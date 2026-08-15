@@ -1,0 +1,301 @@
+const pool = require("../config/database");
+const { isValidEmail, isValidPhone, sanitizeString } = require("../utils/validators");
+
+const getStudents = async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT *
+            FROM students
+            ORDER BY last_name ASC, first_name ASC
+        `);
+
+        res.json({
+            success: true,
+            students: result.rows
+        });
+    } catch (error) {
+        console.error("Get students error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to get students"
+        });
+    }
+};
+
+const getStudentById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(
+            `SELECT * FROM students WHERE id = $1`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            student: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Get student by id error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get student"
+        });
+    }
+};
+
+const createStudent = async (req, res) => {
+    try {
+        const {
+            user_id,
+            student_number,
+            first_name,
+            middle_name,
+            last_name,
+            suffix,
+            email,
+            phone_number,
+            program,
+            section,
+            year_level,
+            qr_code,
+            profile_image
+        } = req.body;
+
+        if (!user_id || !student_number || !first_name || !last_name || !qr_code) {
+            return res.status(400).json({
+                success: false,
+                message: "user_id, student_number, first_name, last_name, and qr_code are required"
+            });
+        }
+
+        if (email && !isValidEmail(email)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid email format"
+            });
+        }
+
+        if (phone_number && !isValidPhone(phone_number)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid phone number format"
+            });
+        }
+
+        const payload = {
+            user_id: Number(user_id),
+            student_number: sanitizeString(student_number),
+            first_name: sanitizeString(first_name),
+            middle_name: sanitizeString(middle_name),
+            last_name: sanitizeString(last_name),
+            suffix: sanitizeString(suffix),
+            email: sanitizeString(email),
+            phone_number: sanitizeString(phone_number),
+            program: sanitizeString(program),
+            section: sanitizeString(section),
+            year_level: year_level !== undefined ? Number(year_level) : null,
+            qr_code: sanitizeString(qr_code),
+            profile_image: sanitizeString(profile_image)
+        };
+
+        const result = await pool.query(
+            `
+                INSERT INTO students (
+                    user_id,
+                    student_number,
+                    first_name,
+                    middle_name,
+                    last_name,
+                    suffix,
+                    email,
+                    phone_number,
+                    program,
+                    section,
+                    year_level,
+                    qr_code,
+                    profile_image
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING *
+            `,
+            [
+                user_id,
+                student_number,
+                first_name,
+                middle_name || null,
+                last_name,
+                suffix || null,
+                email || null,
+                phone_number || null,
+                program || null,
+                section || null,
+                year_level || null,
+                qr_code,
+                profile_image || null
+            ]
+        );
+
+        return res.status(201).json({
+            success: true,
+            student: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Create student error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to create student"
+        });
+    }
+};
+
+const updateStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const {
+            user_id,
+            student_number,
+            first_name,
+            middle_name,
+            last_name,
+            suffix,
+            email,
+            phone_number,
+            program,
+            section,
+            year_level,
+            qr_code,
+            profile_image
+        } = req.body;
+
+        const fields = [
+            user_id !== undefined ? "user_id = $1" : null,
+            student_number !== undefined ? "student_number = $2" : null,
+            first_name !== undefined ? "first_name = $3" : null,
+            middle_name !== undefined ? "middle_name = $4" : null,
+            last_name !== undefined ? "last_name = $5" : null,
+            suffix !== undefined ? "suffix = $6" : null,
+            email !== undefined ? "email = $7" : null,
+            phone_number !== undefined ? "phone_number = $8" : null,
+            program !== undefined ? "program = $9" : null,
+            section !== undefined ? "section = $10" : null,
+            year_level !== undefined ? "year_level = $11" : null,
+            qr_code !== undefined ? "qr_code = $12" : null,
+            profile_image !== undefined ? "profile_image = $13" : null
+        ].filter(Boolean);
+
+        if (fields.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No student fields provided for update"
+            });
+        }
+
+        const result = await pool.query(
+            `
+                UPDATE students
+                SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP
+                WHERE id = $${fields.length + 1}
+                RETURNING *
+            `,
+            [
+                user_id,
+                student_number,
+                first_name,
+                middle_name,
+                last_name,
+                suffix,
+                email,
+                phone_number,
+                program,
+                section,
+                year_level,
+                qr_code,
+                profile_image,
+                id
+            ].filter((value, index) => {
+                const valuePos = [
+                    user_id !== undefined,
+                    student_number !== undefined,
+                    first_name !== undefined,
+                    middle_name !== undefined,
+                    last_name !== undefined,
+                    suffix !== undefined,
+                    email !== undefined,
+                    phone_number !== undefined,
+                    program !== undefined,
+                    section !== undefined,
+                    year_level !== undefined,
+                    qr_code !== undefined,
+                    profile_image !== undefined
+                ];
+                return valuePos[index];
+            }).concat(id)
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            student: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Update student error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update student"
+        });
+    }
+};
+
+const deleteStudent = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const result = await pool.query(
+            `DELETE FROM students WHERE id = $1 RETURNING *`,
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student not found"
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: "Student deleted successfully"
+        });
+    } catch (error) {
+        console.error("Delete student error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to delete student"
+        });
+    }
+};
+
+module.exports = {
+    getStudents,
+    getStudentById,
+    createStudent,
+    updateStudent,
+    deleteStudent
+};
