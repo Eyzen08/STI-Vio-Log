@@ -13,6 +13,7 @@ const communityServiceRoutes = require("./routes/communityServiceRoutes");
 const qrRoutes = require("./routes/qrRoutes");
 const clearanceRoutes = require("./routes/clearanceRoutes");
 const reportRoutes = require("./routes/reportRoutes");
+const auditRoutes = require("./routes/auditRoutes");
 const { authenticateToken, authorizeRoles } = require("./middleware/authMiddleware");
 
 const app = express();
@@ -99,6 +100,13 @@ app.use("/api/community-service", authenticateToken, authorizeRoles("ADMIN", "DI
 app.use("/api/qr", authenticateToken, authorizeRoles("DEPARTMENT_HEAD", "DISCIPLINE_OFFICE"), qrRoutes);
 app.use("/api/clearance", authenticateToken, authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), clearanceRoutes);
 app.use("/api/reports", reportRoutes);
+app.use(
+  "/api/audit-logs",
+  authenticateToken,
+  authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+  auditRoutes
+);
+
 
 // Test route
 app.get("/", (req, res) => {

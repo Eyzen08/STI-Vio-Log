@@ -2,21 +2,29 @@ const pool = require('../config/database');
 
 const getAuditLogs = async (req, res) => {
   try {
-    const { action, user_id, target_type, from_date, to_date, limit = 100 } = req.query;
+    const {
+      action,
+      user_id,
+      table_name,
+      from_date,
+      to_date,
+      limit = 100
+    } = req.query;
 
     let query = `
-      SELECT 
+      SELECT
         id,
         user_id,
         action,
-        target_type,
-        target_id,
+        table_name,
+        record_id,
         description,
         ip_address,
         created_at
       FROM audit_logs
       WHERE 1=1
     `;
+
     const params = [];
 
     if (action) {
@@ -29,9 +37,9 @@ const getAuditLogs = async (req, res) => {
       params.push(user_id);
     }
 
-    if (target_type) {
-      query += ` AND target_type = $${params.length + 1}`;
-      params.push(target_type);
+    if (table_name) {
+      query += ` AND table_name = $${params.length + 1}`;
+      params.push(table_name);
     }
 
     if (from_date) {
@@ -44,8 +52,13 @@ const getAuditLogs = async (req, res) => {
       params.push(to_date);
     }
 
+    const parsedLimit = Math.min(
+      Math.max(parseInt(limit, 10) || 100, 1),
+      1000
+    );
+
     query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
-    params.push(Math.min(parseInt(limit) || 100, 1000));
+    params.push(parsedLimit);
 
     const result = await pool.query(query, params);
 
@@ -56,6 +69,7 @@ const getAuditLogs = async (req, res) => {
     });
   } catch (error) {
     console.error('Get audit logs error:', error);
+
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit logs'
@@ -66,11 +80,11 @@ const getAuditLogs = async (req, res) => {
 const getAuditLogStats = async (req, res) => {
   try {
     const query = `
-      SELECT 
+      SELECT
         action,
-        COUNT(*) as count,
-        COUNT(DISTINCT user_id) as unique_users,
-        MAX(created_at) as last_occurrence
+        COUNT(*)::int AS count,
+        COUNT(DISTINCT user_id)::int AS unique_users,
+        MAX(created_at) AS last_occurrence
       FROM audit_logs
       GROUP BY action
       ORDER BY count DESC
@@ -84,6 +98,7 @@ const getAuditLogStats = async (req, res) => {
     });
   } catch (error) {
     console.error('Get audit log stats error:', error);
+
     return res.status(500).json({
       success: false,
       message: 'Failed to retrieve audit log statistics'
@@ -91,12 +106,27 @@ const getAuditLogStats = async (req, res) => {
   }
 };
 
-const recordAuditLog = async (userId, action, targetType, targetId, description, ipAddress) => {
+const recordAuditLog = async (
+  userId,
+  action,
+  tableName,
+  recordId,
+  description,
+  ipAddress
+) => {
   try {
     await pool.query(
-      `INSERT INTO audit_logs (user_id, action, target_type, target_id, description, ip_address)
+      `INSERT INTO audit_logs
+        (user_id, action, table_name, record_id, description, ip_address)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [userId, action, targetType, targetId, description, ipAddress]
+      [
+        userId || null,
+        action,
+        tableName || null,
+        recordId || null,
+        description || null,
+        ipAddress || null
+      ]
     );
   } catch (error) {
     console.error('Record audit log error:', error);

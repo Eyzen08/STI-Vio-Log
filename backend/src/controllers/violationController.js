@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const { recordAuditLog } = require("./auditController");
 
 const getViolations = async (req, res) => {
     try {
@@ -101,9 +102,20 @@ const createViolation = async (req, res) => {
             ]
         );
 
-        return res.status(201).json({
-            success: true,
-            violation: result.rows[0]
+      const violation = result.rows[0];
+
+    await recordAuditLog(
+    req.user.id,
+    "CREATE",
+    "violations",
+    violation.id,
+    `Created violation for student ID ${violation.student_id}`,
+    req.ip
+);
+
+    return res.status(201).json({
+    success: true,
+    violation
         });
     } catch (error) {
         console.error("Create violation error:", error);
@@ -118,65 +130,46 @@ const createViolation = async (req, res) => {
 const updateViolation = async (req, res) => {
     try {
         const { id } = req.params;
-        const {
-            student_id,
-            violation_type_id,
-            reported_by,
-            incident_date,
-            description,
-            status,
-            required_service_hours,
-            completed_service_hours,
-            cleared_at
-        } = req.body;
 
-        const fields = [
-            student_id !== undefined ? "student_id = $1" : null,
-            violation_type_id !== undefined ? "violation_type_id = $2" : null,
-            reported_by !== undefined ? "reported_by = $3" : null,
-            incident_date !== undefined ? "incident_date = $4" : null,
-            description !== undefined ? "description = $5" : null,
-            status !== undefined ? "status = $6" : null,
-            required_service_hours !== undefined ? "required_service_hours = $7" : null,
-            completed_service_hours !== undefined ? "completed_service_hours = $8" : null,
-            cleared_at !== undefined ? "cleared_at = $9" : null
-        ].filter(Boolean);
+        const allowedFields = [
+            "student_id",
+            "violation_type_id",
+            "reported_by",
+            "incident_date",
+            "description",
+            "status",
+            "required_service_hours",
+            "completed_service_hours",
+            "cleared_at"
+        ];
 
-        if (fields.length === 0) {
+        const updates = [];
+        const values = [];
+
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                values.push(req.body[field]);
+                updates.push(`${field} = $${values.length}`);
+            }
+        }
+
+        if (updates.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: "No violation fields provided for update"
             });
         }
 
-        const values = [
-            student_id,
-            violation_type_id,
-            reported_by,
-            incident_date,
-            description,
-            status,
-            required_service_hours,
-            completed_service_hours,
-            cleared_at,
-            id
-        ].filter((value, index) => {
-            const provided = [
-                student_id !== undefined,
-                violation_type_id !== undefined,
-                reported_by !== undefined,
-                incident_date !== undefined,
-                description !== undefined,
-                status !== undefined,
-                required_service_hours !== undefined,
-                completed_service_hours !== undefined,
-                cleared_at !== undefined
-            ];
-            return provided[index];
-        }).concat(id);
+        values.push(id);
 
         const result = await pool.query(
-            `UPDATE violations SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${values.length} RETURNING *`,
+            `
+                UPDATE violations
+                SET ${updates.join(", ")},
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = $${values.length}
+                RETURNING *
+            `,
             values
         );
 
@@ -187,9 +180,20 @@ const updateViolation = async (req, res) => {
             });
         }
 
+        const violation = result.rows[0];
+
+        await recordAuditLog(
+            req.user.id,
+            "UPDATE",
+            "violations",
+            violation.id,
+            `Updated violation for student ID ${violation.student_id}`,
+            req.ip
+        );
+
         return res.json({
             success: true,
-            violation: result.rows[0]
+            violation
         });
     } catch (error) {
         console.error("Update violation error:", error);
@@ -200,7 +204,6 @@ const updateViolation = async (req, res) => {
         });
     }
 };
-
 const deleteViolation = async (req, res) => {
     try {
         const { id } = req.params;
@@ -216,10 +219,21 @@ const deleteViolation = async (req, res) => {
             });
         }
 
-        return res.json({
-            success: true,
-            message: "Violation deleted successfully"
-        });
+      const violation = result.rows[0];
+
+await recordAuditLog(
+    req.user.id,
+    "DELETE",
+    "violations",
+    violation.id,
+    `Deleted violation for student ID ${violation.student_id}`,
+    req.ip
+);
+
+return res.json({
+    success: true,
+    message: "Violation deleted successfully"
+});
     } catch (error) {
         console.error("Delete violation error:", error);
 

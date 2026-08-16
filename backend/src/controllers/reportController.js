@@ -129,12 +129,13 @@ const getCommunityServiceReport = async (req, res) => {
       generated_at: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Community service report error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to generate community service report'
-    });
-  }
+  console.error('DTR report error:', error);
+  return res.status(500).json({
+    success: false,
+    message: 'Failed to generate DTR report',
+    error: error.message
+  });
+}
 };
 
 // DTR Report
@@ -143,19 +144,20 @@ const getDTRReport = async (req, res) => {
     const { department_id, student_id, from_date, to_date, sort_by } = req.query;
 
     let query = `
-      SELECT 
-        qr.id,
-        qr.student_id,
-        s.first_name,
-        s.last_name,
-        s.student_number,
-        qr.department_id,
-        qr.action,
-        qr.scanned_at,
-        qr.notes
-      FROM qr_scan_logs qr
-      JOIN students s ON qr.student_id = s.id
-      WHERE 1=1
+SELECT 
+  qr.id,
+  qr.student_id,
+  s.first_name,
+  s.last_name,
+  s.student_number,
+  qr.department_id,
+  qr.scan_type,
+  qr.scanned_at,
+  qr.device_information,
+  qr.ip_address
+FROM qr_scan_logs qr
+JOIN students s ON qr.student_id = s.id
+WHERE 1=1
     `;
     const params = [];
 
@@ -200,11 +202,13 @@ const getDTRReport = async (req, res) => {
     });
   } catch (error) {
     console.error('DTR report error:', error);
+
     return res.status(500).json({
       success: false,
-      message: 'Failed to generate DTR report'
+      message: 'Failed to generate DTR report',
+      error: error.message
     });
-  }
+}
 };
 
 // Non-Compliance Report
