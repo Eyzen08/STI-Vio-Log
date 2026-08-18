@@ -7,7 +7,7 @@ const getNavItems = (role) => {
   if (!role) return []
   
   const adminItems = ['Dashboard', 'Students', 'Violations', 'Community Service', 'QR Scan', 'Clearance', 'Reports']
-  const departmentHeadItems = ['Dashboard', 'QR Scan']
+  const departmentHeadItems = ['Dashboard', 'QR Scan', 'Clearance']
   const studentItems = ['Dashboard', 'My Profile', 'My Violations', 'My Clearance']
   
   switch (role) {
@@ -140,6 +140,8 @@ function App() {
     if (!isLoggedIn || !token) {
       setStudents([])
       setViolations([])
+      setCommunityServiceAssignments([])
+      setClearanceRecords([])
       return
     }
 
@@ -147,7 +149,7 @@ function App() {
       setDashboardLoading(true)
 
       try {
-        const [studentsResponse, violationsResponse, assignmentsResponse, clearanceResponse] = await Promise.all([
+        const requests = [
           fetch(`${API_URL}/api/students`, {
             headers: {
               Authorization: `Bearer ${token}`
@@ -162,27 +164,51 @@ function App() {
             headers: {
               Authorization: `Bearer ${token}`
             }
-          }),
-          fetch(`${API_URL}/api/clearance`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
           })
-        ])
+        ]
 
-        if (!studentsResponse.ok || !violationsResponse.ok || !assignmentsResponse.ok || !clearanceResponse.ok) {
+        const [studentsResponse, violationsResponse, assignmentsResponse] =
+          await Promise.all(requests)
+
+        if (
+          !studentsResponse.ok ||
+          !violationsResponse.ok ||
+          !assignmentsResponse.ok
+        ) {
           throw new Error('Unable to load dashboard data')
         }
 
         const studentsData = await studentsResponse.json()
         const violationsData = await violationsResponse.json()
         const assignmentsData = await assignmentsResponse.json()
-        const clearanceData = await clearanceResponse.json()
 
         setStudents(studentsData.students || [])
         setViolations(violationsData.violations || [])
         setCommunityServiceAssignments(assignmentsData.assignments || [])
-        setClearanceRecords(clearanceData.clearanceRecords || [])
+
+        // Clearance records are currently available to
+        // ADMIN, DISCIPLINE_OFFICE, and DEPARTMENT_HEAD.
+        // STUDENT access should be added through a dedicated
+        // student clearance endpoint before requesting it here.
+        if (isAdmin || isDepartmentHead) {
+          const clearanceResponse = await fetch(
+            `${API_URL}/api/clearance`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          )
+
+          if (!clearanceResponse.ok) {
+            throw new Error('Unable to load clearance data')
+          }
+
+          const clearanceData = await clearanceResponse.json()
+          setClearanceRecords(clearanceData.clearanceRecords || [])
+        } else {
+          setClearanceRecords([])
+        }
       } catch (fetchError) {
         console.error(fetchError)
         setStudents([])
@@ -195,7 +221,7 @@ function App() {
     }
 
     loadDashboardData()
-  }, [isLoggedIn, token])
+  }, [isLoggedIn, token, isAdmin, isDepartmentHead])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -490,17 +516,16 @@ function App() {
 
     try {
       const payload = {
-        ...clearanceForm,
         student_id: Number(clearanceForm.student_id),
-        cleared_by: clearanceForm.cleared_by ? Number(clearanceForm.cleared_by) : null,
-        has_active_violation: Boolean(clearanceForm.has_active_violation),
-        has_pending_service: Boolean(clearanceForm.has_pending_service),
-        cleared_at: clearanceForm.cleared_at || null,
+        academic_year: String(clearanceForm.academic_year).trim(),
+        semester: clearanceForm.semester,
         remarks: clearanceForm.remarks.trim()
       }
 
       if (!payload.student_id || !payload.academic_year || !payload.semester) {
-        throw new Error('Student ID, academic year, and semester are required.')
+        throw new Error(
+          'Student ID, academic year, and semester are required.'
+        )
       }
 
       const response = await fetch(`${API_URL}/api/clearance`, {
@@ -515,13 +540,18 @@ function App() {
       const data = await response.json()
 
       if (!response.ok || !data.success) {
-        throw new Error(data.message || 'Unable to save clearance record.')
+        throw new Error(
+          data.message || 'Unable to create clearance record.'
+        )
       }
 
-      setClearanceFormSuccess(`Clearance record was created for student #${payload.student_id}.`)
+      setClearanceFormSuccess(
+        `Clearance record was created for student #${payload.student_id}.`
+      )
+
       setClearanceForm({
         student_id: '',
-        academic_year: new Date().getFullYear(),
+        academic_year: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
         semester: '1st Semester',
         status: 'NOT_ELIGIBLE',
         has_active_violation: false,
@@ -531,18 +561,79 @@ function App() {
         remarks: ''
       })
 
-      const refreshedClearance = await fetch(`${API_URL}/api/clearance`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const refreshedClearance = await fetch(
+        `${API_URL}/api/clearance`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      })
+      )
 
       if (refreshedClearance.ok) {
-        const refreshedData = await refreshedClearance.json()
-        setClearanceRecords(refreshedData.clearanceRecords || [])
+        const refreshedData =
+          await refreshedClearance.json()
+
+        setClearanceRecords(
+          refreshedData.clearanceRecords || []
+        )
       }
     } catch (clearanceError) {
-      setClearanceFormError(clearanceError.message)
+      setClearanceFormError(
+        clearanceError.message
+      )
+    }
+  }
+
+  const handleClearanceApprove = async (clearanceId) => {
+    setClearanceFormError('')
+    setClearanceFormSuccess('')
+
+    try {
+      const response = await fetch(
+        `${API_URL}/api/clearance/${clearanceId}/approve`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+          'Unable to approve clearance.'
+        )
+      }
+
+      setClearanceFormSuccess(
+        `Clearance #${clearanceId} was approved successfully.`
+      )
+
+      const refreshedClearance = await fetch(
+        `${API_URL}/api/clearance`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+
+      if (refreshedClearance.ok) {
+        const refreshedData =
+          await refreshedClearance.json()
+
+        setClearanceRecords(
+          refreshedData.clearanceRecords || []
+        )
+      }
+    } catch (approvalError) {
+      setClearanceFormError(
+        approvalError.message
+      )
     }
   }
 
@@ -590,6 +681,7 @@ function App() {
     setStudents([])
     setViolations([])
     setCommunityServiceAssignments([])
+    setClearanceRecords([])
     setActiveView('Dashboard')
   }
 
@@ -752,11 +844,20 @@ function App() {
         return (
           <section className="table-card">
             <div className="table-header">
-              <h3>Clearance Status</h3>
-              <span>{clearanceRecords.length} records</span>
+              <h3>My Clearance</h3>
+              <span>Student Portal</span>
             </div>
+
             {clearanceRecords.length === 0 ? (
-              <p className="empty-state">No clearance records yet.</p>
+              <div>
+                <p className="empty-state">
+                  Clearance records are not available to the student portal yet.
+                </p>
+                <p className="info-note">
+                  Your clearance information will appear here after the student
+                  clearance endpoint is enabled on the backend.
+                </p>
+              </div>
             ) : (
               <div className="table-wrap">
                 <table>
@@ -765,6 +866,8 @@ function App() {
                       <th>Year</th>
                       <th>Semester</th>
                       <th>Status</th>
+                      <th>Active Violation</th>
+                      <th>Pending Service</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -772,7 +875,17 @@ function App() {
                       <tr key={record.id}>
                         <td>{record.academic_year}</td>
                         <td>{record.semester}</td>
-                        <td><span className="status-badge">{record.status}</span></td>
+                        <td>
+                          <span className="status-badge">
+                            {record.status}
+                          </span>
+                        </td>
+                        <td>
+                          {record.has_active_violation ? 'Yes' : 'No'}
+                        </td>
+                        <td>
+                          {record.has_pending_service ? 'Yes' : 'No'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -840,7 +953,7 @@ function App() {
     }
 
     // Admin/Discipline Office view
-    if (!isAdmin) {
+    if (!isAdmin && !isDepartmentHead) {
       return <p style={{ color: '#b42318' }}>Access denied. Please contact system administrator.</p>
     }
 
@@ -1196,76 +1309,107 @@ function App() {
     if (activeView === 'Clearance') {
       return (
         <>
-          <section className="table-card form-card">
-            <div className="table-header">
-              <h3>Clearance status</h3>
-              <span>New record</span>
-            </div>
-
-            <form className="student-form" onSubmit={handleClearanceSubmit}>
-              <div className="student-form-grid">
-                <label>
-                  Student ID
-                  <input type="number" name="student_id" value={clearanceForm.student_id} onChange={handleClearanceFieldChange} min="1" />
-                </label>
-                <label>
-                  Academic Year
-                  <input type="number" name="academic_year" value={clearanceForm.academic_year} onChange={handleClearanceFieldChange} min="2020" />
-                </label>
-                <label>
-                  Semester
-                  <select name="semester" value={clearanceForm.semester} onChange={handleClearanceFieldChange}>
-                    <option value="1st Semester">1st Semester</option>
-                    <option value="2nd Semester">2nd Semester</option>
-                    <option value="Summer">Summer</option>
-                  </select>
-                </label>
-                <label>
-                  Status
-                  <select name="status" value={clearanceForm.status} onChange={handleClearanceFieldChange}>
-                    <option value="ELIGIBLE">ELIGIBLE</option>
-                    <option value="NOT_ELIGIBLE">NOT_ELIGIBLE</option>
-                    <option value="PENDING">PENDING</option>
-                    <option value="REVIEW">REVIEW</option>
-                  </select>
-                </label>
-                <label>
-                  Cleared By
-                  <input type="number" name="cleared_by" value={clearanceForm.cleared_by} onChange={handleClearanceFieldChange} min="1" />
-                </label>
-                <label>
-                  Cleared At
-                  <input type="date" name="cleared_at" value={clearanceForm.cleared_at} onChange={handleClearanceFieldChange} />
-                </label>
-                <label className="checkbox-row">
-                  <input type="checkbox" name="has_active_violation" checked={clearanceForm.has_active_violation} onChange={handleClearanceFieldChange} />
-                  Active violation
-                </label>
-                <label className="checkbox-row">
-                  <input type="checkbox" name="has_pending_service" checked={clearanceForm.has_pending_service} onChange={handleClearanceFieldChange} />
-                  Pending service
-                </label>
-                <label className="full-width-field">
-                  Remarks
-                  <textarea name="remarks" value={clearanceForm.remarks} onChange={handleClearanceFieldChange} rows="3" placeholder="Add clearance notes" />
-                </label>
+          {isAdmin && (
+            <section className="table-card form-card">
+              <div className="table-header">
+                <h3>Clearance Record</h3>
+                <span>New record</span>
               </div>
 
-              {clearanceFormError && <p className="error-message">{clearanceFormError}</p>}
-              {clearanceFormSuccess && <p className="success-message">{clearanceFormSuccess}</p>}
+              <form
+                className="student-form"
+                onSubmit={handleClearanceSubmit}
+              >
+                <div className="student-form-grid">
+                  <label>
+                    Student ID
+                    <input
+                      type="number"
+                      name="student_id"
+                      value={clearanceForm.student_id}
+                      onChange={handleClearanceFieldChange}
+                      min="1"
+                      required
+                    />
+                  </label>
 
-              <button type="submit" className="submit-btn">Save Clearance</button>
-            </form>
-          </section>
+                  <label>
+                    Academic Year
+                    <input
+                      type="text"
+                      name="academic_year"
+                      value={clearanceForm.academic_year}
+                      onChange={handleClearanceFieldChange}
+                      placeholder="2025-2026"
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Semester
+                    <select
+                      name="semester"
+                      value={clearanceForm.semester}
+                      onChange={handleClearanceFieldChange}
+                    >
+                      <option value="1st Semester">
+                        1st Semester
+                      </option>
+                      <option value="2nd Semester">
+                        2nd Semester
+                      </option>
+                      <option value="Summer">
+                        Summer
+                      </option>
+                    </select>
+                  </label>
+
+                  <label className="full-width-field">
+                    Remarks
+                    <textarea
+                      name="remarks"
+                      value={clearanceForm.remarks}
+                      onChange={handleClearanceFieldChange}
+                      rows="3"
+                      placeholder="Add clearance notes"
+                    />
+                  </label>
+                </div>
+
+                {clearanceFormError && (
+                  <p className="error-message">
+                    {clearanceFormError}
+                  </p>
+                )}
+
+                {clearanceFormSuccess && (
+                  <p className="success-message">
+                    {clearanceFormSuccess}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="submit-btn"
+                >
+                  Create Clearance
+                </button>
+              </form>
+            </section>
+          )}
 
           <section className="table-card">
             <div className="table-header">
-              <h3>Clearance records</h3>
-              <span>{clearanceRecords.length} records</span>
+              <h3>Clearance Records</h3>
+              <span>
+                {clearanceRecords.length} records
+              </span>
             </div>
 
             {clearanceRecords.length === 0 ? (
-              <p className="empty-state">No clearance records yet.</p>
+              <p className="empty-state">
+                No clearance records yet.
+              </p>
             ) : (
               <div className="table-wrap">
                 <table>
@@ -1273,19 +1417,80 @@ function App() {
                     <tr>
                       <th>ID</th>
                       <th>Student</th>
-                      <th>Year</th>
+                      <th>Academic Year</th>
                       <th>Semester</th>
                       <th>Status</th>
+                      <th>Active Violation</th>
+                      <th>Pending Service</th>
+                      <th>Cleared By</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {clearanceRecords.map((record) => (
                       <tr key={record.id}>
                         <td>#{record.id}</td>
-                        <td>{record.student_id}</td>
-                        <td>{record.academic_year}</td>
-                        <td>{record.semester}</td>
-                        <td><span className="status-badge">{record.status}</span></td>
+
+                        <td>
+                          {record.first_name ||
+                          record.last_name
+                            ? `${record.first_name || ''} ${record.last_name || ''}`.trim()
+                            : `Student #${record.student_id}`}
+                        </td>
+
+                        <td>
+                          {record.academic_year}
+                        </td>
+
+                        <td>
+                          {record.semester}
+                        </td>
+
+                        <td>
+                          <span className="status-badge">
+                            {record.status}
+                          </span>
+                        </td>
+
+                        <td>
+                          {record.has_active_violation
+                            ? 'Yes'
+                            : 'No'}
+                        </td>
+
+                        <td>
+                          {record.has_pending_service
+                            ? 'Yes'
+                            : 'No'}
+                        </td>
+
+                        <td>
+                          {record.cleared_by
+                            ? `User #${record.cleared_by}`
+                            : '—'}
+                        </td>
+
+                        <td>
+                          {isDepartmentHead &&
+                          record.status === 'PENDING' &&
+                          !record.has_active_violation &&
+                          !record.has_pending_service ? (
+                            <button
+                              type="button"
+                              className="submit-btn"
+                              onClick={() =>
+                                handleClearanceApprove(
+                                  record.id
+                                )
+                              }
+                            >
+                              Approve
+                            </button>
+                          ) : (
+                            <span>—</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

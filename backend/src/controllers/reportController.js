@@ -90,7 +90,8 @@ const getCommunityServiceReport = async (req, res) => {
         cs.completed_hours,
         cs.remaining_hours,
         cs.status,
-        cs.created_at
+        cs.assigned_at
+        cs.completed_at
       FROM community_service_assignments cs
       JOIN students s ON cs.student_id = s.id
       JOIN violations v ON cs.violation_id = v.id
@@ -115,7 +116,7 @@ const getCommunityServiceReport = async (req, res) => {
     } else if (sort_by === 'status') {
       query += ` ORDER BY cs.status, cs.remaining_hours DESC`;
     } else {
-      query += ` ORDER BY cs.created_at DESC`;
+      query += ` ORDER BY cs.assigned_at DESC`;
     }
 
     const result = await pool.query(query, params);

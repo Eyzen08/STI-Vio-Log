@@ -98,7 +98,7 @@ app.use("/api/department-heads", authenticateToken, authorizeRoles("ADMIN", "DIS
 app.use("/api/violations", authenticateToken, authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), violationRoutes);
 app.use("/api/community-service", authenticateToken, authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"), communityServiceRoutes);
 app.use("/api/qr", authenticateToken, authorizeRoles("DEPARTMENT_HEAD", "DISCIPLINE_OFFICE"), qrRoutes);
-app.use("/api/clearance", authenticateToken, authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), clearanceRoutes);
+app.use("/api/clearance",authenticateToken,authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"), clearanceRoutes);
 app.use("/api/reports", reportRoutes);
 app.use(
   "/api/audit-logs",
