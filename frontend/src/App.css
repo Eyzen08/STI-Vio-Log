@@ -27,6 +27,7 @@
   background: linear-gradient(135deg, #4f8cff, #6cd4ff);
   font-weight: 700;
   color: white;
+  flex-shrink: 0;
 }
 
 .brand h2,
@@ -54,6 +55,7 @@
   padding: 12px 14px;
   border-radius: 10px;
   cursor: pointer;
+  width: 100%;
 }
 
 .nav-item.active {
@@ -62,12 +64,14 @@
 
 .main-panel {
   padding: 28px;
+  min-width: 0;
 }
 
 .topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
   margin-bottom: 24px;
 }
 
@@ -91,6 +95,7 @@
   color: white;
   padding: 10px 16px;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .login-card,
@@ -108,6 +113,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   margin-bottom: 18px;
 }
 
@@ -157,6 +163,8 @@
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .login-form button,
@@ -223,6 +231,8 @@
   padding: 10px 12px;
   font-size: 1rem;
   font-family: inherit;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .student-form textarea {
@@ -314,6 +324,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 14px;
 }
 
@@ -328,15 +339,19 @@
 }
 
 .table-wrap {
+  width: 100%;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
 }
 
-th, td {
+th,
+td {
   text-align: left;
   padding: 12px 14px;
   border-bottom: 1px solid #ebeff5;
@@ -473,10 +488,6 @@ th {
   min-height: 350px;
 }
 
-#qr-reader video {
-  border-radius: 10px;
-}
-
 .qr-camera-actions {
   display: flex;
   justify-content: center;
@@ -485,4 +496,493 @@ th {
 
 .qr-camera-actions button {
   min-width: 200px;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
+
+/* =========================================
+   LARGE DESKTOP
+   1200px and above
+   ========================================= */
+
+@media (min-width: 1200px) {
+  .main-panel {
+    padding: 32px;
+  }
+
+  .topbar h1 {
+    font-size: 2.4rem;
+  }
+
+  .qr-camera-section {
+    padding: 24px;
+  }
+}
+
+/* =========================================
+   LAPTOP
+   992px - 1199px
+   ========================================= */
+
+@media (max-width: 1199px) {
+  .app-shell {
+    grid-template-columns: 230px 1fr;
+  }
+
+  .sidebar {
+    padding: 20px 14px;
+  }
+
+  .main-panel {
+    padding: 24px;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+}
+
+/* =========================================
+   TABLET / IPAD
+   768px - 991px
+   ========================================= */
+
+@media (max-width: 991px) {
+  .app-shell {
+    grid-template-columns: 200px 1fr;
+  }
+
+  .sidebar {
+    padding: 20px 12px;
+  }
+
+  .brand {
+    gap: 10px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand h2 {
+    font-size: 1.1rem;
+  }
+
+  .brand small {
+    font-size: 0.72rem;
+  }
+
+  .nav {
+    gap: 8px;
+  }
+
+  .nav-item {
+    padding: 11px 10px;
+    font-size: 0.9rem;
+  }
+
+  .main-panel {
+    padding: 20px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .topbar h1 {
+    font-size: 1.9rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 14px;
+  }
+
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .student-form-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+
+  .qr-panel {
+    max-width: 100%;
+  }
+
+  #qr-reader {
+    max-width: 100%;
+  }
+
+  #qr-reader video {
+    max-height: 450px;
+  }
+}
+
+/* =========================================
+   MOBILE
+   767px and below
+   ========================================= */
+
+@media (max-width: 767px) {
+  html,
+  body {
+    width: 100%;
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  /* Mobile sidebar becomes top navigation */
+  .sidebar {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 12px;
+  }
+
+  .brand {
+    margin-bottom: 12px;
+  }
+
+  .brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+  }
+
+  .brand h2 {
+    font-size: 1.05rem;
+  }
+
+  .brand small {
+    font-size: 0.7rem;
+  }
+
+  .nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+    margin-top: 12px;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: max-content;
+    text-align: center;
+    padding: 10px 13px;
+    font-size: 0.85rem;
+  }
+
+  .main-panel {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px 12px;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .topbar h1 {
+    font-size: 1.65rem;
+    margin-top: 5px;
+  }
+
+  .eyebrow {
+    font-size: 0.65rem;
+  }
+
+  .logout-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .login-card,
+  .user-panel,
+  .table-card {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    padding: 18px;
+    border-radius: 14px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+  }
+
+  .card-header h3 {
+    font-size: 1.35rem;
+  }
+
+  .login-form {
+    gap: 14px;
+  }
+
+  .login-form input {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .login-form button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .student-form {
+    gap: 14px;
+  }
+
+  .student-form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .full-width-field {
+    grid-column: auto;
+  }
+
+  .student-form input,
+  .student-form textarea,
+  .student-form select {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-card {
+    padding: 16px;
+  }
+
+  .stat-card strong {
+    font-size: 1.7rem;
+  }
+
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .dashboard-summary-grid li {
+    padding: 10px;
+  }
+
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .table-header h3 {
+    font-size: 1.15rem;
+  }
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 650px;
+    font-size: 0.85rem;
+  }
+
+  th,
+  td {
+    padding: 10px 12px;
+  }
+
+  .qr-panel {
+    width: 100%;
+    max-width: none;
+  }
+
+  .qr-camera-section {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px;
+    margin-bottom: 18px;
+  }
+
+  #qr-reader {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto;
+  }
+
+  #qr-reader video {
+    width: 100% !important;
+    height: auto !important;
+    max-height: none;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+
+  #qr-reader__scan_region {
+    min-height: 0;
+  }
+
+  .qr-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .qr-actions button {
+    width: 100%;
+    min-height: 46px;
+  }
+
+  .qr-camera-actions {
+    width: 100%;
+  }
+
+  .qr-camera-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+  }
+
+  .qr-result {
+    padding: 14px;
+    font-size: 0.92rem;
+  }
+
+  .checkbox-row {
+    min-height: 44px;
+  }
+
+  .info-note {
+    font-size: 0.9rem;
+  }
+}
+
+/* =========================================
+   SMALL PHONES
+   480px and below
+   ========================================= */
+
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 12px 10px;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    font-size: 0.85rem;
+  }
+
+  .brand h2 {
+    font-size: 0.95rem;
+  }
+
+  .brand small {
+    font-size: 0.65rem;
+  }
+
+  .nav {
+    gap: 6px;
+  }
+
+  .nav-item {
+    padding: 9px 11px;
+    font-size: 0.78rem;
+    border-radius: 8px;
+  }
+
+  .main-panel {
+    padding: 12px 8px;
+  }
+
+  .topbar h1 {
+    font-size: 1.45rem;
+  }
+
+  .login-card,
+  .user-panel,
+  .table-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .card-header h3 {
+    font-size: 1.2rem;
+  }
+
+  .badge,
+  .user-badge {
+    font-size: 0.68rem;
+    padding: 5px 8px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-card strong {
+    font-size: 1.5rem;
+  }
+
+  .qr-camera-section {
+    padding: 10px;
+  }
+
+  #qr-reader video {
+    border-radius: 8px;
+  }
+
+  .qr-result {
+    padding: 12px;
+  }
+
+  .status-badge {
+    font-size: 0.65rem;
+  }
+}
+
+/* =========================================
+   TOUCH DEVICES
+   ========================================= */
+
+@media (hover: none) and (pointer: coarse) {
+  button,
+  .nav-item,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button,
+  .nav-item {
+    touch-action: manipulation;
+  }
 }
