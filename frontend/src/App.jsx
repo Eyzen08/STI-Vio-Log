@@ -137,91 +137,211 @@ function App() {
   ]
 
   useEffect(() => {
-    if (!isLoggedIn || !token) {
-      setStudents([])
-      setViolations([])
-      setCommunityServiceAssignments([])
-      setClearanceRecords([])
-      return
-    }
+  if (!isLoggedIn || !token || !userRole) {
+    setStudents([])
+    setViolations([])
+    setCommunityServiceAssignments([])
+    setClearanceRecords([])
+    return
+  }
 
-    const loadDashboardData = async () => {
-      setDashboardLoading(true)
+  const loadDashboardData = async () => {
+    setDashboardLoading(true)
 
-      try {
-        const requests = [
+    try {
+      const authHeaders = {
+        Authorization: `Bearer ${token}`
+      }
+
+      // =====================================================
+      // ADMIN / DISCIPLINE OFFICE
+      // =====================================================
+
+      if (isAdmin) {
+        const [
+          studentsResponse,
+          violationsResponse,
+          assignmentsResponse,
+          clearanceResponse
+        ] = await Promise.all([
           fetch(`${API_URL}/api/students`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            headers: authHeaders
           }),
-          fetch(`${API_URL}/api/violations`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }),
-          fetch(`${API_URL}/api/community-service`, {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          })
-        ]
 
-        const [studentsResponse, violationsResponse, assignmentsResponse] =
-          await Promise.all(requests)
+          fetch(`${API_URL}/api/violations`, {
+            headers: authHeaders
+          }),
+
+          fetch(`${API_URL}/api/community-service`, {
+            headers: authHeaders
+          }),
+
+          fetch(`${API_URL}/api/clearance`, {
+            headers: authHeaders
+          })
+        ])
 
         if (
           !studentsResponse.ok ||
           !violationsResponse.ok ||
-          !assignmentsResponse.ok
+          !assignmentsResponse.ok ||
+          !clearanceResponse.ok
         ) {
-          throw new Error('Unable to load dashboard data')
+          throw new Error(
+            'Unable to load administration data'
+          )
         }
 
-        const studentsData = await studentsResponse.json()
-        const violationsData = await violationsResponse.json()
-        const assignmentsData = await assignmentsResponse.json()
+        const studentsData =
+          await studentsResponse.json()
 
-        setStudents(studentsData.students || [])
-        setViolations(violationsData.violations || [])
-        setCommunityServiceAssignments(assignmentsData.assignments || [])
+        const violationsData =
+          await violationsResponse.json()
 
-        // Clearance records are currently available to
-        // ADMIN, DISCIPLINE_OFFICE, and DEPARTMENT_HEAD.
-        // STUDENT access should be added through a dedicated
-        // student clearance endpoint before requesting it here.
-        if (isAdmin || isDepartmentHead) {
-          const clearanceResponse = await fetch(
+        const assignmentsData =
+          await assignmentsResponse.json()
+
+        const clearanceData =
+          await clearanceResponse.json()
+
+        setStudents(
+          studentsData.students || []
+        )
+
+        setViolations(
+          violationsData.violations || []
+        )
+
+        setCommunityServiceAssignments(
+          assignmentsData.assignments || []
+        )
+
+        setClearanceRecords(
+          clearanceData.clearanceRecords || []
+        )
+
+        return
+      }
+
+
+      // =====================================================
+      // DEPARTMENT HEAD
+      // =====================================================
+
+      if (isDepartmentHead) {
+        const clearanceResponse =
+          await fetch(
             `${API_URL}/api/clearance`,
             {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
+              headers: authHeaders
             }
           )
 
-          if (!clearanceResponse.ok) {
-            throw new Error('Unable to load clearance data')
-          }
+        if (!clearanceResponse.ok) {
+          const errorData =
+            await clearanceResponse.json()
+              .catch(() => ({}))
 
-          const clearanceData = await clearanceResponse.json()
-          setClearanceRecords(clearanceData.clearanceRecords || [])
-        } else {
-          setClearanceRecords([])
+          throw new Error(
+            errorData.message ||
+            'Unable to load clearance records'
+          )
         }
-      } catch (fetchError) {
-        console.error(fetchError)
+
+        const clearanceData =
+          await clearanceResponse.json()
+
         setStudents([])
         setViolations([])
         setCommunityServiceAssignments([])
-        setClearanceRecords([])
-      } finally {
-        setDashboardLoading(false)
+
+        setClearanceRecords(
+          clearanceData.clearanceRecords || []
+        )
+
+        return
       }
+
+
+      // =====================================================
+      // STUDENT
+      // =====================================================
+
+     if (isStudent) {
+    setStudents([])
+    setCommunityServiceAssignments([])
+
+    const violationsResponse = await fetch(
+        `${API_URL}/api/students/${user.id}/violations`,
+        {
+            headers: authHeaders
+        }
+    )
+
+    if (violationsResponse.ok) {
+        const violationsData =
+            await violationsResponse.json()
+
+        setViolations(
+            violationsData.violations || []
+        )
+    } else {
+        setViolations([])
     }
 
-    loadDashboardData()
-  }, [isLoggedIn, token, isAdmin, isDepartmentHead])
+    const clearanceResponse = await fetch(
+        `${API_URL}/api/student/clearance`,
+        {
+            headers: authHeaders
+        }
+    )
+
+    if (!clearanceResponse.ok) {
+        const errorData =
+            await clearanceResponse.json()
+                .catch(() => ({}))
+
+        throw new Error(
+            errorData.message ||
+            "Unable to load your clearance records"
+        )
+    }
+
+    const clearanceData =
+        await clearanceResponse.json()
+
+    setClearanceRecords(
+        clearanceData.clearanceRecords || []
+    )
+
+    return
+}
+
+    } catch (fetchError) {
+      console.error(
+        'Dashboard data loading error:',
+        fetchError
+      )
+
+      setStudents([])
+      setViolations([])
+      setCommunityServiceAssignments([])
+      setClearanceRecords([])
+    } finally {
+      setDashboardLoading(false)
+    }
+  }
+
+  loadDashboardData()
+}, [
+  isLoggedIn,
+  token,
+  userRole,
+  isAdmin,
+  isDepartmentHead,
+  isStudent,
+  user
+])
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -839,62 +959,87 @@ function App() {
           </section>
         )
       }
-
-      if (activeView === 'My Clearance') {
-        return (
-          <section className="table-card">
+      
+if (activeView === 'My Clearance') {
+    return (
+        <section className="table-card">
             <div className="table-header">
-              <h3>My Clearance</h3>
-              <span>Student Portal</span>
+                <h3>My Clearance</h3>
+                <span>
+                    {clearanceRecords.length} records
+                </span>
             </div>
 
             {clearanceRecords.length === 0 ? (
-              <div>
                 <p className="empty-state">
-                  Clearance records are not available to the student portal yet.
+                    No clearance records found.
                 </p>
-                <p className="info-note">
-                  Your clearance information will appear here after the student
-                  clearance endpoint is enabled on the backend.
-                </p>
-              </div>
             ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Year</th>
-                      <th>Semester</th>
-                      <th>Status</th>
-                      <th>Active Violation</th>
-                      <th>Pending Service</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clearanceRecords.map((record) => (
-                      <tr key={record.id}>
-                        <td>{record.academic_year}</td>
-                        <td>{record.semester}</td>
-                        <td>
-                          <span className="status-badge">
-                            {record.status}
-                          </span>
-                        </td>
-                        <td>
-                          {record.has_active_violation ? 'Yes' : 'No'}
-                        </td>
-                        <td>
-                          {record.has_pending_service ? 'Yes' : 'No'}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                <div className="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Academic Year</th>
+                                <th>Semester</th>
+                                <th>Status</th>
+                                <th>Active Violation</th>
+                                <th>Pending Service</th>
+                                <th>Cleared By</th>
+                                <th>Cleared At</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {clearanceRecords.map((record) => (
+                                <tr key={record.id}>
+                                    <td>{record.academic_year}</td>
+                                    <td>{record.semester}</td>
+
+                                    <td>
+                                        <span className="status-badge">
+                                            {record.status}
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        {record.has_active_violation
+                                            ? 'Yes'
+                                            : 'No'}
+                                    </td>
+
+                                    <td>
+                                        {record.has_pending_service
+                                            ? 'Yes'
+                                            : 'No'}
+                                    </td>
+
+                                    <td>
+                                        {record.cleared_by
+                                            ? `User #${record.cleared_by}`
+                                            : '—'}
+                                    </td>
+
+                                    <td>
+                                        {record.cleared_at
+                                            ? new Date(
+                                                record.cleared_at
+                                            ).toLocaleString()
+                                            : '—'}
+                                    </td>
+
+                                    <td>
+                                        {record.remarks || '—'}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
-          </section>
-        )
-      }
+        </section>
+    )
+}
 
       // Student Dashboard
       return (

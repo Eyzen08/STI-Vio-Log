@@ -215,6 +215,63 @@ const syncClearanceStatusForStudent = async (studentId) => {
 // =====================================================
 // GET ALL CLEARANCE RECORDS
 // =====================================================
+// =====================================================
+// GET LOGGED-IN STUDENT'S CLEARANCE RECORDS
+// =====================================================
+// Uses req.user.id from the authenticated JWT.
+//
+// User ID -> students.user_id -> students.id
+//         -> student_clearance.student_id
+//
+// This prevents a student from requesting another
+// student's clearance by changing a URL parameter.
+// =====================================================
+
+const getMyClearanceRecords = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const result = await pool.query(
+            `
+            SELECT
+                sc.*,
+                s.student_number,
+                s.first_name,
+                s.last_name
+            FROM student_clearance sc
+            JOIN students s
+                ON sc.student_id = s.id
+            WHERE s.user_id = $1
+            ORDER BY
+                sc.academic_year DESC,
+                sc.semester DESC,
+                sc.id DESC
+            `,
+            [userId]
+        );
+
+        return res.json({
+            success: true,
+            student_id:
+                result.rows.length > 0
+                    ? Number(result.rows[0].student_id)
+                    : null,
+            clearanceRecords: result.rows
+        });
+
+    } catch (error) {
+        console.error(
+            "Get my clearance records error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Failed to get student clearance records"
+        });
+    }
+};
 
 const getClearanceRecords = async (req, res) => {
     try {
@@ -874,5 +931,6 @@ module.exports = {
 
     getStudentClearanceEligibility,
     getStudentClearanceEligibilityController,
-    syncClearanceStatusForStudent
+    syncClearanceStatusForStudent,
+    getMyClearanceRecords
 };
