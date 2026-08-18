@@ -1,14 +1,38 @@
 const express = require("express");
 
 const {
-    getMyClearanceRecords
+    getMyClearanceRecords,
+    getMyClearanceEligibility
 } = require("../controllers/clearanceController");
 
 const router = express.Router();
 
 
 // =====================================================
-// MY CLEARANCE
+// MY CLEARANCE ELIGIBILITY
+// =====================================================
+// STUDENT ONLY.
+//
+// The student ID is NOT provided by the client.
+// The controller gets the authenticated user's ID
+// from req.user.id and finds the corresponding
+// students.id.
+//
+// GET /api/student/clearance/eligibility
+// =====================================================
+
+router.get(
+    "/eligibility",
+    getMyClearanceEligibility
+);
+
+
+// =====================================================
+// MY CLEARANCE RECORDS
+// =====================================================
+// STUDENT ONLY.
+//
+// GET /api/student/clearance
 // =====================================================
 
 router.get(

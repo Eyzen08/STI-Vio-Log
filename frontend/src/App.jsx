@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Html5Qrcode } from 'html5-qrcode'
 import './App.css'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
@@ -24,7 +25,10 @@ const getNavItems = (role) => {
 }
 
 function App() {
-  const [form, setForm] = useState({
+    const [qrScanner, setQrScanner] = useState(null)
+    const [isQrScanning, setIsQrScanning] = useState(false)
+   
+    const [form, setForm] = useState({
     username: 'admin',
     password: 'password'
   })
@@ -248,9 +252,6 @@ function App() {
           )
         }
 
-        const clearanceData =
-          await clearanceResponse.json()
-
         setStudents([])
         setViolations([])
         setCommunityServiceAssignments([])
@@ -267,54 +268,70 @@ function App() {
       // STUDENT
       // =====================================================
 
-     if (isStudent) {
-    setStudents([])
-    setCommunityServiceAssignments([])
+ if (isStudent) {
+  setStudents([])
+  setCommunityServiceAssignments([])
 
-    const violationsResponse = await fetch(
-        `${API_URL}/api/students/${user.id}/violations`,
-        {
-            headers: authHeaders
-        }
-    )
+  // =====================================================
+  // LOAD LOGGED-IN STUDENT'S OWN VIOLATIONS
+  // =====================================================
 
-    if (violationsResponse.ok) {
-        const violationsData =
-            await violationsResponse.json()
-
-        setViolations(
-            violationsData.violations || []
-        )
-    } else {
-        setViolations([])
+  const violationsResponse = await fetch(
+    `${API_URL}/api/students/me/violations`,
+    {
+      headers: authHeaders
     }
+  )
 
-    const clearanceResponse = await fetch(
-        `${API_URL}/api/student/clearance`,
-        {
-            headers: authHeaders
-        }
+  if (!violationsResponse.ok) {
+    const errorData =
+      await violationsResponse.json()
+        .catch(() => ({}))
+
+    throw new Error(
+      errorData.message ||
+      'Unable to load your violations'
     )
+  }
 
-    if (!clearanceResponse.ok) {
-        const errorData =
-            await clearanceResponse.json()
-                .catch(() => ({}))
+  const violationsData =
+    await violationsResponse.json()
 
-        throw new Error(
-            errorData.message ||
-            "Unable to load your clearance records"
-        )
+  setViolations(
+    violationsData.violations || []
+  )
+
+
+  // =====================================================
+  // LOAD LOGGED-IN STUDENT'S OWN CLEARANCE
+  // =====================================================
+
+  const clearanceResponse = await fetch(
+    `${API_URL}/api/student/clearance`,
+    {
+      headers: authHeaders
     }
+  )
 
-    const clearanceData =
-        await clearanceResponse.json()
+  if (!clearanceResponse.ok) {
+    const errorData =
+      await clearanceResponse.json()
+        .catch(() => ({}))
 
-    setClearanceRecords(
-        clearanceData.clearanceRecords || []
+    throw new Error(
+      errorData.message ||
+      'Unable to load your clearance records'
     )
+  }
 
-    return
+  const clearanceData =
+    await clearanceResponse.json()
+
+  setClearanceRecords(
+    clearanceData.clearanceRecords || []
+  )
+
+  return
 }
 
     } catch (fetchError) {
@@ -570,6 +587,91 @@ function App() {
     } catch (assignmentError) {
       setCommunityServiceFormError(assignmentError.message)
     }
+  }
+
+const startQrScanner = async () => {
+  setQrError('')
+  setQrResult(null)
+
+  try {
+    if (qrScanner) {
+      return
+    }
+
+    const scanner = new Html5Qrcode('qr-reader')
+
+    setQrScanner(scanner)
+    setIsQrScanning(true)
+
+    await scanner.start(
+      { facingMode: 'environment' },
+      {
+        fps: 15,
+        qrbox: {
+          width: 280,
+          height: 280
+        },
+        aspectRatio: 1.0
+      },
+      (decodedText) => {
+        console.log('QR DETECTED:', decodedText)
+
+        setQrForm((current) => ({
+          ...current,
+          qr_code: decodedText.trim()
+        }))
+
+        setQrResult({
+          action: 'scan',
+          message: `QR code detected: ${decodedText}`,
+          student: null,
+          studentId: null,
+          notes: null
+        })
+
+        stopQrScanner(scanner)
+      },
+      (errorMessage) => {
+        // html5-qrcode continuously reports scan failures
+        // while looking for a QR code. Ignore these.
+      }
+    )
+  } catch (error) {
+    console.error('QR scanner error:', error)
+
+    setQrError(
+      error.message ||
+      'Unable to access the camera. Please allow camera permission.'
+    )
+
+    setIsQrScanning(false)
+    setQrScanner(null)
+  }
+}
+
+  const stopQrScanner = async (scanner = qrScanner) => {
+    if (!scanner) {
+      setIsQrScanning(false)
+      setQrScanner(null)
+      return
+    }
+
+    try {
+      if (scanner.isScanning) {
+        await scanner.stop()
+      }
+    } catch (error) {
+      console.error('Failed to stop QR scanner:', error)
+    }
+
+    try {
+      scanner.clear()
+    } catch (error) {
+      console.error('Failed to clear QR scanner:', error)
+    }
+
+    setIsQrScanning(false)
+    setQrScanner(null)
   }
 
   const handleQrFieldChange = (event) => {
@@ -1406,7 +1508,28 @@ if (activeView === 'My Clearance') {
             <h3>QR attendance</h3>
             <span>Live scan</span>
           </div>
+          <div className="qr-camera-section">
+            <div id="qr-reader"></div>
 
+            <div className="qr-camera-actions">
+              {!isQrScanning ? (
+                <button
+                  type="button"
+                  onClick={startQrScanner}
+                >
+                  📷 Start Camera Scanner
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => stopQrScanner()}
+                >
+                  Stop Camera
+                </button>
+              )}
+            </div>
+          </div>
           <div className="student-form-grid qr-grid">
             <label>
               QR Code

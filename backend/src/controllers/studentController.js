@@ -291,11 +291,117 @@ const deleteStudent = async (req, res) => {
         });
     }
 };
+// =====================================================
+// GET LOGGED-IN STUDENT'S VIOLATIONS
+// =====================================================
+// Uses req.user.id from the authenticated JWT.
+//
+// users.id
+//     ↓
+// students.user_id
+//     ↓
+// students.id
+//     ↓
+// violations.student_id
+//
+// This ensures students can only see their own violations.
+// =====================================================
+
+const getMyViolations = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // -------------------------------------------------
+        // Find the student linked to the authenticated user
+        // -------------------------------------------------
+
+        const studentResult = await pool.query(
+            `
+            SELECT
+                id,
+                student_number,
+                first_name,
+                last_name
+            FROM students
+            WHERE user_id = $1
+            `,
+            [userId]
+        );
+
+        if (studentResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message:
+                    "No student profile is linked to this account"
+            });
+        }
+
+        const student = studentResult.rows[0];
+
+        // -------------------------------------------------
+        // Get only this student's violations
+        // -------------------------------------------------
+
+        const result = await pool.query(
+            `
+            SELECT
+                v.id,
+                v.student_id,
+                v.violation_type_id,
+                v.reported_by,
+                v.incident_date,
+                v.description,
+                v.status,
+                v.required_service_hours,
+                v.completed_service_hours,
+                GREATEST(
+                    v.required_service_hours -
+                    v.completed_service_hours,
+                    0
+                ) AS remaining_service_hours,
+                v.cleared_at,
+                v.created_at,
+                v.updated_at
+            FROM violations v
+            WHERE v.student_id = $1
+            ORDER BY
+                v.incident_date DESC,
+                v.id DESC
+            `,
+            [student.id]
+        );
+
+        return res.json({
+            success: true,
+            student_id: Number(student.id),
+            student: {
+                student_number: student.student_number,
+                first_name: student.first_name,
+                last_name: student.last_name
+            },
+            violations: result.rows
+        });
+
+    } catch (error) {
+        console.error(
+            "Get my violations error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Failed to get student violations"
+        });
+    }
+};
+
 
 module.exports = {
     getStudents,
     getStudentById,
     createStudent,
     updateStudent,
-    deleteStudent
+    deleteStudent,
+    getMyViolations
 };

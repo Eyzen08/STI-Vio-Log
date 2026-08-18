@@ -312,11 +312,59 @@ const deleteCommunityServiceAssignment = async (req, res) => {
     }
 };
 
+// =====================================================
+// GET MY COMMUNITY SERVICE ASSIGNMENT - STUDENT
+// =====================================================
+const getMyCommunityServiceAssignment = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `
+            SELECT
+                cs.id,
+                cs.violation_id,
+                cs.student_id,
+                s.student_number,
+                s.first_name,
+                s.last_name,
+                cs.required_hours,
+                cs.completed_hours,
+                cs.remaining_hours,
+                cs.status,
+                cs.assigned_at,
+                cs.completed_at
+            FROM community_service_assignments cs
+            JOIN students s
+                ON cs.student_id = s.id
+            WHERE s.user_id = $1
+            ORDER BY cs.assigned_at DESC, cs.id DESC
+            `,
+            [req.user.id]
+        );
+
+        return res.json({
+            success: true,
+            assignments: result.rows
+        });
+
+    } catch (error) {
+        console.error(
+            "Get my community service assignment error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get your community service assignments",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     getCommunityServiceAssignments,
     getCommunityServiceAssignmentById,
     createCommunityServiceAssignment,
+    getMyCommunityServiceAssignment,
     updateCommunityServiceAssignment,
     deleteCommunityServiceAssignment
 };

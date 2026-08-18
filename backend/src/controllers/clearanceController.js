@@ -78,18 +78,6 @@ const getStudentClearanceEligibility = async (studentId) => {
 // =====================================================
 // SYNCHRONIZE EXISTING CLEARANCE RECORDS
 // =====================================================
-// Recalculates the clearance state after changes to
-// violations or community service.
-//
-// NOT_ELIGIBLE:
-// - Active violation OR pending service
-//
-// PENDING:
-// - Eligible but not yet approved
-//
-// CLEARED:
-// - Already approved and still eligible
-// =====================================================
 
 const syncClearanceStatusForStudent = async (studentId) => {
     const eligibility =
@@ -213,25 +201,146 @@ const syncClearanceStatusForStudent = async (studentId) => {
 
 
 // =====================================================
-// GET ALL CLEARANCE RECORDS
+// GET MY CLEARANCE RECORDS
 // =====================================================
-// =====================================================
-// GET LOGGED-IN STUDENT'S CLEARANCE RECORDS
-// =====================================================
+// STUDENT ONLY.
+//
 // Uses req.user.id from the authenticated JWT.
 //
 // User ID -> students.user_id -> students.id
-//         -> student_clearance.student_id
-//
-// This prevents a student from requesting another
-// student's clearance by changing a URL parameter.
 // =====================================================
+// =====================================================
+// GET MY CLEARANCE ELIGIBILITY
+// =====================================================
+// STUDENT ONLY.
+//
+// Uses req.user.id from the authenticated JWT.
+//
+// User ID -> students.user_id -> students.id
+//
+// The student cannot provide another student's ID.
+// =====================================================
+
+const getMyClearanceEligibility = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+
+        // -------------------------------------------------
+        // Find the logged-in student's student record
+        // -------------------------------------------------
+
+        const studentResult = await pool.query(
+            `
+            SELECT
+                id,
+                student_number,
+                first_name,
+                last_name
+            FROM students
+            WHERE user_id = $1
+            LIMIT 1
+            `,
+            [userId]
+        );
+
+
+        if (studentResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student record not found"
+            });
+        }
+
+
+        const student = studentResult.rows[0];
+
+
+        // -------------------------------------------------
+        // Calculate current eligibility
+        // -------------------------------------------------
+
+        const eligibility =
+            await getStudentClearanceEligibility(
+                student.id
+            );
+
+
+        return res.json({
+            success: true,
+
+            student_id: Number(student.id),
+
+            student: {
+                student_number:
+                    student.student_number,
+
+                first_name:
+                    student.first_name,
+
+                last_name:
+                    student.last_name
+            },
+
+            ...eligibility
+        });
+
+    } catch (error) {
+        console.error(
+            "Get my clearance eligibility error:",
+            error
+        );
+
+        return res.status(500).json({
+            success: false,
+            message:
+                "Failed to determine your clearance eligibility",
+            error: error.message
+        });
+    }
+};
+
 
 const getMyClearanceRecords = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        const result = await pool.query(
+
+        // -------------------------------------------------
+        // Find logged-in student's student record
+        // -------------------------------------------------
+
+        const studentResult = await pool.query(
+            `
+            SELECT
+                id,
+                student_number,
+                first_name,
+                last_name
+            FROM students
+            WHERE user_id = $1
+            LIMIT 1
+            `,
+            [userId]
+        );
+
+
+        if (studentResult.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Student record not found"
+            });
+        }
+
+
+        const student = studentResult.rows[0];
+
+
+        // -------------------------------------------------
+        // Get student's clearance records
+        // -------------------------------------------------
+
+        const clearanceResult = await pool.query(
             `
             SELECT
                 sc.*,
@@ -241,22 +350,25 @@ const getMyClearanceRecords = async (req, res) => {
             FROM student_clearance sc
             JOIN students s
                 ON sc.student_id = s.id
-            WHERE s.user_id = $1
+            WHERE sc.student_id = $1
             ORDER BY
                 sc.academic_year DESC,
                 sc.semester DESC,
                 sc.id DESC
             `,
-            [userId]
+            [student.id]
         );
+
 
         return res.json({
             success: true,
-            student_id:
-                result.rows.length > 0
-                    ? Number(result.rows[0].student_id)
-                    : null,
-            clearanceRecords: result.rows
+            student_id: Number(student.id),
+            student: {
+                student_number: student.student_number,
+                first_name: student.first_name,
+                last_name: student.last_name
+            },
+            clearanceRecords: clearanceResult.rows
         });
 
     } catch (error) {
@@ -268,10 +380,18 @@ const getMyClearanceRecords = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to get student clearance records"
+                "Failed to get student clearance records",
+            error: error.message
         });
     }
 };
+
+
+// =====================================================
+// GET ALL CLEARANCE RECORDS
+// =====================================================
+// ADMIN / DISCIPLINE OFFICE / DEPARTMENT HEAD
+// =====================================================
 
 const getClearanceRecords = async (req, res) => {
     try {
@@ -292,6 +412,7 @@ const getClearanceRecords = async (req, res) => {
             `
         );
 
+
         return res.json({
             success: true,
             clearanceRecords: result.rows
@@ -306,7 +427,8 @@ const getClearanceRecords = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to get clearance records"
+                "Failed to get clearance records",
+            error: error.message
         });
     }
 };
@@ -319,6 +441,7 @@ const getClearanceRecords = async (req, res) => {
 const getClearanceRecordById = async (req, res) => {
     try {
         const { id } = req.params;
+
 
         const result = await pool.query(
             `
@@ -335,6 +458,7 @@ const getClearanceRecordById = async (req, res) => {
             [id]
         );
 
+
         if (result.rows.length === 0) {
             return res.status(404).json({
                 success: false,
@@ -342,6 +466,7 @@ const getClearanceRecordById = async (req, res) => {
                     "Clearance record not found"
             });
         }
+
 
         return res.json({
             success: true,
@@ -357,7 +482,8 @@ const getClearanceRecordById = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to get clearance record"
+                "Failed to get clearance record",
+            error: error.message
         });
     }
 };
@@ -372,6 +498,7 @@ const getStudentClearanceEligibilityController =
         try {
             const { studentId } = req.params;
 
+
             if (!studentId) {
                 return res.status(400).json({
                     success: false,
@@ -380,10 +507,12 @@ const getStudentClearanceEligibilityController =
                 });
             }
 
+
             const eligibility =
                 await getStudentClearanceEligibility(
                     studentId
                 );
+
 
             return res.json({
                 success: true,
@@ -408,17 +537,6 @@ const getStudentClearanceEligibilityController =
 
 // =====================================================
 // CREATE CLEARANCE RECORD
-// =====================================================
-// New records are automatically calculated.
-//
-// Eligible:
-//     PENDING
-//
-// Not eligible:
-//     NOT_ELIGIBLE
-//
-// Approval fields cannot be supplied by the client
-// during creation.
 // =====================================================
 
 const createClearanceRecord = async (req, res) => {
@@ -532,7 +650,8 @@ const createClearanceRecord = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to create clearance record"
+                "Failed to create clearance record",
+            error: error.message
         });
     }
 };
@@ -541,20 +660,11 @@ const createClearanceRecord = async (req, res) => {
 // =====================================================
 // UPDATE CLEARANCE RECORD
 // =====================================================
-// Generic record update.
-//
-// Approval fields are intentionally NOT accepted here:
-// - status
-// - cleared_by
-// - cleared_at
-//
-// Department Head approval must use:
-// PUT /api/clearance/:id/approve
-// =====================================================
 
 const updateClearanceRecord = async (req, res) => {
     try {
         const { id } = req.params;
+
 
         const {
             student_id,
@@ -716,7 +826,8 @@ const updateClearanceRecord = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to update clearance record"
+                "Failed to update clearance record",
+            error: error.message
         });
     }
 };
@@ -726,13 +837,6 @@ const updateClearanceRecord = async (req, res) => {
 // APPROVE CLEARANCE
 // =====================================================
 // Department Head only.
-//
-// Rechecks eligibility immediately before approval.
-//
-// The backend automatically determines:
-// - cleared_by = authenticated Department Head
-// - cleared_at = CURRENT_TIMESTAMP
-// - status = CLEARED
 // =====================================================
 
 const approveClearanceRecord = async (req, res) => {
@@ -863,7 +967,8 @@ const approveClearanceRecord = async (req, res) => {
         return res.status(500).json({
             success: false,
             message:
-                "Failed to approve clearance"
+                "Failed to approve clearance",
+            error: error.message
         });
     }
 };
@@ -876,6 +981,7 @@ const approveClearanceRecord = async (req, res) => {
 const deleteClearanceRecord = async (req, res) => {
     try {
         const { id } = req.params;
+
 
         const result = await pool.query(
             `
@@ -908,10 +1014,12 @@ const deleteClearanceRecord = async (req, res) => {
             error
         );
 
+
         return res.status(500).json({
             success: false,
             message:
-                "Failed to delete clearance record"
+                "Failed to delete clearance record",
+            error: error.message
         });
     }
 };
@@ -932,5 +1040,7 @@ module.exports = {
     getStudentClearanceEligibility,
     getStudentClearanceEligibilityController,
     syncClearanceStatusForStudent,
+
+    getMyClearanceEligibility,
     getMyClearanceRecords
 };

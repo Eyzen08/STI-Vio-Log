@@ -447,3 +447,42 @@ th {
   border-radius: 6px;
   margin-top: 12px;
 }
+
+.qr-camera-section {
+  margin-bottom: 24px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
+#qr-reader {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+#qr-reader__scan_region {
+  min-height: 350px;
+}
+
+#qr-reader video {
+  border-radius: 10px;
+}
+
+.qr-camera-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.qr-camera-actions button {
+  min-width: 200px;
+}

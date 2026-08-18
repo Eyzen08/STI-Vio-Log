@@ -7,3 +7,7 @@ build/
 coverage/
 .DS_Store
 *.log
+
+# Local database backups
+*.dump
+*.sql

@@ -21,6 +21,10 @@ const {
   authorizeRoles
 } = require("./middleware/authMiddleware");
 
+const {
+  getMyCommunityServiceAssignment
+} = require("./controllers/communityServiceController");
+
 const app = express();
 
 const PORT = process.env.PORT || 5000;
@@ -190,8 +194,15 @@ app.use(
 // =====================================================
 // STUDENT ROUTES
 // =====================================================
-// Existing student routes are accessible to students
-// as well as authorized administrative roles.
+//
+// Accessible by:
+// - ADMIN
+// - DISCIPLINE_OFFICE
+// - DEPARTMENT_HEAD
+// - STUDENT
+//
+// Student-specific controllers must still use
+// req.user.id when accessing personal records.
 // =====================================================
 
 app.use(
@@ -225,6 +236,10 @@ app.use(
 // =====================================================
 // VIOLATIONS
 // =====================================================
+//
+// Students cannot directly create/update/delete
+// violation records.
+// =====================================================
 
 app.use(
   "/api/violations",
@@ -240,6 +255,32 @@ app.use(
 // =====================================================
 // COMMUNITY SERVICE
 // =====================================================
+
+// -----------------------------------------------------
+// STUDENT COMMUNITY SERVICE
+// -----------------------------------------------------
+// Students can only access their own community-service
+// assignment through this endpoint.
+// -----------------------------------------------------
+
+app.get(
+  "/api/community-service/my-assignment",
+  authenticateToken,
+  authorizeRoles("STUDENT"),
+  require("./controllers/communityServiceController")
+    .getMyCommunityServiceAssignment
+);
+
+
+// -----------------------------------------------------
+// STAFF / ADMIN COMMUNITY SERVICE
+// -----------------------------------------------------
+// ADMIN
+// DISCIPLINE_OFFICE
+// DEPARTMENT_HEAD
+//
+// Students cannot access these management endpoints.
+// -----------------------------------------------------
 
 app.use(
   "/api/community-service",
@@ -261,6 +302,7 @@ app.use(
   "/api/qr",
   authenticateToken,
   authorizeRoles(
+    "ADMIN",
     "DEPARTMENT_HEAD",
     "DISCIPLINE_OFFICE"
   ),
@@ -271,12 +313,13 @@ app.use(
 // =====================================================
 // GENERAL CLEARANCE
 // =====================================================
+//
 // Used by:
 // - ADMIN
 // - DISCIPLINE_OFFICE
 // - DEPARTMENT_HEAD
 //
-// Students do NOT have access to this general CRUD API.
+// Students do NOT have access here.
 // They use /api/student/clearance instead.
 // =====================================================
 
@@ -295,12 +338,11 @@ app.use(
 // =====================================================
 // STUDENT'S OWN CLEARANCE
 // =====================================================
+//
 // STUDENT ONLY.
 //
-// The controller uses req.user.id and the students.user_id
-// relationship to find the logged-in student's own records.
-//
-// A student cannot provide another student's ID.
+// The controller uses req.user.id and the
+// students.user_id relationship.
 // =====================================================
 
 app.use(
@@ -374,9 +416,13 @@ app.get(
 
 app.listen(
   PORT,
+  "0.0.0.0",
   () => {
     console.log(
-      `🚀 STI Vio-Log API running on http://localhost:${PORT}`
+      `🚀 STI Vio-Log API running on http://0.0.0.0:${PORT}`
+    );
+    console.log(
+      `📱 LAN access: http://192.168.100.81:${PORT}`
     );
   }
 );
