@@ -1355,6 +1355,7 @@ These requirements are recorded for future implementation. They are not part of 
 
 ## 27.5 Future Account Administration
 
+- [x] Complete the security, credential-lifecycle, recovery, and API design in `docs/ACCOUNT-ADMINISTRATION-DESIGN.md` before implementation.
 - [ ] Add authorized account creation, activation/deactivation, department assignment, and role management.
 - [ ] Add audited account recovery and Google-link recovery.
 - [ ] Add duplicate-account review tools without silently merging or deleting history.
