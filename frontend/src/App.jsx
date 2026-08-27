@@ -6,6 +6,7 @@ import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
+import StudentClearance from './components/StudentClearance.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
@@ -1685,9 +1686,18 @@ function App() {
        * --------------------------------------------------------
        */
 
-      if (
-        activeView === 'My Clearance'
-      ) {
+      if (activeView === 'My Clearance') {
+        return (
+          <StudentClearance
+            eligibility={clearanceEligibility}
+            records={clearanceRecords}
+            loading={dashboardLoading}
+            error={dashboardError}
+          />
+        )
+      }
+
+      if (activeView === 'Legacy Clearance') {
         return (
           <section className="table-card">
             <div className="table-header">

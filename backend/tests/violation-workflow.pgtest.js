@@ -425,6 +425,7 @@ test('CLEAR and INVALID_CANCEL preserve service history and REOPEN safely reacti
 
 test('clearance eligibility evaluates all violations for the student', async () => {
   const adminToken = await login('admin_test');
+  const studentToken = await login('student_test');
   const studentId = (await pool.query("SELECT id FROM students WHERE student_number = '02000123456'")).rows[0].id;
 
   const openOne = await createViolation(adminToken, studentId);
@@ -451,6 +452,13 @@ test('clearance eligibility evaluates all violations for the student', async () 
   assert.equal(reopened.body.clearanceSync.hasActiveViolation, true);
   eligibility = await request(`/api/clearance/student/${studentId}/eligibility`, { token: adminToken });
   assert.equal(eligibility.body.eligible, false);
+
+  const selfEligibility = await request('/api/student/clearance/eligibility', { token: studentToken });
+  assert.equal(selfEligibility.status, 200);
+  assert.equal(selfEligibility.body.eligible, false);
+  const selfClearance = await request('/api/student/clearance', { token: studentToken });
+  assert.equal(selfClearance.status, 200);
+  assert.ok(selfClearance.body.clearanceRecords.every((record) => !Object.hasOwn(record, 'cleared_by')));
   await act(adminToken, clearOne.id, 'INVALID_CANCEL', 'Close test record');
 });
 

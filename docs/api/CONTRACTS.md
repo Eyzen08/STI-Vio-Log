@@ -29,6 +29,10 @@ Administrative DTR corrections are deliberately deferred. A future correction de
 
 Department Heads may submit only `qr_code` and optional `notes` to `/api/qr/scan`, `/api/qr/time-in`, and `/api/qr/time-out`. Their actor and department are derived from the authenticated account. Client-supplied `scanned_by` or `department_id` fields are rejected. The frontend requires a successful `/api/qr/scan` confirmation for the current code before enabling attendance actions; the backend remains authoritative for active-session and concurrency rules.
 
+## Student clearance self-service
+
+`GET /api/student/clearance` and `/api/student/clearance/eligibility` accept no query parameters and derive ownership from the authenticated student account. The records response omits the internal `cleared_by` user ID while retaining status, blocker flags, approval timestamp, academic period, and remarks. Eligibility is live and may differ from older historical records.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

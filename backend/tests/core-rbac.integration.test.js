@@ -200,7 +200,11 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/students/me/violations', { token: student })).status, 200);
   assert.equal((await request(baseUrl, '/api/students/me/violations?student_id=41', { token: student })).status, 400);
   assert.equal((await request(baseUrl, '/api/students/me/community-service', { token: student })).status, 200);
-  assert.equal((await request(baseUrl, '/api/students/me/clearance', { token: student })).status, 200);
+  const selfClearance = await request(baseUrl, '/api/students/me/clearance', { token: student });
+  assert.equal(selfClearance.status, 200);
+  assert.ok(selfClearance.body.clearanceRecords.every((record) => !Object.hasOwn(record, 'cleared_by')));
+  assert.equal((await request(baseUrl, '/api/students/me/clearance?student_id=41', { token: student })).status, 400);
+  assert.equal((await request(baseUrl, '/api/student/clearance/eligibility?student_id=41', { token: student })).status, 400);
   assert.equal((await request(baseUrl, '/api/students/41', { token: student })).status, 403);
   assert.equal((await request(baseUrl, '/api/violations', { token: student, method: 'POST', body: { student_id: 41 } })).status, 403);
   assert.equal((await request(baseUrl, '/api/community-service/80', { token: student, method: 'PUT', body: { completed_hours: 2 } })).status, 403);

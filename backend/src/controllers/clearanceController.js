@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const { assertAllowedFields } = require("../utils/validators");
 
 
 // =====================================================
@@ -221,6 +222,7 @@ const syncClearanceStatusForStudent = async (studentId, executor = pool) => {
 
 const getMyClearanceEligibility = async (req, res) => {
     try {
+        assertAllowedFields(req.query, []);
         const userId = req.user.id;
 
 
@@ -289,11 +291,9 @@ const getMyClearanceEligibility = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message:
-                "Failed to determine your clearance eligibility",
-            error: error.message
+            message: error.statusCode ? error.message : "Failed to determine your clearance eligibility"
         });
     }
 };
@@ -301,6 +301,7 @@ const getMyClearanceEligibility = async (req, res) => {
 
 const getMyClearanceRecords = async (req, res) => {
     try {
+        assertAllowedFields(req.query, []);
         const userId = req.user.id;
 
 
@@ -341,7 +342,17 @@ const getMyClearanceRecords = async (req, res) => {
         const clearanceResult = await pool.query(
             `
             SELECT
-                sc.*,
+                sc.id,
+                sc.student_id,
+                sc.academic_year,
+                sc.semester,
+                sc.status,
+                sc.has_active_violation,
+                sc.has_pending_service,
+                sc.cleared_at,
+                sc.remarks,
+                sc.created_at,
+                sc.updated_at,
                 s.student_number,
                 s.first_name,
                 s.last_name
@@ -375,11 +386,9 @@ const getMyClearanceRecords = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message:
-                "Failed to get student clearance records",
-            error: error.message
+            message: error.statusCode ? error.message : "Failed to get student clearance records"
         });
     }
 };

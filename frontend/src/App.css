@@ -1629,6 +1629,121 @@ th {
 .status-completed { background: #e7f7ee; color: #087443; }
 .service-heading-skeleton { width: 100%; height: 145px; }
 
+.clearance-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.clearance-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(26px, 5vw, 42px);
+  border: 1px solid #e0e8f2;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 18px 42px rgba(18, 32, 51, 0.08);
+}
+
+.clearance-hero h2 {
+  margin: 7px 0 9px;
+  color: #13263f;
+  font-size: clamp(2rem, 4vw, 3rem);
+  letter-spacing: -0.04em;
+}
+
+.clearance-hero p:last-child { max-width: 650px; margin: 0; color: #60708a; }
+.clearance-cleared { border-top: 5px solid #14915a; }
+.clearance-pending { border-top: 5px solid #2f80ed; }
+.clearance-not-eligible { border-top: 5px solid #d85b16; }
+
+.clearance-status-mark {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #edf4ff;
+  color: #1d6ef2;
+  font-size: 2rem;
+  font-weight: 850;
+}
+
+.clearance-cleared .clearance-status-mark { background: #e7f7ee; color: #087443; }
+.clearance-not-eligible .clearance-status-mark { background: #fff0e6; color: #a44608; }
+
+.clearance-requirements {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.35fr) minmax(0, 1fr);
+  gap: 30px;
+  padding: 24px;
+  border: 1px solid #e3eaf4;
+  border-radius: 16px;
+  background: #f9fbfe;
+}
+
+.clearance-requirements h3 { margin: 5px 0 0; color: #13263f; }
+.clearance-requirements ul { margin: 0; padding-left: 20px; color: #71370f; }
+.clearance-requirements li + li { margin-top: 9px; }
+
+.clearance-ready {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #e7f7ee;
+  color: #087443;
+  font-weight: 700;
+}
+
+.clearance-history-card { margin: 0; }
+
+.clearance-record-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.clearance-record-list > article {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.6fr) auto minmax(340px, 1.4fr);
+  align-items: center;
+  gap: 22px;
+  padding: 17px 0;
+  border-bottom: 1px solid #ebeff5;
+}
+
+.clearance-record-list > article:last-child { border-bottom: 0; }
+
+.clearance-record-list > article > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #13263f;
+}
+
+.clearance-record-list > article > div:first-child span { color: #60708a; font-size: 0.8rem; }
+
+.clearance-record-list dl {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.6fr) minmax(180px, 1.4fr);
+  gap: 18px;
+  margin: 0;
+}
+
+.clearance-record-list dt { color: #60708a; font-size: 0.68rem; text-transform: uppercase; }
+.clearance-record-list dd { margin: 3px 0 0; color: #13263f; overflow-wrap: anywhere; }
+.status-not-eligible { background: #fff0e6; color: #a44608; }
+.status-pending { background: #edf4ff; color: #1d5db7; }
+.status-cleared { background: #e7f7ee; color: #087443; }
+
+.clearance-empty { padding: 38px 10px; text-align: center; }
+.clearance-empty h4 { margin: 0 0 7px; color: #13263f; }
+.clearance-empty p { margin: 0; color: #60708a; }
+.clearance-hero-skeleton { width: 100%; height: 180px; }
+.clearance-record-skeleton { width: 100%; height: 220px; }
+
 .info-note {
   background: #f0f7ff;
   border-left: 4px solid #1d6ef2;
@@ -1791,7 +1906,8 @@ th {
   .scanner-layout { grid-template-columns: 1fr; }
 
   .assignment-list > article,
-  .session-list > article {
+  .session-list > article,
+  .clearance-record-list > article {
     grid-template-columns: 1fr;
     gap: 12px;
   }
@@ -2057,6 +2173,12 @@ th {
 
   .scanner-intro { align-items: flex-start; }
 
+  .clearance-hero { align-items: flex-start; }
+
+  .clearance-requirements { grid-template-columns: 1fr; }
+
+  .clearance-record-list dl { grid-template-columns: 1fr; }
+
   .verified-details,
   .attendance-actions {
     grid-template-columns: 1fr;
@@ -2071,6 +2193,8 @@ th {
   .dtr-filters button { min-height: 42px; }
 
   .session-list dl { grid-template-columns: 1fr; }
+
+  .clearance-hero { flex-direction: column; }
 
   .stat-card {
     padding: 16px;
