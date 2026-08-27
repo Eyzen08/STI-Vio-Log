@@ -23,6 +23,8 @@ import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
 function App() {
   const [initialSession] = useState(loadSession)
   const [qrScanner, setQrScanner] = useState(null)
@@ -1421,21 +1423,7 @@ function App() {
        * Username/password are NOT stored.
        */
 
-      saveSession(data)
-
-      setToken(data.token)
-      setUser(data.user)
-      navigateTo(getHomePath(data.user.role), { replace: true })
-
-      /*
-       * Clear the password from React state
-       * after successful login.
-       */
-
-      setForm({
-        username: '',
-        password: ''
-      })
+      acceptSession(data)
     } catch (loginError) {
       setError(
         loginError.message
@@ -1448,6 +1436,15 @@ function App() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const acceptSession = (data) => {
+    saveSession(data)
+    setToken(data.token)
+    setUser(data.user)
+    setError('')
+    setForm({ username: '', password: '' })
+    navigateTo(getHomePath(data.user.role), { replace: true })
   }
 
   /*
@@ -1664,7 +1661,9 @@ function App() {
           form={form}
           error={error}
           isSubmitting={isSubmitting}
+          googleClientId={GOOGLE_CLIENT_ID}
           onChange={handleChange}
+          onGoogleSession={acceptSession}
           onSubmit={handleSubmit}
         />
       )

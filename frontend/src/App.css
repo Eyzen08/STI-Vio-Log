@@ -192,6 +192,114 @@
   border-color: #1d6ef2;
 }
 
+.google-access {
+  margin-top: 24px;
+}
+
+.auth-divider {
+  align-items: center;
+  color: #738197;
+  display: flex;
+  font-size: 0.72rem;
+  font-weight: 750;
+  gap: 12px;
+  letter-spacing: 0.08em;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  background: #e1e7ef;
+  content: '';
+  flex: 1;
+  height: 1px;
+}
+
+.google-access h4 {
+  color: #263850;
+  font-size: 0.9rem;
+  margin: 0 0 14px;
+  text-align: center;
+}
+
+.google-button {
+  min-height: 40px;
+  width: 100%;
+}
+
+.google-button > div,
+.google-button iframe {
+  margin: 0 auto !important;
+}
+
+.auth-status {
+  color: #60708a;
+  font-size: 0.82rem;
+  margin: 10px 0 0;
+  text-align: center;
+}
+
+.google-link-form {
+  display: grid;
+  gap: 14px;
+}
+
+.google-link-form > div:first-child {
+  margin-bottom: 2px;
+}
+
+.google-link-form h4 {
+  margin-bottom: 5px;
+  text-align: left;
+}
+
+.google-link-form p {
+  color: #60708a;
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.google-link-form label {
+  color: #344963;
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 700;
+  gap: 7px;
+}
+
+.google-link-form input {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font: inherit;
+  min-height: 42px;
+  padding: 0 11px;
+}
+
+.google-link-form input:focus-visible {
+  border-color: #1d6ef2;
+  outline: 3px solid rgba(29, 110, 242, 0.18);
+}
+
+.google-link-actions {
+  display: grid;
+  gap: 9px;
+  grid-template-columns: 1fr auto;
+}
+
+.google-link-actions button {
+  min-height: 42px;
+}
+
+.google-link-actions .secondary-button {
+  background: #e8eef5;
+  color: #344963;
+}
+
+.google-access > .error-message {
+  margin: 13px 0 0;
+}
+
 .sidebar {
   background: #122033;
   color: white;

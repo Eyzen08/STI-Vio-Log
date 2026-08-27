@@ -1,4 +1,6 @@
-function LoginPage({ form, error, isSubmitting, onChange, onSubmit }) {
+import GoogleStudentAccess from './GoogleStudentAccess.jsx'
+
+function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit }) {
   return (
     <section className="login-page" aria-labelledby="login-title">
       <div className="login-intro">
@@ -69,6 +71,8 @@ function LoginPage({ form, error, isSubmitting, onChange, onSubmit }) {
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
+
+        <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} />
 
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
       </div>

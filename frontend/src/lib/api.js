@@ -1,3 +1,5 @@
+import { buildGoogleLinkPayload } from './googleIdentity.js'
+
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 export class ApiError extends Error {
@@ -39,4 +41,18 @@ export const login = (credentials) =>
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(credentials)
+  })
+
+export const googleLogin = (credential) =>
+  apiRequest('/api/auth/google/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential })
+  })
+
+export const googleLink = ({ credential, studentNumber, firstName, lastName }) =>
+  apiRequest('/api/auth/google/link', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(buildGoogleLinkPayload({ credential, studentNumber, firstName, lastName }))
   })

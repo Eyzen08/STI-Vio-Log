@@ -78,7 +78,7 @@ Self-service unlinking and relinking are intentionally excluded. Recovery requir
 2. [x] Isolated Google token-verification adapter with mocked unit tests.
 3. [x] Transactional link/login service and audit events.
 4. [x] Public routes with rate limiting and stable error envelopes.
-5. Google Identity Services frontend and account-linking form.
+5. [x] Google Identity Services frontend and account-linking form.
 6. Full backend/frontend/integration verification before enabling configuration.
 
 Primary references: [Google backend ID-token verification](https://developers.google.com/identity/sign-in/web/backend-auth) and [Google OpenID Connect claims](https://developers.google.com/identity/openid-connect/reference).
