@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
+import StudentProfile from './components/StudentProfile.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
@@ -1618,39 +1619,12 @@ function App() {
         activeView === 'My Profile'
       ) {
         return (
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                My Profile
-              </h3>
-
-              <span>
-                Student Information
-              </span>
-            </div>
-
-            <div className="student-profile-view">
-              <p>
-                <strong>
-                  Username:
-                </strong>{' '}
-                {user.username}
-              </p>
-
-              <p>
-                <strong>
-                  Role:
-                </strong>{' '}
-                {user.role}
-              </p>
-
-              <p className="info-note">
-                Contact your department head
-                for violations or clearance
-                information.
-              </p>
-            </div>
-          </section>
+          <StudentProfile
+            profile={studentProfile}
+            username={user.username}
+            loading={dashboardLoading}
+            error={dashboardError}
+          />
         )
       }
 

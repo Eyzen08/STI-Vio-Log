@@ -269,7 +269,7 @@ const getMyProfile = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 id, student_number, first_name, middle_name, last_name,
-                suffix, email, program, section, year_level,
+                suffix, email, phone_number, program, section, year_level,
                 qr_code, profile_image
              FROM students
              WHERE user_id = $1
