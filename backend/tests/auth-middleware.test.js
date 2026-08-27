@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const jwt = require('jsonwebtoken');
+const pool = require('../src/config/database');
 
 const { authenticateToken, authorizeRoles } = require('../src/middleware/authMiddleware');
 
@@ -33,16 +34,20 @@ test('authenticateToken rejects missing bearer token', () => {
   assert.equal(res.body.success, false);
 });
 
-test('authenticateToken accepts valid JWT and attaches user', () => {
+test('authenticateToken accepts valid JWT and attaches current database identity', async () => {
   process.env.JWT_SECRET = 'this-is-a-secure-test-secret-123456';
-  const token = jwt.sign({ id: 1, username: 'admin', role: 'ADMIN' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = jwt.sign({ id: 1, username: 'admin', role: 'STUDENT' }, process.env.JWT_SECRET, { expiresIn: '1h' });
   const req = { headers: { authorization: `Bearer ${token}` } };
   const res = createRes();
   let called = false;
+  const originalQuery = pool.query;
+  pool.query = async () => ({ rows: [{ id: 1, username: 'admin', role: 'ADMIN', department_id: null }] });
 
-  authenticateToken(req, res, () => {
+  await authenticateToken(req, res, () => {
     called = true;
   });
+
+  pool.query = originalQuery;
 
   assert.equal(called, true);
   assert.equal(req.user.role, 'ADMIN');
@@ -62,7 +67,7 @@ test('authorizeRoles denies users without required role', () => {
   assert.equal(called, false);
 });
 
-test('authenticateToken fails when JWT secret is missing', () => {
+test('authenticateToken fails when JWT secret is missing', async () => {
   const originalSecret = process.env.JWT_SECRET;
   delete process.env.JWT_SECRET;
 
@@ -70,7 +75,7 @@ test('authenticateToken fails when JWT secret is missing', () => {
   const res = createRes();
   let called = false;
 
-  authenticateToken(req, res, () => {
+  await authenticateToken(req, res, () => {
     called = true;
   });
 

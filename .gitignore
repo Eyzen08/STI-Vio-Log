@@ -11,3 +11,4 @@ coverage/
 # Local database backups
 *.dump
 *.sql
+!database/migrations/*.sql

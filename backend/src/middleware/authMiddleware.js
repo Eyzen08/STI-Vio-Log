@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const pool = require("../config/database");
 
 
 // =====================================================
@@ -35,7 +36,7 @@ const getJwtSecret = () => {
 // AUTHENTICATE TOKEN
 // =====================================================
 
-const authenticateToken = (req, res, next) => {
+const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     const token =
@@ -51,46 +52,72 @@ const authenticateToken = (req, res, next) => {
         });
     }
 
+    let decoded;
+
     try {
-        const decoded = jwt.verify(
+        decoded = jwt.verify(
             token,
             getJwtSecret()
         );
-
-        // Store decoded JWT information
-        // on the request object.
-        req.user = decoded;
-
-        console.log(
-            `[AUTH] ${req.method} ${req.originalUrl} | user=${req.user.id} | role=${req.user.role}`
-        );
-
-        return next();
-
     } catch (error) {
+        console.error("[AUTH] Token verification failed:", error.message);
 
-        console.error(
-            "[AUTH] Token verification failed:",
-            error.message
-        );
-
-        if (
-            error &&
-            error.message &&
-            error.message
-                .toLowerCase()
-                .includes("jwt_secret")
-        ) {
+        if (error.message && error.message.toLowerCase().includes("jwt_secret")) {
             return res.status(500).json({
                 success: false,
-                message:
-                    "JWT_SECRET is not configured securely. Set a strong environment secret before launch."
+                message: "JWT_SECRET is not configured securely. Set a strong environment secret before launch."
             });
         }
 
         return res.status(401).json({
             success: false,
             message: "Invalid or expired token"
+        });
+    }
+
+    try {
+        const accountResult = await pool.query(
+            `
+            SELECT
+                u.id,
+                u.username,
+                u.role,
+                dh.department_id
+            FROM users u
+            LEFT JOIN department_heads dh
+                ON dh.user_id = u.id
+            WHERE u.id = $1
+              AND u.is_active = TRUE
+            LIMIT 1
+            `,
+            [decoded.id]
+        );
+
+        if (accountResult.rows.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid or inactive account"
+            });
+        }
+
+        const account = accountResult.rows[0];
+
+        req.user = {
+            id: Number(account.id),
+            username: account.username,
+            role: account.role,
+            department_id: account.department_id
+                ? Number(account.department_id)
+                : null
+        };
+
+        return next();
+
+    } catch (error) {
+        console.error("Authenticated account lookup failed:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to validate authenticated account"
         });
     }
 };
@@ -101,19 +128,6 @@ const authenticateToken = (req, res, next) => {
 // =====================================================
 
 const authorizeRoles = (...allowedRoles) => (req, res, next) => {
-    console.log("====================================");
-    console.log("ROLE AUTHORIZATION CHECK");
-    console.log("METHOD:", req.method);
-    console.log("PATH:", req.originalUrl);
-    console.log("USER:", req.user);
-    console.log("USER ROLE:", req.user?.role);
-    console.log("ALLOWED ROLES:", allowedRoles);
-    console.log(
-        "ROLE MATCH:",
-        allowedRoles.includes(req.user?.role)
-    );
-    console.log("====================================");
-
     if (!req.user) {
         return res.status(401).json({
             success: false,
@@ -131,8 +145,45 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
     return next();
 };
 
+const requireAuthorizedDepartment = async (req, res, next) => {
+    const departmentId = req.user.role === "DEPARTMENT_HEAD"
+        ? req.user.department_id
+        : req.body.department_id;
+
+    if (!departmentId) {
+        return res.status(400).json({
+            success: false,
+            message: "A valid staff department is required"
+        });
+    }
+
+    try {
+        const result = await pool.query(
+            "SELECT id FROM departments WHERE id = $1 AND is_active = TRUE",
+            [departmentId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "A valid staff department is required"
+            });
+        }
+
+        req.staffDepartmentId = Number(departmentId);
+        return next();
+    } catch (error) {
+        console.error("Department authorization error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to validate staff department"
+        });
+    }
+};
+
 
 module.exports = {
     authenticateToken,
-    authorizeRoles
+    authorizeRoles,
+    requireAuthorizedDepartment
 };

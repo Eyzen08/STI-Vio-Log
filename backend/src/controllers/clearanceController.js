@@ -19,12 +19,12 @@ const pool = require("../config/database");
 // - Department Head has approved the clearance
 // =====================================================
 
-const getStudentClearanceEligibility = async (studentId) => {
+const getStudentClearanceEligibility = async (studentId, executor = pool) => {
     // -------------------------------------------------
     // Check active violations
     // -------------------------------------------------
 
-    const activeViolationResult = await pool.query(
+    const activeViolationResult = await executor.query(
         `
         SELECT COUNT(*) AS count
         FROM violations
@@ -42,15 +42,13 @@ const getStudentClearanceEligibility = async (studentId) => {
     // Check pending community service
     // -------------------------------------------------
 
-    const pendingServiceResult = await pool.query(
+    const pendingServiceResult = await executor.query(
         `
         SELECT COUNT(*) AS count
         FROM community_service_assignments
         WHERE student_id = $1
-          AND (
-              status <> 'COMPLETED'
-              OR remaining_hours > 0
-          )
+          AND status IN ('OPEN', 'IN_PROGRESS')
+          AND remaining_hours > 0
         `,
         [studentId]
     );
@@ -79,16 +77,16 @@ const getStudentClearanceEligibility = async (studentId) => {
 // SYNCHRONIZE EXISTING CLEARANCE RECORDS
 // =====================================================
 
-const syncClearanceStatusForStudent = async (studentId) => {
+const syncClearanceStatusForStudent = async (studentId, executor = pool) => {
     const eligibility =
-        await getStudentClearanceEligibility(studentId);
+        await getStudentClearanceEligibility(studentId, executor);
 
 
     // -------------------------------------------------
     // Find clearance records
     // -------------------------------------------------
 
-    const clearanceResult = await pool.query(
+    const clearanceResult = await executor.query(
         `
         SELECT
             id,
@@ -168,7 +166,7 @@ const syncClearanceStatusForStudent = async (studentId) => {
                   `;
 
 
-        const result = await pool.query(
+        const result = await executor.query(
             `
             UPDATE student_clearance
             SET

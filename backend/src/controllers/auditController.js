@@ -13,42 +13,44 @@ const getAuditLogs = async (req, res) => {
 
     let query = `
       SELECT
-        id,
-        user_id,
-        action,
-        table_name,
-        record_id,
-        description,
-        ip_address,
-        created_at
-      FROM audit_logs
+        al.id,
+        al.user_id,
+        u.role AS actor_role,
+        al.action,
+        al.table_name,
+        al.record_id,
+        al.description,
+        al.ip_address,
+        al.created_at
+      FROM audit_logs al
+      LEFT JOIN users u ON u.id = al.user_id
       WHERE 1=1
     `;
 
     const params = [];
 
     if (action) {
-      query += ` AND action = $${params.length + 1}`;
+      query += ` AND al.action = $${params.length + 1}`;
       params.push(action);
     }
 
     if (user_id) {
-      query += ` AND user_id = $${params.length + 1}`;
+      query += ` AND al.user_id = $${params.length + 1}`;
       params.push(user_id);
     }
 
     if (table_name) {
-      query += ` AND table_name = $${params.length + 1}`;
+      query += ` AND al.table_name = $${params.length + 1}`;
       params.push(table_name);
     }
 
     if (from_date) {
-      query += ` AND created_at >= $${params.length + 1}`;
+      query += ` AND al.created_at >= $${params.length + 1}`;
       params.push(from_date);
     }
 
     if (to_date) {
-      query += ` AND created_at <= $${params.length + 1}`;
+      query += ` AND al.created_at <= $${params.length + 1}`;
       params.push(to_date);
     }
 
@@ -57,7 +59,7 @@ const getAuditLogs = async (req, res) => {
       1000
     );
 
-    query += ` ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+    query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1}`;
     params.push(parsedLimit);
 
     const result = await pool.query(query, params);

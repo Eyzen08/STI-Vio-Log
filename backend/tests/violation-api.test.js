@@ -12,7 +12,7 @@ function getRouteSummary() {
     }));
 }
 
-test('violation routes expose full CRUD surface', () => {
+test('violation routes expose CRUD compatibility and explicit lifecycle actions', () => {
   const routes = getRouteSummary();
 
   assert(routes.some((route) => route.path === '/' && route.methods.includes('get')));
@@ -20,4 +20,6 @@ test('violation routes expose full CRUD surface', () => {
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('put')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('delete')));
+  assert(routes.some((route) => route.path === '/:id/actions' && route.methods.includes('get')));
+  assert(routes.some((route) => route.path === '/:id/actions' && route.methods.includes('post')));
 });

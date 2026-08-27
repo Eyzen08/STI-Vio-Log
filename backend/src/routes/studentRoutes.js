@@ -6,8 +6,14 @@ const {
     createStudent,
     updateStudent,
     deleteStudent,
+    getMyProfile,
     getMyViolations
 } = require("../controllers/studentController");
+
+const { getMyCommunityServiceAssignment } = require("../controllers/communityServiceController");
+const { getMyClearanceRecords } = require("../controllers/clearanceController");
+const { getMyDTR } = require("../controllers/communityServiceSessionReportController");
+const { authorizeRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -16,10 +22,17 @@ const router = express.Router();
 // LOGGED-IN STUDENT'S OWN DATA
 // =====================================================
 
+router.get("/me", authorizeRoles("STUDENT"), getMyProfile);
+
 router.get(
     "/me/violations",
+    authorizeRoles("STUDENT"),
     getMyViolations
 );
+
+router.get("/me/community-service", authorizeRoles("STUDENT"), getMyCommunityServiceAssignment);
+router.get("/me/community-service/dtr", authorizeRoles("STUDENT"), getMyDTR);
+router.get("/me/clearance", authorizeRoles("STUDENT"), getMyClearanceRecords);
 
 
 // =====================================================
@@ -28,26 +41,31 @@ router.get(
 
 router.get(
     "/",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     getStudents
 );
 
 router.post(
     "/",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     createStudent
 );
 
 router.get(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     getStudentById
 );
 
 router.put(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     updateStudent
 );
 
 router.delete(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     deleteStudent
 );
 

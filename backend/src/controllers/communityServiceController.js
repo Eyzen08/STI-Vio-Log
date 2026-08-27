@@ -1,10 +1,13 @@
 const pool = require("../config/database");
+const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils/validators");
 
 // =====================================================
 // GET ALL COMMUNITY SERVICE ASSIGNMENTS
 // =====================================================
 const getCommunityServiceAssignments = async (req, res) => {
     try {
+        assertAllowedFields(req.query, ["page", "limit"]);
+        const { page, limit, offset } = parsePagination(req.query);
         const result = await pool.query(`
             SELECT
                 cs.id,
@@ -23,11 +26,13 @@ const getCommunityServiceAssignments = async (req, res) => {
             JOIN students s
                 ON cs.student_id = s.id
             ORDER BY cs.assigned_at DESC, cs.id DESC
-        `);
+            LIMIT $1 OFFSET $2
+        `, [limit, offset]);
 
         return res.json({
             success: true,
-            assignments: result.rows
+            assignments: result.rows,
+            pagination: { page, limit, returned: result.rows.length }
         });
 
     } catch (error) {
@@ -36,10 +41,9 @@ const getCommunityServiceAssignments = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message: "Failed to get community service assignments",
-            error: error.message
+            message: error.statusCode ? error.message : "Failed to get community service assignments"
         });
     }
 };
@@ -106,15 +110,13 @@ const getCommunityServiceAssignmentById = async (req, res) => {
 // CREATE COMMUNITY SERVICE ASSIGNMENT
 // =====================================================
 const createCommunityServiceAssignment = async (req, res) => {
+    const client = await pool.connect();
     try {
+        assertAllowedFields(req.body, ["violation_id", "student_id", "required_hours"]);
         const {
             violation_id,
             student_id,
-            required_hours,
-            completed_hours,
-            remaining_hours,
-            status,
-            completed_at
+            required_hours
         } = req.body;
 
         if (!violation_id || !student_id || required_hours === undefined) {
@@ -125,7 +127,7 @@ const createCommunityServiceAssignment = async (req, res) => {
             });
         }
 
-        const completed = Number(completed_hours || 0);
+        if (!isPositiveId(violation_id) || !isPositiveId(student_id)) return res.status(400).json({ success: false, message: "violation_id and student_id must be positive IDs" });
         const required = Number(required_hours);
 
         if (Number.isNaN(required) || required < 0) {
@@ -135,20 +137,32 @@ const createCommunityServiceAssignment = async (req, res) => {
             });
         }
 
-        const remaining =
-            remaining_hours !== undefined
-                ? Number(remaining_hours)
-                : Math.max(required - completed, 0);
+        await client.query("BEGIN");
 
-        const assignmentStatus =
-            status ||
-            (remaining <= 0 ? "COMPLETED" : "OPEN");
+        const violationResult = await client.query(
+            `SELECT id, student_id, status
+             FROM violations
+             WHERE id = $1
+             FOR UPDATE`,
+            [violation_id]
+        );
 
-        const completedAt =
-            completed_at ||
-            (remaining <= 0 ? new Date() : null);
+        if (violationResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ success: false, message: "Violation not found" });
+        }
 
-        const result = await pool.query(
+        const violation = violationResult.rows[0];
+        if (Number(violation.student_id) !== Number(student_id)) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ success: false, message: "The violation does not belong to the specified student" });
+        }
+        if (violation.status !== "OPEN") {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ success: false, message: "Community service can only be assigned to an open violation" });
+        }
+
+        const result = await client.query(
             `
             INSERT INTO community_service_assignments (
                 violation_id,
@@ -166,12 +180,23 @@ const createCommunityServiceAssignment = async (req, res) => {
                 violation_id,
                 student_id,
                 required,
-                completed,
-                remaining,
-                assignmentStatus,
-                completedAt
+                0,
+                required,
+                required <= 0 ? "COMPLETED" : "OPEN",
+                required <= 0 ? new Date() : null
             ]
         );
+
+        await client.query(
+            `UPDATE violations
+             SET required_service_hours = $1,
+                 completed_service_hours = 0,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [required, violation_id]
+        );
+
+        await client.query("COMMIT");
 
         return res.status(201).json({
             success: true,
@@ -184,11 +209,15 @@ const createCommunityServiceAssignment = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        try { await client.query("ROLLBACK"); } catch (_) {}
+        return res.status(error.statusCode || (error.code === "23505" ? 409 : 500)).json({
             success: false,
-            message: "Failed to create assignment",
-            error: error.message
+            message: error.statusCode ? error.message : error.code === "23505"
+                ? "A community service assignment already exists for this violation"
+                : "Failed to create assignment"
         });
+    } finally {
+        client.release();
     }
 };
 
@@ -197,57 +226,74 @@ const createCommunityServiceAssignment = async (req, res) => {
 // UPDATE COMMUNITY SERVICE ASSIGNMENT
 // =====================================================
 const updateCommunityServiceAssignment = async (req, res) => {
+    const client = await pool.connect();
     try {
         const { id } = req.params;
+        const required = Number(req.body.required_hours);
 
-        const allowedFields = [
-            "violation_id",
-            "student_id",
-            "required_hours",
-            "completed_hours",
-            "remaining_hours",
-            "status",
-            "completed_at"
-        ];
-
-        const updates = [];
-        const values = [];
-
-        for (const field of allowedFields) {
-            if (req.body[field] !== undefined) {
-                values.push(req.body[field]);
-                updates.push(
-                    `${field} = $${values.length}`
-                );
-            }
-        }
-
-        if (updates.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "No community service assignment fields provided for update"
-            });
-        }
-
-        values.push(id);
-
-        const result = await pool.query(
-            `
-            UPDATE community_service_assignments
-            SET ${updates.join(", ")}
-            WHERE id = $${values.length}
-            RETURNING *
-            `,
-            values
+        const unsupportedFields = Object.keys(req.body).filter(
+            (field) => field !== "required_hours"
         );
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({
+        if (unsupportedFields.length > 0) {
+            return res.status(400).json({
                 success: false,
-                message: "Community service assignment not found"
+                message: "Service progress, ownership, and status cannot be changed through this endpoint"
             });
         }
+
+        if (req.body.required_hours === undefined || !Number.isFinite(required) || required < 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Only a valid non-negative required_hours value may be updated directly"
+            });
+        }
+
+        await client.query("BEGIN");
+        const currentResult = await client.query(
+            `SELECT * FROM community_service_assignments WHERE id = $1 FOR UPDATE`,
+            [id]
+        );
+
+        if (currentResult.rows.length === 0) {
+            await client.query("ROLLBACK");
+            return res.status(404).json({ success: false, message: "Community service assignment not found" });
+        }
+
+        const current = currentResult.rows[0];
+        const completed = Number(current.completed_hours || 0);
+        if (required < completed) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ success: false, message: "required_hours cannot be less than completed_hours" });
+        }
+
+        const remaining = Math.max(required - completed, 0);
+        const status = remaining <= 0
+            ? "COMPLETED"
+            : completed > 0 ? "IN_PROGRESS" : "OPEN";
+
+        const result = await client.query(
+            `
+            UPDATE community_service_assignments
+            SET required_hours = $1,
+                remaining_hours = $2,
+                status = $3,
+                completed_at = $4
+            WHERE id = $5
+            RETURNING *
+            `,
+            [required, remaining, status, remaining <= 0 ? current.completed_at || new Date() : null, id]
+        );
+
+        await client.query(
+            `UPDATE violations
+             SET required_service_hours = $1,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $2`,
+            [required, current.violation_id]
+        );
+
+        await client.query("COMMIT");
 
         return res.json({
             success: true,
@@ -260,11 +306,13 @@ const updateCommunityServiceAssignment = async (req, res) => {
             error
         );
 
+        try { await client.query("ROLLBACK"); } catch (_) {}
         return res.status(500).json({
             success: false,
-            message: "Failed to update community service assignment",
-            error: error.message
+            message: "Failed to update community service assignment"
         });
+    } finally {
+        client.release();
     }
 };
 
@@ -273,43 +321,10 @@ const updateCommunityServiceAssignment = async (req, res) => {
 // DELETE COMMUNITY SERVICE ASSIGNMENT
 // =====================================================
 const deleteCommunityServiceAssignment = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const result = await pool.query(
-            `
-            DELETE FROM community_service_assignments
-            WHERE id = $1
-            RETURNING *
-            `,
-            [id]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Community service assignment not found"
-            });
-        }
-
-        return res.json({
-            success: true,
-            message:
-                "Community service assignment deleted successfully"
-        });
-
-    } catch (error) {
-        console.error(
-            "Delete community service assignment error:",
-            error
-        );
-
-        return res.status(500).json({
-            success: false,
-            message: "Failed to delete assignment",
-            error: error.message
-        });
-    }
+    return res.status(400).json({
+        success: false,
+        message: "Community service assignments are retained as disciplinary history and cannot be permanently deleted"
+    });
 };
 
 // =====================================================

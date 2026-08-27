@@ -1,8 +1,14 @@
 const pool = require("../config/database");
-const { recordAuditLog } = require("./auditController");
 const {
     syncClearanceStatusForStudent
 } = require("./clearanceController");
+const {
+    ViolationWorkflowError,
+    insertViolationAction,
+    insertViolationAudit,
+    transitionViolation
+} = require("../services/violationWorkflowService");
+const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils/validators");
 
 
 // =====================================================
@@ -11,15 +17,19 @@ const {
 
 const getViolations = async (req, res) => {
     try {
+        assertAllowedFields(req.query, ["page", "limit"]);
+        const { page, limit, offset } = parsePagination(req.query);
         const result = await pool.query(`
             SELECT *
             FROM violations
             ORDER BY incident_date DESC, id DESC
-        `);
+            LIMIT $1 OFFSET $2
+        `, [limit, offset]);
 
         return res.json({
             success: true,
-            violations: result.rows
+            violations: result.rows,
+            pagination: { page, limit, returned: result.rows.length }
         });
 
     } catch (error) {
@@ -28,9 +38,9 @@ const getViolations = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message: "Failed to get violations"
+            message: error.statusCode ? error.message : "Failed to get violations"
         });
     }
 };
@@ -100,16 +110,13 @@ const createViolation = async (req, res) => {
     const client = await pool.connect();
 
     try {
+        assertAllowedFields(req.body, ["student_id", "violation_type_id", "incident_date", "description", "required_service_hours"]);
         const {
             student_id,
             violation_type_id,
-            reported_by,
             incident_date,
             description,
-            status,
             required_service_hours,
-            completed_service_hours,
-            cleared_at
         } = req.body;
 
         if (
@@ -128,9 +135,7 @@ const createViolation = async (req, res) => {
             required_service_hours || 0
         );
 
-        const completedHours = Number(
-            completed_service_hours || 0
-        );
+        const completedHours = 0;
 
         if (
             !Number.isFinite(requiredHours) ||
@@ -140,25 +145,6 @@ const createViolation = async (req, res) => {
                 success: false,
                 message:
                     "required_service_hours must be a valid non-negative number"
-            });
-        }
-
-        if (
-            !Number.isFinite(completedHours) ||
-            completedHours < 0
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "completed_service_hours must be a valid non-negative number"
-            });
-        }
-
-        if (completedHours > requiredHours) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "completed_service_hours cannot exceed required_service_hours"
             });
         }
 
@@ -197,13 +183,13 @@ const createViolation = async (req, res) => {
             [
                 student_id,
                 violation_type_id,
-                reported_by || null,
+                req.user.id,
                 incident_date,
                 description || null,
-                status || "OPEN",
+                "OPEN",
                 requiredHours,
                 completedHours,
-                cleared_at || null
+                null
             ]
         );
 
@@ -270,38 +256,37 @@ const createViolation = async (req, res) => {
                 assignmentResult.rows[0];
         }
 
+        const history = await insertViolationAction({
+            client,
+            violationId: violation.id,
+            action: "CREATE",
+            fromStatus: null,
+            toStatus: "OPEN",
+            reason: null,
+            actor: req.user
+        });
+
+        await insertViolationAudit({
+            client,
+            violationId: violation.id,
+            action: "CREATE",
+            fromStatus: null,
+            toStatus: "OPEN",
+            reason: null,
+            actor: req.user,
+            ipAddress: req.ip
+        });
+
+        const clearanceSync = await syncClearanceStatusForStudent(
+            violation.student_id,
+            client
+        );
+
         // -------------------------------------------------
         // Commit violation + assignment
         // -------------------------------------------------
 
         await client.query("COMMIT");
-
-        // -------------------------------------------------
-        // Synchronize clearance
-        // -------------------------------------------------
-        //
-        // This is performed after the transaction so the
-        // clearance check can see the newly created
-        // violation and community-service assignment.
-        // -------------------------------------------------
-
-        const clearanceSync =
-            await syncClearanceStatusForStudent(
-                violation.student_id
-            );
-
-        // -------------------------------------------------
-        // Audit log
-        // -------------------------------------------------
-
-        await recordAuditLog(
-            req.user.id,
-            "CREATE",
-            "violations",
-            violation.id,
-            `Created violation for student ID ${violation.student_id}`,
-            req.ip
-        );
 
         // -------------------------------------------------
         // Return result
@@ -311,6 +296,7 @@ const createViolation = async (req, res) => {
             success: true,
             violation,
             assignment,
+            history,
             clearanceSync
         });
 
@@ -339,11 +325,9 @@ const createViolation = async (req, res) => {
             });
         }
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message:
-                "Failed to create violation",
-            error: error.message
+            message: error.statusCode ? error.message : "Failed to create violation"
         });
 
     } finally {
@@ -361,19 +345,27 @@ const createViolation = async (req, res) => {
 // =====================================================
 
 const updateViolation = async (req, res) => {
+    const client = await pool.connect();
     try {
+        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "description", "required_service_hours"]);
         const { id } = req.params;
 
+        if (req.body.required_service_hours !== undefined) {
+            const requiredHours = Number(req.body.required_service_hours);
+            if (!Number.isFinite(requiredHours) || requiredHours < 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "required_service_hours must be a valid non-negative number"
+                });
+            }
+            req.body.required_service_hours = requiredHours;
+        }
+
         const allowedFields = [
-            "student_id",
             "violation_type_id",
-            "reported_by",
             "incident_date",
             "description",
-            "status",
-            "required_service_hours",
-            "completed_service_hours",
-            "cleared_at"
+            "required_service_hours"
         ];
 
         const updates = [];
@@ -397,9 +389,10 @@ const updateViolation = async (req, res) => {
             });
         }
 
+        await client.query("BEGIN");
         values.push(id);
 
-        const result = await pool.query(
+        const result = await client.query(
             `
             UPDATE violations
             SET
@@ -412,6 +405,7 @@ const updateViolation = async (req, res) => {
         );
 
         if (result.rows.length === 0) {
+            await client.query("ROLLBACK");
             return res.status(404).json({
                 success: false,
                 message: "Violation not found"
@@ -420,17 +414,29 @@ const updateViolation = async (req, res) => {
 
         const violation = result.rows[0];
 
+        if (
+            req.body.required_service_hours !== undefined &&
+            violation.status !== "OPEN"
+        ) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({
+                success: false,
+                message: "Service hours can only be changed while the violation is open"
+            });
+        }
+
         // -------------------------------------------------
         // Synchronize community service assignment
         // -------------------------------------------------
 
         let assignment = null;
 
-        const assignmentResult = await pool.query(
+        const assignmentResult = await client.query(
             `
             SELECT *
             FROM community_service_assignments
             WHERE violation_id = $1
+            FOR UPDATE
             `,
             [violation.id]
         );
@@ -439,7 +445,8 @@ const updateViolation = async (req, res) => {
             const existingAssignment =
                 assignmentResult.rows[0];
 
-            const requiredHours = Number(
+        if (!isPositiveId(student_id) || !isPositiveId(violation_type_id)) return res.status(400).json({ success: false, message: "student_id and violation_type_id must be positive IDs" });
+        const requiredHours = Number(
                 violation.required_service_hours || 0
             );
 
@@ -455,7 +462,9 @@ const updateViolation = async (req, res) => {
             const newStatus =
                 remainingHours <= 0
                     ? "COMPLETED"
-                    : "OPEN";
+                    : completedHours > 0
+                        ? "IN_PROGRESS"
+                        : "OPEN";
 
             const completedAt =
                 remainingHours <= 0
@@ -464,7 +473,7 @@ const updateViolation = async (req, res) => {
                     : null;
 
             const updatedAssignment =
-                await pool.query(
+                await client.query(
                     `
                     UPDATE community_service_assignments
                     SET
@@ -523,7 +532,7 @@ const updateViolation = async (req, res) => {
     );
 
     const assignmentResult =
-        await pool.query(
+        await client.query(
             `
             INSERT INTO community_service_assignments (
                 violation_id,
@@ -575,21 +584,27 @@ const updateViolation = async (req, res) => {
 
         const clearanceSync =
             await syncClearanceStatusForStudent(
-                violation.student_id
+                violation.student_id,
+                client
             );
 
         // -------------------------------------------------
         // Audit log
         // -------------------------------------------------
 
-        await recordAuditLog(
-            req.user.id,
-            "UPDATE",
-            "violations",
-            violation.id,
-            `Updated violation for student ID ${violation.student_id}`,
-            req.ip
+        await client.query(
+            `INSERT INTO audit_logs (
+                user_id, action, table_name, record_id, description, ip_address
+             ) VALUES ($1, 'UPDATE', 'violations', $2, $3, $4)`,
+            [
+                req.user.id,
+                violation.id,
+                JSON.stringify({ actor_role: req.user.role, fields: allowedFields.filter((field) => req.body[field] !== undefined) }),
+                req.ip || null
+            ]
         );
+
+        await client.query("COMMIT");
 
         return res.json({
             success: true,
@@ -599,17 +614,18 @@ const updateViolation = async (req, res) => {
         });
 
     } catch (error) {
+        try { await client.query("ROLLBACK"); } catch (_) {}
         console.error(
             "Update violation error:",
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message:
-                "Failed to update violation",
-            error: error.message
+            message: error.statusCode ? error.message : "Failed to update violation"
         });
+    } finally {
+        client.release();
     }
 };
 
@@ -619,63 +635,82 @@ const updateViolation = async (req, res) => {
 // =====================================================
 
 const deleteViolation = async (req, res) => {
-    try {
-        const { id } = req.params;
+    return res.status(400).json({
+        success: false,
+        message: "Violations are retained as disciplinary history and cannot be permanently deleted through this API"
+    });
+};
 
-        const result = await pool.query(
-            `
-            DELETE FROM violations
-            WHERE id = $1
-            RETURNING *
-            `,
-            [id]
+const performViolationAction = async (req, res) => {
+    try {
+        assertAllowedFields(req.body, ["action", "reason"]);
+        const result = await transitionViolation({
+            pool,
+            violationId: req.params.id,
+            action: req.body.action,
+            reason: req.body.reason,
+            actor: req.user,
+            ipAddress: req.ip
+        });
+
+        return res.json({
+            success: true,
+            violation: result.violation,
+            assignment: result.assignment,
+            history: result.history,
+            clearanceSync: result.clearanceSync
+        });
+    } catch (error) {
+        if (error instanceof ViolationWorkflowError) {
+            return res.status(error.statusCode).json({
+                success: false,
+                message: error.message,
+                error: { code: error.code, message: error.message }
+            });
+        }
+
+        console.error("Violation action error:", error);
+        return res.status(error.statusCode || 500).json({
+            success: false,
+            message: error.statusCode ? error.message : "Failed to perform violation action",
+            ...(error.code ? { error: { code: error.code, message: error.message } } : {})
+        });
+    }
+};
+
+const getViolationActions = async (req, res) => {
+    try {
+        const violationResult = await pool.query(
+            "SELECT id FROM violations WHERE id = $1",
+            [req.params.id]
         );
 
-        if (result.rows.length === 0) {
+        if (violationResult.rows.length === 0) {
             return res.status(404).json({
                 success: false,
                 message: "Violation not found"
             });
         }
 
-        const violation = result.rows[0];
-
-        // Community-service assignment is automatically
-        // removed by the database foreign key:
-        // ON DELETE CASCADE.
-
-        const clearanceSync =
-            await syncClearanceStatusForStudent(
-                violation.student_id
-            );
-
-        await recordAuditLog(
-            req.user.id,
-            "DELETE",
-            "violations",
-            violation.id,
-            `Deleted violation for student ID ${violation.student_id}`,
-            req.ip
+        const result = await pool.query(
+            `SELECT
+                id, violation_id, action, from_status, to_status, reason,
+                performed_by_user_id, performed_by_role, created_at
+             FROM violation_actions
+             WHERE violation_id = $1
+             ORDER BY created_at ASC, id ASC`,
+            [req.params.id]
         );
 
         return res.json({
             success: true,
-            message:
-                "Violation deleted successfully",
-            clearanceSync
+            actions: result.rows
         });
-
     } catch (error) {
-        console.error(
-            "Delete violation error:",
-            error
-        );
-
+        console.error("Get violation actions error:", error);
         return res.status(500).json({
             success: false,
-            message:
-                "Failed to delete violation",
-            error: error.message
+            message: "Failed to get violation action history"
         });
     }
 };
@@ -690,5 +725,7 @@ module.exports = {
     getViolationById,
     createViolation,
     updateViolation,
-    deleteViolation
+    deleteViolation,
+    performViolationAction,
+    getViolationActions
 };

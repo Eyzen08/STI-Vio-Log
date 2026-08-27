@@ -12,11 +12,13 @@ const {
 const {
     communityServiceTimeIn,
     communityServiceTimeOut,
-    getCommunityServiceAttendance
+    getCommunityServiceAttendance,
+    getCommunityServiceSessions
 } = require("../controllers/communityServiceAttendanceController");
 
 const {
-    authorizeRoles
+    authorizeRoles,
+    requireAuthorizedDepartment
 } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -49,6 +51,7 @@ router.post(
         "DISCIPLINE_OFFICE",
         "DEPARTMENT_HEAD"
     ),
+    requireAuthorizedDepartment,
     communityServiceTimeIn
 );
 
@@ -60,9 +63,16 @@ router.post(
         "DISCIPLINE_OFFICE",
         "DEPARTMENT_HEAD"
     ),
+    requireAuthorizedDepartment,
     communityServiceTimeOut
 );
 
+
+router.get(
+    "/:assignmentId/sessions",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+    getCommunityServiceSessions
+);
 
 router.get(
     "/attendance/:assignmentId",
@@ -99,8 +109,7 @@ router.post(
     "/",
     authorizeRoles(
         "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
+        "DISCIPLINE_OFFICE"
     ),
     createCommunityServiceAssignment
 );
@@ -121,8 +130,7 @@ router.put(
     "/:id",
     authorizeRoles(
         "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
+        "DISCIPLINE_OFFICE"
     ),
     updateCommunityServiceAssignment
 );
@@ -132,8 +140,7 @@ router.delete(
     "/:id",
     authorizeRoles(
         "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
+        "DISCIPLINE_OFFICE"
     ),
     deleteCommunityServiceAssignment
 );

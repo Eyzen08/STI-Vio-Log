@@ -11,6 +11,7 @@ const {
 } = require("../controllers/clearanceController");
 
 const router = express.Router();
+const { authorizeRoles } = require("../middleware/authMiddleware");
 
 
 // =====================================================
@@ -19,6 +20,7 @@ const router = express.Router();
 
 router.get(
     "/student/:studentId/eligibility",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
     getStudentClearanceEligibilityController
 );
 
@@ -29,6 +31,7 @@ router.get(
 
 router.put(
     "/:id/approve",
+    authorizeRoles("DEPARTMENT_HEAD"),
     approveClearanceRecord
 );
 
@@ -39,26 +42,31 @@ router.put(
 
 router.get(
     "/",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
     getClearanceRecords
 );
 
 router.post(
     "/",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     createClearanceRecord
 );
 
 router.get(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
     getClearanceRecordById
 );
 
 router.put(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     updateClearanceRecord
 );
 
 router.delete(
     "/:id",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     deleteClearanceRecord
 );
 

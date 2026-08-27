@@ -1,0 +1,28 @@
+# Backend API contracts
+
+All protected endpoints use `Authorization: Bearer <JWT>`. Successful responses retain the existing `success: true` envelope. Errors preserve `success: false` and `message` for compatibility and use the stable shape below where the endpoint has been migrated:
+
+```json
+{"success":false,"message":"Human-readable message","error":{"code":"VALIDATION_ERROR","message":"Human-readable message"}}
+```
+
+Standard statuses are 400 validation/business rules, 401 authentication, 403 authorization, 404 missing or non-visible resources, 409 concurrency/database conflicts, and 500 unexpected failures. Student self-service never accepts an ownership identifier; it derives ownership from the authenticated account. Private resources outside that ownership are treated as not visible (404) unless access is rejected at the role boundary (403).
+
+## Canonical domain rules
+
+- Violation statuses: `OPEN`, `COMPLETE`, `CLEAR`, `INVALID_CANCEL`.
+- Violation actions: `COMPLETE`, `CLEAR`, `INVALID_CANCEL`, `REOPEN`. `CLEAR`, `INVALID_CANCEL`, and `REOPEN` require reasons. REOPEN always results in `OPEN`.
+- Assignment states include `OPEN`, `IN_PROGRESS`, `COMPLETED`, `ADMIN_CLOSED`, and `INVALID_CANCELLED`.
+- DTR session states are `ACTIVE` and `COMPLETED`. Clients never set timestamps, status, worked minutes, credited minutes, or actors.
+- Integer minutes in completed sessions are authoritative. `worked_minutes` records actual duration; `credited_minutes` is capped at the requirement. Assignment `completed_hours` is a derived compatibility cache, not an independent source of truth.
+- Legacy `community_service_attendance` events remain preserved. They are not automatically paired or counted in authoritative session totals because historical pairing can be ambiguous. New writes retain compatibility events alongside sessions.
+- `CLEAR` administratively closes an assignment without deleting history. `INVALID_CANCEL` marks it invalid/cancelled without deletion. `REOPEN` reactivates remaining work when applicable.
+- An `OPEN` violation or an `OPEN`/`IN_PROGRESS` assignment with remaining work blocks clearance. `COMPLETE`, `CLEAR`, and `INVALID_CANCEL` do not. All student violations are evaluated. `NOT_ELIGIBLE` means blocked, `PENDING` means eligible but awaiting approval, and `CLEARED` means approved.
+
+Administrative DTR corrections are deliberately deferred. A future correction design must be authorized, reasoned, append-only or revision-based, and audited; it must never silently rewrite or delete session history.
+
+## Filters and pagination
+
+DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.
+
+Large-list pagination uses `page` and `limit` where exposed. The contract default is 25 and maximum is 100. Unknown privileged body fields are rejected on stabilized create/update endpoints rather than silently applied.

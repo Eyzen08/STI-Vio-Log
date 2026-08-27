@@ -1,0 +1,53 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "STI Vio-Log API", "version": "1.0.0", "description": "Stable backend contract. Roles: ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, STUDENT." },
+  "servers": [{ "url": "/api" }],
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer", "bearerFormat": "JWT" } },
+    "schemas": {
+      "ErrorResponse": { "type": "object", "required": ["success", "message"], "properties": { "success": { "const": false }, "message": { "type": "string" }, "error": { "type": "object", "properties": { "code": { "type": "string", "examples": ["VALIDATION_ERROR"] }, "message": { "type": "string" } } } } },
+      "PaginationMetadata": { "type": "object", "properties": { "page": { "type": "integer" }, "limit": { "type": "integer" }, "returned": { "type": "integer" } } },
+      "StudentSummary": { "type": "object", "properties": { "id": { "type": "integer" }, "student_number": { "type": "string", "pattern": "^02000[0-9]{6}$" }, "first_name": { "type": "string" }, "last_name": { "type": "string" } } },
+      "Violation": { "type": "object", "properties": { "id": { "type": "integer" }, "student_id": { "type": "integer" }, "status": { "enum": ["OPEN", "COMPLETE", "CLEAR", "INVALID_CANCEL"] }, "required_service_hours": { "type": "number" }, "completed_service_hours": { "type": "number" } } },
+      "ViolationAction": { "type": "object", "properties": { "action": { "enum": ["COMPLETE", "CLEAR", "INVALID_CANCEL", "REOPEN"] }, "reason": { "type": ["string", "null"] }, "created_at": { "type": "string", "format": "date-time" } } },
+      "CommunityServiceAssignment": { "type": "object", "properties": { "id": { "type": "integer" }, "required_hours": { "type": "number" }, "completed_hours": { "type": "number", "description": "Derived compatibility cache; session minutes are authoritative." }, "remaining_hours": { "type": "number" }, "status": { "type": "string" } } },
+      "DtrSession": { "type": "object", "properties": { "id": { "type": "integer" }, "assignment_id": { "type": "integer" }, "time_in": { "type": "string", "format": "date-time" }, "time_out": { "type": ["string", "null"], "format": "date-time" }, "worked_minutes": { "type": ["integer", "null"] }, "credited_minutes": { "type": ["integer", "null"] }, "status": { "enum": ["ACTIVE", "COMPLETED"] } } },
+      "ServiceProgress": { "type": "object", "properties": { "required_minutes": { "type": "integer" }, "credited_minutes": { "type": "integer" }, "remaining_minutes": { "type": "integer" } } },
+      "Clearance": { "type": "object", "properties": { "id": { "type": "integer" }, "status": { "enum": ["ELIGIBLE", "NOT_ELIGIBLE", "PENDING", "CLEARED"] }, "has_active_violation": { "type": "boolean" }, "has_pending_service": { "type": "boolean" } } },
+      "AuditEntry": { "type": "object", "properties": { "id": { "type": "integer" }, "user_id": { "type": ["integer", "null"] }, "action": { "type": "string" }, "table_name": { "type": ["string", "null"] }, "record_id": { "type": ["integer", "null"] }, "created_at": { "type": "string", "format": "date-time" } } }
+    },
+    "responses": { "BadRequest": { "description": "Validation or business-rule failure", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }, "Unauthorized": { "description": "Authentication required" }, "Forbidden": { "description": "Role or department scope denied" }, "NotFound": { "description": "Resource not found or not visible" }, "Conflict": { "description": "Concurrency or uniqueness conflict" } }
+  },
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/login": { "post": { "security": [], "tags": ["Auth"], "summary": "Authenticate with username and password", "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["username", "password"], "properties": { "username": { "type": "string" }, "password": { "type": "string", "format": "password" } } } } }, "responses": { "200": { "description": "JWT and current user" }, "401": { "$ref": "#/components/responses/Unauthorized" } } } } },
+    "/health": { "get": { "security": [], "tags": ["System"], "summary": "Application and database health", "responses": { "200": { "description": "Healthy" }, "503": { "description": "Database unavailable" } } } },
+    "/students": { "get": { "tags": ["Students"], "summary": "List students (ADMIN, DISCIPLINE_OFFICE)", "responses": { "200": { "description": "Student list" } } }, "post": { "tags": ["Students"], "summary": "Create student (ADMIN, DISCIPLINE_OFFICE)", "responses": { "201": { "description": "Created" }, "400": { "$ref": "#/components/responses/BadRequest" } } } },
+    "/students/{id}": { "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "get": { "tags": ["Students"], "summary": "Read student" }, "put": { "tags": ["Students"], "summary": "Update whitelisted student fields" }, "delete": { "tags": ["Students"], "summary": "Delete student" } },
+    "/students/me": { "get": { "tags": ["Students"], "summary": "Read authenticated student's profile" } },
+    "/students/me/violations": { "get": { "tags": ["Students"], "summary": "Read own violations" } },
+    "/students/me/community-service": { "get": { "tags": ["Community Service"], "summary": "Read own assignments" } },
+    "/students/me/community-service/dtr": { "get": { "tags": ["Community Service"], "summary": "Read own DTR and progress", "parameters": [{ "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } }, { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } }] } },
+    "/students/me/clearance": { "get": { "tags": ["Clearance"], "summary": "Read own clearance" } },
+    "/violations": { "get": { "tags": ["Violations"], "summary": "List violations (ADMIN, DISCIPLINE_OFFICE)" }, "post": { "tags": ["Violations"], "summary": "Create violation and synchronized assignment" } },
+    "/violations/{id}": { "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "get": { "tags": ["Violations"], "summary": "Read violation" }, "put": { "tags": ["Violations"], "summary": "Update metadata; lifecycle status forbidden" }, "delete": { "tags": ["Violations"], "summary": "Permanent deletion is rejected" } },
+    "/violations/{id}/actions": { "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "get": { "tags": ["Violations"], "summary": "Read lifecycle history" }, "post": { "tags": ["Violations"], "summary": "Perform COMPLETE, CLEAR, INVALID_CANCEL, or REOPEN", "requestBody": { "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ViolationAction" } } } } } },
+    "/community-service": { "get": { "tags": ["Community Service"], "summary": "List assignments" }, "post": { "tags": ["Community Service"], "summary": "Create assignment" } },
+    "/community-service/{id}": { "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }], "get": { "tags": ["Community Service"], "summary": "Read assignment" }, "put": { "tags": ["Community Service"], "summary": "Update required hours only" }, "delete": { "tags": ["Community Service"], "summary": "Permanent deletion is rejected" } },
+    "/community-service/attendance/time-in": { "post": { "tags": ["Community Service"], "summary": "Create ACTIVE session as authorized staff" } },
+    "/community-service/attendance/time-out": { "post": { "tags": ["Community Service"], "summary": "Complete active session and credit minutes atomically" } },
+    "/community-service/{assignmentId}/sessions": { "get": { "tags": ["Community Service"], "summary": "Read authoritative sessions", "parameters": [{ "name": "assignmentId", "in": "path", "required": true, "schema": { "type": "integer" } }] } },
+    "/qr/scan": { "post": { "tags": ["QR"], "summary": "Resolve QR student and active assignment" } },
+    "/qr/time-in": { "post": { "tags": ["QR"], "summary": "QR TIME_IN" } },
+    "/qr/time-out": { "post": { "tags": ["QR"], "summary": "QR TIME_OUT" } },
+    "/clearance": { "get": { "tags": ["Clearance"], "summary": "List clearance records" }, "post": { "tags": ["Clearance"], "summary": "Create clearance record" } },
+    "/clearance/student/{studentId}/eligibility": { "get": { "tags": ["Clearance"], "summary": "Evaluate all violations and assignments", "parameters": [{ "name": "studentId", "in": "path", "required": true, "schema": { "type": "integer" } }] } },
+    "/clearance/{id}/approve": { "put": { "tags": ["Clearance"], "summary": "Department Head approval", "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }] } },
+    "/reports/violations": { "get": { "tags": ["Reports"], "summary": "Violation report" } },
+    "/reports/community-service": { "get": { "tags": ["Reports"], "summary": "Assignment report" } },
+    "/reports/dtr": { "get": { "tags": ["Reports"], "summary": "Authoritative DTR report", "parameters": [{ "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } }, { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } }, { "name": "department_id", "in": "query", "schema": { "type": "integer" } }, { "name": "student_id", "in": "query", "schema": { "type": "integer" } }, { "name": "assignment_id", "in": "query", "schema": { "type": "integer" } }] } },
+    "/reports/non-compliance": { "get": { "tags": ["Reports"], "summary": "Non-compliance report" } },
+    "/audit-logs": { "get": { "tags": ["Audit"], "summary": "Read audit entries (ADMIN, DISCIPLINE_OFFICE)" } },
+    "/audit-logs/stats": { "get": { "tags": ["Audit"], "summary": "Audit action statistics" } }
+  }
+}

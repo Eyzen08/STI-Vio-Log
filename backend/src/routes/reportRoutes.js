@@ -3,9 +3,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/authMiddlew
 const {
   getViolationReport,
   getCommunityServiceReport,
-  getDTRReport,
   getNonComplianceReport
 } = require('../controllers/reportController');
+const { getDTRReport } = require('../controllers/communityServiceSessionReportController');
 
 const router = express.Router();
 

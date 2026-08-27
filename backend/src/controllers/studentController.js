@@ -1,24 +1,31 @@
 const pool = require("../config/database");
-const { isValidEmail, isValidPhone, sanitizeString } = require("../utils/validators");
+const { isValidEmail, isValidPhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
     try {
+        assertAllowedFields(req.query, ["page", "limit"]);
+        const { page, limit, offset } = parsePagination(req.query);
         const result = await pool.query(`
-            SELECT *
+            SELECT
+                id, student_number, first_name, middle_name, last_name,
+                suffix, email, phone_number, program, section, year_level,
+                qr_code, profile_image, created_at, updated_at
             FROM students
             ORDER BY last_name ASC, first_name ASC
-        `);
+            LIMIT $1 OFFSET $2
+        `, [limit, offset]);
 
         res.json({
             success: true,
-            students: result.rows
+            students: result.rows,
+            pagination: { page, limit, returned: result.rows.length }
         });
     } catch (error) {
         console.error("Get students error:", error);
 
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
-            message: "Failed to get students"
+            message: error.statusCode ? error.message : "Failed to get students"
         });
     }
 };
@@ -27,7 +34,11 @@ const getStudentById = async (req, res) => {
     try {
         const { id } = req.params;
         const result = await pool.query(
-            `SELECT * FROM students WHERE id = $1`,
+            `SELECT
+                id, student_number, first_name, middle_name, last_name,
+                suffix, email, phone_number, program, section, year_level,
+                qr_code, profile_image, created_at, updated_at
+             FROM students WHERE id = $1`,
             [id]
         );
 
@@ -54,6 +65,7 @@ const getStudentById = async (req, res) => {
 
 const createStudent = async (req, res) => {
     try {
+        assertAllowedFields(req.body, ["user_id", "student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
         const {
             user_id,
             student_number,
@@ -75,6 +87,10 @@ const createStudent = async (req, res) => {
                 success: false,
                 message: "user_id, student_number, first_name, last_name, and qr_code are required"
             });
+        }
+
+        if (!isPositiveId(user_id) || !isValidStudentNumber(student_number)) {
+            return res.status(400).json({ success: false, message: "user_id must be a positive ID and student_number must match 02000 followed by exactly 6 digits" });
         }
 
         if (email && !isValidEmail(email)) {
@@ -151,9 +167,9 @@ const createStudent = async (req, res) => {
     } catch (error) {
         console.error("Create student error:", error);
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message: "Failed to create student"
+            message: error.statusCode ? error.message : "Failed to create student"
         });
     }
 };
@@ -161,37 +177,24 @@ const createStudent = async (req, res) => {
 const updateStudent = async (req, res) => {
     try {
         const { id } = req.params;
-        const {
-            user_id,
-            student_number,
-            first_name,
-            middle_name,
-            last_name,
-            suffix,
-            email,
-            phone_number,
-            program,
-            section,
-            year_level,
-            qr_code,
-            profile_image
-        } = req.body;
+        const allowedFields = [
+            "student_number", "first_name", "middle_name", "last_name",
+            "suffix", "email", "phone_number", "program", "section",
+            "year_level", "qr_code", "profile_image"
+        ];
+        assertAllowedFields(req.body, allowedFields);
+        if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
+            return res.status(400).json({ success: false, message: "student_number must match 02000 followed by exactly 6 digits" });
+        }
+        const fields = [];
+        const values = [];
 
-        const fields = [
-            user_id !== undefined ? "user_id = $1" : null,
-            student_number !== undefined ? "student_number = $2" : null,
-            first_name !== undefined ? "first_name = $3" : null,
-            middle_name !== undefined ? "middle_name = $4" : null,
-            last_name !== undefined ? "last_name = $5" : null,
-            suffix !== undefined ? "suffix = $6" : null,
-            email !== undefined ? "email = $7" : null,
-            phone_number !== undefined ? "phone_number = $8" : null,
-            program !== undefined ? "program = $9" : null,
-            section !== undefined ? "section = $10" : null,
-            year_level !== undefined ? "year_level = $11" : null,
-            qr_code !== undefined ? "qr_code = $12" : null,
-            profile_image !== undefined ? "profile_image = $13" : null
-        ].filter(Boolean);
+        for (const field of allowedFields) {
+            if (req.body[field] !== undefined) {
+                values.push(req.body[field]);
+                fields.push(`${field} = $${values.length}`);
+            }
+        }
 
         if (fields.length === 0) {
             return res.status(400).json({
@@ -200,46 +203,16 @@ const updateStudent = async (req, res) => {
             });
         }
 
+        values.push(id);
+
         const result = await pool.query(
             `
                 UPDATE students
                 SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP
-                WHERE id = $${fields.length + 1}
+                WHERE id = $${values.length}
                 RETURNING *
             `,
-            [
-                user_id,
-                student_number,
-                first_name,
-                middle_name,
-                last_name,
-                suffix,
-                email,
-                phone_number,
-                program,
-                section,
-                year_level,
-                qr_code,
-                profile_image,
-                id
-            ].filter((value, index) => {
-                const valuePos = [
-                    user_id !== undefined,
-                    student_number !== undefined,
-                    first_name !== undefined,
-                    middle_name !== undefined,
-                    last_name !== undefined,
-                    suffix !== undefined,
-                    email !== undefined,
-                    phone_number !== undefined,
-                    program !== undefined,
-                    section !== undefined,
-                    year_level !== undefined,
-                    qr_code !== undefined,
-                    profile_image !== undefined
-                ];
-                return valuePos[index];
-            }).concat(id)
+            values
         );
 
         if (result.rows.length === 0) {
@@ -256,9 +229,9 @@ const updateStudent = async (req, res) => {
     } catch (error) {
         console.error("Update student error:", error);
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message: "Failed to update student"
+            message: error.statusCode ? error.message : "Failed to update student"
         });
     }
 };
@@ -291,6 +264,39 @@ const deleteStudent = async (req, res) => {
         });
     }
 };
+const getMyProfile = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT
+                id, student_number, first_name, middle_name, last_name,
+                suffix, email, program, section, year_level,
+                qr_code, profile_image
+             FROM students
+             WHERE user_id = $1
+             LIMIT 1`,
+            [req.user.id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No student profile is linked to this account"
+            });
+        }
+
+        return res.json({
+            success: true,
+            student: result.rows[0]
+        });
+    } catch (error) {
+        console.error("Get my student profile error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to get your student profile"
+        });
+    }
+};
+
 // =====================================================
 // GET LOGGED-IN STUDENT'S VIOLATIONS
 // =====================================================
@@ -403,5 +409,6 @@ module.exports = {
     createStudent,
     updateStudent,
     deleteStudent,
+    getMyProfile,
     getMyViolations
 };

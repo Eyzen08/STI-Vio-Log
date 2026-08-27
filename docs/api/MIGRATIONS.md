@@ -1,0 +1,32 @@
+# Database migrations
+
+Migrations live in `database/migrations`, use ordered numeric filenames, and are tracked in `schema_migrations`. The runner takes a PostgreSQL advisory lock, applies each pending file in its own transaction, records it only after success, stops at the first failure, and closes its connection. It never drops or wipes application data.
+
+## Commands
+
+From `backend`:
+
+```text
+npm run migrate:status
+npm run migrate
+npm test
+npm run test:migrations
+```
+
+`migrate:status` shows applied/pending files. A second `migrate` is idempotent.
+
+## Environment
+
+Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Configure `DB_SSL=disable`, `require`, or `no-verify` according to the provider. `JWT_SECRET` must be at least 32 characters. Never commit real secrets.
+
+## Deployment procedure
+
+1. Back up the production database and verify restoration procedures.
+2. Configure production environment variables.
+3. Run `npm run migrate:status`.
+4. Run `npm run migrate`; stop deployment if it fails.
+5. Start or restart the backend.
+6. Call `GET /api/health` and require HTTP 200 with database `connected`.
+7. Smoke-test login, a protected read, and the critical DTR flow.
+
+This procedure does not claim zero-downtime migration support. Disposable integration tests use guarded `sti_vio_log_test_*` schemas and never wipe the configured development schema.

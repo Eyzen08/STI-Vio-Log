@@ -15,6 +15,8 @@ const clearanceRoutes = require("./routes/clearanceRoutes");
 const studentClearanceRoutes = require("./routes/studentClearanceRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
+const pool = require("./config/database");
+const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
 const {
   authenticateToken,
@@ -179,6 +181,7 @@ app.use(
 );
 
 app.use(apiLimiter);
+app.use(normalizeErrorResponses);
 
 
 // =====================================================
@@ -400,20 +403,26 @@ app.get(
 
 app.get(
   "/api/health",
-  (req, res) => {
-    return res.json({
-      success: true,
-      message:
-        "Backend is healthy"
-    });
+  async (req, res) => {
+    try {
+      await pool.query("SELECT 1 AS healthy");
+      return res.json({ success: true, status: "ok", database: "connected" });
+    } catch (error) {
+      console.error("Health check database error:", error);
+      return res.status(503).json({ success: false, status: "degraded", database: "unavailable", error: { code: "DATABASE_UNAVAILABLE", message: "Database connectivity check failed" } });
+    }
   }
 );
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 
 // =====================================================
 // START SERVER
 // =====================================================
 
+if (require.main === module) {
 app.listen(
   PORT,
   "0.0.0.0",
@@ -426,3 +435,6 @@ app.listen(
     );
   }
 );
+}
+
+module.exports = app;
