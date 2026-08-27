@@ -568,6 +568,9 @@ test('DTR reports return exact worked and capped credited minutes with secure fi
   assert.equal((await request(`/api/reports/dtr?department_id=${departmentId + 100}`, { token: headToken })).status, 403);
   assert.equal((await request(`/api/reports/dtr?department_id=${departmentId}`, { token: headToken })).status, 200);
   assert.equal((await request(`/api/reports/dtr?department_id=${departmentId}`, { token: studentToken })).status, 403);
+  assert.equal((await request('/api/reports/non-compliance?sort_by=hours', { token: headToken })).status, 200);
+  assert.equal((await request('/api/reports/non-compliance?department_id=999', { token: headToken })).status, 400);
+  assert.equal((await request('/api/reports/non-compliance', { token: studentToken })).status, 403);
 
   const sessionDates = (await pool.query(
     `SELECT TO_CHAR(MIN(time_in) AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS first_date,

@@ -8,6 +8,17 @@
 /* Department DTR workspace */
 .department-students-page { display: grid; gap: 22px; }
 .department-service-page { display: grid; gap: 22px; }
+.department-noncompliance { display: grid; gap: 22px; }
+.noncompliance-toolbar { background: white; border: 1px solid #dfe7ef; border-radius: 16px; display: flex; justify-content: flex-end; padding: 16px 18px; }
+.noncompliance-toolbar label { color: #3e5068; display: grid; font-size: .82rem; font-weight: 700; gap: 7px; min-width: 230px; }
+.noncompliance-toolbar select { background: white; border: 1px solid #cbd7e3; border-radius: 9px; font: inherit; min-height: 42px; padding: 0 11px; }
+.noncompliance-list > article { align-items: center; border-bottom: 1px solid #e4eaf1; display: grid; gap: 20px; grid-template-columns: minmax(190px, 1fr) minmax(330px, 1.4fr); padding: 20px 22px; }
+.noncompliance-list > article:last-child { border-bottom: 0; }
+.noncompliance-list h4 { color: #13263f; margin: 0 0 5px; }
+.noncompliance-list article > div > span { color: #697a90; font-size: .84rem; }
+.noncompliance-list dl { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); margin: 0; }
+.noncompliance-list dt { color: #748399; font-size: .72rem; text-transform: uppercase; }
+.noncompliance-list dd { color: #1b3049; font-weight: 750; margin: 4px 0 0; }
 .service-assignment-list > article { border-bottom: 1px solid #e4eaf1; padding: 20px 22px; }
 .service-assignment-list > article:last-child { border-bottom: 0; }
 .service-assignment-heading { align-items: start; display: flex; gap: 16px; justify-content: space-between; }
@@ -44,6 +55,10 @@
 .table-subtext { color: #6b7b90; display: block; font-weight: 400; margin-top: 4px; }
 
 @media (max-width: 767px) {
+  .noncompliance-toolbar { justify-content: stretch; }
+  .noncompliance-toolbar label { width: 100%; }
+  .noncompliance-list > article { align-items: start; grid-template-columns: 1fr; }
+  .noncompliance-list dl { grid-template-columns: 1fr; }
   .student-roster-tools { grid-template-columns: 1fr; }
   .student-roster-heading { align-items: start; grid-template-columns: auto 1fr; }
   .student-roster-heading > .status-badge { grid-column: 2; justify-self: start; }

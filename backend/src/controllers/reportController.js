@@ -1,4 +1,5 @@
 const pool = require('../config/database');
+const { assertAllowedFields } = require('../utils/validators');
 
 // Violation Report
 const getViolationReport = async (req, res) => {
@@ -142,7 +143,12 @@ const getCommunityServiceReport = async (req, res) => {
 // Non-Compliance Report
 const getNonComplianceReport = async (req, res) => {
   try {
+    assertAllowedFields(req.query, ['sort_by']);
     const { sort_by } = req.query;
+    if (sort_by && !['date', 'hours', 'violations'].includes(sort_by)) {
+      return res.status(400).json({ success: false, message: 'sort_by must be date, hours, or violations' });
+    }
+    const departmentScoped = req.user.role === 'DEPARTMENT_HEAD';
 
     const query = `
       SELECT 
@@ -157,12 +163,20 @@ const getNonComplianceReport = async (req, res) => {
         MAX(v.incident_date) as last_violation_date
       FROM students s
       LEFT JOIN violations v ON s.id = v.student_id
+      ${departmentScoped ? `WHERE EXISTS (
+        SELECT 1
+        FROM community_service_assignments scoped_assignment
+        JOIN community_service_sessions scoped_session
+          ON scoped_session.assignment_id = scoped_assignment.id
+        WHERE scoped_assignment.student_id = s.id
+          AND scoped_session.department_id = $1
+      )` : ''}
       GROUP BY s.id, s.first_name, s.last_name, s.student_number, s.program, s.year_level
       HAVING COUNT(DISTINCT CASE WHEN v.status = 'OPEN' THEN v.id END) > 0
       ORDER BY ${sort_by === 'hours' ? 'pending_hours DESC' : sort_by === 'violations' ? 'open_violations DESC' : 'last_violation_date DESC'}
     `;
 
-    const result = await pool.query(query);
+    const result = await pool.query(query, departmentScoped ? [req.user.department_id] : []);
 
     return res.json({
       success: true,
@@ -173,9 +187,9 @@ const getNonComplianceReport = async (req, res) => {
     });
   } catch (error) {
     console.error('Non-compliance report error:', error);
-    return res.status(500).json({
+    return res.status(error.statusCode || 500).json({
       success: false,
-      message: 'Failed to generate non-compliance report'
+      message: error.statusCode ? error.message : 'Failed to generate non-compliance report'
     });
   }
 };

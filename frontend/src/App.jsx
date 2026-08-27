@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
 import DepartmentCommunityService from './components/DepartmentCommunityService.jsx'
 import DepartmentDtr from './components/DepartmentDtr.jsx'
+import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
@@ -16,6 +17,7 @@ import StudentViolations from './components/StudentViolations.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
+import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -52,6 +54,10 @@ function App() {
   const [departmentDtr, setDepartmentDtr] = useState(null)
   const [departmentDtrLoading, setDepartmentDtrLoading] = useState(false)
   const [departmentDtrError, setDepartmentDtrError] = useState('')
+  const [departmentNonCompliance, setDepartmentNonCompliance] = useState(null)
+  const [departmentNonComplianceLoading, setDepartmentNonComplianceLoading] = useState(false)
+  const [departmentNonComplianceError, setDepartmentNonComplianceError] = useState('')
+  const [departmentNonComplianceSort, setDepartmentNonComplianceSort] = useState('date')
   const [studentDtr, setStudentDtr] = useState(null)
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
@@ -365,22 +371,25 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const [dtrResponse, assignmentsResponse] = await Promise.all([
+          const [dtrResponse, assignmentsResponse, nonComplianceResponse] = await Promise.all([
             fetch(`${API_URL}/api/reports/dtr`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders })
+            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/reports/non-compliance?sort_by=date`, { headers: authHeaders })
           ])
-          const [dtrData, assignmentsData] = await Promise.all([
+          const [dtrData, assignmentsData, nonComplianceData] = await Promise.all([
             dtrResponse.json().catch(() => ({})),
-            assignmentsResponse.json().catch(() => ({}))
+            assignmentsResponse.json().catch(() => ({})),
+            nonComplianceResponse.json().catch(() => ({}))
           ])
 
-          if (!dtrResponse.ok || !assignmentsResponse.ok) throw new Error(dtrData.message || assignmentsData.message || 'Unable to load department activity')
+          if (!dtrResponse.ok || !assignmentsResponse.ok || !nonComplianceResponse.ok) throw new Error(dtrData.message || assignmentsData.message || nonComplianceData.message || 'Unable to load department activity')
 
           setStudents([])
           setViolations([])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
           setClearanceRecords([])
           setDepartmentDtr(dtrData)
+          setDepartmentNonCompliance(nonComplianceData)
 
           return
         }
@@ -487,6 +496,23 @@ function App() {
       setDepartmentDtrError(dtrError.message || 'Unable to load department DTR')
     } finally {
       setDepartmentDtrLoading(false)
+    }
+  }
+
+  const loadDepartmentNonCompliance = async (sortBy) => {
+    setDepartmentNonComplianceSort(sortBy)
+    setDepartmentNonComplianceLoading(true)
+    setDepartmentNonComplianceError('')
+    try {
+      const query = nonComplianceSortQuery(sortBy)
+      const response = await fetch(`${API_URL}/api/reports/non-compliance${query ? `?${query}` : ''}`, { headers: { Authorization: `Bearer ${token}` } })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to load non-compliance report')
+      setDepartmentNonCompliance(data)
+    } catch (reportError) {
+      setDepartmentNonComplianceError(reportError.message || 'Unable to load non-compliance report')
+    } finally {
+      setDepartmentNonComplianceLoading(false)
     }
   }
 
@@ -1934,6 +1960,10 @@ function App() {
           onOpenScanner={() => navigateTo('/department/qr-scan')}
         />
       )
+    }
+
+    if (isDepartmentHead && activeView === 'Non-Compliance') {
+      return <DepartmentNonCompliance report={departmentNonCompliance} loading={dashboardLoading || departmentNonComplianceLoading} error={departmentNonComplianceError || dashboardError} sortBy={departmentNonComplianceSort} onSort={loadDepartmentNonCompliance} />
     }
 
     /*

@@ -13,6 +13,6 @@ const router = express.Router();
 router.get('/violations', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getViolationReport);
 router.get('/community-service', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getCommunityServiceReport);
 router.get('/dtr', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD'), getDTRReport);
-router.get('/non-compliance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getNonComplianceReport);
+router.get('/non-compliance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD'), getNonComplianceReport);
 
 module.exports = router;
