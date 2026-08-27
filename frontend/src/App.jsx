@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
+import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
@@ -1610,6 +1611,16 @@ function App() {
      */
 
     if (isStudent) {
+      if (activeView === 'My QR') {
+        return (
+          <StudentQr
+            profile={studentProfile}
+            loading={dashboardLoading}
+            error={dashboardError}
+          />
+        )
+      }
+
       /*
        * --------------------------------------------------------
        * MY PROFILE

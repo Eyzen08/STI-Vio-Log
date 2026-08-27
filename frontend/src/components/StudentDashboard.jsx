@@ -98,6 +98,9 @@ function StudentDashboard({
             </div>
           </div>
           <div className="quick-actions">
+            <button type="button" onClick={() => onNavigate('/student/qr')}>
+              <strong>My QR code</strong><span>Open attendance code</span>
+            </button>
             <button type="button" onClick={() => onNavigate('/student/profile')}>
               <strong>My profile</strong><span>Review student information</span>
             </button>

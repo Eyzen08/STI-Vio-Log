@@ -1129,6 +1129,106 @@ th {
 .violations-heading-skeleton { width: 100%; height: 145px; }
 .violation-card-skeleton { height: 110px; }
 
+.student-qr-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.qr-page-intro { align-items: center; }
+
+.qr-display-card {
+  width: min(560px, 100%);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid #dfe7f1;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 22px 50px rgba(18, 32, 51, 0.1);
+  text-align: center;
+}
+
+.qr-student-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 22px;
+  color: #13263f;
+  font-size: 1.08rem;
+}
+
+.qr-student-summary span {
+  color: #60708a;
+  font-size: 0.84rem;
+}
+
+.student-qr-frame {
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  margin: 0 auto;
+  padding: 14px;
+  border: 1px solid #e1e7ef;
+  border-radius: 18px;
+  background: white;
+}
+
+.student-qr-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.qr-security-note {
+  max-width: 430px;
+  margin: 20px auto;
+  color: #60708a;
+  font-size: 0.84rem;
+}
+
+.qr-download-button {
+  display: inline-flex;
+  justify-content: center;
+  padding: 11px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #1d6ef2, #4cb5ff);
+  color: white;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.qr-download-button:focus-visible {
+  outline: 3px solid rgba(29, 110, 242, 0.25);
+  outline-offset: 3px;
+}
+
+.qr-guidance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.qr-guidance > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 17px;
+  border: 1px solid #e3eaf4;
+  border-radius: 13px;
+  background: #f9fbfe;
+}
+
+.qr-guidance strong { color: #13263f; }
+.qr-guidance span { color: #60708a; font-size: 0.84rem; }
+
+.qr-unavailable { padding: 32px 10px; }
+.qr-unavailable h3 { margin: 0 0 8px; color: #13263f; }
+.qr-unavailable p { margin: 0; color: #60708a; }
+.qr-page-heading-skeleton { width: 100%; height: 145px; }
+.qr-code-skeleton { width: min(330px, 100%); aspect-ratio: 1; margin: 0 auto; }
+
 .info-note {
   background: #f0f7ff;
   border-left: 4px solid #1d6ef2;
@@ -1517,6 +1617,14 @@ th {
 
   .service-hours-grid {
     grid-template-columns: 1fr;
+  }
+
+  .qr-guidance {
+    grid-template-columns: 1fr;
+  }
+
+  .qr-display-card {
+    border-radius: 18px;
   }
 
   .stat-card {

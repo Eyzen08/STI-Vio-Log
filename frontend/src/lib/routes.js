@@ -17,6 +17,7 @@ export const APP_ROUTES = [
   { path: '/department/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
+  { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },
   { path: '/student/violations', label: 'My Violations', view: 'My Violations', roles: ROLE_GROUPS.student },
   { path: '/student/clearance', label: 'My Clearance', view: 'My Clearance', roles: ROLE_GROUPS.student }
 ]
