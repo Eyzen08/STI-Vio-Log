@@ -317,10 +317,17 @@ test('service attendance completes assignment, violation, clearance, history, an
   const blockedClearance = await pool.query('SELECT status FROM student_clearance WHERE student_id = $1', [studentId]);
   assert.equal(blockedClearance.rows[0].status, 'NOT_ELIGIBLE');
 
-  const timeIn = await request('/api/qr/time-in', {
+  const spoofedTimeIn = await request('/api/qr/time-in', {
     token: headToken,
     method: 'POST',
     body: { qr_code: 'QR-TEST', department_id: 999, scanned_by: 999 }
+  });
+  assert.equal(spoofedTimeIn.status, 400);
+
+  const timeIn = await request('/api/qr/time-in', {
+    token: headToken,
+    method: 'POST',
+    body: { qr_code: 'QR-TEST' }
   });
   assert.equal(timeIn.status, 201);
   assert.equal(Number(timeIn.body.attendance.scanned_by), Number((await pool.query("SELECT id FROM users WHERE username = 'head_test'")).rows[0].id));
@@ -334,7 +341,7 @@ test('service attendance completes assignment, violation, clearance, history, an
   const timeOut = await request('/api/qr/time-out', {
     token: headToken,
     method: 'POST',
-    body: { qr_code: 'QR-TEST', department_id: 999, scanned_by: 999 }
+    body: { qr_code: 'QR-TEST' }
   });
   assert.equal(timeOut.status, 201);
   assert.equal(timeOut.body.assignment.status, 'COMPLETED');

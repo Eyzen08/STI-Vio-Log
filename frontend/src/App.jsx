@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
+import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
@@ -106,6 +107,8 @@ function App() {
 
   const [qrError, setQrError] = useState('')
   const [qrResult, setQrResult] = useState(null)
+  const [verifiedQr, setVerifiedQr] = useState('')
+  const [qrSubmitting, setQrSubmitting] = useState(false)
 
   const [clearanceRecords, setClearanceRecords] = useState([])
 
@@ -922,14 +925,9 @@ function App() {
             qr_code: decodedText.trim()
           }))
 
-          setQrResult({
-            action: 'scan',
-            message:
-              `QR code detected: ${decodedText}`,
-            student: null,
-            studentId: null,
-            notes: null
-          })
+          setVerifiedQr('')
+          setQrResult(null)
+          setQrError('QR detected. Verify the student before recording attendance.')
 
           stopQrScanner(scanner)
         },
@@ -1032,48 +1030,43 @@ function App() {
           ? Number(value) || ''
           : value
     }))
+
+    if (name === 'qr_code') {
+      setVerifiedQr('')
+      setQrResult(null)
+      setQrError('')
+    }
   }
 
   const handleQrAction = async (action) => {
     setQrError('')
-    setQrResult(null)
+    setQrSubmitting(true)
 
     try {
       if (!qrForm.qr_code.trim()) {
-        throw new Error(
-          'QR code is required.'
-        )
+        throw new Error('QR code is required.')
       }
 
-      const response =
-        await fetch(
-          `${API_URL}/api/qr/${action}`,
-          {
-            method: 'POST',
+      if (isDepartmentHead && action !== 'scan' && qrForm.qr_code.trim() !== verifiedQr) {
+        throw new Error('Verify the student before recording attendance.')
+      }
 
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
+      const response = await fetch(`${API_URL}/api/qr/${action}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          qr_code: qrForm.qr_code.trim(),
+          ...(isDepartmentHead ? {} : {
+            department_id: Number(qrForm.department_id)
+          }),
+          notes: qrForm.notes.trim()
+        })
+      })
 
-            body: JSON.stringify({
-              qr_code:
-                qrForm.qr_code.trim(),
-
-              scanned_by:
-                Number(qrForm.scanned_by),
-
-              department_id:
-                Number(qrForm.department_id),
-
-              notes:
-                qrForm.notes.trim()
-            })
-          }
-        )
-
-      const data =
-        await response.json()
+      const data = await response.json()
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -1087,12 +1080,15 @@ function App() {
         message: data.message,
         student: data.student || null,
         studentId: data.studentId || null,
-        notes: data.notes || null
+        notes: data.notes || null,
+        assignment: data.assignment || qrResult?.assignment || null,
+        session: data.session || null
       })
+      setVerifiedQr(qrForm.qr_code.trim())
     } catch (qrErrorObject) {
-      setQrError(
-        qrErrorObject.message
-      )
+      setQrError(qrErrorObject.message)
+    } finally {
+      setQrSubmitting(false)
     }
   }
 
@@ -2776,6 +2772,23 @@ function App() {
     if (
       activeView === 'QR Scan'
     ) {
+      if (isDepartmentHead) {
+        return (
+          <DepartmentQrScanner
+            form={qrForm}
+            result={qrResult}
+            error={qrError}
+            verifiedQr={verifiedQr}
+            isScanning={isQrScanning}
+            isSubmitting={qrSubmitting}
+            onFieldChange={handleQrFieldChange}
+            onStartCamera={startQrScanner}
+            onStopCamera={() => stopQrScanner()}
+            onAction={handleQrAction}
+          />
+        )
+      }
+
       return (
         <section className="table-card qr-panel">
           <div className="table-header">
@@ -3856,9 +3869,10 @@ function App() {
                     ? 'active'
                     : ''
                 }`}
-                onClick={() =>
+                onClick={() => {
+                  if (isQrScanning && item.view !== 'QR Scan') stopQrScanner()
                   navigateTo(item.path)
-                }
+                }}
                 type="button"
                 aria-current={routePath === item.path ? 'page' : undefined}
               >
