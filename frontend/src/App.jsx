@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
+import StudentDashboard from './components/StudentDashboard.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
@@ -34,6 +35,9 @@ function App() {
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
   const [dashboardLoading, setDashboardLoading] = useState(false)
+  const [dashboardError, setDashboardError] = useState('')
+  const [studentProfile, setStudentProfile] = useState(null)
+  const [clearanceEligibility, setClearanceEligibility] = useState(null)
 
   const [studentForm, setStudentForm] = useState({
     user_id: 1,
@@ -245,11 +249,15 @@ function App() {
       setViolations([])
       setCommunityServiceAssignments([])
       setClearanceRecords([])
+      setStudentProfile(null)
+      setClearanceEligibility(null)
+      setDashboardError('')
       return
     }
 
     const loadDashboardData = async () => {
       setDashboardLoading(true)
+      setDashboardError('')
 
       try {
         const authHeaders = {
@@ -377,69 +385,28 @@ function App() {
 
         if (isStudent) {
           setStudents([])
-          setCommunityServiceAssignments([])
 
-          /*
-           * Load logged-in student's own violations
-           */
+          const responses = await Promise.all([
+            fetch(`${API_URL}/api/students/me`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/students/me/violations`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/students/me/community-service`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/student/clearance`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/student/clearance/eligibility`, { headers: authHeaders })
+          ])
 
-          const violationsResponse =
-            await fetch(
-              `${API_URL}/api/students/me/violations`,
-              {
-                headers: authHeaders
-              }
-            )
+          const payloads = await Promise.all(responses.map((response) => response.json().catch(() => ({}))))
+          const failedIndex = responses.findIndex((response) => !response.ok)
 
-          if (!violationsResponse.ok) {
-            const errorData =
-              await violationsResponse
-                .json()
-                .catch(() => ({}))
-
-            throw new Error(
-              errorData.message ||
-              'Unable to load your violations'
-            )
+          if (failedIndex !== -1) {
+            throw new Error(payloads[failedIndex].message || 'Unable to load your dashboard')
           }
 
-          const violationsData =
-            await violationsResponse.json()
-
-          setViolations(
-            violationsData.violations || []
-          )
-
-          /*
-           * Load logged-in student's own clearance
-           */
-
-          const clearanceResponse =
-            await fetch(
-              `${API_URL}/api/student/clearance`,
-              {
-                headers: authHeaders
-              }
-            )
-
-          if (!clearanceResponse.ok) {
-            const errorData =
-              await clearanceResponse
-                .json()
-                .catch(() => ({}))
-
-            throw new Error(
-              errorData.message ||
-              'Unable to load your clearance records'
-            )
-          }
-
-          const clearanceData =
-            await clearanceResponse.json()
-
-          setClearanceRecords(
-            clearanceData.clearanceRecords || []
-          )
+          const [profileData, violationsData, assignmentsData, clearanceData, eligibilityData] = payloads
+          setStudentProfile(profileData.student || null)
+          setViolations(violationsData.violations || [])
+          setCommunityServiceAssignments(assignmentsData.assignments || [])
+          setClearanceRecords(clearanceData.clearanceRecords || [])
+          setClearanceEligibility(eligibilityData)
 
           return
         }
@@ -453,6 +420,9 @@ function App() {
         setViolations([])
         setCommunityServiceAssignments([])
         setClearanceRecords([])
+        setStudentProfile(null)
+        setClearanceEligibility(null)
+        setDashboardError(fetchError.message || 'Unable to load dashboard data')
       } finally {
         setDashboardLoading(false)
       }
@@ -1926,61 +1896,16 @@ function App() {
        */
 
       return (
-        <>
-          <section className="stats-grid">
-            <article className="stat-card">
-              <span>
-                Status
-              </span>
-
-              <strong>
-                {violations.length === 0
-                  ? 'Good Standing'
-                  : 'Pending'}
-              </strong>
-            </article>
-
-            <article className="stat-card">
-              <span>
-                Active Violations
-              </span>
-
-              <strong>
-                {openViolationsCount}
-              </strong>
-            </article>
-
-            <article className="stat-card">
-              <span>
-                Clearance Records
-              </span>
-
-              <strong>
-                {clearanceRecords.length}
-              </strong>
-            </article>
-          </section>
-
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Account Information
-              </h3>
-            </div>
-
-            <p
-              style={{
-                margin: 0,
-                color: '#32415d'
-              }}
-            >
-              Use the navigation menu to
-              view your violations,
-              clearance status, and profile
-              information.
-            </p>
-          </section>
-        </>
+        <StudentDashboard
+          profile={studentProfile}
+          violations={violations}
+          assignments={communityServiceAssignments}
+          clearanceRecords={clearanceRecords}
+          eligibility={clearanceEligibility}
+          loading={dashboardLoading}
+          error={dashboardError}
+          onNavigate={navigateTo}
+        />
       )
     }
 
