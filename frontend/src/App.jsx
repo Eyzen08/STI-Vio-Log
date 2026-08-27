@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
+import DepartmentDashboard from './components/DepartmentDashboard.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
@@ -41,6 +42,7 @@ function App() {
   const [dashboardError, setDashboardError] = useState('')
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
+  const [departmentDtr, setDepartmentDtr] = useState(null)
 
   const [studentForm, setStudentForm] = useState({
     user_id: 1,
@@ -255,6 +257,7 @@ function App() {
       setStudentProfile(null)
       setClearanceEligibility(null)
       setDashboardError('')
+      setDepartmentDtr(null)
       return
     }
 
@@ -346,36 +349,16 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const clearanceResponse =
-            await fetch(
-              `${API_URL}/api/clearance`,
-              {
-                headers: authHeaders
-              }
-            )
+          const dtrResponse = await fetch(`${API_URL}/api/reports/dtr`, { headers: authHeaders })
+          const dtrData = await dtrResponse.json().catch(() => ({}))
 
-          if (!clearanceResponse.ok) {
-            const errorData =
-              await clearanceResponse
-                .json()
-                .catch(() => ({}))
-
-            throw new Error(
-              errorData.message ||
-              'Unable to load clearance records'
-            )
-          }
-
-          const clearanceData =
-            await clearanceResponse.json()
+          if (!dtrResponse.ok) throw new Error(dtrData.message || 'Unable to load department activity')
 
           setStudents([])
           setViolations([])
           setCommunityServiceAssignments([])
-
-          setClearanceRecords(
-            clearanceData.clearanceRecords || []
-          )
+          setClearanceRecords([])
+          setDepartmentDtr(dtrData)
 
           return
         }
@@ -426,6 +409,7 @@ function App() {
         setStudentProfile(null)
         setClearanceEligibility(null)
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
+        setDepartmentDtr(null)
       } finally {
         setDashboardLoading(false)
       }
@@ -1833,52 +1817,12 @@ function App() {
       activeView === 'Dashboard'
     ) {
       return (
-        <>
-          <section className="stats-grid">
-            <article className="stat-card">
-              <span>
-                Role
-              </span>
-
-              <strong>
-                Department Head
-              </strong>
-            </article>
-
-            <article className="stat-card">
-              <span>
-                QR Scanner
-              </span>
-
-              <strong>
-                Ready
-              </strong>
-            </article>
-          </section>
-
-          <section className="table-card qr-panel">
-            <div className="table-header">
-              <h3>
-                QR Scanner Status
-              </h3>
-
-              <span>
-                Time tracking
-              </span>
-            </div>
-
-            <p
-              style={{
-                margin: 0,
-                color: '#32415d'
-              }}
-            >
-              Use the QR Scan menu item to
-              scan student QR codes and
-              record time-in/time-out.
-            </p>
-          </section>
-        </>
+        <DepartmentDashboard
+          report={departmentDtr}
+          loading={dashboardLoading}
+          error={dashboardError}
+          onOpenScanner={() => navigateTo('/department/qr-scan')}
+        />
       )
     }
 
