@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import LoginPage from './components/LoginPage.jsx'
+import { API_URL, login } from './lib/api.js'
+import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const getNavItems = (role) => {
   if (!role) return []
@@ -47,6 +48,7 @@ const getNavItems = (role) => {
 }
 
 function App() {
+  const [initialSession] = useState(loadSession)
   const [qrScanner, setQrScanner] = useState(null)
   const [isQrScanning, setIsQrScanning] = useState(false)
 
@@ -65,20 +67,8 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
 
-  const [token, setToken] = useState(
-    () => localStorage.getItem('sti_vio_log_token') || ''
-  )
-
-  const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem('sti_vio_log_user')
-
-    try {
-      return storedUser ? JSON.parse(storedUser) : null
-    } catch {
-      localStorage.removeItem('sti_vio_log_user')
-      return null
-    }
-  })
+  const [token, setToken] = useState(initialSession.token)
+  const [user, setUser] = useState(initialSession.user)
 
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
@@ -979,11 +969,6 @@ function App() {
         },
 
         (decodedText) => {
-          console.log(
-            'QR DETECTED:',
-            decodedText
-          )
-
           setQrForm((current) => ({
             ...current,
             qr_code: decodedText.trim()
@@ -1388,51 +1373,17 @@ function App() {
         )
       }
 
-      const response =
-        await fetch(
-          `${API_URL}/api/login`,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
-
-            body: JSON.stringify({
-              username:
-                form.username.trim(),
-
-              password:
-                form.password
-            })
-          }
-        )
-
-      const data =
-        await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.message ||
-          'Login failed'
-        )
-      }
+      const data = await login({
+        username: form.username.trim(),
+        password: form.password
+      })
 
       /*
        * Store ONLY the authentication session.
        * Username/password are NOT stored.
        */
 
-      localStorage.setItem(
-        'sti_vio_log_token',
-        data.token
-      )
-
-      localStorage.setItem(
-        'sti_vio_log_user',
-        JSON.stringify(data.user)
-      )
+      saveSession(data)
 
       setToken(data.token)
       setUser(data.user)
@@ -1451,13 +1402,7 @@ function App() {
         loginError.message
       )
 
-      localStorage.removeItem(
-        'sti_vio_log_token'
-      )
-
-      localStorage.removeItem(
-        'sti_vio_log_user'
-      )
+      clearSession()
 
       setToken('')
       setUser(null)
@@ -1473,13 +1418,7 @@ function App() {
    */
 
   const handleLogout = () => {
-    localStorage.removeItem(
-      'sti_vio_log_token'
-    )
-
-    localStorage.removeItem(
-      'sti_vio_log_user'
-    )
+    clearSession()
 
     setToken('')
     setUser(null)
@@ -1681,78 +1620,13 @@ function App() {
 
     if (!isLoggedIn) {
       return (
-        <section className="login-card">
-          <div className="card-header">
-            <span className="badge">
-              Secure access
-            </span>
-
-            <h3>
-              Sign in
-            </h3>
-          </div>
-
-          <form
-            className="login-form"
-            onSubmit={handleSubmit}
-            autoComplete="off"
-          >
-            <label>
-              Username
-
-              <input
-                type="text"
-                name="username"
-                placeholder="Enter your username"
-                value={form.username}
-                onChange={handleChange}
-
-                /*
-                 * Prevent application/browser autofill
-                 * as much as possible.
-                 */
-
-                autoComplete="off"
-                autoCapitalize="none"
-                spellCheck="false"
-              />
-            </label>
-
-            <label>
-              Password
-
-              <input
-                type="password"
-                name="password"
-                placeholder="Enter your password"
-                value={form.password}
-                onChange={handleChange}
-
-                /*
-                 * new-password discourages Chrome
-                 * from inserting a saved password.
-                 */
-
-                autoComplete="new-password"
-              />
-            </label>
-
-            {error && (
-              <p className="error-message">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting
-                ? 'Signing in...'
-                : 'Login'}
-            </button>
-          </form>
-        </section>
+        <LoginPage
+          form={form}
+          error={error}
+          isSubmitting={isSubmitting}
+          onChange={handleChange}
+          onSubmit={handleSubmit}
+        />
       )
     }
 
@@ -4171,8 +4045,8 @@ function App() {
    */
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}`}>
+      {isLoggedIn && <aside className="sidebar">
         <div className="brand">
           <div className="brand-mark">
             S
@@ -4209,10 +4083,10 @@ function App() {
             )
           )}
         </nav>
-      </aside>
+      </aside>}
 
       <main className="main-panel">
-        <header className="topbar">
+        {isLoggedIn && <header className="topbar">
           <div>
             <p className="eyebrow">
               {isStudent
@@ -4237,7 +4111,7 @@ function App() {
               Logout
             </button>
           )}
-        </header>
+        </header>}
 
         {renderContent()}
       </main>

@@ -1,0 +1,42 @@
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+export class ApiError extends Error {
+  constructor(message, { status = 0, code = 'REQUEST_FAILED' } = {}) {
+    super(message)
+    this.name = 'ApiError'
+    this.status = status
+    this.code = code
+  }
+}
+
+const readJson = async (response) => {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (!contentType.includes('application/json')) return null
+
+  return response.json().catch(() => null)
+}
+
+export const apiRequest = async (path, options = {}) => {
+  const response = await fetch(`${API_URL}${path}`, options)
+  const data = await readJson(response)
+
+  if (!response.ok || data?.success === false) {
+    throw new ApiError(
+      data?.error?.message || data?.message || 'The request could not be completed.',
+      {
+        status: response.status,
+        code: data?.error?.code || 'REQUEST_FAILED'
+      }
+    )
+  }
+
+  return data
+}
+
+export const login = (credentials) =>
+  apiRequest('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(credentials)
+  })
