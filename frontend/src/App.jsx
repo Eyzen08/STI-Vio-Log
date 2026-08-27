@@ -5,6 +5,7 @@ import DepartmentDashboard from './components/DepartmentDashboard.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
+import StudentCommunityService from './components/StudentCommunityService.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
@@ -44,6 +45,9 @@ function App() {
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
   const [departmentDtr, setDepartmentDtr] = useState(null)
+  const [studentDtr, setStudentDtr] = useState(null)
+  const [studentDtrLoading, setStudentDtrLoading] = useState(false)
+  const [studentDtrError, setStudentDtrError] = useState('')
 
   const [studentForm, setStudentForm] = useState({
     user_id: 1,
@@ -261,6 +265,8 @@ function App() {
       setClearanceEligibility(null)
       setDashboardError('')
       setDepartmentDtr(null)
+      setStudentDtr(null)
+      setStudentDtrError('')
       return
     }
 
@@ -379,6 +385,7 @@ function App() {
             fetch(`${API_URL}/api/students/me`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/violations`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/community-service`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance/eligibility`, { headers: authHeaders })
           ])
@@ -390,10 +397,11 @@ function App() {
             throw new Error(payloads[failedIndex].message || 'Unable to load your dashboard')
           }
 
-          const [profileData, violationsData, assignmentsData, clearanceData, eligibilityData] = payloads
+          const [profileData, violationsData, assignmentsData, dtrData, clearanceData, eligibilityData] = payloads
           setStudentProfile(profileData.student || null)
           setViolations(violationsData.violations || [])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
+          setStudentDtr(dtrData)
           setClearanceRecords(clearanceData.clearanceRecords || [])
           setClearanceEligibility(eligibilityData)
 
@@ -413,6 +421,7 @@ function App() {
         setClearanceEligibility(null)
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
         setDepartmentDtr(null)
+        setStudentDtr(null)
       } finally {
         setDashboardLoading(false)
       }
@@ -428,6 +437,27 @@ function App() {
     isStudent,
     user
   ])
+
+  const loadStudentDtr = async ({ from = '', to = '' } = {}) => {
+    setStudentDtrLoading(true)
+    setStudentDtrError('')
+    try {
+      const query = new URLSearchParams()
+      if (from) query.set('from', from)
+      if (to) query.set('to', to)
+      const suffix = query.size ? `?${query}` : ''
+      const response = await fetch(`${API_URL}/api/students/me/community-service/dtr${suffix}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to load your DTR')
+      setStudentDtr(data)
+    } catch (dtrError) {
+      setStudentDtrError(dtrError.message || 'Unable to load your DTR')
+    } finally {
+      setStudentDtrLoading(false)
+    }
+  }
 
   /*
    * ============================================================
@@ -1591,6 +1621,17 @@ function App() {
      */
 
     if (isStudent) {
+      if (activeView === 'My Service') {
+        return (
+          <StudentCommunityService
+            dtr={studentDtr}
+            loading={dashboardLoading || studentDtrLoading}
+            error={studentDtrError || dashboardError}
+            onFilter={loadStudentDtr}
+          />
+        )
+      }
+
       if (activeView === 'My QR') {
         return (
           <StudentQr

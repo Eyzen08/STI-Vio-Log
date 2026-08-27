@@ -9,7 +9,7 @@ test('each supported role receives its own dashboard and navigation', () => {
   assert.equal(getHomePath('DEPARTMENT_HEAD'), '/department/dashboard')
   assert.equal(getHomePath('STUDENT'), '/student/dashboard')
   assert.deepEqual(getNavItems('STUDENT').map(({ label }) => label), [
-    'Dashboard', 'My Profile', 'My QR', 'My Violations', 'My Clearance'
+    'Dashboard', 'My Profile', 'My QR', 'My Violations', 'My Service', 'My Clearance'
   ])
   assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'QR Scan'])
 })
