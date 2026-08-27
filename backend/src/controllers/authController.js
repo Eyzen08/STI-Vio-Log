@@ -1,22 +1,6 @@
-const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const pool = require("../config/database");
-
-const getJwtSecret = () => {
-    const secret = process.env.JWT_SECRET;
-    const insecureDefaults = [
-        "sti-vio-log-dev-secret-change-me",
-        "change-this-to-a-long-random-secret"
-    ];
-
-    if (!secret || insecureDefaults.includes(secret) || secret.length < 32) {
-        const error = new Error("JWT_SECRET is not configured securely. Set a strong environment secret before launch.");
-        error.statusCode = 500;
-        throw error;
-    }
-
-    return secret;
-};
+const { getJwtSecret, issueSessionToken } = require("../services/sessionTokenService");
 
 const loginUser = async (req, res) => {
     try {
@@ -52,15 +36,7 @@ const loginUser = async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
-            {
-                id: user.id,
-                username: user.username,
-                role: user.role
-            },
-            jwtSecret,
-            { expiresIn: "8h" }
-        );
+        const token = issueSessionToken(user, { env: { JWT_SECRET: jwtSecret } });
 
         return res.json({
             success: true,

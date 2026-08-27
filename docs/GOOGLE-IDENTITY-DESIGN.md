@@ -76,7 +76,7 @@ Self-service unlinking and relinking are intentionally excluded. Recovery requir
 
 1. [x] Migration and migration/concurrency tests.
 2. [x] Isolated Google token-verification adapter with mocked unit tests.
-3. Transactional link/login service and audit events.
+3. [x] Transactional link/login service and audit events.
 4. Public routes with rate limiting and stable error envelopes.
 5. Google Identity Services frontend and account-linking form.
 6. Full backend/frontend/integration verification before enabling configuration.

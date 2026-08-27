@@ -5,6 +5,7 @@ const os = require("node:os");
 const path = require("node:path");
 const { Pool } = require("pg");
 const { runMigrations, migrationStatus } = require("../scripts/migrate");
+const { createGoogleIdentityService } = require("../src/services/googleIdentityService");
 
 require("dotenv").config({ quiet: true });
 
@@ -52,6 +53,27 @@ test("fresh migration chain is complete and idempotent", async () => {
             (error) => error.code === "23505"
         );
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM google_identity_links")).rows[0].count, 1);
+
+        const serviceUser = (await pool.query(
+            "INSERT INTO users (username, password_hash, role) VALUES ('linked_service_student', $1, 'STUDENT') RETURNING id",
+            [passwordHash]
+        )).rows[0];
+        await pool.query(
+            `INSERT INTO students (user_id, student_number, first_name, last_name, qr_code)
+             VALUES ($1, '02000999999', 'María Ana', 'De León', 'LINK-SERVICE-QR')`,
+            [serviceUser.id]
+        );
+        const identityService = createGoogleIdentityService({
+            pool,
+            verifyIdentity: async () => ({ subject: "service-google-subject", email: "student@example.test" }),
+            issueToken: (user) => `test-session-${user.id}`
+        });
+        const linked = await identityService.linkStudent({ credential: "mocked-token", studentNumber: "02000999999", firstName: " MARÍA  ANA ", lastName: "de león", ipAddress: "127.0.0.1" });
+        assert.equal(linked.token, `test-session-${serviceUser.id}`);
+        const loggedIn = await identityService.loginStudent({ credential: "mocked-token", ipAddress: "127.0.0.1" });
+        assert.equal(loggedIn.user.id, Number(serviceUser.id));
+        assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE user_id = $1 AND action IN ('GOOGLE_LINK', 'GOOGLE_LOGIN')", [serviceUser.id])).rows[0].count, 2);
+        assert.ok((await pool.query("SELECT last_login_at FROM google_identity_links WHERE user_id = $1", [serviceUser.id])).rows[0].last_login_at);
         assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, []);
         assert.ok((await migrationStatus(pool)).every((item) => item.applied));
     } finally { await pool.end(); }
