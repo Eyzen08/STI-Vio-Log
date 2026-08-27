@@ -1307,12 +1307,81 @@ NOTIFICATIONS
 
 ---
 
-# 27. Definition of "Done"
+# 27. Deferred Identity, Account, and eDTR Milestones
+
+These requirements are recorded for future implementation. They are not part of the current username/password authentication flow and must not be considered complete until their backend, frontend, database, security, and integration tests pass.
+
+## 27.1 Student Google Account Registration and Linking
+
+- [x] Complete the security and API design in `docs/GOOGLE-IDENTITY-DESIGN.md` before implementation.
+
+- [ ] Allow a student to register or link a Google account.
+- [ ] Require the student to provide their own STI student number and full name during first-time linking.
+- [ ] Verify the supplied identity against an existing school-managed student record.
+- [ ] Only an existing student record whose account identity is not yet bound may enter the registration/linking flow.
+- [ ] A student number already bound to an account cannot be registered again.
+- [ ] A Google identity already linked to one user cannot be linked to another student.
+- [ ] A student without a completed account link cannot use Google sign-in as an authenticated student.
+- [ ] After successful one-time linking, subsequent Google sign-ins must resolve to the same student record.
+- [ ] Reject mismatched student-number/full-name combinations without exposing private student information.
+- [ ] Enforce uniqueness with PostgreSQL constraints as well as application validation.
+- [ ] Record account-linking security events in the audit history.
+- [ ] Define safe recovery and relinking procedures before allowing administrators to change a link.
+- [ ] Add concurrency tests proving that simultaneous registrations cannot create duplicate accounts.
+
+## 27.2 Student eDTR Frontend
+
+- [x] Build the authenticated student eDTR screen using the existing self-service DTR API.
+- [x] Show only the signed-in student's sessions; never accept a client-selected student ID.
+- [x] Display TIME_IN, TIME_OUT, actual worked minutes, credited minutes, assignment progress, and department.
+- [x] Include loading, empty, error, active-session, date-filter, responsive, and accessible states.
+
+## 27.3 Department and Staff Accounts
+
+- [ ] Create/configure the Library Department.
+- [ ] Create/configure the Staff Department or Staff Office after confirming its official name.
+- [ ] Create/configure the School Guard Department.
+- [ ] Create authorized scanner/staff accounts mapped to the correct departments.
+- [ ] Keep department membership separate from application roles unless a department genuinely requires different permissions.
+- [ ] Ensure Department-scoped accounts cannot scan for or report on another department.
+- [ ] Manage initial credentials securely; never store real passwords in migrations or documentation.
+
+## 27.4 Discipline Office Accounts
+
+- [ ] Provision two distinct Discipline Office user accounts because the school has two Discipline Officers.
+- [ ] Give each officer an individual identity; do not share one account.
+- [ ] Ensure audit records distinguish which officer performed each action.
+- [ ] Provide secure initial-password delivery and forced password-change/account-recovery procedures.
+
+## 27.5 Future Account Administration
+
+- [ ] Add authorized account creation, activation/deactivation, department assignment, and role management.
+- [ ] Add audited account recovery and Google-link recovery.
+- [ ] Add duplicate-account review tools without silently merging or deleting history.
+- [ ] Revisit more granular staff roles only when their permissions differ from the existing RBAC model.
+
+Recommended sequence:
+
+```text
+STUDENT SELF-SERVICE SCREENS
+  -> STUDENT eDTR FRONTEND
+  -> GOOGLE IDENTITY/LINKING DESIGN
+  -> GOOGLE AUTHENTICATION IMPLEMENTATION
+  -> DEPARTMENT AND STAFF ACCOUNT PROVISIONING
+  -> ACCOUNT ADMINISTRATION AND RECOVERY
+```
+
+---
+
+# 28. Definition of "Done"
 
 The system is ready for deployment only when:
 
 - [ ] All four roles work
 - [ ] Authentication works
+- [ ] Student Google identity linking prevents duplicate student and Google accounts
+- [ ] Required department/scanner accounts are individually provisioned and correctly scoped
+- [ ] Both Discipline Officers have distinct audited accounts
 - [ ] Database relationships work
 - [ ] Student QR works
 - [ ] Department QR scanning works
