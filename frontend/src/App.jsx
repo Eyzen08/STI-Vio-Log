@@ -1,51 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
+import RouteStatePage from './components/RouteStatePage.jsx'
 import { API_URL, login } from './lib/api.js'
+import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
-
-const getNavItems = (role) => {
-  if (!role) return []
-
-  const adminItems = [
-    'Dashboard',
-    'Students',
-    'Violations',
-    'Community Service',
-    'QR Scan',
-    'Clearance',
-    'Reports'
-  ]
-
-  const departmentHeadItems = [
-    'Dashboard',
-    'QR Scan',
-    'Clearance'
-  ]
-
-  const studentItems = [
-    'Dashboard',
-    'My Profile',
-    'My Violations',
-    'My Clearance'
-  ]
-
-  switch (role) {
-    case 'ADMIN':
-    case 'DISCIPLINE_OFFICE':
-      return adminItems
-
-    case 'DEPARTMENT_HEAD':
-      return departmentHeadItems
-
-    case 'STUDENT':
-      return studentItems
-
-    default:
-      return adminItems
-  }
-}
 
 function App() {
   const [initialSession] = useState(loadSession)
@@ -63,6 +23,7 @@ function App() {
     password: ''
   })
 
+  const [routePath, setRoutePath] = useState(() => window.location.pathname)
   const [activeView, setActiveView] = useState('Dashboard')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -181,6 +142,36 @@ function App() {
 
   const isStudent =
     userRole === 'STUDENT'
+
+  const routeResolution = resolveRoute(routePath, userRole)
+
+  const navigateTo = (path, { replace = false } = {}) => {
+    window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
+    setRoutePath(path)
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+
+  useEffect(() => {
+    const handlePopState = () => setRoutePath(window.location.pathname)
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      if (routePath !== '/login') navigateTo('/login', { replace: true })
+      return
+    }
+
+    if (routePath === '/' || routePath === '/login') {
+      navigateTo(getHomePath(userRole), { replace: true })
+      return
+    }
+
+    if (routeResolution.status === 'allowed') {
+      setActiveView(routeResolution.route.view)
+    }
+  }, [isLoggedIn, routePath, routeResolution.route, routeResolution.status, userRole])
 
   const openViolationsCount = violations.filter(
     (violation) =>
@@ -1387,6 +1378,7 @@ function App() {
 
       setToken(data.token)
       setUser(data.user)
+      navigateTo(getHomePath(data.user.role), { replace: true })
 
       /*
        * Clear the password from React state
@@ -1439,6 +1431,7 @@ function App() {
     setClearanceRecords([])
 
     setActiveView('Dashboard')
+    navigateTo('/login', { replace: true })
   }
 
   /*
@@ -1628,6 +1621,14 @@ function App() {
           onSubmit={handleSubmit}
         />
       )
+    }
+
+    if (routeResolution.status === 'unauthorized') {
+      return <RouteStatePage type="unauthorized" onGoHome={() => navigateTo(getHomePath(userRole))} />
+    }
+
+    if (routeResolution.status === 'not_found') {
+      return <RouteStatePage type="not_found" onGoHome={() => navigateTo(getHomePath(userRole))} />
     }
 
     /*
@@ -4067,18 +4068,19 @@ function App() {
           {navItems.map(
             (item) => (
               <button
-                key={item}
+                key={item.path}
                 className={`nav-item ${
-                  activeView === item
+                  routePath === item.path
                     ? 'active'
                     : ''
                 }`}
                 onClick={() =>
-                  setActiveView(item)
+                  navigateTo(item.path)
                 }
                 type="button"
+                aria-current={routePath === item.path ? 'page' : undefined}
               >
-                {item}
+                {item.label}
               </button>
             )
           )}
@@ -4097,19 +4099,23 @@ function App() {
             </p>
 
             <h1>
-              {isLoggedIn
-                ? `Welcome, ${user?.username}`
-                : 'Welcome back'}
+              {routeResolution.route?.label || 'Portal'}
             </h1>
           </div>
 
           {isLoggedIn && (
-            <button
-              className="logout-btn"
-              onClick={handleLogout}
-            >
-              Logout
-            </button>
+            <div className="account-actions">
+              <div className="account-summary">
+                <strong>{user?.username}</strong>
+                <span>{userRole?.replaceAll('_', ' ')}</span>
+              </div>
+              <button
+                className="logout-btn"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            </div>
           )}
         </header>}
 
