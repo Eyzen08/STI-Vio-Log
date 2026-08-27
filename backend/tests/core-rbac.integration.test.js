@@ -164,6 +164,8 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   });
 
   assert.equal((await request(baseUrl, '/api/students')).status, 401);
+  assert.equal((await request(baseUrl, '/api/auth/google/login', { method: 'POST', body: {} })).status, 400);
+  assert.equal((await request(baseUrl, '/api/auth/google/link', { method: 'POST', body: { credential: 'x', student_number: '02000123456', first_name: 'Test', last_name: 'Student', role: 'ADMIN' } })).status, 400);
   assert.equal((await request(baseUrl, '/api/students', { token: 'invalid-token' })).status, 401);
 
   const expired = tokenFor(4, { expiresIn: '-1s' });

@@ -8,7 +8,7 @@ const { isValidStudentNumber, parsePagination, assertAllowedFields } = require("
 test("OpenAPI contract parses and documents critical endpoint groups", () => {
     const spec = JSON.parse(fs.readFileSync(path.resolve(__dirname, "../../docs/api/openapi.json"), "utf8"));
     assert.match(spec.openapi, /^3\./);
-    for (const route of ["/login", "/students/me", "/students/me/violations", "/students/me/community-service/dtr", "/violations/{id}/actions", "/community-service/attendance/time-in", "/community-service/attendance/time-out", "/community-service/{assignmentId}/sessions", "/clearance/student/{studentId}/eligibility", "/reports/dtr", "/audit-logs", "/health"]) assert.ok(spec.paths[route], `OpenAPI missing ${route}`);
+    for (const route of ["/login", "/auth/google/link", "/auth/google/login", "/students/me", "/students/me/violations", "/students/me/community-service/dtr", "/violations/{id}/actions", "/community-service/attendance/time-in", "/community-service/attendance/time-out", "/community-service/{assignmentId}/sessions", "/clearance/student/{studentId}/eligibility", "/reports/dtr", "/audit-logs", "/health"]) assert.ok(spec.paths[route], `OpenAPI missing ${route}`);
     for (const schema of ["StudentSummary", "Violation", "ViolationAction", "CommunityServiceAssignment", "DtrSession", "ServiceProgress", "Clearance", "AuditEntry", "ErrorResponse", "PaginationMetadata"]) assert.ok(spec.components.schemas[schema], `OpenAPI missing ${schema}`);
 });
 

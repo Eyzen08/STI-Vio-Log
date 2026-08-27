@@ -49,6 +49,10 @@ Department operational CSV exports are generated only from the currently loaded,
 
 `GET /api/students/me/notifications` derives ownership exclusively from the authenticated user ID. It accepts only `page` and `limit`, returns newest notifications first, and never accepts a student or user ownership override. This milestone is read-only; notification read-state mutation is deferred.
 
+## Google student authentication
+
+`POST /api/auth/google/link` accepts only `credential`, `student_number`, `first_name`, and `last_name`. `POST /api/auth/google/login` accepts only `credential`. Both endpoints are public but separately rate-limited, verify the Google ID token on the backend, and return the existing JWT/user session shape. Link identity mismatches and conflicts use generic responses; unexpected failures never expose internal or token details.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.
