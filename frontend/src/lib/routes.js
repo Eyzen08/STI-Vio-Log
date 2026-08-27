@@ -16,6 +16,7 @@ export const APP_ROUTES = [
   { path: '/department/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.department },
   { path: '/department/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.department },
   { path: '/department/dtr', label: 'DTR', view: 'DTR', roles: ROLE_GROUPS.department },
+  { path: '/department/community-service', label: 'Service', view: 'Community Service', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },

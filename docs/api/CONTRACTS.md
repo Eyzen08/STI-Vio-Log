@@ -35,6 +35,8 @@ Department Heads may submit only `qr_code` and optional `notes` to `/api/qr/scan
 
 The Department Students roster is derived exclusively from this scoped DTR response. It represents students served through attendance in the authenticated department; it does not expose the global student directory or infer a permanent department assignment that the student schema does not contain.
 
+Department Head reads from `GET /api/community-service` and `GET /api/community-service/:id` are restricted to assignments having attendance sessions in the authenticated department. Assignments outside that scope are not visible (404 for detail). Assignment creation, editing, and deletion remain unavailable to Department Heads.
+
 ## Student clearance self-service
 
 `GET /api/student/clearance` and `/api/student/clearance/eligibility` accept no query parameters and derive ownership from the authenticated student account. The records response omits the internal `cleared_by` user ID while retaining status, blocker flags, approval timestamp, academic period, and remarks. Eligibility is live and may differ from older historical records.

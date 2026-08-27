@@ -8,6 +8,8 @@ const getCommunityServiceAssignments = async (req, res) => {
     try {
         assertAllowedFields(req.query, ["page", "limit"]);
         const { page, limit, offset } = parsePagination(req.query);
+        const departmentScoped = req.user.role === "DEPARTMENT_HEAD";
+        const params = departmentScoped ? [req.user.department_id, limit, offset] : [limit, offset];
         const result = await pool.query(`
             SELECT
                 cs.id,
@@ -25,9 +27,14 @@ const getCommunityServiceAssignments = async (req, res) => {
             FROM community_service_assignments cs
             JOIN students s
                 ON cs.student_id = s.id
+            ${departmentScoped ? `WHERE EXISTS (
+                SELECT 1 FROM community_service_sessions scoped_session
+                WHERE scoped_session.assignment_id = cs.id
+                  AND scoped_session.department_id = $1
+            )` : ""}
             ORDER BY cs.assigned_at DESC, cs.id DESC
-            LIMIT $1 OFFSET $2
-        `, [limit, offset]);
+            LIMIT $${departmentScoped ? 2 : 1} OFFSET $${departmentScoped ? 3 : 2}
+        `, params);
 
         return res.json({
             success: true,
@@ -56,6 +63,7 @@ const getCommunityServiceAssignmentById = async (req, res) => {
     try {
         const { id } = req.params;
 
+        const departmentScoped = req.user.role === "DEPARTMENT_HEAD";
         const result = await pool.query(
             `
             SELECT
@@ -75,8 +83,13 @@ const getCommunityServiceAssignmentById = async (req, res) => {
             JOIN students s
                 ON cs.student_id = s.id
             WHERE cs.id = $1
+              ${departmentScoped ? `AND EXISTS (
+                SELECT 1 FROM community_service_sessions scoped_session
+                WHERE scoped_session.assignment_id = cs.id
+                  AND scoped_session.department_id = $2
+              )` : ""}
             `,
-            [id]
+            departmentScoped ? [id, req.user.department_id] : [id]
         );
 
         if (result.rows.length === 0) {

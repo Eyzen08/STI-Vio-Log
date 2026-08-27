@@ -194,6 +194,8 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal(capturedAttendanceParams[3], 3);
   assert.equal((await request(baseUrl, '/api/violations', { token: head, method: 'POST', body: {} })).status, 403);
   assert.equal((await request(baseUrl, '/api/students', { token: head })).status, 403);
+  assert.equal((await request(baseUrl, '/api/community-service', { token: head })).status, 200);
+  assert.equal((await request(baseUrl, '/api/community-service/80', { token: head })).status, 404);
   assert.equal((await request(baseUrl, '/api/community-service', { token: head, method: 'POST', body: {} })).status, 403);
 
   assert.equal((await request(baseUrl, '/api/students/me', { token: student })).status, 200);

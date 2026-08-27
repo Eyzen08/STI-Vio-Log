@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
+import DepartmentCommunityService from './components/DepartmentCommunityService.jsx'
 import DepartmentDtr from './components/DepartmentDtr.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
@@ -364,14 +365,20 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const dtrResponse = await fetch(`${API_URL}/api/reports/dtr`, { headers: authHeaders })
-          const dtrData = await dtrResponse.json().catch(() => ({}))
+          const [dtrResponse, assignmentsResponse] = await Promise.all([
+            fetch(`${API_URL}/api/reports/dtr`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders })
+          ])
+          const [dtrData, assignmentsData] = await Promise.all([
+            dtrResponse.json().catch(() => ({})),
+            assignmentsResponse.json().catch(() => ({}))
+          ])
 
-          if (!dtrResponse.ok) throw new Error(dtrData.message || 'Unable to load department activity')
+          if (!dtrResponse.ok || !assignmentsResponse.ok) throw new Error(dtrData.message || assignmentsData.message || 'Unable to load department activity')
 
           setStudents([])
           setViolations([])
-          setCommunityServiceAssignments([])
+          setCommunityServiceAssignments(assignmentsData.assignments || [])
           setClearanceRecords([])
           setDepartmentDtr(dtrData)
 
@@ -1914,6 +1921,17 @@ function App() {
           loading={dashboardLoading}
           error={dashboardError}
           onOpenDtr={() => navigateTo('/department/dtr')}
+        />
+      )
+    }
+
+    if (isDepartmentHead && activeView === 'Community Service') {
+      return (
+        <DepartmentCommunityService
+          assignments={communityServiceAssignments}
+          loading={dashboardLoading}
+          error={dashboardError}
+          onOpenScanner={() => navigateTo('/department/qr-scan')}
         />
       )
     }

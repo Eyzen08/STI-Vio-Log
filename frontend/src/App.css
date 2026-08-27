@@ -7,6 +7,16 @@
 
 /* Department DTR workspace */
 .department-students-page { display: grid; gap: 22px; }
+.department-service-page { display: grid; gap: 22px; }
+.service-assignment-list > article { border-bottom: 1px solid #e4eaf1; padding: 20px 22px; }
+.service-assignment-list > article:last-child { border-bottom: 0; }
+.service-assignment-heading { align-items: start; display: flex; gap: 16px; justify-content: space-between; }
+.service-assignment-heading h4 { color: #13263f; margin: 0 0 4px; }
+.service-assignment-heading div span { color: #697a90; font-size: .84rem; }
+.service-progress-meta { align-items: center; color: #52657d; display: flex; font-size: .85rem; justify-content: space-between; margin-top: 18px; }
+.progress-track { background: #e5ebf1; border-radius: 999px; height: 9px; margin-top: 8px; overflow: hidden; }
+.progress-track > span { background: linear-gradient(90deg, #0877a8, #19a974); border-radius: inherit; display: block; height: 100%; }
+.service-assignment-list article > p { color: #697a90; font-size: .82rem; margin: 9px 0 0; }
 .student-roster-tools { background: white; border: 1px solid #dfe7ef; border-radius: 16px; display: grid; gap: 16px; grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr); padding: 18px; }
 .student-roster-tools label { color: #3e5068; display: grid; font-size: .82rem; font-weight: 700; gap: 7px; }
 .student-roster-tools input, .student-roster-tools select { background: white; border: 1px solid #cbd7e3; border-radius: 9px; font: inherit; min-height: 43px; padding: 0 11px; }
