@@ -537,6 +537,13 @@ test('DTR reports return exact worked and capped credited minutes with secure fi
   const headToken = await login('head_test');
   const studentToken = await login('student_test');
   const studentId = (await pool.query("SELECT id FROM students WHERE student_number = '02000123456'")).rows[0].id;
+  const studentUserId = (await pool.query("SELECT id FROM users WHERE username = 'student_test'")).rows[0].id;
+  await pool.query("INSERT INTO notifications (user_id, title, message, notification_type) VALUES ($1, 'Service update', 'Attendance is ready', 'SERVICE')", [studentUserId]);
+  const notifications = await request('/api/students/me/notifications', { token: studentToken });
+  assert.equal(notifications.status, 200);
+  assert.equal(notifications.body.notifications.length, 1);
+  assert.equal(notifications.body.notifications[0].title, 'Service update');
+  assert.equal((await request('/api/students/me/notifications?user_id=1', { token: studentToken })).status, 400);
   const departmentId = (await pool.query("SELECT id FROM departments WHERE department_code = 'TEST'")).rows[0].id;
   const { assignment } = await createServiceViolation(adminToken, studentId, 2);
 

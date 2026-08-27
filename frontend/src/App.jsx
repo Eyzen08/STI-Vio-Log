@@ -12,6 +12,7 @@ import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
 import StudentClearance from './components/StudentClearance.jsx'
+import StudentNotifications from './components/StudentNotifications.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
@@ -62,6 +63,7 @@ function App() {
   const [studentDtr, setStudentDtr] = useState(null)
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
+  const [studentNotifications, setStudentNotifications] = useState([])
 
   const [studentForm, setStudentForm] = useState({
     user_id: 1,
@@ -281,6 +283,7 @@ function App() {
       setDepartmentDtr(null)
       setStudentDtr(null)
       setStudentDtrError('')
+      setStudentNotifications([])
       return
     }
 
@@ -409,6 +412,7 @@ function App() {
             fetch(`${API_URL}/api/students/me/violations`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/community-service`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/students/me/notifications?limit=100`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance/eligibility`, { headers: authHeaders })
           ])
@@ -420,11 +424,12 @@ function App() {
             throw new Error(payloads[failedIndex].message || 'Unable to load your dashboard')
           }
 
-          const [profileData, violationsData, assignmentsData, dtrData, clearanceData, eligibilityData] = payloads
+          const [profileData, violationsData, assignmentsData, dtrData, notificationsData, clearanceData, eligibilityData] = payloads
           setStudentProfile(profileData.student || null)
           setViolations(violationsData.violations || [])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
           setStudentDtr(dtrData)
+          setStudentNotifications(notificationsData.notifications || [])
           setClearanceRecords(clearanceData.clearanceRecords || [])
           setClearanceEligibility(eligibilityData)
 
@@ -445,6 +450,7 @@ function App() {
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
         setDepartmentDtr(null)
         setStudentDtr(null)
+        setStudentNotifications([])
       } finally {
         setDashboardLoading(false)
       }
@@ -1752,6 +1758,10 @@ function App() {
             error={dashboardError}
           />
         )
+      }
+
+      if (activeView === 'Notifications') {
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={dashboardError} />
       }
 
       if (activeView === 'Legacy Clearance') {

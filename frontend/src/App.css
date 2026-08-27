@@ -10,6 +10,23 @@
 .department-service-page { display: grid; gap: 22px; }
 .department-noncompliance { display: grid; gap: 22px; }
 .department-reports-page { display: grid; gap: 22px; }
+.student-notifications-page { display: grid; gap: 22px; }
+.notifications-hero { align-items: center; background: linear-gradient(125deg, #123e63, #2a70a0); border-radius: 22px; color: white; display: flex; justify-content: space-between; padding: 28px 30px; }
+.notifications-hero h2 { margin: 5px 0 8px; }
+.notifications-hero p:last-child { color: #d7ebf7; margin: 0; }
+.notifications-hero > div:last-child { align-items: center; background: #ffffff17; border: 1px solid #ffffff30; border-radius: 14px; display: grid; min-width: 120px; padding: 13px; text-align: center; }
+.notifications-hero strong { font-size: 1.65rem; }
+.notifications-hero span { color: #d7ebf7; font-size: .78rem; }
+.notification-list > article { border-bottom: 1px solid #e4eaf1; display: grid; gap: 14px; grid-template-columns: auto 1fr; padding: 20px 22px; }
+.notification-list > article:last-child { border-bottom: 0; }
+.notification-list > article.unread { background: #f5fbff; }
+.notification-indicator { background: #aeb9c5; border-radius: 50%; height: 9px; margin-top: 7px; width: 9px; }
+.notification-list .unread .notification-indicator { background: #0877a8; box-shadow: 0 0 0 4px #dceff8; }
+.notification-heading { align-items: start; display: flex; gap: 12px; justify-content: space-between; }
+.notification-heading h4 { color: #13263f; margin: 0; }
+.notification-heading span { background: #e7f0f7; border-radius: 999px; color: #245878; font-size: .7rem; font-weight: 750; padding: 5px 8px; }
+.notification-list p { color: #4d6077; line-height: 1.55; margin: 8px 0; }
+.notification-list time { color: #7a899c; font-size: .78rem; }
 .report-selector { background: #e8eef5; border-radius: 12px; display: flex; gap: 5px; padding: 5px; width: fit-content; }
 .report-selector button { background: transparent; color: #43566d; }
 .report-selector button.active { background: white; box-shadow: 0 2px 8px #17334f1c; color: #07547a; }
@@ -62,6 +79,8 @@
 .table-subtext { color: #6b7b90; display: block; font-weight: 400; margin-top: 4px; }
 
 @media (max-width: 767px) {
+  .notifications-hero { align-items: flex-start; flex-direction: column; gap: 17px; padding: 23px; }
+  .notifications-hero > div:last-child { min-width: 100px; }
   .report-selector { display: grid; width: 100%; }
   .noncompliance-toolbar { justify-content: stretch; }
   .noncompliance-toolbar label { width: 100%; }

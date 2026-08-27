@@ -43,6 +43,10 @@ function mockResult(sql, params = []) {
     return { rows: [{ id: 40, student_number: '02000123456', first_name: 'Test', last_name: 'Student', email: 'student@example.test', program: 'BSIT', section: 'A', year_level: 2, qr_code: 'QR-40' }] };
   }
 
+  if (text.includes('FROM notifications') && text.includes('WHERE user_id = $1')) {
+    return { rows: [{ id: 120, title: 'Service update', message: 'Attendance recorded', notification_type: 'SERVICE', is_read: false, created_at: new Date() }] };
+  }
+
   if (text.includes('FROM violations v') && text.includes('WHERE v.student_id = $1')) {
     return { rows: [{ id: 70, student_id: 40, status: 'OPEN', required_service_hours: 2, completed_service_hours: 0, remaining_service_hours: 2 }] };
   }
@@ -204,6 +208,10 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/students/me/violations', { token: student })).status, 200);
   assert.equal((await request(baseUrl, '/api/students/me/violations?student_id=41', { token: student })).status, 400);
   assert.equal((await request(baseUrl, '/api/students/me/community-service', { token: student })).status, 200);
+  const notifications = await request(baseUrl, '/api/students/me/notifications', { token: student });
+  assert.equal(notifications.status, 200);
+  assert.equal(notifications.body.notifications.length, 1);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications?student_id=41', { token: student })).status, 400);
   const selfClearance = await request(baseUrl, '/api/students/me/clearance', { token: student });
   assert.equal(selfClearance.status, 200);
   assert.ok(selfClearance.body.clearanceRecords.every((record) => !Object.hasOwn(record, 'cleared_by')));
