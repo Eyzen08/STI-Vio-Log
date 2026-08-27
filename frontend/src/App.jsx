@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
 import DepartmentDtr from './components/DepartmentDtr.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
+import DepartmentStudents from './components/DepartmentStudents.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
@@ -1902,6 +1903,17 @@ function App() {
           loading={dashboardLoading || departmentDtrLoading}
           error={departmentDtrError || dashboardError}
           onFilter={loadDepartmentDtr}
+        />
+      )
+    }
+
+    if (isDepartmentHead && activeView === 'Students') {
+      return (
+        <DepartmentStudents
+          report={departmentDtr}
+          loading={dashboardLoading}
+          error={dashboardError}
+          onOpenDtr={() => navigateTo('/department/dtr')}
         />
       )
     }

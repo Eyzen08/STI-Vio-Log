@@ -6,6 +6,21 @@
 }
 
 /* Department DTR workspace */
+.department-students-page { display: grid; gap: 22px; }
+.student-roster-tools { background: white; border: 1px solid #dfe7ef; border-radius: 16px; display: grid; gap: 16px; grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr); padding: 18px; }
+.student-roster-tools label { color: #3e5068; display: grid; font-size: .82rem; font-weight: 700; gap: 7px; }
+.student-roster-tools input, .student-roster-tools select { background: white; border: 1px solid #cbd7e3; border-radius: 9px; font: inherit; min-height: 43px; padding: 0 11px; }
+.department-student-grid { display: grid; gap: 0; }
+.department-student-grid > article { border-bottom: 1px solid #e4eaf1; padding: 20px 22px; }
+.department-student-grid > article:last-child { border-bottom: 0; }
+.student-roster-heading { align-items: center; display: grid; gap: 12px; grid-template-columns: auto 1fr auto; }
+.student-roster-heading h4 { color: #13263f; margin: 0 0 3px; }
+.student-roster-heading > div > span { color: #697a90; font-size: .86rem; }
+.student-avatar { align-items: center; background: #e4f1fa; border-radius: 50%; color: #07547a; display: flex; font-weight: 800; height: 42px; justify-content: center; width: 42px; }
+.department-student-grid dl { display: grid; gap: 15px; grid-template-columns: repeat(4, 1fr); margin: 18px 0 12px 54px; }
+.department-student-grid dt { color: #748399; font-size: .74rem; text-transform: uppercase; }
+.department-student-grid dd { color: #1b3049; font-weight: 750; margin: 4px 0 0; }
+.department-student-grid article > p { color: #697a90; font-size: .82rem; margin: 0 0 0 54px; }
 .department-dtr { display: grid; gap: 22px; }
 .dtr-intro { align-items: center; background: linear-gradient(125deg, #073a5d, #12658b); border-radius: 22px; color: white; display: flex; justify-content: space-between; padding: 28px 30px; }
 .dtr-intro h2 { margin: 5px 0 8px; }
@@ -19,6 +34,11 @@
 .table-subtext { color: #6b7b90; display: block; font-weight: 400; margin-top: 4px; }
 
 @media (max-width: 767px) {
+  .student-roster-tools { grid-template-columns: 1fr; }
+  .student-roster-heading { align-items: start; grid-template-columns: auto 1fr; }
+  .student-roster-heading > .status-badge { grid-column: 2; justify-self: start; }
+  .department-student-grid dl { grid-template-columns: repeat(2, 1fr); margin-left: 0; }
+  .department-student-grid article > p { margin-left: 0; }
   .dtr-intro { align-items: flex-start; flex-direction: column; gap: 16px; padding: 23px; }
   .department-dtr-filters { grid-template-columns: 1fr; }
   .department-dtr-filters button { width: 100%; }
