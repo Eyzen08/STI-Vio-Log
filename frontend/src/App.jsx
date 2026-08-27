@@ -4,6 +4,7 @@ import LoginPage from './components/LoginPage.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
+import StudentViolations from './components/StudentViolations.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
@@ -1638,84 +1639,11 @@ function App() {
         activeView === 'My Violations'
       ) {
         return (
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                My Violations
-              </h3>
-
-              <span>
-                {violations.length}{' '}
-                records
-              </span>
-            </div>
-
-            {violations.length === 0 ? (
-              <p className="empty-state">
-                No violations on record.
-                Good standing!
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        ID
-                      </th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>
-                        Service Hours
-                      </th>
-
-                      <th>
-                        Date
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {violations.map(
-                      (violation) => (
-                        <tr
-                          key={
-                            violation.id
-                          }
-                        >
-                          <td>
-                            #{violation.id}
-                          </td>
-
-                          <td>
-                            <span className="status-badge">
-                              {violation.status}
-                            </span>
-                          </td>
-
-                          <td>
-                            {
-                              violation.required_service_hours ||
-                              0
-                            }
-                          </td>
-
-                          <td>
-                            {new Date(
-                              violation.incident_date
-                            ).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+          <StudentViolations
+            violations={violations}
+            loading={dashboardLoading}
+            error={dashboardError}
+          />
         )
       }
 

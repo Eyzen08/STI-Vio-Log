@@ -21,6 +21,10 @@ Standard statuses are 400 validation/business rules, 401 authentication, 403 aut
 
 Administrative DTR corrections are deliberately deferred. A future correction design must be authorized, reasoned, append-only or revision-based, and audited; it must never silently rewrite or delete session history.
 
+## Student violation self-service
+
+`GET /api/students/me/violations` accepts no query parameters and derives the student exclusively from the authenticated account. Each violation includes type code/name, severity, canonical lifecycle status, description, incident timestamps, authoritative required/completed/remaining service hours, and ordered lifecycle history. Student history exposes action, status transition, reason, actor role, and timestamp; actor user IDs and usernames are intentionally omitted.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

@@ -315,6 +315,7 @@ const getMyProfile = async (req, res) => {
 
 const getMyViolations = async (req, res) => {
     try {
+        assertAllowedFields(req.query, []);
         const userId = req.user.id;
 
         // -------------------------------------------------
@@ -354,22 +355,41 @@ const getMyViolations = async (req, res) => {
                 v.id,
                 v.student_id,
                 v.violation_type_id,
-                v.reported_by,
+                vt.violation_code,
+                vt.violation_name,
+                vt.severity,
                 v.incident_date,
                 v.description,
                 v.status,
-                v.required_service_hours,
-                v.completed_service_hours,
+                COALESCE(cs.required_hours, v.required_service_hours) AS required_service_hours,
+                COALESCE(cs.completed_hours, v.completed_service_hours) AS completed_service_hours,
                 GREATEST(
-                    v.required_service_hours -
-                    v.completed_service_hours,
+                    COALESCE(cs.remaining_hours, v.required_service_hours - v.completed_service_hours),
                     0
                 ) AS remaining_service_hours,
                 v.cleared_at,
                 v.created_at,
-                v.updated_at
+                v.updated_at,
+                COALESCE(
+                    JSON_AGG(
+                        JSON_BUILD_OBJECT(
+                            'id', va.id,
+                            'action', va.action,
+                            'from_status', va.from_status,
+                            'to_status', va.to_status,
+                            'reason', va.reason,
+                            'performed_by_role', va.performed_by_role,
+                            'created_at', va.created_at
+                        ) ORDER BY va.created_at, va.id
+                    ) FILTER (WHERE va.id IS NOT NULL),
+                    '[]'::json
+                ) AS history
             FROM violations v
+            JOIN violation_types vt ON vt.id = v.violation_type_id
+            LEFT JOIN community_service_assignments cs ON cs.violation_id = v.id
+            LEFT JOIN violation_actions va ON va.violation_id = v.id
             WHERE v.student_id = $1
+            GROUP BY v.id, vt.id, cs.id
             ORDER BY
                 v.incident_date DESC,
                 v.id DESC
@@ -394,10 +414,9 @@ const getMyViolations = async (req, res) => {
             error
         );
 
-        return res.status(500).json({
+        return res.status(error.statusCode || 500).json({
             success: false,
-            message:
-                "Failed to get student violations"
+            message: error.statusCode ? error.message : "Failed to get student violations"
         });
     }
 };

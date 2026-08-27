@@ -220,6 +220,15 @@ test('violation lifecycle transitions preserve structured history and audit reco
   assert.ok(history.body.actions.every((item) => item.performed_by_user_id));
   assert.ok(history.body.actions.every((item) => item.performed_by_role));
 
+  const studentToken = tokenFor(users.student_test);
+  const selfRecords = await request('/api/students/me/violations', { token: studentToken });
+  assert.equal(selfRecords.status, 200);
+  const selfViolation = selfRecords.body.violations.find((item) => item.id === chainedViolation.id);
+  assert.equal(selfViolation.violation_name, 'Minor Violation');
+  assert.equal(selfViolation.severity, 'MINOR');
+  assert.deepEqual(selfViolation.history.map((item) => item.action), ['CREATE', 'COMPLETE', 'REOPEN', 'CLEAR', 'REOPEN', 'INVALID_CANCEL']);
+  assert.ok(selfViolation.history.every((item) => !Object.hasOwn(item, 'performed_by_user_id')));
+
   const audit = await pool.query(
     `SELECT action, user_id, created_at FROM audit_logs
      WHERE table_name = 'violations' AND record_id = $1
