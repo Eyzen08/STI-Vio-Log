@@ -300,6 +300,104 @@
   margin: 13px 0 0;
 }
 
+.registration-pending {
+  background: #eef8f3;
+  border: 1px solid #b8dfca;
+  border-radius: 12px;
+  padding: 17px;
+}
+
+.registration-pending h4,
+.registration-pending p {
+  text-align: left;
+}
+
+.registration-pending p {
+  color: #436255;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.registration-review-page,
+.registration-review-list {
+  display: grid;
+  gap: 22px;
+}
+
+.registration-review-list .table-card {
+  margin: 0;
+  max-width: none;
+}
+
+.registration-review-heading {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.registration-review-heading h3,
+.registration-review-heading p {
+  margin: 0;
+}
+
+.registration-review-heading p {
+  color: #60708a;
+  margin-top: 5px;
+}
+
+.registration-review-list dl {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 22px 0;
+}
+
+.registration-review-list dt {
+  color: #738197;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+
+.registration-review-list dd {
+  color: #263850;
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+}
+
+.registration-review-list label {
+  color: #344963;
+  display: grid;
+  font-size: .82rem;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.registration-review-list textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  font: inherit;
+  min-height: 88px;
+  padding: 11px;
+  resize: vertical;
+}
+
+.registration-review-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.danger-button {
+  background: #fff0f0;
+  color: #a62929;
+}
+
+@media (max-width: 620px) {
+  .registration-review-list dl { grid-template-columns: 1fr; }
+  .registration-review-actions { align-items: stretch; flex-direction: column; }
+}
+
 .sidebar {
   background: #122033;
   color: white;

@@ -27,6 +27,15 @@ test('Google auth controllers reject unsupported and incomplete bodies before se
   assert.equal(factories, 0);
 });
 
+test('Google link controller returns accepted without a session for pending enrollment', async () => {
+  const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent() { return { pending: true, message: 'Pending review', registration: { id: 8, status: 'PENDING' } }; } }) });
+  const res = response();
+  await controller.link({ body: { credential: 'id-token', student_number: '02000123456', first_name: 'Test', last_name: 'Student' }, ip: null }, res);
+  assert.equal(res.statusCode, 202);
+  assert.equal(res.body.pending, true);
+  assert.equal('token' in res.body, false);
+});
+
 test('Google login controller preserves stable service errors and hides unexpected failures', async () => {
   for (const [failure, expectedStatus, expectedCode, expectedMessage] of [[new ApiError(401, 'GOOGLE_LOGIN_FAILED', 'Not linked'), 401, 'GOOGLE_LOGIN_FAILED', 'Not linked'], [new Error('database details'), 500, 'INTERNAL_ERROR', 'Google authentication failed']]) {
     const controller = createGoogleAuthController({ serviceFactory: () => ({ async loginStudent() { throw failure; } }) });

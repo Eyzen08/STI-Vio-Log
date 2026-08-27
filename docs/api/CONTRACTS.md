@@ -51,7 +51,9 @@ Department operational CSV exports are generated only from the currently loaded,
 
 ## Google student authentication
 
-`POST /api/auth/google/link` accepts only `credential`, `student_number`, `first_name`, and `last_name`. `POST /api/auth/google/login` accepts only `credential`. Both endpoints are public but separately rate-limited, verify the Google ID token on the backend, and return the existing JWT/user session shape. Link identity mismatches and conflicts use generic responses; unexpected failures never expose internal or token details.
+`POST /api/auth/google/link` accepts only `credential`, `student_number`, `first_name`, and `last_name`. Existing active students are linked immediately after an exact school-record match. A new unique student identity creates a `PENDING` enrollment request and returns HTTP 202 without a user, QR, link, JWT, or portal access. Existing mismatches and conflicts remain generic.
+
+`GET /api/google-registrations` and the `/:id/approve` and `/:id/reject` actions require `ADMIN` or `DISCIPLINE_OFFICE`. Review actions require a reason and derive the reviewer from authentication. Approval atomically creates the student account, profile, opaque QR, Google link, and audit events; rejection preserves history. Review responses never expose the stable Google subject. `POST /api/auth/google/login` accepts only `credential` and succeeds only after linking or approval.
 
 ## Filters and pagination
 

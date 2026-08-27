@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { googleLink, googleLogin } from '../lib/api.js'
 import {
   isGoogleClientConfigured,
+  isPendingGoogleRegistration,
   loadGoogleIdentityServices,
   readGoogleCredential
 } from '../lib/googleIdentity.js'
@@ -16,6 +17,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
   const [isLinking, setIsLinking] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState('')
+  const [pendingRegistration, setPendingRegistration] = useState(false)
 
   credentialHandlerRef.current = async (response) => {
     const nextCredential = readGoogleCredential(response)
@@ -102,7 +104,12 @@ function GoogleStudentAccess({ clientId, onSession }) {
       const session = await googleLink({ credential, ...linkForm })
       setCredential('')
       setLinkForm(emptyLinkForm)
-      onSession(session)
+      if (isPendingGoogleRegistration(session)) {
+        setIsLinking(false)
+        setPendingRegistration(true)
+      } else {
+        onSession(session)
+      }
     } catch (linkError) {
       setError(linkError.message)
     } finally {
@@ -114,7 +121,13 @@ function GoogleStudentAccess({ clientId, onSession }) {
     <section className="google-access" aria-labelledby="google-access-title">
       <div className="auth-divider"><span>Student access</span></div>
 
-      {!isLinking ? (
+      {pendingRegistration ? (
+        <div className="registration-pending" role="status">
+          <h4 id="google-access-title">Enrollment verification pending</h4>
+          <p>Your request was submitted to the Discipline Office. You can sign in with Google after an authorized reviewer approves it.</p>
+          <button type="button" className="secondary-button" onClick={() => setPendingRegistration(false)}>Back to sign in</button>
+        </div>
+      ) : !isLinking ? (
         <>
           <h4 id="google-access-title">Continue with your school Google account</h4>
           <div ref={buttonRef} className="google-button" aria-busy={isBusy} />

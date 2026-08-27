@@ -31,6 +31,12 @@ export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, l
   last_name: lastName.trim()
 })
 
+export const isPendingGoogleRegistration = (result) =>
+  result?.pending === true &&
+  result?.registration?.status === 'PENDING' &&
+  Number.isInteger(Number(result?.registration?.id)) &&
+  Number(result.registration.id) > 0
+
 export const loadGoogleIdentityServices = ({
   windowObject = window,
   documentObject = document

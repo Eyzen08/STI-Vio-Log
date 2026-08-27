@@ -1315,19 +1315,19 @@ These requirements are recorded for future implementation. They are not part of 
 
 - [x] Complete the security and API design in `docs/GOOGLE-IDENTITY-DESIGN.md` before implementation.
 
-- [ ] Allow a student to register or link a Google account.
-- [ ] Require the student to provide their own STI student number and full name during first-time linking.
-- [ ] Verify the supplied identity against an existing school-managed student record.
-- [ ] Only an existing student record whose account identity is not yet bound may enter the registration/linking flow.
-- [ ] A student number already bound to an account cannot be registered again.
-- [ ] A Google identity already linked to one user cannot be linked to another student.
-- [ ] A student without a completed account link cannot use Google sign-in as an authenticated student.
-- [ ] After successful one-time linking, subsequent Google sign-ins must resolve to the same student record.
-- [ ] Reject mismatched student-number/full-name combinations without exposing private student information.
-- [ ] Enforce uniqueness with PostgreSQL constraints as well as application validation.
-- [ ] Record account-linking security events in the audit history.
+- [x] Allow a student to register or link a Google account through enrollment-gated verification.
+- [x] Require the student to provide their own STI student number and full name during first-time linking.
+- [x] Link existing school-managed records immediately and require authorized enrollment review for new identities.
+- [x] Keep pending applicants outside the user/student tables and deny portal access until approval.
+- [x] A student number already bound to an account cannot be registered again.
+- [x] A Google identity already linked to one user cannot be linked to another student.
+- [x] A student without a completed account link cannot use Google sign-in as an authenticated student.
+- [x] After successful linking or approval, subsequent Google sign-ins resolve to the same student record.
+- [x] Reject mismatched or conflicting identity combinations without exposing private student information.
+- [x] Enforce pending and linked uniqueness with PostgreSQL constraints as well as application validation.
+- [x] Record submission, approval, rejection, linking, and login security events in audit history.
 - [ ] Define safe recovery and relinking procedures before allowing administrators to change a link.
-- [ ] Add concurrency tests proving that simultaneous registrations cannot create duplicate accounts.
+- [x] Add concurrency tests proving that simultaneous pending registrations cannot claim the same Google identity.
 
 ## 27.2 Student eDTR Frontend
 

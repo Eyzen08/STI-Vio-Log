@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   buildGoogleLinkPayload,
   isGoogleClientConfigured,
+  isPendingGoogleRegistration,
   readGoogleCredential
 } from '../src/lib/googleIdentity.js'
 
@@ -12,6 +13,12 @@ test('Google sign-in is enabled only for a configured web client ID', () => {
   assert.equal(isGoogleClientConfigured('<google-web-client-id>.apps.googleusercontent.com'), false)
   assert.equal(isGoogleClientConfigured('replace-me.apps.googleusercontent.com'), false)
   assert.equal(isGoogleClientConfigured('123-example'), false)
+})
+
+test('only a complete pending-registration response enters the waiting state', () => {
+  assert.equal(isPendingGoogleRegistration({ pending: true, registration: { id: 7, status: 'PENDING' } }), true)
+  assert.equal(isPendingGoogleRegistration({ pending: true, registration: { status: 'PENDING' } }), false)
+  assert.equal(isPendingGoogleRegistration({ token: 'session', user: { role: 'STUDENT' } }), false)
 })
 
 test('Google credential responses are bounded and normalized', () => {

@@ -15,6 +15,7 @@ const clearanceRoutes = require("./routes/clearanceRoutes");
 const studentClearanceRoutes = require("./routes/studentClearanceRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
+const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -378,6 +379,13 @@ app.use(
     "DISCIPLINE_OFFICE"
   ),
   auditRoutes
+);
+
+app.use(
+  "/api/google-registrations",
+  authenticateToken,
+  authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+  googleRegistrationRoutes
 );
 
 

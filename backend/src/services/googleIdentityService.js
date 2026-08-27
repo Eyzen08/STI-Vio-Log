@@ -4,6 +4,7 @@ const { issueSessionToken } = require('./sessionTokenService');
 
 const LINK_FAILURE = 'Unable to link this student account';
 const LOGIN_FAILURE = 'Google account is not linked to an active student account';
+const REGISTRATION_PENDING = 'Student registration submitted for enrollment verification';
 
 const normalizeName = (value) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
@@ -44,8 +45,51 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       );
       const account = result.rows[0];
       matchedUserId = account?.id || null;
-      if (!account || normalizeName(account.first_name) !== normalizeName(firstName) || normalizeName(account.last_name) !== normalizeName(lastName)) {
+      if (account && (normalizeName(account.first_name) !== normalizeName(firstName) || normalizeName(account.last_name) !== normalizeName(lastName))) {
         throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
+      }
+      if (!account) {
+        const occupied = (await client.query(
+          `SELECT 1 FROM students WHERE student_number = $1
+           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+           LIMIT 1`,
+          [studentNumber.trim(), identity.subject]
+        )).rows[0];
+        if (occupied) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
+
+        const existing = (await client.query(
+          `SELECT id, google_subject, student_number, first_name, last_name
+           FROM google_student_registrations
+           WHERE status = 'PENDING' AND (google_subject = $1 OR student_number = $2)
+           FOR UPDATE`,
+          [identity.subject, studentNumber.trim()]
+        )).rows;
+        const sameRequest = existing.find((row) =>
+          row.google_subject === identity.subject
+          && row.student_number === studentNumber.trim()
+          && normalizeName(row.first_name) === normalizeName(firstName)
+          && normalizeName(row.last_name) === normalizeName(lastName)
+        );
+        if (sameRequest && existing.length === 1) {
+          await client.query('COMMIT');
+          return { pending: true, message: REGISTRATION_PENDING, registration: { id: Number(sameRequest.id), status: 'PENDING' } };
+        }
+        if (existing.length) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
+
+        const registration = (await client.query(
+          `INSERT INTO google_student_registrations
+             (google_subject, google_email, student_number, first_name, last_name)
+           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+          [identity.subject, identity.emailVerified ? identity.email : null, studentNumber.trim(), firstName.trim(), lastName.trim()]
+        )).rows[0];
+        await client.query(
+          `INSERT INTO audit_logs (user_id, action, table_name, record_id, description, ip_address)
+           VALUES (NULL, 'GOOGLE_REGISTRATION_SUBMITTED', 'google_student_registrations', $1,
+                   'Google student registration submitted for enrollment verification', $2)`,
+          [registration.id, ipAddress]
+        );
+        await client.query('COMMIT');
+        return { pending: true, message: REGISTRATION_PENDING, registration: { id: Number(registration.id), status: 'PENDING' } };
       }
       const link = await client.query(
         `INSERT INTO google_identity_links (user_id, google_subject, google_email)
@@ -104,4 +148,4 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
   return { linkStudent, loginStudent };
 };
 
-module.exports = { createGoogleIdentityService, normalizeName, LINK_FAILURE, LOGIN_FAILURE };
+module.exports = { createGoogleIdentityService, normalizeName, LINK_FAILURE, LOGIN_FAILURE, REGISTRATION_PENDING };

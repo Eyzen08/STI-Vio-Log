@@ -23,6 +23,7 @@ const createGoogleAuthController = ({ serviceFactory = defaultServiceFactory } =
         return sendError(res, 400, 'VALIDATION_ERROR', 'credential, student_number, first_name, and last_name are required');
       }
       const result = await getService().linkStudent({ credential, studentNumber: student_number, firstName: first_name, lastName: last_name, ipAddress: req.ip || null });
+      if (result.pending) return res.status(202).json({ success: true, ...result });
       return res.json({ success: true, message: 'Google account linked successfully', ...result });
     } catch (error) { return fail(res, error); }
   };

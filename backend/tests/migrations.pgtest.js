@@ -32,9 +32,9 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
-        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql"]);
+        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql"]);
         const tables = (await pool.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = $1`, [freshSchema])).rows.map((row) => row.table_name);
-        for (const name of ["users", "students", "violations", "violation_actions", "community_service_assignments", "community_service_sessions", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
+        for (const name of ["users", "students", "violations", "violation_actions", "community_service_assignments", "community_service_sessions", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
 
         const passwordHash = "$2b$04$abcdefghijklmnopqrstuuXJfM5Z0nJf4wPMFnYbPxM3Ya7kXyQYO";
         const users = (await pool.query(
@@ -53,6 +53,13 @@ test("fresh migration chain is complete and idempotent", async () => {
             (error) => error.code === "23505"
         );
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM google_identity_links")).rows[0].count, 1);
+
+        const pendingAttempts = await Promise.allSettled([
+            pool.query("INSERT INTO google_student_registrations (google_subject, student_number, first_name, last_name) VALUES ('pending-subject', '02000888888', 'Pending', 'One')"),
+            pool.query("INSERT INTO google_student_registrations (google_subject, student_number, first_name, last_name) VALUES ('pending-subject', '02000777777', 'Pending', 'Two')")
+        ]);
+        assert.equal(pendingAttempts.filter((item) => item.status === "fulfilled").length, 1);
+        assert.equal(pendingAttempts.filter((item) => item.status === "rejected" && item.reason.code === "23505").length, 1);
 
         const serviceUser = (await pool.query(
             "INSERT INTO users (username, password_hash, role) VALUES ('linked_service_student', $1, 'STUDENT') RETURNING id",
@@ -97,7 +104,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
         await pool.query(`INSERT INTO community_service_attendance (assignment_id, student_id, department_id, scanned_by, attendance_type)
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
-        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql"]);
+        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql"]);
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM google_identity_links")).rows[0].count, 0);
         assert.equal((await pool.query("SELECT status::text FROM violations")).rows[0].status, "COMPLETE");
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM community_service_attendance")).rows[0].count, 1);

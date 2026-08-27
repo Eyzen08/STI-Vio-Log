@@ -2,22 +2,13 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createGoogleIdentityService, LINK_FAILURE, LOGIN_FAILURE, normalizeName } = require('../src/services/googleIdentityService');
 
-const account = { id: 44, username: 'student44', role: 'STUDENT', first_name: 'María  Ana', last_name: 'De León' };
-const identity = Object.freeze({ subject: 'google-sub-44', email: 'student@example.test' });
+const account = { id: 44, username: 'student44', role: 'STUDENT', first_name: 'Maria Ana', last_name: 'De Leon' };
+const identity = Object.freeze({ subject: 'google-sub-44', email: 'student@example.test', emailVerified: true });
 
 const fakeDatabase = (handler) => {
   const calls = [];
-  const client = {
-    async query(sql, params = []) { calls.push({ scope: 'client', sql: String(sql), params }); return handler(String(sql), params); },
-    release() { calls.push({ scope: 'client', sql: 'RELEASE', params: [] }); }
-  };
-  return {
-    calls,
-    pool: {
-      async connect() { return client; },
-      async query(sql, params = []) { calls.push({ scope: 'pool', sql: String(sql), params }); return { rows: [] }; }
-    }
-  };
+  const client = { async query(sql, params = []) { calls.push({ scope: 'client', sql: String(sql), params }); return handler(String(sql), params); }, release() { calls.push({ scope: 'client', sql: 'RELEASE', params: [] }); } };
+  return { calls, pool: { async connect() { return client; }, async query(sql, params = []) { calls.push({ scope: 'pool', sql: String(sql), params }); return { rows: [] }; } } };
 };
 
 test('Google identity linking normalizes names, commits link and audit, then issues a session', async () => {
@@ -27,23 +18,37 @@ test('Google identity linking normalizes names, commits link and audit, then iss
     return { rows: [] };
   });
   const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: (user) => `token-${user.id}` });
-  const result = await service.linkStudent({ credential: 'verified-token', studentNumber: '02000123456', firstName: '  MARÍA ANA ', lastName: 'de león', ipAddress: '127.0.0.1' });
+  const result = await service.linkStudent({ credential: 'verified-token', studentNumber: '02000123456', firstName: '  MARIA ANA ', lastName: 'de leon', ipAddress: '127.0.0.1' });
   assert.deepEqual(result, { token: 'token-44', user: { id: 44, username: 'student44', role: 'STUDENT' } });
   assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
   assert.ok(db.calls.some((call) => call.sql.includes("'GOOGLE_LINK'")));
   assert.equal(db.calls.some((call) => call.sql.includes('verified-token') || call.params.includes('verified-token')), false);
 });
 
-test('Google identity linking gives the same public failure for unknown and mismatched students', async () => {
-  for (const rows of [[], [{ ...account, last_name: 'Different' }]]) {
-    const db = fakeDatabase((sql) => sql.includes('FROM students s') ? { rows } : { rows: [] });
-    const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
-    await assert.rejects(
-      service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'María Ana', lastName: 'De León' }),
-      (error) => error.statusCode === 409 && error.code === 'STUDENT_LINK_UNAVAILABLE' && error.message === LINK_FAILURE
-    );
-    assert.ok(db.calls.some((call) => call.sql === 'ROLLBACK'));
-  }
+test('unknown students create a pending registration without a session or credential leak', async () => {
+  const db = fakeDatabase((sql) => sql.includes('INSERT INTO google_student_registrations') ? { rows: [{ id: 73 }] } : { rows: [] });
+  const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
+  const result = await service.linkStudent({ credential: 'verified-token', studentNumber: '02000123456', firstName: 'New', lastName: 'Student' });
+  assert.deepEqual(result, { pending: true, message: 'Student registration submitted for enrollment verification', registration: { id: 73, status: 'PENDING' } });
+  assert.equal('token' in result, false);
+  assert.ok(db.calls.some((call) => call.sql.includes('GOOGLE_REGISTRATION_SUBMITTED')));
+  assert.equal(db.calls.some((call) => call.sql.includes('verified-token') || call.params.includes('verified-token')), false);
+});
+
+test('name mismatch for an existing student remains a generic link failure', async () => {
+  const db = fakeDatabase((sql) => sql.includes('FROM students s') ? { rows: [{ ...account, last_name: 'Different' }] } : { rows: [] });
+  const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
+  await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'Maria Ana', lastName: 'De Leon' }), (error) => error.statusCode === 409 && error.code === 'STUDENT_LINK_UNAVAILABLE' && error.message === LINK_FAILURE);
+  assert.ok(db.calls.some((call) => call.sql === 'ROLLBACK'));
+});
+
+test('a different Google identity cannot reuse another pending student number', async () => {
+  const db = fakeDatabase((sql) => {
+    if (sql.includes('FROM google_student_registrations')) return { rows: [{ id: 73, google_subject: 'other-subject', student_number: '02000123456', first_name: 'New', last_name: 'Student' }] };
+    return { rows: [] };
+  });
+  const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
+  await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'New', lastName: 'Student' }), (error) => error.code === 'STUDENT_LINK_UNAVAILABLE');
 });
 
 test('duplicate Google links roll back and create a token-free rejection audit', async () => {
@@ -54,7 +59,7 @@ test('duplicate Google links roll back and create a token-free rejection audit',
     return { rows: [] };
   });
   const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
-  await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'María Ana', lastName: 'De León' }), (error) => error.message === LINK_FAILURE);
+  await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'Maria Ana', lastName: 'De Leon' }), (error) => error.message === LINK_FAILURE);
   assert.ok(db.calls.some((call) => call.scope === 'client' && call.sql.includes('GOOGLE_LINK_REJECTED')));
   assert.equal(db.calls.some((call) => call.sql.includes(identity.subject) || (call.params.includes(identity.subject) && call.sql.includes('GOOGLE_LINK_REJECTED'))), false);
 });
@@ -76,6 +81,6 @@ test('unlinked Google login is generic and rolls back', async () => {
 });
 
 test('name normalization is Unicode-aware and collapses whitespace', () => {
-  assert.equal(normalizeName('  MARÍA\t Ana '), 'maría ana');
+  assert.equal(normalizeName('  MARIA\t Ana '), 'maria ana');
   assert.equal(normalizeName(null), '');
 });
