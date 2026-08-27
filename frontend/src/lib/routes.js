@@ -18,6 +18,7 @@ export const APP_ROUTES = [
   { path: '/department/dtr', label: 'DTR', view: 'DTR', roles: ROLE_GROUPS.department },
   { path: '/department/community-service', label: 'Service', view: 'Community Service', roles: ROLE_GROUPS.department },
   { path: '/department/non-compliance', label: 'Non-Compliance', view: 'Non-Compliance', roles: ROLE_GROUPS.department },
+  { path: '/department/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },

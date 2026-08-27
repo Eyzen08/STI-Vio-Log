@@ -6,6 +6,7 @@ import DepartmentCommunityService from './components/DepartmentCommunityService.
 import DepartmentDtr from './components/DepartmentDtr.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
+import DepartmentReports from './components/DepartmentReports.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
@@ -1964,6 +1965,10 @@ function App() {
 
     if (isDepartmentHead && activeView === 'Non-Compliance') {
       return <DepartmentNonCompliance report={departmentNonCompliance} loading={dashboardLoading || departmentNonComplianceLoading} error={departmentNonComplianceError || dashboardError} sortBy={departmentNonComplianceSort} onSort={loadDepartmentNonCompliance} />
+    }
+
+    if (isDepartmentHead && activeView === 'Reports') {
+      return <DepartmentReports dtr={departmentDtr} nonCompliance={departmentNonCompliance} loading={dashboardLoading} error={dashboardError} />
     }
 
     /*

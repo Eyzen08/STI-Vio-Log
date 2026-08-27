@@ -39,6 +39,8 @@ Department Head reads from `GET /api/community-service` and `GET /api/community-
 
 Department Head non-compliance reports accept only the `sort_by` values `date`, `hours`, or `violations`. They include only students who have service attendance in the authenticated department; client-selected department filters are rejected.
 
+Department operational CSV exports are generated only from the currently loaded, backend-scoped DTR or non-compliance response. They intentionally exclude guardian details and global directory fields, consistent with Department Head RBAC.
+
 ## Student clearance self-service
 
 `GET /api/student/clearance` and `/api/student/clearance/eligibility` accept no query parameters and derive ownership from the authenticated student account. The records response omits the internal `cleared_by` user ID while retaining status, blocker flags, approval timestamp, academic period, and remarks. Eligibility is live and may differ from older historical records.
