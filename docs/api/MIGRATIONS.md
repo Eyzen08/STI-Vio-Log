@@ -30,3 +30,5 @@ Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB
 7. Smoke-test login, a protected read, and the critical DTR flow.
 
 This procedure does not claim zero-downtime migration support. Disposable integration tests use guarded `sti_vio_log_test_*` schemas and never wipe the configured development schema.
+
+Migration `005_google_identity_links.sql` adds only the identity-link storage foundation. Its independent unique constraints prevent one local user from linking multiple Google subjects and prevent one Google subject from linking multiple users, including under concurrent inserts. Applying it does not enable Google login or require Google credentials.
