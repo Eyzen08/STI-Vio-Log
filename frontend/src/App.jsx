@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
+import DepartmentDtr from './components/DepartmentDtr.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
@@ -12,6 +13,7 @@ import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
+import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -46,6 +48,8 @@ function App() {
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
   const [departmentDtr, setDepartmentDtr] = useState(null)
+  const [departmentDtrLoading, setDepartmentDtrLoading] = useState(false)
+  const [departmentDtrError, setDepartmentDtrError] = useState('')
   const [studentDtr, setStudentDtr] = useState(null)
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
@@ -457,6 +461,24 @@ function App() {
       setStudentDtrError(dtrError.message || 'Unable to load your DTR')
     } finally {
       setStudentDtrLoading(false)
+    }
+  }
+
+  const loadDepartmentDtr = async (filters = {}) => {
+    setDepartmentDtrLoading(true)
+    setDepartmentDtrError('')
+    try {
+      const query = buildDepartmentDtrQuery(filters)
+      const response = await fetch(`${API_URL}/api/reports/dtr${query ? `?${query}` : ''}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to load department DTR')
+      setDepartmentDtr(data)
+    } catch (dtrError) {
+      setDepartmentDtrError(dtrError.message || 'Unable to load department DTR')
+    } finally {
+      setDepartmentDtrLoading(false)
     }
   }
 
@@ -1869,6 +1891,17 @@ function App() {
           loading={dashboardLoading}
           error={dashboardError}
           onOpenScanner={() => navigateTo('/department/qr-scan')}
+        />
+      )
+    }
+
+    if (isDepartmentHead && activeView === 'DTR') {
+      return (
+        <DepartmentDtr
+          report={departmentDtr}
+          loading={dashboardLoading || departmentDtrLoading}
+          error={departmentDtrError || dashboardError}
+          onFilter={loadDepartmentDtr}
         />
       )
     }
