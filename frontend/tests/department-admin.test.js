@@ -1,3 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {buildDepartmentPayload,departmentCanDeactivate} from '../src/lib/departmentAdmin.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {buildDepartmentPayload,departmentCanDeactivate,departmentFormCopy} from '../src/lib/departmentAdmin.js';
 test('department payload normalizes only supported configuration fields',()=>{assert.deepEqual(buildDepartmentPayload({code:' lib ',name:' Main Library ',description:' Student services ',is_active:false,reason:'x'}),{department_code:'LIB',department_name:'Main Library',description:'Student services'})});
 test('departments with active accounts cannot be deactivated',()=>{assert.equal(departmentCanDeactivate({active_accounts:1}),false);assert.equal(departmentCanDeactivate({active_accounts:0}),true)});
+test('department forms use officer-focused wording and examples',()=>{assert.deepEqual(departmentFormCopy,{departmentLabel:'Department',departmentPlaceholder:'Library Department',officerLabel:'Department Officer',officerPlaceholder:'Name of Officer'})});
