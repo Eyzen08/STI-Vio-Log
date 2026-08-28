@@ -1075,7 +1075,7 @@ Before deployment:
 - [ ] QR validation
 - [ ] Duplicate scan prevention
 - [ ] Audit logs
-- [ ] Database backups
+- [x] Database backup tooling and recovery runbook
 - [ ] Session expiration
 - [ ] Error handling without leaking secrets
 
@@ -1421,5 +1421,5 @@ The system is ready for deployment only when:
 - [ ] Permissions are tested
 - [ ] Mobile QR scanning works
 - [ ] Production environment works
-- [ ] Database backup strategy exists
+- [x] Database backup strategy exists
 - [ ] No critical security issues remain

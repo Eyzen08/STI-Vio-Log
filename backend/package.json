@@ -10,7 +10,9 @@
     "test:violation-integration": "node --test tests/violation-workflow.pgtest.js",
     "test:migrations": "node --test tests/migrations.pgtest.js",
     "migrate": "node scripts/migrate.js",
-    "migrate:status": "node scripts/migrate.js status"
+    "migrate:status": "node scripts/migrate.js status",
+    "backup": "node scripts/backup.js",
+    "backup:verify": "node scripts/backup.js verify"
   },
   "keywords": [],
   "author": "",
