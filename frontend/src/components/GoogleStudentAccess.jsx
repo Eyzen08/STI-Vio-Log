@@ -144,19 +144,20 @@ function GoogleStudentAccess({ clientId, onSession }) {
             Student number
             <input id="google-student-number" name="studentNumber" value={linkForm.studentNumber}
               onChange={(event) => setLinkForm({ ...linkForm, studentNumber: event.target.value })}
-              autoComplete="off" inputMode="numeric" disabled={isBusy} required autoFocus />
+              placeholder="Example: 02000XXXXXX" autoComplete="off" inputMode="numeric"
+              disabled={isBusy} required autoFocus />
           </label>
           <label htmlFor="google-first-name">
             First name
             <input id="google-first-name" name="firstName" value={linkForm.firstName}
               onChange={(event) => setLinkForm({ ...linkForm, firstName: event.target.value })}
-              autoComplete="given-name" disabled={isBusy} required />
+              placeholder="Example: Jose Pedro" autoComplete="given-name" disabled={isBusy} required />
           </label>
           <label htmlFor="google-last-name">
             Last name
             <input id="google-last-name" name="lastName" value={linkForm.lastName}
               onChange={(event) => setLinkForm({ ...linkForm, lastName: event.target.value })}
-              autoComplete="family-name" disabled={isBusy} required />
+              placeholder="Example: Reyes" autoComplete="family-name" disabled={isBusy} required />
           </label>
 
           <div className="google-link-actions">
