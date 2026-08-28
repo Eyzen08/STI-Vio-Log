@@ -28,12 +28,10 @@ From `backend`, with production environment variables provided by the hosting pl
 
 ```powershell
 npm ci
-npm run migrate
-npm run production:check
 npm start
 ```
 
-The readiness command validates configuration, database connectivity, and that every repository migration is recorded. It reports only status and counts, never environment values.
+`npm start` applies pending migrations under a PostgreSQL advisory lock, validates configuration and database readiness, and only then starts the API. This makes automatic deployments safe when more than one instance starts concurrently. The readiness command reports only status and counts, never environment values.
 
 After deployment:
 
