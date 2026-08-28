@@ -95,6 +95,12 @@ function App() {
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
+  const [reviewedStudentViolations, setReviewedStudentViolations] = useState([])
+  const [reviewedStudentPage, setReviewedStudentPage] = useState(1)
+  const [reviewedStudentHasMore, setReviewedStudentHasMore] = useState(false)
+  const [reviewedStudentSummary, setReviewedStudentSummary] = useState(null)
+  const [reviewedStudentLoading, setReviewedStudentLoading] = useState(false)
+  const [reviewedStudentError, setReviewedStudentError] = useState('')
 
   const [violationForm, setViolationForm] = useState({
     student_id: '',
@@ -565,6 +571,30 @@ function App() {
       required_service_hours: Number(violation.required_service_hours || 0),
       reason: ''
     })
+  }
+
+  const loadReviewedStudentHistory = async (student, page = 1, append = false) => {
+    setReviewedStudent(student)
+    if (!append) {
+      setReviewedStudentViolations([])
+      setReviewedStudentSummary(null)
+    }
+    setReviewedStudentLoading(true)
+    setReviewedStudentError('')
+    try {
+      const response = await fetch(`${API_URL}/api/violations/student/${student.id}?page=${page}&limit=25`, {headers:{Authorization:`Bearer ${token}`}})
+      const data = await response.json().catch(() => null)
+      if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to load student violation history.')
+      setReviewedStudentViolations((current) => append ? [...current, ...(data.violations || [])] : (data.violations || []))
+      setReviewedStudentPage(page)
+      setReviewedStudentHasMore(Boolean(data.pagination?.hasMore))
+      setReviewedStudentSummary(data.summary || null)
+    } catch (error) {
+      setReviewedStudentError(error.message)
+      if (!append) setReviewedStudentViolations([])
+    } finally {
+      setReviewedStudentLoading(false)
+    }
   }
 
   const handleViolationUpdate = async (event) => {
@@ -2071,7 +2101,7 @@ function App() {
       activeView === 'Students'
     ) {
       const visibleStudents = filterAdminStudents(students, studentRosterSearch)
-      const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, violations) : null
+      const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, reviewedStudentViolations) : null
       return (
         <>
           <section className="table-card form-card">
@@ -2376,7 +2406,7 @@ function App() {
                           </td>
                           <td>{condition.total} total / {condition.open} open</td>
                           <td><span className="status-badge">{condition.condition}</span></td>
-                          <td><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(student)}>View condition</button></td>
+                          <td><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button></td>
                         </tr>
                         )
                       }
@@ -2389,9 +2419,11 @@ function App() {
 
           {reviewedStudent && reviewedCondition && (
             <section className="table-card">
-              <div className="table-header"><div><h3>{reviewedStudent.student_number} - {reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedCondition.condition}</span></div><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(null)}>Close</button></div>
-              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{reviewedCondition.remainingHours.toFixed(2)} hrs</strong></article></section>
-              {reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>Violation #{violation.id}</h4><p>{violation.incident_date || 'Incident date unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{Number(violation.required_service_hours||0).toFixed(2)} hrs</dd></div><div><dt>Completed service</dt><dd>{Number(violation.completed_service_hours||0).toFixed(2)} hrs</dd></div></dl></article>)}</div>}
+              <div className="table-header"><div><h3>{reviewedStudent.student_number} - {reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(null)}>Close</button></div>
+              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{Number(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours).toFixed(2)} hrs</strong></article></section>
+              {reviewedStudentError&&<p className="error-message" role="alert">{reviewedStudentError}</p>}
+              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{violation.incident_date || 'Incident date unavailable'} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{Number(violation.required_service_hours||0).toFixed(2)} hrs</dd></div><div><dt>Completed service</dt><dd>{Number(violation.completed_service_hours||0).toFixed(2)} hrs</dd></div></dl></article>)}</div>}
+              {reviewedStudentHasMore&&<button type="button" className="secondary-button" disabled={reviewedStudentLoading} onClick={()=>loadReviewedStudentHistory(reviewedStudent,reviewedStudentPage+1,true)}>{reviewedStudentLoading?'Loading...':'Load older violations'}</button>}
               <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
             </section>
           )}

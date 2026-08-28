@@ -653,6 +653,38 @@ const updateViolation = async (req, res) => {
     }
 };
 
+const getStudentViolationHistory = async (req, res) => {
+    try {
+        assertAllowedFields(req.query, ["page", "limit"]);
+        const studentId = Number(req.params.studentId);
+        if (!isPositiveId(studentId)) return res.status(400).json({ success: false, message: "studentId must be a positive ID" });
+        const { page, limit, offset } = parsePagination(req.query);
+        const [records, count, summaryResult] = await Promise.all([
+            pool.query(`
+                SELECT v.*, vt.violation_code, vt.violation_name, vt.severity
+                FROM violations v
+                JOIN violation_types vt ON vt.id = v.violation_type_id
+                WHERE v.student_id = $1
+                ORDER BY v.incident_date DESC, v.id DESC
+                LIMIT $2 OFFSET $3
+            `, [studentId, limit, offset]),
+            pool.query("SELECT COUNT(*)::int AS total FROM violations WHERE student_id = $1", [studentId]),
+            pool.query(`SELECT
+                COUNT(*) FILTER (WHERE status = 'OPEN')::int AS open,
+                COUNT(*) FILTER (WHERE status IN ('COMPLETE', 'CLEAR'))::int AS resolved,
+                COALESCE(SUM(required_service_hours) FILTER (WHERE status = 'OPEN'), 0) AS required_hours,
+                COALESCE(SUM(GREATEST(required_service_hours - completed_service_hours, 0)) FILTER (WHERE status = 'OPEN'), 0) AS remaining_hours
+                FROM violations WHERE student_id = $1`, [studentId])
+        ]);
+        const total = count.rows[0]?.total || 0;
+        const aggregate = summaryResult.rows[0] || {};
+        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing' }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
+    } catch (error) {
+        console.error("Get student violation history error:", error);
+        return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to get student violation history" });
+    }
+};
+
 
 // =====================================================
 // DELETE VIOLATION
@@ -746,6 +778,7 @@ const getViolationActions = async (req, res) => {
 
 module.exports = {
     getViolationTypes,
+    getStudentViolationHistory,
     getViolations,
     getViolationById,
     createViolation,
