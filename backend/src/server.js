@@ -21,6 +21,7 @@ const accountRoutes = require('./routes/accountRoutes');
 const accountAdministrationRoutes = require('./routes/accountAdministrationRoutes');
 const departmentAdministrationRoutes = require('./routes/departmentAdministrationRoutes');
 const googleLinkAdministrationRoutes = require('./routes/googleLinkAdministrationRoutes');
+const duplicateAccountReviewRoutes = require('./routes/duplicateAccountReviewRoutes');
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -204,6 +205,7 @@ app.use('/api/account', authenticateToken, accountRoutes);
 app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
 app.use('/api/admin/departments', authenticateToken, authorizeRoles('ADMIN'), departmentAdministrationRoutes);
 app.use('/api/admin/students', authenticateToken, authorizeRoles('ADMIN'), googleLinkAdministrationRoutes);
+app.use('/api/admin/duplicate-review', authenticateToken, authorizeRoles('ADMIN'), duplicateAccountReviewRoutes);
 
 
 // =====================================================

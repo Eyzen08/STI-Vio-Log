@@ -77,6 +77,8 @@ Revoked Google identity links remain historical records. Active-link uniqueness 
 
 `POST /api/admin/students/:studentId/google-link/revoke` is restricted to `ADMIN`, accepts only a required `reason`, revokes the active link without deleting identity history, increments the student account's session version, and records `GOOGLE_LINK_REVOKE`. Missing and already-revoked links use the same non-sensitive conflict response. The endpoint never returns the Google subject, email snapshot, credential, or token; the student must complete the normal linking flow again.
 
+`GET /api/admin/duplicate-review` is an `ADMIN`-only, read-only comparison of current records and pending requests. It reports cross-source student-number, employee-number, prospective-username, and Google-identity conflict groups. It cannot resolve, merge, reject, or delete records. Google matching keys and email snapshots remain server-private; Google groups return only `Hidden Google identity`, source categories, local record IDs, and occurrence counts.
+
 ## Staff account administration
 
 `/api/admin/accounts` requires an active `ADMIN` session. Listing supports bounded pagination plus role, active-status, and search filters and returns only non-sensitive staff summaries. Creation accepts an individual username, non-Student staff role, officer name, optional employee number/email, and an active `department_id` only for `DEPARTMENT_HEAD`. It returns a cryptographically generated temporary password exactly once and marks the account for mandatory password change.

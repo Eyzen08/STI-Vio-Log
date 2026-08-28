@@ -114,6 +114,12 @@ All administration endpoints require `authenticateToken` and `authorizeRoles('AD
 - A missing or already revoked link returns the same non-sensitive conflict response.
 - The response confirms only the local student record and revocation result; it does not return Google identity claims.
 
+### Duplicate review
+
+- `GET /api/admin/duplicate-review` reports current cross-source conflicts for student numbers, employee numbers, prospective usernames, and Google identities.
+- The workflow is read-only: it cannot merge, delete, activate, reject, or reassign records.
+- Google subjects and email snapshots are never returned. Google conflicts use local source references and the fixed label `Hidden Google identity`.
+
 ## UI milestones
 
 The system-admin shell gains Accounts, Departments, and Audit Log navigation. Account lists show status, role, department, forced-change state, and last relevant activity. Create, deactivate, reassignment, password-reset, and Google-recovery dialogs explain their effects and require confirmation/reasons where specified.
