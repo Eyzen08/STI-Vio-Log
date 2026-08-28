@@ -135,9 +135,9 @@ The officer signs in with Google afterward to receive the normal role-scoped ses
 
 ## Implementation order
 
-1. [ ] Separate authentication chooser, Student entry, and Department entry contracts/routes.
-2. [ ] Pending department-registration migration and cross-role concurrency tests.
-3. [ ] Google department registration/login verifier service and rate-limited public routes.
-4. [ ] Admin-only review service, department confirmation, approval/rejection, and audits.
-5. [ ] Department registration/pending UI and Admin review queue.
+1. [x] Separate authentication chooser, Student entry, and Department entry contracts/routes.
+2. [x] Pending department-registration migration and cross-role uniqueness safeguards.
+3. [x] Google department registration/login verifier service and rate-limited public routes.
+4. [x] Admin-only review service, department confirmation, approval/rejection, and audits.
+5. [x] Department registration/pending UI and Admin review queue.
 6. [ ] Full backend, frontend, migration, RBAC, and live Google verification.

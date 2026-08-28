@@ -21,6 +21,8 @@ test('protected routes permit only their declared roles', () => {
   assert.equal(resolveRoute('/admin/registrations', 'ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/registrations', 'DISCIPLINE_OFFICE').status, 'allowed')
   assert.equal(resolveRoute('/admin/registrations', 'STUDENT').status, 'unauthorized')
+  assert.equal(resolveRoute('/admin/department-registrations', 'ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/department-registrations', 'DISCIPLINE_OFFICE').status, 'unauthorized')
   assert.equal(resolveRoute('/department/qr-scan', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/dtr', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/students', 'DEPARTMENT_HEAD').status, 'allowed')
@@ -39,6 +41,9 @@ test('protected routes permit only their declared roles', () => {
 
 test('public, unauthorized, and unknown locations resolve explicitly', () => {
   assert.equal(resolveRoute('/login', null).status, 'public')
+  assert.equal(resolveRoute('/student/login', null).status, 'public')
+  assert.equal(resolveRoute('/department/login', null).status, 'public')
+  assert.equal(resolveRoute('/department/register', null).status, 'public')
   assert.equal(resolveRoute('/unauthorized', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/not-a-real-page', 'ADMIN').status, 'not_found')
 })

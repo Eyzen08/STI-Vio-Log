@@ -56,3 +56,16 @@ export const googleLink = ({ credential, studentNumber, firstName, lastName }) =
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildGoogleLinkPayload({ credential, studentNumber, firstName, lastName }))
   })
+
+export const googleDepartmentLogin = (credential) =>
+  apiRequest('/api/auth/google/department/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential })
+  })
+
+export const googleDepartmentRegister = ({ credential, firstName, lastName, employeeNumber, departmentType, departmentName, note }) =>
+  apiRequest('/api/auth/google/department/register', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ credential, first_name: firstName, last_name: lastName, employee_number: employeeNumber || undefined,
+      department_type: departmentType, department_name: departmentName, note: note || undefined })
+  })

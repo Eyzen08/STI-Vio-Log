@@ -55,6 +55,16 @@ Department operational CSV exports are generated only from the currently loaded,
 
 `GET /api/google-registrations` and the `/:id/approve` and `/:id/reject` actions require `ADMIN` or `DISCIPLINE_OFFICE`. Review actions require a reason and derive the reviewer from authentication. Approval atomically creates the student account, profile, opaque QR, Google link, and audit events; rejection preserves history. Review responses never expose the stable Google subject. `POST /api/auth/google/login` accepts only `credential` and succeeds only after linking or approval.
 
+## Google department officer authentication
+
+`POST /api/auth/google/department/register` accepts only a Google `credential`, officer first/last name, optional employee number, controlled `department_type`, requested `department_name`, and optional note. The controlled types are `LIBRARY`, `SCHOOL_GUARD`, `STAFF_OFFICE`, and `OTHER`. A successful submission returns HTTP 202 with a pending reference and never creates a user, department mapping, Google link, or JWT.
+
+`POST /api/auth/google/department/login` accepts only `credential`. It succeeds only for a Google identity linked to an active `DEPARTMENT_HEAD` user whose mapped department is active. The authenticated middleware reloads department scope from the database; the client cannot supply or override that scope.
+
+`GET /api/admin/google-department-registrations` and its `/:id/approve` and `/:id/reject` actions require `ADMIN`; `DISCIPLINE_OFFICE` is explicitly excluded. Approval requires a reason and an existing active `department_id`, then atomically creates one individual Department Head user, one department mapping, one Google link, and audit events. The generated fallback password is random and never disclosed. Rejection preserves the request. Review responses omit the stable Google subject and all credentials.
+
+Student and department registration transactions serialize ownership checks by Google subject and reject active links or pending cross-role claims. Individual employee numbers also cannot be reused by an active officer or simultaneous pending request.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

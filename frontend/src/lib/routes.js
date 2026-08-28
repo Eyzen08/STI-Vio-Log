@@ -8,6 +8,7 @@ export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
+  { path: '/admin/department-registrations', label: 'Department Accounts', view: 'Department Registrations', roles: ['ADMIN'] },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
   { path: '/admin/community-service', label: 'Community Service', view: 'Community Service', roles: ROLE_GROUPS.administration },
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
@@ -42,7 +43,7 @@ export const getNavItems = (role) =>
   APP_ROUTES.filter((route) => route.roles.includes(role))
 
 export const resolveRoute = (path, role) => {
-  if (path === '/login') return { status: 'public', route: null }
+  if (['/login','/student/login','/department/login','/department/register'].includes(path)) return { status: 'public', route: null }
   if (path === '/unauthorized') return { status: 'unauthorized', route: null }
 
   const route = APP_ROUTES.find((candidate) => candidate.path === path)

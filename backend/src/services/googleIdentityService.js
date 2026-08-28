@@ -36,6 +36,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     let matchedUserId = null;
     try {
       await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const result = await client.query(
         `SELECT u.id, u.username, u.role, s.first_name, s.last_name
          FROM students s JOIN users u ON u.id = s.user_id
@@ -51,7 +52,8 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       if (!account) {
         const occupied = (await client.query(
           `SELECT 1 FROM students WHERE student_number = $1
-           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+          UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
            LIMIT 1`,
           [studentNumber.trim(), identity.subject]
         )).rows[0];
@@ -82,6 +84,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         const newlyOccupied = (await client.query(
           `SELECT 1 FROM students WHERE student_number = $1
            UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+           UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
            LIMIT 1`,
           [studentNumber.trim(), identity.subject]
         )).rows[0];

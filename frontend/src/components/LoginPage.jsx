@@ -1,6 +1,8 @@
 import GoogleStudentAccess from './GoogleStudentAccess.jsx'
+import GoogleDepartmentAccess from './GoogleDepartmentAccess.jsx'
 
-function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit }) {
+function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, mode='main', onNavigate }) {
+  const title = mode === 'student' ? 'Student sign in' : mode === 'department-register' ? 'Department officer signup' : mode === 'department' ? 'Department officer sign in' : 'Sign in to Vio-Log'
   return (
     <section className="login-page" aria-labelledby="login-title">
       <div className="login-intro">
@@ -22,12 +24,12 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         <div className="card-header auth-card-header">
           <div>
             <span className="badge">Secure access</span>
-            <h3 id="login-title">Sign in to Vio-Log</h3>
-            <p>Use the account issued by your school administrator.</p>
+            <h3 id="login-title">{title}</h3>
+            <p>{mode === 'department-register' ? 'Request an individual account using your school Google identity.' : 'Use an approved school account.'}</p>
           </div>
         </div>
 
-        <form className="login-form" onSubmit={onSubmit}>
+        {mode !== 'department-register' && <form className="login-form" onSubmit={onSubmit}>
           <label htmlFor="username">
             Username
             <input
@@ -70,9 +72,14 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
-        </form>
+        </form>}
 
-        <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} />
+        {mode === 'student' && <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} />}
+        {(mode === 'department' || mode === 'department-register') && <GoogleDepartmentAccess clientId={googleClientId} mode={mode === 'department-register' ? 'register' : 'login'} onSession={onGoogleSession} onNavigate={onNavigate} />}
+
+        {mode === 'main' && <div className="google-link-actions auth-entry-actions"><button type="button" onClick={() => onNavigate('/student/login')}>Student access</button><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Department access</button></div>}
+        {mode === 'department' && <button type="button" className="secondary-button" onClick={() => onNavigate('/department/register')}>Request a department account</button>}
+        {mode !== 'main' && <button type="button" className="secondary-button" onClick={() => onNavigate('/login')}>Back to all sign-in options</button>}
 
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
       </div>

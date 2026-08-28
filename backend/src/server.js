@@ -16,6 +16,7 @@ const studentClearanceRoutes = require("./routes/studentClearanceRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
+const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -386,6 +387,13 @@ app.use(
   authenticateToken,
   authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
   googleRegistrationRoutes
+);
+
+app.use(
+  '/api/admin/google-department-registrations',
+  authenticateToken,
+  authorizeRoles('ADMIN'),
+  googleDepartmentRegistrationRoutes
 );
 
 

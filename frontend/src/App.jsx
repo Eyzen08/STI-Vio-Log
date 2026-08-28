@@ -17,6 +17,7 @@ import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
+import GoogleDepartmentRegistrationReview from './components/GoogleDepartmentRegistrationReview.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -194,7 +195,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      if (routePath !== '/login') navigateTo('/login', { replace: true })
+      if (!['/login','/student/login','/department/login','/department/register'].includes(routePath)) navigateTo('/login', { replace: true })
       return
     }
 
@@ -1666,6 +1667,8 @@ function App() {
           onChange={handleChange}
           onGoogleSession={acceptSession}
           onSubmit={handleSubmit}
+          mode={routePath === '/student/login' ? 'student' : routePath === '/department/login' ? 'department' : routePath === '/department/register' ? 'department-register' : 'main'}
+          onNavigate={navigateTo}
         />
       )
     }
@@ -2005,6 +2008,10 @@ function App() {
 
     if (isAdmin && activeView === 'Registrations') {
       return <GoogleRegistrationReview token={token} />
+    }
+
+    if (userRole === 'ADMIN' && activeView === 'Department Registrations') {
+      return <GoogleDepartmentRegistrationReview token={token} />
     }
 
     /*

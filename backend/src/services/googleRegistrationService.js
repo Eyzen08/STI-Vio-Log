@@ -56,6 +56,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
         [Number(registrationId)]
       )).rows[0];
       if (!registration || registration.status !== 'PENDING') throw new ApiError(409, 'REGISTRATION_NOT_PENDING', REVIEW_FAILURE);
+      await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${registration.google_subject}`]);
 
       if (normalizedDecision === 'REJECTED') {
         const reviewed = (await client.query(
@@ -78,6 +79,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
         `SELECT 1 FROM users WHERE username = $1
          UNION ALL SELECT 1 FROM students WHERE student_number = $1
          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+         UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
          LIMIT 1`,
         [registration.student_number, registration.google_subject]
       )).rows[0];

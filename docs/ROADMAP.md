@@ -1342,19 +1342,19 @@ These requirements are recorded for future implementation. They are not part of 
 ## 27.3 Department and Staff Accounts
 
 - [x] Define secure Google onboarding in `docs/DEPARTMENT-GOOGLE-IDENTITY-DESIGN.md` before implementation.
-- [ ] Provide separate Student and Department login/registration entry points with clearly different forms.
-- [ ] Allow an individual department officer to submit a Google-authenticated registration request.
-- [ ] Require officer first/last name, optional employee number, controlled department type, and requested official department name.
-- [ ] Support Library, School Guard, Staff Office, and Other as requested department types without hard-coding shared accounts.
-- [ ] Keep every request pending and deny all Department Head permissions until an Admin verifies the officer and department.
-- [ ] Require Admin approval/rejection with a reason; Discipline Office cannot grant staff roles or department scope.
-- [ ] During approval, map the officer to exactly one existing active department and create an individual `DEPARTMENT_HEAD` account.
-- [ ] Allow approved, active Department Heads to sign in with their own Google account.
-- [ ] Prevent one Google identity from registering as both a Student and Department Head or linking to multiple users.
+- [x] Provide separate Student and Department login/registration entry points with clearly different forms.
+- [x] Allow an individual department officer to submit a Google-authenticated registration request.
+- [x] Require officer first/last name, optional employee number, controlled department type, and requested official department name.
+- [x] Support Library, School Guard, Staff Office, and Other as requested department types without hard-coding shared accounts.
+- [x] Keep every request pending and deny all Department Head permissions until an Admin verifies the officer and department.
+- [x] Require Admin approval/rejection with a reason; Discipline Office cannot grant staff roles or department scope.
+- [x] During approval, map the officer to exactly one existing active department and create an individual `DEPARTMENT_HEAD` account.
+- [x] Allow approved, active Department Heads to sign in with their own Google account.
+- [x] Prevent one Google identity from registering as both a Student and Department Head or linking to multiple users.
 - [ ] Preserve rejected registration history and audit submission, approval, rejection, linking, and login events.
 - [ ] Keep department membership separate from application roles unless a department genuinely requires different permissions.
 - [ ] Ensure Department-scoped accounts cannot scan for or report on another department.
-- [ ] Manage any optional password credential securely; Google-only officers receive no known/default password.
+- [x] Manage any optional password credential securely; Google-only officers receive no known/default password.
 - [ ] Add concurrency and RBAC tests for duplicate officer, employee-number, Google-identity, and cross-role requests.
 
 ## 27.4 Discipline Office Accounts
