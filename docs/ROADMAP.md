@@ -1343,6 +1343,7 @@ These requirements are recorded for future implementation. They are not part of 
 
 - [x] Define secure Google onboarding in `docs/DEPARTMENT-GOOGLE-IDENTITY-DESIGN.md` before implementation.
 - [x] Provide separate Student and Department login/registration entry points with clearly different forms.
+- [x] Add an operator/user guide and clear on-screen instructions for Student and Department Google registration and returning login.
 - [x] Allow an individual department officer to submit a Google-authenticated registration request.
 - [x] Require officer first/last name, optional employee number, controlled department type, and requested official department name.
 - [x] Support Library, School Guard, Staff Office, and Other as requested department types without hard-coding shared accounts.
