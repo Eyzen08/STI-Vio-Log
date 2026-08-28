@@ -164,6 +164,9 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   });
 
   assert.equal((await request(baseUrl, '/api/students')).status, 401);
+  const deniedCors = await fetch(`${baseUrl}/api/health`, { headers: { Origin: 'https://unapproved.example' } });
+  assert.equal(deniedCors.status, 403);
+  assert.equal(deniedCors.headers.get('access-control-allow-origin'), null);
   assert.equal((await request(baseUrl, '/api/auth/google/login', { method: 'POST', body: {} })).status, 400);
   assert.equal((await request(baseUrl, '/api/auth/google/link', { method: 'POST', body: { credential: 'x', student_number: '02000123456', first_name: 'Test', last_name: 'Student', role: 'ADMIN' } })).status, 400);
   assert.equal((await request(baseUrl, '/api/students', { token: 'invalid-token' })).status, 401);

@@ -9,7 +9,7 @@ Deploy the Vite frontend to Vercel (or an equivalent HTTPS static host), the Exp
 - `VITE_API_URL`: exact public HTTPS backend origin, without a trailing slash.
 - `VITE_GOOGLE_CLIENT_ID`: Google OAuth web client ID authorized for the exact production frontend origin.
 
-Build from `frontend` with `npm run build`. Configure the host to rewrite client-side routes to `index.html`.
+Build from `frontend` with `npm run build`. `frontend/vercel.json` rewrites non-asset client-side routes to `index.html`, allowing direct navigation and reloads while leaving built assets untouched.
 
 ## Backend environment
 
