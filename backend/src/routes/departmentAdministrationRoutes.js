@@ -1,0 +1,1 @@
+const express=require('express');const {list,create,update}=require('../controllers/departmentAdministrationController');const router=express.Router();router.get('/',list);router.post('/',create);router.patch('/:id',update);module.exports=router;

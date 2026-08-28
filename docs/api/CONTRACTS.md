@@ -81,6 +81,12 @@ Revoked Google identity links remain historical records. Active-link uniqueness 
 
 The `/:id/status`, `/:id/assignment`, and `/:id/password-reset` actions require reasons, lock target records, audit the actor, and increment `session_version`. Administrators cannot deactivate or reassign themselves, concurrent operations cannot remove the final active Admin, and an active Department Head must retain exactly one active department mapping. Generic staff creation and reassignment never accept the `STUDENT` role. Passwords, hashes, JWTs, and Google identity values are excluded from account lists and audit descriptions.
 
+## Department administration
+
+`GET` and `POST /api/admin/departments` plus `PATCH /api/admin/departments/:id` require `ADMIN`. The directory returns official code/name, description, status, and assigned/active account counts. Creation normalizes the unique department code and records an audit event. Updates require a reason and preserve the department record; there is no delete endpoint.
+
+An active department cannot be deactivated while active Department Head accounts remain assigned. The check locks the department and runs in the same transaction as the update. Officers must first be reassigned or deactivated through account administration. The Google department-registration reviewer obtains approval choices from this canonical directory and displays only active departments.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

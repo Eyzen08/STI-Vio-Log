@@ -19,6 +19,7 @@ const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
 const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const accountAdministrationRoutes = require('./routes/accountAdministrationRoutes');
+const departmentAdministrationRoutes = require('./routes/departmentAdministrationRoutes');
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -200,6 +201,7 @@ app.use(
 app.use('/api/account', authenticateToken, accountRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
+app.use('/api/admin/departments', authenticateToken, authorizeRoles('ADMIN'), departmentAdministrationRoutes);
 
 
 // =====================================================

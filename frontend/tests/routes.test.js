@@ -25,6 +25,8 @@ test('protected routes permit only their declared roles', () => {
   assert.equal(resolveRoute('/admin/department-registrations', 'DISCIPLINE_OFFICE').status, 'unauthorized')
   assert.equal(resolveRoute('/admin/accounts', 'ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/accounts', 'DISCIPLINE_OFFICE').status, 'unauthorized')
+  assert.equal(resolveRoute('/admin/departments', 'ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/departments', 'DISCIPLINE_OFFICE').status, 'unauthorized')
   assert.equal(resolveRoute('/department/qr-scan', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/dtr', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/students', 'DEPARTMENT_HEAD').status, 'allowed')

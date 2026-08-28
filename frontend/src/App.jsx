@@ -20,6 +20,7 @@ import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
 import GoogleDepartmentRegistrationReview from './components/GoogleDepartmentRegistrationReview.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminAccounts from './components/AdminAccounts.jsx'
+import AdminDepartments from './components/AdminDepartments.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -2023,6 +2024,10 @@ function App() {
 
     if (userRole === 'ADMIN' && activeView === 'Accounts') {
       return <AdminAccounts token={token} />
+    }
+
+    if (userRole === 'ADMIN' && activeView === 'Departments') {
+      return <AdminDepartments token={token} />
     }
 
     /*

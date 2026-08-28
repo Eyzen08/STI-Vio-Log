@@ -10,6 +10,7 @@ export const APP_ROUTES = [
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
   { path: '/admin/department-registrations', label: 'Department Accounts', view: 'Department Registrations', roles: ['ADMIN'] },
   { path: '/admin/accounts', label: 'Accounts', view: 'Accounts', roles: ['ADMIN'] },
+  { path: '/admin/departments', label: 'Departments', view: 'Departments', roles: ['ADMIN'] },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
   { path: '/admin/community-service', label: 'Community Service', view: 'Community Service', roles: ROLE_GROUPS.administration },
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },

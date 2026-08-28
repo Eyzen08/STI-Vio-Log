@@ -9,6 +9,7 @@ const { createGoogleIdentityService } = require("../src/services/googleIdentityS
 const { createGoogleDepartmentIdentityService } = require('../src/services/googleDepartmentIdentityService');
 const { createGoogleDepartmentRegistrationService } = require('../src/services/googleDepartmentRegistrationService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
+const { createDepartmentAdministrationService } = require('../src/services/departmentAdministrationService');
 
 require("dotenv").config({ quiet: true });
 
@@ -121,6 +122,10 @@ test("fresh migration chain is complete and idempotent", async () => {
         const assignedStaff=await accounts.assign({actorId:admin.id,targetId:createdStaff.account.id,role:'DEPARTMENT_HEAD',departmentId:department.id,reason:'Assigned to library'});assert.equal(assignedStaff.department_id,Number(department.id));
         const resetStaff=await accounts.resetPassword({actorId:admin.id,targetId:createdStaff.account.id,reason:'Credential recovery'});assert.match(resetStaff.temporary_password,/!Aa1$/);
         const inactiveStaff=await accounts.setStatus({actorId:admin.id,targetId:createdStaff.account.id,isActive:false,reason:'Officer left assignment'});assert.equal(inactiveStaff.is_active,false);
+        const departmentAdmin=createDepartmentAdministrationService({pool});
+        const newDepartment=await departmentAdmin.create({actorId:admin.id,code:'GUIDE-TEST',name:'Guidance Test',description:'Test department'});assert.equal(newDepartment.is_active,true);
+        const disabledDepartment=await departmentAdmin.update({actorId:admin.id,departmentId:newDepartment.id,isActive:false,reason:'Not yet operational'});assert.equal(disabledDepartment.is_active,false);
+        await assert.rejects(departmentAdmin.update({actorId:admin.id,departmentId:department.id,isActive:false,reason:'Unsafe deactivation'}),(error)=>error.code==='DEPARTMENT_HAS_ACTIVE_ACCOUNTS');
         assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, []);
         assert.ok((await migrationStatus(pool)).every((item) => item.applied));
     } finally { await pool.end(); }
