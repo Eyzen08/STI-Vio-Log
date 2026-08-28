@@ -1329,7 +1329,7 @@ These requirements are recorded for future implementation. They are not part of 
 - [x] Reject mismatched or conflicting identity combinations without exposing private student information.
 - [x] Enforce pending and linked uniqueness with PostgreSQL constraints as well as application validation.
 - [x] Record submission, approval, rejection, linking, and login security events in audit history.
-- [ ] Define safe recovery and relinking procedures before allowing administrators to change a link.
+- [x] Define and implement safe, audited recovery that revokes link history and requires normal relinking.
 - [x] Add concurrency tests proving that simultaneous pending registrations cannot claim the same Google identity.
 
 ## 27.2 Student eDTR Frontend
@@ -1373,7 +1373,7 @@ These requirements are recorded for future implementation. They are not part of 
 - [x] Add the Admin-only individual staff account directory, creation, status, password-reset, and one-time-secret UI.
 - [x] Add audited Admin-only department creation and configuration with active-assignment deactivation safeguards.
 - [ ] Add authorized account creation, activation/deactivation, department assignment, and role management.
-- [ ] Add audited account recovery and Google-link recovery.
+- [x] Add audited account recovery and Google-link recovery.
 - [ ] Add duplicate-account review tools without silently merging or deleting history.
 - [ ] Revisit more granular staff roles only when their permissions differ from the existing RBAC model.
 

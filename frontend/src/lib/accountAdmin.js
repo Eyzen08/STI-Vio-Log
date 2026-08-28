@@ -9,3 +9,5 @@ export const buildStaffAccountPayload = (form = {}) => ({
 
 export const accountStatusLabel = (account) => account?.is_active ? 'Active' : 'Inactive'
 export const clearOneTimeSecret = () => null
+
+export const buildGoogleRecoveryPayload = (reason = '') => ({ reason: String(reason).trim() })

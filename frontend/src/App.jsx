@@ -2024,7 +2024,7 @@ function App() {
     }
 
     if (userRole === 'ADMIN' && activeView === 'Accounts') {
-      return <AdminAccounts token={token} />
+      return <AdminAccounts token={token} students={students} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Departments') {

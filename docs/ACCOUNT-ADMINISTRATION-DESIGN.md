@@ -146,5 +146,5 @@ Loading, empty, validation, conflict, forbidden, expired-session, and retry stat
 3. [x] Transactional staff-account administration services and audit events.
 4. [x] Admin-only account routes with validation, pagination, and stable errors.
 5. [x] Role-aware system-admin accounts, departments, and audit frontend.
-6. [ ] Full backend, frontend, migration, and integration verification.
+6. [ ] Full backend, frontend, migration, and integration verification. (Google-link recovery API and UI complete.)
 7. [ ] Provision named school accounts through the verified workflow; never through committed seed credentials.
