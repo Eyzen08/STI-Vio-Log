@@ -8,6 +8,7 @@ const { runMigrations, migrationStatus } = require("../scripts/migrate");
 const { createGoogleIdentityService } = require("../src/services/googleIdentityService");
 const { createGoogleDepartmentIdentityService } = require('../src/services/googleDepartmentIdentityService');
 const { createGoogleDepartmentRegistrationService } = require('../src/services/googleDepartmentRegistrationService');
+const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
 
 require("dotenv").config({ quiet: true });
 
@@ -34,9 +35,9 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
-        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql"]);
+        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql"]);
         const tables = (await pool.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = $1`, [freshSchema])).rows.map((row) => row.table_name);
-        for (const name of ["users", "students", "violations", "violation_actions", "community_service_assignments", "community_service_sessions", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "google_department_registrations", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
+        for (const name of ["users", "students", "violations", "violation_actions", "community_service_assignments", "community_service_sessions", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "google_department_registrations", "staff_profiles", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
 
         const passwordHash = "$2b$04$abcdefghijklmnopqrstuuXJfM5Z0nJf4wPMFnYbPxM3Ya7kXyQYO";
         const users = (await pool.query(
@@ -112,6 +113,14 @@ test("fresh migration chain is complete and idempotent", async () => {
         assert.equal(departmentLogin.user.role, 'DEPARTMENT_HEAD');
         assert.match(departmentLogin.token, /^department-session-/);
         assert.equal((await pool.query("SELECT department_id FROM department_heads WHERE user_id=$1", [departmentLogin.user.id])).rows[0].department_id, department.id);
+
+        const accounts=createAccountAdministrationService({pool,hashPassword:async()=>passwordHash,randomBytes:()=>Buffer.alloc(18,9)});
+        const createdStaff=await accounts.create({actorId:admin.id,username:'discipline.two',role:'DISCIPLINE_OFFICE',firstName:'Second',lastName:'Officer',employeeNumber:'EMP-TEST-2',email:'second@example.test'});
+        assert.match(createdStaff.temporary_password,/!Aa1$/);assert.equal(createdStaff.account.role,'DISCIPLINE_OFFICE');
+        const listedStaff=await accounts.list({search:'discipline.two'});assert.equal(listedStaff.accounts.length,1);assert.equal('temporary_password' in listedStaff.accounts[0],false);
+        const assignedStaff=await accounts.assign({actorId:admin.id,targetId:createdStaff.account.id,role:'DEPARTMENT_HEAD',departmentId:department.id,reason:'Assigned to library'});assert.equal(assignedStaff.department_id,Number(department.id));
+        const resetStaff=await accounts.resetPassword({actorId:admin.id,targetId:createdStaff.account.id,reason:'Credential recovery'});assert.match(resetStaff.temporary_password,/!Aa1$/);
+        const inactiveStaff=await accounts.setStatus({actorId:admin.id,targetId:createdStaff.account.id,isActive:false,reason:'Officer left assignment'});assert.equal(inactiveStaff.is_active,false);
         assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, []);
         assert.ok((await migrationStatus(pool)).every((item) => item.applied));
     } finally { await pool.end(); }
@@ -135,7 +144,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
         await pool.query(`INSERT INTO community_service_attendance (assignment_id, student_id, department_id, scanned_by, attendance_type)
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
-        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql"]);
+        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql"]);
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM google_identity_links")).rows[0].count, 0);
         assert.equal((await pool.query("SELECT status::text FROM violations")).rows[0].status, "COMPLETE");
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM community_service_attendance")).rows[0].count, 1);

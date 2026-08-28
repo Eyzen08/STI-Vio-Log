@@ -1,0 +1,14 @@
+const pool=require('../config/database');
+const {assertAllowedFields}=require('../utils/validators');
+const {sendError}=require('../utils/api');
+const {createAccountAdministrationService}=require('../services/accountAdministrationService');
+const createAccountAdministrationController=({service=createAccountAdministrationService({pool})}={})=>{
+ const fail=(res,error)=>sendError(res,error.statusCode||500,error.code||'INTERNAL_ERROR',error.statusCode?error.message:'Account administration failed');
+ const list=async(req,res)=>{try{assertAllowedFields(req.query,['page','limit','role','status','search']);return res.json({success:true,...await service.list(req.query)})}catch(e){return fail(res,e)}};
+ const create=async(req,res)=>{try{assertAllowedFields(req.body,['username','role','first_name','last_name','employee_number','email','department_id']);const result=await service.create({actorId:req.user.id,username:req.body?.username,role:req.body?.role,firstName:req.body?.first_name,lastName:req.body?.last_name,employeeNumber:req.body?.employee_number,email:req.body?.email,departmentId:req.body?.department_id});return res.status(201).json({success:true,message:'Staff account created',...result})}catch(e){return fail(res,e)}};
+ const status=async(req,res)=>{try{assertAllowedFields(req.body,['is_active','reason']);return res.json({success:true,message:'Account status updated',account:await service.setStatus({actorId:req.user.id,targetId:req.params.id,isActive:req.body?.is_active,reason:req.body?.reason})})}catch(e){return fail(res,e)}};
+ const assignment=async(req,res)=>{try{assertAllowedFields(req.body,['role','department_id','reason']);return res.json({success:true,message:'Account assignment updated',account:await service.assign({actorId:req.user.id,targetId:req.params.id,role:req.body?.role,departmentId:req.body?.department_id,reason:req.body?.reason})})}catch(e){return fail(res,e)}};
+ const reset=async(req,res)=>{try{assertAllowedFields(req.body,['reason']);return res.json({success:true,message:'Temporary password generated',...await service.resetPassword({actorId:req.user.id,targetId:req.params.id,reason:req.body?.reason})})}catch(e){return fail(res,e)}};
+ return{list,create,status,assignment,reset};
+};
+module.exports={createAccountAdministrationController,...createAccountAdministrationController()};

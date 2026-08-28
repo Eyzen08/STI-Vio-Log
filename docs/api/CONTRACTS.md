@@ -73,6 +73,12 @@ Accounts marked `must_change_password` receive a restricted session. Role-protec
 
 Revoked Google identity links remain historical records. Active-link uniqueness applies only where `revoked_at IS NULL`, allowing the later audited recovery workflow to revoke rather than delete link history.
 
+## Staff account administration
+
+`/api/admin/accounts` requires an active `ADMIN` session. Listing supports bounded pagination plus role, active-status, and search filters and returns only non-sensitive staff summaries. Creation accepts an individual username, non-Student staff role, officer name, optional employee number/email, and an active `department_id` only for `DEPARTMENT_HEAD`. It returns a cryptographically generated temporary password exactly once and marks the account for mandatory password change.
+
+The `/:id/status`, `/:id/assignment`, and `/:id/password-reset` actions require reasons, lock target records, audit the actor, and increment `session_version`. Administrators cannot deactivate or reassign themselves, concurrent operations cannot remove the final active Admin, and an active Department Head must retain exactly one active department mapping. Generic staff creation and reassignment never accept the `STUDENT` role. Passwords, hashes, JWTs, and Google identity values are excluded from account lists and audit descriptions.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

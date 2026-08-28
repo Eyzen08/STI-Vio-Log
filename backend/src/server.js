@@ -18,6 +18,7 @@ const auditRoutes = require("./routes/auditRoutes");
 const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
 const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
 const accountRoutes = require('./routes/accountRoutes');
+const accountAdministrationRoutes = require('./routes/accountAdministrationRoutes');
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -198,6 +199,8 @@ app.use(
 
 app.use('/api/account', authenticateToken, accountRoutes);
 
+app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
+
 
 // =====================================================
 // STUDENT ROUTES
@@ -234,8 +237,7 @@ app.use(
   "/api/department-heads",
   authenticateToken,
   authorizeRoles(
-    "ADMIN",
-    "DISCIPLINE_OFFICE"
+    "ADMIN"
   ),
   departmentHeadRoutes
 );

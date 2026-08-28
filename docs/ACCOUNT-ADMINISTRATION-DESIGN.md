@@ -143,8 +143,8 @@ Loading, empty, validation, conflict, forbidden, expired-session, and retry stat
 
 1. [x] Account-security and recoverable-Google-link migration with upgrade tests.
 2. [x] Session-version and forced-password-change authentication enforcement.
-3. [ ] Transactional account/department administration services and audit events.
-4. [ ] Admin-only routes with validation, pagination, and stable errors.
+3. [x] Transactional staff-account administration services and audit events.
+4. [x] Admin-only account routes with validation, pagination, and stable errors.
 5. [ ] Role-aware system-admin accounts, departments, and audit frontend.
 6. [ ] Full backend, frontend, migration, and integration verification.
 7. [ ] Provision named school accounts through the verified workflow; never through committed seed credentials.
