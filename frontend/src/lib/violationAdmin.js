@@ -54,3 +54,12 @@ export const buildViolationPayload = (form = {}) => ({
 
 export const selectedViolationType = (types = [], id) =>
   types.find((type) => Number(type.id) === Number(id)) || null
+
+export const studentOptionLabel = (student = {}) =>
+  `${student.student_number || ''} - ${student.first_name || ''} ${student.last_name || ''}`.trim()
+
+export const studentIdFromSearch = (students = [], search = '') => {
+  const normalized = String(search).trim().toLocaleLowerCase()
+  const match = students.find((student) => studentOptionLabel(student).toLocaleLowerCase() === normalized)
+  return match ? Number(match.id) : ''
+}

@@ -27,7 +27,7 @@ import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
-import { buildViolationPayload, offensesForType, selectedViolationType } from './lib/violationAdmin.js'
+import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -95,6 +95,7 @@ function App() {
 
   const [violationForm, setViolationForm] = useState({
     student_id: '',
+    student_search: '',
     violation_type_id: '',
     incident_date: '',
     exact_offense: '',
@@ -592,6 +593,15 @@ function App() {
   const handleViolationFieldChange = (event) => {
     const { name, value } = event.target
 
+    if (name === 'student_search') {
+      setViolationForm((current) => ({
+        ...current,
+        student_search: value,
+        student_id: studentIdFromSearch(students, value)
+      }))
+      return
+    }
+
     setViolationForm((current) => ({
       ...current,
       ...(name === 'violation_type_id' ? { exact_offense: '' } : {}),
@@ -807,6 +817,7 @@ function App() {
 
       setViolationForm({
         student_id: '',
+        student_search: '',
         violation_type_id: '',
         incident_date: '',
         exact_offense: '',
@@ -2363,23 +2374,25 @@ function App() {
                 <label>
                   Student
 
-                  <select
-                    name="student_id"
+                  <input
+                    type="search"
+                    name="student_search"
+                    list="violation-student-options"
+                    placeholder="Type a student number or name"
                     value={
-                      violationForm.student_id
+                      violationForm.student_search
                     }
                     onChange={
                       handleViolationFieldChange
                     }
                     required
-                  >
-                    <option value="">Select a student</option>
+                  />
+                  <datalist id="violation-student-options">
                     {students.map((student) => (
-                      <option key={student.id} value={student.id}>
-                        {student.student_number} - {student.first_name} {student.last_name}
-                      </option>
+                      <option key={student.id} value={studentOptionLabel(student)} />
                     ))}
-                  </select>
+                  </datalist>
+                  <span>Search by student number, first name, or last name, then choose the matching result.</span>
                 </label>
 
                 <label>
