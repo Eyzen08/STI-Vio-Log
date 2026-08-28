@@ -17,12 +17,12 @@ const createGoogleAuthController = ({ serviceFactory = defaultServiceFactory } =
 
   const link = async (req, res) => {
     try {
-      assertAllowedFields(req.body, ['credential', 'student_number', 'first_name', 'last_name']);
-      const { credential, student_number, first_name, last_name } = req.body || {};
-      if (![credential, student_number, first_name, last_name].every((value) => typeof value === 'string' && value.trim())) {
-        return sendError(res, 400, 'VALIDATION_ERROR', 'credential, student_number, first_name, and last_name are required');
+      assertAllowedFields(req.body, ['credential', 'student_number', 'first_name', 'last_name', 'phone_number', 'program', 'section', 'year_level', 'guardian_name', 'guardian_relationship', 'guardian_phone_number']);
+      const { credential, student_number, first_name, last_name, phone_number, program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number } = req.body || {};
+      if (![credential, student_number, first_name, last_name, phone_number, program, section, guardian_name, guardian_relationship, guardian_phone_number].every((value) => typeof value === 'string' && value.trim())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'All student registration fields are required');
       }
-      const result = await getService().linkStudent({ credential, studentNumber: student_number, firstName: first_name, lastName: last_name, ipAddress: req.ip || null });
+      const result = await getService().linkStudent({ credential, studentNumber: student_number, firstName: first_name, lastName: last_name, phoneNumber: phone_number, program, section, yearLevel: year_level, guardianName: guardian_name, guardianRelationship: guardian_relationship, guardianPhoneNumber: guardian_phone_number, ipAddress: req.ip || null });
       if (result.pending) return res.status(202).json({ success: true, ...result });
       return res.json({ success: true, message: 'Google account linked successfully', ...result });
     } catch (error) { return fail(res, error); }

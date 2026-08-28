@@ -72,6 +72,7 @@ function StudentProfile({ profile, username, loading, error }) {
         <dl className="profile-details-grid">
           <ProfileField label="Email address" value={displayProfileValue(profile.email)} />
           <ProfileField label="Phone number" value={displayProfileValue(profile.phone_number)} />
+          <ProfileField label="Parent/Guardian phone number" value={displayProfileValue(profile.guardian_phone_number)} />
           <ProfileField label="Portal username" value={displayProfileValue(username)} />
         </dl>
       </div>

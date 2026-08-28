@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createGoogleRegistrationService } = require('../src/services/googleRegistrationService');
 
-const pending = { id: 7, google_subject: 'private-google-subject', google_email: 'new@example.test', student_number: '02000654321', first_name: 'New', last_name: 'Student', status: 'PENDING', created_at: new Date('2026-01-01T00:00:00Z') };
+const pending = { id: 7, google_subject: 'private-google-subject', google_email: 'new@example.test', student_number: '02000654321', first_name: 'New', last_name: 'Student', phone_number: '09171234567', program: 'BSIT', section: 'A103', year_level: 3, guardian_name: 'Maria Student', guardian_relationship: 'Mother', guardian_phone_number: '09181234567', status: 'PENDING', created_at: new Date('2026-01-01T00:00:00Z') };
 
 const fakePool = (handler) => {
   const calls = [];
@@ -24,6 +24,7 @@ test('approval atomically creates an active student, opaque QR, link, and audit'
     if (sql.includes('FROM google_student_registrations WHERE id')) return { rows: [pending] };
     if (sql.includes('SELECT 1 FROM users')) return { rows: [] };
     if (sql.includes('INSERT INTO users')) return { rows: [{ id: 50, username: pending.student_number }] };
+    if (sql.includes('INSERT INTO students')) return { rows: [{ id: 55 }] };
     if (sql.includes('INSERT INTO google_identity_links')) return { rows: [{ id: 60 }] };
     if (sql.includes("SET status = 'APPROVED'")) return { rows: [{ ...pending, status: 'APPROVED', review_reason: 'Enrollment verified', reviewed_at: new Date() }] };
     return { rows: [] };
@@ -33,6 +34,7 @@ test('approval atomically creates an active student, opaque QR, link, and audit'
   assert.equal(result.status, 'APPROVED');
   assert.ok(db.calls.some((call) => call.sql.includes("'STUDENT'")));
   assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO students')));
+  assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO student_guardians')));
   assert.ok(db.calls.some((call) => call.sql.includes('GOOGLE_REGISTRATION_APPROVED')));
   assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
   const auditCall = db.calls.find((call) => call.sql.includes('GOOGLE_REGISTRATION_APPROVED'));

@@ -36,7 +36,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
-        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql"]);
+        assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql", "010_handbook_violation_categories.sql", "011_student_registration_profile.sql"]);
         const tables = (await pool.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = $1`, [freshSchema])).rows.map((row) => row.table_name);
         for (const name of ["users", "students", "violations", "violation_actions", "community_service_assignments", "community_service_sessions", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "google_department_registrations", "staff_profiles", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
 
@@ -86,7 +86,7 @@ test("fresh migration chain is complete and idempotent", async () => {
             verifyIdentity: async () => ({ subject: "service-google-subject", email: "student@example.test" }),
             issueToken: (user) => `test-session-${user.id}`
         });
-        const linked = await identityService.linkStudent({ credential: "mocked-token", studentNumber: "02000999999", firstName: " MARÍA  ANA ", lastName: "de león", ipAddress: "127.0.0.1" });
+        const linked = await identityService.linkStudent({ credential: "mocked-token", studentNumber: "02000999999", firstName: " MARÍA  ANA ", lastName: "de león", phoneNumber: "09171234567", program: "BSIT", section: "A103", yearLevel: 3, guardianName: "Maria de Leon", guardianRelationship: "Mother", guardianPhoneNumber: "09181234567", ipAddress: "127.0.0.1" });
         assert.equal(linked.token, `test-session-${serviceUser.id}`);
         const loggedIn = await identityService.loginStudent({ credential: "mocked-token", ipAddress: "127.0.0.1" });
         assert.equal(loggedIn.user.id, Number(serviceUser.id));
@@ -149,7 +149,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
         await pool.query(`INSERT INTO community_service_attendance (assignment_id, student_id, department_id, scanned_by, attendance_type)
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
-        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql"]);
+        assert.deepEqual((await runMigrations(pool, { logger: { log() {} } })).applied, ["002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql", "010_handbook_violation_categories.sql", "011_student_registration_profile.sql"]);
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM google_identity_links")).rows[0].count, 0);
         assert.equal((await pool.query("SELECT status::text FROM violations")).rows[0].status, "COMPLETE");
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM community_service_attendance")).rows[0].count, 1);

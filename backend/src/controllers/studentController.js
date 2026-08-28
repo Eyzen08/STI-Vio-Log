@@ -186,7 +186,10 @@ const getMyProfile = async (req, res) => {
             `SELECT
                 id, student_number, first_name, middle_name, last_name,
                 suffix, email, phone_number, program, section, year_level,
-                qr_code, profile_image
+                qr_code, profile_image,
+                (SELECT phone_number FROM student_guardians
+                 WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)
+                    AS guardian_phone_number
              FROM students
              WHERE user_id = $1
              LIMIT 1`,

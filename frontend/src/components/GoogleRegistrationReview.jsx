@@ -74,6 +74,10 @@ function GoogleRegistrationReview({ token }) {
               </div>
               <dl>
                 <div><dt>Google account</dt><dd>{registration.google_email || 'Verified identity; email unavailable'}</dd></div>
+                <div><dt>Student phone</dt><dd>{registration.phone_number}</dd></div>
+                <div><dt>Enrollment</dt><dd>{registration.program} · Year {registration.year_level} · {registration.section}</dd></div>
+                <div><dt>Parent/Guardian</dt><dd>{registration.guardian_name} ({registration.guardian_relationship})</dd></div>
+                <div><dt>Parent/Guardian phone</dt><dd>{registration.guardian_phone_number}</dd></div>
                 <div><dt>Submitted</dt><dd>{new Date(registration.created_at).toLocaleString()}</dd></div>
               </dl>
               <label htmlFor={`review-reason-${registration.id}`}>Review reason

@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
 const { ApiError } = require('../utils/api');
-const { isPositiveId } = require('../utils/validators');
+const { isPositiveId, isValidPhone } = require('../utils/validators');
 
 const REVIEW_FAILURE = 'Unable to review this registration';
 const VALID_STATUSES = new Set(['PENDING', 'APPROVED', 'REJECTED']);
@@ -11,6 +11,13 @@ const publicRegistration = (row) => ({
   student_number: row.student_number,
   first_name: row.first_name,
   last_name: row.last_name,
+  phone_number: row.phone_number || null,
+  program: row.program || null,
+  section: row.section || null,
+  year_level: row.year_level === null ? null : Number(row.year_level),
+  guardian_name: row.guardian_name || null,
+  guardian_relationship: row.guardian_relationship || null,
+  guardian_phone_number: row.guardian_phone_number || null,
   google_email: row.google_email || null,
   status: row.status,
   review_reason: row.review_reason || null,
@@ -28,7 +35,8 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100) throw new ApiError(400, 'VALIDATION_ERROR', 'limit must be an integer between 1 and 100');
     const safeLimit = parsedLimit;
     const result = await pool.query(
-      `SELECT id, student_number, first_name, last_name, google_email, status,
+      `SELECT id, student_number, first_name, last_name, google_email, phone_number,
+              program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status,
               review_reason, reviewed_at, created_at
        FROM google_student_registrations
        WHERE status = $1
@@ -51,7 +59,8 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     try {
       await client.query('BEGIN');
       const registration = (await client.query(
-        `SELECT id, google_subject, google_email, student_number, first_name, last_name, status, created_at
+        `SELECT id, google_subject, google_email, student_number, first_name, last_name, phone_number,
+                program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status, created_at
          FROM google_student_registrations WHERE id = $1 FOR UPDATE`,
         [Number(registrationId)]
       )).rows[0];
@@ -75,6 +84,12 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
         return publicRegistration(reviewed);
       }
 
+      if (!isValidPhone(registration.phone_number) || !registration.program || !registration.section
+        || !Number.isInteger(Number(registration.year_level)) || !registration.guardian_name
+        || !registration.guardian_relationship || !isValidPhone(registration.guardian_phone_number)) {
+        throw new ApiError(409, 'REGISTRATION_INCOMPLETE', 'The student must resubmit the registration with complete profile and guardian information');
+      }
+
       const conflict = (await client.query(
         `SELECT 1 FROM users WHERE username = $1
          UNION ALL SELECT 1 FROM students WHERE student_number = $1
@@ -93,10 +108,16 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
         [registration.student_number, passwordHash]
       )).rows[0];
       const qrCode = randomBytes(32).toString('base64url');
+      const student = (await client.query(
+        `INSERT INTO students (user_id, student_number, first_name, last_name, email, phone_number, program, section, year_level, qr_code)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        [user.id, registration.student_number, registration.first_name, registration.last_name, registration.google_email,
+          registration.phone_number, registration.program, registration.section, registration.year_level, qrCode]
+      )).rows[0];
       await client.query(
-        `INSERT INTO students (user_id, student_number, first_name, last_name, email, qr_code)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [user.id, registration.student_number, registration.first_name, registration.last_name, registration.google_email, qrCode]
+        `INSERT INTO student_guardians (student_id, guardian_name, relationship, phone_number, is_primary)
+         VALUES ($1, $2, $3, $4, TRUE)`,
+        [student.id, registration.guardian_name, registration.guardian_relationship, registration.guardian_phone_number]
       );
       const link = (await client.query(
         `INSERT INTO google_identity_links (user_id, google_subject, google_email)

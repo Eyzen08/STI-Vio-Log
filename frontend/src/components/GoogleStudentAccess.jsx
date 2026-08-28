@@ -7,7 +7,10 @@ import {
   readGoogleCredential
 } from '../lib/googleIdentity.js'
 
-const emptyLinkForm = { studentNumber: '', firstName: '', lastName: '' }
+const emptyLinkForm = {
+  studentNumber: '', firstName: '', lastName: '', phoneNumber: '', program: '',
+  section: '', yearLevel: '', guardianName: '', guardianRelationship: '', guardianPhoneNumber: ''
+}
 
 function GoogleStudentAccess({ clientId, onSession }) {
   const buttonRef = useRef(null)
@@ -158,6 +161,50 @@ function GoogleStudentAccess({ clientId, onSession }) {
             <input id="google-last-name" name="lastName" value={linkForm.lastName}
               onChange={(event) => setLinkForm({ ...linkForm, lastName: event.target.value })}
               placeholder="Example: Reyes" autoComplete="family-name" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-phone-number">
+            Phone number
+            <input id="google-phone-number" name="phoneNumber" value={linkForm.phoneNumber}
+              onChange={(event) => setLinkForm({ ...linkForm, phoneNumber: event.target.value })}
+              placeholder="Example: 09171234567" autoComplete="tel" inputMode="tel" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-program">
+            Program
+            <input id="google-program" name="program" value={linkForm.program}
+              onChange={(event) => setLinkForm({ ...linkForm, program: event.target.value })}
+              placeholder="Example: BSIT" autoComplete="off" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-year-level">
+            Year level
+            <select id="google-year-level" name="yearLevel" value={linkForm.yearLevel}
+              onChange={(event) => setLinkForm({ ...linkForm, yearLevel: event.target.value })} disabled={isBusy} required>
+              <option value="">Select year level</option>
+              {[1, 2, 3, 4, 5, 6].map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </label>
+          <label htmlFor="google-section">
+            Section
+            <input id="google-section" name="section" value={linkForm.section}
+              onChange={(event) => setLinkForm({ ...linkForm, section: event.target.value })}
+              placeholder="Example: A103" autoComplete="off" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-guardian-name">
+            Parent/Guardian name
+            <input id="google-guardian-name" name="guardianName" value={linkForm.guardianName}
+              onChange={(event) => setLinkForm({ ...linkForm, guardianName: event.target.value })}
+              placeholder="Example: Maria Reyes" autoComplete="name" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-guardian-relationship">
+            Relationship
+            <input id="google-guardian-relationship" name="guardianRelationship" value={linkForm.guardianRelationship}
+              onChange={(event) => setLinkForm({ ...linkForm, guardianRelationship: event.target.value })}
+              placeholder="Example: Mother" autoComplete="off" disabled={isBusy} required />
+          </label>
+          <label htmlFor="google-guardian-phone-number">
+            Parent/Guardian phone number
+            <input id="google-guardian-phone-number" name="guardianPhoneNumber" value={linkForm.guardianPhoneNumber}
+              onChange={(event) => setLinkForm({ ...linkForm, guardianPhoneNumber: event.target.value })}
+              placeholder="Example: 09181234567" autoComplete="tel" inputMode="tel" disabled={isBusy} required />
           </label>
 
           <div className="google-link-actions">

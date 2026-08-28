@@ -24,11 +24,18 @@ export const readGoogleCredential = (response) => {
     : ''
 }
 
-export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName }) => ({
+export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber }) => ({
   credential,
   student_number: studentNumber.trim(),
   first_name: firstName.trim(),
-  last_name: lastName.trim()
+  last_name: lastName.trim(),
+  phone_number: phoneNumber.trim(),
+  program: program.trim(),
+  section: section.trim(),
+  year_level: Number(yearLevel),
+  guardian_name: guardianName.trim(),
+  guardian_relationship: guardianRelationship.trim(),
+  guardian_phone_number: guardianPhoneNumber.trim()
 })
 
 export const isPendingGoogleRegistration = (result) =>

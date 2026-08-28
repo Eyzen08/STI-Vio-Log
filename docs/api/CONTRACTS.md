@@ -59,9 +59,9 @@ Department operational CSV exports are generated only from the currently loaded,
 
 ## Google student authentication
 
-`POST /api/auth/google/link` accepts only `credential`, `student_number`, `first_name`, and `last_name`. Existing active students are linked immediately after an exact school-record match. A new unique student identity creates a `PENDING` enrollment request and returns HTTP 202 without a user, QR, link, JWT, or portal access. Existing mismatches and conflicts remain generic.
+`POST /api/auth/google/link` accepts only the Google credential and the student's registration details: Student Number, name, personal phone, program, section, year level, guardian name, guardian relationship, and guardian phone. Existing active students are linked after an exact school-record match. A new unique identity creates a `PENDING` enrollment request and returns HTTP 202 without a user, QR, link, JWT, or portal access. Existing mismatches and conflicts remain generic.
 
-`GET /api/google-registrations` and the `/:id/approve` and `/:id/reject` actions require `ADMIN` or `DISCIPLINE_OFFICE`. Review actions require a reason and derive the reviewer from authentication. Approval atomically creates the student account, profile, opaque QR, Google link, and audit events; rejection preserves history. Review responses never expose the stable Google subject. `POST /api/auth/google/login` accepts only `credential` and succeeds only after linking or approval.
+`GET /api/google-registrations` and the `/:id/approve` and `/:id/reject` actions require `ADMIN` or `DISCIPLINE_OFFICE`. Review actions require a reason and derive the reviewer from authentication. Approval atomically creates the student account, verified profile, primary guardian contact, opaque QR, Google link, and audit events; rejection preserves history. The student's own profile may return the primary guardian phone, but other student self-service data remains ownership-scoped and Department operational reports omit guardian details. Review responses never expose the stable Google subject. `POST /api/auth/google/login` accepts only `credential` and succeeds only after linking or approval.
 
 ## Google department officer authentication
 

@@ -33,6 +33,13 @@ test('link payload contains only the school identity contract fields', () => {
     studentNumber: ' 02000123456 ',
     firstName: ' Ada ',
     lastName: ' Lovelace ',
+    phoneNumber: ' 09171234567 ',
+    program: ' BSIT ',
+    section: ' A103 ',
+    yearLevel: '3',
+    guardianName: ' Maria Lovelace ',
+    guardianRelationship: ' Mother ',
+    guardianPhoneNumber: ' 09181234567 ',
     studentId: 99,
     role: 'ADMIN'
   })
@@ -41,6 +48,13 @@ test('link payload contains only the school identity contract fields', () => {
     credential: 'google-token',
     student_number: '02000123456',
     first_name: 'Ada',
-    last_name: 'Lovelace'
+    last_name: 'Lovelace',
+    phone_number: '09171234567',
+    program: 'BSIT',
+    section: 'A103',
+    year_level: 3,
+    guardian_name: 'Maria Lovelace',
+    guardian_relationship: 'Mother',
+    guardian_phone_number: '09181234567'
   })
 })

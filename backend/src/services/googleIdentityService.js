@@ -1,5 +1,5 @@
 const { ApiError } = require('../utils/api');
-const { isValidStudentNumber } = require('../utils/validators');
+const { isValidPhone, isValidStudentNumber } = require('../utils/validators');
 const { issueSessionToken } = require('./sessionTokenService');
 
 const LINK_FAILURE = 'Unable to link this student account';
@@ -27,9 +27,13 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     } catch (_) {}
   };
 
-  const linkStudent = async ({ credential, studentNumber, firstName, lastName, ipAddress = null }) => {
+  const linkStudent = async ({ credential, studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
     const identity = await verifyIdentity(credential);
-    if (!isValidStudentNumber(studentNumber) || !normalizeName(firstName) || !normalizeName(lastName)) {
+    const parsedYearLevel = Number(yearLevel);
+    if (!isValidStudentNumber(studentNumber) || !normalizeName(firstName) || !normalizeName(lastName)
+      || !isValidPhone(phoneNumber) || !normalizeName(program) || !normalizeName(section)
+      || !Number.isInteger(parsedYearLevel) || parsedYearLevel < 1 || parsedYearLevel > 6
+      || !normalizeName(guardianName) || !normalizeName(guardianRelationship) || !isValidPhone(guardianPhoneNumber)) {
       throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
     }
     const client = await pool.connect();
@@ -60,7 +64,8 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         if (occupied) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
 
         const existing = (await client.query(
-          `SELECT id, google_subject, student_number, first_name, last_name
+          `SELECT id, google_subject, student_number, first_name, last_name, phone_number, program,
+                  section, year_level, guardian_name, guardian_relationship, guardian_phone_number
            FROM google_student_registrations
            WHERE status = 'PENDING' AND (google_subject = $1 OR student_number = $2)
            FOR UPDATE`,
@@ -73,6 +78,15 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
           && normalizeName(row.last_name) === normalizeName(lastName)
         );
         if (sameRequest && existing.length === 1) {
+          await client.query(
+            `UPDATE google_student_registrations
+             SET phone_number = $2, program = $3, section = $4, year_level = $5,
+                 guardian_name = $6, guardian_relationship = $7, guardian_phone_number = $8,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE id = $1`,
+            [sameRequest.id, phoneNumber.trim(), program.trim(), section.trim(), parsedYearLevel,
+              guardianName.trim(), guardianRelationship.trim(), guardianPhoneNumber.trim()]
+          );
           await client.query('COMMIT');
           return { pending: true, message: REGISTRATION_PENDING, registration: { id: Number(sameRequest.id), status: 'PENDING' } };
         }
@@ -92,9 +106,11 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
 
         const registration = (await client.query(
           `INSERT INTO google_student_registrations
-             (google_subject, google_email, student_number, first_name, last_name)
-           VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-          [identity.subject, identity.emailVerified ? identity.email : null, studentNumber.trim(), firstName.trim(), lastName.trim()]
+             (google_subject, google_email, student_number, first_name, last_name, phone_number,
+              program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+          [identity.subject, identity.emailVerified ? identity.email : null, studentNumber.trim(), firstName.trim(), lastName.trim(),
+            phoneNumber.trim(), program.trim(), section.trim(), parsedYearLevel, guardianName.trim(), guardianRelationship.trim(), guardianPhoneNumber.trim()]
         )).rows[0];
         await client.query(
           `INSERT INTO audit_logs (user_id, action, table_name, record_id, description, ip_address)

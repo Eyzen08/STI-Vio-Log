@@ -4,15 +4,16 @@ const { createGoogleAuthController } = require('../src/controllers/googleAuthCon
 const { ApiError } = require('../src/utils/api');
 
 const response = () => ({ statusCode: 200, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } });
+const registrationBody = { credential: 'id-token', student_number: '02000123456', first_name: 'Test', last_name: 'Student', phone_number: '09171234567', program: 'BSIT', section: 'A103', year_level: 3, guardian_name: 'Maria Student', guardian_relationship: 'Mother', guardian_phone_number: '09181234567' };
 
 test('Google link controller whitelists and maps the public contract', async () => {
   let input;
   const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent(value) { input = value; return { token: 'jwt', user: { id: 4, username: 'student', role: 'STUDENT' } }; } }) });
   const res = response();
-  await controller.link({ body: { credential: 'id-token', student_number: '02000123456', first_name: 'Test', last_name: 'Student' }, ip: '127.0.0.1' }, res);
+  await controller.link({ body: registrationBody, ip: '127.0.0.1' }, res);
   assert.equal(res.statusCode, 200);
   assert.equal(res.body.token, 'jwt');
-  assert.deepEqual(input, { credential: 'id-token', studentNumber: '02000123456', firstName: 'Test', lastName: 'Student', ipAddress: '127.0.0.1' });
+  assert.deepEqual(input, { credential: 'id-token', studentNumber: '02000123456', firstName: 'Test', lastName: 'Student', phoneNumber: '09171234567', program: 'BSIT', section: 'A103', yearLevel: 3, guardianName: 'Maria Student', guardianRelationship: 'Mother', guardianPhoneNumber: '09181234567', ipAddress: '127.0.0.1' });
 });
 
 test('Google auth controllers reject unsupported and incomplete bodies before service creation', async () => {
@@ -30,7 +31,7 @@ test('Google auth controllers reject unsupported and incomplete bodies before se
 test('Google link controller returns accepted without a session for pending enrollment', async () => {
   const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent() { return { pending: true, message: 'Pending review', registration: { id: 8, status: 'PENDING' } }; } }) });
   const res = response();
-  await controller.link({ body: { credential: 'id-token', student_number: '02000123456', first_name: 'Test', last_name: 'Student' }, ip: null }, res);
+  await controller.link({ body: registrationBody, ip: null }, res);
   assert.equal(res.statusCode, 202);
   assert.equal(res.body.pending, true);
   assert.equal('token' in res.body, false);

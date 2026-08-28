@@ -50,11 +50,11 @@ export const googleLogin = (credential) =>
     body: JSON.stringify({ credential })
   })
 
-export const googleLink = ({ credential, studentNumber, firstName, lastName }) =>
+export const googleLink = (registration) =>
   apiRequest('/api/auth/google/link', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(buildGoogleLinkPayload({ credential, studentNumber, firstName, lastName }))
+    body: JSON.stringify(buildGoogleLinkPayload(registration))
   })
 
 export const googleDepartmentLogin = (credential) =>
