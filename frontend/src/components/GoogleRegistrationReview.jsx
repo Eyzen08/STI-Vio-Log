@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 
-function GoogleRegistrationReview({ token }) {
+function GoogleRegistrationReview({ token, onPendingCountChange }) {
   const [registrations, setRegistrations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -26,6 +26,7 @@ function GoogleRegistrationReview({ token }) {
   }, [token])
 
   useEffect(() => { load() }, [load])
+  useEffect(() => { onPendingCountChange?.(registrations.length) }, [registrations.length, onPendingCountChange])
 
   const review = async (registration, decision) => {
     const reason = String(reasonById[registration.id] || '').trim()
