@@ -17,6 +17,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
 const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
+const parentContactRoutes = require('./routes/parentContactRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const accountAdministrationRoutes = require('./routes/accountAdministrationRoutes');
 const departmentAdministrationRoutes = require('./routes/departmentAdministrationRoutes');
@@ -253,6 +254,13 @@ app.use(
     "DEPARTMENT_HEAD"
   ),
   communityServiceRoutes
+);
+
+app.use(
+  "/api/parent-contact",
+  authenticateToken,
+  authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+  parentContactRoutes
 );
 
 

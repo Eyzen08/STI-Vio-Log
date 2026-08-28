@@ -49,6 +49,12 @@ Department Head non-compliance reports accept only the `sort_by` values `date`, 
 
 Department operational CSV exports are generated only from the currently loaded, backend-scoped DTR or non-compliance response. They intentionally exclude guardian details and global directory fields, consistent with Department Head RBAC.
 
+## Parent and guardian contact
+
+`GET /api/parent-contact/{studentId}` and `POST /api/parent-contact/{studentId}` require Admin, Discipline Office, or Department Head access. Admin and Discipline Office may review enrolled students. Department Heads can access only students with recorded community-service attendance in their authenticated department; out-of-scope students receive the same 404 response as missing students. Clients cannot select an actor or department.
+
+Contact recording is append-only and accepts only a guardian ID belonging to the scoped student, a controlled method and outcome, and optional bounded notes. Each attempt records the authenticated staff member, derived department where applicable, timestamp, and audit event. There are no update or delete endpoints. Department reports and exports continue to omit guardian information.
+
 ## Student clearance self-service
 
 `GET /api/student/clearance` and `/api/student/clearance/eligibility` accept no query parameters and derive ownership from the authenticated student account. The records response omits the internal `cleared_by` user ID while retaining status, blocker flags, approval timestamp, academic period, and remarks. Eligibility is live and may differ from older historical records.

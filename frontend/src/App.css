@@ -388,6 +388,15 @@
   margin-top: 15px;
 }
 
+.guardian-contact-panel { margin-top: 24px; }
+.guardian-contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin: 18px 0; }
+.guardian-contact-grid article { border: 1px solid #dbe4f0; border-radius: 14px; padding: 16px; }
+.guardian-contact-grid h4, .guardian-contact-grid p { margin: 0 0 6px; }
+.guardian-contact-actions { display: flex; gap: 10px; margin-top: 12px; }
+.guardian-contact-actions a { border-radius: 9px; padding: 8px 12px; background: #e9f3ff; color: #155fc4; font-weight: 700; text-decoration: none; }
+.guardian-contact-form { border-top: 1px solid #e1e8f2; border-bottom: 1px solid #e1e8f2; padding: 20px 0; margin: 20px 0; }
+.table-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 .danger-button {
   background: #fff0f0;
   color: #a62929;

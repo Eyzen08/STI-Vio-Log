@@ -1106,8 +1106,8 @@ Never rely only on frontend permission checks.
 - [ ] View DTR
 - [ ] View assigned service
 - [ ] View non-compliant students
-- [ ] View authorized guardian contact
-- [ ] Record parent contact
+- [x] View authorized guardian contact
+- [x] Record parent contact
 - [ ] Cannot access system-admin functions
 
 ## DO Admin
@@ -1118,7 +1118,7 @@ Never rely only on frontend permission checks.
 - [ ] Monitor service
 - [ ] Mark/review non-compliance
 - [ ] Issue clearance
-- [ ] Review parent contact logs
+- [x] Review parent contact logs
 - [ ] Generate reports
 
 ## System Admin

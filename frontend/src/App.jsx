@@ -8,6 +8,7 @@ import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import DepartmentReports from './components/DepartmentReports.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
+import GuardianContactPanel from './components/GuardianContactPanel.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
@@ -103,6 +104,7 @@ function App() {
   const [reviewedStudentSummary, setReviewedStudentSummary] = useState(null)
   const [reviewedStudentLoading, setReviewedStudentLoading] = useState(false)
   const [reviewedStudentError, setReviewedStudentError] = useState('')
+  const [guardianContactStudent, setGuardianContactStudent] = useState(null)
 
   const [violationForm, setViolationForm] = useState({
     student_id: '',
@@ -2056,6 +2058,7 @@ function App() {
           loading={dashboardLoading}
           error={dashboardError}
           onOpenDtr={() => navigateTo('/department/dtr')}
+          token={token}
         />
       )
     }
@@ -2441,7 +2444,7 @@ function App() {
                           </td>
                           <td>{condition.total} total / {condition.open} open</td>
                           <td><span className="status-badge">{condition.condition}</span></td>
-                          <td><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button></td>
+                          <td><div className="table-actions"><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)}>Guardian contact</button></div></td>
                         </tr>
                         )
                       }
@@ -2451,6 +2454,8 @@ function App() {
               </div>
             )}
           </section>
+
+          {guardianContactStudent && <GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} />}
 
           {reviewedStudent && reviewedCondition && (
             <section className="table-card">
