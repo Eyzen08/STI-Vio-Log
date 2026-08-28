@@ -27,7 +27,7 @@ import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
-import { buildViolationPayload, selectedViolationType } from './lib/violationAdmin.js'
+import { buildViolationPayload, offensesForType, selectedViolationType } from './lib/violationAdmin.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -97,7 +97,8 @@ function App() {
     student_id: '',
     violation_type_id: '',
     incident_date: '',
-    description: '',
+    exact_offense: '',
+    incident_details: '',
     required_service_hours: 0
   })
   const [violationTypes, setViolationTypes] = useState([])
@@ -378,7 +379,9 @@ function App() {
           )
 
           setViolationTypes(
-            violationTypesData.violationTypes || []
+            (violationTypesData.violationTypes || []).filter((type) =>
+              type.violation_code.startsWith('HANDBOOK_')
+            )
           )
 
           setCommunityServiceAssignments(
@@ -591,14 +594,10 @@ function App() {
 
     setViolationForm((current) => ({
       ...current,
-      [name]:
-        [
-          'student_id',
-          'violation_type_id',
-          'required_service_hours'
-        ].includes(name)
-          ? Number(value) || ''
-          : value
+      ...(name === 'violation_type_id' ? { exact_offense: '' } : {}),
+      [name]: ['student_id', 'violation_type_id', 'required_service_hours'].includes(name)
+        ? Number(value) || ''
+        : value
     }))
   }
 
@@ -768,10 +767,12 @@ function App() {
       if (
         !payload.student_id ||
         !payload.violation_type_id ||
-        !payload.incident_date
+        !payload.incident_date ||
+        !violationForm.exact_offense.trim() ||
+        !violationForm.incident_details.trim()
       ) {
         throw new Error(
-          'Student, violation type, and incident date are required.'
+          'Student, classification, exact offense, incident date, and incident details are required.'
         )
       }
 
@@ -808,7 +809,8 @@ function App() {
         student_id: '',
         violation_type_id: '',
         incident_date: '',
-        description: '',
+        exact_offense: '',
+        incident_details: '',
         required_service_hours: 0
       })
 
@@ -2336,6 +2338,8 @@ function App() {
     if (
       activeView === 'Violations'
     ) {
+      const selectedType = selectedViolationType(violationTypes, violationForm.violation_type_id)
+      const exactOffenses = offensesForType(selectedType)
       return (
         <>
           <section className="table-card form-card">
@@ -2434,24 +2438,43 @@ function App() {
                 </label>
 
                 <label className="full-width-field">
-                  Exact offense and incident details
+                  Specific handbook offense
+
+                  <select
+                    name="exact_offense"
+                    value={violationForm.exact_offense}
+                    onChange={handleViolationFieldChange}
+                    disabled={!selectedType || exactOffenses.length === 0}
+                    required
+                  >
+                    <option value="">
+                      {selectedType ? 'Select the exact offense' : 'Choose a handbook classification first'}
+                    </option>
+                    {exactOffenses.map((offense) => (
+                      <option key={offense} value={offense}>{offense}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="full-width-field">
+                  Incident details
 
                   <textarea
-                    name="description"
+                    name="incident_details"
                     value={
-                      violationForm.description
+                      violationForm.incident_details
                     }
                     onChange={
                       handleViolationFieldChange
                     }
                     rows="4"
-                    placeholder="State the specific handbook offense and describe what happened"
+                    placeholder="Describe what happened, where and when it occurred, and other relevant facts"
                     required
                   />
                 </label>
-                {selectedViolationType(violationTypes, violationForm.violation_type_id) && (
+                {selectedType && (
                   <p className="form-guidance full-width-field">
-                    {selectedViolationType(violationTypes, violationForm.violation_type_id).description}
+                    {selectedType.description}
                     {' '}Service hours are assigned by authorized staff for this case; the handbook does not prescribe an automatic hour value.
                   </p>
                 )}
