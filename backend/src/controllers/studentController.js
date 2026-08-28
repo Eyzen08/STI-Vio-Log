@@ -1,4 +1,6 @@
 const pool = require("../config/database");
+const bcrypt = require('bcrypt');
+const crypto = require('node:crypto');
 const { isValidEmail, isValidPhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
@@ -64,114 +66,28 @@ const getStudentById = async (req, res) => {
 };
 
 const createStudent = async (req, res) => {
+    let client;
     try {
-        assertAllowedFields(req.body, ["user_id", "student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
-        const {
-            user_id,
-            student_number,
-            first_name,
-            middle_name,
-            last_name,
-            suffix,
-            email,
-            phone_number,
-            program,
-            section,
-            year_level,
-            qr_code,
-            profile_image
-        } = req.body;
-
-        if (!user_id || !student_number || !first_name || !last_name || !qr_code) {
-            return res.status(400).json({
-                success: false,
-                message: "user_id, student_number, first_name, last_name, and qr_code are required"
-            });
-        }
-
-        if (!isPositiveId(user_id) || !isValidStudentNumber(student_number)) {
-            return res.status(400).json({ success: false, message: "user_id must be a positive ID and student_number must match 02000 followed by exactly 6 digits" });
-        }
-
-        if (email && !isValidEmail(email)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid email format"
-            });
-        }
-
-        if (phone_number && !isValidPhone(phone_number)) {
-            return res.status(400).json({
-                success: false,
-                message: "Invalid phone number format"
-            });
-        }
-
-        const payload = {
-            user_id: Number(user_id),
-            student_number: sanitizeString(student_number),
-            first_name: sanitizeString(first_name),
-            middle_name: sanitizeString(middle_name),
-            last_name: sanitizeString(last_name),
-            suffix: sanitizeString(suffix),
-            email: sanitizeString(email),
-            phone_number: sanitizeString(phone_number),
-            program: sanitizeString(program),
-            section: sanitizeString(section),
-            year_level: year_level !== undefined ? Number(year_level) : null,
-            qr_code: sanitizeString(qr_code),
-            profile_image: sanitizeString(profile_image)
-        };
-
-        const result = await pool.query(
-            `
-                INSERT INTO students (
-                    user_id,
-                    student_number,
-                    first_name,
-                    middle_name,
-                    last_name,
-                    suffix,
-                    email,
-                    phone_number,
-                    program,
-                    section,
-                    year_level,
-                    qr_code,
-                    profile_image
-                )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-                RETURNING *
-            `,
-            [
-                user_id,
-                student_number,
-                first_name,
-                middle_name || null,
-                last_name,
-                suffix || null,
-                email || null,
-                phone_number || null,
-                program || null,
-                section || null,
-                year_level || null,
-                qr_code,
-                profile_image || null
-            ]
-        );
-
-        return res.status(201).json({
-            success: true,
-            student: result.rows[0]
-        });
+        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
+        const { student_number, first_name, middle_name, last_name, suffix, email, phone_number, program, section, year_level, qr_code, profile_image } = req.body;
+        if (!student_number || !first_name || !last_name || !qr_code) return res.status(400).json({ success: false, message: "student_number, first_name, last_name, and qr_code are required" });
+        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "student_number must match 02000 followed by exactly 6 digits" });
+        if (email && !isValidEmail(email)) return res.status(400).json({ success: false, message: "Invalid email format" });
+        if (phone_number && !isValidPhone(phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
+        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:sanitizeString(phone_number), program:sanitizeString(program), section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('base64url'), 12);
+        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active) VALUES ($1,$2,'STUDENT',TRUE) RETURNING id", [payload.student_number,passwordHash])).rows[0];
+        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code,profile_image) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.email||null,payload.phone_number||null,payload.program||null,payload.section||null,payload.year_level||null,payload.qr_code,payload.profile_image||null]);
+        await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
+        await client.query('COMMIT');
+        return res.status(201).json({ success:true, student:result.rows[0] });
     } catch (error) {
+        if (client) try { await client.query('ROLLBACK'); } catch (_) {}
         console.error("Create student error:", error);
-
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.statusCode ? error.message : "Failed to create student"
-        });
-    }
+        return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({ success:false, message:error.statusCode ? error.message : error.code === '23505' ? "A student account with that student number already exists" : "Failed to create student" });
+    } finally { if (client) client.release(); }
 };
 
 const updateStudent = async (req, res) => {

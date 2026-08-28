@@ -25,6 +25,8 @@ Administrative DTR corrections are deliberately deferred. A future correction de
 
 `GET /api/students/me/violations` accepts no query parameters and derives the student exclusively from the authenticated account. Each violation includes type code/name, severity, canonical lifecycle status, description, incident timestamps, authoritative required/completed/remaining service hours, and ordered lifecycle history. Student history exposes action, status transition, reason, actor role, and timestamp; actor user IDs and usernames are intentionally omitted.
 
+Staff student creation accepts the Student Number directly and never accepts a client-selected `user_id`. The backend uses the validated `02000` plus six digits Student Number as the local account username, generates an unknown random password, and creates the user/profile relationship atomically. Students subsequently use the enrollment-gated Google linking workflow; no generated password is returned or logged.
+
 ## Department Head QR attendance
 
 Department Heads may submit only `qr_code` and optional `notes` to `/api/qr/scan`, `/api/qr/time-in`, and `/api/qr/time-out`. Their actor and department are derived from the authenticated account. Client-supplied `scanned_by` or `department_id` fields are rejected. The frontend requires a successful `/api/qr/scan` confirmation for the current code before enabling attendance actions; the backend remains authoritative for active-session and concurrency rules.

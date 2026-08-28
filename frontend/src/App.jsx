@@ -71,7 +71,6 @@ function App() {
   const [studentNotifications, setStudentNotifications] = useState([])
 
   const [studentForm, setStudentForm] = useState({
-    user_id: 1,
     student_number: '',
     first_name: '',
     last_name: '',
@@ -560,7 +559,6 @@ function App() {
     setStudentForm((current) => ({
       ...current,
       [name]:
-        name === 'user_id' ||
         name === 'year_level'
           ? Number(value) || ''
           : value
@@ -661,13 +659,12 @@ function App() {
       }
 
       if (
-        !payload.user_id ||
         !payload.student_number ||
         !payload.first_name ||
         !payload.last_name
       ) {
         throw new Error(
-          'User ID, student number, first name, and last name are required.'
+          'Student number, first name, and last name are required.'
         )
       }
 
@@ -701,7 +698,6 @@ function App() {
       )
 
       setStudentForm({
-        user_id: 1,
         student_number: '',
         first_name: '',
         last_name: '',
@@ -2054,22 +2050,6 @@ function App() {
             >
               <div className="student-form-grid">
                 <label>
-                  User ID
-
-                  <input
-                    type="number"
-                    name="user_id"
-                    value={
-                      studentForm.user_id
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    min="1"
-                  />
-                </label>
-
-                <label>
                   Student Number
 
                   <input
@@ -2081,7 +2061,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="2024-001"
+                    placeholder="02000XXXXXX"
                   />
                 </label>
 
@@ -2209,7 +2189,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="BSIT-3A"
+                    placeholder="A103"
                   />
                 </label>
 
