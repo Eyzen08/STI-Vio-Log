@@ -659,7 +659,7 @@ const getStudentViolationHistory = async (req, res) => {
         const studentId = Number(req.params.studentId);
         if (!isPositiveId(studentId)) return res.status(400).json({ success: false, message: "studentId must be a positive ID" });
         const { page, limit, offset } = parsePagination(req.query);
-        const [records, count, summaryResult] = await Promise.all([
+        const [records, count, summaryResult, categoryResult] = await Promise.all([
             pool.query(`
                 SELECT v.*, vt.violation_code, vt.violation_name, vt.severity
                 FROM violations v
@@ -674,11 +674,16 @@ const getStudentViolationHistory = async (req, res) => {
                 COUNT(*) FILTER (WHERE status IN ('COMPLETE', 'CLEAR'))::int AS resolved,
                 COALESCE(SUM(required_service_hours) FILTER (WHERE status = 'OPEN'), 0) AS required_hours,
                 COALESCE(SUM(GREATEST(required_service_hours - completed_service_hours, 0)) FILTER (WHERE status = 'OPEN'), 0) AS remaining_hours
-                FROM violations WHERE student_id = $1`, [studentId])
+                FROM violations WHERE student_id = $1`, [studentId]),
+            pool.query(`SELECT vt.violation_code, vt.violation_name, COUNT(*)::int AS offense_count
+                FROM violations v JOIN violation_types vt ON vt.id = v.violation_type_id
+                WHERE v.student_id = $1 AND vt.violation_code LIKE 'HANDBOOK_%'
+                GROUP BY vt.violation_code, vt.violation_name
+                ORDER BY vt.violation_code`, [studentId])
         ]);
         const total = count.rows[0]?.total || 0;
         const aggregate = summaryResult.rows[0] || {};
-        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing' }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
+        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing', categoryCounts: categoryResult.rows.map((row) => ({ code: row.violation_code, name: row.violation_name, count: row.offense_count })) }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
     } catch (error) {
         console.error("Get student violation history error:", error);
         return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to get student violation history" });
