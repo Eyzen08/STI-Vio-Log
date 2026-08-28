@@ -15,6 +15,29 @@ const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils
 // GET ALL VIOLATIONS
 // =====================================================
 
+const getViolationTypes = async (req, res) => {
+    try {
+        assertAllowedFields(req.query, []);
+        const result = await pool.query(`
+            SELECT id, violation_code, violation_name, description, severity, default_service_hours
+            FROM violation_types
+            WHERE is_active = TRUE
+            ORDER BY CASE violation_code
+                WHEN 'HANDBOOK_MINOR' THEN 1
+                WHEN 'HANDBOOK_MAJOR_A' THEN 2
+                WHEN 'HANDBOOK_MAJOR_B' THEN 3
+                WHEN 'HANDBOOK_MAJOR_C' THEN 4
+                WHEN 'HANDBOOK_MAJOR_D' THEN 5
+                ELSE 6 END,
+                violation_name
+        `);
+        return res.json({ success: true, violationTypes: result.rows });
+    } catch (error) {
+        console.error("Get violation types error:", error);
+        return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to get violation types" });
+    }
+};
+
 const getViolations = async (req, res) => {
     try {
         assertAllowedFields(req.query, ["page", "limit"]);
@@ -721,6 +744,7 @@ const getViolationActions = async (req, res) => {
 // =====================================================
 
 module.exports = {
+    getViolationTypes,
     getViolations,
     getViolationById,
     createViolation,

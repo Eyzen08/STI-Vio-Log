@@ -1,6 +1,7 @@
 const express = require("express");
 
 const {
+    getViolationTypes,
     getViolations,
     getViolationById,
     createViolation,
@@ -12,6 +13,7 @@ const {
 
 const router = express.Router();
 
+router.get("/types", getViolationTypes);
 router.get("/", getViolations);
 router.post("/", createViolation);
 router.get("/:id/actions", getViolationActions);

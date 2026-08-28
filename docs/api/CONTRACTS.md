@@ -25,6 +25,8 @@ Administrative DTR corrections are deliberately deferred. A future correction de
 
 `GET /api/students/me/violations` accepts no query parameters and derives the student exclusively from the authenticated account. Each violation includes type code/name, severity, canonical lifecycle status, description, incident timestamps, authoritative required/completed/remaining service hours, and ordered lifecycle history. Student history exposes action, status transition, reason, actor role, and timestamp; actor user IDs and usernames are intentionally omitted.
 
+`GET /api/violations/types` returns active violation classifications available to Admin and Discipline Office users. Handbook classifications are Minor and Major Categories A-D. Their default service hours are zero because the handbook prescribes sanctions and school days, not community-service hours; authorized staff must explicitly enter any required hours for the individual case.
+
 Staff student creation accepts the Student Number directly and never accepts a client-selected `user_id`. The backend uses the validated `02000` plus six digits Student Number as the local account username, generates an unknown random password, and creates the user/profile relationship atomically. Students subsequently use the enrollment-gated Google linking workflow; no generated password is returned or logged.
 
 ## Department Head QR attendance
