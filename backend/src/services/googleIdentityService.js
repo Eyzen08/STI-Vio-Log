@@ -9,6 +9,9 @@ const REGISTRATION_PENDING = 'Student registration submitted for enrollment veri
 const normalizeName = (value) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
   : '';
+const namesMatch = (account, firstName, lastName) =>
+  normalizeName(`${account?.first_name || ''} ${account?.last_name || ''}`)
+  === normalizeName(`${firstName || ''} ${lastName || ''}`);
 
 const publicUser = (row) => ({ id: Number(row.id), username: row.username, role: row.role });
 const sessionResult = (row, issueToken) => ({ token: issueToken(row), user: publicUser(row) });
@@ -50,7 +53,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       );
       const account = result.rows[0];
       matchedUserId = account?.id || null;
-      if (account && (normalizeName(account.first_name) !== normalizeName(firstName) || normalizeName(account.last_name) !== normalizeName(lastName))) {
+      if (account && !namesMatch(account, firstName, lastName)) {
         throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
       }
       if (!account) {
@@ -178,4 +181,4 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
   return { linkStudent, loginStudent };
 };
 
-module.exports = { createGoogleIdentityService, normalizeName, LINK_FAILURE, LOGIN_FAILURE, REGISTRATION_PENDING };
+module.exports = { createGoogleIdentityService, normalizeName, namesMatch, LINK_FAILURE, LOGIN_FAILURE, REGISTRATION_PENDING };

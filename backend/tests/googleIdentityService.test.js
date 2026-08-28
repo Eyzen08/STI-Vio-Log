@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createGoogleIdentityService, LINK_FAILURE, LOGIN_FAILURE, normalizeName } = require('../src/services/googleIdentityService');
+const { createGoogleIdentityService, LINK_FAILURE, LOGIN_FAILURE, normalizeName, namesMatch } = require('../src/services/googleIdentityService');
 
 const account = { id: 44, username: 'student44', role: 'STUDENT', first_name: 'Maria Ana', last_name: 'De Leon' };
 const identity = Object.freeze({ subject: 'google-sub-44', email: 'student@example.test', emailVerified: true });
@@ -98,4 +98,22 @@ test('unlinked Google login is generic and rolls back', async () => {
 test('name normalization is Unicode-aware and collapses whitespace', () => {
   assert.equal(normalizeName('  MARIA\t Ana '), 'maria ana');
   assert.equal(normalizeName(null), '');
+});
+
+test('school-name matching tolerates a different split of multi-word names', () => {
+  assert.equal(namesMatch({ first_name: 'Mang Jose', last_name: 'dela Cruz' }, 'Mang Jose dela', 'Cruz'), true);
+  assert.equal(namesMatch({ first_name: 'Mang Jose', last_name: 'dela Cruz' }, 'Jose', 'dela Cruz'), false);
+});
+
+test('a revoked identity can create a new active link after the school record matches', async () => {
+  const db = fakeDatabase((sql) => {
+    if (sql.includes('FROM students s')) return { rows: [account] };
+    if (sql.includes('INSERT INTO google_identity_links')) return { rows: [{ id: 92 }] };
+    return { rows: [] };
+  });
+  const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'relinked-session' });
+  const result = await service.linkStudent({ credential: 'new-token', studentNumber: '02000123456', firstName: 'Maria', lastName: 'Ana De Leon', ...profile });
+  assert.equal(result.token, 'relinked-session');
+  assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO google_identity_links')));
+  assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
 });
