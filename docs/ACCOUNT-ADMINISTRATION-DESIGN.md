@@ -11,6 +11,7 @@ The first implementation remains intentionally narrow:
 - activate and deactivate accounts;
 - assign the existing application roles;
 - map `DEPARTMENT_HEAD` accounts to one active department;
+- review Google-authenticated department-officer requests and confirm their official department mapping;
 - require a password change after initial credential delivery or recovery;
 - recover a student Google link through an explicit, reasoned workflow;
 - retain immutable audit history.
@@ -68,6 +69,8 @@ Changing a password requires the temporary/current password, validates the new p
 
 No shared account may be created for the Discipline Office or a scanning location. Every human operator receives an individual identity.
 
+Department officers may use the pending Google workflow defined in `docs/DEPARTMENT-GOOGLE-IDENTITY-DESIGN.md`. Public registration cannot assign a role or department. Only `ADMIN` approval may create the `DEPARTMENT_HEAD` account and database-derived department mapping.
+
 ## Authorization and invariants
 
 The backend enforces all invariants transactionally:
@@ -76,12 +79,13 @@ The backend enforces all invariants transactionally:
 2. Usernames are normalized for comparison and remain unique.
 3. A `DEPARTMENT_HEAD` must have exactly one active department mapping before activation.
 4. Non-department roles cannot retain a `department_heads` mapping.
-5. Student accounts are created only with a complete, unique school-managed student record; generic staff creation cannot assign `STUDENT`.
-6. An administrator cannot deactivate or demote their own active session.
-7. The last active `ADMIN` cannot be deactivated or changed to another role.
-8. Deactivation and role/department changes lock the target row and invalidate all existing sessions.
-9. Account and Google-link records are never hard-deleted by application workflows.
-10. Duplicate-account review is read-only until an explicit, history-preserving resolution design exists.
+5. A pending Google department registration is not a user and has no application permissions.
+6. Student accounts are created only through the enrollment-gated student workflow; generic staff creation cannot assign `STUDENT`.
+7. An administrator cannot deactivate or demote their own active session.
+8. The last active `ADMIN` cannot be deactivated or changed to another role.
+9. Deactivation and role/department changes lock the target row and invalidate all existing sessions.
+10. Account and Google-link records are never hard-deleted by application workflows.
+11. Duplicate-account review is read-only until an explicit, history-preserving resolution design exists.
 
 Checks for the last active administrator and target state occur inside the same transaction with locked rows so concurrent requests cannot remove all administrators.
 
