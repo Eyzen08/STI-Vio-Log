@@ -76,6 +76,17 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         }
         if (existing.length) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
 
+        // The pending-row lock above may have waited for an approval to
+        // commit. Recheck cross-table ownership in the now-current snapshot
+        // before creating a new pending request.
+        const newlyOccupied = (await client.query(
+          `SELECT 1 FROM students WHERE student_number = $1
+           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+           LIMIT 1`,
+          [studentNumber.trim(), identity.subject]
+        )).rows[0];
+        if (newlyOccupied) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
+
         const registration = (await client.query(
           `INSERT INTO google_student_registrations
              (google_subject, google_email, student_number, first_name, last_name)

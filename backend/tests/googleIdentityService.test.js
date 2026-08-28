@@ -51,6 +51,20 @@ test('a different Google identity cannot reuse another pending student number', 
   await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'New', lastName: 'Student' }), (error) => error.code === 'STUDENT_LINK_UNAVAILABLE');
 });
 
+test('submission rechecks ownership after waiting on the pending queue', async () => {
+  let ownershipChecks = 0;
+  const db = fakeDatabase((sql) => {
+    if (sql.includes('SELECT 1 FROM students')) {
+      ownershipChecks += 1;
+      return { rows: ownershipChecks === 1 ? [] : [{ exists: 1 }] };
+    }
+    return { rows: [] };
+  });
+  const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
+  await assert.rejects(service.linkStudent({ credential: 'token', studentNumber: '02000123456', firstName: 'New', lastName: 'Student' }), (error) => error.code === 'STUDENT_LINK_UNAVAILABLE');
+  assert.equal(db.calls.some((call) => call.sql.includes('INSERT INTO google_student_registrations')), false);
+});
+
 test('duplicate Google links roll back and create a token-free rejection audit', async () => {
   const duplicate = Object.assign(new Error('duplicate secret-subject'), { code: '23505' });
   const db = fakeDatabase((sql) => {
