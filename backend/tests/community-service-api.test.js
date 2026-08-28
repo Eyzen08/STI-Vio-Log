@@ -16,6 +16,7 @@ test('community service routes expose full CRUD surface', () => {
   const routes = getRouteSummary();
 
   assert(routes.some((route) => route.path === '/' && route.methods.includes('get')));
+  assert(routes.some((route) => route.path === '/assignment-options' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/' && route.methods.includes('post')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('put')));

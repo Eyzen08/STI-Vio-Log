@@ -200,7 +200,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/violations', {
     token: discipline,
     method: 'POST',
-    body: { student_id: 40, violation_type_id: 1, incident_date: '2026-08-27', required_service_hours: 0 }
+    body: { student_id: 40, violation_type_id: 1, incident_date: '2026-08-27' }
   })).status, 201);
   assert.equal(capturedViolationParams[2], 2);
   assert.equal(capturedViolationParams[5], 'OPEN');

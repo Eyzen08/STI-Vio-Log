@@ -5,6 +5,7 @@ const {
     getCommunityServiceAssignmentById,
     getMyCommunityServiceAssignment,
     createCommunityServiceAssignment,
+    getCommunityServiceAssignmentOptions,
     updateCommunityServiceAssignment,
     deleteCommunityServiceAssignment
 } = require("../controllers/communityServiceController");
@@ -93,6 +94,12 @@ router.get(
 // - DISCIPLINE_OFFICE
 // - DEPARTMENT_HEAD
 // =====================================================
+
+router.get(
+    "/assignment-options",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    getCommunityServiceAssignmentOptions
+);
 
 router.get(
     "/",

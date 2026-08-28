@@ -25,7 +25,9 @@ Administrative DTR corrections are deliberately deferred. A future correction de
 
 `GET /api/students/me/violations` accepts no query parameters and derives the student exclusively from the authenticated account. Each violation includes type code/name, severity, canonical lifecycle status, description, incident timestamps, authoritative required/completed/remaining service hours, and ordered lifecycle history. Student history exposes action, status transition, reason, actor role, and timestamp; actor user IDs and usernames are intentionally omitted.
 
-`GET /api/violations/types` returns active violation classifications available to Admin and Discipline Office users. Handbook classifications are Minor and Major Categories A-D. Their default service hours are zero because the handbook prescribes sanctions and school days, not community-service hours; authorized staff must explicitly enter any required hours for the individual case.
+`GET /api/violations/types` returns active violation classifications available to Admin and Discipline Office users. Handbook classifications are Minor and Major Categories A-D. Violation creation records only the offense and incident facts; it never accepts or automatically creates community-service hours.
+
+`GET /api/community-service/assignment-options` returns only active departments with their active Department Heads to Admin and Discipline Office users. `POST /api/community-service` requires `violation_id`, `student_id`, `required_hours`, `department_id`, and `department_head_id`. The backend verifies that the open violation belongs to the student and that the selected head is active and assigned to the selected active department. Assignment lists preserve and return that accountable destination; historical assignments created before this contract may have no recorded destination.
 
 `PUT /api/violations/{id}` permits Admin and Discipline Office users to edit supported case fields. Every update requires a non-empty `reason`, derives the actor from authentication, records the changed field names and reason in the audit log, and synchronizes required hours with the linked service assignment and clearance state. Required hours can only change while the violation is `OPEN`.
 
@@ -43,7 +45,7 @@ Department Heads may submit only `qr_code` and optional `notes` to `/api/qr/scan
 
 The Department Students roster is derived exclusively from this scoped DTR response. It represents students served through attendance in the authenticated department; it does not expose the global student directory or infer a permanent department assignment that the student schema does not contain.
 
-Department Head reads from `GET /api/community-service` and `GET /api/community-service/:id` are restricted to assignments having attendance sessions in the authenticated department. Assignments outside that scope are not visible (404 for detail). Assignment creation, editing, and deletion remain unavailable to Department Heads.
+Department Head reads from `GET /api/community-service` and `GET /api/community-service/:id` are restricted to assignments routed to the authenticated department or already having attendance sessions there. Assignments outside that scope are not visible (404 for detail). Assignment creation, editing, and deletion remain unavailable to Department Heads.
 
 Department Head non-compliance reports accept only the `sort_by` values `date`, `hours`, or `violations`. They include only students who have service attendance in the authenticated department; client-selected department filters are rejected.
 

@@ -48,8 +48,7 @@ export const buildViolationPayload = (form = {}) => ({
   student_id: Number(form.student_id),
   violation_type_id: Number(form.violation_type_id),
   incident_date: form.incident_date || new Date().toISOString().slice(0, 10),
-  description: buildViolationDescription(form),
-  required_service_hours: Number(form.required_service_hours || 0)
+  description: buildViolationDescription(form)
 })
 
 export const selectedViolationType = (types = [], id) =>
@@ -66,6 +65,5 @@ export const studentIdFromSearch = (students = [], search = '') => {
 
 export const buildViolationUpdatePayload = (form = {}) => ({
   description: String(form.description || '').trim(),
-  required_service_hours: Number(form.required_service_hours || 0),
   reason: String(form.reason || '').trim()
 })

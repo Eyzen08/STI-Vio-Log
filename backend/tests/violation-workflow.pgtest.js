@@ -109,8 +109,7 @@ async function createViolation(token, studentId) {
       student_id: studentId,
       violation_type_id: 1,
       incident_date: '2026-08-27',
-      description: 'Lifecycle integration test',
-      required_service_hours: 0
+      description: 'Lifecycle integration test'
     }
   });
   assert.equal(result.status, 201);
@@ -122,6 +121,19 @@ async function act(token, violationId, action, reason) {
     token,
     method: 'POST',
     body: { action, ...(reason === undefined ? {} : { reason }) }
+  });
+}
+
+async function assignService(token, violationId, studentId, requiredHours) {
+  const destination = (await pool.query(
+    `SELECT d.id AS department_id, dh.id AS department_head_id
+     FROM departments d JOIN department_heads dh ON dh.department_id = d.id
+     WHERE d.department_code = 'TEST'`
+  )).rows[0];
+  return request('/api/community-service', {
+    token,
+    method: 'POST',
+    body: { violation_id: violationId, student_id: studentId, required_hours: requiredHours, ...destination }
   });
 }
 
@@ -142,12 +154,13 @@ async function createServiceViolation(token, studentId, requiredHours) {
       student_id: studentId,
       violation_type_id: 1,
       incident_date: '2026-08-27',
-      description: 'DTR session integration test',
-      required_service_hours: requiredHours
+      description: 'DTR session integration test'
     }
   });
   assert.equal(result.status, 201);
-  return result.body;
+  const assignment = await assignService(token, result.body.violation.id, studentId, requiredHours);
+  assert.equal(assignment.status, 201);
+  return { ...result.body, assignment: assignment.body.assignment };
 }
 
 test.before(async () => {
@@ -302,13 +315,14 @@ test('service attendance completes assignment, violation, clearance, history, an
       student_id: studentId,
       violation_type_id: 1,
       incident_date: '2026-08-27',
-      description: 'Service completion workflow',
-      required_service_hours: 1
+      description: 'Service completion workflow'
     }
   });
   assert.equal(violationResult.status, 201);
   const violation = violationResult.body.violation;
-  const assignment = violationResult.body.assignment;
+  const assignmentResponse = await assignService(adminToken, violation.id, studentId, 1);
+  assert.equal(assignmentResponse.status, 201);
+  const assignment = assignmentResponse.body.assignment;
   assert.equal(assignment.status, 'OPEN');
 
   const blockedClearance = await pool.query('SELECT status FROM student_clearance WHERE student_id = $1', [studentId]);
@@ -377,11 +391,7 @@ test('CLEAR and INVALID_CANCEL preserve service history and REOPEN safely reacti
     method: 'POST',
     body: { violation_id: clearViolation.id, student_id: studentId, required_hours: 2, completed_hours: 99, status: 'COMPLETED' }
   })).status, 400);
-  const clearAssignment = (await request('/api/community-service', {
-    token: adminToken,
-    method: 'POST',
-    body: { violation_id: clearViolation.id, student_id: studentId, required_hours: 2 }
-  })).body.assignment;
+  const clearAssignment = (await assignService(adminToken, clearViolation.id, studentId, 2)).body.assignment;
 
   const clearTimeIn = await request('/api/qr/time-in', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } });
   assert.equal(clearTimeIn.status, 201);
@@ -402,11 +412,7 @@ test('CLEAR and INVALID_CANCEL preserve service history and REOPEN safely reacti
   await act(adminToken, clearViolation.id, 'INVALID_CANCEL', 'Close test record');
 
   const invalidViolation = await createViolation(adminToken, studentId);
-  const invalidAssignment = (await request('/api/community-service', {
-    token: adminToken,
-    method: 'POST',
-    body: { violation_id: invalidViolation.id, student_id: studentId, required_hours: 1 }
-  })).body.assignment;
+  const invalidAssignment = (await assignService(adminToken, invalidViolation.id, studentId, 1)).body.assignment;
   const invalidated = await act(adminToken, invalidViolation.id, 'INVALID_CANCEL', 'Duplicate violation');
   assert.equal(invalidated.body.assignment.status, 'INVALID_CANCELLED');
   assert.equal(Number(invalidated.body.assignment.completed_hours), 0);
@@ -459,20 +465,16 @@ test('clearance eligibility evaluates all violations for the student', async () 
   await act(adminToken, clearOne.id, 'INVALID_CANCEL', 'Close test record');
 });
 
-test('multi-write failures roll back violation, assignment, audit, history, and clearance changes', async () => {
+test('multi-write failures roll back assignment, audit, history, and clearance changes', async () => {
   const adminToken = await login('admin_test');
   const studentId = (await pool.query("SELECT id FROM students WHERE student_number = '02000123456'")).rows[0].id;
 
   await pool.query(`CREATE FUNCTION fail_test_assignment() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced assignment failure'; END $$`);
   await pool.query(`CREATE TRIGGER fail_test_assignment_trigger BEFORE INSERT ON community_service_assignments FOR EACH ROW EXECUTE FUNCTION fail_test_assignment()`);
-  const beforeViolations = Number((await pool.query('SELECT COUNT(*) AS count FROM violations')).rows[0].count);
-  const failedCreate = await request('/api/violations', {
-    token: adminToken,
-    method: 'POST',
-    body: { student_id: studentId, violation_type_id: 1, incident_date: '2026-08-27', required_service_hours: 1 }
-  });
+  const assignmentFailureViolation = await createViolation(adminToken, studentId);
+  const failedCreate = await assignService(adminToken, assignmentFailureViolation.id, studentId, 1);
   assert.equal(failedCreate.status, 500);
-  assert.equal(Number((await pool.query('SELECT COUNT(*) AS count FROM violations')).rows[0].count), beforeViolations);
+  assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_assignments WHERE violation_id = $1', [assignmentFailureViolation.id])).rows[0].count, 0);
   await pool.query('DROP TRIGGER fail_test_assignment_trigger ON community_service_assignments');
   await pool.query('DROP FUNCTION fail_test_assignment()');
 

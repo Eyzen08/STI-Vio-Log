@@ -48,7 +48,7 @@ function StudentCommunityService({ dtr, loading, error, onFilter }) {
             const credited = Number(assignment.credited_minutes) || 0
             const percentage = required ? Math.min(100, Math.round((credited / required) * 100)) : 100
             return <article key={assignment.assignment_id}>
-              <div><strong>Assignment #{assignment.assignment_id}</strong><span>Violation #{assignment.violation_id}</span></div>
+              <div><strong>{assignment.department_name || `Assignment #${assignment.assignment_id}`}</strong><span>Violation #{assignment.violation_id}</span><span>{assignment.department_head_first_name || assignment.department_head_last_name ? `Department Head: ${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Department Head not recorded'}</span></div>
               <div className="assignment-progress"><div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percentage}><span style={{ width: `${percentage}%` }} /></div><small>{percentage}% complete</small></div>
               <span className="status-badge">{String(assignment.status).replaceAll('_', ' ')}</span>
             </article>

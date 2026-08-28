@@ -32,7 +32,7 @@ import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, se
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
-import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -114,11 +114,10 @@ function App() {
     incident_date: '',
     exact_offense: '',
     incident_details: '',
-    required_service_hours: 0
   })
   const [violationTypes, setViolationTypes] = useState([])
   const [editingViolation, setEditingViolation] = useState(null)
-  const [violationEditForm, setViolationEditForm] = useState({description:'',required_service_hours:0,reason:''})
+  const [violationEditForm, setViolationEditForm] = useState({description:'',reason:''})
   const [violationEditError, setViolationEditError] = useState('')
 
   const [violationFormError, setViolationFormError] = useState('')
@@ -126,12 +125,15 @@ function App() {
 
   const [communityServiceAssignments, setCommunityServiceAssignments] =
     useState([])
+  const [communityServiceDestinations, setCommunityServiceDestinations] = useState([])
 
   const [communityServiceForm, setCommunityServiceForm] = useState({
     violation_id: '',
     student_id: '',
     student_search: '',
     required_hours: '',
+    department_id: '',
+    department_head_id: ''
   })
 
   const [communityServiceFormError, setCommunityServiceFormError] =
@@ -367,7 +369,8 @@ function App() {
             violationsResponse,
             violationTypesResponse,
             assignmentsResponse,
-            clearanceResponse
+            clearanceResponse,
+            destinationsResponse
           ] = await Promise.all([
             fetch(`${API_URL}/api/students`, {
               headers: authHeaders
@@ -387,6 +390,10 @@ function App() {
 
             fetch(`${API_URL}/api/clearance`, {
               headers: authHeaders
+            }),
+
+            fetch(`${API_URL}/api/community-service/assignment-options`, {
+              headers: authHeaders
             })
           ])
 
@@ -395,7 +402,8 @@ function App() {
             !violationsResponse.ok ||
             !violationTypesResponse.ok ||
             !assignmentsResponse.ok ||
-            !clearanceResponse.ok
+            !clearanceResponse.ok ||
+            !destinationsResponse.ok
           ) {
             throw new Error(
               'Unable to load administration data'
@@ -417,6 +425,8 @@ function App() {
           const clearanceData =
             await clearanceResponse.json()
 
+          const destinationsData = await destinationsResponse.json()
+
           setStudents(
             studentsData.students || []
           )
@@ -434,6 +444,7 @@ function App() {
           setCommunityServiceAssignments(
             assignmentsData.assignments || []
           )
+          setCommunityServiceDestinations(destinationsData.destinations || [])
 
           setClearanceRecords(
             clearanceData.clearanceRecords || []
@@ -602,7 +613,6 @@ function App() {
     setViolationEditError('')
     setViolationEditForm({
       description: violation.description || '',
-      required_service_hours: Number(violation.required_service_hours || 0),
       reason: ''
     })
   }
@@ -705,7 +715,7 @@ function App() {
     setViolationForm((current) => ({
       ...current,
       ...(name === 'violation_type_id' ? { exact_offense: '' } : {}),
-      [name]: ['student_id', 'violation_type_id', 'required_service_hours'].includes(name)
+      [name]: ['student_id', 'violation_type_id'].includes(name)
         ? Number(value) || ''
         : value
     }))
@@ -730,13 +740,19 @@ function App() {
       return
     }
 
+    if (name === 'department_id') {
+      setCommunityServiceForm((current) => ({ ...current, department_id: Number(value) || '', department_head_id: '' }))
+      return
+    }
+
     setCommunityServiceForm((current) => ({
       ...current,
       [name]:
         [
           'violation_id',
           'student_id',
-          'required_hours'
+          'required_hours',
+          'department_head_id'
         ].includes(name)
           ? Number(value) || ''
           : value
@@ -929,8 +945,7 @@ function App() {
         violation_type_id: '',
         incident_date: '',
         exact_offense: '',
-        incident_details: '',
-        required_service_hours: 0
+        incident_details: ''
       })
 
       const refreshedViolations =
@@ -977,7 +992,9 @@ function App() {
         if (
           !payload.violation_id ||
           !payload.student_id ||
-          !payload.required_hours
+          !payload.required_hours ||
+          !payload.department_id ||
+          !payload.department_head_id
         ) {
           throw new Error(
             'Select a student and violation, then enter the required hours.'
@@ -1018,6 +1035,8 @@ function App() {
           student_id: '',
           student_search: '',
           required_hours: '',
+          department_id: '',
+          department_head_id: ''
         })
 
         const refreshedAssignments =
@@ -2534,24 +2553,6 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Required service hours
-
-                  <input
-                    type="number"
-                    name="required_service_hours"
-                    value={
-                      violationForm.required_service_hours
-                    }
-                    onChange={
-                      handleViolationFieldChange
-                    }
-                    min="0"
-                    step="0.5"
-                    required
-                  />
-                </label>
-
                 <label className="full-width-field">
                   Specific handbook offense
 
@@ -2621,7 +2622,6 @@ function App() {
               <div className="table-header"><h3>Edit violation #{editingViolation.id}</h3><span>Open cases only</span></div>
               <form className="student-form" onSubmit={handleViolationUpdate}>
                 <div className="student-form-grid">
-                  <label>Required service hours<input type="number" min="0" step="0.5" value={violationEditForm.required_service_hours} onChange={(event)=>setViolationEditForm({...violationEditForm,required_service_hours:event.target.value})} required/></label>
                   <label className="full-width-field">Violation and incident details<textarea rows="5" value={violationEditForm.description} onChange={(event)=>setViolationEditForm({...violationEditForm,description:event.target.value})} required/></label>
                   <label className="full-width-field">Reason for change<textarea rows="3" value={violationEditForm.reason} onChange={(event)=>setViolationEditForm({...violationEditForm,reason:event.target.value})} placeholder="Explain why this record is being updated" required/></label>
                 </div>
@@ -2666,9 +2666,6 @@ function App() {
                         Status
                       </th>
 
-                      <th>
-                        Hours
-                      </th>
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -2701,12 +2698,6 @@ function App() {
                               </span>
                             </td>
 
-                            <td>
-                              {
-                                violation.required_service_hours ||
-                                0
-                              }
-                            </td>
                             <td>{violation.status === 'OPEN' ? <button type="button" className="secondary-button" onClick={()=>startViolationEdit(violation)}>Edit</button> : 'Locked'}</td>
                           </tr>
                         )
@@ -2734,6 +2725,11 @@ function App() {
         communityServiceAssignments,
         communityServiceForm.student_id
       )
+      const departmentOptions = [...new Map(communityServiceDestinations.map((destination) => [
+        Number(destination.department_id),
+        { id: Number(destination.department_id), name: destination.department_name }
+      ])).values()]
+      const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
       return (
         <>
           <section className="table-card form-card">
@@ -2823,6 +2819,27 @@ function App() {
                     required
                   />
                 </label>
+
+                <label>
+                  Service department
+                  <select name="department_id" value={communityServiceForm.department_id} onChange={handleCommunityServiceFieldChange} required>
+                    <option value="">Select a department</option>
+                    {departmentOptions.map((department) => (
+                      <option key={department.id} value={department.id}>{department.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Department Head
+                  <select name="department_head_id" value={communityServiceForm.department_head_id} onChange={handleCommunityServiceFieldChange} disabled={!communityServiceForm.department_id} required>
+                    <option value="">{communityServiceForm.department_id ? 'Select the accountable Department Head' : 'Select a department first'}</option>
+                    {departmentHeads.map((head) => (
+                      <option key={head.department_head_id} value={head.department_head_id}>{head.first_name} {head.last_name}</option>
+                    ))}
+                  </select>
+                  {communityServiceForm.department_id && departmentHeads.length === 0 && <span>No active Department Head is assigned to this department.</span>}
+                </label>
               </div>
 
               {communityServiceFormError && (
@@ -2886,6 +2903,10 @@ function App() {
                         Violation
                       </th>
 
+                      <th>Department</th>
+
+                      <th>Department Head</th>
+
                       <th>
                         Required
                       </th>
@@ -2919,11 +2940,16 @@ function App() {
                             )}
                           </td>
 
+
                           <td>
                             {
                               `#${assignment.violation_id}`
                             }
                           </td>
+
+                          <td>{assignment.department_name || 'Historical assignment'}</td>
+
+                          <td>{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
 
                           <td>
                             {

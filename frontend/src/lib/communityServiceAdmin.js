@@ -23,5 +23,10 @@ export const communityServiceViolationLabel = (violation = {}) => {
 export const buildCommunityServiceAssignmentPayload = (form = {}) => ({
   violation_id: Number(form.violation_id),
   student_id: Number(form.student_id),
-  required_hours: Number(form.required_hours || 0)
+  required_hours: Number(form.required_hours || 0),
+  department_id: Number(form.department_id),
+  department_head_id: Number(form.department_head_id)
 })
+
+export const headsForDepartment = (destinations = [], departmentId) =>
+  destinations.filter((destination) => Number(destination.department_id) === Number(departmentId))

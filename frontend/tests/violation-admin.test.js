@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from '../src/lib/violationAdmin.js'
 
 test('violation creation sends only staff-editable contract fields', () => {
-  assert.deepEqual(buildViolationPayload({student_id:'4',violation_type_id:'2',incident_date:'2026-08-28',exact_offense:' ID misuse ',incident_details:' Used another ID ',required_service_hours:'3.5',reported_by:99,status:'CLEAR',completed_service_hours:9}), {student_id:4,violation_type_id:2,incident_date:'2026-08-28',description:'Handbook offense: ID misuse\nIncident details: Used another ID',required_service_hours:3.5})
+  assert.deepEqual(buildViolationPayload({student_id:'4',violation_type_id:'2',incident_date:'2026-08-28',exact_offense:' ID misuse ',incident_details:' Used another ID ',required_service_hours:'3.5',reported_by:99,status:'CLEAR',completed_service_hours:9}), {student_id:4,violation_type_id:2,incident_date:'2026-08-28',description:'Handbook offense: ID misuse\nIncident details: Used another ID'})
 })
 
 test('handbook classification reveals only its exact offense choices', () => {
@@ -28,5 +28,5 @@ test('student search resolves only an exact loaded roster option', () => {
 })
 
 test('violation update sends editable fields and an audit reason only', () => {
-  assert.deepEqual(buildViolationUpdatePayload({description:' Updated facts ',required_service_hours:'4.5',reason:' Case review ',status:'CLEAR'}), {description:'Updated facts',required_service_hours:4.5,reason:'Case review'})
+  assert.deepEqual(buildViolationUpdatePayload({description:' Updated facts ',required_service_hours:'4.5',reason:' Case review ',status:'CLEAR'}), {description:'Updated facts',reason:'Case review'})
 })

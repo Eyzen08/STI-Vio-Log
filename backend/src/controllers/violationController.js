@@ -125,21 +125,19 @@ const getViolationById = async (req, res) => {
 //       ↓
 // RETURN VIOLATION + ASSIGNMENT + CLEARANCE SYNC
 //
-// A community service assignment is automatically
-// created whenever required_service_hours > 0.
+// Community service is assigned separately after the violation is recorded.
 // =====================================================
 
 const createViolation = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        assertAllowedFields(req.body, ["student_id", "violation_type_id", "incident_date", "description", "required_service_hours"]);
+        assertAllowedFields(req.body, ["student_id", "violation_type_id", "incident_date", "description"]);
         const {
             student_id,
             violation_type_id,
             incident_date,
             description,
-            required_service_hours,
         } = req.body;
 
         if (
@@ -151,23 +149,6 @@ const createViolation = async (req, res) => {
                 success: false,
                 message:
                     "student_id, violation_type_id, and incident_date are required"
-            });
-        }
-
-        const requiredHours = Number(
-            required_service_hours || 0
-        );
-
-        const completedHours = 0;
-
-        if (
-            !Number.isFinite(requiredHours) ||
-            requiredHours < 0
-        ) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "required_service_hours must be a valid non-negative number"
             });
         }
 
@@ -210,74 +191,15 @@ const createViolation = async (req, res) => {
                 incident_date,
                 description || null,
                 "OPEN",
-                requiredHours,
-                completedHours,
+                0,
+                0,
                 null
             ]
         );
 
         const violation = result.rows[0];
 
-        // -------------------------------------------------
-        // Automatically create community service
-        // assignment when service hours are required.
-        // -------------------------------------------------
-
-        let assignment = null;
-
-        if (requiredHours > 0) {
-            const remainingHours = Math.max(
-                requiredHours - completedHours,
-                0
-            );
-
-            const assignmentStatus =
-                remainingHours <= 0
-                    ? "COMPLETED"
-                    : "OPEN";
-
-            const completedAt =
-                remainingHours <= 0
-                    ? new Date()
-                    : null;
-
-            const assignmentResult =
-                await client.query(
-                    `
-                    INSERT INTO community_service_assignments (
-                        violation_id,
-                        student_id,
-                        required_hours,
-                        completed_hours,
-                        remaining_hours,
-                        status,
-                        completed_at
-                    )
-                    VALUES (
-                        $1,
-                        $2,
-                        $3,
-                        $4,
-                        $5,
-                        $6,
-                        $7
-                    )
-                    RETURNING *
-                    `,
-                    [
-                        violation.id,
-                        violation.student_id,
-                        requiredHours,
-                        completedHours,
-                        remainingHours,
-                        assignmentStatus,
-                        completedAt
-                    ]
-                );
-
-            assignment =
-                assignmentResult.rows[0];
-        }
+        const assignment = null;
 
         const history = await insertViolationAction({
             client,

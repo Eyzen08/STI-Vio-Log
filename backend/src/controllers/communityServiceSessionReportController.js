@@ -62,11 +62,15 @@ const getMyDTR = async (req, res) => {
         if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'UTC')`; }
         if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'UTC')`; }
         const assignments = await pool.query(
-            `SELECT a.id AS assignment_id, a.violation_id,
+            `SELECT a.id AS assignment_id, a.violation_id, a.department_id, d.department_name,
+                    a.department_head_id, dh.first_name AS department_head_first_name,
+                    dh.last_name AS department_head_last_name,
                     ROUND(a.required_hours * 60)::int AS required_minutes,
                     ROUND(a.completed_hours * 60)::int AS credited_minutes,
                     ROUND(a.remaining_hours * 60)::int AS remaining_minutes, a.status
              FROM community_service_assignments a JOIN students s ON s.id = a.student_id
+             LEFT JOIN departments d ON d.id = a.department_id
+             LEFT JOIN department_heads dh ON dh.id = a.department_head_id
              WHERE s.user_id = $1 ORDER BY a.assigned_at DESC`, [req.user.id]);
         const sessions = await pool.query(
             `SELECT css.id, css.assignment_id, css.department_id, d.department_name,

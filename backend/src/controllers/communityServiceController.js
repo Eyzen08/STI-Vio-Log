@@ -15,9 +15,14 @@ const getCommunityServiceAssignments = async (req, res) => {
                 cs.id,
                 cs.violation_id,
                 cs.student_id,
+                cs.department_id,
+                cs.department_head_id,
                 s.student_number,
                 s.first_name,
                 s.last_name,
+                d.department_name,
+                dh.first_name AS department_head_first_name,
+                dh.last_name AS department_head_last_name,
                 cs.required_hours,
                 cs.completed_hours,
                 cs.remaining_hours,
@@ -27,7 +32,9 @@ const getCommunityServiceAssignments = async (req, res) => {
             FROM community_service_assignments cs
             JOIN students s
                 ON cs.student_id = s.id
-            ${departmentScoped ? `WHERE EXISTS (
+            LEFT JOIN departments d ON d.id = cs.department_id
+            LEFT JOIN department_heads dh ON dh.id = cs.department_head_id
+            ${departmentScoped ? `WHERE cs.department_id = $1 OR EXISTS (
                 SELECT 1 FROM community_service_sessions scoped_session
                 WHERE scoped_session.assignment_id = cs.id
                   AND scoped_session.department_id = $1
@@ -70,9 +77,14 @@ const getCommunityServiceAssignmentById = async (req, res) => {
                 cs.id,
                 cs.violation_id,
                 cs.student_id,
+                cs.department_id,
+                cs.department_head_id,
                 s.student_number,
                 s.first_name,
                 s.last_name,
+                d.department_name,
+                dh.first_name AS department_head_first_name,
+                dh.last_name AS department_head_last_name,
                 cs.required_hours,
                 cs.completed_hours,
                 cs.remaining_hours,
@@ -82,12 +94,14 @@ const getCommunityServiceAssignmentById = async (req, res) => {
             FROM community_service_assignments cs
             JOIN students s
                 ON cs.student_id = s.id
+            LEFT JOIN departments d ON d.id = cs.department_id
+            LEFT JOIN department_heads dh ON dh.id = cs.department_head_id
             WHERE cs.id = $1
-              ${departmentScoped ? `AND EXISTS (
+              ${departmentScoped ? `AND (cs.department_id = $2 OR EXISTS (
                 SELECT 1 FROM community_service_sessions scoped_session
                 WHERE scoped_session.assignment_id = cs.id
                   AND scoped_session.department_id = $2
-              )` : ""}
+              ))` : ""}
             `,
             departmentScoped ? [id, req.user.department_id] : [id]
         );
@@ -125,22 +139,24 @@ const getCommunityServiceAssignmentById = async (req, res) => {
 const createCommunityServiceAssignment = async (req, res) => {
     const client = await pool.connect();
     try {
-        assertAllowedFields(req.body, ["violation_id", "student_id", "required_hours"]);
+        assertAllowedFields(req.body, ["violation_id", "student_id", "required_hours", "department_id", "department_head_id"]);
         const {
             violation_id,
             student_id,
-            required_hours
+            required_hours,
+            department_id,
+            department_head_id
         } = req.body;
 
-        if (!violation_id || !student_id || required_hours === undefined) {
+        if (!violation_id || !student_id || required_hours === undefined || !department_id || !department_head_id) {
             return res.status(400).json({
                 success: false,
                 message:
-                    "violation_id, student_id, and required_hours are required"
+                    "violation_id, student_id, required_hours, department_id, and department_head_id are required"
             });
         }
 
-        if (!isPositiveId(violation_id) || !isPositiveId(student_id)) return res.status(400).json({ success: false, message: "violation_id and student_id must be positive IDs" });
+        if (![violation_id, student_id, department_id, department_head_id].every(isPositiveId)) return res.status(400).json({ success: false, message: "Assignment identifiers must be positive IDs" });
         const required = Number(required_hours);
 
         if (Number.isNaN(required) || required < 0) {
@@ -151,6 +167,20 @@ const createCommunityServiceAssignment = async (req, res) => {
         }
 
         await client.query("BEGIN");
+
+        const destination = (await client.query(
+            `SELECT dh.id
+             FROM department_heads dh
+             JOIN users u ON u.id = dh.user_id AND u.role = 'DEPARTMENT_HEAD' AND u.is_active = TRUE
+             JOIN departments d ON d.id = dh.department_id AND d.is_active = TRUE
+             WHERE d.id = $1 AND dh.id = $2
+             FOR SHARE OF dh, u, d`,
+            [department_id, department_head_id]
+        )).rows[0];
+        if (!destination) {
+            await client.query("ROLLBACK");
+            return res.status(400).json({ success: false, message: "Select an active Department Head assigned to the chosen department" });
+        }
 
         const violationResult = await client.query(
             `SELECT id, student_id, status
@@ -184,9 +214,11 @@ const createCommunityServiceAssignment = async (req, res) => {
                 completed_hours,
                 remaining_hours,
                 status,
+                department_id,
+                department_head_id,
                 completed_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
             `,
             [
@@ -196,6 +228,8 @@ const createCommunityServiceAssignment = async (req, res) => {
                 0,
                 required,
                 required <= 0 ? "COMPLETED" : "OPEN",
+                department_id,
+                department_head_id,
                 required <= 0 ? new Date() : null
             ]
         );
@@ -231,6 +265,23 @@ const createCommunityServiceAssignment = async (req, res) => {
         });
     } finally {
         client.release();
+    }
+};
+
+const getCommunityServiceAssignmentOptions = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT d.id AS department_id, d.department_name,
+                    dh.id AS department_head_id, dh.first_name, dh.last_name
+             FROM departments d
+             JOIN department_heads dh ON dh.department_id = d.id
+             JOIN users u ON u.id = dh.user_id
+             WHERE d.is_active = TRUE AND u.is_active = TRUE AND u.role = 'DEPARTMENT_HEAD'
+             ORDER BY d.department_name, dh.last_name, dh.first_name, dh.id`
+        );
+        return res.json({ success: true, destinations: result.rows });
+    } catch (error) {
+        return res.status(500).json({ success: false, message: "Failed to load service destinations" });
     }
 };
 
@@ -351,9 +402,14 @@ const getMyCommunityServiceAssignment = async (req, res) => {
                 cs.id,
                 cs.violation_id,
                 cs.student_id,
+                cs.department_id,
+                cs.department_head_id,
                 s.student_number,
                 s.first_name,
                 s.last_name,
+                d.department_name,
+                dh.first_name AS department_head_first_name,
+                dh.last_name AS department_head_last_name,
                 cs.required_hours,
                 cs.completed_hours,
                 cs.remaining_hours,
@@ -363,6 +419,8 @@ const getMyCommunityServiceAssignment = async (req, res) => {
             FROM community_service_assignments cs
             JOIN students s
                 ON cs.student_id = s.id
+            LEFT JOIN departments d ON d.id = cs.department_id
+            LEFT JOIN department_heads dh ON dh.id = cs.department_head_id
             WHERE s.user_id = $1
             ORDER BY cs.assigned_at DESC, cs.id DESC
             `,
@@ -392,6 +450,7 @@ module.exports = {
     getCommunityServiceAssignments,
     getCommunityServiceAssignmentById,
     createCommunityServiceAssignment,
+    getCommunityServiceAssignmentOptions,
     getMyCommunityServiceAssignment,
     updateCommunityServiceAssignment,
     deleteCommunityServiceAssignment
