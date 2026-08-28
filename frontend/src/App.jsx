@@ -29,6 +29,7 @@ import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
+import { filterAdminStudents, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -92,6 +93,8 @@ function App() {
 
   const [studentFormError, setStudentFormError] = useState('')
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
+  const [studentRosterSearch, setStudentRosterSearch] = useState('')
+  const [reviewedStudent, setReviewedStudent] = useState(null)
 
   const [violationForm, setViolationForm] = useState({
     student_id: '',
@@ -330,7 +333,7 @@ function App() {
               headers: authHeaders
             }),
 
-            fetch(`${API_URL}/api/violations`, {
+            fetch(`${API_URL}/api/violations?limit=100`, {
               headers: authHeaders
             }),
 
@@ -821,7 +824,7 @@ function App() {
 
       const response =
         await fetch(
-          `${API_URL}/api/violations`,
+          `${API_URL}/api/violations?limit=100`,
           {
             method: 'POST',
 
@@ -2067,6 +2070,8 @@ function App() {
     if (
       activeView === 'Students'
     ) {
+      const visibleStudents = filterAdminStudents(students, studentRosterSearch)
+      const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, violations) : null
       return (
         <>
           <section className="table-card form-card">
@@ -2299,11 +2304,14 @@ function App() {
               </span>
             </div>
 
-            {students.length === 0 &&
+            <div className="noncompliance-toolbar">
+              <label><span>Search students</span><input type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
+            </div>
+
+            {visibleStudents.length === 0 &&
             !dashboardLoading ? (
               <p className="empty-state">
-                No student records returned
-                for the current account.
+                No students match this search.
               </p>
             ) : (
               <div className="table-wrap">
@@ -2325,12 +2333,17 @@ function App() {
                       <th>
                         Year
                       </th>
+                      <th>Violations</th>
+                      <th>Condition</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {students.map(
-                      (student) => (
+                    {visibleStudents.map(
+                      (student) => {
+                        const condition = summarizeStudentCondition(student.id, violations)
+                        return (
                         <tr
                           key={
                             student.id
@@ -2361,14 +2374,27 @@ function App() {
                               '—'
                             }
                           </td>
+                          <td>{condition.total} total / {condition.open} open</td>
+                          <td><span className="status-badge">{condition.condition}</span></td>
+                          <td><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(student)}>View condition</button></td>
                         </tr>
-                      )
+                        )
+                      }
                     )}
                   </tbody>
                 </table>
               </div>
             )}
           </section>
+
+          {reviewedStudent && reviewedCondition && (
+            <section className="table-card">
+              <div className="table-header"><div><h3>{reviewedStudent.student_number} - {reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedCondition.condition}</span></div><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(null)}>Close</button></div>
+              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{reviewedCondition.remainingHours.toFixed(2)} hrs</strong></article></section>
+              {reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>Violation #{violation.id}</h4><p>{violation.incident_date || 'Incident date unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{Number(violation.required_service_hours||0).toFixed(2)} hrs</dd></div><div><dt>Completed service</dt><dd>{Number(violation.completed_service_hours||0).toFixed(2)} hrs</dd></div></dl></article>)}</div>}
+              <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
+            </section>
+          )}
         </>
       )
     }
