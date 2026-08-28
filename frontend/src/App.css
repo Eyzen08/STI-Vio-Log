@@ -965,6 +965,13 @@ th {
   letter-spacing: 0.08em;
 }
 
+.table-cell-detail {
+  display: block;
+  margin-top: 3px;
+  color: #60708a;
+  font-size: 0.82rem;
+}
+
 .status-badge {
   display: inline-flex;
   align-items: center;

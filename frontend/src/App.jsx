@@ -32,6 +32,7 @@ import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, se
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
+import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -129,11 +130,8 @@ function App() {
   const [communityServiceForm, setCommunityServiceForm] = useState({
     violation_id: '',
     student_id: '',
-    required_hours: 0,
-    completed_hours: 0,
-    remaining_hours: 0,
-    status: 'OPEN',
-    completed_at: ''
+    student_search: '',
+    required_hours: '',
   })
 
   const [communityServiceFormError, setCommunityServiceFormError] =
@@ -722,15 +720,23 @@ function App() {
   const handleCommunityServiceFieldChange = (event) => {
     const { name, value } = event.target
 
+    if (name === 'student_search') {
+      setCommunityServiceForm((current) => ({
+        ...current,
+        student_search: value,
+        student_id: resolveCommunityServiceStudent(students, value),
+        violation_id: ''
+      }))
+      return
+    }
+
     setCommunityServiceForm((current) => ({
       ...current,
       [name]:
         [
           'violation_id',
           'student_id',
-          'required_hours',
-          'completed_hours',
-          'remaining_hours'
+          'required_hours'
         ].includes(name)
           ? Number(value) || ''
           : value
@@ -966,40 +972,7 @@ function App() {
       setCommunityServiceFormSuccess('')
 
       try {
-        const payload = {
-          ...communityServiceForm,
-
-          violation_id:
-            Number(
-              communityServiceForm.violation_id
-            ),
-
-          student_id:
-            Number(
-              communityServiceForm.student_id
-            ),
-
-          required_hours:
-            Number(
-              communityServiceForm.required_hours || 0
-            ),
-
-          completed_hours:
-            Number(
-              communityServiceForm.completed_hours || 0
-            ),
-
-          remaining_hours:
-            Number(
-              communityServiceForm.remaining_hours ||
-              communityServiceForm.required_hours ||
-              0
-            ),
-
-          completed_at:
-            communityServiceForm.completed_at ||
-            null
-        }
+        const payload = buildCommunityServiceAssignmentPayload(communityServiceForm)
 
         if (
           !payload.violation_id ||
@@ -1007,7 +980,7 @@ function App() {
           !payload.required_hours
         ) {
           throw new Error(
-            'Violation ID, student ID, and required hours are required.'
+            'Select a student and violation, then enter the required hours.'
           )
         }
 
@@ -1037,17 +1010,14 @@ function App() {
         }
 
         setCommunityServiceFormSuccess(
-          `Assignment for student #${payload.student_id} was created.`
+          `Community service was assigned successfully.`
         )
 
         setCommunityServiceForm({
           violation_id: '',
           student_id: '',
-          required_hours: 0,
-          completed_hours: 0,
-          remaining_hours: 0,
-          status: 'OPEN',
-          completed_at: ''
+          student_search: '',
+          required_hours: '',
         })
 
         const refreshedAssignments =
@@ -2759,6 +2729,11 @@ function App() {
     if (
       activeView === 'Community Service'
     ) {
+      const serviceViolations = eligibleServiceViolations(
+        violations,
+        communityServiceAssignments,
+        communityServiceForm.student_id
+      )
       return (
         <>
           <section className="table-card form-card">
@@ -2780,10 +2755,33 @@ function App() {
             >
               <div className="student-form-grid">
                 <label>
-                  Violation ID
+                  Student
 
                   <input
-                    type="number"
+                    type="search"
+                    name="student_search"
+                    list="community-service-student-options"
+                    placeholder="Type a student number or name"
+                    value={
+                      communityServiceForm.student_search
+                    }
+                    onChange={
+                      handleCommunityServiceFieldChange
+                    }
+                    required
+                  />
+                  <datalist id="community-service-student-options">
+                    {students.map((student) => (
+                      <option key={student.id} value={communityServiceStudentLabel(student)} />
+                    ))}
+                  </datalist>
+                  <span>Search by Student Number, first name, or last name, then select the matching result.</span>
+                </label>
+
+                <label>
+                  Open violation
+
+                  <select
                     name="violation_id"
                     value={
                       communityServiceForm.violation_id
@@ -2791,24 +2789,21 @@ function App() {
                     onChange={
                       handleCommunityServiceFieldChange
                     }
-                    min="1"
-                  />
-                </label>
-
-                <label>
-                  Student ID
-
-                  <input
-                    type="number"
-                    name="student_id"
-                    value={
-                      communityServiceForm.student_id
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    min="1"
-                  />
+                    disabled={!communityServiceForm.student_id}
+                    required
+                  >
+                    <option value="">
+                      {communityServiceForm.student_id ? 'Select an open violation' : 'Select a student first'}
+                    </option>
+                    {serviceViolations.map((violation) => (
+                      <option key={violation.id} value={violation.id}>
+                        {communityServiceViolationLabel(violation)}
+                      </option>
+                    ))}
+                  </select>
+                  {communityServiceForm.student_id && serviceViolations.length === 0 && (
+                    <span>This student has no open violation available for a new assignment.</span>
+                  )}
                 </label>
 
                 <label>
@@ -2823,87 +2818,9 @@ function App() {
                     onChange={
                       handleCommunityServiceFieldChange
                     }
-                    min="0"
+                    min="0.5"
                     step="0.5"
-                  />
-                </label>
-
-                <label>
-                  Completed Hours
-
-                  <input
-                    type="number"
-                    name="completed_hours"
-                    value={
-                      communityServiceForm.completed_hours
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    min="0"
-                    step="0.5"
-                  />
-                </label>
-
-                <label>
-                  Remaining Hours
-
-                  <input
-                    type="number"
-                    name="remaining_hours"
-                    value={
-                      communityServiceForm.remaining_hours
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    min="0"
-                    step="0.5"
-                  />
-                </label>
-
-                <label>
-                  Status
-
-                  <select
-                    name="status"
-                    value={
-                      communityServiceForm.status
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                  >
-                    <option value="OPEN">
-                      OPEN
-                    </option>
-
-                    <option value="IN_PROGRESS">
-                      IN_PROGRESS
-                    </option>
-
-                    <option value="COMPLETED">
-                      COMPLETED
-                    </option>
-
-                    <option value="CLOSED">
-                      CLOSED
-                    </option>
-                  </select>
-                </label>
-
-                <label>
-                  Completed At
-
-                  <input
-                    type="date"
-                    name="completed_at"
-                    value={
-                      communityServiceForm.completed_at
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
+                    required
                   />
                 </label>
               </div>
@@ -2996,14 +2913,15 @@ function App() {
                           </td>
 
                           <td>
-                            {
-                              assignment.student_id
-                            }
+                            <strong>{assignment.student_number || `Student #${assignment.student_id}`}</strong>
+                            {(assignment.first_name || assignment.last_name) && (
+                              <span className="table-cell-detail">{assignment.first_name} {assignment.last_name}</span>
+                            )}
                           </td>
 
                           <td>
                             {
-                              assignment.violation_id
+                              `#${assignment.violation_id}`
                             }
                           </td>
 
