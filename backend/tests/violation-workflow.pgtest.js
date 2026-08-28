@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
+const { listMigrationFiles } = require('../scripts/migrate');
 
 require('dotenv').config({ quiet: true });
 
@@ -29,12 +30,8 @@ let pool;
 let server;
 let baseUrl;
 
-const migrationFiles = [
-  path.resolve(__dirname, '../../database/migrations/001_initial_schema.sql'),
-  path.resolve(__dirname, '../../database/migrations/002_violation_lifecycle.sql'),
-  path.resolve(__dirname, '../../database/migrations/003_service_clearance_sync.sql'),
-  path.resolve(__dirname, '../../database/migrations/004_community_service_sessions.sql')
-];
+const migrationsDirectory = path.resolve(__dirname, '../../database/migrations');
+const migrationFiles = listMigrationFiles(migrationsDirectory).map((name) => path.join(migrationsDirectory, name));
 
 async function request(route, { token, method = 'GET', body } = {}) {
   const response = await fetch(`${baseUrl}${route}`, {
@@ -51,7 +48,7 @@ async function request(route, { token, method = 'GET', body } = {}) {
 
 function tokenFor(user) {
   return jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
+    { id: user.id, username: user.username, role: user.role, session_version: Number(user.session_version || 1) },
     process.env.JWT_SECRET,
     { expiresIn: '1h' }
   );
