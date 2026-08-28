@@ -19,6 +19,7 @@ import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
 import GoogleDepartmentRegistrationReview from './components/GoogleDepartmentRegistrationReview.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
+import AdminAccounts from './components/AdminAccounts.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -2018,6 +2019,10 @@ function App() {
 
     if (userRole === 'ADMIN' && activeView === 'Department Registrations') {
       return <GoogleDepartmentRegistrationReview token={token} />
+    }
+
+    if (userRole === 'ADMIN' && activeView === 'Accounts') {
+      return <AdminAccounts token={token} />
     }
 
     /*

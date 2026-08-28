@@ -1369,6 +1369,7 @@ These requirements are recorded for future implementation. They are not part of 
 - [x] Complete the security, credential-lifecycle, recovery, and API design in `docs/ACCOUNT-ADMINISTRATION-DESIGN.md` before implementation.
 - [x] Add session-version invalidation, forced password-change enforcement, and recoverable Google-link schema foundations.
 - [x] Add Admin-only transactional staff creation, activation/deactivation, role/department assignment, and password reset APIs.
+- [x] Add the Admin-only individual staff account directory, creation, status, password-reset, and one-time-secret UI.
 - [ ] Add authorized account creation, activation/deactivation, department assignment, and role management.
 - [ ] Add audited account recovery and Google-link recovery.
 - [ ] Add duplicate-account review tools without silently merging or deleting history.
