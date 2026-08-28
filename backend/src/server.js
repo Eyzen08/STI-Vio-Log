@@ -23,6 +23,7 @@ const departmentAdministrationRoutes = require('./routes/departmentAdministratio
 const googleLinkAdministrationRoutes = require('./routes/googleLinkAdministrationRoutes');
 const duplicateAccountReviewRoutes = require('./routes/duplicateAccountReviewRoutes');
 const pool = require("./config/database");
+const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
 const {
@@ -36,46 +37,14 @@ const {
 
 const app = express();
 
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+
 const PORT = process.env.PORT || 5000;
 
 
 // =====================================================
 // SECURE CONFIGURATION VALIDATION
 // =====================================================
-
-const validateSecureConfig = () => {
-  const jwtSecret = process.env.JWT_SECRET;
-
-  const requiredDbValues = [
-    process.env.DB_HOST,
-    process.env.DB_PORT,
-    process.env.DB_NAME,
-    process.env.DB_USER,
-    process.env.DB_PASSWORD
-  ];
-
-  const insecureDefaults = [
-    "sti-vio-log-dev-secret-change-me",
-    "change-this-to-a-long-random-secret"
-  ];
-
-  if (
-    !jwtSecret ||
-    insecureDefaults.includes(jwtSecret) ||
-    jwtSecret.length < 32
-  ) {
-    throw new Error(
-      "JWT_SECRET must be set to a strong value in the environment before launch."
-    );
-  }
-
-  if (requiredDbValues.some((value) => !value)) {
-    throw new Error(
-      "Missing required database environment variables before launch."
-    );
-  }
-};
-
 
 // =====================================================
 // VALIDATE CONFIG BEFORE SERVER START
@@ -115,23 +84,7 @@ const apiLimiter = rateLimit({
 // CORS
 // =====================================================
 
-const defaultAllowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:5173"
-];
-
-const allowedOrigins = (
-  process.env.FRONTEND_URL ||
-  defaultAllowedOrigins.join(",")
-)
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean)
-  .concat(defaultAllowedOrigins)
-  .filter(
-    (value, index, array) =>
-      array.indexOf(value) === index
-  );
+const allowedOrigins = allowedOriginsFor(process.env);
 
 
 // =====================================================
@@ -166,13 +119,7 @@ app.use(
 
     credentials: true,
 
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "DELETE",
-      "OPTIONS"
-    ],
+    methods: CORS_METHODS,
 
     allowedHeaders: [
       "Content-Type",

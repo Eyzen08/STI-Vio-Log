@@ -1071,7 +1071,7 @@ Before deployment:
 - [ ] Rate limiting
 - [ ] Secure authentication storage
 - [ ] HTTPS
-- [ ] CORS configuration
+- [x] Production-aware CORS configuration
 - [ ] QR validation
 - [ ] Duplicate scan prevention
 - [ ] Audit logs

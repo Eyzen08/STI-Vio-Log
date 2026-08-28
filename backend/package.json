@@ -12,7 +12,8 @@
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js status",
     "backup": "node scripts/backup.js",
-    "backup:verify": "node scripts/backup.js verify"
+    "backup:verify": "node scripts/backup.js verify",
+    "production:check": "node scripts/production-check.js"
   },
   "keywords": [],
   "author": "",

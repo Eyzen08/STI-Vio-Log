@@ -1,0 +1,7 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { runProductionCheck } = require('../scripts/production-check');
+
+const environment={NODE_ENV:'production',JWT_SECRET:'s'.repeat(48),DATABASE_URL:'postgresql://example',FRONTEND_URL:'https://portal.example.test'};
+test('production check confirms connectivity and current migrations without returning secrets',async()=>{const database={async query(sql){if(sql.includes('SELECT 1 AS healthy'))return{rows:[{healthy:1}]};if(sql.includes('CREATE TABLE IF NOT EXISTS schema_migrations'))return{rows:[]};if(sql.includes('SELECT migration_name'))return{rows:[{migration_name:'001_initial_schema.sql'},{migration_name:'002_violation_lifecycle.sql'},{migration_name:'003_service_clearance_sync.sql'},{migration_name:'004_community_service_sessions.sql'},{migration_name:'005_google_identity_links.sql'},{migration_name:'006_google_student_registrations.sql'},{migration_name:'007_google_department_registrations.sql'},{migration_name:'008_account_security.sql'},{migration_name:'009_staff_profiles.sql'}]};return{rows:[]}}};const result=await runProductionCheck({environment,database});assert.equal(result.database,'connected');assert.equal(result.migrations,'current');assert.equal(JSON.stringify(result).includes(environment.JWT_SECRET),false)});
+test('production check refuses development configuration',async()=>{await assert.rejects(runProductionCheck({environment:{...environment,NODE_ENV:'development'},database:{query(){throw new Error('must not connect')}}}),/NODE_ENV/)});
