@@ -382,10 +382,7 @@ app.use(
 app.use(
   "/api/audit-logs",
   authenticateToken,
-  authorizeRoles(
-    "ADMIN",
-    "DISCIPLINE_OFFICE"
-  ),
+  authorizeRoles("ADMIN"),
   auditRoutes
 );
 
