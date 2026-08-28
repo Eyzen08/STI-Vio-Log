@@ -38,7 +38,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const result = await client.query(
-        `SELECT u.id, u.username, u.role, s.first_name, s.last_name
+        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, s.first_name, s.last_name
          FROM students s JOIN users u ON u.id = s.user_id
          WHERE s.student_number = $1 AND u.role = 'STUDENT' AND u.is_active = TRUE
          FOR UPDATE`,
@@ -52,7 +52,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       if (!account) {
         const occupied = (await client.query(
           `SELECT 1 FROM students WHERE student_number = $1
-          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2 AND revoked_at IS NULL
           UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
            LIMIT 1`,
           [studentNumber.trim(), identity.subject]
@@ -83,7 +83,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         // before creating a new pending request.
         const newlyOccupied = (await client.query(
           `SELECT 1 FROM students WHERE student_number = $1
-           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2 AND revoked_at IS NULL
            UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
            LIMIT 1`,
           [studentNumber.trim(), identity.subject]
@@ -135,9 +135,9 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     try {
       await client.query('BEGIN');
       const result = await client.query(
-        `SELECT u.id, u.username, u.role, gil.id AS link_id
+        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, gil.id AS link_id
          FROM google_identity_links gil JOIN users u ON u.id = gil.user_id
-         WHERE gil.google_subject = $1 AND u.role = 'STUDENT' AND u.is_active = TRUE
+         WHERE gil.google_subject = $1 AND gil.revoked_at IS NULL AND u.role = 'STUDENT' AND u.is_active = TRUE
          FOR UPDATE OF gil`,
         [identity.subject]
       );

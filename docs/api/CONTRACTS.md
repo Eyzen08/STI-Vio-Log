@@ -65,6 +65,14 @@ Department operational CSV exports are generated only from the currently loaded,
 
 Student and department registration transactions serialize ownership checks by Google subject and reject active links or pending cross-role claims. Individual employee numbers also cannot be reused by an active officer or simultaneous pending request.
 
+## Session invalidation and required password change
+
+Application JWTs contain the account's current `session_version` and password-change-required state. Authentication reloads both values from the active database account. A missing or stale session version returns `SESSION_INVALIDATED`; role changes, status changes, and password resets can therefore invalidate previously issued sessions immediately.
+
+Accounts marked `must_change_password` receive a restricted session. Role-protected endpoints return `PASSWORD_CHANGE_REQUIRED`; only `POST /api/account/password-change` remains available. That endpoint accepts only `current_password` and `new_password`, verifies the existing credential, rejects reuse, enforces the password policy, increments the session version, audits the action without credential material, and returns a normal replacement session. The frontend never persists either password.
+
+Revoked Google identity links remain historical records. Active-link uniqueness applies only where `revoked_at IS NULL`, allowing the later audited recovery workflow to revoke rather than delete link history.
+
 ## Filters and pagination
 
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.

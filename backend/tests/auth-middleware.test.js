@@ -36,12 +36,12 @@ test('authenticateToken rejects missing bearer token', () => {
 
 test('authenticateToken accepts valid JWT and attaches current database identity', async () => {
   process.env.JWT_SECRET = 'this-is-a-secure-test-secret-123456';
-  const token = jwt.sign({ id: 1, username: 'admin', role: 'STUDENT' }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  const token = jwt.sign({ id: 1, username: 'admin', role: 'STUDENT', session_version: 1 }, process.env.JWT_SECRET, { expiresIn: '1h' });
   const req = { headers: { authorization: `Bearer ${token}` } };
   const res = createRes();
   let called = false;
   const originalQuery = pool.query;
-  pool.query = async () => ({ rows: [{ id: 1, username: 'admin', role: 'ADMIN', department_id: null }] });
+  pool.query = async () => ({ rows: [{ id: 1, username: 'admin', role: 'ADMIN', session_version: 1, must_change_password: false, department_id: null }] });
 
   await authenticateToken(req, res, () => {
     called = true;
@@ -65,6 +65,21 @@ test('authorizeRoles denies users without required role', () => {
 
   assert.equal(res.statusCode, 403);
   assert.equal(called, false);
+});
+
+test('authenticateToken rejects a stale session version', async () => {
+  process.env.JWT_SECRET = 'this-is-a-secure-test-secret-123456';
+  const token = jwt.sign({ id:1, username:'admin', role:'ADMIN', session_version:1 }, process.env.JWT_SECRET, {expiresIn:'1h'});
+  const req={headers:{authorization:`Bearer ${token}`}},res=createRes();let called=false;const originalQuery=pool.query;
+  pool.query=async()=>({rows:[{id:1,username:'admin',role:'ADMIN',session_version:2,must_change_password:false,department_id:null}]});
+  await authenticateToken(req,res,()=>{called=true});pool.query=originalQuery;
+  assert.equal(called,false);assert.equal(res.statusCode,401);assert.equal(res.body.error.code,'SESSION_INVALIDATED');
+});
+
+test('forced-change sessions cannot pass role authorization', () => {
+  const req={user:{role:'ADMIN',must_change_password:true}},res=createRes();let called=false;
+  authorizeRoles('ADMIN')(req,res,()=>{called=true});
+  assert.equal(called,false);assert.equal(res.statusCode,403);assert.equal(res.body.error.code,'PASSWORD_CHANGE_REQUIRED');
 });
 
 test('authenticateToken fails when JWT secret is missing', async () => {

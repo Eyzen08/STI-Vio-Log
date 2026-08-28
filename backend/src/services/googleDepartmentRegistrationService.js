@@ -67,7 +67,7 @@ const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value
       const baseUsername = registration.employee_number || `department-${registration.id}`;
       const conflict = (await client.query(
         `SELECT 1 FROM users WHERE username=$1
-         UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject=$2
+         UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject=$2 AND revoked_at IS NULL
          UNION ALL SELECT 1 FROM department_heads WHERE employee_number IS NOT NULL AND employee_number=$3 LIMIT 1`,
         [baseUsername, registration.google_subject, registration.employee_number]
       )).rows[0];

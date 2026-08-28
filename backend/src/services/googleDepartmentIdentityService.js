@@ -28,7 +28,7 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const occupied = (await client.query(
-        `SELECT 'LINK' AS source FROM google_identity_links WHERE google_subject = $1
+        `SELECT 'LINK' AS source FROM google_identity_links WHERE google_subject = $1 AND revoked_at IS NULL
          UNION ALL SELECT 'STUDENT' FROM google_student_registrations WHERE google_subject = $1 AND status = 'PENDING'
          LIMIT 1`, [identity.subject]
       )).rows[0];
@@ -83,12 +83,12 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
     try {
       await client.query('BEGIN');
       const account = (await client.query(
-        `SELECT u.id, u.username, u.role, gil.id AS link_id
+        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, gil.id AS link_id
          FROM google_identity_links gil
          JOIN users u ON u.id = gil.user_id
          JOIN department_heads dh ON dh.user_id = u.id
          JOIN departments d ON d.id = dh.department_id
-         WHERE gil.google_subject = $1 AND u.role = 'DEPARTMENT_HEAD'
+         WHERE gil.google_subject = $1 AND gil.revoked_at IS NULL AND u.role = 'DEPARTMENT_HEAD'
            AND u.is_active = TRUE AND d.is_active = TRUE FOR UPDATE OF gil`,
         [identity.subject]
       )).rows[0];

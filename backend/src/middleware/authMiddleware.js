@@ -82,6 +82,8 @@ const authenticateToken = async (req, res, next) => {
                 u.id,
                 u.username,
                 u.role,
+                u.session_version,
+                u.must_change_password,
                 dh.department_id
             FROM users u
             LEFT JOIN department_heads dh
@@ -102,10 +104,16 @@ const authenticateToken = async (req, res, next) => {
 
         const account = accountResult.rows[0];
 
+        if (!Number.isInteger(decoded.session_version) || Number(decoded.session_version) !== Number(account.session_version)) {
+            return res.status(401).json({ success: false, message: "Session has been invalidated", error: { code: "SESSION_INVALIDATED", message: "Session has been invalidated" } });
+        }
+
         req.user = {
             id: Number(account.id),
             username: account.username,
             role: account.role,
+            session_version: Number(account.session_version),
+            must_change_password: Boolean(account.must_change_password),
             department_id: account.department_id
                 ? Number(account.department_id)
                 : null
@@ -133,6 +141,10 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
             success: false,
             message: "Authentication required"
         });
+    }
+
+    if (req.user.must_change_password) {
+        return res.status(403).json({ success: false, message: "Password change required", error: { code: "PASSWORD_CHANGE_REQUIRED", message: "Password change required" } });
     }
 
     if (!allowedRoles.includes(req.user.role)) {

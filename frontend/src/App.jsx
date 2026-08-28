@@ -18,6 +18,7 @@ import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
 import GoogleDepartmentRegistrationReview from './components/GoogleDepartmentRegistrationReview.jsx'
+import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -199,6 +200,11 @@ function App() {
       return
     }
 
+    if (user?.password_change_required) {
+      if (routePath !== '/account/password-change') navigateTo('/account/password-change', { replace: true })
+      return
+    }
+
     if (routePath === '/' || routePath === '/login') {
       navigateTo(getHomePath(userRole), { replace: true })
       return
@@ -207,7 +213,7 @@ function App() {
     if (routeResolution.status === 'allowed') {
       setActiveView(routeResolution.route.view)
     }
-  }, [isLoggedIn, routePath, routeResolution.route, routeResolution.status, userRole])
+  }, [isLoggedIn, routePath, routeResolution.route, routeResolution.status, user, userRole])
 
   const openViolationsCount = violations.filter(
     (violation) =>
@@ -1446,7 +1452,7 @@ function App() {
     setUser(data.user)
     setError('')
     setForm({ username: '', password: '' })
-    navigateTo(getHomePath(data.user.role), { replace: true })
+    navigateTo(data.user.password_change_required ? '/account/password-change' : getHomePath(data.user.role), { replace: true })
   }
 
   /*
@@ -1671,6 +1677,10 @@ function App() {
           onNavigate={navigateTo}
         />
       )
+    }
+
+    if (user?.password_change_required) {
+      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={handleLogout} />
     }
 
     if (routeResolution.status === 'unauthorized') {

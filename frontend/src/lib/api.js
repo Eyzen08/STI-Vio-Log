@@ -69,3 +69,9 @@ export const googleDepartmentRegister = ({ credential, firstName, lastName, empl
     body: JSON.stringify({ credential, first_name: firstName, last_name: lastName, employee_number: employeeNumber || undefined,
       department_type: departmentType, department_name: departmentName, note: note || undefined })
   })
+
+export const changePassword = ({ token, currentPassword, newPassword }) =>
+  apiRequest('/api/account/password-change', {
+    method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+    body:JSON.stringify({current_password:currentPassword,new_password:newPassword})
+  })

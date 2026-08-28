@@ -78,7 +78,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
       const conflict = (await client.query(
         `SELECT 1 FROM users WHERE username = $1
          UNION ALL SELECT 1 FROM students WHERE student_number = $1
-         UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2
+         UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2 AND revoked_at IS NULL
          UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
          LIMIT 1`,
         [registration.student_number, registration.google_subject]

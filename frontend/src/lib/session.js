@@ -32,7 +32,8 @@ export const loadSession = () => {
     const identityMismatch =
       Number(payload?.id) !== Number(user?.id) ||
       payload?.role !== user?.role ||
-      payload?.username !== user?.username
+      payload?.username !== user?.username ||
+      Boolean(payload?.password_change_required) !== Boolean(user?.password_change_required)
 
     if (isExpired || identityMismatch) throw new Error('Invalid session')
 

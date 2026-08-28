@@ -13,15 +13,15 @@ const pool = require('../src/config/database');
 const app = require('../src/server');
 
 const accounts = {
-  1: { id: 1, username: 'admin', role: 'ADMIN', department_id: null },
-  2: { id: 2, username: 'discipline', role: 'DISCIPLINE_OFFICE', department_id: null },
-  3: { id: 3, username: 'head', role: 'DEPARTMENT_HEAD', department_id: 9 },
-  4: { id: 4, username: 'student', role: 'STUDENT', department_id: null }
+  1: { id: 1, username: 'admin', role: 'ADMIN', session_version:1, must_change_password:false, department_id: null },
+  2: { id: 2, username: 'discipline', role: 'DISCIPLINE_OFFICE', session_version:1, must_change_password:false, department_id: null },
+  3: { id: 3, username: 'head', role: 'DEPARTMENT_HEAD', session_version:1, must_change_password:false, department_id: 9 },
+  4: { id: 4, username: 'student', role: 'STUDENT', session_version:1, must_change_password:false, department_id: null }
 };
 
 function tokenFor(id, options = {}) {
   return jwt.sign(
-    { id, username: accounts[id]?.username || 'unknown', role: options.claimedRole || accounts[id]?.role },
+    { id, username: accounts[id]?.username || 'unknown', role: options.claimedRole || accounts[id]?.role, session_version:1 },
     process.env.JWT_SECRET,
     { expiresIn: options.expiresIn || '1h' }
   );

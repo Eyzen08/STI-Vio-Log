@@ -17,6 +17,7 @@ const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
 const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
+const accountRoutes = require('./routes/accountRoutes');
 const pool = require("./config/database");
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 
@@ -194,6 +195,8 @@ app.use(
   "/api",
   authRoutes
 );
+
+app.use('/api/account', authenticateToken, accountRoutes);
 
 
 // =====================================================

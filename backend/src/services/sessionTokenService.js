@@ -12,7 +12,11 @@ const getJwtSecret = (env = process.env) => {
 };
 
 const issueSessionToken = (user, { env = process.env, expiresIn = '8h' } = {}) => jwt.sign(
-  { id: Number(user.id), username: user.username, role: user.role },
+  {
+    id: Number(user.id), username: user.username, role: user.role,
+    session_version: Number(user.session_version || 1),
+    password_change_required: Boolean(user.must_change_password)
+  },
   getJwtSecret(env),
   { expiresIn }
 );

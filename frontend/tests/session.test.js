@@ -64,3 +64,9 @@ test('logout clears all persisted authentication data', () => {
   assert.equal(localStorage.getItem('sti_vio_log_token'), null)
   assert.equal(localStorage.getItem('sti_vio_log_user'), null)
 })
+
+test('forced-password-change state must match the signed token', () => {
+  const token = tokenFor({ ...user, password_change_required:true, exp:Math.floor(Date.now()/1000)+3600 })
+  saveSession({token,user:{...user,password_change_required:false}})
+  assert.deepEqual(loadSession(),{token:'',user:null})
+})

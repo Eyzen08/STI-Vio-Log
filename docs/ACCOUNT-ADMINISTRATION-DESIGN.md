@@ -141,8 +141,8 @@ Loading, empty, validation, conflict, forbidden, expired-session, and retry stat
 
 ## Implementation order
 
-1. [ ] Account-security and recoverable-Google-link migration with concurrency tests.
-2. [ ] Session-version and forced-password-change authentication enforcement.
+1. [x] Account-security and recoverable-Google-link migration with upgrade tests.
+2. [x] Session-version and forced-password-change authentication enforcement.
 3. [ ] Transactional account/department administration services and audit events.
 4. [ ] Admin-only routes with validation, pagination, and stable errors.
 5. [ ] Role-aware system-admin accounts, departments, and audit frontend.
