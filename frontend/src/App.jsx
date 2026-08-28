@@ -27,6 +27,7 @@ import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
+import { buildViolationPayload, selectedViolationType } from './lib/violationAdmin.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -95,14 +96,11 @@ function App() {
   const [violationForm, setViolationForm] = useState({
     student_id: '',
     violation_type_id: '',
-    reported_by: 1,
     incident_date: '',
     description: '',
-    status: 'OPEN',
-    required_service_hours: 0,
-    completed_service_hours: 0,
-    cleared_at: ''
+    required_service_hours: 0
   })
+  const [violationTypes, setViolationTypes] = useState([])
 
   const [violationFormError, setViolationFormError] = useState('')
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
@@ -319,6 +317,7 @@ function App() {
           const [
             studentsResponse,
             violationsResponse,
+            violationTypesResponse,
             assignmentsResponse,
             clearanceResponse
           ] = await Promise.all([
@@ -327,6 +326,10 @@ function App() {
             }),
 
             fetch(`${API_URL}/api/violations`, {
+              headers: authHeaders
+            }),
+
+            fetch(`${API_URL}/api/violations/types`, {
               headers: authHeaders
             }),
 
@@ -342,6 +345,7 @@ function App() {
           if (
             !studentsResponse.ok ||
             !violationsResponse.ok ||
+            !violationTypesResponse.ok ||
             !assignmentsResponse.ok ||
             !clearanceResponse.ok
           ) {
@@ -356,6 +360,9 @@ function App() {
           const violationsData =
             await violationsResponse.json()
 
+          const violationTypesData =
+            await violationTypesResponse.json()
+
           const assignmentsData =
             await assignmentsResponse.json()
 
@@ -368,6 +375,10 @@ function App() {
 
           setViolations(
             violationsData.violations || []
+          )
+
+          setViolationTypes(
+            violationTypesData.violationTypes || []
           )
 
           setCommunityServiceAssignments(
@@ -584,9 +595,7 @@ function App() {
         [
           'student_id',
           'violation_type_id',
-          'reported_by',
-          'required_service_hours',
-          'completed_service_hours'
+          'required_service_hours'
         ].includes(name)
           ? Number(value) || ''
           : value
@@ -754,40 +763,7 @@ function App() {
     setViolationFormSuccess('')
 
     try {
-      const payload = {
-        ...violationForm,
-
-        student_id:
-          Number(violationForm.student_id),
-
-        violation_type_id:
-          Number(violationForm.violation_type_id),
-
-        reported_by:
-          Number(violationForm.reported_by),
-
-        required_service_hours:
-          Number(
-            violationForm.required_service_hours || 0
-          ),
-
-        completed_service_hours:
-          Number(
-            violationForm.completed_service_hours || 0
-          ),
-
-        incident_date:
-          violationForm.incident_date ||
-          new Date()
-            .toISOString()
-            .slice(0, 10),
-
-        description:
-          violationForm.description.trim(),
-
-        cleared_at:
-          violationForm.cleared_at || null
-      }
+      const payload = buildViolationPayload(violationForm)
 
       if (
         !payload.student_id ||
@@ -831,13 +807,9 @@ function App() {
       setViolationForm({
         student_id: '',
         violation_type_id: '',
-        reported_by: 1,
         incident_date: '',
         description: '',
-        status: 'OPEN',
-        required_service_hours: 0,
-        completed_service_hours: 0,
-        cleared_at: ''
+        required_service_hours: 0
       })
 
       const refreshedViolations =
@@ -2385,10 +2357,9 @@ function App() {
             >
               <div className="student-form-grid">
                 <label>
-                  Student ID
+                  Student
 
-                  <input
-                    type="number"
+                  <select
                     name="student_id"
                     value={
                       violationForm.student_id
@@ -2396,15 +2367,21 @@ function App() {
                     onChange={
                       handleViolationFieldChange
                     }
-                    min="1"
-                  />
+                    required
+                  >
+                    <option value="">Select a student</option>
+                    {students.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.student_number} - {student.first_name} {student.last_name}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label>
-                  Violation Type ID
+                  Handbook classification
 
-                  <input
-                    type="number"
+                  <select
                     name="violation_type_id"
                     value={
                       violationForm.violation_type_id
@@ -2412,24 +2389,15 @@ function App() {
                     onChange={
                       handleViolationFieldChange
                     }
-                    min="1"
-                  />
-                </label>
-
-                <label>
-                  Reported By
-
-                  <input
-                    type="number"
-                    name="reported_by"
-                    value={
-                      violationForm.reported_by
-                    }
-                    onChange={
-                      handleViolationFieldChange
-                    }
-                    min="1"
-                  />
+                    required
+                  >
+                    <option value="">Select a classification</option>
+                    {violationTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.violation_name} ({type.severity})
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <label>
@@ -2448,37 +2416,7 @@ function App() {
                 </label>
 
                 <label>
-                  Status
-
-                  <select
-                    name="status"
-                    value={
-                      violationForm.status
-                    }
-                    onChange={
-                      handleViolationFieldChange
-                    }
-                  >
-                    <option value="OPEN">
-                      OPEN
-                    </option>
-
-                    <option value="IN_PROGRESS">
-                      IN_PROGRESS
-                    </option>
-
-                    <option value="COMPLETED">
-                      COMPLETED
-                    </option>
-
-                    <option value="CLEARED">
-                      CLEARED
-                    </option>
-                  </select>
-                </label>
-
-                <label>
-                  Required Hours
+                  Required service hours
 
                   <input
                     type="number"
@@ -2491,43 +2429,12 @@ function App() {
                     }
                     min="0"
                     step="0.5"
-                  />
-                </label>
-
-                <label>
-                  Completed Hours
-
-                  <input
-                    type="number"
-                    name="completed_service_hours"
-                    value={
-                      violationForm.completed_service_hours
-                    }
-                    onChange={
-                      handleViolationFieldChange
-                    }
-                    min="0"
-                    step="0.5"
-                  />
-                </label>
-
-                <label>
-                  Cleared At
-
-                  <input
-                    type="date"
-                    name="cleared_at"
-                    value={
-                      violationForm.cleared_at
-                    }
-                    onChange={
-                      handleViolationFieldChange
-                    }
+                    required
                   />
                 </label>
 
                 <label className="full-width-field">
-                  Description
+                  Exact offense and incident details
 
                   <textarea
                     name="description"
@@ -2538,9 +2445,16 @@ function App() {
                       handleViolationFieldChange
                     }
                     rows="4"
-                    placeholder="Describe the incident"
+                    placeholder="State the specific handbook offense and describe what happened"
+                    required
                   />
                 </label>
+                {selectedViolationType(violationTypes, violationForm.violation_type_id) && (
+                  <p className="form-guidance full-width-field">
+                    {selectedViolationType(violationTypes, violationForm.violation_type_id).description}
+                    {' '}Service hours are assigned by authorized staff for this case; the handbook does not prescribe an automatic hour value.
+                  </p>
+                )}
               </div>
 
               {violationFormError && (
