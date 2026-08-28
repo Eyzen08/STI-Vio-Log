@@ -27,7 +27,7 @@ import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
-import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
+import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import './App.css'
 
@@ -103,6 +103,9 @@ function App() {
     required_service_hours: 0
   })
   const [violationTypes, setViolationTypes] = useState([])
+  const [editingViolation, setEditingViolation] = useState(null)
+  const [violationEditForm, setViolationEditForm] = useState({description:'',required_service_hours:0,reason:''})
+  const [violationEditError, setViolationEditError] = useState('')
 
   const [violationFormError, setViolationFormError] = useState('')
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
@@ -548,6 +551,36 @@ function App() {
       setDepartmentNonComplianceError(reportError.message || 'Unable to load non-compliance report')
     } finally {
       setDepartmentNonComplianceLoading(false)
+    }
+  }
+
+  const startViolationEdit = (violation) => {
+    setEditingViolation(violation)
+    setViolationEditError('')
+    setViolationEditForm({
+      description: violation.description || '',
+      required_service_hours: Number(violation.required_service_hours || 0),
+      reason: ''
+    })
+  }
+
+  const handleViolationUpdate = async (event) => {
+    event.preventDefault()
+    setViolationEditError('')
+    const payload = buildViolationUpdatePayload(violationEditForm)
+    if (!payload.description || !payload.reason) return setViolationEditError('Updated details and an audit reason are required.')
+    try {
+      const response = await fetch(`${API_URL}/api/violations/${editingViolation.id}`, {
+        method: 'PUT',
+        headers: {'Content-Type':'application/json',Authorization:`Bearer ${token}`},
+        body: JSON.stringify(payload)
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to update violation.')
+      setViolations((current) => current.map((item) => item.id === editingViolation.id ? data.violation : item))
+      setEditingViolation(null)
+    } catch (error) {
+      setViolationEditError(error.message)
     }
   }
 
@@ -2514,6 +2547,21 @@ function App() {
             </form>
           </section>
 
+          {editingViolation && (
+            <section className="table-card form-card">
+              <div className="table-header"><h3>Edit violation #{editingViolation.id}</h3><span>Open cases only</span></div>
+              <form className="student-form" onSubmit={handleViolationUpdate}>
+                <div className="student-form-grid">
+                  <label>Required service hours<input type="number" min="0" step="0.5" value={violationEditForm.required_service_hours} onChange={(event)=>setViolationEditForm({...violationEditForm,required_service_hours:event.target.value})} required/></label>
+                  <label className="full-width-field">Violation and incident details<textarea rows="5" value={violationEditForm.description} onChange={(event)=>setViolationEditForm({...violationEditForm,description:event.target.value})} required/></label>
+                  <label className="full-width-field">Reason for change<textarea rows="3" value={violationEditForm.reason} onChange={(event)=>setViolationEditForm({...violationEditForm,reason:event.target.value})} placeholder="Explain why this record is being updated" required/></label>
+                </div>
+                {violationEditError && <p className="error-message" role="alert">{violationEditError}</p>}
+                <div className="registration-review-actions"><button type="submit">Save audited changes</button><button type="button" className="secondary-button" onClick={()=>setEditingViolation(null)}>Cancel</button></div>
+              </form>
+            </section>
+          )}
+
           <section className="table-card">
             <div className="table-header">
               <h3>
@@ -2552,6 +2600,7 @@ function App() {
                       <th>
                         Hours
                       </th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
 
@@ -2589,6 +2638,7 @@ function App() {
                                 0
                               }
                             </td>
+                            <td>{violation.status === 'OPEN' ? <button type="button" className="secondary-button" onClick={()=>startViolationEdit(violation)}>Edit</button> : 'Locked'}</td>
                           </tr>
                         )
                       )}

@@ -370,8 +370,10 @@ const createViolation = async (req, res) => {
 const updateViolation = async (req, res) => {
     const client = await pool.connect();
     try {
-        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "description", "required_service_hours"]);
+        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "description", "required_service_hours", "reason"]);
         const { id } = req.params;
+        const reason = String(req.body.reason || "").trim();
+        if (!reason) return res.status(400).json({ success: false, message: "reason is required for an audited violation update" });
 
         if (req.body.required_service_hours !== undefined) {
             const requiredHours = Number(req.body.required_service_hours);
@@ -468,8 +470,7 @@ const updateViolation = async (req, res) => {
             const existingAssignment =
                 assignmentResult.rows[0];
 
-        if (!isPositiveId(student_id) || !isPositiveId(violation_type_id)) return res.status(400).json({ success: false, message: "student_id and violation_type_id must be positive IDs" });
-        const requiredHours = Number(
+            const requiredHours = Number(
                 violation.required_service_hours || 0
             );
 
@@ -622,7 +623,7 @@ const updateViolation = async (req, res) => {
             [
                 req.user.id,
                 violation.id,
-                JSON.stringify({ actor_role: req.user.role, fields: allowedFields.filter((field) => req.body[field] !== undefined) }),
+                JSON.stringify({ actor_role: req.user.role, fields: allowedFields.filter((field) => req.body[field] !== undefined), reason }),
                 req.ip || null
             ]
         );

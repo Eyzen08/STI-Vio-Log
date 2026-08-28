@@ -63,3 +63,9 @@ export const studentIdFromSearch = (students = [], search = '') => {
   const match = students.find((student) => studentOptionLabel(student).toLocaleLowerCase() === normalized)
   return match ? Number(match.id) : ''
 }
+
+export const buildViolationUpdatePayload = (form = {}) => ({
+  description: String(form.description || '').trim(),
+  required_service_hours: Number(form.required_service_hours || 0),
+  reason: String(form.reason || '').trim()
+})

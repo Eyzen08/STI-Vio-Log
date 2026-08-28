@@ -27,6 +27,8 @@ Administrative DTR corrections are deliberately deferred. A future correction de
 
 `GET /api/violations/types` returns active violation classifications available to Admin and Discipline Office users. Handbook classifications are Minor and Major Categories A-D. Their default service hours are zero because the handbook prescribes sanctions and school days, not community-service hours; authorized staff must explicitly enter any required hours for the individual case.
 
+`PUT /api/violations/{id}` permits Admin and Discipline Office users to edit supported case fields. Every update requires a non-empty `reason`, derives the actor from authentication, records the changed field names and reason in the audit log, and synchronizes required hours with the linked service assignment and clearance state. Required hours can only change while the violation is `OPEN`.
+
 Staff student creation accepts the Student Number directly and never accepts a client-selected `user_id`. The backend uses the validated `02000` plus six digits Student Number as the local account username, generates an unknown random password, and creates the user/profile relationship atomically. Students subsequently use the enrollment-gated Google linking workflow; no generated password is returned or logged.
 
 ## Department Head QR attendance
