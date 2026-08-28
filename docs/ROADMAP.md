@@ -1372,7 +1372,7 @@ These requirements are recorded for future implementation. They are not part of 
 - [x] Add Admin-only transactional staff creation, activation/deactivation, role/department assignment, and password reset APIs.
 - [x] Add the Admin-only individual staff account directory, creation, status, password-reset, and one-time-secret UI.
 - [x] Add audited Admin-only department creation and configuration with active-assignment deactivation safeguards.
-- [ ] Add authorized account creation, activation/deactivation, department assignment, and role management.
+- [x] Add authorized account creation, activation/deactivation, department assignment, and role management.
 - [x] Add audited account recovery and Google-link recovery.
 - [ ] Add duplicate-account review tools without silently merging or deleting history.
 - [ ] Revisit more granular staff roles only when their permissions differ from the existing RBAC model.

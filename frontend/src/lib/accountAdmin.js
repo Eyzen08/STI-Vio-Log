@@ -1,4 +1,5 @@
 export const STAFF_ROLES = ['ADMIN', 'DISCIPLINE_OFFICE']
+export const ASSIGNABLE_STAFF_ROLES = ['ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD']
 
 export const buildStaffAccountPayload = (form = {}) => ({
   username:String(form.username||'').trim().toLowerCase(), role:String(form.role||'').trim().toUpperCase(),
@@ -11,3 +12,9 @@ export const accountStatusLabel = (account) => account?.is_active ? 'Active' : '
 export const clearOneTimeSecret = () => null
 
 export const buildGoogleRecoveryPayload = (reason = '') => ({ reason: String(reason).trim() })
+
+export const buildAccountAssignmentPayload = ({ role, departmentId, reason } = {}) => ({
+  role: String(role || '').trim().toUpperCase(),
+  department_id: String(role || '').trim().toUpperCase() === 'DEPARTMENT_HEAD' ? Number(departmentId) : null,
+  reason: String(reason || '').trim()
+})
