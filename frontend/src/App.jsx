@@ -32,7 +32,7 @@ import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, se
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
-import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -144,8 +144,7 @@ function App() {
 
   const [qrForm, setQrForm] = useState({
     qr_code: '',
-    scanned_by: 1,
-    department_id: 1,
+    department_id: '',
     notes: ''
   })
 
@@ -1206,7 +1205,7 @@ function App() {
       ...current,
 
       [name]:
-        ['scanned_by', 'department_id'].includes(name)
+        ['department_id'].includes(name)
           ? Number(value) || ''
           : value
     }))
@@ -1227,8 +1226,12 @@ function App() {
         throw new Error('QR code is required.')
       }
 
-      if (isDepartmentHead && action !== 'scan' && qrForm.qr_code.trim() !== verifiedQr) {
+      if (action !== 'scan' && qrForm.qr_code.trim() !== verifiedQr) {
         throw new Error('Verify the student before recording attendance.')
+      }
+
+      if (!isDepartmentHead && !qrForm.department_id) {
+        throw new Error('Select the department responsible for this attendance record.')
       }
 
       const response = await fetch(`${API_URL}/api/qr/${action}`, {
@@ -2725,10 +2728,7 @@ function App() {
         communityServiceAssignments,
         communityServiceForm.student_id
       )
-      const departmentOptions = [...new Map(communityServiceDestinations.map((destination) => [
-        Number(destination.department_id),
-        { id: Number(destination.department_id), name: destination.department_name }
-      ])).values()]
+      const departmentOptions = serviceDepartmentOptions(communityServiceDestinations)
       const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
       return (
         <>
@@ -3012,6 +3012,8 @@ function App() {
         )
       }
 
+      const scannerDepartments = serviceDepartmentOptions(communityServiceDestinations)
+
       return (
         <section className="table-card qr-panel">
           <div className="table-header">
@@ -3072,23 +3074,18 @@ function App() {
               Scanned By
 
               <input
-                type="number"
-                name="scanned_by"
-                value={
-                  qrForm.scanned_by
-                }
-                onChange={
-                  handleQrFieldChange
-                }
-                min="1"
+                type="text"
+                value={user?.username || 'Authenticated staff'}
+                readOnly
+                aria-readonly="true"
               />
+              <span>Recorded automatically from the signed-in account for audit accuracy.</span>
             </label>
 
             <label>
-              Department ID
+              Department
 
-              <input
-                type="number"
+              <select
                 name="department_id"
                 value={
                   qrForm.department_id
@@ -3096,8 +3093,16 @@ function App() {
                 onChange={
                   handleQrFieldChange
                 }
-                min="1"
-              />
+                required
+              >
+                <option value="">Select the assigned department</option>
+                {scannerDepartments.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.name}{department.code ? ` (${department.code})` : ''}
+                  </option>
+                ))}
+              </select>
+              <span>Need another destination? Configure an active “Other” department and Department Head first.</span>
             </label>
 
             <label className="full-width-field">

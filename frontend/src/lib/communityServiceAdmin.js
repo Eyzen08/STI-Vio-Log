@@ -30,3 +30,13 @@ export const buildCommunityServiceAssignmentPayload = (form = {}) => ({
 
 export const headsForDepartment = (destinations = [], departmentId) =>
   destinations.filter((destination) => Number(destination.department_id) === Number(departmentId))
+
+export const serviceDepartmentOptions = (destinations = []) =>
+  [...new Map(destinations.map((destination) => [
+    Number(destination.department_id),
+    {
+      id: Number(destination.department_id),
+      code: destination.department_code || '',
+      name: destination.department_name || 'Unnamed department'
+    }
+  ])).values()]

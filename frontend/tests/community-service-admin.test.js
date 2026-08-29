@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent } from '../src/lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from '../src/lib/communityServiceAdmin.js'
 
 const students = [{ id: 7, student_number: '02000123456', first_name: 'Jose Pedro', last_name: 'Reyes' }]
 
@@ -31,4 +31,16 @@ test('assignment payload sends only the backend-supported fields', () => {
 test('department selection limits the accountable head choices', () => {
   const destinations = [{ department_id: 3, department_head_id: 9 }, { department_id: 4, department_head_id: 10 }]
   assert.deepEqual(headsForDepartment(destinations, '3'), [destinations[0]])
+})
+
+test('scanner department options deduplicate heads without accepting arbitrary departments', () => {
+  const destinations = [
+    { department_id: 3, department_code: 'LIBRARY', department_name: 'Library Department', department_head_id: 9 },
+    { department_id: 3, department_code: 'LIBRARY', department_name: 'Library Department', department_head_id: 10 },
+    { department_id: 4, department_code: 'OTHER', department_name: 'Other', department_head_id: 11 }
+  ]
+  assert.deepEqual(serviceDepartmentOptions(destinations), [
+    { id: 3, code: 'LIBRARY', name: 'Library Department' },
+    { id: 4, code: 'OTHER', name: 'Other' }
+  ])
 })

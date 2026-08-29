@@ -271,7 +271,7 @@ const createCommunityServiceAssignment = async (req, res) => {
 const getCommunityServiceAssignmentOptions = async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT d.id AS department_id, d.department_name,
+            `SELECT d.id AS department_id, d.department_code, d.department_name,
                     dh.id AS department_head_id, dh.first_name, dh.last_name
              FROM departments d
              JOIN department_heads dh ON dh.department_id = d.id
