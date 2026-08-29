@@ -374,12 +374,16 @@ created_at
 
 ```text
 id
-sender_id
-receiver_id
+conversation_id
+sender_user_id
 message
 is_read
 created_at
 ```
+
+Supporting conversation records identify the student participant, creation time,
+latest activity, and closed/open state. Student ownership and Department Head scope
+are derived by the backend; clients never grant access by submitting a student ID.
 
 ## parent_contact_logs
 
@@ -631,9 +635,20 @@ PUT /api/notifications/:id/read
 ## Messages
 
 ```text
-GET  /api/messages
-POST /api/messages
+GET   /api/messages/conversations
+POST  /api/messages/conversations
+GET   /api/messages/conversations/:id
+POST  /api/messages/conversations/:id/messages
+PATCH /api/messages/conversations/:id/read
 ```
+
+- Students may open conversations with the Discipline Office and access only their own conversations.
+- Admin and Discipline Office accounts may contact an individual student and reply to student conversations.
+- Department Heads may contact only students assigned to or served by their authenticated department.
+- Initial messaging is text-only with bounded message length; attachments and real-time WebSockets are deferred.
+- Messages are append-only and auditable, with no silent edit or delete endpoint.
+- Unread counts appear in the relevant role navigation.
+- Passwords, JWTs, Google credentials, and other authentication secrets must never be accepted or logged as message metadata.
 
 ## Clearance
 
@@ -1191,13 +1206,15 @@ Follow this exact order:
         ↓
 28. Reports
         ↓
-29. Audit Logs
+29. Secure Student Messaging
         ↓
-30. Security Testing
+30. Audit Logs
         ↓
-31. Full Testing
+31. Security Testing
         ↓
-32. Production Deployment
+32. Full Testing
+        ↓
+33. Production Deployment
 ```
 
 ---
@@ -1413,6 +1430,7 @@ The system is ready for deployment only when:
 - [ ] Parent contact works
 - [ ] Contact logs work
 - [ ] Notifications work
+- [ ] Secure student messaging and unread counts work
 - [ ] Clearance works
 - [ ] Good-standing status works
 - [ ] Enrollment verification works
