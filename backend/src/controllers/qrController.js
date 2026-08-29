@@ -8,6 +8,13 @@ const validateQrBody = (req) => {
         ? ["qr_code", "notes"]
         : ["qr_code", "notes", "department_id"];
     assertAllowedFields(req.body, allowed);
+    const qrCode = typeof req.body.qr_code === "string" ? req.body.qr_code.trim() : "";
+    const notes = req.body.notes == null ? "" : (typeof req.body.notes === "string" ? req.body.notes.trim() : null);
+    if (!qrCode || qrCode.length > 256 || notes === null || notes.length > 500) {
+        throw new CommunityServiceSessionError("A valid QR code and optional note are required", 400, "VALIDATION_ERROR");
+    }
+    req.body.qr_code = qrCode;
+    req.body.notes = notes;
 };
 
 const findStudentAndAssignment = async (qrCode, departmentId) => {
@@ -17,7 +24,7 @@ const findStudentAndAssignment = async (qrCode, departmentId) => {
     const assignmentResult = await pool.query(
         `SELECT a.* FROM community_service_assignments a JOIN violations v ON v.id = a.violation_id
          WHERE a.student_id = $1 AND a.status IN ('OPEN', 'IN_PROGRESS') AND v.status = 'OPEN'
-           AND (a.department_id IS NULL OR a.department_id = $2)
+           AND a.department_id = $2
          ORDER BY a.id DESC LIMIT 1`, [student.id, departmentId]);
     if (!assignmentResult.rows.length) throw new CommunityServiceSessionError("Student has no active community service assignment", 400);
     return { student, assignment: assignmentResult.rows[0] };

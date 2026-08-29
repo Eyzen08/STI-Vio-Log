@@ -170,15 +170,25 @@ const requireAuthorizedDepartment = async (req, res, next) => {
     }
 
     try {
-        const result = await pool.query(
-            "SELECT id FROM departments WHERE id = $1 AND is_active = TRUE",
-            [departmentId]
-        );
+        const result = req.user.role === "DEPARTMENT_HEAD"
+            ? await pool.query(
+                `SELECT d.id FROM department_heads dh
+                 JOIN departments d ON d.id = dh.department_id
+                 WHERE dh.user_id = $1 AND dh.department_id = $2
+                   AND dh.qr_scanner_enabled = TRUE AND d.is_active = TRUE`,
+                [req.user.id, departmentId]
+            )
+            : await pool.query(
+                "SELECT id FROM departments WHERE id = $1 AND is_active = TRUE",
+                [departmentId]
+            );
 
         if (result.rows.length === 0) {
-            return res.status(400).json({
+            return res.status(req.user.role === "DEPARTMENT_HEAD" ? 403 : 400).json({
                 success: false,
-                message: "A valid staff department is required"
+                message: req.user.role === "DEPARTMENT_HEAD"
+                    ? "QR scanner access is not enabled for this account"
+                    : "A valid staff department is required"
             });
         }
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
+import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
 import DepartmentCommunityService from './components/DepartmentCommunityService.jsx'
@@ -1115,6 +1116,12 @@ function App() {
     setQrResult(null)
 
     try {
+      const unavailable = cameraUnavailableMessage({
+        secureContext: window.isSecureContext,
+        hasMediaDevices: Boolean(navigator.mediaDevices?.getUserMedia)
+      })
+      if (unavailable) throw new Error(unavailable)
+
       if (qrScanner) {
         return
       }
@@ -1131,10 +1138,7 @@ function App() {
         {
           fps: 15,
 
-          qrbox: {
-            width: 280,
-            height: 280
-          },
+          qrbox: scannerQrBox,
 
           aspectRatio: 1.0
         },

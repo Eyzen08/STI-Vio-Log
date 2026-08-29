@@ -39,7 +39,7 @@ Staff student creation accepts the Student Number directly and never accepts a c
 
 ## Department Head QR attendance
 
-Department Heads may submit only `qr_code` and optional `notes` to `/api/qr/scan`, `/api/qr/time-in`, and `/api/qr/time-out`. Their actor and department are derived from the authenticated account. Client-supplied `scanned_by` or `department_id` fields are rejected. The frontend requires a successful `/api/qr/scan` confirmation for the current code before enabling attendance actions; the backend remains authoritative for active-session and concurrency rules.
+Department Heads may submit only a bounded opaque `qr_code` and optional bounded `notes` to `/api/qr/scan`, `/api/qr/time-in`, and `/api/qr/time-out`. Their actor and department are derived from the authenticated account, and every request rechecks the current department assignment, active department state, and `qr_scanner_enabled` permission. Client-supplied `scanned_by` or `department_id` fields are rejected. QR attendance requires an active assignment explicitly assigned to that department; legacy unassigned work cannot be claimed through scanning. The frontend requires a successful `/api/qr/scan` confirmation for the current code before enabling attendance actions; the backend remains authoritative for active-session and concurrency rules.
 
 ## Department Head DTR
 
