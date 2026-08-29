@@ -44,6 +44,16 @@ After deployment:
 7. Verify mobile QR scanning over HTTPS on a real device.
 8. Confirm provider backups and monitoring alerts are enabled.
 
+The read-only automated subset can be repeated from `backend` after each deployment:
+
+```powershell
+$env:PRODUCTION_FRONTEND_URL = "https://your-frontend.example"
+$env:PRODUCTION_API_URL = "https://your-api.example"
+npm run smoke:production
+```
+
+This checks API/database health, direct frontend routing, unauthenticated protection, and approved/denied CORS behavior. It performs only `GET` and `OPTIONS` requests. Google sign-in, authenticated role workflows, provider backups, and physical mobile-camera behavior remain manual release checks.
+
 ## Rollback
 
 Keep the previous backend/frontend release available. If application code fails but the migration is backward compatible, redeploy the prior release. Never reverse or edit an applied migration manually. If data recovery is required, follow `DATABASE-BACKUP-RECOVERY.md` and restore into a separate database before switching connections.

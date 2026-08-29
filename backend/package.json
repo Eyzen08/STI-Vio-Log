@@ -13,7 +13,8 @@
     "migrate:status": "node scripts/migrate.js status",
     "backup": "node scripts/backup.js",
     "backup:verify": "node scripts/backup.js verify",
-    "production:check": "node scripts/production-check.js"
+    "production:check": "node scripts/production-check.js",
+    "smoke:production": "node scripts/smoke-production.js"
   },
   "keywords": [],
   "author": "",
