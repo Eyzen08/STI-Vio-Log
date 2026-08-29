@@ -2,6 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
   buildGoogleLinkPayload,
+  googleButtonConfiguration,
+  googleIdentityConfiguration,
   isGoogleClientConfigured,
   isPendingGoogleRegistration,
   readGoogleCredential
@@ -25,6 +27,19 @@ test('Google credential responses are bounded and normalized', () => {
   assert.equal(readGoogleCredential({ credential: '  header.payload.signature  ' }), 'header.payload.signature')
   assert.equal(readGoogleCredential({}), '')
   assert.equal(readGoogleCredential({ credential: 'x'.repeat(16_385) }), '')
+})
+
+test('Google button uses mobile-safe FedCM and recovery callbacks', () => {
+  const callback = () => {}
+  const onClick = () => {}
+  assert.deepEqual(googleIdentityConfiguration({ clientId: ' client.apps.googleusercontent.com ', callback }), {
+    client_id: 'client.apps.googleusercontent.com', callback, auto_select: false,
+    cancel_on_tap_outside: false, itp_support: true, use_fedcm_for_button: true
+  })
+  assert.deepEqual(googleButtonConfiguration({ width: 320.9, onClick }), {
+    type: 'standard', theme: 'outline', size: 'large', text: 'continue_with',
+    shape: 'rectangular', width: 320, click_listener: onClick
+  })
 })
 
 test('link payload contains only the school identity contract fields', () => {

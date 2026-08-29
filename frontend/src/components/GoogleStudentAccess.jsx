@@ -3,6 +3,8 @@ import { googleLink, googleLogin } from '../lib/api.js'
 import {
   isGoogleClientConfigured,
   isPendingGoogleRegistration,
+  googleButtonConfiguration,
+  googleIdentityConfiguration,
   loadGoogleIdentityServices,
   readGoogleCredential
 } from '../lib/googleIdentity.js'
@@ -15,6 +17,7 @@ const emptyLinkForm = {
 function GoogleStudentAccess({ clientId, onSession }) {
   const buttonRef = useRef(null)
   const credentialHandlerRef = useRef(null)
+  const attemptTimerRef = useRef(null)
   const [credential, setCredential] = useState('')
   const [linkForm, setLinkForm] = useState(emptyLinkForm)
   const [isLinking, setIsLinking] = useState(false)
@@ -22,7 +25,23 @@ function GoogleStudentAccess({ clientId, onSession }) {
   const [error, setError] = useState('')
   const [pendingRegistration, setPendingRegistration] = useState(false)
 
+  const clearAttemptTimer = () => {
+    if (attemptTimerRef.current) window.clearTimeout(attemptTimerRef.current)
+    attemptTimerRef.current = null
+  }
+
+  const beginGoogleAttempt = () => {
+    clearAttemptTimer()
+    setIsBusy(true)
+    setError('')
+    attemptTimerRef.current = window.setTimeout(() => {
+      setIsBusy(false)
+      setError('Google sign-in did not return to Vio-Log. Return to this page and retry in Chrome or Safari, not an in-app browser.')
+    }, 30000)
+  }
+
   credentialHandlerRef.current = async (response) => {
+    clearAttemptTimer()
     const nextCredential = readGoogleCredential(response)
 
     if (!nextCredential) {
@@ -60,18 +79,14 @@ function GoogleStudentAccess({ clientId, onSession }) {
         if (!active || !buttonNode) return
 
         buttonNode.replaceChildren()
-        googleIdentity.initialize({
-          client_id: clientId.trim(),
+        googleIdentity.initialize(googleIdentityConfiguration({
+          clientId,
           callback: (response) => credentialHandlerRef.current?.(response)
-        })
-        googleIdentity.renderButton(buttonNode, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'continue_with',
-          shape: 'rectangular',
-          width: buttonNode.clientWidth
-        })
+        }))
+        googleIdentity.renderButton(buttonNode, googleButtonConfiguration({
+          width: buttonNode.clientWidth,
+          onClick: beginGoogleAttempt
+        }))
       })
       .catch((loadError) => {
         if (active) setError(loadError.message)
@@ -79,11 +94,13 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
     return () => {
       active = false
+      clearAttemptTimer()
       if (buttonNode) buttonNode.replaceChildren()
     }
   }, [clientId, isLinking])
 
   useEffect(() => () => {
+    clearAttemptTimer()
     credentialHandlerRef.current = null
   }, [])
 
@@ -135,6 +152,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
           <h4 id="google-access-title">Continue with your school Google account</h4>
           <div ref={buttonRef} className="google-button" aria-busy={isBusy} />
           {isBusy && <p className="auth-status" role="status">Checking your account…</p>}
+          <p className="auth-mobile-help">On a phone, use Chrome or Safari. If the Google window stays blank, return here and retry outside Messenger or another in-app browser.</p>
         </>
       ) : (
         <form className="google-link-form" onSubmit={submitLink}>

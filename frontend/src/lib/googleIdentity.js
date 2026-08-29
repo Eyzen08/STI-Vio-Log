@@ -24,6 +24,25 @@ export const readGoogleCredential = (response) => {
     : ''
 }
 
+export const googleIdentityConfiguration = ({ clientId, callback }) => ({
+  client_id: String(clientId || '').trim(),
+  callback,
+  auto_select: false,
+  cancel_on_tap_outside: false,
+  itp_support: true,
+  use_fedcm_for_button: true
+})
+
+export const googleButtonConfiguration = ({ width, onClick }) => ({
+  type: 'standard',
+  theme: 'outline',
+  size: 'large',
+  text: 'continue_with',
+  shape: 'rectangular',
+  width: Math.max(200, Math.floor(Number(width) || 0)),
+  click_listener: onClick
+})
+
 export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber }) => ({
   credential,
   student_number: studentNumber.trim(),
