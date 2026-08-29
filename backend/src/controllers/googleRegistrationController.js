@@ -21,12 +21,19 @@ const createGoogleRegistrationController = ({ service = createGoogleRegistration
 
   const decide = (decision) => async (req, res) => {
     try {
-      assertAllowedFields(req.body, ['reason']);
+      const allowed = decision === 'APPROVED'
+        ? ['reason', 'academic_year', 'semester', 'verification_method', 'verification_reference']
+        : ['reason'];
+      assertAllowedFields(req.body, allowed);
       const registration = await service.review({
         registrationId: req.params.id,
         reviewerId: req.user.id,
         decision,
-        reason: req.body?.reason
+        reason: req.body?.reason,
+        academicYear: req.body?.academic_year,
+        semester: req.body?.semester,
+        verificationMethod: req.body?.verification_method,
+        verificationReference: req.body?.verification_reference
       });
       return res.json({ success: true, message: `Registration ${decision.toLowerCase()}`, registration });
     } catch (error) { return fail(res, error); }

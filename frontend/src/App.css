@@ -382,6 +382,9 @@
   padding: 11px;
   resize: vertical;
 }
+.enrollment-verification-fields { border: 1px solid #dce5ef; border-radius: 14px; display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 18px 0; padding: 18px; }
+.enrollment-verification-fields legend { color: #13263f; font-weight: 750; padding: 0 8px; }
+.enrollment-verification-fields input, .enrollment-verification-fields select { margin-top: 7px; width: 100%; }
 
 .registration-review-actions {
   display: flex;
@@ -405,6 +408,7 @@
 
 @media (max-width: 620px) {
   .registration-review-list dl { grid-template-columns: 1fr; }
+  .enrollment-verification-fields { grid-template-columns: 1fr; }
   .registration-review-actions { align-items: stretch; flex-direction: column; }
 }
 

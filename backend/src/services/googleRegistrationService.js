@@ -22,6 +22,10 @@ const publicRegistration = (row) => ({
   status: row.status,
   review_reason: row.review_reason || null,
   reviewed_at: row.reviewed_at || null,
+  enrollment_academic_year: row.enrollment_academic_year || null,
+  enrollment_semester: row.enrollment_semester || null,
+  verification_method: row.verification_method || null,
+  verification_reference: row.verification_reference || null,
   created_at: row.created_at
 });
 
@@ -37,7 +41,8 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     const result = await pool.query(
       `SELECT id, student_number, first_name, last_name, google_email, phone_number,
               program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status,
-              review_reason, reviewed_at, created_at
+              review_reason, reviewed_at, enrollment_academic_year, enrollment_semester,
+              verification_method, verification_reference, created_at
        FROM google_student_registrations
        WHERE status = $1
        ORDER BY created_at ASC, id ASC
@@ -47,12 +52,24 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     return result.rows.map(publicRegistration);
   };
 
-  const review = async ({ registrationId, reviewerId, decision, reason }) => {
+  const review = async ({ registrationId, reviewerId, decision, reason, academicYear, semester, verificationMethod, verificationReference }) => {
     if (!isPositiveId(registrationId) || !isPositiveId(reviewerId)) throw new ApiError(400, 'VALIDATION_ERROR', REVIEW_FAILURE);
     const normalizedDecision = String(decision).trim().toUpperCase();
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
     if (!['APPROVED', 'REJECTED'].includes(normalizedDecision) || !normalizedReason || normalizedReason.length > 1000) {
       throw new ApiError(400, 'VALIDATION_ERROR', 'A review decision and reason are required');
+    }
+    const verification = {
+      academicYear: typeof academicYear === 'string' ? academicYear.trim() : '',
+      semester: typeof semester === 'string' ? semester.trim() : '',
+      method: String(verificationMethod || '').trim().toUpperCase(),
+      reference: typeof verificationReference === 'string' ? verificationReference.trim() : ''
+    };
+    if (normalizedDecision === 'APPROVED' && (!verification.academicYear || verification.academicYear.length > 20
+      || !verification.semester || verification.semester.length > 50
+      || !['REGISTRAR_RECORD', 'SIS', 'ENROLLMENT_LIST', 'OTHER'].includes(verification.method)
+      || !verification.reference || verification.reference.length > 200)) {
+      throw new ApiError(400, 'VALIDATION_ERROR', 'Academic period, verification method, and official reference are required for approval');
     }
 
     const client = await pool.connect();
@@ -127,9 +144,12 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
       const reviewed = (await client.query(
         `UPDATE google_student_registrations
          SET status = 'APPROVED', review_reason = $2, reviewed_by = $3,
+             enrollment_academic_year = $4, enrollment_semester = $5,
+             verification_method = $6, verification_reference = $7,
              reviewed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
          WHERE id = $1 RETURNING *`,
-        [registration.id, normalizedReason, Number(reviewerId)]
+        [registration.id, normalizedReason, Number(reviewerId), verification.academicYear,
+          verification.semester, verification.method, verification.reference]
       )).rows[0];
       await client.query(
         `INSERT INTO audit_logs (user_id, action, table_name, record_id, description)

@@ -30,7 +30,7 @@ test('approval atomically creates an active student, opaque QR, link, and audit'
     return { rows: [] };
   });
   const service = createGoogleRegistrationService({ pool: db.pool, hashPassword: async () => 'secure-hash', randomBytes: () => Buffer.from(`opaque-${++randomCall}`) });
-  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Enrollment verified' });
+  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Enrollment verified', academicYear: '2026-2027', semester: 'First Semester', verificationMethod: 'SIS', verificationReference: 'SIS-42' });
   assert.equal(result.status, 'APPROVED');
   assert.ok(db.calls.some((call) => call.sql.includes("'STUDENT'")));
   assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO students')));
@@ -58,5 +58,6 @@ test('review requires a reason and a pending registration', async () => {
   const db = fakePool(() => ({ rows: [] }));
   const service = createGoogleRegistrationService({ pool: db.pool });
   await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: '' }), (error) => error.code === 'VALIDATION_ERROR');
-  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked' }), (error) => error.code === 'REGISTRATION_NOT_PENDING');
+  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked' }), (error) => error.code === 'VALIDATION_ERROR');
+  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked', academicYear: '2026-2027', semester: 'First Semester', verificationMethod: 'SIS', verificationReference: 'SIS-42' }), (error) => error.code === 'REGISTRATION_NOT_PENDING');
 });

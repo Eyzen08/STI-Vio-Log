@@ -6,6 +6,7 @@ function GoogleRegistrationReview({ token, onPendingCountChange }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reasonById, setReasonById] = useState({})
+  const [verificationById, setVerificationById] = useState({})
   const [busyId, setBusyId] = useState(null)
 
   const load = useCallback(async () => {
@@ -34,18 +35,24 @@ function GoogleRegistrationReview({ token, onPendingCountChange }) {
       setError('Enter a review reason before approving or rejecting a request.')
       return
     }
+    const verification = verificationById[registration.id] || {}
+    if (decision === 'approve' && (!verification.academic_year || !verification.semester || !verification.verification_method || !verification.verification_reference)) {
+      setError('Complete the academic period, verification method, and official reference before approval.')
+      return
+    }
     setBusyId(registration.id)
     setError('')
     try {
       const response = await fetch(`${API_URL}/api/google-registrations/${registration.id}/${decision}`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify(decision === 'approve' ? { reason, ...verification } : { reason })
       })
       const data = await response.json().catch(() => null)
       if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to review this registration.')
       setRegistrations((current) => current.filter((item) => item.id !== registration.id))
       setReasonById((current) => { const next = { ...current }; delete next[registration.id]; return next })
+      setVerificationById((current) => { const next = { ...current }; delete next[registration.id]; return next })
     } catch (reviewError) {
       setError(reviewError.message)
     } finally {
@@ -81,6 +88,13 @@ function GoogleRegistrationReview({ token, onPendingCountChange }) {
                 <div><dt>Parent/Guardian phone</dt><dd>{registration.guardian_phone_number}</dd></div>
                 <div><dt>Submitted</dt><dd>{new Date(registration.created_at).toLocaleString()}</dd></div>
               </dl>
+              <fieldset className="enrollment-verification-fields" disabled={busyId === registration.id}>
+                <legend>Official enrollment verification</legend>
+                <label>Academic year<input value={verificationById[registration.id]?.academic_year || ''} placeholder="2026-2027" maxLength="20" onChange={(event) => setVerificationById({ ...verificationById, [registration.id]: { ...verificationById[registration.id], academic_year: event.target.value } })} /></label>
+                <label>Semester<select value={verificationById[registration.id]?.semester || ''} onChange={(event) => setVerificationById({ ...verificationById, [registration.id]: { ...verificationById[registration.id], semester: event.target.value } })}><option value="">Select semester</option><option>First Semester</option><option>Second Semester</option><option>Summer</option></select></label>
+                <label>Verification method<select value={verificationById[registration.id]?.verification_method || ''} onChange={(event) => setVerificationById({ ...verificationById, [registration.id]: { ...verificationById[registration.id], verification_method: event.target.value } })}><option value="">Select source</option><option value="REGISTRAR_RECORD">Registrar record</option><option value="SIS">Student information system</option><option value="ENROLLMENT_LIST">Official enrollment list</option><option value="OTHER">Other official source</option></select></label>
+                <label>Official reference<input value={verificationById[registration.id]?.verification_reference || ''} placeholder="Record, receipt, or enrollment reference" maxLength="200" onChange={(event) => setVerificationById({ ...verificationById, [registration.id]: { ...verificationById[registration.id], verification_reference: event.target.value } })} /></label>
+              </fieldset>
               <label htmlFor={`review-reason-${registration.id}`}>Review reason
                 <textarea id={`review-reason-${registration.id}`} value={reasonById[registration.id] || ''}
                   onChange={(event) => setReasonById({ ...reasonById, [registration.id]: event.target.value })}
