@@ -14,6 +14,7 @@ import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
 import StudentClearance from './components/StudentClearance.jsx'
 import StudentNotifications from './components/StudentNotifications.jsx'
+import MessagesPage from './components/MessagesPage.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
@@ -1768,6 +1769,10 @@ function App() {
           onNavigate={navigateTo}
         />
       )
+    }
+
+    if (activeView === 'Messages') {
+      return <MessagesPage token={token} role={userRole} students={students} />
     }
 
     if (user?.password_change_required) {

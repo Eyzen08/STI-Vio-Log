@@ -55,6 +55,10 @@ Department operational CSV exports are generated only from the currently loaded,
 
 Administrative reports include violations, community service, DTR, non-compliance, parent-contact activity, clearance, and current good-standing students. Parent-contact exports identify the guardian and operational outcome but omit guardian phone numbers. Good standing is calculated live: students with no historical violations are `GOOD_STANDING`, while students with resolved history and no active violation or pending service are `CLEARED`. CSV generation quotes every cell and prefixes spreadsheet formula characters to prevent formula injection.
 
+## Secure messaging
+
+`/api/messages/conversations` provides text-only, append-only conversations. Students never submit an ownership identifier and can access only conversations attached to their authenticated student record. Admin and Discipline Office users may communicate with individual students. Department Heads may access only students with service attendance in their authenticated department. Conversation detail, reply, and read-state endpoints repeat the same backend scope check; inaccessible conversations return 404. Messages are bounded to 2000 characters and have no update or delete endpoint.
+
 ## Parent and guardian contact
 
 `GET /api/parent-contact/{studentId}` and `POST /api/parent-contact/{studentId}` require Admin, Discipline Office, or Department Head access. Admin and Discipline Office may review enrolled students. Department Heads can access only students with recorded community-service attendance in their authenticated department; out-of-scope students receive the same 404 response as missing students. Clients cannot select an actor or department.

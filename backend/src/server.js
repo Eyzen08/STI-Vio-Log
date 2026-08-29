@@ -24,6 +24,7 @@ const departmentAdministrationRoutes = require('./routes/departmentAdministratio
 const googleLinkAdministrationRoutes = require('./routes/googleLinkAdministrationRoutes');
 const duplicateAccountReviewRoutes = require('./routes/duplicateAccountReviewRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
+const messageRoutes = require('./routes/messageRoutes');
 const pool = require("./config/database");
 const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
@@ -149,6 +150,7 @@ app.use(
 );
 
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), messageRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 

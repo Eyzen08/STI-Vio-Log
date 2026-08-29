@@ -18,6 +18,7 @@ export const APP_ROUTES = [
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
   { path: '/admin/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.administration },
   { path: '/admin/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.administration },
+  { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
   { path: '/department/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.department },
   { path: '/department/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.department },
@@ -25,12 +26,14 @@ export const APP_ROUTES = [
   { path: '/department/community-service', label: 'Service', view: 'Community Service', roles: ROLE_GROUPS.department },
   { path: '/department/non-compliance', label: 'Non-Compliance', view: 'Non-Compliance', roles: ROLE_GROUPS.department },
   { path: '/department/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.department },
+  { path: '/department/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },
   { path: '/student/violations', label: 'My Violations', view: 'My Violations', roles: ROLE_GROUPS.student },
   { path: '/student/community-service', label: 'My Service', view: 'My Service', roles: ROLE_GROUPS.student },
   { path: '/student/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.student },
+  { path: '/student/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.student },
   { path: '/student/clearance', label: 'My Clearance', view: 'My Clearance', roles: ROLE_GROUPS.student }
 ]
 

@@ -2134,6 +2134,25 @@ th {
   min-width: 200px;
 }
 
+.messages-page { display: grid; gap: 20px; }
+.message-compose { display: grid; gap: 14px; }
+.message-compose label { display: grid; gap: 7px; }
+.message-compose textarea { min-height: 110px; }
+.message-layout { display: grid; gap: 20px; grid-template-columns: minmax(250px, .8fr) minmax(0, 2fr); }
+.message-conversations { align-content: start; display: grid; gap: 8px; }
+.message-conversations > button { background: #f6f9fc; border: 1px solid #dce5ef; color: #13263f; display: grid; gap: 5px; padding: 13px; position: relative; text-align: left; }
+.message-conversations > button.active { border-color: #2f80ed; background: #edf6ff; }
+.message-conversations span { color: #60708a; font-size: .78rem; }
+.message-conversations b { background: #d82d20; border-radius: 999px; color: white; padding: 2px 7px; position: absolute; right: 8px; top: 8px; }
+.message-thread > div { display: grid; gap: 10px; margin: 18px 0; max-height: 520px; overflow-y: auto; }
+.message-thread article { background: #f2f5f8; border-radius: 14px; max-width: 80%; padding: 13px 15px; }
+.message-thread article.mine { background: #e2f1ff; justify-self: end; }
+.message-thread article p { margin: 7px 0; white-space: pre-wrap; }
+.message-thread article time { color: #60708a; font-size: .72rem; }
+.message-thread form { display: flex; gap: 10px; }
+.message-thread textarea { flex: 1; min-height: 75px; }
+@media (max-width: 760px) { .message-layout { grid-template-columns: 1fr; } .message-thread form { flex-direction: column; } }
+
 /* =========================================
    RESPONSIVE DESIGN
    ========================================= */
