@@ -6,6 +6,7 @@ const {
   getNonComplianceReport
 } = require('../controllers/reportController');
 const { getDTRReport } = require('../controllers/communityServiceSessionReportController');
+const { getParentContactReport, getClearanceReport, getGoodStandingReport } = require('../controllers/extendedReportController');
 
 const router = express.Router();
 
@@ -14,5 +15,8 @@ router.get('/violations', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE
 router.get('/community-service', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getCommunityServiceReport);
 router.get('/dtr', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD'), getDTRReport);
 router.get('/non-compliance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD'), getNonComplianceReport);
+router.get('/parent-contacts', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getParentContactReport);
+router.get('/clearance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getClearanceReport);
+router.get('/good-standing', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getGoodStandingReport);
 
 module.exports = router;

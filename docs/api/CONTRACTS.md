@@ -53,6 +53,8 @@ Department Head non-compliance reports accept only the `sort_by` values `date`, 
 
 Department operational CSV exports are generated only from the currently loaded, backend-scoped DTR or non-compliance response. They intentionally exclude guardian details and global directory fields, consistent with Department Head RBAC.
 
+Administrative reports include violations, community service, DTR, non-compliance, parent-contact activity, clearance, and current good-standing students. Parent-contact exports identify the guardian and operational outcome but omit guardian phone numbers. Good standing is calculated live: students with no historical violations are `GOOD_STANDING`, while students with resolved history and no active violation or pending service are `CLEARED`. CSV generation quotes every cell and prefixes spreadsheet formula characters to prevent formula injection.
+
 ## Parent and guardian contact
 
 `GET /api/parent-contact/{studentId}` and `POST /api/parent-contact/{studentId}` require Admin, Discipline Office, or Department Head access. Admin and Discipline Office may review enrolled students. Department Heads can access only students with recorded community-service attendance in their authenticated department; out-of-scope students receive the same 404 response as missing students. Clients cannot select an actor or department.

@@ -33,6 +33,7 @@ import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
+import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -207,6 +208,7 @@ function App() {
   const [reportType, setReportType] = useState('violations')
   const [reportData, setReportData] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
+  const [reportError, setReportError] = useState('')
 
   const [reportFilters, setReportFilters] = useState({
     status: '',
@@ -1611,12 +1613,13 @@ function App() {
 
   const fetchReport = async () => {
     setReportLoading(true)
+    setReportError('')
 
     try {
       const params =
         new URLSearchParams()
 
-      if (reportFilters.status) {
+      if (reportFilters.status && ['violations', 'community-service', 'clearance'].includes(reportType)) {
         params.append(
           'status',
           reportFilters.status
@@ -1630,21 +1633,21 @@ function App() {
         )
       }
 
-      if (reportFilters.from_date) {
+      if (reportFilters.from_date && ['violations', 'parent-contacts'].includes(reportType)) {
         params.append(
           'from_date',
           reportFilters.from_date
         )
       }
 
-      if (reportFilters.to_date) {
+      if (reportFilters.to_date && ['violations', 'parent-contacts'].includes(reportType)) {
         params.append(
           'to_date',
           reportFilters.to_date
         )
       }
 
-      if (reportFilters.sort_by) {
+      if (reportFilters.sort_by && reportType !== 'dtr' && reportType !== 'non-compliance') {
         params.append(
           'sort_by',
           reportFilters.sort_by
@@ -1674,6 +1677,7 @@ function App() {
         )
       } else {
         setReportData([])
+        setReportError(data.message || 'Unable to generate this report.')
       }
     } catch (error) {
       console.error(
@@ -1682,6 +1686,7 @@ function App() {
       )
 
       setReportData([])
+      setReportError(error.message || 'Unable to generate this report.')
     } finally {
       setReportLoading(false)
     }
@@ -1706,38 +1711,7 @@ function App() {
       return
     }
 
-    const headers =
-      Object.keys(
-        reportData[0]
-      )
-
-    const csvContent = [
-      headers.join(','),
-
-      ...reportData.map(
-        (row) =>
-          headers
-            .map((header) => {
-              const value =
-                row[header]
-
-              if (
-                typeof value === 'string'
-              ) {
-                const escaped =
-                  value.replace(
-                    /"/g,
-                    '""'
-                  )
-
-                return `"${escaped}"`
-              }
-
-              return value ?? ''
-            })
-            .join(',')
-      )
-    ].join('\n')
+    const csvContent = createDepartmentReportCsv(reportData)
 
     const blob =
       new Blob(
@@ -1825,6 +1799,9 @@ function App() {
           />
         )
       }
+
+      if (reportType === 'dtr' && reportFilters.from_date) params.append('from', reportFilters.from_date)
+      if (reportType === 'dtr' && reportFilters.to_date) params.append('to', reportFilters.to_date)
 
       if (activeView === 'My QR') {
         return (
@@ -3562,6 +3539,8 @@ function App() {
               </span>
             </div>
 
+            {reportError && <p className="error-message" role="alert">{reportError}</p>}
+
             <div
               className="student-form-grid"
               style={{
@@ -3579,6 +3558,7 @@ function App() {
                     )
 
                     setReportData([])
+                    setReportFilters((current) => ({ ...current, status: '', from_date: '', to_date: '', sort_by: event.target.value === 'good-standing' ? 'student_number' : 'date_desc' }))
                   }}
                 >
                   <option value="violations">
@@ -3596,6 +3576,9 @@ function App() {
                   <option value="non-compliance">
                     Non-Compliance Report
                   </option>
+                  <option value="parent-contacts">Parent Contact Report</option>
+                  <option value="clearance">Clearance Report</option>
+                  <option value="good-standing">Good-Standing Report</option>
                 </select>
               </label>
 
@@ -3672,6 +3655,8 @@ function App() {
                   <option value="status">
                     Status
                   </option>
+                  <option value="student_number">Student Number</option>
+                  <option value="name">Student Name</option>
                 </select>
               </label>
 
