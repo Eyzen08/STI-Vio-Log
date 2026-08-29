@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { transitionViolationWithClient } = require("./violationWorkflowService");
+const { notifyStudent } = require('./notificationService');
 
 class CommunityServiceSessionError extends Error {
     constructor(message, statusCode, code) {
@@ -83,6 +84,12 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, act
             )).rows[0];
         }
         await insertAudit({ client, actor, action: "TIME_IN", sessionId: session.id, assignmentId, description: { department_id: Number(departmentId) }, ipAddress });
+        await notifyStudent(client, assignment.student_id, {
+            title: 'Community service time-in recorded',
+            message: `Time-in was recorded for assignment #${assignment.id}.`,
+            type: 'SERVICE_TIME_IN',
+            eventKey: `service-session:${session.id}:time-in`
+        });
         await client.query("COMMIT");
         return { assignment, attendance, session, scanLog };
     } catch (error) {
@@ -165,6 +172,12 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
             )).rows[0];
         }
         await insertAudit({ client, actor, action: "TIME_OUT", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), credited_minutes: creditedMinutes }, ipAddress });
+        await notifyStudent(client, assignment.student_id, {
+            title: status === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
+            message: `${creditedMinutes} credited minute${creditedMinutes === 1 ? '' : 's'} recorded. ${Math.round(remainingHours * 60)} minute${Math.round(remainingHours * 60) === 1 ? '' : 's'} remaining.`,
+            type: status === 'COMPLETED' ? 'SERVICE_COMPLETED' : 'SERVICE_TIME_OUT',
+            eventKey: `service-session:${session.id}:time-out`
+        });
         await client.query("COMMIT");
         return { assignment: updatedAssignment, violation: updatedViolation, clearanceSync, attendance, session: completedSession, scanLog };
     } catch (error) {

@@ -13,7 +13,7 @@ const {
 const { getMyCommunityServiceAssignment } = require("../controllers/communityServiceController");
 const { getMyClearanceRecords } = require("../controllers/clearanceController");
 const { getMyDTR } = require("../controllers/communityServiceSessionReportController");
-const { getMyNotifications } = require("../controllers/notificationController");
+const { getMyNotifications, markMyNotificationRead } = require("../controllers/notificationController");
 const { authorizeRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -35,6 +35,7 @@ router.get("/me/community-service", authorizeRoles("STUDENT"), getMyCommunitySer
 router.get("/me/community-service/dtr", authorizeRoles("STUDENT"), getMyDTR);
 router.get("/me/clearance", authorizeRoles("STUDENT"), getMyClearanceRecords);
 router.get("/me/notifications", authorizeRoles("STUDENT"), getMyNotifications);
+router.patch("/me/notifications/:id/read", authorizeRoles("STUDENT"), markMyNotificationRead);
 
 
 // =====================================================

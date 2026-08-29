@@ -27,6 +27,7 @@
 .notification-heading span { background: #e7f0f7; border-radius: 999px; color: #245878; font-size: .7rem; font-weight: 750; padding: 5px 8px; }
 .notification-list p { color: #4d6077; line-height: 1.55; margin: 8px 0; }
 .notification-list time { color: #7a899c; font-size: .78rem; }
+.notification-list .secondary-button { display: block; margin-top: 12px; padding: 8px 12px; width: fit-content; }
 .report-selector { background: #e8eef5; border-radius: 12px; display: flex; gap: 5px; padding: 5px; width: fit-content; }
 .report-selector button { background: transparent; color: #43566d; }
 .report-selector button.active { background: white; box-shadow: 0 2px 8px #17334f1c; color: #07547a; }

@@ -78,7 +78,26 @@ function App() {
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
   const [studentNotifications, setStudentNotifications] = useState([])
+  const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
+
+  const markNotificationRead = async (notificationId) => {
+    setNotificationActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/students/me/notifications/${notificationId}/read`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to mark this notification as read.')
+      setStudentNotifications((items) => items.map((item) => Number(item.id) === Number(notificationId)
+        ? { ...item, is_read: true, read_at: data.notification?.read_at || new Date().toISOString() }
+        : item))
+    } catch (error) {
+      setNotificationActionError(error.message)
+    }
+  }
 
   const [studentForm, setStudentForm] = useState({
     student_number: '',
@@ -1853,7 +1872,7 @@ function App() {
       }
 
       if (activeView === 'Notifications') {
-        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={dashboardError} />
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} />
       }
 
       if (activeView === 'Legacy Clearance') {

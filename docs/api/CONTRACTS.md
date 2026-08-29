@@ -65,7 +65,9 @@ Contact recording is append-only and accepts only a guardian ID belonging to the
 
 ## Student notifications
 
-`GET /api/students/me/notifications` derives ownership exclusively from the authenticated user ID. It accepts only `page` and `limit`, returns newest notifications first, and never accepts a student or user ownership override. This milestone is read-only; notification read-state mutation is deferred.
+`GET /api/students/me/notifications` derives ownership exclusively from the authenticated user ID. It accepts only `page` and `limit`, returns newest notifications first, and never accepts a student or user ownership override. `PATCH /api/students/me/notifications/{id}/read` accepts an empty body and can update only a notification owned by that authenticated student; out-of-scope IDs are treated as not found.
+
+Violation creation, service assignment, DTR time-in, DTR time-out, and service completion create transactional student notifications. Each event uses a server-generated idempotency key, so retrying the surrounding operation cannot create a duplicate notification. A notification is committed or rolled back with its underlying domain event, and marking it read never changes the violation, assignment, DTR, or clearance record.
 
 ## Google student authentication
 

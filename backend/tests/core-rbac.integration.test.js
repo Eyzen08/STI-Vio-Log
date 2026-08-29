@@ -47,6 +47,10 @@ function mockResult(sql, params = []) {
     return { rows: [{ id: 120, title: 'Service update', message: 'Attendance recorded', notification_type: 'SERVICE', is_read: false, created_at: new Date() }] };
   }
 
+  if (text.startsWith('UPDATE notifications SET is_read = TRUE')) {
+    return { rows: Number(params[0]) === 120 && Number(params[1]) === 4 ? [{ id: 120, is_read: true, read_at: new Date() }] : [] };
+  }
+
   if (text.includes('FROM violations v') && text.includes('WHERE v.student_id = $1')) {
     return { rows: [{ id: 70, student_id: 40, status: 'OPEN', required_service_hours: 2, completed_service_hours: 0, remaining_service_hours: 2 }] };
   }
@@ -228,6 +232,10 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal(notifications.status, 200);
   assert.equal(notifications.body.notifications.length, 1);
   assert.equal((await request(baseUrl, '/api/students/me/notifications?student_id=41', { token: student })).status, 400);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications/120/read', { token: student, method: 'PATCH', body: {} })).status, 200);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications/999/read', { token: student, method: 'PATCH', body: {} })).status, 404);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications/nope/read', { token: student, method: 'PATCH', body: {} })).status, 400);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications/120/read', { token: student, method: 'PATCH', body: { user_id: 1 } })).status, 400);
   const selfClearance = await request(baseUrl, '/api/students/me/clearance', { token: student });
   assert.equal(selfClearance.status, 200);
   assert.ok(selfClearance.body.clearanceRecords.every((record) => !Object.hasOwn(record, 'cleared_by')));

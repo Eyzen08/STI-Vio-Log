@@ -1,5 +1,6 @@
 const pool = require("../config/database");
 const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils/validators");
+const { insertNotification, notifyStudent } = require('../services/notificationService');
 
 // =====================================================
 // GET ALL COMMUNITY SERVICE ASSIGNMENTS
@@ -169,7 +170,7 @@ const createCommunityServiceAssignment = async (req, res) => {
         await client.query("BEGIN");
 
         const destination = (await client.query(
-            `SELECT dh.id
+            `SELECT dh.id, dh.user_id, d.department_name, dh.first_name, dh.last_name
              FROM department_heads dh
              JOIN users u ON u.id = dh.user_id AND u.role = 'DEPARTMENT_HEAD' AND u.is_active = TRUE
              JOIN departments d ON d.id = dh.department_id AND d.is_active = TRUE
@@ -243,11 +244,26 @@ const createCommunityServiceAssignment = async (req, res) => {
             [required, violation_id]
         );
 
+        const assignment = result.rows[0];
+        await notifyStudent(client, student_id, {
+            title: 'Community service assigned',
+            message: `${required} required hour${required === 1 ? '' : 's'} assigned at ${destination.department_name} under ${destination.first_name} ${destination.last_name}.`,
+            type: 'SERVICE_ASSIGNED',
+            eventKey: `service:${assignment.id}:assigned:student`
+        });
+        await insertNotification(client, {
+            userId: destination.user_id,
+            title: 'New student service assignment',
+            message: `A student community-service assignment was routed to ${destination.department_name}.`,
+            type: 'SERVICE_ASSIGNED',
+            eventKey: `service:${assignment.id}:assigned:head`
+        });
+
         await client.query("COMMIT");
 
         return res.status(201).json({
             success: true,
-            assignment: result.rows[0]
+            assignment
         });
 
     } catch (error) {

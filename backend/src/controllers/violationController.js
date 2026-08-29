@@ -1,4 +1,5 @@
 const pool = require("../config/database");
+const { notifyStudent } = require('../services/notificationService');
 const {
     syncClearanceStatusForStudent
 } = require("./clearanceController");
@@ -226,6 +227,13 @@ const createViolation = async (req, res) => {
             violation.student_id,
             client
         );
+
+        await notifyStudent(client, violation.student_id, {
+            title: 'New violation recorded',
+            message: `Violation #${violation.id} was added to your disciplinary record. Review the details in My Violations.`,
+            type: 'VIOLATION_CREATED',
+            eventKey: `violation:${violation.id}:created`
+        });
 
         // -------------------------------------------------
         // Commit violation + assignment
