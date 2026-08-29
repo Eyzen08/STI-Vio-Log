@@ -67,6 +67,8 @@ function App() {
   const [dashboardError, setDashboardError] = useState('')
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
+  const [clearanceCertificate, setClearanceCertificate] = useState(null)
+  const [clearanceCertificateError, setClearanceCertificateError] = useState('')
   const [departmentDtr, setDepartmentDtr] = useState(null)
   const [departmentDtrLoading, setDepartmentDtrLoading] = useState(false)
   const [departmentDtrError, setDepartmentDtrError] = useState('')
@@ -96,6 +98,19 @@ function App() {
         : item))
     } catch (error) {
       setNotificationActionError(error.message)
+    }
+  }
+
+  const loadClearanceCertificate = async () => {
+    setClearanceCertificateError('')
+    try {
+      const response = await fetch(`${API_URL}/api/student/clearance/certificate`, { headers: { Authorization: `Bearer ${token}` } })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to prepare your certificate.')
+      setClearanceCertificate(data.certificate)
+    } catch (error) {
+      setClearanceCertificate(null)
+      setClearanceCertificateError(error.message)
     }
   }
 
@@ -358,6 +373,8 @@ function App() {
       setClearanceRecords([])
       setStudentProfile(null)
       setClearanceEligibility(null)
+      setClearanceCertificate(null)
+      setClearanceCertificateError('')
       setDashboardError('')
       setDepartmentDtr(null)
       setStudentDtr(null)
@@ -550,6 +567,8 @@ function App() {
         setClearanceRecords([])
         setStudentProfile(null)
         setClearanceEligibility(null)
+        setClearanceCertificate(null)
+        setClearanceCertificateError('')
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
         setDepartmentDtr(null)
         setStudentDtr(null)
@@ -1866,7 +1885,9 @@ function App() {
             eligibility={clearanceEligibility}
             records={clearanceRecords}
             loading={dashboardLoading}
-            error={dashboardError}
+            error={clearanceCertificateError || dashboardError}
+            certificate={clearanceCertificate}
+            onLoadCertificate={loadClearanceCertificate}
           />
         )
       }

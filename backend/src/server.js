@@ -23,6 +23,7 @@ const accountAdministrationRoutes = require('./routes/accountAdministrationRoute
 const departmentAdministrationRoutes = require('./routes/departmentAdministrationRoutes');
 const googleLinkAdministrationRoutes = require('./routes/googleLinkAdministrationRoutes');
 const duplicateAccountReviewRoutes = require('./routes/duplicateAccountReviewRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
 const pool = require("./config/database");
 const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
@@ -146,6 +147,8 @@ app.use(
   "/api",
   authRoutes
 );
+
+app.use('/api/certificates', certificateRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 

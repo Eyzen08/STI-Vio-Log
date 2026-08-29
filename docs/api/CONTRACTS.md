@@ -63,6 +63,8 @@ Contact recording is append-only and accepts only a guardian ID belonging to the
 
 `GET /api/student/clearance` and `/api/student/clearance/eligibility` accept no query parameters and derive ownership from the authenticated student account. The records response omits the internal `cleared_by` user ID while retaining status, blocker flags, approval timestamp, academic period, and remarks. Eligibility is live and may differ from older historical records.
 
+`GET /api/student/clearance/certificate` returns a certificate only when the authenticated student has an approved `CLEARED` record and remains currently eligible. The server signs the certificate reference; the browser cannot select a student, clearance record, status, or approval date. `GET /api/certificates/clearance/{code}` publicly verifies only a correctly signed certificate that is still backed by a live approved clearance. A newly opened violation or pending service requirement makes prior certificate verification fail automatically.
+
 ## Student notifications
 
 `GET /api/students/me/notifications` derives ownership exclusively from the authenticated user ID. It accepts only `page` and `limit`, returns newest notifications first, and never accepts a student or user ownership override. `PATCH /api/students/me/notifications/{id}/read` accepts an empty body and can update only a notification owned by that authenticated student; out-of-scope IDs are treated as not found.

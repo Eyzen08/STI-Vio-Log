@@ -5,7 +5,7 @@ const displayDate = (value) => {
   return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()
 }
 
-function StudentClearance({ eligibility, records, loading, error }) {
+function StudentClearance({ eligibility, records, loading, error, certificate, onLoadCertificate }) {
   const summary = summarizeClearance({ eligibility, records })
   const blockers = clearanceBlockers(summary)
 
@@ -38,6 +38,19 @@ function StudentClearance({ eligibility, records, loading, error }) {
           <ul>{blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}</ul>
         )}
       </section>
+
+      {summary.status === 'CLEARED' && summary.eligible && <section className="clearance-certificate-actions">
+        <div><p className="eyebrow">Good standing document</p><h3>Clearance certificate</h3><p>Generate a server-verified certificate for your currently approved clearance.</p></div>
+        <button type="button" onClick={certificate ? () => window.print() : onLoadCertificate}>{certificate ? 'Print or save PDF' : 'Generate certificate'}</button>
+      </section>}
+
+      {certificate && summary.status === 'CLEARED' && summary.eligible && <section className="clearance-certificate" aria-label="Good-standing certificate">
+        <p className="eyebrow">STI Student Services</p><h2>Certificate of Good Standing</h2>
+        <p>This certifies that</p><strong>{certificate.student_name}</strong><p>Student Number {certificate.student_number}</p>
+        <p>has an approved disciplinary clearance for {certificate.semester}, Academic Year {certificate.academic_year}, and has no current violation or community-service blockers.</p>
+        <dl><div><dt>Certificate reference</dt><dd>{certificate.certificate_code}</dd></div><div><dt>Approved</dt><dd>{displayDate(certificate.cleared_at)}</dd></div></dl>
+        <small>Verify using GET /api/certificates/clearance/{certificate.certificate_code}</small>
+      </section>}
 
       <section className="table-card clearance-history-card">
         <div className="table-header"><div><p className="eyebrow">Academic periods</p><h3>Clearance history</h3></div><span>{records.length} records</span></div>

@@ -2031,6 +2031,15 @@ th {
   color: #087443;
   font-weight: 700;
 }
+.clearance-certificate-actions { align-items: center; background: #fff; border: 1px solid #dce5ef; border-radius: 18px; display: flex; justify-content: space-between; padding: 22px 24px; }
+.clearance-certificate-actions h3 { margin: 4px 0; }
+.clearance-certificate-actions p:last-child { color: #60708a; margin: 0; }
+.clearance-certificate { background: #fff; border: 8px double #173f68; border-radius: 4px; padding: 48px; text-align: center; }
+.clearance-certificate > strong { color: #13263f; display: block; font-size: 2rem; margin: 18px 0 8px; }
+.clearance-certificate dl { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; margin: 32px 0; text-align: left; }
+.clearance-certificate dt { color: #60708a; font-size: .72rem; text-transform: uppercase; }
+.clearance-certificate dd { margin: 5px 0 0; overflow-wrap: anywhere; }
+@media print { body * { visibility: hidden; } .clearance-certificate, .clearance-certificate * { visibility: visible; } .clearance-certificate { border: 8px double #173f68; left: 0; position: absolute; top: 0; width: 100%; } }
 
 .clearance-history-card { margin: 0; }
 

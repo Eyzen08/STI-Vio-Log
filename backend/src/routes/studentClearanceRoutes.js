@@ -6,6 +6,7 @@ const {
 } = require("../controllers/clearanceController");
 
 const router = express.Router();
+const { getMyClearanceCertificate } = require('../controllers/clearanceCertificateController');
 
 
 // =====================================================
@@ -25,6 +26,8 @@ router.get(
     "/eligibility",
     getMyClearanceEligibility
 );
+
+router.get('/certificate', getMyClearanceCertificate);
 
 
 // =====================================================
