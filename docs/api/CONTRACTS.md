@@ -89,9 +89,9 @@ Violation creation, service assignment, DTR time-in, DTR time-out, and service c
 
 `POST /api/auth/google/department/login` accepts only `credential`. It succeeds only for a Google identity linked to an active `DEPARTMENT_HEAD` user whose mapped department is active. The authenticated middleware reloads department scope from the database; the client cannot supply or override that scope.
 
-`GET /api/admin/google-department-registrations` and its `/:id/approve` and `/:id/reject` actions require `ADMIN`; `DISCIPLINE_OFFICE` is explicitly excluded. Approval requires a reason and an existing active `department_id`, then atomically creates one individual Department Head user, one department mapping, one Google link, and audit events. The generated fallback password is random and never disclosed. Rejection preserves the request. Review responses omit the stable Google subject and all credentials.
+`GET /api/admin/google-department-registrations` and its `/:id/approve` and `/:id/reject` actions require `ADMIN`; `DISCIPLINE_OFFICE` is explicitly excluded. The review transaction independently verifies that the reviewer is still an active Admin. Approval requires a reason and an existing active `department_id`, then atomically creates one individual Department Head user, one department mapping, one Google link, and audit events. The generated fallback password is random and never disclosed. Rejection accepts only a reason, preserves the request, and cannot assign a department. Review responses omit the stable Google subject and all credentials.
 
-Student and department registration transactions serialize ownership checks by Google subject and reject active links or pending cross-role claims. Individual employee numbers also cannot be reused by an active officer or simultaneous pending request.
+Student and department registration transactions serialize ownership checks by Google subject and reject active links or pending cross-role claims. Department submission and approval also serialize ownership by normalized employee number, so simultaneous requests cannot create two officers from one employee identity. Approval repeats cross-role checks inside its transaction. Individual employee numbers also cannot be reused by an active officer or simultaneous pending request.
 
 ## Session invalidation and required password change
 

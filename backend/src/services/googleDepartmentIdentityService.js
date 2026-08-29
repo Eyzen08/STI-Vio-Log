@@ -27,6 +27,9 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
     try {
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
+      if (values.employeeNumber) {
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`department-employee:${values.employeeNumber.toUpperCase()}`]);
+      }
       const occupied = (await client.query(
         `SELECT 'LINK' AS source FROM google_identity_links WHERE google_subject = $1 AND revoked_at IS NULL
          UNION ALL SELECT 'STUDENT' FROM google_student_registrations WHERE google_subject = $1 AND status = 'PENDING'

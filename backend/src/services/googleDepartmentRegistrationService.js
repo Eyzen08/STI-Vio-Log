@@ -43,9 +43,17 @@ const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      const reviewer = (await client.query(
+        `SELECT id FROM users WHERE id=$1 AND role='ADMIN' AND is_active=TRUE FOR UPDATE`,
+        [Number(reviewerId)]
+      )).rows[0];
+      if (!reviewer) throw new ApiError(403, 'REVIEWER_FORBIDDEN', FAILURE);
       const registration = (await client.query('SELECT * FROM google_department_registrations WHERE id = $1 FOR UPDATE', [Number(registrationId)])).rows[0];
       if (!registration || registration.status !== 'PENDING') throw new ApiError(409, 'REGISTRATION_NOT_PENDING', FAILURE);
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${registration.google_subject}`]);
+      if (registration.employee_number) {
+        await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`department-employee:${registration.employee_number.toUpperCase()}`]);
+      }
 
       if (normalizedDecision === 'REJECTED') {
         const row = (await client.query(
@@ -68,6 +76,7 @@ const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value
       const conflict = (await client.query(
         `SELECT 1 FROM users WHERE username=$1
          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject=$2 AND revoked_at IS NULL
+         UNION ALL SELECT 1 FROM google_student_registrations WHERE google_subject=$2 AND status='PENDING'
          UNION ALL SELECT 1 FROM department_heads WHERE employee_number IS NOT NULL AND employee_number=$3 LIMIT 1`,
         [baseUsername, registration.google_subject, registration.employee_number]
       )).rows[0];
