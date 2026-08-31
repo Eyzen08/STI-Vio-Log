@@ -54,7 +54,7 @@ function StudentProfile({ profile, username, loading, error }) {
       <div className="profile-section">
         <div className="profile-section-heading">
           <h3>Academic information</h3>
-          <p>Your current enrollment details.</p>
+          <p>Your current student record details.</p>
         </div>
         <dl className="profile-details-grid">
           <ProfileField label="Student number" value={displayProfileValue(profile.student_number)} />

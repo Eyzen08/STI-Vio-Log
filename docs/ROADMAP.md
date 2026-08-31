@@ -23,7 +23,7 @@ Build a web application that allows STI to digitally manage:
 - Student communication
 - Clearance
 - Good disciplinary standing
-- Enrollment verification
+- Discipline Office student-record review
 - Reports and audit logs
 
 ---
@@ -970,7 +970,7 @@ NOT CLEARED
 
 # 18. Enrollment Verification
 
-Authorized enrollment personnel/professor should be able to view the student's disciplinary status.
+Authorized school personnel should be able to view the student's disciplinary status when their role requires it.
 
 Examples:
 
@@ -1335,9 +1335,9 @@ These requirements are recorded for future implementation. They are not part of 
 
 - [x] Complete the security and API design in `docs/GOOGLE-IDENTITY-DESIGN.md` before implementation.
 
-- [x] Allow a student to register or link a Google account through enrollment-gated verification.
+- [x] Allow a student to register or link a Google account through Discipline Office student-record review.
 - [x] Require the student to provide their own STI student number and full name during first-time linking.
-- [x] Link existing school-managed records immediately and require authorized enrollment review for new identities.
+- [x] Link existing Discipline Office student records immediately and require authorized student-record review for new identities.
 - [x] Keep pending applicants outside the user/student tables and deny portal access until approval.
 - [x] A student number already bound to an account cannot be registered again.
 - [x] A Google identity already linked to one user cannot be linked to another student.
@@ -1433,7 +1433,7 @@ The system is ready for deployment only when:
 - [ ] Secure student messaging and unread counts work
 - [ ] Clearance works
 - [ ] Good-standing status works
-- [ ] Enrollment verification works
+- [ ] Discipline Office student-record approval works
 - [ ] Reports work
 - [ ] Audit logs work
 - [ ] Permissions are tested

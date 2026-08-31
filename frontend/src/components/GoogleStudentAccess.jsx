@@ -147,8 +147,8 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
       {pendingRegistration ? (
         <div className="registration-pending" role="status">
-          <h4 id="google-access-title">Enrollment verification pending</h4>
-          <p>Your request was submitted to the Discipline Office. You can sign in with Google after an authorized reviewer approves it.</p>
+          <h4 id="google-access-title">Student record review pending</h4>
+          <p>Your request was submitted to the Discipline Office. You can sign in with Google after the student profile is approved.</p>
           <button type="button" className="secondary-button" onClick={() => setPendingRegistration(false)}>Back to sign in</button>
         </div>
       ) : !isLinking ? (

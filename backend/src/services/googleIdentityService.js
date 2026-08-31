@@ -4,7 +4,7 @@ const { issueSessionToken } = require('./sessionTokenService');
 
 const LINK_FAILURE = 'Unable to link this student account';
 const LOGIN_FAILURE = 'Google account is not linked to an active student account';
-const REGISTRATION_PENDING = 'Student registration submitted for enrollment verification';
+const REGISTRATION_PENDING = 'Student registration submitted for Discipline Office review';
 
 const normalizeName = (value) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
@@ -118,7 +118,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         await client.query(
           `INSERT INTO audit_logs (user_id, action, table_name, record_id, description, ip_address)
            VALUES (NULL, 'GOOGLE_REGISTRATION_SUBMITTED', 'google_student_registrations', $1,
-                   'Google student registration submitted for enrollment verification', $2)`,
+                   'Google student registration submitted for Discipline Office review', $2)`,
           [registration.id, ipAddress]
         );
         await client.query('COMMIT');

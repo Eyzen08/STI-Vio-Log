@@ -28,7 +28,7 @@ test('Google auth controllers reject unsupported and incomplete bodies before se
   assert.equal(factories, 0);
 });
 
-test('Google link controller returns accepted without a session for pending enrollment', async () => {
+test('Google link controller returns accepted without a session for pending student review', async () => {
   const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent() { return { pending: true, message: 'Pending review', registration: { id: 8, status: 'PENDING' } }; } }) });
   const res = response();
   await controller.link({ body: registrationBody, ip: null }, res);

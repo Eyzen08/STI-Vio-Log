@@ -4,7 +4,7 @@ import GoogleDepartmentAccess from './GoogleDepartmentAccess.jsx'
 function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, mode='main', onNavigate }) {
   const title = mode === 'student' ? 'Student sign in' : mode === 'department-register' ? 'Department officer signup' : mode === 'department' ? 'Department officer sign in' : 'Sign in to Vio-Log'
   const guidance = mode === 'student'
-    ? 'Use Google below. First-time students confirm their Student Number and name; access starts after enrollment verification when no record exists.'
+    ? 'Use Google below. First-time students submit their Student Number and profile for Discipline Office review.'
     : mode === 'department'
       ? 'Approved officers sign in with Google below. New officers must request an account first.'
       : mode === 'department-register'

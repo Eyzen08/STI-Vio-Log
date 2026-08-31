@@ -30,7 +30,7 @@ test('unknown students create a pending registration without a session or creden
   const db = fakeDatabase((sql) => sql.includes('INSERT INTO google_student_registrations') ? { rows: [{ id: 73 }] } : { rows: [] });
   const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'unused' });
   const result = await service.linkStudent({ credential: 'verified-token', studentNumber: '02000123456', firstName: 'New', lastName: 'Student', ...profile });
-  assert.deepEqual(result, { pending: true, message: 'Student registration submitted for enrollment verification', registration: { id: 73, status: 'PENDING' } });
+  assert.deepEqual(result, { pending: true, message: 'Student registration submitted for Discipline Office review', registration: { id: 73, status: 'PENDING' } });
   assert.equal('token' in result, false);
   assert.ok(db.calls.some((call) => call.sql.includes('GOOGLE_REGISTRATION_SUBMITTED')));
   assert.equal(db.calls.some((call) => call.sql.includes('verified-token') || call.params.includes('verified-token')), false);

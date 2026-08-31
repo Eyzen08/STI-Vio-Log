@@ -18,15 +18,23 @@ test('review controller derives reviewer identity from authentication', async ()
   let reviewInput;
   const controller = createGoogleRegistrationController({ service: { async review(value) { reviewInput = value; return { id: 7, status: 'APPROVED' }; } } });
   const res = response();
-  await controller.approve({ params: { id: '7' }, user: { id: 91 }, body: { reason: 'Verified enrollment', academic_year: '2026-2027', semester: 'First Semester', verification_method: 'SIS', verification_reference: 'SIS-42' } }, res);
+  await controller.approve({ params: { id: '7' }, user: { id: 91 }, body: { reason: 'Student details reviewed' } }, res);
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(reviewInput, { registrationId: '7', reviewerId: 91, decision: 'APPROVED', reason: 'Verified enrollment', academicYear: '2026-2027', semester: 'First Semester', verificationMethod: 'SIS', verificationReference: 'SIS-42' });
+  assert.deepEqual(reviewInput, { registrationId: '7', reviewerId: 91, decision: 'APPROVED', reason: 'Student details reviewed' });
 });
 
 test('review controller rejects actor and status overrides', async () => {
   const controller = createGoogleRegistrationController({ service: { async review() { throw new Error('must not run'); } } });
   const res = response();
   await controller.reject({ params: { id: '7' }, user: { id: 91 }, body: { reason: 'No enrollment', reviewed_by: 1 } }, res);
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.body.error.code, 'VALIDATION_ERROR');
+});
+
+test('approval rejects legacy enrollment verification fields', async () => {
+  const controller = createGoogleRegistrationController({ service: { async review() { throw new Error('must not run'); } } });
+  const res = response();
+  await controller.approve({ params: { id: '7' }, user: { id: 91 }, body: { reason: 'Student reviewed', academic_year: '2026-2027' } }, res);
   assert.equal(res.statusCode, 400);
   assert.equal(res.body.error.code, 'VALIDATION_ERROR');
 });

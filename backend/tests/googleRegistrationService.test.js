@@ -26,17 +26,20 @@ test('approval atomically creates an active student, opaque QR, link, and audit'
     if (sql.includes('INSERT INTO users')) return { rows: [{ id: 50, username: pending.student_number }] };
     if (sql.includes('INSERT INTO students')) return { rows: [{ id: 55 }] };
     if (sql.includes('INSERT INTO google_identity_links')) return { rows: [{ id: 60 }] };
-    if (sql.includes("SET status = 'APPROVED'")) return { rows: [{ ...pending, status: 'APPROVED', review_reason: 'Enrollment verified', reviewed_at: new Date() }] };
+    if (sql.includes("SET status = 'APPROVED'")) return { rows: [{ ...pending, status: 'APPROVED', review_reason: 'Student details reviewed', reviewed_at: new Date() }] };
     return { rows: [] };
   });
   const service = createGoogleRegistrationService({ pool: db.pool, hashPassword: async () => 'secure-hash', randomBytes: () => Buffer.from(`opaque-${++randomCall}`) });
-  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Enrollment verified', academicYear: '2026-2027', semester: 'First Semester', verificationMethod: 'SIS', verificationReference: 'SIS-42' });
+  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Student details reviewed' });
   assert.equal(result.status, 'APPROVED');
   assert.ok(db.calls.some((call) => call.sql.includes("'STUDENT'")));
   assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO students')));
   assert.ok(db.calls.some((call) => call.sql.includes('INSERT INTO student_guardians')));
   assert.ok(db.calls.some((call) => call.sql.includes('GOOGLE_REGISTRATION_APPROVED')));
   assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
+  const approvalCall = db.calls.find((call) => call.sql.includes("SET status = 'APPROVED'"));
+  assert.equal(approvalCall.sql.includes('enrollment_academic_year'), false);
+  assert.equal(approvalCall.sql.includes('verification_method'), false);
   const auditCall = db.calls.find((call) => call.sql.includes('GOOGLE_REGISTRATION_APPROVED'));
   assert.equal(auditCall.params.includes(pending.google_subject), false);
 });
@@ -44,11 +47,11 @@ test('approval atomically creates an active student, opaque QR, link, and audit'
 test('rejection preserves the request and records the reviewer reason', async () => {
   const db = fakePool((sql) => {
     if (sql.includes('FROM google_student_registrations WHERE id')) return { rows: [pending] };
-    if (sql.includes("SET status = 'REJECTED'")) return { rows: [{ ...pending, status: 'REJECTED', review_reason: 'Enrollment not found', reviewed_at: new Date() }] };
+    if (sql.includes("SET status = 'REJECTED'")) return { rows: [{ ...pending, status: 'REJECTED', review_reason: 'Student details could not be confirmed', reviewed_at: new Date() }] };
     return { rows: [] };
   });
   const service = createGoogleRegistrationService({ pool: db.pool });
-  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'REJECTED', reason: 'Enrollment not found' });
+  const result = await service.review({ registrationId: 7, reviewerId: 2, decision: 'REJECTED', reason: 'Student details could not be confirmed' });
   assert.equal(result.status, 'REJECTED');
   assert.ok(db.calls.some((call) => call.sql.includes('GOOGLE_REGISTRATION_REJECTED')));
   assert.equal(db.calls.some((call) => call.sql.includes('DELETE')), false);
@@ -58,6 +61,5 @@ test('review requires a reason and a pending registration', async () => {
   const db = fakePool(() => ({ rows: [] }));
   const service = createGoogleRegistrationService({ pool: db.pool });
   await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: '' }), (error) => error.code === 'VALIDATION_ERROR');
-  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked' }), (error) => error.code === 'VALIDATION_ERROR');
-  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked', academicYear: '2026-2027', semester: 'First Semester', verificationMethod: 'SIS', verificationReference: 'SIS-42' }), (error) => error.code === 'REGISTRATION_NOT_PENDING');
+  await assert.rejects(service.review({ registrationId: 7, reviewerId: 2, decision: 'APPROVED', reason: 'Checked' }), (error) => error.code === 'REGISTRATION_NOT_PENDING');
 });
