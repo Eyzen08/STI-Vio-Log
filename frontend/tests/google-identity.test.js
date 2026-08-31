@@ -3,10 +3,12 @@ import assert from 'node:assert/strict'
 import {
   buildGoogleLinkPayload,
   googleButtonConfiguration,
+  googleStudentLinkErrorMessage,
   googleIdentityConfiguration,
   isGoogleClientConfigured,
   isPendingGoogleRegistration,
-  readGoogleCredential
+  readGoogleCredential,
+  validateGoogleStudentRegistration
 } from '../src/lib/googleIdentity.js'
 
 test('Google sign-in is enabled only for a configured web client ID', () => {
@@ -72,4 +74,23 @@ test('link payload contains only the school identity contract fields', () => {
     guardian_relationship: 'Mother',
     guardian_phone_number: '09181234567'
   })
+})
+
+test('student Google registration validates the school number before calling the API', () => {
+  const registration = {
+    studentNumber: '02000123456', firstName: 'Jose Pedro', lastName: 'Reyes',
+    phoneNumber: '09171234567', program: 'BSIT', section: 'A303', yearLevel: '2',
+    guardianName: 'Jenalin Hamsters', guardianRelationship: 'Mother', guardianPhoneNumber: '09123456774'
+  }
+  assert.equal(validateGoogleStudentRegistration(registration), '')
+  assert.match(validateGoogleStudentRegistration({ ...registration, studentNumber: '2024-001' }), /02000/)
+  assert.match(validateGoogleStudentRegistration({ ...registration, guardianPhoneNumber: '' }), /every student/)
+})
+
+test('student-link conflicts provide a safe recovery instruction', () => {
+  const message = googleStudentLinkErrorMessage({ code: 'STUDENT_LINK_UNAVAILABLE', message: 'Unable to link this student account' })
+  assert.match(message, /exactly match the school record/)
+  assert.match(message, /clear the old Google link/)
+  assert.equal(message.includes('another student'), false)
+  assert.equal(googleStudentLinkErrorMessage({ code: 'NETWORK', message: 'Try again' }), 'Try again')
 })

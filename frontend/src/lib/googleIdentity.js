@@ -57,6 +57,27 @@ export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, l
   guardian_phone_number: guardianPhoneNumber.trim()
 })
 
+export const validateGoogleStudentRegistration = ({ studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber }) => {
+  const required = [firstName, lastName, phoneNumber, program, section, guardianName, guardianRelationship, guardianPhoneNumber]
+  if (required.some((value) => typeof value !== 'string' || !value.trim()) || !String(yearLevel || '').trim()) {
+    return 'Complete every student and parent/guardian field.'
+  }
+  if (!/^02000\d{6}$/.test(String(studentNumber || '').trim())) {
+    return 'Student Number must start with 02000 and contain 11 digits, for example 02000123456.'
+  }
+  if (!Number.isInteger(Number(yearLevel)) || Number(yearLevel) < 1 || Number(yearLevel) > 6) {
+    return 'Select a valid year level.'
+  }
+  if ([phoneNumber, guardianPhoneNumber].some((value) => value.trim().length < 7 || value.trim().length > 30)) {
+    return 'Enter valid student and parent/guardian phone numbers.'
+  }
+  return ''
+}
+
+export const googleStudentLinkErrorMessage = (error) => error?.code === 'STUDENT_LINK_UNAVAILABLE'
+  ? 'We could not submit this registration. Check that the Student Number and name exactly match the school record. If this Student Number or Google account was used before, ask the Discipline Office to review the pending request or clear the old Google link.'
+  : error?.message || 'The student registration could not be completed.'
+
 export const isPendingGoogleRegistration = (result) =>
   result?.pending === true &&
   result?.registration?.status === 'PENDING' &&

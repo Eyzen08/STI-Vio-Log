@@ -4,9 +4,11 @@ import {
   isGoogleClientConfigured,
   isPendingGoogleRegistration,
   googleButtonConfiguration,
+  googleStudentLinkErrorMessage,
   googleIdentityConfiguration,
   loadGoogleIdentityServices,
-  readGoogleCredential
+  readGoogleCredential,
+  validateGoogleStudentRegistration
 } from '../lib/googleIdentity.js'
 
 const emptyLinkForm = {
@@ -120,6 +122,8 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
     try {
       if (!credential) throw new Error('Your Google sign-in expired. Please start again.')
+      const validationError = validateGoogleStudentRegistration(linkForm)
+      if (validationError) throw new Error(validationError)
 
       const session = await googleLink({ credential, ...linkForm })
       setCredential('')
@@ -131,7 +135,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
         onSession(session)
       }
     } catch (linkError) {
-      setError(linkError.message)
+      setError(googleStudentLinkErrorMessage(linkError))
     } finally {
       setIsBusy(false)
     }
@@ -166,7 +170,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
             <input id="google-student-number" name="studentNumber" value={linkForm.studentNumber}
               onChange={(event) => setLinkForm({ ...linkForm, studentNumber: event.target.value })}
               placeholder="Example: 02000XXXXXX" autoComplete="off" inputMode="numeric"
-              disabled={isBusy} required autoFocus />
+              pattern="02000[0-9]{6}" maxLength={11} disabled={isBusy} required autoFocus />
           </label>
           <label htmlFor="google-first-name">
             First name
