@@ -2215,7 +2215,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="02000XXXXXX"
+                    placeholder="School-issued Student Number"
                   />
                 </label>
 

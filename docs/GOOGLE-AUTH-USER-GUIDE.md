@@ -5,7 +5,7 @@
 1. Open `/student/login` or choose **Student Google access** from `/login`.
 2. Select **Continue with Google** and use the student's own school Google account.
 3. If the Google identity is already linked to an active Student record, the student enters the portal immediately.
-4. On first use, enter the Student Number in `02000XXXXXX` format plus the student's first and last name.
+4. On first use, enter the school-issued Student Number exactly as shown in the enrollment record, plus the student's first and last name.
 5. When an existing school-managed Student record matches, the Google identity is linked and the student signs in.
 6. When no record exists, a pending enrollment request is created. No portal session is granted yet.
 7. An Admin or Discipline Officer opens **Registrations**, verifies enrollment, records a reason, and approves or rejects the request.

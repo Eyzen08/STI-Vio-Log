@@ -62,8 +62,8 @@ export const validateGoogleStudentRegistration = ({ studentNumber, firstName, la
   if (required.some((value) => typeof value !== 'string' || !value.trim()) || !String(yearLevel || '').trim()) {
     return 'Complete every student and parent/guardian field.'
   }
-  if (!/^02000\d{6}$/.test(String(studentNumber || '').trim())) {
-    return 'Student Number must start with 02000 and contain 11 digits, for example 02000123456.'
+  if (!/^\S{1,50}$/u.test(String(studentNumber || '').trim())) {
+    return 'Enter the school-issued Student Number without spaces.'
   }
   if (!Number.isInteger(Number(yearLevel)) || Number(yearLevel) < 1 || Number(yearLevel) > 6) {
     return 'Select a valid year level.'

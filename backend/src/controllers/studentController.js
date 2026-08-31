@@ -71,7 +71,7 @@ const createStudent = async (req, res) => {
         assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
         const { student_number, first_name, middle_name, last_name, suffix, email, phone_number, program, section, year_level, qr_code, profile_image } = req.body;
         if (!student_number || !first_name || !last_name || !qr_code) return res.status(400).json({ success: false, message: "student_number, first_name, last_name, and qr_code are required" });
-        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "student_number must match 02000 followed by exactly 6 digits" });
+        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
         if (email && !isValidEmail(email)) return res.status(400).json({ success: false, message: "Invalid email format" });
         if (phone_number && !isValidPhone(phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
         const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:sanitizeString(phone_number), program:sanitizeString(program), section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
@@ -100,7 +100,7 @@ const updateStudent = async (req, res) => {
         ];
         assertAllowedFields(req.body, allowedFields);
         if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
-            return res.status(400).json({ success: false, message: "student_number must match 02000 followed by exactly 6 digits" });
+            return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
         }
         const fields = [];
         const values = [];

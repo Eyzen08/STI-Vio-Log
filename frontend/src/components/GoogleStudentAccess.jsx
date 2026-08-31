@@ -169,8 +169,8 @@ function GoogleStudentAccess({ clientId, onSession }) {
             Student number
             <input id="google-student-number" name="studentNumber" value={linkForm.studentNumber}
               onChange={(event) => setLinkForm({ ...linkForm, studentNumber: event.target.value })}
-              placeholder="Example: 02000XXXXXX" autoComplete="off" inputMode="numeric"
-              pattern="02000[0-9]{6}" maxLength={11} disabled={isBusy} required autoFocus />
+              placeholder="Enter your school-issued Student Number" autoComplete="off"
+              maxLength={50} disabled={isBusy} required autoFocus />
           </label>
           <label htmlFor="google-first-name">
             First name

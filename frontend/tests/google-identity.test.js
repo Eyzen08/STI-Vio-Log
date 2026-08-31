@@ -83,7 +83,9 @@ test('student Google registration validates the school number before calling the
     guardianName: 'Jenalin Hamsters', guardianRelationship: 'Mother', guardianPhoneNumber: '09123456774'
   }
   assert.equal(validateGoogleStudentRegistration(registration), '')
-  assert.match(validateGoogleStudentRegistration({ ...registration, studentNumber: '2024-001' }), /02000/)
+  assert.equal(validateGoogleStudentRegistration({ ...registration, studentNumber: '02064513751' }), '')
+  assert.equal(validateGoogleStudentRegistration({ ...registration, studentNumber: '2024-001' }), '')
+  assert.match(validateGoogleStudentRegistration({ ...registration, studentNumber: 'student number' }), /without spaces/)
   assert.match(validateGoogleStudentRegistration({ ...registration, guardianPhoneNumber: '' }), /every student/)
 })
 

@@ -5,7 +5,12 @@ const isValidPhone = (value) => typeof value === "string" && value.trim().length
 const sanitizeString = (value) => typeof value === "string" ? value.trim() : value;
 
 const isPositiveId = (value) => /^\d+$/.test(String(value)) && Number(value) > 0;
-const isValidStudentNumber = (value) => typeof value === "string" && /^02000\d{6}$/.test(value.trim());
+// Student-number formats can change between enrollment systems and academic
+// years. Treat the school-issued value as an opaque identifier: trim it,
+// bound its database length, and reject whitespace/control characters rather
+// than encoding a particular prefix or digit count in application logic.
+const isValidStudentNumber = (value) => typeof value === "string"
+    && /^\S{1,50}$/u.test(value.trim());
 
 const parsePagination = (query, { defaultLimit = 25, maxLimit = 100 } = {}) => {
     const page = query.page === undefined ? 1 : Number(query.page);

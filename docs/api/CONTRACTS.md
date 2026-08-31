@@ -35,7 +35,7 @@ QR attendance never accepts a client-selected scanner identity. `scanned_by` is 
 
 `GET /api/violations/student/{studentId}` is restricted to Admin and Discipline Office users and returns that student's violation history with classification metadata and bounded pagination. It accepts only `page` and `limit`; the response includes database-wide condition totals, handbook category counts, plus `total`, `returned`, and `hasMore` so the client can load complete detail history without relying on the general violation list.
 
-Staff student creation accepts the Student Number directly and never accepts a client-selected `user_id`. The backend uses the validated `02000` plus six digits Student Number as the local account username, generates an unknown random password, and creates the user/profile relationship atomically. Students subsequently use the enrollment-gated Google linking workflow; no generated password is returned or logged.
+Staff student creation accepts the school-issued Student Number directly and never accepts a client-selected `user_id`. The backend treats the bounded, whitespace-free Student Number as an opaque identifier and local account username, generates an unknown random password, and creates the user/profile relationship atomically. Students subsequently use the enrollment-gated Google linking workflow; no generated password is returned or logged.
 
 ## Department Head QR attendance
 
