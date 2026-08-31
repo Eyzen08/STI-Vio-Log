@@ -5,6 +5,7 @@ const {
     getStudentById,
     createStudent,
     updateStudent,
+    resetStudentPassword,
     deleteStudent,
     getMyProfile,
     getMyViolations
@@ -64,6 +65,12 @@ router.put(
     "/:id",
     authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     updateStudent
+);
+
+router.post(
+    "/:id/password-reset",
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    resetStudentPassword
 );
 
 router.delete(

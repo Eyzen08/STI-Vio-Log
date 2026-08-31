@@ -91,23 +91,32 @@ const createStudent = async (req, res) => {
 };
 
 const updateStudent = async (req, res) => {
+    let client;
     try {
         const { id } = req.params;
         const allowedFields = [
             "student_number", "first_name", "middle_name", "last_name",
             "suffix", "email", "phone_number", "program", "section",
-            "year_level", "qr_code", "profile_image"
+            "year_level", "qr_code", "profile_image", "reason"
         ];
         assertAllowedFields(req.body, allowedFields);
+        const reason = sanitizeString(req.body.reason);
+        if (!reason || reason.length > 1000) return res.status(400).json({ success: false, message: "A reason of at most 1000 characters is required" });
         if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
             return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
         }
+        if (req.body.first_name !== undefined && !sanitizeString(req.body.first_name)) return res.status(400).json({ success:false, message:'First name is required' });
+        if (req.body.last_name !== undefined && !sanitizeString(req.body.last_name)) return res.status(400).json({ success:false, message:'Last name is required' });
+        if (req.body.email && !isValidEmail(req.body.email)) return res.status(400).json({ success: false, message: "Invalid email format" });
+        if (req.body.phone_number && !isValidPhone(req.body.phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
+        if (req.body.year_level !== undefined && req.body.year_level !== null && (!Number.isInteger(Number(req.body.year_level)) || Number(req.body.year_level) < 1 || Number(req.body.year_level) > 8)) return res.status(400).json({ success:false, message:'Year level must be between 1 and 8' });
         const fields = [];
         const values = [];
 
-        for (const field of allowedFields) {
+        for (const field of allowedFields.filter((field) => field !== "reason")) {
             if (req.body[field] !== undefined) {
-                values.push(req.body[field]);
+                const value = field === "year_level" ? (req.body[field] === null || req.body[field] === '' ? null : Number(req.body[field])) : sanitizeString(req.body[field]);
+                values.push(value === "" ? null : value);
                 fields.push(`${field} = $${values.length}`);
             }
         }
@@ -119,9 +128,15 @@ const updateStudent = async (req, res) => {
             });
         }
 
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const current = (await client.query('SELECT id,user_id,student_number FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
+        if (!current) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: "Student not found" });
+        }
         values.push(id);
-
-        const result = await pool.query(
+        const result = await client.query(
             `
                 UPDATE students
                 SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP
@@ -130,26 +145,51 @@ const updateStudent = async (req, res) => {
             `,
             values
         );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "Student not found"
-            });
+        if (req.body.student_number !== undefined && req.body.student_number.trim() !== current.student_number) {
+            await client.query('UPDATE users SET username=$2,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [current.user_id, req.body.student_number.trim().toLowerCase()]);
         }
+        await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address) VALUES($1,'STUDENT_UPDATE','students',$2,$3,$4)`, [req.user.id, current.id, `Updated student information: ${reason}`, req.ip || null]);
+        await client.query('COMMIT');
 
         return res.json({
             success: true,
             student: result.rows[0]
         });
     } catch (error) {
+        if (client) try { await client.query('ROLLBACK'); } catch (_) {}
         console.error("Update student error:", error);
 
-        return res.status(error.statusCode || 500).json({
+        return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({
             success: false,
-            message: error.statusCode ? error.message : "Failed to update student"
+            message: error.statusCode ? error.message : error.code === '23505' ? "That Student Number is already in use" : "Failed to update student"
         });
-    }
+    } finally { if (client) client.release(); }
+};
+
+const resetStudentPassword = async (req, res) => {
+    let client;
+    try {
+        assertAllowedFields(req.body, ['reason']);
+        const reason = sanitizeString(req.body.reason);
+        if (!isPositiveId(req.params.id) || !reason || reason.length > 1000) return res.status(400).json({ success:false, message:'A valid student and required reason are required' });
+        client = await pool.connect();
+        await client.query('BEGIN');
+        const account = (await client.query(`SELECT u.id,u.username FROM students s JOIN users u ON u.id=s.user_id AND u.role='STUDENT' WHERE s.id=$1 FOR UPDATE OF u`, [Number(req.params.id)])).rows[0];
+        if (!account) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success:false, message:'Student account not found' });
+        }
+        const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
+        const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+        await client.query(`UPDATE users SET password_hash=$2,is_active=TRUE,deactivated_at=NULL,deactivated_by=NULL,must_change_password=TRUE,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [account.id, passwordHash]);
+        await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address) VALUES($1,'STUDENT_PASSWORD_RESET','users',$2,$3,$4)`, [req.user.id, account.id, `Issued student temporary password: ${reason}`, req.ip || null]);
+        await client.query('COMMIT');
+        return res.json({ success:true, message:'Temporary password generated', account:{ username:account.username }, temporary_password:temporaryPassword });
+    } catch (error) {
+        if (client) try { await client.query('ROLLBACK'); } catch (_) {}
+        console.error('Reset student password error:', error);
+        return res.status(error.statusCode || 500).json({ success:false, message:error.statusCode ? error.message : 'Failed to issue student password' });
+    } finally { if (client) client.release(); }
 };
 
 const deleteStudent = async (req, res) => {
@@ -346,6 +386,7 @@ module.exports = {
     getStudentById,
     createStudent,
     updateStudent,
+    resetStudentPassword,
     deleteStudent,
     getMyProfile,
     getMyViolations

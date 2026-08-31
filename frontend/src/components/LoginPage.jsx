@@ -6,7 +6,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
     ? 'Use Google below. First-time students submit their Student Number and profile for Discipline Office review.'
     : mode === 'department'
       ? 'Use the username and temporary password given privately by the Discipline Office. You must change it after your first sign in.'
-      : 'Students use Google access. Department Accounts use credentials issued by the Discipline Office.'
+      : 'Students may use Google or credentials issued by the Discipline Office. Department Accounts use issued credentials.'
   return (
     <section className="login-page" aria-labelledby="login-title">
       <div className="login-intro">
@@ -79,7 +79,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         </form>
 
         {mode === 'student' && <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} />}
-        {mode === 'main' && <><div className="google-link-actions auth-entry-actions"><button type="button" onClick={() => onNavigate('/student/login')}>Student Google access</button><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Department Account sign in</button></div><div className="registration-pending auth-flow-guide"><h4>How access works</h4><ol><li>Students continue with their school Google account.</li><li>Department credentials are issued privately by the Discipline Office.</li><li>A temporary Department password must be changed at first sign in.</li></ol></div></>}
+        {mode === 'main' && <><div className="google-link-actions auth-entry-actions"><button type="button" onClick={() => onNavigate('/student/login')}>Student access</button><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Department Account sign in</button></div><div className="registration-pending auth-flow-guide"><h4>How access works</h4><ol><li>Students may continue with Google or use their Student Number and an issued password.</li><li>Temporary passwords must be changed after the first sign-in.</li><li>Department credentials are issued privately by the Discipline Office.</li></ol></div></>}
         {mode !== 'main' && <button type="button" className="secondary-button" onClick={() => onNavigate('/login')}>Back to all sign-in options</button>}
 
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>

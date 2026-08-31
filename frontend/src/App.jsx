@@ -9,7 +9,7 @@ import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
 import DepartmentReports from './components/DepartmentReports.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
-import StudentAccessRemoval from './components/StudentAccessRemoval.jsx'
+import StudentAccountActions from './components/StudentAccountActions.jsx'
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
@@ -2487,7 +2487,7 @@ function App() {
                           </td>
                           <td>{condition.total} total / {condition.open} open</td>
                           <td><span className="status-badge">{condition.condition}</span></td>
-                          <td><div className="table-actions"><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)}>Guardian contact</button><StudentAccessRemoval token={token} student={student}/></div></td>
+                          <td><div className="table-actions"><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)}>Guardian contact</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
                         </tr>
                         )
                       }

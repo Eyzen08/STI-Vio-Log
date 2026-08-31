@@ -19,5 +19,6 @@ test('student routes expose full CRUD surface', () => {
   assert(routes.some((route) => route.path === '/' && route.methods.includes('post')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('put')));
+  assert(routes.some((route) => route.path === '/:id/password-reset' && route.methods.includes('post')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('delete')));
 });
