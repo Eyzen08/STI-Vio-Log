@@ -10,19 +10,26 @@ const sendError = (res, error, operation) => {
 };
 
 const communityServiceTimeIn = async (req, res) => {
-    const { assignment_id, student_id, notes } = req.body;
-    if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
     try {
-        assertAllowedFields(req.query, ["from", "to", "department_id"]);
+        const allowedFields = req.user.role === "DEPARTMENT_HEAD"
+            ? ["assignment_id", "student_id", "notes"]
+            : ["assignment_id", "student_id", "notes", "department_id"];
+        assertAllowedFields(req.body, allowedFields);
+        const { assignment_id, student_id, notes } = req.body;
+        if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
         const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, ipAddress: req.ip });
         return res.status(201).json({ success: true, message: "Community service time-in recorded successfully", ...result });
     } catch (error) { return sendError(res, error, "record community service time-in"); }
 };
 
 const communityServiceTimeOut = async (req, res) => {
-    const { assignment_id, student_id, notes, condition } = req.body;
-    if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
     try {
+        const allowedFields = req.user.role === "DEPARTMENT_HEAD"
+            ? ["assignment_id", "student_id", "notes", "condition"]
+            : ["assignment_id", "student_id", "notes", "condition", "department_id"];
+        assertAllowedFields(req.body, allowedFields);
+        const { assignment_id, student_id, notes, condition } = req.body;
+        if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
         const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, condition, ipAddress: req.ip });
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
     } catch (error) { return sendError(res, error, "record community service time-out"); }
@@ -62,7 +69,11 @@ const getCommunityServiceSessions = async (req, res) => {
         if (req.user.role === "DEPARTMENT_HEAD" && requestedDepartment && Number(requestedDepartment) !== Number(req.user.department_id)) return res.status(403).json({ success: false, message: "Department Heads can only access their own department" });
         const params = [req.params.assignmentId];
         let filters = "";
-        if (effectiveDepartment) { params.push(effectiveDepartment); filters += ` AND css.department_id = $${params.length}`; }
+        if (effectiveDepartment) {
+            params.push(effectiveDepartment);
+            filters += ` AND css.department_id = $${params.length}`;
+            if (req.user.role === "DEPARTMENT_HEAD") filters += ` AND a.department_id = $${params.length}`;
+        }
         if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'UTC')`; }
         if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'UTC')`; }
         const result = await pool.query(
@@ -80,11 +91,15 @@ const getCommunityServiceSessions = async (req, res) => {
 
 const getCommunityServiceAttendance = async (req, res) => {
     try {
+        const departmentScoped = req.user.role === 'DEPARTMENT_HEAD';
         const result = await pool.query(
             `SELECT csa.*, s.student_number, s.first_name, s.last_name, d.department_name
-             FROM community_service_attendance csa JOIN students s ON s.id = csa.student_id
+             FROM community_service_attendance csa
+             JOIN community_service_assignments a ON a.id = csa.assignment_id
+             JOIN students s ON s.id = csa.student_id
              JOIN departments d ON d.id = csa.department_id WHERE csa.assignment_id = $1
-             ORDER BY csa.scanned_at DESC, csa.id DESC`, [req.params.assignmentId]);
+             ${departmentScoped ? 'AND csa.department_id = $2 AND a.department_id = $2' : ''}
+             ORDER BY csa.scanned_at DESC, csa.id DESC`, departmentScoped ? [req.params.assignmentId, req.user.department_id] : [req.params.assignmentId]);
         return res.json({ success: true, assignment_id: Number(req.params.assignmentId), total_records: result.rows.length, attendance: result.rows });
     } catch (error) { return sendError(res, error, "get community service attendance"); }
 };

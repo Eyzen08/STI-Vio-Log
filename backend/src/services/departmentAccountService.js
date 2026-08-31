@@ -18,15 +18,14 @@ const createDepartmentAccountService = ({ pool, accountService = createAccountAd
     if (!isPositiveId(departmentId)) throw new ApiError(400, 'VALIDATION_ERROR', 'Select an active department');
     const department = (await pool.query('SELECT id,department_name FROM departments WHERE id=$1 AND is_active=TRUE', [Number(departmentId)])).rows[0];
     if (!department) throw new ApiError(400, 'VALIDATION_ERROR', 'Select an active department');
-    const existing = (await pool.query("SELECT u.id FROM users u JOIN department_heads dh ON dh.user_id=u.id WHERE dh.department_id=$1 AND u.role='DEPARTMENT_HEAD' AND u.is_active=TRUE", [Number(departmentId)])).rows[0];
-    if (existing) throw new ApiError(409, 'DEPARTMENT_ACCOUNT_EXISTS', 'This department already has an active Department Account');
     return accountService.create({
       actorId,
       username,
       role: 'DEPARTMENT_HEAD',
       firstName: department.department_name,
       lastName: 'Account',
-      departmentId: Number(departmentId)
+      departmentId: Number(departmentId),
+      enforceSingleDepartmentAccount: true
     });
   };
 

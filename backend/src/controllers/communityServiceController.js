@@ -35,11 +35,7 @@ const getCommunityServiceAssignments = async (req, res) => {
                 ON cs.student_id = s.id
             LEFT JOIN departments d ON d.id = cs.department_id
             LEFT JOIN department_heads dh ON dh.id = cs.department_head_id
-            ${departmentScoped ? `WHERE cs.department_id = $1 OR EXISTS (
-                SELECT 1 FROM community_service_sessions scoped_session
-                WHERE scoped_session.assignment_id = cs.id
-                  AND scoped_session.department_id = $1
-            )` : ""}
+            ${departmentScoped ? `WHERE cs.department_id = $1` : ""}
             ORDER BY cs.assigned_at DESC, cs.id DESC
             LIMIT $${departmentScoped ? 2 : 1} OFFSET $${departmentScoped ? 3 : 2}
         `, params);
@@ -98,11 +94,7 @@ const getCommunityServiceAssignmentById = async (req, res) => {
             LEFT JOIN departments d ON d.id = cs.department_id
             LEFT JOIN department_heads dh ON dh.id = cs.department_head_id
             WHERE cs.id = $1
-              ${departmentScoped ? `AND (cs.department_id = $2 OR EXISTS (
-                SELECT 1 FROM community_service_sessions scoped_session
-                WHERE scoped_session.assignment_id = cs.id
-                  AND scoped_session.department_id = $2
-              ))` : ""}
+              ${departmentScoped ? `AND cs.department_id = $2` : ""}
             `,
             departmentScoped ? [id, req.user.department_id] : [id]
         );

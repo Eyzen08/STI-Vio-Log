@@ -1367,7 +1367,7 @@ These requirements reflect the approved simplified account model. Student Google
 - [x] Allow audited password reset, portal-access removal, and restoration without deleting operational history.
 - [x] Restrict Department Accounts to assigned-service visibility, QR verification, time-in/time-out, and service-result submission.
 - [x] Prevent Department Accounts from deciding hours, crediting time, approving clearance, messaging students, viewing guardian contact, or opening global reports.
-- [ ] Complete concurrency and cross-department RBAC tests for creation, scanning, attendance, service results, and reporting denial.
+- [x] Complete concurrency and cross-department RBAC tests for creation, scanning, attendance, service results, and reporting denial.
 
 ## 27.4 Discipline Office Accounts
 
@@ -1413,7 +1413,7 @@ The system is ready for deployment only when:
 - [ ] Authentication works
 - [ ] Student Google identity linking prevents duplicate student and Google accounts
 - [x] Department Accounts are issued by authorized staff, require first-login password change, and are assigned to one department
-- [ ] Department Accounts are proven unable to scan, update, or report outside their assigned department
+- [x] Department Accounts are proven unable to scan, update, or report outside their assigned department
 - [ ] Both Discipline Officers have distinct audited accounts
 - [ ] Database relationships work
 - [ ] Student QR works

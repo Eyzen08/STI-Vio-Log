@@ -23,7 +23,10 @@ const loadAssignment = async (client, assignmentId, lock = false) => {
     return result.rows[0];
 };
 
-const validateEligible = (assignment, expectedStudentId) => {
+const validateEligible = (assignment, expectedStudentId, departmentId) => {
+    if (departmentId && Number(assignment.department_id) !== Number(departmentId)) {
+        throw new CommunityServiceSessionError("Community service assignment not found", 404);
+    }
     if (expectedStudentId && Number(assignment.student_id) !== Number(expectedStudentId)) {
         throw new CommunityServiceSessionError("The assignment does not belong to the specified student", 400);
     }
@@ -57,7 +60,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, act
     try {
         await client.query("BEGIN");
         const assignment = await loadAssignment(client, assignmentId, true);
-        validateEligible(assignment, expectedStudentId);
+        validateEligible(assignment, expectedStudentId, departmentId);
 
         const active = await client.query(
             `SELECT id, time_in FROM community_service_sessions
@@ -114,8 +117,9 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
              FOR UPDATE`, [assignmentId]
         );
         if (!sessionResult.rows.length) throw new CommunityServiceSessionError("No active community service session found", 409, "NO_ACTIVE_SESSION");
-        validateEligible(assignment, expectedStudentId);
+        validateEligible(assignment, expectedStudentId, departmentId);
         const session = sessionResult.rows[0];
+        if (Number(session.department_id) !== Number(departmentId)) throw new CommunityServiceSessionError("No active community service session found", 409, "NO_ACTIVE_SESSION");
 
         const attendance = await insertAttendance({ client, assignment, departmentId, actorId: actor.id, type: "TIME_OUT", notes });
         const duration = (await client.query(

@@ -93,6 +93,8 @@ Department Google signup and login are retired. Historical requests and identity
 
 Department Accounts have operational access only to their assigned department's QR verification/time-in/time-out and assigned service records. They cannot access messaging, parent/guardian contact, clearance approval, global student records, non-compliance reports, or administrative reports.
 
+Every assignment lookup and direct attendance mutation rechecks the authenticated Department Account's current active department against the assignment destination. A client-supplied assignment or student ID cannot bypass this boundary, and cross-department records use a non-visible response. Department Account creation is serialized per department so concurrent requests cannot both pass the one-active-account check.
+
 Every time-out records authoritative worked minutes, a controlled student service condition, and an optional result note with `review_status=PENDING` and zero credited minutes. `GET /api/community-service/results/pending` and `POST /api/community-service/results/{sessionId}/review` require Admin or Discipline Office. Approval applies capped credit, updates assignment/violation progress, and may complete the violation; rejection records the reason and applies no credit. A result can be reviewed only once.
 
 ## Session invalidation and required password change

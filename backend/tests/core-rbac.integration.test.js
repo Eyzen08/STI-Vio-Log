@@ -146,7 +146,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
         return { rows: [{ id: 70, student_id: params[0], status: params[5], required_service_hours: params[6], completed_service_hours: params[7] }] };
       }
       if (text.includes('FROM community_service_assignments a') && text.includes('JOIN violations v')) {
-        return { rows: [{ id: 80, violation_id: 70, student_id: 40, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN', violation_status: 'OPEN' }] };
+        return { rows: [{ id: 80, violation_id: 70, student_id: 40, department_id: 9, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN', violation_status: 'OPEN' }] };
       }
       if (text.includes('FROM community_service_sessions')) return { rows: [] };
       if (text.includes('INSERT INTO community_service_attendance')) {
