@@ -28,3 +28,13 @@ test('department duration values are displayed consistently', () => {
   assert.equal(formatDuration(60), '1h')
   assert.equal(formatDuration(135), '2h 15m')
 })
+
+test('department dashboard tolerates the empty report used during login routing', () => {
+  assert.deepEqual(summarizeDepartmentDtr(null), {
+    studentsServed: 0,
+    activeAssignments: 0,
+    completedSessions: 0,
+    workedMinutes: 0,
+    creditedMinutes: 0
+  })
+})

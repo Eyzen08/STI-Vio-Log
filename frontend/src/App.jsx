@@ -248,7 +248,7 @@ function App() {
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
   useEffect(() => {
-    if (!isLoggedIn || !token) {
+    if (!isLoggedIn || !token || isDepartmentHead) {
       setUnreadMessages(0)
       return undefined
     }
@@ -267,7 +267,7 @@ function App() {
     refresh()
     const interval = window.setInterval(refresh, 30000)
     return () => { controller.abort(); window.clearInterval(interval) }
-  }, [isLoggedIn, token])
+  }, [isDepartmentHead, isLoggedIn, token])
 
   useEffect(() => {
     if (!token || !isAdmin) {
@@ -523,25 +523,17 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const [dtrResponse, assignmentsResponse, nonComplianceResponse] = await Promise.all([
-            fetch(`${API_URL}/api/reports/dtr`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/reports/non-compliance?sort_by=date`, { headers: authHeaders })
-          ])
-          const [dtrData, assignmentsData, nonComplianceData] = await Promise.all([
-            dtrResponse.json().catch(() => ({})),
-            assignmentsResponse.json().catch(() => ({})),
-            nonComplianceResponse.json().catch(() => ({}))
-          ])
+          const assignmentsResponse = await fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders })
+          const assignmentsData = await assignmentsResponse.json().catch(() => ({}))
 
-          if (!dtrResponse.ok || !assignmentsResponse.ok || !nonComplianceResponse.ok) throw new Error(dtrData.message || assignmentsData.message || nonComplianceData.message || 'Unable to load department activity')
+          if (!assignmentsResponse.ok) throw new Error(assignmentsData.message || 'Unable to load assigned community service')
 
           setStudents([])
           setViolations([])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
           setClearanceRecords([])
-          setDepartmentDtr(dtrData)
-          setDepartmentNonCompliance(nonComplianceData)
+          setDepartmentDtr(null)
+          setDepartmentNonCompliance(null)
 
           return
         }

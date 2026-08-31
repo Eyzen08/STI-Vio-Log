@@ -4,8 +4,9 @@ const asNumber = (value) => {
 }
 
 export const summarizeDepartmentDtr = (report = {}) => {
-  const rows = Array.isArray(report.data) ? report.data : []
-  const totals = report.totals || {}
+  const safeReport = report && typeof report === 'object' ? report : {}
+  const rows = Array.isArray(safeReport.data) ? safeReport.data : []
+  const totals = safeReport.totals || {}
   const students = new Set(rows.map((row) => Number(row.student_id)).filter(Number.isFinite))
   const activeAssignments = rows.filter((row) =>
     ['OPEN', 'IN_PROGRESS'].includes(row.assignment_status) && asNumber(row.remaining_hours) > 0
