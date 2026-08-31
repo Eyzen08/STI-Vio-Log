@@ -110,11 +110,6 @@ Can:
 - Submit a controlled service condition and result note for Discipline Office review
 - View only the assigned service records necessary for those actions
 - Cannot decide service hours, credit worked time, approve clearance, message students, view guardian contact, or open global reports
-- View non-compliant students
-- View authorized parent/guardian contact information
-- Call/message parent/guardian using available contact action
-- Record parent/guardian contact attempts
-- View department reports
 
 ## DO_ADMIN
 
@@ -1126,11 +1121,9 @@ Never rely only on frontend permission checks.
 - [ ] Scan QR
 - [ ] Time-In
 - [ ] Time-Out
-- [ ] View DTR
 - [ ] View assigned service
-- [ ] View non-compliant students
-- [x] View authorized guardian contact
-- [x] Record parent contact
+- [ ] Submit service condition/result for Discipline Office review
+- [ ] Cannot view guardian contact, messages, global DTR, non-compliance, clearance, or administrative reports
 - [ ] Cannot access system-admin functions
 
 ## DO Admin
@@ -1335,9 +1328,9 @@ NOTIFICATIONS
 
 ---
 
-# 27. Deferred Identity, Account, and eDTR Milestones
+# 27. Identity, Account, and eDTR Milestones
 
-These requirements are recorded for future implementation. They are not part of the current username/password authentication flow and must not be considered complete until their backend, frontend, database, security, and integration tests pass.
+These requirements reflect the approved simplified account model. Student Google access and optional Discipline Office-issued credentials resolve to the same student record. Department access uses credentials issued privately by the Discipline Office; individual Department Google registration is retired.
 
 ## 27.1 Student Google Account Registration and Linking
 
@@ -1366,26 +1359,19 @@ These requirements are recorded for future implementation. They are not part of 
 
 ## 27.3 Department and Staff Accounts
 
-- [x] Define secure Google onboarding in `docs/DEPARTMENT-GOOGLE-IDENTITY-DESIGN.md` before implementation.
-- [x] Provide separate Student and Department login/registration entry points with clearly different forms.
-- [x] Add an operator/user guide and clear on-screen instructions for Student and Department Google registration and returning login.
-- [x] Allow an individual department officer to submit a Google-authenticated registration request.
-- [x] Require officer first/last name, optional employee number, controlled department type, and requested official department name.
-- [x] Support Library, School Guard, Staff Office, and Other as requested department types without hard-coding shared accounts.
-- [x] Keep every request pending and deny all Department Head permissions until an Admin verifies the officer and department.
-- [x] Require Admin approval/rejection with a reason; Discipline Office cannot grant staff roles or department scope.
-- [x] During approval, map the officer to exactly one existing active department and create an individual `DEPARTMENT_HEAD` account.
-- [x] Allow approved, active Department Heads to sign in with their own Google account.
-- [x] Prevent one Google identity from registering as both a Student and Department Head or linking to multiple users.
-- [ ] Preserve rejected registration history and audit submission, approval, rejection, linking, and login events.
-- [ ] Keep department membership separate from application roles unless a department genuinely requires different permissions.
-- [ ] Ensure Department-scoped accounts cannot scan for or report on another department.
-- [x] Manage any optional password credential securely; Google-only officers receive no known/default password.
-- [ ] Add concurrency and RBAC tests for duplicate officer, employee-number, Google-identity, and cross-role requests.
+- [x] Retire individual Department Google registration and preserve its design document only as historical context.
+- [x] Provide separate Student and Department login entry points with clearly different instructions.
+- [x] Add an operator/user guide and clear on-screen instructions for Student Google access, optional issued student credentials, and Department Account login.
+- [x] Allow Admin or Discipline Office staff to create one operational Department Account for an active department.
+- [x] Generate a temporary password exactly once and require a password change after first sign-in.
+- [x] Allow audited password reset, portal-access removal, and restoration without deleting operational history.
+- [x] Restrict Department Accounts to assigned-service visibility, QR verification, time-in/time-out, and service-result submission.
+- [x] Prevent Department Accounts from deciding hours, crediting time, approving clearance, messaging students, viewing guardian contact, or opening global reports.
+- [ ] Complete concurrency and cross-department RBAC tests for creation, scanning, attendance, service results, and reporting denial.
 
 ## 27.4 Discipline Office Accounts
 
-- [ ] Provision two distinct Discipline Office user accounts because the school has two Discipline Officers.
+- [ ] Provision the required distinct Discipline Office user accounts for the production school deployment.
 - [ ] Give each officer an individual identity; do not share one account.
 - [ ] Ensure audit records distinguish which officer performed each action.
 - [ ] Provide secure initial-password delivery and forced password-change/account-recovery procedures.
@@ -1399,6 +1385,9 @@ These requirements are recorded for future implementation. They are not part of 
 - [x] Add audited Admin-only department creation and configuration with active-assignment deactivation safeguards.
 - [x] Add authorized account creation, activation/deactivation, department assignment, and role management.
 - [x] Add audited account recovery and Google-link recovery.
+- [x] Add audited student-information correction that preserves history and synchronizes Student Number/password login.
+- [x] Allow Admin or Discipline Office staff to issue a one-time student temporary password with forced first-login change.
+- [x] Allow students to choose Google or issued Student Number/password access for the same student record.
 - [x] Add read-only duplicate-account review tools without silently merging or deleting history.
 - [ ] Revisit more granular staff roles only when their permissions differ from the existing RBAC model.
 
@@ -1410,7 +1399,7 @@ STUDENT SELF-SERVICE SCREENS
   -> GOOGLE IDENTITY/LINKING DESIGN
   -> GOOGLE AUTHENTICATION IMPLEMENTATION
   -> SEPARATE STUDENT / DEPARTMENT AUTHENTICATION ENTRY POINTS
-  -> GOOGLE DEPARTMENT REGISTRATION AND ADMIN APPROVAL
+  -> DISCIPLINE OFFICE-ISSUED DEPARTMENT ACCOUNTS
   -> ACCOUNT ADMINISTRATION AND RECOVERY
 ```
 
@@ -1423,8 +1412,8 @@ The system is ready for deployment only when:
 - [ ] All four roles work
 - [ ] Authentication works
 - [ ] Student Google identity linking prevents duplicate student and Google accounts
-- [ ] Department Google registration requires Admin approval and prevents cross-role identity reuse
-- [ ] Department/scanner officers are individually identified, Google-linked, and correctly scoped
+- [x] Department Accounts are issued by authorized staff, require first-login password change, and are assigned to one department
+- [ ] Department Accounts are proven unable to scan, update, or report outside their assigned department
 - [ ] Both Discipline Officers have distinct audited accounts
 - [ ] Database relationships work
 - [ ] Student QR works
