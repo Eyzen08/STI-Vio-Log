@@ -14,7 +14,16 @@ const scopeParams = (user) => user.role === 'DEPARTMENT_HEAD' ? [user.id, user.d
 
 const assertConversation = async (user, id, executor = pool) => {
   if (!isPositiveId(id)) bad('A valid conversation ID is required');
-  const row = (await executor.query(`SELECT mc.* FROM message_conversations mc WHERE mc.id = $${user.role === 'DEPARTMENT_HEAD' ? 3 : 2} AND ${scopeSql(user)}`, [...scopeParams(user), Number(id)])).rows[0];
+  const accessParams = user.role === 'STUDENT'
+    ? [user.id]
+    : user.role === 'DEPARTMENT_HEAD'
+      ? [user.id, user.department_id]
+      : [];
+  const conversationIdParameter = accessParams.length + 1;
+  const row = (await executor.query(
+    `SELECT mc.* FROM message_conversations mc WHERE mc.id = $${conversationIdParameter} AND ${scopeSql(user)}`,
+    [...accessParams, Number(id)]
+  )).rows[0];
   if (!row) notFound();
   return row;
 };
