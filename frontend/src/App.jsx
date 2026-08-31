@@ -23,7 +23,6 @@ import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
 import DepartmentAccounts from './components/DepartmentAccounts.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
-import AdminAccounts from './components/AdminAccounts.jsx'
 import AdminDepartments from './components/AdminDepartments.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
@@ -2115,10 +2114,6 @@ function App() {
 
     if (isAdmin && activeView === 'Department Accounts') {
       return <DepartmentAccounts token={token} />
-    }
-
-    if (userRole === 'ADMIN' && activeView === 'Accounts') {
-      return <AdminAccounts token={token} students={students} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Departments') {
