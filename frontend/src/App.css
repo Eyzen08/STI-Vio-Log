@@ -2147,7 +2147,7 @@ th {
 .message-compose textarea { min-height: 110px; }
 .message-layout { display: grid; gap: 20px; grid-template-columns: minmax(250px, .8fr) minmax(0, 2fr); }
 .message-conversations { align-content: start; display: grid; gap: 8px; }
-.message-conversations > button { background: #f6f9fc; border: 1px solid #dce5ef; color: #13263f; display: grid; gap: 5px; padding: 13px; position: relative; text-align: left; }
+.message-conversations > button { background: #f6f9fc; border: 1px solid #dce5ef; color: #13263f; cursor: pointer; display: grid; gap: 5px; padding: 13px; position: relative; text-align: left; width: 100%; z-index: 1; }
 .message-conversations > button.active { border-color: #2f80ed; background: #edf6ff; }
 .message-conversations span { color: #60708a; font-size: .78rem; }
 .message-conversations b { background: #d82d20; border-radius: 999px; color: white; padding: 2px 7px; position: absolute; right: 8px; top: 8px; }
