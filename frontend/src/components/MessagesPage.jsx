@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
+import { unreadMessageCount } from '../lib/messageUnread.js'
 
-function MessagesPage({ token, role, students = [] }) {
+function MessagesPage({ token, role, students = [], onUnreadChange }) {
   const [conversations, setConversations] = useState([])
   const [selected, setSelected] = useState(null)
   const [messages, setMessages] = useState([])
@@ -15,8 +16,10 @@ function MessagesPage({ token, role, students = [] }) {
     const response = await fetch(`${API_URL}/api/messages/conversations`, { headers })
     const data = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(data.message || 'Unable to load conversations.')
-    setConversations(data.conversations || [])
-  }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
+    const items = data.conversations || []
+    setConversations(items)
+    onUnreadChange?.(unreadMessageCount(items))
+  }, [token, onUnreadChange]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load().catch((e) => setError(e.message)) }, [load])
 

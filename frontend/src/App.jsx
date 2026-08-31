@@ -36,6 +36,7 @@ import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentConditio
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
+import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -85,6 +86,7 @@ function App() {
   const [studentNotifications, setStudentNotifications] = useState([])
   const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
+  const [unreadMessages, setUnreadMessages] = useState(0)
 
   const markNotificationRead = async (notificationId) => {
     setNotificationActionError('')
@@ -243,6 +245,29 @@ function App() {
   const updatePendingDepartmentCount = useCallback((departments) => {
     setPendingAccountCounts((current) => ({ ...current, departments }))
   }, [])
+  const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
+
+  useEffect(() => {
+    if (!isLoggedIn || !token) {
+      setUnreadMessages(0)
+      return undefined
+    }
+    const controller = new AbortController()
+    const refresh = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/messages/conversations`, {
+          headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
+        })
+        const data = await response.json().catch(() => ({}))
+        if (response.ok) setUnreadMessages(unreadMessageCount(data.conversations))
+      } catch (loadError) {
+        if (loadError.name !== 'AbortError') return
+      }
+    }
+    refresh()
+    const interval = window.setInterval(refresh, 30000)
+    return () => { controller.abort(); window.clearInterval(interval) }
+  }, [isLoggedIn, token])
 
   useEffect(() => {
     if (!token || !isAdmin) {
@@ -1776,7 +1801,7 @@ function App() {
     }
 
     if (activeView === 'Messages') {
-      return <MessagesPage token={token} role={userRole} students={students} />
+      return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} />
     }
 
     if (user?.password_change_required) {
@@ -4139,6 +4164,11 @@ function App() {
                 aria-current={routePath === item.path ? 'page' : undefined}
               >
                 <span>{item.label}</span>
+                {item.view === 'Messages' && formatUnreadMessageCount(unreadMessages) && (
+                  <span className="nav-pending-badge" aria-label={`${formatUnreadMessageCount(unreadMessages)} unread messages`}>
+                    {formatUnreadMessageCount(unreadMessages)}
+                  </span>
+                )}
                 {formatPendingRegistrationCount(
                   item.view === 'Registrations'
                     ? pendingAccountCounts.students
