@@ -1407,6 +1407,8 @@ STUDENT SELF-SERVICE SCREENS
 
 # 28. Definition of "Done"
 
+Use `docs/FINAL-ACCEPTANCE-CHECKLIST.md` to verify these items with controlled test identities and real mobile devices. Automated tests and read-only production smoke checks do not replace the manual four-role and camera workflows.
+
 The system is ready for deployment only when:
 
 - [ ] All four roles work
