@@ -1,15 +1,12 @@
 import GoogleStudentAccess from './GoogleStudentAccess.jsx'
-import GoogleDepartmentAccess from './GoogleDepartmentAccess.jsx'
 
 function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, mode='main', onNavigate }) {
-  const title = mode === 'student' ? 'Student sign in' : mode === 'department-register' ? 'Department officer signup' : mode === 'department' ? 'Department officer sign in' : 'Sign in to Vio-Log'
+  const title = mode === 'student' ? 'Student sign in' : mode === 'department' ? 'Department account sign in' : 'Sign in to Vio-Log'
   const guidance = mode === 'student'
     ? 'Use Google below. First-time students submit their Student Number and profile for Discipline Office review.'
     : mode === 'department'
-      ? 'Approved officers sign in with Google below. New officers must request an account first.'
-      : mode === 'department-register'
-        ? 'Sign in with your own school Google account, enter your officer and department details, then wait for Admin approval.'
-        : 'Choose Student or Department access below. Each person must use their own school Google account.'
+      ? 'Use the username and temporary password given privately by the Discipline Office. You must change it after your first sign in.'
+      : 'Students use Google access. Department Accounts use credentials issued by the Discipline Office.'
   return (
     <section className="login-page" aria-labelledby="login-title">
       <div className="login-intro">
@@ -36,7 +33,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
           </div>
         </div>
 
-        {mode !== 'department-register' && <form className="login-form" onSubmit={onSubmit}>
+        <form className="login-form" onSubmit={onSubmit}>
           <label htmlFor="username">
             Username
             <input
@@ -79,13 +76,10 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
           <button type="submit" disabled={isSubmitting}>
             {isSubmitting ? 'Signing in…' : 'Sign in'}
           </button>
-        </form>}
+        </form>
 
         {mode === 'student' && <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} />}
-        {(mode === 'department' || mode === 'department-register') && <GoogleDepartmentAccess clientId={googleClientId} mode={mode === 'department-register' ? 'register' : 'login'} onSession={onGoogleSession} onNavigate={onNavigate} />}
-
-        {mode === 'main' && <><div className="google-link-actions auth-entry-actions"><button type="button" onClick={() => onNavigate('/student/login')}>Student Google access</button><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Department Google access</button></div><div className="registration-pending auth-flow-guide"><h4>How Google access works</h4><ol><li>Choose the correct Student or Department entry.</li><li>Continue with your own school Google account.</li><li>First-time requests are verified before portal access is granted.</li></ol></div></>}
-        {mode === 'department' && <button type="button" className="secondary-button" onClick={() => onNavigate('/department/register')}>Request a department account</button>}
+        {mode === 'main' && <><div className="google-link-actions auth-entry-actions"><button type="button" onClick={() => onNavigate('/student/login')}>Student Google access</button><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Department Account sign in</button></div><div className="registration-pending auth-flow-guide"><h4>How access works</h4><ol><li>Students continue with their school Google account.</li><li>Department credentials are issued privately by the Discipline Office.</li><li>A temporary Department password must be changed at first sign in.</li></ol></div></>}
         {mode !== 'main' && <button type="button" className="secondary-button" onClick={() => onNavigate('/login')}>Back to all sign-in options</button>}
 
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>

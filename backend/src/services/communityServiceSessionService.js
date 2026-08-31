@@ -101,7 +101,9 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, act
     } finally { client.release(); }
 };
 
-const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, actor, notes, ipAddress, writeQrLog = false }) => {
+const CONDITIONS = new Set(['SATISFACTORY', 'NEEDS_FOLLOW_UP', 'INCIDENT_REPORTED']);
+
+const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, actor, notes, condition, ipAddress, writeQrLog = false }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -120,48 +122,20 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
             `SELECT GREATEST(FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - $1::timestamptz)) / 60), 0)::int AS minutes`,
             [session.time_in]
         )).rows[0].minutes;
-        const requiredMinutes = Math.round(Number(assignment.required_hours) * 60);
-        const previousMinutes = Math.round(Number(assignment.completed_hours || 0) * 60);
-        const creditedMinutes = Math.min(Number(duration), Math.max(requiredMinutes - previousMinutes, 0));
-        const newMinutes = previousMinutes + creditedMinutes;
+        const normalizedCondition = String(condition || '').toUpperCase();
+        if (!CONDITIONS.has(normalizedCondition)) throw new CommunityServiceSessionError('Select the student service condition before time-out', 400);
 
         const completedSession = (await client.query(
             `UPDATE community_service_sessions
-             SET time_out = CURRENT_TIMESTAMP, worked_minutes = $1, credited_minutes = $2,
-                 status = 'COMPLETED', time_out_by_user_id = $3,
-                 time_out_attendance_id = $4, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $5 AND time_out IS NULL RETURNING *`,
-            [duration, creditedMinutes, actor.id, attendance.id, session.id]
+             SET time_out = CURRENT_TIMESTAMP, worked_minutes = $1, credited_minutes = 0,
+                 status = 'COMPLETED', time_out_by_user_id = $2,
+                 time_out_attendance_id = $3, service_condition = $5,
+                 result_notes = $6, review_status = 'PENDING', updated_at = CURRENT_TIMESTAMP
+             WHERE id = $4 AND time_out IS NULL RETURNING *`,
+            [duration, actor.id, attendance.id, session.id, normalizedCondition, notes || null]
         )).rows[0];
         if (!completedSession) throw new CommunityServiceSessionError("Community service session was already completed", 409);
 
-        await client.query(
-            `INSERT INTO community_service_progress_history
-                (assignment_id, session_id, previous_completed_minutes, worked_minutes,
-                 credited_minutes, new_completed_minutes, performed_by_user_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [assignmentId, session.id, previousMinutes, duration, creditedMinutes, newMinutes, actor.id]
-        );
-        const newHours = newMinutes / 60;
-        const remainingHours = Math.max((requiredMinutes - newMinutes) / 60, 0);
-        const status = remainingHours === 0 ? "COMPLETED" : "IN_PROGRESS";
-        const updatedAssignment = (await client.query(
-            `UPDATE community_service_assignments SET completed_hours = $1, remaining_hours = $2,
-                 status = $3::violation_status,
-                 completed_at = CASE WHEN $3::text = 'COMPLETED' THEN CURRENT_TIMESTAMP ELSE NULL END
-             WHERE id = $4 RETURNING *`,
-            [newHours, remainingHours, status, assignmentId]
-        )).rows[0];
-        let updatedViolation = (await client.query(
-            `UPDATE violations SET completed_service_hours = $1, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $2 RETURNING *`, [newHours, assignment.violation_id]
-        )).rows[0];
-        let clearanceSync = null;
-        if (status === "COMPLETED" && updatedViolation.status === "OPEN") {
-            const transition = await transitionViolationWithClient({ client, violationId: assignment.violation_id, action: "COMPLETE", reason: null, actor, ipAddress });
-            updatedViolation = transition.violation;
-            clearanceSync = transition.clearanceSync;
-        }
         let scanLog = null;
         if (writeQrLog) {
             scanLog = (await client.query(
@@ -171,19 +145,47 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
                 [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null]
             )).rows[0];
         }
-        await insertAudit({ client, actor, action: "TIME_OUT", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), credited_minutes: creditedMinutes }, ipAddress });
+        await insertAudit({ client, actor, action: "TIME_OUT_PENDING_REVIEW", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), service_condition: normalizedCondition }, ipAddress });
         await notifyStudent(client, assignment.student_id, {
-            title: status === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
-            message: `${creditedMinutes} credited minute${creditedMinutes === 1 ? '' : 's'} recorded. ${Math.round(remainingHours * 60)} minute${Math.round(remainingHours * 60) === 1 ? '' : 's'} remaining.`,
-            type: status === 'COMPLETED' ? 'SERVICE_COMPLETED' : 'SERVICE_TIME_OUT',
+            title: 'Community service result submitted',
+            message: `${duration} worked minute${Number(duration) === 1 ? '' : 's'} submitted for Discipline Office review.`,
+            type: 'SERVICE_TIME_OUT',
             eventKey: `service-session:${session.id}:time-out`
         });
         await client.query("COMMIT");
-        return { assignment: updatedAssignment, violation: updatedViolation, clearanceSync, attendance, session: completedSession, scanLog };
+        return { assignment, attendance, session: completedSession, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         throw error;
     } finally { client.release(); }
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut };
+const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ipAddress }) => {
+    const normalizedDecision = String(decision || '').toUpperCase();
+    if (!['APPROVE','REJECT'].includes(normalizedDecision) || !String(reviewNotes || '').trim()) throw new CommunityServiceSessionError('Decision and review notes are required', 400);
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const session = (await client.query(`SELECT css.*,a.student_id,a.violation_id,a.required_hours,a.completed_hours,a.status AS assignment_status,v.status AS violation_status FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN violations v ON v.id=a.violation_id WHERE css.id=$1 FOR UPDATE OF css,a`,[Number(sessionId)])).rows[0];
+        if(!session) throw new CommunityServiceSessionError('Service result not found',404);
+        if(session.review_status!=='PENDING') throw new CommunityServiceSessionError('Service result was already reviewed',409);
+        if(normalizedDecision==='REJECT'){
+            const rejected=(await client.query(`UPDATE community_service_sessions SET review_status='REJECTED',reviewed_by_user_id=$2,reviewed_at=CURRENT_TIMESTAMP,review_notes=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,[session.id,actor.id,String(reviewNotes).trim()])).rows[0];
+            await insertAudit({client,actor,action:'SERVICE_RESULT_REJECT',sessionId:session.id,assignmentId:session.assignment_id,description:{reason:String(reviewNotes).trim()},ipAddress});
+            await notifyStudent(client,session.student_id,{title:'Community service result needs follow-up',message:'The Discipline Office did not credit the submitted service session. Contact the Discipline Office for guidance.',type:'SERVICE_RESULT_REJECTED',eventKey:`service-session:${session.id}:rejected`});
+            await client.query('COMMIT');return{session:rejected};
+        }
+        const requiredMinutes=Math.round(Number(session.required_hours)*60),previousMinutes=Math.round(Number(session.completed_hours||0)*60),creditedMinutes=Math.min(Number(session.worked_minutes),Math.max(requiredMinutes-previousMinutes,0)),newMinutes=previousMinutes+creditedMinutes;
+        const approved=(await client.query(`UPDATE community_service_sessions SET credited_minutes=$2,review_status='APPROVED',reviewed_by_user_id=$3,reviewed_at=CURRENT_TIMESTAMP,review_notes=$4,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,[session.id,creditedMinutes,actor.id,String(reviewNotes).trim()])).rows[0];
+        await client.query(`INSERT INTO community_service_progress_history(assignment_id,session_id,previous_completed_minutes,worked_minutes,credited_minutes,new_completed_minutes,performed_by_user_id)VALUES($1,$2,$3,$4,$5,$6,$7)`,[session.assignment_id,session.id,previousMinutes,session.worked_minutes,creditedMinutes,newMinutes,actor.id]);
+        const remainingMinutes=Math.max(requiredMinutes-newMinutes,0),status=remainingMinutes===0?'COMPLETED':'IN_PROGRESS';
+        const assignment=(await client.query(`UPDATE community_service_assignments SET completed_hours=$1,remaining_hours=$2,status=$3::violation_status,completed_at=CASE WHEN $3::text='COMPLETED' THEN CURRENT_TIMESTAMP ELSE NULL END WHERE id=$4 RETURNING *`,[newMinutes/60,remainingMinutes/60,status,session.assignment_id])).rows[0];
+        let violation=(await client.query('UPDATE violations SET completed_service_hours=$1,updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *',[newMinutes/60,session.violation_id])).rows[0],clearanceSync=null;
+        if(status==='COMPLETED'&&violation.status==='OPEN'){const transition=await transitionViolationWithClient({client,violationId:session.violation_id,action:'COMPLETE',reason:null,actor,ipAddress});violation=transition.violation;clearanceSync=transition.clearanceSync;}
+        await insertAudit({client,actor,action:'SERVICE_RESULT_APPROVE',sessionId:session.id,assignmentId:session.assignment_id,description:{worked_minutes:Number(session.worked_minutes),credited_minutes:creditedMinutes},ipAddress});
+        await notifyStudent(client,session.student_id,{title:status==='COMPLETED'?'Community service completed':'Community service result approved',message:`${creditedMinutes} service minute${creditedMinutes===1?'':'s'} approved by the Discipline Office.`,type:status==='COMPLETED'?'SERVICE_COMPLETED':'SERVICE_RESULT_APPROVED',eventKey:`service-session:${session.id}:approved`});
+        await client.query('COMMIT');return{session:approved,assignment,violation,clearanceSync};
+    }catch(error){try{await client.query('ROLLBACK')}catch(_){}throw error}finally{client.release()}
+};
+
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, CONDITIONS };

@@ -85,13 +85,13 @@ Violation creation, service assignment, DTR time-in, DTR time-out, and service c
 
 ## Google department officer authentication
 
-`POST /api/auth/google/department/register` accepts only a Google `credential`, officer first/last name, optional employee number, controlled `department_type`, requested `department_name`, and optional note. The controlled types are `LIBRARY`, `SCHOOL_GUARD`, `STAFF_OFFICE`, and `OTHER`. A successful submission returns HTTP 202 with a pending reference and never creates a user, department mapping, Google link, or JWT.
+Department Google signup and login are retired. Historical requests and identity links remain stored for audit history but have no active public or administrative HTTP route.
 
-`POST /api/auth/google/department/login` accepts only `credential`. It succeeds only for a Google identity linked to an active `DEPARTMENT_HEAD` user whose mapped department is active. The authenticated middleware reloads department scope from the database; the client cannot supply or override that scope.
+`/api/department-accounts` requires Admin or Discipline Office authentication and manages only the internal `DEPARTMENT_HEAD` role, presented to users as a **Department Account**. Creation accepts a username and active department, generates a temporary password exactly once, and forces a password change on first sign-in. Credentials are delivered privately by the Discipline Office. The narrow endpoint cannot create, reassign, reset, activate, or deactivate Admin, Discipline Office, or Student accounts.
 
-`GET /api/admin/google-department-registrations` and its `/:id/approve` and `/:id/reject` actions require `ADMIN`; `DISCIPLINE_OFFICE` is explicitly excluded. The review transaction independently verifies that the reviewer is still an active Admin. Approval requires a reason and an existing active `department_id`, then atomically creates one individual Department Head user, one department mapping, one Google link, and audit events. The generated fallback password is random and never disclosed. Rejection accepts only a reason, preserves the request, and cannot assign a department. Review responses omit the stable Google subject and all credentials.
+Department Accounts have operational access only to their assigned department's QR verification/time-in/time-out and assigned service records. They cannot access messaging, parent/guardian contact, clearance approval, global student records, non-compliance reports, or administrative reports.
 
-Student and department registration transactions serialize ownership checks by Google subject and reject active links or pending cross-role claims. Department submission and approval also serialize ownership by normalized employee number, so simultaneous requests cannot create two officers from one employee identity. Approval repeats cross-role checks inside its transaction. Individual employee numbers also cannot be reused by an active officer or simultaneous pending request.
+Every time-out records authoritative worked minutes, a controlled student service condition, and an optional result note with `review_status=PENDING` and zero credited minutes. `GET /api/community-service/results/pending` and `POST /api/community-service/results/{sessionId}/review` require Admin or Discipline Office. Approval applies capped credit, updates assignment/violation progress, and may complete the violation; rejection records the reason and applies no credit. A result can be reviewed only once.
 
 ## Session invalidation and required password change
 

@@ -14,7 +14,9 @@ const {
     communityServiceTimeIn,
     communityServiceTimeOut,
     getCommunityServiceAttendance,
-    getCommunityServiceSessions
+    getCommunityServiceSessions,
+    reviewCommunityServiceResult,
+    getPendingServiceResults
 } = require("../controllers/communityServiceAttendanceController");
 
 const {
@@ -68,6 +70,9 @@ router.post(
     communityServiceTimeOut
 );
 
+
+router.get("/results/pending", authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), getPendingServiceResults);
+router.post("/results/:sessionId/review", authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), reviewCommunityServiceResult);
 
 router.get(
     "/:assignmentId/sessions",

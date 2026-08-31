@@ -57,13 +57,18 @@ function DepartmentQrScanner({ form, result, error, verifiedQr, isScanning, isSu
                 <div><dt>Remaining service</dt><dd>{progress.remaining.toFixed(2)} hrs</dd></div>
               </dl>
               <label className="scanner-field" htmlFor="attendance-notes">
-                Attendance note <span>(optional)</span>
+                Service result note <span>(describe the student’s work or any concern)</span>
                 <textarea id="attendance-notes" name="notes" value={form.notes} onChange={onFieldChange}
                   rows="3" maxLength="500" disabled={isSubmitting} />
               </label>
+              <label className="scanner-field" htmlFor="service-condition">Student condition
+                <select id="service-condition" name="condition" value={form.condition||''} onChange={onFieldChange} disabled={isSubmitting}>
+                  <option value="">Select before time-out</option><option value="SATISFACTORY">Satisfactory</option><option value="NEEDS_FOLLOW_UP">Needs follow-up</option><option value="INCIDENT_REPORTED">Incident reported</option>
+                </select>
+              </label>
               <div className="attendance-actions">
                 <button type="button" onClick={() => onAction('time-in')} disabled={isSubmitting}>Record time in</button>
-                <button type="button" className="secondary" onClick={() => onAction('time-out')} disabled={isSubmitting}>Record time out</button>
+                <button type="button" className="secondary" onClick={() => onAction('time-out')} disabled={isSubmitting||!form.condition}>Submit time out and result</button>
               </div>
               {result.action !== 'scan' && <p className="success-message" role="status">{result.message}</p>}
             </>

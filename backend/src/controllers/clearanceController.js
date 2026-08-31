@@ -843,7 +843,7 @@ const updateClearanceRecord = async (req, res) => {
 // =====================================================
 // APPROVE CLEARANCE
 // =====================================================
-// Department Head only.
+// Discipline Office or system Admin only.
 // =====================================================
 
 const approveClearanceRecord = async (req, res) => {
@@ -855,11 +855,11 @@ const approveClearanceRecord = async (req, res) => {
         // Role verification
         // -------------------------------------------------
 
-        if (req.user.role !== "DEPARTMENT_HEAD") {
+        if (!["ADMIN", "DISCIPLINE_OFFICE"].includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
                 message:
-                    "Only the Department Head can approve clearance"
+                    "Only the Discipline Office or Admin can approve clearance"
             });
         }
 

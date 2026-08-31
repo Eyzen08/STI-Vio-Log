@@ -20,7 +20,7 @@ const { authorizeRoles } = require("../middleware/authMiddleware");
 
 router.get(
     "/student/:studentId/eligibility",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     getStudentClearanceEligibilityController
 );
 
@@ -31,7 +31,7 @@ router.get(
 
 router.put(
     "/:id/approve",
-    authorizeRoles("DEPARTMENT_HEAD"),
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     approveClearanceRecord
 );
 
@@ -42,7 +42,7 @@ router.put(
 
 router.get(
     "/",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     getClearanceRecords
 );
 
@@ -54,7 +54,7 @@ router.post(
 
 router.get(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
     getClearanceRecordById
 );
 

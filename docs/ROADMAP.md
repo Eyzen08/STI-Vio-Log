@@ -95,6 +95,8 @@ Cannot:
 
 ## DEPARTMENT_HEAD
 
+> Implementation name retained for database compatibility. In the product this is a **Department Account**, not an individual officer identity. The Discipline Office provisions one credential per department, hands it over privately, and the department must change the temporary password at first sign-in. Department Google registration is retired.
+
 Can:
 
 - Login/logout
@@ -104,7 +106,10 @@ Can:
 - Time-out students
 - View authorized student records
 - View DTR
-- Monitor assigned community service
+- Scan assigned students for time-in and time-out
+- Submit a controlled service condition and result note for Discipline Office review
+- View only the assigned service records necessary for those actions
+- Cannot decide service hours, credit worked time, approve clearance, message students, view guardian contact, or open global reports
 - View non-compliant students
 - View authorized parent/guardian contact information
 - Call/message parent/guardian using available contact action
@@ -152,7 +157,10 @@ Student
 → Department Head scans student QR
 → Time-In recorded
 → Student performs service
-→ Department Head scans QR / records Time-Out
+→ Department Account scans QR / records Time-Out and submits the service condition
+→ Worked time remains pending with zero credit
+→ Discipline Office/Admin approves or rejects the result
+→ Only approval credits time and advances community-service completion
 → DTR calculates duration
 → Community service progress updates
 → Requirement becomes completed or remains pending

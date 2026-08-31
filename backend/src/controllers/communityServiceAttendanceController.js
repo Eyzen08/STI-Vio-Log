@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-const { CommunityServiceSessionError, recordTimeIn, recordTimeOut } = require("../services/communityServiceSessionService");
+const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
 
@@ -20,12 +20,27 @@ const communityServiceTimeIn = async (req, res) => {
 };
 
 const communityServiceTimeOut = async (req, res) => {
-    const { assignment_id, student_id, notes } = req.body;
+    const { assignment_id, student_id, notes, condition } = req.body;
     if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
     try {
-        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, ipAddress: req.ip });
+        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, condition, ipAddress: req.ip });
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
     } catch (error) { return sendError(res, error, "record community service time-out"); }
+};
+
+const reviewCommunityServiceResult = async (req,res) => {
+    try {
+        assertAllowedFields(req.body,['decision','review_notes']);
+        const result=await reviewServiceResult({sessionId:req.params.sessionId,decision:req.body?.decision,reviewNotes:req.body?.review_notes,actor:req.user,ipAddress:req.ip});
+        return res.json({success:true,message:req.body.decision==='APPROVE'?'Service result approved and credited':'Service result rejected without credit',...result});
+    } catch(error){return sendError(res,error,'review community service result')}
+};
+
+const getPendingServiceResults = async (_req,res) => {
+    try {
+        const result=await pool.query(`SELECT css.*,a.required_hours,a.completed_hours,a.remaining_hours,s.student_number,s.first_name,s.last_name,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN students s ON s.id=a.student_id JOIN departments d ON d.id=css.department_id WHERE css.status='COMPLETED' AND css.review_status='PENDING' ORDER BY css.time_out ASC,css.id ASC`);
+        return res.json({success:true,results:result.rows});
+    } catch(error){return sendError(res,error,'get pending service results')}
 };
 
 const parseDateFilters = (query) => {
@@ -74,4 +89,4 @@ const getCommunityServiceAttendance = async (req, res) => {
     } catch (error) { return sendError(res, error, "get community service attendance"); }
 };
 
-module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, parseDateFilters };
+module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, parseDateFilters };

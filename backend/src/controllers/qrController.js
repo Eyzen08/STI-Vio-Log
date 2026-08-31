@@ -5,8 +5,8 @@ const { assertAllowedFields } = require("../utils/validators");
 
 const validateQrBody = (req) => {
     const allowed = req.user.role === "DEPARTMENT_HEAD"
-        ? ["qr_code", "notes"]
-        : ["qr_code", "notes", "department_id"];
+        ? ["qr_code", "notes", "condition"]
+        : ["qr_code", "notes", "condition", "department_id"];
     assertAllowedFields(req.body, allowed);
     const qrCode = typeof req.body.qr_code === "string" ? req.body.qr_code.trim() : "";
     const notes = req.body.notes == null ? "" : (typeof req.body.notes === "string" ? req.body.notes.trim() : null);
@@ -50,7 +50,7 @@ const handle = (operation) => async (req, res) => {
         validateQrBody(req);
         if (!req.body.qr_code || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "qr_code and a valid staff department are required" });
         const { student, assignment } = await findStudentAndAssignment(req.body.qr_code, req.staffDepartmentId);
-        const result = await (operation === "time-in" ? recordTimeIn : recordTimeOut)({ assignmentId: assignment.id, expectedStudentId: student.id, departmentId: req.staffDepartmentId, actor: req.user, notes: req.body.notes, ipAddress: req.ip, writeQrLog: true });
+        const result = await (operation === "time-in" ? recordTimeIn : recordTimeOut)({ assignmentId: assignment.id, expectedStudentId: student.id, departmentId: req.staffDepartmentId, actor: req.user, notes: req.body.notes, condition: req.body.condition, ipAddress: req.ip, writeQrLog: true });
         return res.status(201).json({ success: true, message: `Community service QR ${operation} recorded successfully`, student, studentId: student.id, hours_worked: result.session.worked_minutes == null ? undefined : result.session.worked_minutes / 60, ...result });
     } catch (error) { return respondError(res, error, `record QR community service ${operation}`); }
 };

@@ -3,7 +3,6 @@ const rateLimit = require("express-rate-limit");
 
 const { loginUser } = require("../controllers/authController");
 const { link, login } = require("../controllers/googleAuthController");
-const { register: registerDepartment, login: loginDepartment } = require('../controllers/googleDepartmentAuthController');
 
 const router = express.Router();
 
@@ -19,7 +18,5 @@ const googleAuthLimiter = rateLimit({
 
 router.post("/auth/google/link", googleAuthLimiter, link);
 router.post("/auth/google/login", googleAuthLimiter, login);
-router.post('/auth/google/department/register', googleAuthLimiter, registerDepartment);
-router.post('/auth/google/department/login', googleAuthLimiter, loginDepartment);
 
 module.exports = router;

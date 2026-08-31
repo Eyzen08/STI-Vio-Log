@@ -20,12 +20,13 @@ import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
-import GoogleDepartmentRegistrationReview from './components/GoogleDepartmentRegistrationReview.jsx'
+import DepartmentAccounts from './components/DepartmentAccounts.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminAccounts from './components/AdminAccounts.jsx'
 import AdminDepartments from './components/AdminDepartments.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
+import ServiceResultReview from './components/ServiceResultReview.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -184,7 +185,8 @@ function App() {
   const [qrForm, setQrForm] = useState({
     qr_code: '',
     department_id: '',
-    notes: ''
+    notes: '',
+    condition: ''
   })
 
   const [qrError, setQrError] = useState('')
@@ -242,9 +244,6 @@ function App() {
   const updatePendingStudentCount = useCallback((students) => {
     setPendingAccountCounts((current) => ({ ...current, students }))
   }, [])
-  const updatePendingDepartmentCount = useCallback((departments) => {
-    setPendingAccountCounts((current) => ({ ...current, departments }))
-  }, [])
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
   useEffect(() => {
@@ -278,14 +277,13 @@ function App() {
     const controller = new AbortController()
     const headers = { Authorization: `Bearer ${token}` }
     const requests = [fetch(`${API_URL}/api/google-registrations?status=PENDING&limit=100`, { headers, signal: controller.signal })]
-    if (userRole === 'ADMIN') requests.push(fetch(`${API_URL}/api/admin/google-department-registrations?status=PENDING&limit=100`, { headers, signal: controller.signal }))
 
     Promise.all(requests)
       .then((responses) => Promise.all(responses.map(async (response) => response.ok ? response.json() : null)))
-      .then(([studentsData, departmentsData]) => {
+      .then(([studentsData]) => {
         setPendingAccountCounts({
           students: pendingRegistrationCount(studentsData),
-          departments: pendingRegistrationCount(departmentsData)
+          departments: 0
         })
       })
       .catch((loadError) => {
@@ -309,7 +307,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      if (!['/login','/student/login','/department/login','/department/register'].includes(routePath)) navigateTo('/login', { replace: true })
+      if (!['/login','/student/login','/department/login'].includes(routePath)) navigateTo('/login', { replace: true })
       return
     }
 
@@ -1315,7 +1313,8 @@ function App() {
           ...(isDepartmentHead ? {} : {
             department_id: Number(qrForm.department_id)
           }),
-          notes: qrForm.notes.trim()
+          notes: qrForm.notes.trim(),
+          ...(action === 'time-out' ? { condition: qrForm.condition } : {})
         })
       })
 
@@ -1794,7 +1793,7 @@ function App() {
           onChange={handleChange}
           onGoogleSession={acceptSession}
           onSubmit={handleSubmit}
-          mode={routePath === '/student/login' ? 'student' : routePath === '/department/login' ? 'department' : routePath === '/department/register' ? 'department-register' : 'main'}
+          mode={routePath === '/student/login' ? 'student' : routePath === '/department/login' ? 'department' : 'main'}
           onNavigate={navigateTo}
         />
       )
@@ -2151,8 +2150,8 @@ function App() {
       return <GoogleRegistrationReview token={token} onPendingCountChange={updatePendingStudentCount} />
     }
 
-    if (userRole === 'ADMIN' && activeView === 'Department Registrations') {
-      return <GoogleDepartmentRegistrationReview token={token} onPendingCountChange={updatePendingDepartmentCount} />
+    if (isAdmin && activeView === 'Department Accounts') {
+      return <DepartmentAccounts token={token} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Accounts') {
@@ -2783,6 +2782,7 @@ function App() {
       const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
       return (
         <>
+          <ServiceResultReview token={token} />
           <section className="table-card form-card">
             <div className="table-header">
               <h3>
@@ -3171,6 +3171,14 @@ function App() {
                 placeholder="Optional attendance note"
               />
             </label>
+            <label className="full-width-field">Student service condition
+              <select name="condition" value={qrForm.condition} onChange={handleQrFieldChange}>
+                <option value="">Select before time-out</option>
+                <option value="SATISFACTORY">Satisfactory</option>
+                <option value="NEEDS_FOLLOW_UP">Needs follow-up</option>
+                <option value="INCIDENT_REPORTED">Incident reported</option>
+              </select>
+            </label>
           </div>
 
           <div className="qr-actions">
@@ -3196,6 +3204,7 @@ function App() {
             <button
               type="button"
               className="secondary"
+              disabled={!qrForm.condition}
               onClick={() =>
                 handleQrAction('time-out')
               }
@@ -4172,12 +4181,10 @@ function App() {
                 {formatPendingRegistrationCount(
                   item.view === 'Registrations'
                     ? pendingAccountCounts.students
-                    : item.view === 'Department Registrations'
-                      ? pendingAccountCounts.departments
-                      : 0
+                    : 0
                 ) && (
-                  <span className="nav-pending-badge" aria-label={`${item.label}: ${item.view === 'Registrations' ? pendingAccountCounts.students : pendingAccountCounts.departments} pending`}>
-                    {formatPendingRegistrationCount(item.view === 'Registrations' ? pendingAccountCounts.students : pendingAccountCounts.departments)}
+                  <span className="nav-pending-badge" aria-label={`${item.label}: ${pendingAccountCounts.students} pending`}>
+                    {formatPendingRegistrationCount(pendingAccountCounts.students)}
                   </span>
                 )}
               </button>

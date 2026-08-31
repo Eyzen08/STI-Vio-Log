@@ -16,7 +16,6 @@ const studentClearanceRoutes = require("./routes/studentClearanceRoutes");
 const reportRoutes = require("./routes/reportRoutes");
 const auditRoutes = require("./routes/auditRoutes");
 const googleRegistrationRoutes = require("./routes/googleRegistrationRoutes");
-const googleDepartmentRegistrationRoutes = require('./routes/googleDepartmentRegistrationRoutes');
 const parentContactRoutes = require('./routes/parentContactRoutes');
 const accountRoutes = require('./routes/accountRoutes');
 const accountAdministrationRoutes = require('./routes/accountAdministrationRoutes');
@@ -150,11 +149,12 @@ app.use(
 );
 
 app.use('/api/certificates', certificateRoutes);
-app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), messageRoutes);
+app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'STUDENT'), messageRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
+app.use('/api/department-accounts', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), require('./routes/departmentAccountRoutes'));
 app.use('/api/admin/departments', authenticateToken, authorizeRoles('ADMIN'), departmentAdministrationRoutes);
 app.use('/api/admin/students', authenticateToken, authorizeRoles('ADMIN'), googleLinkAdministrationRoutes);
 app.use('/api/admin/duplicate-review', authenticateToken, authorizeRoles('ADMIN'), duplicateAccountReviewRoutes);
@@ -180,7 +180,6 @@ app.use(
   authorizeRoles(
     "ADMIN",
     "DISCIPLINE_OFFICE",
-    "DEPARTMENT_HEAD",
     "STUDENT"
   ),
   studentRoutes
@@ -264,7 +263,7 @@ app.use(
 app.use(
   "/api/parent-contact",
   authenticateToken,
-  authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
+  authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
   parentContactRoutes
 );
 
@@ -304,7 +303,6 @@ app.use(
   authorizeRoles(
     "ADMIN",
     "DISCIPLINE_OFFICE",
-    "DEPARTMENT_HEAD"
   ),
   clearanceRoutes
 );
@@ -356,12 +354,6 @@ app.use(
   googleRegistrationRoutes
 );
 
-app.use(
-  '/api/admin/google-department-registrations',
-  authenticateToken,
-  authorizeRoles('ADMIN'),
-  googleDepartmentRegistrationRoutes
-);
 
 
 // =====================================================
