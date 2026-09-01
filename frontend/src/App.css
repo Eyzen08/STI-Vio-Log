@@ -2,7 +2,7 @@
   display: grid;
   grid-template-columns: 260px 1fr;
   min-height: 100vh;
-  background: #f4f7fb;
+  background: var(--color-page);
 }
 
 /* Department DTR workspace */
@@ -103,7 +103,7 @@
   background:
     radial-gradient(circle at 8% 10%, rgba(45, 129, 255, 0.18), transparent 30%),
     radial-gradient(circle at 92% 88%, rgba(255, 211, 77, 0.22), transparent 28%),
-    #eef4fb;
+    var(--color-page);
 }
 
 .auth-shell .main-panel {
