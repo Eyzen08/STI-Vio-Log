@@ -50,6 +50,27 @@ const getPendingServiceResults = async (_req,res) => {
     } catch(error){return sendError(res,error,'get pending service results')}
 };
 
+const getActiveDepartmentSessions = async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.notes,
+                    FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int AS elapsed_seconds,
+                    CURRENT_TIMESTAMP AS server_time,
+                    a.student_id, a.required_hours, a.completed_hours, a.remaining_hours,
+                    s.student_number, s.first_name, s.last_name
+             FROM community_service_sessions css
+             JOIN community_service_assignments a ON a.id=css.assignment_id
+             JOIN students s ON s.id=a.student_id
+             WHERE css.department_id=$1 AND a.department_id=$1
+               AND css.time_out IS NULL AND css.status='ACTIVE'
+               AND a.status IN ('OPEN','IN_PROGRESS')
+             ORDER BY css.time_in ASC, css.id ASC`,
+            [req.staffDepartmentId]
+        );
+        return res.json({ success: true, server_time: new Date().toISOString(), sessions: result.rows });
+    } catch (error) { return sendError(res, error, "get active department sessions"); }
+};
+
 const parseDateFilters = (query) => {
     const pattern = /^\d{4}-\d{2}-\d{2}$/;
     const { from, to } = query;
@@ -104,4 +125,4 @@ const getCommunityServiceAttendance = async (req, res) => {
     } catch (error) { return sendError(res, error, "get community service attendance"); }
 };
 
-module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, parseDateFilters };
+module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters };

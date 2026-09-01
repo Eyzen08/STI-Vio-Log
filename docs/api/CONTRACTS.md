@@ -95,7 +95,9 @@ Department Accounts have operational access only to their assigned department's 
 
 Every assignment lookup and direct attendance mutation rechecks the authenticated Department Account's current active department against the assignment destination. A client-supplied assignment or student ID cannot bypass this boundary, and cross-department records use a non-visible response. Department Account creation is serialized per department so concurrent requests cannot both pass the one-active-account check.
 
-Every time-out records authoritative worked minutes, a controlled student service condition, and an optional result note with `review_status=PENDING` and zero credited minutes. `GET /api/community-service/results/pending` and `POST /api/community-service/results/{sessionId}/review` require Admin or Discipline Office. Approval applies capped credit, updates assignment/violation progress, and may complete the violation; rejection records the reason and applies no credit. A result can be reviewed only once.
+Every time-out records authoritative worked minutes, a controlled student service condition, and an optional result note. The assigned Department Account's time-out immediately applies credit capped at the remaining required minutes, updates assignment and violation progress, and records the actor in immutable attendance, progress, and audit history. Discipline Office approval is not required for new attendance. Legacy pending results created by older releases remain reviewable by Admin or Discipline Office through the existing review endpoints.
+
+`GET /api/community-service/active-sessions` is available only to an authenticated, currently authorized Department Account. It returns active sessions assigned to that same department for live elapsed-time monitoring; it accepts no department override.
 
 ## Session invalidation and required password change
 

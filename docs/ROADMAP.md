@@ -155,7 +155,7 @@ Student
 → Department Account scans QR / records Time-Out and submits the service condition
 → Worked time remains pending with zero credit
 → Discipline Office/Admin approves or rejects the result
-→ Only approval credits time and advances community-service completion
+→ Department Time-Out immediately credits server-calculated time, capped at the remaining hours
 → DTR calculates duration
 → Community service progress updates
 → Requirement becomes completed or remains pending
@@ -1366,7 +1366,7 @@ These requirements reflect the approved simplified account model. Student Google
 - [x] Generate a temporary password exactly once and require a password change after first sign-in.
 - [x] Allow audited password reset, portal-access removal, and restoration without deleting operational history.
 - [x] Restrict Department Accounts to assigned-service visibility, QR verification, time-in/time-out, and service-result submission.
-- [x] Prevent Department Accounts from deciding hours, crediting time, approving clearance, messaging students, viewing guardian contact, or opening global reports.
+- [x] Prevent Department Accounts from deciding required hours, exceeding remaining-hour credit, approving clearance, messaging students, viewing guardian contact, or opening global reports.
 - [x] Complete concurrency and cross-department RBAC tests for creation, scanning, attendance, service results, and reporting denial.
 
 ## 27.4 Discipline Office Accounts

@@ -36,10 +36,9 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 - [ ] Department A grants camera permission and scans the student's QR.
 - [ ] Time-In succeeds once; a repeated Time-In is rejected and does not create a duplicate active session.
 - [ ] Department B tries the same QR and assignment; the action is rejected without revealing private assignment details.
-- [ ] Department A records Time-Out and a service condition.
-- [ ] Confirm worked minutes are non-negative and derived from server timestamps.
-- [ ] Discipline Office approves the submitted result; only then do completed and remaining hours change.
-- [ ] Confirm a rejected result does not credit hours.
+- [ ] Department A opens Service Results and confirms the active student and live elapsed timer are visible.
+- [ ] Department A records Time-Out and a service condition from the live monitor or QR scanner.
+- [ ] Confirm worked minutes are non-negative, derived from server timestamps, and immediately credited up to the remaining requirement without Discipline Office approval.
 - [ ] Test camera denial and manual QR entry; both must show usable instructions without a blank screen.
 
 ## 5. Supporting workflows

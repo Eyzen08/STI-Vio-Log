@@ -19,6 +19,7 @@ test('community service routes expose full CRUD surface', () => {
   assert(routes.some((route) => route.path === '/assignment-options' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/results/pending' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/results/:sessionId/review' && route.methods.includes('post')));
+  assert(routes.some((route) => route.path === '/active-sessions' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/' && route.methods.includes('post')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('put')));

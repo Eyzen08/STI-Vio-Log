@@ -26,7 +26,6 @@ import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminDepartments from './components/AdminDepartments.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
-import ServiceResultReview from './components/ServiceResultReview.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -71,6 +70,7 @@ function App() {
   const [violations, setViolations] = useState([])
   const [dashboardLoading, setDashboardLoading] = useState(false)
   const [dashboardError, setDashboardError] = useState('')
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
   const [clearanceCertificate, setClearanceCertificate] = useState(null)
@@ -606,7 +606,8 @@ function App() {
     isAdmin,
     isDepartmentHead,
     isStudent,
-    user
+    user,
+    dashboardRefreshKey
   ])
 
   const loadStudentDtr = async ({ from = '', to = '' } = {}) => {
@@ -2066,6 +2067,8 @@ function App() {
           loading={dashboardLoading}
           error={dashboardError}
           onOpenScanner={() => navigateTo('/department/qr-scan')}
+          token={token}
+          onAttendanceUpdated={() => setDashboardRefreshKey((current) => current + 1)}
         />
       )
     }
@@ -2732,7 +2735,6 @@ function App() {
       const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
       return (
         <>
-          <ServiceResultReview token={token} />
           <section className="table-card form-card">
             <div className="table-header">
               <h3>
@@ -3159,7 +3161,7 @@ function App() {
                 handleQrAction('time-out')
               }
             >
-              Time Out
+              Time Out and Credit Hours
             </button>
           </div>
 

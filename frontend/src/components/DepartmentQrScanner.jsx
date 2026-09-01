@@ -68,7 +68,7 @@ function DepartmentQrScanner({ form, result, error, verifiedQr, isScanning, isSu
               </label>
               <div className="attendance-actions">
                 <button type="button" onClick={() => onAction('time-in')} disabled={isSubmitting}>Record time in</button>
-                <button type="button" className="secondary" onClick={() => onAction('time-out')} disabled={isSubmitting||!form.condition}>Submit time out and result</button>
+                <button type="button" className="secondary" onClick={() => onAction('time-out')} disabled={isSubmitting||!form.condition}>Time out and credit hours</button>
               </div>
               {result.action !== 'scan' && <p className="success-message" role="status">{result.message}</p>}
             </>

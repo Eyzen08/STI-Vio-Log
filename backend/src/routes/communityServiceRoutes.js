@@ -16,7 +16,8 @@ const {
     getCommunityServiceAttendance,
     getCommunityServiceSessions,
     reviewCommunityServiceResult,
-    getPendingServiceResults
+    getPendingServiceResults,
+    getActiveDepartmentSessions
 } = require("../controllers/communityServiceAttendanceController");
 
 const {
@@ -124,6 +125,13 @@ router.post(
         "DISCIPLINE_OFFICE"
     ),
     createCommunityServiceAssignment
+);
+
+router.get(
+    "/active-sessions",
+    authorizeRoles("DEPARTMENT_HEAD"),
+    requireAuthorizedDepartment,
+    getActiveDepartmentSessions
 );
 
 

@@ -20,3 +20,18 @@ export const serviceProgress = (assignment) => {
   const completed = amount(assignment.completed_hours)
   return required > 0 ? Math.min(100, Math.max(0, Math.round((completed / required) * 100))) : 100
 }
+
+export const liveServiceSeconds = (timeIn, now = Date.now()) => {
+  const startedAt = new Date(timeIn).getTime()
+  const current = Number(now)
+  if (!Number.isFinite(startedAt) || !Number.isFinite(current)) return 0
+  return Math.max(0, Math.floor((current - startedAt) / 1000))
+}
+
+export const formatLiveServiceTime = (seconds) => {
+  const safe = Math.max(0, Math.floor(Number(seconds) || 0))
+  const hours = Math.floor(safe / 3600)
+  const minutes = Math.floor((safe % 3600) / 60)
+  const remainder = safe % 60
+  return [hours, minutes, remainder].map((value) => String(value).padStart(2, '0')).join(':')
+}

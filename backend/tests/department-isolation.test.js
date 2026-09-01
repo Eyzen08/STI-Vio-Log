@@ -1,8 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const pool = require('../src/config/database');
-const { recordTimeIn } = require('../src/services/communityServiceSessionService');
-const { communityServiceTimeIn, getCommunityServiceAttendance } = require('../src/controllers/communityServiceAttendanceController');
+const { calculateSessionCredit, recordTimeIn } = require('../src/services/communityServiceSessionService');
+const { communityServiceTimeIn, getActiveDepartmentSessions, getCommunityServiceAttendance } = require('../src/controllers/communityServiceAttendanceController');
 const { createDepartmentAccountService } = require('../src/services/departmentAccountService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
 
@@ -23,6 +23,17 @@ test('Department Account attendance history is filtered by authenticated departm
 test('Department Account cannot override its authenticated department in direct attendance',async()=>{
   const originalError=console.error;console.error=()=>{};
   try{const res=response();await communityServiceTimeIn({body:{assignment_id:8,student_id:4,department_id:10},user:{id:3,role:'DEPARTMENT_HEAD',department_id:7},staffDepartmentId:7,ip:'127.0.0.1'},res);assert.equal(res.statusCode,400);assert.match(res.body.message,/Unsupported field\(s\): department_id/)}finally{console.error=originalError}
+});
+
+test('live sessions are restricted to the authenticated Department Account scope',async()=>{
+  const originalQuery=pool.query;let captured;
+  pool.query=async(sql,params)=>{captured={sql:String(sql),params};return{rows:[]}};
+  try{const res=response();await getActiveDepartmentSessions({staffDepartmentId:7},res);assert.equal(res.statusCode,200);assert.match(captured.sql,/css\.department_id=\$1 AND a\.department_id=\$1/);assert.deepEqual(captured.params,[7])}finally{pool.query=originalQuery}
+});
+
+test('department time-out credit is capped at the remaining requirement',()=>{
+  assert.deepEqual(calculateSessionCredit({requiredHours:4,completedHours:3.5,workedMinutes:90}),{requiredMinutes:240,previousMinutes:210,creditedMinutes:30,newMinutes:240,remainingMinutes:0});
+  assert.equal(calculateSessionCredit({requiredHours:4,completedHours:1,workedMinutes:45}).creditedMinutes,45);
 });
 
 test('Department Account creation requests transactional single-account enforcement',async()=>{
