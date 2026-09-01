@@ -14,35 +14,36 @@
 10. Student can view disciplinary clearance status.
 11. Eligible students can view/download the applicable certificate.
 
-## Department Head
+## Department Account
 
-1. Department Head can authenticate securely.
-2. Department Head can only access authorized department functions.
-3. Department Head can scan student QR codes.
-4. Department Head can record student Time-In.
-5. Department Head can record student Time-Out.
-6. System records the department and staff member responsible for the scan.
-7. Department Head can view authorized student/service records.
-8. Department Head can identify non-compliant students.
-9. Department Head can access authorized parent/guardian contact information.
-10. Department Head can initiate a call/message action using the stored contact information.
-11. Department Head can record contact attempts and remarks.
+1. A Department Account can authenticate using the username and temporary password issued by the Discipline Office/Admin.
+2. The account must change its temporary password at first sign-in.
+3. A Department Account can access only assignments owned by its authenticated department.
+4. A Department Account can scan student QR codes for its assigned community-service records.
+5. A Department Account can record student Time-In and Time-Out without a second Discipline Office approval.
+6. The system calculates worked time from server timestamps and credits no more than the remaining required hours.
+7. A Department Account can monitor its currently active students and live elapsed service time.
+8. A Department Account can record the student's service condition and an optional result note at Time-Out.
+9. A Department Account can view only the student/service details necessary for its assigned work.
+10. A Department Account cannot decide required hours, approve clearance, access student messages, or view parent/guardian contact information.
+11. Department A cannot view, scan, update, or export Department B's assignments.
 
 ## Disciplinary Office
 
 1. DO Admin can create and manage violations.
 2. DO Admin can assign community service.
-3. System can calculate service progress.
-4. DO Admin can monitor DTR.
-5. DO Admin can monitor non-compliance.
-6. DO Admin can review parent contact logs.
-7. DO Admin can manage disciplinary clearance.
-8. DO Admin can review reports.
-9. DO Admin can communicate with students.
+3. DO Admin decides required service hours separately from the violation and assigns the student to a department.
+4. System calculates service progress from credited Department Time-In/Time-Out sessions.
+5. DO Admin can monitor DTR.
+6. DO Admin can monitor non-compliance.
+7. DO Admin can access guardian details, manually contact the guardian, and append a contact-attempt log.
+8. DO Admin can manage disciplinary clearance.
+9. DO Admin can review reports.
+10. DO Admin can communicate with students.
 
 ## System Administration
 
-1. System Admin can manage accounts.
+1. System Admin can manage Student and Department Accounts, including password reset, deactivation/deletion, and Google-link revocation where applicable.
 2. System Admin can manage departments.
 3. System Admin can manage roles and permissions.
 4. System Admin can review audit logs.
@@ -55,3 +56,10 @@
 4. Historical violations must not be deleted simply because they are completed.
 5. Clearance status must be determined by backend rules.
 6. Only authorized users can issue/finalize clearance.
+
+## Real-time updates and recovery
+
+1. Authenticated students and Discipline Office/Admin users receive message refresh events only for conversations they are authorized to access.
+2. Department Accounts receive attendance refresh events only for their authenticated department.
+3. Real-time events contain refresh identifiers rather than private record contents.
+4. REST endpoints remain authoritative, and periodic polling recovers state after a connection interruption.

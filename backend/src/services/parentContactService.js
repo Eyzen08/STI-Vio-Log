@@ -10,18 +10,12 @@ const createParentContactService = ({ pool } = {}) => {
 
   const assertScope = async ({ executor = pool, actor, studentId }) => {
     if (!isPositiveId(studentId)) throw new ApiError(400, 'VALIDATION_ERROR', 'A valid student is required');
-    const departmentScoped = actor.role === 'DEPARTMENT_HEAD';
-    if (departmentScoped && !isPositiveId(actor.department_id)) throw new ApiError(403, 'PARENT_CONTACT_FORBIDDEN', 'Student contact information is not available');
+    if (!['ADMIN', 'DISCIPLINE_OFFICE'].includes(actor?.role)) throw new ApiError(403, 'PARENT_CONTACT_FORBIDDEN', 'Student contact information is not available');
     const result = await executor.query(
       `SELECT s.id, s.student_number, s.first_name, s.last_name
        FROM students s
-       WHERE s.id = $1
-         AND ($2::boolean = FALSE OR EXISTS (
-           SELECT 1 FROM community_service_assignments a
-           JOIN community_service_sessions css ON css.assignment_id = a.id
-           WHERE a.student_id = s.id AND css.department_id = $3
-         ))`,
-      [Number(studentId), departmentScoped, departmentScoped ? Number(actor.department_id) : null]
+       WHERE s.id = $1`,
+      [Number(studentId)]
     );
     if (!result.rows[0]) throw new ApiError(404, 'STUDENT_NOT_VISIBLE', 'Student contact information is not available');
     return result.rows[0];
@@ -66,7 +60,7 @@ const createParentContactService = ({ pool } = {}) => {
         `INSERT INTO parent_contact_logs
           (student_id, guardian_id, contacted_by_user_id, department_id, contact_method, outcome, notes)
          VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, guardian_id, contact_method, outcome, notes, created_at`,
-        [student.id, guardian.id, Number(actor.id), actor.role === 'DEPARTMENT_HEAD' ? Number(actor.department_id) : null, normalizedMethod, normalizedOutcome, normalizedNotes || null]
+        [student.id, guardian.id, Number(actor.id), null, normalizedMethod, normalizedOutcome, normalizedNotes || null]
       )).rows[0];
       await client.query(
         `INSERT INTO audit_logs (user_id, action, table_name, record_id, description, ip_address)
@@ -85,4 +79,3 @@ const createParentContactService = ({ pool } = {}) => {
 };
 
 module.exports = { createParentContactService, METHODS, OUTCOMES };
-
