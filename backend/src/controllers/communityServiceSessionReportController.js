@@ -35,8 +35,8 @@ const getDTRReport = async (req, res) => {
         if (from) add(from, " AND css.time_in >= (?::date::timestamp AT TIME ZONE 'UTC')");
         if (to) add(to, " AND css.time_in < ((?::date + 1)::timestamp AT TIME ZONE 'UTC')");
         const result = await pool.query(
-            `SELECT a.id AS assignment_id, a.student_id, s.student_number, s.first_name, s.last_name,
-                    a.violation_id, css.department_id, d.department_name, a.required_hours,
+            `SELECT s.student_number, s.first_name, s.last_name,
+                    d.department_name, a.required_hours,
                     a.completed_hours AS credited_hours, a.remaining_hours, a.status AS assignment_status,
                     COUNT(*) FILTER (WHERE css.status = 'COMPLETED')::int AS total_completed_sessions,
                     COALESCE(SUM(css.worked_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_worked_minutes,

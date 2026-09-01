@@ -48,6 +48,14 @@
 3. System Admin can manage roles and permissions.
 4. System Admin can review audit logs.
 
+## Reports and exports
+
+1. Admin and Discipline Office can generate violation, community-service, DTR, non-compliance, guardian-contact, clearance, and good-standing reports.
+2. Report filters and sorting values must be validated by the backend.
+3. Reports and CSV exports must use student-facing references such as Student Number and must omit raw internal database IDs, credentials, tokens, and guardian phone numbers.
+4. Violation reports must not assign or display legacy violation service hours; community-service reports are the authoritative source for required, completed, and remaining hours.
+5. Invalid or cancelled violations do not change an otherwise eligible student from GOOD_STANDING to CLEARED.
+
 ## Clearance
 
 1. Student with no applicable recorded violations can be classified as GOOD_STANDING.

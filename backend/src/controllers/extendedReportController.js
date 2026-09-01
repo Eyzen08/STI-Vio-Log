@@ -23,7 +23,7 @@ const getParentContactReport = async (req, res) => {
     if (outcome) addFilter(state, outcome, 'pcl.outcome = ?');
     if (from_date) addFilter(state, from_date, 'pcl.created_at >= ?::date');
     if (to_date) addFilter(state, to_date, "pcl.created_at < (?::date + INTERVAL '1 day')");
-    const rows = (await pool.query(`SELECT pcl.id, s.student_number, s.first_name, s.last_name,
+    const rows = (await pool.query(`SELECT s.student_number, s.first_name, s.last_name,
       sg.guardian_name, sg.relationship AS guardian_relationship, pcl.contact_method, pcl.outcome,
       pcl.notes, u.username AS contacted_by, d.department_name, pcl.created_at
       FROM parent_contact_logs pcl JOIN students s ON s.id = pcl.student_id
@@ -44,7 +44,7 @@ const getClearanceReport = async (req, res) => {
     if (student_id) addFilter(state, student_id, 'sc.student_id = ?'); if (status) addFilter(state, status, 'sc.status = ?');
     if (academic_year) addFilter(state, academic_year, 'sc.academic_year = ?'); if (semester) addFilter(state, semester, 'sc.semester = ?');
     const order = sort_by === 'date_asc' ? 'sc.updated_at ASC' : sort_by === 'status' ? 'sc.status, sc.updated_at DESC' : 'sc.updated_at DESC';
-    const rows = (await pool.query(`SELECT sc.id, s.student_number, s.first_name, s.last_name, sc.academic_year,
+    const rows = (await pool.query(`SELECT s.student_number, s.first_name, s.last_name, sc.academic_year,
       sc.semester, sc.status, sc.has_active_violation, sc.has_pending_service, sc.cleared_at, sc.remarks, sc.updated_at
       FROM student_clearance sc JOIN students s ON s.id = sc.student_id WHERE 1=1${state.sql}
       ORDER BY ${order}, sc.id DESC`, state.params)).rows;
@@ -59,7 +59,8 @@ const getGoodStandingReport = async (req, res) => {
     if (!['student_number', 'name'].includes(sort_by)) bad('Unsupported sort_by value');
     const params = student_id ? [student_id] : []; const filter = student_id ? ' AND s.id = $1' : '';
     const rows = (await pool.query(`SELECT s.student_number, s.first_name, s.last_name, s.program, s.year_level, s.section,
-      CASE WHEN COUNT(v.id) = 0 THEN 'GOOD_STANDING' ELSE 'CLEARED' END AS standing, COUNT(v.id)::int AS historical_violations
+      CASE WHEN COUNT(v.id) FILTER (WHERE v.status <> 'INVALID_CANCELLED') = 0 THEN 'GOOD_STANDING' ELSE 'CLEARED' END AS standing,
+      COUNT(v.id) FILTER (WHERE v.status <> 'INVALID_CANCELLED')::int AS historical_violations
       FROM students s LEFT JOIN violations v ON v.student_id = s.id
       WHERE NOT EXISTS (SELECT 1 FROM violations ov WHERE ov.student_id = s.id AND ov.status = 'OPEN')
       AND NOT EXISTS (SELECT 1 FROM community_service_assignments ca WHERE ca.student_id = s.id

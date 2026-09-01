@@ -1,23 +1,30 @@
 const pool = require('../config/database');
 const { assertAllowedFields } = require('../utils/validators');
 
+const REPORT_STATUSES = new Set(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CLEARED', 'ADMIN_CLOSED', 'INVALID_CANCELLED']);
+const bad = (message) => { const error = new Error(message); error.statusCode = 400; throw error; };
+const validateId = (value) => { if (value !== undefined && (!/^\d+$/.test(String(value)) || Number(value) < 1)) bad('student_id must be a positive integer'); };
+const validateDate = (name, value) => { if (value !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) bad(`${name} must use YYYY-MM-DD`); };
+const fail = (res, error, message) => res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : message });
+
 // Violation Report
 const getViolationReport = async (req, res) => {
   try {
+    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by', 'from_date', 'to_date']);
     const { status, student_id, sort_by, from_date, to_date } = req.query;
+    validateId(student_id); validateDate('from_date', from_date); validateDate('to_date', to_date);
+    if (status && !REPORT_STATUSES.has(status)) bad('Unsupported report status');
+    if (sort_by && !['date_desc', 'date_asc', 'status'].includes(sort_by)) bad('Unsupported sort_by value');
+    if (from_date && to_date && from_date > to_date) bad('from_date cannot be after to_date');
 
     let query = `
-      SELECT 
-        v.id,
-        v.student_id,
+      SELECT
         s.first_name,
         s.last_name,
         s.student_number,
         vt.violation_name,
         v.incident_date,
         v.status,
-        v.required_service_hours,
-        v.completed_service_hours,
         v.description
       FROM violations v
       JOIN students s ON v.student_id = s.id
@@ -67,26 +74,26 @@ const getViolationReport = async (req, res) => {
     });
   } catch (error) {
     console.error('Violation report error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to generate violation report'
-    });
+    return fail(res, error, 'Failed to generate violation report');
   }
 };
 
 // Community Service Report
 const getCommunityServiceReport = async (req, res) => {
   try {
+    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by']);
     const { status, student_id, sort_by } = req.query;
+    validateId(student_id);
+    if (status && !REPORT_STATUSES.has(status)) bad('Unsupported report status');
+    if (sort_by && !['hours_asc', 'hours_desc', 'status'].includes(sort_by)) bad('Unsupported sort_by value');
 
     let query = `
-      SELECT 
-        cs.id,
-        cs.student_id,
+      SELECT
         s.first_name,
         s.last_name,
         s.student_number,
-        v.id as violation_id,
+        vt.violation_name,
+        d.department_name,
         cs.required_hours,
         cs.completed_hours,
         cs.remaining_hours,
@@ -96,6 +103,8 @@ const getCommunityServiceReport = async (req, res) => {
       FROM community_service_assignments cs
       JOIN students s ON cs.student_id = s.id
       JOIN violations v ON cs.violation_id = v.id
+      JOIN violation_types vt ON vt.id = v.violation_type_id
+      LEFT JOIN departments d ON d.id = cs.department_id
       WHERE 1=1
     `;
     const params = [];
@@ -126,17 +135,13 @@ const getCommunityServiceReport = async (req, res) => {
       success: true,
       report_type: 'community_service',
       total_records: result.rows.length,
-      total_pending_hours: result.rows.reduce((sum, row) => sum + (row.remaining_hours || 0), 0),
+      total_pending_hours: result.rows.reduce((sum, row) => sum + Number(row.remaining_hours || 0), 0),
       data: result.rows,
       generated_at: new Date().toISOString()
     });
   } catch (error) {
-  console.error('DTR report error:', error);
-  return res.status(500).json({
-    success: false,
-    message: 'Failed to generate DTR report',
-    error: error.message
-  });
+  console.error('Community service report error:', error);
+  return fail(res, error, 'Failed to generate community service report');
 }
 };
 
@@ -152,14 +157,16 @@ const getNonComplianceReport = async (req, res) => {
 
     const query = `
       SELECT 
-        s.id,
         s.first_name,
         s.last_name,
         s.student_number,
         s.program,
         s.year_level,
         COUNT(DISTINCT CASE WHEN v.status = 'OPEN' THEN v.id END) as open_violations,
-        SUM(CASE WHEN v.status = 'OPEN' THEN v.required_service_hours - COALESCE(v.completed_service_hours, 0) ELSE 0 END) as pending_hours,
+        (SELECT COALESCE(SUM(a.remaining_hours), 0)
+         FROM community_service_assignments a
+         WHERE a.student_id = s.id
+           AND a.status IN ('OPEN', 'IN_PROGRESS')) AS pending_hours,
         MAX(v.incident_date) as last_violation_date
       FROM students s
       LEFT JOIN violations v ON s.id = v.student_id

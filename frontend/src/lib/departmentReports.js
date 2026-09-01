@@ -19,7 +19,6 @@ export const departmentReportRows = (type, { dtr, nonCompliance } = {}) => {
   return (Array.isArray(dtr?.data) ? dtr.data : []).map((row) => ({
     student_number: row.student_number,
     student_name: [row.first_name, row.last_name].filter(Boolean).join(' '),
-    assignment_id: row.assignment_id,
     assignment_status: row.assignment_status,
     completed_sessions: row.total_completed_sessions,
     worked_minutes: row.total_worked_minutes,

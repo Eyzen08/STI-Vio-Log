@@ -6,6 +6,7 @@ test('department DTR export selects only scoped operational fields', () => {
   const rows = departmentReportRows('dtr', { dtr: { data: [{ student_number: '02000123456', first_name: 'Ana', last_name: 'Reyes', assignment_id: 7, assignment_status: 'IN_PROGRESS', total_completed_sessions: 2, total_worked_minutes: 90, total_credited_minutes: 80, remaining_hours: 1, latest_attendance_at: '2026-08-28', phone_number: 'private' }] } })
   assert.equal(rows[0].student_name, 'Ana Reyes')
   assert.equal(Object.hasOwn(rows[0], 'phone_number'), false)
+  assert.equal(Object.hasOwn(rows[0], 'assignment_id'), false)
 })
 
 test('department report CSV escapes spreadsheet values safely', () => {
