@@ -3565,12 +3565,16 @@ tbody tr:hover {
     height: 100dvh;
     padding: var(--space-5) var(--space-4);
     transform: translateX(-105%);
+    visibility: hidden;
+    pointer-events: none;
     transition: transform var(--transition-base);
     box-shadow: var(--shadow-lg);
   }
 
   .sidebar.mobile-open {
     transform: translateX(0);
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .sidebar-backdrop {
@@ -3645,5 +3649,87 @@ tbody tr:hover {
 
   .topbar-title {
     align-items: flex-start;
+  }
+}
+
+/* Final responsive and accessibility safeguards */
+.main-panel {
+  overflow-x: hidden;
+}
+
+.topbar-title > div,
+.table-header > div,
+.registration-review-heading > div {
+  min-width: 0;
+}
+
+.topbar h1,
+.table-header h3,
+.registration-review-heading h3,
+.registration-review-heading h4,
+td,
+dd {
+  overflow-wrap: anywhere;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
+@media (min-width: 768px) {
+  .sidebar {
+    visibility: visible;
+    pointer-events: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .main-panel {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .login-card,
+  .user-panel,
+  .table-card,
+  .form-card {
+    padding: var(--space-4);
+  }
+
+  .student-form-grid,
+  .stats-grid,
+  .dashboard-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-summary {
+    overflow-wrap: anywhere;
+  }
+
+  .notification-list > article {
+    padding: var(--space-4);
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .main-panel :where(button, a, input, select, textarea),
+  .sidebar :where(button, a) {
+    min-height: 44px;
+  }
+}
+
+@media (forced-colors: active) {
+  .nav-item.active,
+  .message-conversations > button.active,
+  .notification-list > article.unread {
+    outline: 3px solid Highlight;
+    outline-offset: -3px;
+  }
+
+  .status-badge,
+  .badge,
+  .user-badge,
+  .error-message,
+  .success-message {
+    border: 1px solid CanvasText;
   }
 }

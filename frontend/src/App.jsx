@@ -4119,7 +4119,7 @@ function App() {
         />
       )}
 
-      {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation">
+      {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
         <div className="brand">
           <div className="brand-mark">
             S
