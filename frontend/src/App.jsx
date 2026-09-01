@@ -60,6 +60,7 @@ function App() {
   })
 
   const [routePath, setRoutePath] = useState(() => window.location.pathname)
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [activeView, setActiveView] = useState('Dashboard')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -261,6 +262,15 @@ function App() {
     userRole === 'STUDENT'
 
   const routeResolution = resolveRoute(routePath, userRole)
+
+  useEffect(() => {
+    if (!isMobileNavOpen) return undefined
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setIsMobileNavOpen(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [isMobileNavOpen])
   const updatePendingStudentCount = useCallback((students) => {
     setPendingAccountCounts((current) => ({ ...current, students }))
   }, [])
@@ -4100,7 +4110,16 @@ function App() {
 
   return (
     <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}`}>
-      {isLoggedIn && <aside className="sidebar">
+      {isLoggedIn && isMobileNavOpen && (
+        <button
+          className="sidebar-backdrop"
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={() => setIsMobileNavOpen(false)}
+        />
+      )}
+
+      {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation">
         <div className="brand">
           <div className="brand-mark">
             S
@@ -4112,12 +4131,21 @@ function App() {
             </h2>
 
             <small>
-              Discipline Portal
+              Student Violation and Community Service Management System
             </small>
           </div>
+
+          <button
+            className="sidebar-close"
+            type="button"
+            aria-label="Close navigation menu"
+            onClick={() => setIsMobileNavOpen(false)}
+          >
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
 
-        <nav className="nav">
+        <nav className="nav" aria-label="Primary navigation">
           {navItems.map(
             (item) => (
               <button
@@ -4129,6 +4157,7 @@ function App() {
                 }`}
                 onClick={() => {
                   if (isQrScanning && item.view !== 'QR Scan') stopQrScanner()
+                  setIsMobileNavOpen(false)
                   navigateTo(item.path)
                 }}
                 type="button"
@@ -4157,7 +4186,19 @@ function App() {
 
       <main className="main-panel">
         {isLoggedIn && <header className="topbar">
-          <div>
+          <div className="topbar-title">
+            <button
+              className="mobile-menu-button"
+              type="button"
+              aria-controls="portal-navigation"
+              aria-expanded={isMobileNavOpen}
+              aria-label="Open navigation menu"
+              onClick={() => setIsMobileNavOpen(true)}
+            >
+              <span aria-hidden="true">☰</span>
+            </button>
+
+            <div>
             <p className="eyebrow">
               {isStudent
                 ? 'Student Portal'
@@ -4169,6 +4210,7 @@ function App() {
             <h1>
               {routeResolution.route?.label || 'Portal'}
             </h1>
+            </div>
           </div>
 
           {isLoggedIn && (
