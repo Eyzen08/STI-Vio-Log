@@ -2,6 +2,7 @@ const pool = require("../config/database");
 const { CommunityServiceSessionError, recordTimeIn, recordTimeOut } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
+const { emitAttendanceChange } = require('../services/realtimeEventService');
 
 const validateQrBody = (req) => {
     const allowed = req.user.role === "DEPARTMENT_HEAD"
@@ -51,6 +52,7 @@ const handle = (operation) => async (req, res) => {
         if (!req.body.qr_code || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "qr_code and a valid staff department are required" });
         const { student, assignment } = await findStudentAndAssignment(req.body.qr_code, req.staffDepartmentId);
         const result = await (operation === "time-in" ? recordTimeIn : recordTimeOut)({ assignmentId: assignment.id, expectedStudentId: student.id, departmentId: req.staffDepartmentId, actor: req.user, notes: req.body.notes, condition: req.body.condition, ipAddress: req.ip, writeQrLog: true });
+        await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: `Community service QR ${operation} recorded successfully`, student, studentId: student.id, hours_worked: result.session.worked_minutes == null ? undefined : result.session.worked_minutes / 60, ...result });
     } catch (error) { return respondError(res, error, `record QR community service ${operation}`); }
 };

@@ -648,7 +648,7 @@ PATCH /api/messages/conversations/:id/read
 - Students may open conversations with the Discipline Office and access only their own conversations.
 - Admin and Discipline Office accounts may contact an individual student and reply to student conversations.
 - Department Heads may contact only students assigned to or served by their authenticated department.
-- Initial messaging is text-only with bounded message length; attachments and real-time WebSockets are deferred.
+- Messaging remains text-only with bounded message length. Authenticated Socket.IO refresh events now update open conversations and unread badges immediately, while REST remains authoritative and periodic polling remains the recovery fallback.
 - Messages are append-only and auditable, with no silent edit or delete endpoint.
 - Unread counts appear in the relevant role navigation.
 - Passwords, JWTs, Google credentials, and other authentication secrets must never be accepted or logged as message metadata.

@@ -4,7 +4,7 @@ import { filterDepartmentService, formatLiveServiceTime, liveServiceSeconds, ser
 
 const emptyTimeOut = { condition: '', notes: '' }
 
-function DepartmentCommunityService({ assignments, loading, error, onOpenScanner, token, onAttendanceUpdated }) {
+function DepartmentCommunityService({ assignments, loading, error, onOpenScanner, token, onAttendanceUpdated, realtimeSocket }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('ALL')
   const [activeSessions, setActiveSessions] = useState([])
@@ -33,10 +33,12 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
 
   useEffect(() => {
     loadActiveSessions()
+    const handleChange = () => { loadActiveSessions({ quiet: true }); onAttendanceUpdated?.() }
+    realtimeSocket?.on('community-service:changed', handleChange)
     const refresh = window.setInterval(() => loadActiveSessions({ quiet: true }), 15000)
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => { window.clearInterval(refresh); window.clearInterval(clock) }
-  }, [loadActiveSessions])
+    return () => { window.clearInterval(refresh); window.clearInterval(clock); realtimeSocket?.off('community-service:changed', handleChange) }
+  }, [loadActiveSessions, onAttendanceUpdated, realtimeSocket])
 
   const updateTimeOut = (sessionId, field, value) => setTimeOutForms((current) => ({
     ...current,

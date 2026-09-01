@@ -37,6 +37,7 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 - [ ] Time-In succeeds once; a repeated Time-In is rejected and does not create a duplicate active session.
 - [ ] Department B tries the same QR and assignment; the action is rejected without revealing private assignment details.
 - [ ] Department A opens Service Results and confirms the active student and live elapsed timer are visible.
+- [ ] With Service Results open on a second device, record Time-In/Time-Out and confirm the list refreshes immediately; briefly disable networking and confirm polling recovers after reconnection.
 - [ ] Department A records Time-Out and a service condition from the live monitor or QR scanner.
 - [ ] Confirm worked minutes are non-negative, derived from server timestamps, and immediately credited up to the remaining requirement without Discipline Office approval.
 - [ ] Test camera denial and manual QR entry; both must show usable instructions without a blank screen.
@@ -44,6 +45,7 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 ## 5. Supporting workflows
 
 - [ ] Student and Discipline Office can open the same conversation, exchange replies, and clear unread badges by reading it.
+- [ ] Keep the conversation open on both devices and confirm new replies and unread badges update without manually refreshing the page.
 - [ ] Department Accounts cannot open student messaging or guardian contact information.
 - [ ] Discipline Office records a manual parent/guardian contact attempt and it appears in the append-only log.
 - [ ] Notifications appear for the intended student and do not expose another student's information.

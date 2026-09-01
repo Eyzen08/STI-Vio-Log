@@ -1,5 +1,18 @@
 const pool = require('../config/database');
 const { assertAllowedFields, isPositiveId } = require('../utils/validators');
+const { emitToRole, emitToUser } = require('../realtime');
+
+const emitMessageChange = async (conversation) => {
+  try {
+    const student = (await pool.query('SELECT user_id FROM students WHERE id=$1', [conversation.student_id])).rows[0];
+    const payload = { conversation_id: Number(conversation.id) };
+    if (student?.user_id) emitToUser(student.user_id, 'messages:changed', payload);
+    emitToRole('ADMIN', 'messages:changed', payload);
+    emitToRole('DISCIPLINE_OFFICE', 'messages:changed', payload);
+  } catch (error) {
+    console.error('Realtime message notification failed:', error.message);
+  }
+};
 
 const fail = (res, error) => res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : 'Messaging request failed' });
 const bad = (message) => { const error = new Error(message); error.statusCode = 400; throw error; };
@@ -65,6 +78,7 @@ const createConversation = async (req, res) => {
     await client.query(`INSERT INTO conversation_messages (conversation_id, sender_user_id, message_text) VALUES ($1,$2,$3)`, [conversation.id, req.user.id, message]);
     await client.query(`INSERT INTO conversation_reads (conversation_id,user_id) VALUES ($1,$2)`, [conversation.id, req.user.id]);
     await client.query('COMMIT');
+    await emitMessageChange(conversation);
     return res.status(201).json({ success: true, conversation });
   } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} return fail(res, error); } finally { client.release(); }
 };
@@ -85,6 +99,7 @@ const sendMessage = async (req, res) => {
     if (conversation.status !== 'OPEN') { const error = new Error('Conversation is closed'); error.statusCode = 409; throw error; }
     const message = (await pool.query(`INSERT INTO conversation_messages (conversation_id,sender_user_id,message_text) VALUES ($1,$2,$3) RETURNING id,message_text,created_at`, [conversation.id, req.user.id, text])).rows[0];
     await pool.query('UPDATE message_conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=$1', [conversation.id]);
+    await emitMessageChange(conversation);
     return res.status(201).json({ success: true, message });
   } catch (error) { return fail(res, error); }
 };

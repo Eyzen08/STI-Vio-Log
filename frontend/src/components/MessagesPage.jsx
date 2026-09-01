@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { unreadMessageCount } from '../lib/messageUnread.js'
 
-function MessagesPage({token,role,students=[],onUnreadChange}){
+function MessagesPage({token,role,students=[],onUnreadChange,realtimeSocket}){
  const [conversations,setConversations]=useState([]),[selected,setSelected]=useState(null),[messages,setMessages]=useState([])
  const [form,setForm]=useState({student_id:'',subject:'',message:''}),[reply,setReply]=useState(''),[error,setError]=useState('')
  const [threadError,setThreadError]=useState(''),[threadLoading,setThreadLoading]=useState(false)
+ const selectedRef=useRef(null)
  const isStudent=role==='STUDENT',headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'}
  const load=useCallback(async()=>{const response=await fetch(`${API_URL}/api/messages/conversations`,{headers:{Authorization:`Bearer ${token}`}}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'Unable to load conversations.');const items=data.conversations||[];setConversations(items);onUnreadChange?.(unreadMessageCount(items))},[token,onUnreadChange])
  useEffect(()=>{load().catch(e=>setError(e.message))},[load])
+ useEffect(()=>{selectedRef.current=selected},[selected])
+ const refreshThread=useCallback(async conversation=>{const response=await fetch(`${API_URL}/api/messages/conversations/${conversation.id}`,{headers:{Authorization:`Bearer ${token}`}}),data=await response.json().catch(()=>({}));if(response.ok){setSelected(data.conversation);setMessages(data.messages||[])}},[token])
+ useEffect(()=>{if(!realtimeSocket)return undefined;const refresh=()=>{load().catch(e=>setError(e.message));if(selectedRef.current)refreshThread(selectedRef.current).catch(e=>setThreadError(e.message))};realtimeSocket.on('messages:changed',refresh);return()=>realtimeSocket.off('messages:changed',refresh)},[load,realtimeSocket,refreshThread])
  const open=async conversation=>{setError('');setThreadError('');setSelected(conversation);setMessages([]);setThreadLoading(true);try{const response=await fetch(`${API_URL}/api/messages/conversations/${conversation.id}`,{headers}),data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||'Unable to open conversation.');setSelected(data.conversation);setMessages(data.messages||[]);fetch(`${API_URL}/api/messages/conversations/${conversation.id}/read`,{method:'PATCH',headers,body:'{}'}).then(readResponse=>{if(readResponse.ok)load().catch(()=>{})}).catch(()=>{})}catch(openError){setThreadError(openError.message)}finally{setThreadLoading(false)}}
  const create=async event=>{event.preventDefault();setError('');const body=isStudent?{subject:form.subject,message:form.message}:form,response=await fetch(`${API_URL}/api/messages/conversations`,{method:'POST',headers,body:JSON.stringify(body)}),data=await response.json().catch(()=>({}));if(!response.ok)return setError(data.message||'Unable to create conversation.');setForm({student_id:'',subject:'',message:''});await load();await open(data.conversation)}
  const send=async event=>{event.preventDefault();setError('');const response=await fetch(`${API_URL}/api/messages/conversations/${selected.id}/messages`,{method:'POST',headers,body:JSON.stringify({message:reply})}),data=await response.json().catch(()=>({}));if(!response.ok)return setThreadError(data.message||'Unable to send message.');setReply('');await open(selected)}

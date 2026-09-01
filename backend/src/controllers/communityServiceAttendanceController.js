@@ -2,6 +2,7 @@ const pool = require("../config/database");
 const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
+const { emitAttendanceChange } = require('../services/realtimeEventService');
 
 const sendError = (res, error, operation) => {
     console.error(`${operation} error:`, error);
@@ -18,6 +19,7 @@ const communityServiceTimeIn = async (req, res) => {
         const { assignment_id, student_id, notes } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
         const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, ipAddress: req.ip });
+        await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-in recorded successfully", ...result });
     } catch (error) { return sendError(res, error, "record community service time-in"); }
 };
@@ -31,6 +33,7 @@ const communityServiceTimeOut = async (req, res) => {
         const { assignment_id, student_id, notes, condition } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
         const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, condition, ipAddress: req.ip });
+        await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
     } catch (error) { return sendError(res, error, "record community service time-out"); }
 };

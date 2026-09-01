@@ -8,6 +8,15 @@ All protected endpoints use `Authorization: Bearer <JWT>`. Successful responses 
 
 Standard statuses are 400 validation/business rules, 401 authentication, 403 authorization, 404 missing or non-visible resources, 409 concurrency/database conflicts, and 500 unexpected failures. Student self-service never accepts an ownership identifier; it derives ownership from the authenticated account. Private resources outside that ownership are treated as not visible (404) unless access is rejected at the role boundary (403).
 
+## Authenticated real-time refresh events
+
+Socket.IO connects to the API origin using the current JWT in `handshake.auth.token`. The server revalidates the active account, session version, forced-password-change state, role, and Department Account assignment before joining private rooms.
+
+- `messages:changed` is sent only to the affected student account and authorized Admin/Discipline Office role rooms.
+- `community-service:changed` is sent only to the assigned department, affected student, and Admin/Discipline Office role rooms.
+- Event payloads contain refresh identifiers only. Clients retrieve authoritative records through the existing REST endpoints.
+- Existing periodic REST polling remains enabled as a reconnect and service-degradation fallback.
+
 ## Canonical domain rules
 
 - Violation statuses: `OPEN`, `COMPLETE`, `CLEAR`, `INVALID_CANCEL`.

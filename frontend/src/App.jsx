@@ -38,6 +38,7 @@ import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
+import { connectRealtime } from './lib/realtime.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -89,6 +90,24 @@ function App() {
   const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const [realtimeSocket, setRealtimeSocket] = useState(null)
+
+  useEffect(() => {
+    if (!token || user?.password_change_required) {
+      setRealtimeSocket(null)
+      return undefined
+    }
+    const socket = connectRealtime(token)
+    setRealtimeSocket(socket)
+    return () => { socket.disconnect() }
+  }, [token, user?.password_change_required])
+
+  useEffect(() => {
+    if (!realtimeSocket) return undefined
+    const refreshServiceData = () => setDashboardRefreshKey((current) => current + 1)
+    realtimeSocket.on('community-service:changed', refreshServiceData)
+    return () => realtimeSocket.off('community-service:changed', refreshServiceData)
+  }, [realtimeSocket])
 
   const markNotificationRead = async (notificationId) => {
     setNotificationActionError('')
@@ -265,9 +284,11 @@ function App() {
       }
     }
     refresh()
+    const handleMessageChange = () => refresh()
+    realtimeSocket?.on('messages:changed', handleMessageChange)
     const interval = window.setInterval(refresh, 30000)
-    return () => { controller.abort(); window.clearInterval(interval) }
-  }, [isDepartmentHead, isLoggedIn, token])
+    return () => { controller.abort(); window.clearInterval(interval); realtimeSocket?.off('messages:changed', handleMessageChange) }
+  }, [isDepartmentHead, isLoggedIn, token, realtimeSocket])
 
   useEffect(() => {
     if (!token || !isAdmin) {
@@ -1758,7 +1779,7 @@ function App() {
     }
 
     if (activeView === 'Messages') {
-      return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} />
+      return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
     }
 
     if (user?.password_change_required) {
@@ -2069,6 +2090,7 @@ function App() {
           onOpenScanner={() => navigateTo('/department/qr-scan')}
           token={token}
           onAttendanceUpdated={() => setDashboardRefreshKey((current) => current + 1)}
+          realtimeSocket={realtimeSocket}
         />
       )
     }

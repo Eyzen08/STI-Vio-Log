@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -27,6 +28,7 @@ const messageRoutes = require('./routes/messageRoutes');
 const pool = require("./config/database");
 const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
+const { initializeRealtime } = require('./realtime');
 
 const {
   authenticateToken,
@@ -398,7 +400,9 @@ app.use(errorHandler);
 // =====================================================
 
 if (require.main === module) {
-app.listen(
+const httpServer = http.createServer(app);
+initializeRealtime(httpServer, allowedOrigins);
+httpServer.listen(
   PORT,
   "0.0.0.0",
   () => {
