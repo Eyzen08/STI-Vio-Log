@@ -2825,6 +2825,171 @@ th {
   }
 }
 
+/* Discipline Office and administration presentation */
+.registration-review-page {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.department-welcome {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.department-welcome::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  height: 5px;
+  background: var(--color-accent);
+  content: '';
+}
+
+.department-welcome .eyebrow,
+.department-welcome p {
+  color: #d8e9f8;
+}
+
+.department-welcome h2 {
+  color: white;
+  letter-spacing: -0.025em;
+}
+
+.department-welcome .status-badge {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
+.registration-review-list > article {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+.registration-review-list > article:hover {
+  border-color: #aec9e2;
+  box-shadow: var(--shadow-sm);
+}
+
+.registration-review-heading h3,
+.registration-review-heading h4 {
+  color: var(--color-text);
+}
+
+.registration-review-heading p,
+.registration-review-list dt,
+.registration-review-list small {
+  color: var(--color-text-secondary);
+}
+
+.registration-review-list dd {
+  color: var(--color-text);
+}
+
+.registration-review-actions {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border);
+}
+
+.registration-pending {
+  border-left: 5px solid var(--color-warning);
+  background: #fffbeb;
+}
+
+.registration-pending code {
+  display: inline-block;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid #e7d393;
+  border-radius: var(--radius-sm);
+  background: white;
+  color: var(--color-primary-dark);
+  font-size: var(--text-base);
+  overflow-wrap: anywhere;
+}
+
+.form-guidance {
+  padding: var(--space-3) var(--space-4);
+  border-left: 4px solid var(--color-info);
+  border-radius: var(--radius-sm);
+  background: #eef7ff;
+  color: #274c6c;
+  line-height: 1.55;
+}
+
+.department-stats .stat-card {
+  border-top: 3px solid var(--color-secondary);
+}
+
+.qr-panel {
+  border-top: 4px solid var(--color-accent);
+}
+
+.qr-camera-section,
+.scanner-confirmation,
+.qr-result {
+  border-color: var(--color-border);
+  background: #f8fbfe;
+}
+
+.guardian-contact-panel {
+  border-top: 4px solid var(--color-secondary);
+}
+
+.guardian-contact-grid > article {
+  border-color: var(--color-border);
+  background: #f8fbfe;
+}
+
+.guardian-contact-actions a {
+  min-height: 40px;
+  border-color: var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.guardian-contact-actions a:hover {
+  border-color: var(--color-secondary);
+  background: #edf6ff;
+}
+
+.table-actions {
+  align-items: center;
+}
+
+.table-actions button {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+@media (max-width: 767px) {
+  .department-welcome {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding: var(--space-5);
+  }
+
+  .registration-review-list dl,
+  .guardian-contact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .table-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .table-actions button {
+    width: 100%;
+  }
+}
+
 /* Student portal presentation */
 .student-dashboard,
 .student-qr-page,
