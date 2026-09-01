@@ -2825,6 +2825,213 @@ th {
   }
 }
 
+/* Student portal presentation */
+.student-dashboard,
+.student-qr-page,
+.violations-page,
+.service-page,
+.clearance-page,
+.messages-page {
+  max-width: 1440px;
+  margin-inline: auto;
+}
+
+.dashboard-welcome,
+.notifications-hero,
+.clearance-hero,
+.page-intro,
+.profile-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-welcome {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.dashboard-welcome::after,
+.notifications-hero::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 96px;
+  height: 5px;
+  background: var(--color-accent);
+  content: '';
+}
+
+.student-number,
+.record-count,
+.profile-readonly-badge {
+  border-radius: var(--radius-pill);
+  font-weight: 700;
+}
+
+.student-stats .stat-card,
+.service-stats .stat-card {
+  min-height: 126px;
+  justify-content: space-between;
+}
+
+.stat-card-featured {
+  border-top-color: var(--color-accent);
+}
+
+.quick-actions button {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  box-shadow: none;
+}
+
+.quick-actions button:hover {
+  border-color: var(--color-secondary);
+  background: #f3f9ff;
+}
+
+.profile-card,
+.qr-display-card,
+.qr-guidance,
+.violation-card,
+.clearance-requirements,
+.clearance-certificate-actions {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-md);
+}
+
+.profile-hero {
+  background: #eef6fd;
+  border-bottom-color: var(--color-border);
+}
+
+.profile-avatar {
+  background: var(--color-primary);
+  box-shadow: inset 0 -4px 0 var(--color-accent);
+}
+
+.profile-section + .profile-section {
+  border-top-color: var(--color-border);
+}
+
+.profile-field dt,
+.service-hours-grid dt,
+.clearance-record-list dt {
+  color: var(--color-text-secondary);
+}
+
+.qr-page-intro,
+.page-intro {
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.student-qr-frame {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 6px #edf5fd;
+}
+
+.qr-security-note,
+.scope-note {
+  border-left-color: var(--color-accent);
+  background: #fffbed;
+  color: #5f511c;
+}
+
+.violation-card {
+  overflow: hidden;
+}
+
+.violation-summary {
+  min-height: 72px;
+}
+
+.violation-summary:hover {
+  background: #f7fbff;
+}
+
+.violation-toggle {
+  color: var(--color-primary);
+}
+
+.violation-details,
+.lifecycle-section {
+  border-color: var(--color-border);
+}
+
+.timeline-marker,
+.progress-track > span {
+  background: var(--color-secondary);
+}
+
+.assignment-list > article,
+.session-list > article,
+.notification-list > article,
+.clearance-record-list > article {
+  border-bottom-color: var(--color-border);
+}
+
+.notifications-hero {
+  background: var(--color-primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+.notification-list > article.unread {
+  box-shadow: inset 4px 0 0 var(--color-secondary);
+}
+
+.clearance-hero {
+  box-shadow: var(--shadow-md);
+}
+
+.clearance-cleared {
+  border-color: #9bd4b4;
+  background: #f0faf4;
+}
+
+.clearance-not-eligible {
+  border-color: #efc0c4;
+  background: #fff5f5;
+}
+
+.message-conversations > button {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.message-conversations > button.active {
+  border-color: var(--color-secondary);
+  background: #edf6ff;
+  box-shadow: inset 4px 0 0 var(--color-accent);
+}
+
+.message-thread article {
+  border-color: var(--color-border);
+  background: #f4f7fb;
+}
+
+.message-thread article.mine {
+  border-color: #bad7f0;
+  background: #edf6ff;
+}
+
+@media (max-width: 767px) {
+  .dashboard-welcome,
+  .page-intro,
+  .profile-hero,
+  .notifications-hero,
+  .clearance-hero {
+    padding: var(--space-5);
+  }
+
+  .student-stats .stat-card,
+  .service-stats .stat-card {
+    min-height: 108px;
+  }
+}
+
 /* Shared interface primitives */
 .main-panel button:not(.text-button):not(.mobile-menu-button) {
   min-height: 42px;
