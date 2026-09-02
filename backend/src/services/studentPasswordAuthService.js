@@ -3,6 +3,7 @@ const crypto = require('node:crypto');
 const { ApiError } = require('../utils/api');
 const { passwordIsStrong } = require('./passwordPolicy');
 const { hashSecret } = require('./otpService');
+const { isValidPhone } = require('../utils/validators');
 
 const STUDENT_NUMBER_PATTERN = /^\d{11}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,15 +19,19 @@ const splitName = (fullName) => {
 const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (value) => bcrypt.hash(value, 12), comparePassword = bcrypt.compare, now = () => new Date(), randomBytes = crypto.randomBytes } = {}) => {
   if (!pool?.connect || !otpService) throw new TypeError('Student authentication dependencies are required');
 
-  const validateRegistration = ({ fullName, studentNumber, email, password, confirmPassword }) => {
+  const validateRegistration = ({ firstName, middleName, lastName, suffix, studentNumber, email, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber, password, confirmPassword }) => {
     const values = {
-      fullName: clean(fullName, 250),
+      firstName: clean(firstName, 150), middleName: clean(middleName, 150), lastName: clean(lastName, 150), suffix: clean(suffix, 50),
       studentNumber: clean(studentNumber, 50),
-      email: clean(email, 255).toLowerCase()
+      email: clean(email, 255).toLowerCase(), phoneNumber: clean(phoneNumber, 30), program: clean(program, 150), section: clean(section, 100),
+      yearLevel: Number(yearLevel), guardianName: clean(guardianName, 200), guardianRelationship: clean(guardianRelationship, 100), guardianPhoneNumber: clean(guardianPhoneNumber, 30)
     };
-    if (!values.fullName || !values.studentNumber || !values.email || !password || !confirmPassword) throw new ApiError(400, 'VALIDATION_ERROR', 'All registration fields are required');
+    values.fullName = [values.firstName, values.middleName, values.lastName, values.suffix].filter(Boolean).join(' ');
+    if (![values.firstName, values.lastName, values.studentNumber, values.email, values.phoneNumber, values.program, values.section, values.guardianName, values.guardianRelationship, values.guardianPhoneNumber, password, confirmPassword].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all required student and guardian information');
     if (!STUDENT_NUMBER_PATTERN.test(values.studentNumber)) throw new ApiError(400, 'INVALID_STUDENT_NUMBER', 'Student Number must contain exactly 11 digits');
     if (!EMAIL_PATTERN.test(values.email)) throw new ApiError(400, 'INVALID_EMAIL', 'Enter a valid email address');
+    if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid student and guardian phone numbers');
+    if (!Number.isInteger(values.yearLevel) || values.yearLevel < 1 || values.yearLevel > 6) throw new ApiError(400, 'INVALID_YEAR_LEVEL', 'Select a valid year level');
     if (!passwordIsStrong(password)) throw new ApiError(400, 'WEAK_PASSWORD', 'Password must have at least 8 characters, one uppercase letter, one number, and one symbol');
     if (password !== confirmPassword) throw new ApiError(400, 'PASSWORD_MISMATCH', 'Password confirmation does not match');
     return values;
@@ -55,9 +60,9 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       }
       await client.query("UPDATE student_account_registrations SET status='CANCELLED',updated_at=CURRENT_TIMESTAMP WHERE (student_number=$1 OR LOWER(email)=LOWER($2)) AND status='PENDING'", [values.studentNumber, values.email]);
       registration = (await client.query(
-        `INSERT INTO student_account_registrations(student_number,full_name,email,password_hash)
-         VALUES($1,$2,$3,$4) RETURNING id,email`,
-        [values.studentNumber, values.fullName, values.email, passwordHash]
+        `INSERT INTO student_account_registrations(student_number,full_name,email,password_hash,first_name,middle_name,last_name,suffix,phone_number,program,section,year_level,guardian_name,guardian_relationship,guardian_phone_number)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id,email`,
+        [values.studentNumber, values.fullName, values.email, passwordHash, values.firstName, values.middleName || null, values.lastName, values.suffix || null, values.phoneNumber, values.program, values.section, values.yearLevel, values.guardianName, values.guardianRelationship, values.guardianPhoneNumber]
       )).rows[0];
       await client.query(
         `INSERT INTO audit_logs(action,table_name,record_id,description)
@@ -97,12 +102,17 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
          VALUES($1,$2,'STUDENT',TRUE,FALSE,TRUE) RETURNING id`,
         [registration.student_number, registration.password_hash]
       )).rows[0];
-      const names = splitName(registration.full_name);
+      const names = registration.first_name && registration.last_name ? { firstName: registration.first_name, lastName: registration.last_name } : splitName(registration.full_name);
       const student = (await client.query(
-        `INSERT INTO students(user_id,student_number,first_name,last_name,email,qr_code)
-         VALUES($1,$2,$3,$4,$5,$6) RETURNING id`,
-        [user.id, registration.student_number, names.firstName, names.lastName, registration.email, `STI-${crypto.randomUUID()}`]
+        `INSERT INTO students(user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code)
+         VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+        [user.id, registration.student_number, names.firstName, registration.middle_name || null, names.lastName, registration.suffix || null, registration.email, registration.phone_number || null, registration.program || null, registration.section || null, registration.year_level || null, `STI-${crypto.randomUUID()}`]
       )).rows[0];
+      if (registration.guardian_name && registration.guardian_phone_number) await client.query(
+        `INSERT INTO student_guardians(student_id,guardian_name,relationship,phone_number,is_primary)
+         VALUES($1,$2,$3,$4,TRUE)`,
+        [student.id, registration.guardian_name, registration.guardian_relationship || null, registration.guardian_phone_number]
+      );
       await client.query("UPDATE student_account_registrations SET status='VERIFIED',verified_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1", [registration.id]);
       await client.query(
         `INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)

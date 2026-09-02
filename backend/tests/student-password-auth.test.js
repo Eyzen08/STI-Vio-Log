@@ -4,6 +4,7 @@ const { passwordIsStrong, passwordRequirements } = require('../src/services/pass
 const { secureOtp, hashSecret, createOtpService } = require('../src/services/otpService');
 const { STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, normalizeName, splitName } = require('../src/services/studentPasswordAuthService');
 const { createStudentPasswordAuthService } = require('../src/services/studentPasswordAuthService');
+const { createStudentPasswordAuthController } = require('../src/controllers/studentPasswordAuthController');
 
 test('student number and email validation follow the registration contract', () => {
   assert.equal(STUDENT_NUMBER_PATTERN.test('02000123456'), true);
@@ -69,6 +70,16 @@ test('correct OTP is consumed exactly once',async()=>{
 test('invalid registrations are rejected before any database mutation',async()=>{
   const pool={connect:async()=>{throw new Error('database must not be reached')}};
   const service=createStudentPasswordAuthService({pool,otpService:{issue:async()=>{}}});
-  const base={fullName:'Jose Reyes',studentNumber:'02000123456',email:'student@example.test',password:'Password@123',confirmPassword:'Password@123'};
-  for(const override of [{studentNumber:'123'},{email:'bad-email'},{password:'weak',confirmPassword:'weak'},{confirmPassword:'Different@123'}, {fullName:''}])await assert.rejects(service.register({...base,...override}));
+  const base={firstName:'Jose',middleName:'Pedro',lastName:'Reyes',suffix:'',studentNumber:'02000123456',email:'student@example.test',phoneNumber:'09171234567',program:'BSIT',section:'A103',yearLevel:2,guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567',password:'Password@123',confirmPassword:'Password@123'};
+  for(const override of [{studentNumber:'123'},{email:'bad-email'},{phoneNumber:'12'},{yearLevel:0},{guardianName:''},{password:'weak',confirmPassword:'weak'},{confirmPassword:'Different@123'}, {firstName:''},{lastName:''}])await assert.rejects(service.register({...base,...override}));
+});
+
+test('registration controller maps complete student and guardian information only',async()=>{
+  let received;
+  const controller=createStudentPasswordAuthController({service:{async register(input){received=input;return{registration_id:7,email:input.email}}}});
+  const body={full_name:'Jose Pedro Reyes',first_name:'Jose',middle_name:'Pedro',last_name:'Reyes',suffix:'',student_number:'02000123456',email:'student@example.test',phone_number:'09171234567',program:'BSIT',section:'A103',year_level:2,guardian_name:'Maria Reyes',guardian_relationship:'Mother',guardian_phone_number:'09181234567',password:'Password@123',confirm_password:'Password@123'};
+  const response={statusCode:0,payload:null,status(code){this.statusCode=code;return this},json(value){this.payload=value;return this}};
+  await controller.register({body},response);
+  assert.equal(response.statusCode,202);
+  assert.deepEqual(received,{fullName:body.full_name,firstName:body.first_name,middleName:body.middle_name,lastName:body.last_name,suffix:body.suffix,studentNumber:body.student_number,email:body.email,phoneNumber:body.phone_number,program:body.program,section:body.section,yearLevel:body.year_level,guardianName:body.guardian_name,guardianRelationship:body.guardian_relationship,guardianPhoneNumber:body.guardian_phone_number,password:body.password,confirmPassword:body.confirm_password});
 });

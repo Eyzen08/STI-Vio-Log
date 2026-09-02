@@ -33,6 +33,7 @@ import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
+import stiVioLogLogo from './assets/sti-vio-log-logo.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
@@ -4129,19 +4130,11 @@ function App() {
 
       {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
         <div className="brand">
-          <div className="brand-mark">
-            S
-          </div>
-
-          <div>
-            <h2>
-              STI Vio-Log
-            </h2>
-
-            <small>
-              Student Violation and Community Service Management System
-            </small>
-          </div>
+          <img
+            className="brand-logo"
+            src={stiVioLogLogo}
+            alt="STI Vio-Log Discipline Office Portal"
+          />
 
           <button
             className="sidebar-close"
