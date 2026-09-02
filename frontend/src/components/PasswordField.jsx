@@ -1,9 +1,9 @@
 import { useState } from 'react'
 
-export default function PasswordField({ label, id, value, onChange, disabled, autoComplete='new-password', required=true, autoFocus=false }) {
+export default function PasswordField({ label, id, value, onChange, disabled, placeholder='', autoComplete='new-password', required=true, autoFocus=false }) {
   const [visible, setVisible] = useState(false)
   return <label htmlFor={id}>{label}<span className="password-input-wrap">
-    <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange} disabled={disabled}
+    <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder}
       autoComplete={autoComplete} required={required} autoFocus={autoFocus} minLength="8" maxLength="128" />
     <button type="button" className="password-visibility" onClick={() => setVisible((current) => !current)}
       aria-label={visible ? 'Hide password' : 'Show password'} aria-pressed={visible} disabled={disabled}>

@@ -11,6 +11,7 @@ import DepartmentReports from './components/DepartmentReports.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 import StudentAccountActions from './components/StudentAccountActions.jsx'
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
+import Modal from './components/Modal.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import StudentDashboard from './components/StudentDashboard.jsx'
 import StudentCommunityService from './components/StudentCommunityService.jsx'
@@ -2487,11 +2488,12 @@ function App() {
             )}
           </section>
 
-          {guardianContactStudent && <GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} />}
+          {guardianContactStudent && <Modal title="Guardian contact" wide onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
 
           {reviewedStudent && reviewedCondition && (
-            <section className="table-card">
-              <div className="table-header"><div><h3>{reviewedStudent.student_number} - {reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div><button type="button" className="secondary-button" onClick={()=>setReviewedStudent(null)}>Close</button></div>
+            <Modal title={`Student condition — ${reviewedStudent.student_number}`} wide onClose={()=>setReviewedStudent(null)}>
+            <section className="table-card modal-content-card">
+              <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{Number(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours).toFixed(2)} hrs</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
               {reviewedStudentError&&<p className="error-message" role="alert">{reviewedStudentError}</p>}
@@ -2499,6 +2501,7 @@ function App() {
               {reviewedStudentHasMore&&<button type="button" className="secondary-button" disabled={reviewedStudentLoading} onClick={()=>loadReviewedStudentHistory(reviewedStudent,reviewedStudentPage+1,true)}>{reviewedStudentLoading?'Loading...':'Load older violations'}</button>}
               <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
             </section>
+            </Modal>
           )}
         </>
       )

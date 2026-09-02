@@ -3132,7 +3132,63 @@ th {
   padding: 8px 12px;
 }
 
+.app-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: rgba(7, 28, 53, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.app-modal {
+  width: min(680px, 100%);
+  max-height: calc(100dvh - 40px);
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: 0 24px 70px rgba(7, 28, 53, 0.3);
+}
+
+.app-modal--wide { width: min(1080px, 100%); }
+
+.app-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.app-modal-header h2 { margin: 0; font-size: var(--text-xl); }
+
+.app-modal-close {
+  flex: 0 0 44px;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.app-modal-body { padding: var(--space-5); }
+.app-modal-body .modal-content-card,
+.app-modal-body .guardian-contact-panel { margin: 0; box-shadow: none; }
+
 @media (max-width: 767px) {
+  .app-modal-backdrop { align-items: end; padding: 0; }
+  .app-modal { width: 100%; max-height: 92dvh; border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+  .app-modal-header, .app-modal-body { padding: var(--space-4); }
+
   .department-welcome {
     align-items: flex-start;
     flex-direction: column;
@@ -3745,3 +3801,253 @@ a {
 .google-access-details { margin-top: 1rem; border-top: 1px solid var(--border, #d4deeb); padding-top: 1rem; }
 .google-access-details summary { cursor: pointer; font-weight: 700; color: var(--primary, #075dab); }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* STI Global City authentication experience */
+.auth-shell .main-panel {
+  min-height: 100vh;
+  padding: 0;
+  place-items: stretch;
+}
+
+.login-page {
+  width: 100%;
+  min-height: 100vh;
+  grid-template-columns: minmax(520px, 1.08fr) minmax(480px, .92fr);
+  gap: 0;
+  align-items: stretch;
+}
+
+.login-intro {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100vh;
+  padding: clamp(32px, 4.2vw, 68px);
+  overflow: hidden;
+  background-position: center;
+  background-size: cover;
+  color: white;
+}
+
+.login-intro::after {
+  content: '';
+  position: absolute;
+  inset: auto auto 0 0;
+  z-index: -1;
+  width: 180px;
+  height: 180px;
+  background: linear-gradient(45deg, #ffd319 0 32%, #0067c8 32% 55%, transparent 55%);
+  clip-path: polygon(0 28%, 72% 100%, 0 100%);
+}
+
+.login-brand-mark {
+  width: clamp(120px, 10vw, 158px);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 12px 30px rgba(0,20,60,.24);
+}
+
+.login-brand-mark img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.login-brand-mark span {
+  display: block;
+  padding: 7px 8px;
+  background: #006bb6;
+  color: white;
+  font-size: clamp(.65rem, .8vw, .8rem);
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-align: center;
+}
+
+.login-intro-content {
+  max-width: 760px;
+  margin-block: clamp(30px, 6vh, 70px);
+}
+
+.login-intro .login-kicker {
+  margin-bottom: 22px;
+  color: #ffdc24;
+  font-size: clamp(.75rem, 1vw, .98rem);
+}
+
+.login-intro h2 {
+  max-width: 780px;
+  margin: 0 0 26px;
+  color: white;
+  font-size: clamp(2.25rem, 3.45vw, 4rem);
+  line-height: 1.08;
+  letter-spacing: -.035em;
+  text-shadow: 0 4px 18px rgba(0,25,70,.35);
+}
+
+.login-office-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #ffdb20;
+  font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+}
+
+.login-office-title svg,
+.auth-card .badge svg,
+.auth-role-note svg {
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+}
+
+.login-intro-content > p {
+  max-width: 670px;
+  margin: 12px 0 0 38px;
+  color: #f1f7ff;
+  font-size: clamp(.95rem, 1.25vw, 1.12rem);
+  line-height: 1.6;
+}
+
+.login-intro .login-assurance {
+  position: relative;
+  margin: 0 0 4px;
+  padding-bottom: 20px;
+}
+
+.login-intro .login-assurance span {
+  border-color: rgba(255,255,255,.45);
+  background: rgba(2,51,119,.58);
+  color: white;
+  backdrop-filter: blur(6px);
+}
+
+.login-form-panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: clamp(28px, 5vw, 72px);
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.92), rgba(233,244,255,.86)),
+    repeating-linear-gradient(135deg, transparent 0 34px, rgba(19,101,194,.08) 35px 36px);
+}
+
+.login-form-panel::before {
+  content: '';
+  position: absolute;
+  top: 13%;
+  right: 5%;
+  width: 130px;
+  height: 130px;
+  opacity: .25;
+  background-image: radial-gradient(#1474d4 1.5px, transparent 1.5px);
+  background-size: 13px 13px;
+}
+
+.auth-card.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  padding: clamp(28px, 3.4vw, 46px);
+  border-radius: 24px;
+  box-shadow: 0 28px 72px rgba(16,50,98,.16);
+}
+
+.auth-card .auth-card-header {
+  justify-content: center;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.auth-card .badge {
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid #c9dcf4;
+  color: #0759c7;
+}
+
+.auth-card .badge svg { width: 21px; height: 21px; }
+.auth-card-header h3 { margin: 18px 0 7px; font-size: clamp(1.8rem, 2.3vw, 2.25rem); }
+.auth-card-header p { font-size: .98rem; }
+
+.auth-card .login-form { gap: 16px; }
+.auth-card .login-form input { min-height: 52px; padding: 13px 15px; }
+.auth-card .login-form .login-submit { min-height: 54px; margin-top: 2px; background: linear-gradient(135deg, #0756c7, #0875d1); font-size: 1rem; }
+.auth-card .password-visibility { min-width: 52px; border-radius: 10px; }
+
+.auth-entry-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.auth-entry-actions > span { width: 1px; height: 20px; background: #c4cfdd; }
+.auth-entry-actions .auth-text-link { color: #075ccb; font-weight: 750; text-decoration: none; }
+.auth-entry-actions .auth-text-link:hover { text-decoration: underline; }
+
+.auth-card .google-access-details { margin-top: 14px; padding-top: 12px; text-align: center; }
+.auth-card .google-access-details summary { font-size: .85rem; }
+
+.auth-role-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 13px 15px;
+  border: 1px solid #cbdff7;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #183d6d;
+}
+
+.auth-role-note svg { color: #0762c9; }
+.auth-role-note p { margin: 0; font-size: .84rem; line-height: 1.45; }
+.auth-card .auth-help { margin-top: 14px; font-size: .78rem; }
+
+.login-page--student-flow .login-form-panel { align-items: start; overflow: visible; }
+.login-page--student-flow .login-card { margin-block: 24px; }
+
+@media (max-width: 980px) {
+  .login-page { grid-template-columns: minmax(390px, .85fr) minmax(430px, 1.15fr); }
+  .login-intro { padding: 34px; }
+  .login-intro h2 { font-size: clamp(2rem, 4.2vw, 2.9rem); }
+  .login-intro-content > p { margin-left: 0; }
+  .login-form-panel { padding: 30px; }
+}
+
+@media (max-width: 767px) {
+  .auth-shell .main-panel { padding: 0; }
+  .login-page { display: block; min-height: 100vh; }
+  .login-intro { min-height: auto; padding: 22px 20px 26px; background-position: center 32%; }
+  .login-brand-mark { width: 92px; }
+  .login-brand-mark span { padding: 4px; font-size: .55rem; }
+  .login-intro-content { margin: 30px 0 22px; }
+  .login-intro .login-kicker { margin-bottom: 12px; }
+  .login-intro h2 { margin-bottom: 18px; font-size: clamp(1.75rem, 8.3vw, 2.35rem); }
+  .login-office-title { font-size: 1rem; }
+  .login-office-title svg { width: 22px; height: 22px; }
+  .login-intro-content > p { margin: 9px 0 0; font-size: .9rem; }
+  .login-intro .login-assurance { gap: 7px; padding: 0; }
+  .login-intro .login-assurance span { padding: 6px 9px; font-size: .7rem; }
+  .login-intro::after { display: none; }
+  .login-form-panel { min-height: auto; padding: 24px 16px 40px; overflow: visible; }
+  .auth-card.login-card { padding: 26px 20px; border-radius: 18px; }
+  .auth-entry-actions { gap: 8px; }
+  .auth-entry-actions .auth-text-link { padding-inline: 5px; font-size: .82rem; }
+}
+
+@media (max-height: 760px) and (min-width: 768px) {
+  .login-intro { padding-block: 28px; }
+  .login-intro-content { margin-block: 24px; }
+  .login-intro h2 { font-size: clamp(2rem, 3vw, 3rem); margin-bottom: 18px; }
+  .login-intro .login-assurance { padding-bottom: 0; }
+  .login-form-panel { padding-block: 24px; }
+  .auth-card.login-card { padding-block: 28px; }
+  .auth-card .auth-help { display: none; }
+}

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '../lib/api.js'
 import { buildParentContactPayload, CONTACT_METHODS, CONTACT_OUTCOMES, contactLabel } from '../lib/parentContact.js'
 
-function GuardianContactPanel({ token, student, onClose }) {
+function GuardianContactPanel({ token, student, onClose, showClose = true }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -32,7 +32,7 @@ function GuardianContactPanel({ token, student, onClose }) {
   const contacts = data?.contacts || []
   return (
     <section className="table-card guardian-contact-panel" aria-busy={loading}>
-      <div className="table-header"><div><p className="eyebrow">Private contact record</p><h3>{student.studentNumber || student.student_number} — {student.name || `${student.first_name} ${student.last_name}`}</h3></div><button type="button" className="secondary-button" onClick={onClose}>Close</button></div>
+      <div className="table-header"><div><p className="eyebrow">Private contact record</p><h3>{student.studentNumber || student.student_number} — {student.name || `${student.first_name} ${student.last_name}`}</h3></div>{showClose && <button type="button" className="secondary-button" onClick={onClose}>Close</button>}</div>
       {error && <p className="error-message" role="alert">{error}</p>}
       {loading && !data ? <p className="empty-state">Loading guardian contact…</p> : guardians.length === 0 ? <p className="empty-state">No parent or guardian contact is recorded.</p> : <>
         <div className="guardian-contact-grid">{guardians.map((guardian) => <article key={guardian.id}><div><h4>{guardian.guardian_name}</h4><p>{guardian.relationship || 'Relationship not provided'}{guardian.is_primary ? ' · Primary contact' : ''}</p></div><strong>{guardian.phone_number}</strong><div className="guardian-contact-actions"><a href={`tel:${guardian.phone_number}`}>Call</a><a href={`sms:${guardian.phone_number}`}>Message</a></div></article>)}</div>
@@ -48,4 +48,3 @@ function GuardianContactPanel({ token, student, onClose }) {
 }
 
 export default GuardianContactPanel
-
