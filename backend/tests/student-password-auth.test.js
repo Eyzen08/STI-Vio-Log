@@ -7,7 +7,8 @@ const { createStudentPasswordAuthService } = require('../src/services/studentPas
 
 test('student number and email validation follow the registration contract', () => {
   assert.equal(STUDENT_NUMBER_PATTERN.test('02000123456'), true);
-  for (const invalid of ['0200012345','12000123456','02000ABCDEF',' 02000123456 ']) assert.equal(STUDENT_NUMBER_PATTERN.test(invalid), false);
+  assert.equal(STUDENT_NUMBER_PATTERN.test('12000123456'), true);
+  for (const invalid of ['0200012345','120001234567','02000ABCDEF',' 02000123456 ']) assert.equal(STUDENT_NUMBER_PATTERN.test(invalid), false);
   assert.equal(EMAIL_PATTERN.test('student@example.com'), true);
   assert.equal(EMAIL_PATTERN.test('student@'), false);
 });

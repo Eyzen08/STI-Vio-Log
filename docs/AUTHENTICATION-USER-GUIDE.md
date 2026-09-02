@@ -7,7 +7,7 @@ Open `/login`. Do not select a role. Enter either a staff username or a Student 
 ## Create a Student account
 
 1. Select **Create Student Account**.
-2. Enter the full name, 11-digit Student Number in `02000XXXXXX` format, email, and a compliant password.
+2. Enter the full name, an exactly 11-digit Student Number, email, and a compliant password. Any 11-digit school-issued number is accepted; no fixed prefix is required.
 3. Enter the six-digit code sent to the submitted email within ten minutes.
 4. After verification, return to the unified login and sign in using the Student Number and password.
 

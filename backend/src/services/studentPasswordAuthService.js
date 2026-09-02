@@ -4,7 +4,7 @@ const { ApiError } = require('../utils/api');
 const { passwordIsStrong } = require('./passwordPolicy');
 const { hashSecret } = require('./otpService');
 
-const STUDENT_NUMBER_PATTERN = /^02000\d{6}$/;
+const STUDENT_NUMBER_PATTERN = /^\d{11}$/;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const clean = (value, max) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').slice(0, max)
@@ -25,7 +25,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       email: clean(email, 255).toLowerCase()
     };
     if (!values.fullName || !values.studentNumber || !values.email || !password || !confirmPassword) throw new ApiError(400, 'VALIDATION_ERROR', 'All registration fields are required');
-    if (!STUDENT_NUMBER_PATTERN.test(values.studentNumber)) throw new ApiError(400, 'INVALID_STUDENT_NUMBER', 'Student Number must use the format 02000XXXXXX');
+    if (!STUDENT_NUMBER_PATTERN.test(values.studentNumber)) throw new ApiError(400, 'INVALID_STUDENT_NUMBER', 'Student Number must contain exactly 11 digits');
     if (!EMAIL_PATTERN.test(values.email)) throw new ApiError(400, 'INVALID_EMAIL', 'Enter a valid email address');
     if (!passwordIsStrong(password)) throw new ApiError(400, 'WEAK_PASSWORD', 'Password must have at least 8 characters, one uppercase letter, one number, and one symbol');
     if (password !== confirmPassword) throw new ApiError(400, 'PASSWORD_MISMATCH', 'Password confirmation does not match');

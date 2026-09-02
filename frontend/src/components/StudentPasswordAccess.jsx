@@ -20,7 +20,7 @@ export default function StudentPasswordAccess({ routePath, onNavigate }) {
   const request=async(action)=>{setBusy(true);setError('');setMessage('');try{await action()}catch(e){setError(e.message)}finally{setBusy(false)}}
 
   const register=(event)=>{event.preventDefault();request(async()=>{
-    if(!/^02000\d{6}$/.test(registration.studentNumber))throw new Error('Student Number must use the format 02000XXXXXX.')
+    if(!/^\d{11}$/.test(registration.studentNumber))throw new Error('Student Number must contain exactly 11 digits.')
     if(!passwordIsStrong(registration.password))throw new Error('Complete all password requirements.')
     if(registration.password!==registration.confirmPassword)throw new Error('Password confirmation does not match.')
     const data=await apiRequest('/api/auth/student/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:registration.fullName,student_number:registration.studentNumber,email:registration.email,password:registration.password,confirm_password:registration.confirmPassword})})
@@ -34,7 +34,7 @@ export default function StudentPasswordAccess({ routePath, onNavigate }) {
 
   if(routePath==='/register')return <form className="login-form" onSubmit={register}><h3>Create Student Account</h3><p>Register using your school identity. Your role is assigned securely by the system.</p>
     <label>Full Name<input value={registration.fullName} onChange={e=>setRegistration({...registration,fullName:e.target.value})} placeholder="Jose Pedro Reyes" required disabled={busy}/></label>
-    <label>Student Number<input value={registration.studentNumber} onChange={e=>setRegistration({...registration,studentNumber:e.target.value})} placeholder="02000123456" inputMode="numeric" pattern="02000[0-9]{6}" required disabled={busy}/></label>
+    <label>Student Number<input value={registration.studentNumber} onChange={e=>setRegistration({...registration,studentNumber:e.target.value.replace(/\D/g,'').slice(0,11)})} placeholder="01234567890" inputMode="numeric" pattern="[0-9]{11}" minLength="11" maxLength="11" title="Enter exactly 11 digits" required disabled={busy}/></label>
     <label>Email Address<input type="email" value={registration.email} onChange={e=>setRegistration({...registration,email:e.target.value})} placeholder="student@email.com" required disabled={busy}/></label>
     <PasswordField id="register-password" label="Password" value={registration.password} onChange={e=>setRegistration({...registration,password:e.target.value})} disabled={busy}/><PasswordRequirements password={registration.password}/>
     <PasswordField id="register-confirm" label="Confirm Password" value={registration.confirmPassword} onChange={e=>setRegistration({...registration,confirmPassword:e.target.value})} disabled={busy}/>
