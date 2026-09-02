@@ -38,4 +38,6 @@ Use the accessible eye button beside a password field to show or hide its value.
 
 ## Email setup
 
-The backend requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM` for registration and recovery delivery. `SMTP_TIMEOUT_MS` optionally controls the mail connection timeout and defaults to 10000 milliseconds. Keep real values only in the deployment environment; never commit them.
+For production, configure the Brevo HTTPS API with `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME`. The sender email must be verified in Brevo. `EMAIL_TIMEOUT_MS` defaults to 10000 milliseconds. Brevo is preferred automatically when configured.
+
+SMTP remains an optional fallback for local development or paid hosts through `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM`; `SMTP_TIMEOUT_MS` defaults to 10000 milliseconds. Free Render services block outbound SMTP ports, so production on Render Free must use the Brevo HTTPS configuration. Keep all real keys and credentials only in the deployment environment; never commit them.
