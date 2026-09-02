@@ -8,7 +8,8 @@ export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
-  { path: '/admin/department-accounts', label: 'Department Accounts', view: 'Department Accounts', roles: ROLE_GROUPS.administration },
+  { path: '/admin/department-accounts', label: 'Department Accounts', view: 'Department Accounts', roles: ['ADMIN'] },
+  { path: '/admin/accounts', label: 'Staff Accounts', view: 'Accounts', roles: ['ADMIN'] },
   { path: '/admin/departments', label: 'Departments', view: 'Departments', roles: ['ADMIN'] },
   { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['ADMIN'] },
   { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Duplicate Review', roles: ['ADMIN'] },
@@ -43,7 +44,7 @@ export const getNavItems = (role) =>
   APP_ROUTES.filter((route) => route.roles.includes(role))
 
 export const resolveRoute = (path, role) => {
-  if (['/login','/student/login','/department/login'].includes(path)) return { status: 'public', route: null }
+  if (['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(path)) return { status: 'public', route: null }
   if (path === '/unauthorized') return { status: 'unauthorized', route: null }
 
   const route = APP_ROUTES.find((candidate) => candidate.path === path)

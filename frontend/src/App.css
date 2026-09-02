@@ -3733,3 +3733,15 @@ a {
     border: 1px solid CanvasText;
   }
 }
+/* Accessible authentication controls */
+.password-input-wrap { display: grid; grid-template-columns: 1fr auto; gap: .5rem; align-items: stretch; }
+.password-input-wrap input { min-width: 0; }
+.password-visibility { min-width: 3rem; padding-inline: .75rem; background: var(--surface-soft, #eef5ff); color: var(--primary, #075dab); border: 1px solid var(--border, #cbd8e8); display: grid; place-items: center; }
+.auth-text-link { background: transparent; color: var(--primary, #075dab); border: 0; text-decoration: underline; padding: .5rem; }
+.password-requirements { border: 1px solid var(--border, #d4deeb); border-radius: .75rem; padding: .75rem 1rem; background: var(--surface-soft, #f7faff); }
+.password-requirements ul { list-style: none; padding: .5rem 0 0; margin: 0; display: grid; gap: .25rem; }
+.password-requirements .valid { color: #166534; }
+.password-requirements .invalid { color: #475569; }
+.google-access-details { margin-top: 1rem; border-top: 1px solid var(--border, #d4deeb); padding-top: 1rem; }
+.google-access-details summary { cursor: pointer; font-weight: 700; color: var(--primary, #075dab); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }

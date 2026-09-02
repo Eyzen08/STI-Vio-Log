@@ -82,6 +82,15 @@ test('forced-change sessions cannot pass role authorization', () => {
   assert.equal(called,false);assert.equal(res.statusCode,403);assert.equal(res.body.error.code,'PASSWORD_CHANGE_REQUIRED');
 });
 
+test('unverified Student sessions are rejected from protected APIs', async () => {
+  process.env.JWT_SECRET='this-is-a-secure-test-secret-123456';
+  const token=jwt.sign({id:7,session_version:1},process.env.JWT_SECRET,{expiresIn:'1h'});
+  const req={headers:{authorization:`Bearer ${token}`}},res=createRes();let called=false;const originalQuery=pool.query;
+  pool.query=async()=>({rows:[{id:7,username:'02000123456',role:'STUDENT',email_verified:false,session_version:1,must_change_password:false,department_id:null}]});
+  await authenticateToken(req,res,()=>{called=true});pool.query=originalQuery;
+  assert.equal(called,false);assert.equal(res.statusCode,401);
+});
+
 test('authenticateToken fails when JWT secret is missing', async () => {
   const originalSecret = process.env.JWT_SECRET;
   delete process.env.JWT_SECRET;

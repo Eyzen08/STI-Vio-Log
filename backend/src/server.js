@@ -156,7 +156,7 @@ app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_
 app.use('/api/account', authenticateToken, accountRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
-app.use('/api/department-accounts', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), require('./routes/departmentAccountRoutes'));
+app.use('/api/department-accounts', authenticateToken, authorizeRoles('ADMIN'), require('./routes/departmentAccountRoutes'));
 app.use('/api/admin/departments', authenticateToken, authorizeRoles('ADMIN'), departmentAdministrationRoutes);
 app.use('/api/admin/students', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), googleLinkAdministrationRoutes);
 app.use('/api/admin/duplicate-review', authenticateToken, authorizeRoles('ADMIN'), duplicateAccountReviewRoutes);

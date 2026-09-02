@@ -79,3 +79,16 @@ npm run smoke:production
 ## Release decision
 
 Release only when every applicable item passes, failures are documented and corrected, both Discipline Office accounts are individually provisioned, and no high- or critical-severity dependency or application-security issue remains.
+# Unified authentication acceptance
+
+- [ ] All roles sign in through `/login` without selecting a role.
+- [ ] ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
+- [ ] A Student registration remains inactive until the email OTP is verified.
+- [ ] Registration OTP expires, cannot be reused, and resend invalidates the previous code.
+- [ ] Forgot-password responses do not reveal whether a Student account exists.
+- [ ] Password reset requires OTP verification and a single-use reset authorization.
+- [ ] Existing sessions stop working after a successful password reset.
+- [ ] Only ADMIN can create or manage staff and Department Accounts.
+- [ ] Temporary-password accounts cannot call business APIs until changing password.
+- [ ] Password fields have keyboard-accessible show/hide controls.
+- [ ] SMTP variables are configured in Render before production testing.

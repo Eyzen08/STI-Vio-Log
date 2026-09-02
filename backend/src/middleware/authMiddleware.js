@@ -82,6 +82,7 @@ const authenticateToken = async (req, res, next) => {
                 u.id,
                 u.username,
                 u.role,
+                u.email_verified,
                 u.session_version,
                 u.must_change_password,
                 dh.department_id
@@ -103,6 +104,10 @@ const authenticateToken = async (req, res, next) => {
         }
 
         const account = accountResult.rows[0];
+
+        if (account.role === 'STUDENT' && !account.email_verified) {
+            return res.status(401).json({ success:false, message:'Student email verification is required' });
+        }
 
         if (!Number.isInteger(decoded.session_version) || Number(decoded.session_version) !== Number(account.session_version)) {
             return res.status(401).json({ success: false, message: "Session has been invalidated", error: { code: "SESSION_INVALIDATED", message: "Session has been invalidated" } });

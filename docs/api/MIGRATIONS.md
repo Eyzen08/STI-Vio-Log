@@ -32,3 +32,5 @@ Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB
 This procedure does not claim zero-downtime migration support. Disposable integration tests use guarded `sti_vio_log_test_*` schemas and never wipe the configured development schema.
 
 Migration `005_google_identity_links.sql` adds only the identity-link storage foundation. Its independent unique constraints prevent one local user from linking multiple Google subjects and prevent one Google subject from linking multiple users, including under concurrent inserts. Applying it does not enable Google login or require Google credentials.
+
+Migration `019_student_password_auth.sql` adds email-verification state, pending Student password registrations, hashed single-use OTP records, and hashed short-lived password-reset authorizations. Existing user accounts are marked verified to preserve access. New Student password accounts are created only after successful OTP verification.

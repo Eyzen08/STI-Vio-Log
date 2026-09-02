@@ -1,15 +1,13 @@
 const bcrypt = require('bcrypt');
 const { ApiError } = require('../utils/api');
 const { issueSessionToken } = require('./sessionTokenService');
-
-const passwordIsStrong = (value) => typeof value === 'string' && value.length >= 12 && value.length <= 128
-  && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+const { passwordIsStrong } = require('./passwordPolicy');
 
 const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, hashPassword = (value) => bcrypt.hash(value, 12), issueToken = issueSessionToken } = {}) => {
   if (!pool?.connect) throw new TypeError('Password change dependencies are required');
   const change = async ({ userId, currentPassword, newPassword, ipAddress = null }) => {
     if (!Number.isInteger(Number(userId)) || Number(userId) < 1 || typeof currentPassword !== 'string' || !passwordIsStrong(newPassword)) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Use a 12–128 character password with uppercase, lowercase, number, and symbol');
+      throw new ApiError(400, 'VALIDATION_ERROR', 'Use an 8-128 character password with uppercase, number, and symbol');
     }
     const client = await pool.connect();
     try {

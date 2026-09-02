@@ -26,6 +26,7 @@ import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminDepartments from './components/AdminDepartments.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
+import AdminAccounts from './components/AdminAccounts.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -339,7 +340,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      if (!['/login','/student/login','/department/login'].includes(routePath)) navigateTo('/login', { replace: true })
+      if (!['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(routePath)) navigateTo('/login', { replace: true })
       return
     }
 
@@ -1782,7 +1783,7 @@ function App() {
           onChange={handleChange}
           onGoogleSession={acceptSession}
           onSubmit={handleSubmit}
-          mode={routePath === '/student/login' ? 'student' : routePath === '/department/login' ? 'department' : 'main'}
+          routePath={routePath}
           onNavigate={navigateTo}
         />
       )
@@ -2141,6 +2142,10 @@ function App() {
 
     if (isAdmin && activeView === 'Department Accounts') {
       return <DepartmentAccounts token={token} />
+    }
+
+    if (userRole === 'ADMIN' && activeView === 'Accounts') {
+      return <AdminAccounts token={token} students={students} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Departments') {
