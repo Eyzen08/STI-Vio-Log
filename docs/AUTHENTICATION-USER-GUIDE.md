@@ -38,4 +38,4 @@ Use the accessible eye button beside a password field to show or hide its value.
 
 ## Email setup
 
-The backend requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM` for registration and recovery delivery. Keep real values only in the deployment environment; never commit them.
+The backend requires `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM` for registration and recovery delivery. `SMTP_TIMEOUT_MS` optionally controls the mail connection timeout and defaults to 10000 milliseconds. Keep real values only in the deployment environment; never commit them.
