@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { apiRequest } from '../lib/api.js'
 import { passwordIsStrong } from '../lib/passwordPolicy.js'
-import { REGISTRATION_STEP_FIELDS, REGISTRATION_STEPS, registrationErrors, registrationStepIsValid } from '../lib/studentRegistration.js'
+import { REGISTRATION_STEP_FIELDS, REGISTRATION_STEPS, formatRegistrationInput, normalizeRegistration, registrationErrors, registrationStepIsValid } from '../lib/studentRegistration.js'
 import PasswordField from './PasswordField.jsx'
 import PasswordRequirements from './PasswordRequirements.jsx'
 
@@ -38,7 +38,7 @@ export default function StudentPasswordAccess({ routePath, onNavigate }) {
   useEffect(()=>{if(routePath==='/register')stepHeadingRef.current?.focus()},[registrationStep,routePath])
 
   const errors=registrationErrors(registration)
-  const updateRegistration=(field,value)=>{setRegistration((current)=>({...current,[field]:value}));setInformationConfirmed(false)}
+  const updateRegistration=(field,value)=>{setRegistration((current)=>({...current,[field]:formatRegistrationInput(field,value)}));setInformationConfirmed(false)}
   const touch=(field)=>setTouched((current)=>({...current,[field]:true}))
   const errorFor=(field)=>touched[field]?errors[field]:''
   const inputProps=(field)=>({value:registration[field],onChange:(event)=>updateRegistration(field,event.target.value),onBlur:()=>touch(field),'aria-invalid':Boolean(errorFor(field)),'aria-describedby':errorFor(field)?`${field}-error`:undefined,disabled:busy})
@@ -48,8 +48,9 @@ export default function StudentPasswordAccess({ routePath, onNavigate }) {
 
   const register=(event)=>{event.preventDefault();if(registrationStep<4){goNext();return}request(async()=>{
     if(!informationConfirmed)throw new Error('Confirm that the information is complete and accurate.')
-    if(!REGISTRATION_STEP_FIELDS.slice(0,4).every((_,step)=>registrationStepIsValid(registration,step)))throw new Error('Review the form and correct the highlighted information.')
-    const data=await apiRequest('/api/auth/student/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:[registration.firstName,registration.middleName,registration.lastName,registration.suffix].filter(Boolean).join(' '),first_name:registration.firstName,middle_name:registration.middleName,last_name:registration.lastName,suffix:registration.suffix,student_number:registration.studentNumber,email:registration.email,phone_number:registration.phoneNumber,program:registration.program,section:registration.section,year_level:Number(registration.yearLevel),guardian_name:registration.guardianName,guardian_relationship:registration.guardianRelationship,guardian_phone_number:registration.guardianPhoneNumber,password:registration.password,confirm_password:registration.confirmPassword})})
+    const values=normalizeRegistration(registration)
+    if(!REGISTRATION_STEP_FIELDS.slice(0,4).every((_,step)=>registrationStepIsValid(values,step)))throw new Error('Review the form and correct the highlighted information.')
+    const data=await apiRequest('/api/auth/student/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:[values.firstName,values.middleName,values.lastName,values.suffix].filter(Boolean).join(' '),first_name:values.firstName,middle_name:values.middleName,last_name:values.lastName,suffix:values.suffix,student_number:values.studentNumber,email:values.email,phone_number:values.phoneNumber,program:values.program,section:values.section,year_level:Number(values.yearLevel),guardian_name:values.guardianName,guardian_relationship:values.guardianRelationship,guardian_phone_number:values.guardianPhoneNumber,password:values.password,confirm_password:values.confirmPassword})})
     setRegistrationId(data.registration_id);setMessage(`A 6-digit code was sent to ${data.email}.`);setRegistration((current)=>({...current,password:'',confirmPassword:''}));setInformationConfirmed(false);onNavigate('/verify-email')
   })}
   const verifyRegistration=(event)=>{event.preventDefault();request(async()=>{await apiRequest('/api/auth/student/registration/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registration_id:registrationId,code})});setMessage('Email verified. You can now sign in.');setRegistration(initialRegistration);setRegistrationStep(0);setHighestRegistrationStep(0);setTouched({});setCode('');onNavigate('/login')})}

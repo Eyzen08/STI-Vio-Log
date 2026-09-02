@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { registrationErrors, registrationStepIsValid } from '../src/lib/studentRegistration.js'
+import { formatRegistrationInput, normalizeRegistration, registrationErrors, registrationStepIsValid } from '../src/lib/studentRegistration.js'
 
 const validRegistration = {
   firstName:'Jose',middleName:'Pedro',lastName:'Reyes',suffix:'',studentNumber:'02000123456',
@@ -26,4 +26,27 @@ test('security step requires a strong matching password',()=>{
 
 test('optional middle name and suffix do not block identity completion',()=>{
   assert.equal(registrationStepIsValid({...validRegistration,middleName:'',suffix:''},0),true)
+})
+
+test('name fields use title case while preserving spaces, hyphens, and apostrophes',()=>{
+  assert.equal(formatRegistrationInput('firstName','jose  pedro santos'),'Jose  Pedro Santos')
+  assert.equal(formatRegistrationInput('lastName',"o'connor dela-cruz"),"O'Connor Dela-Cruz")
+  assert.equal(formatRegistrationInput('guardianName','mary-jane de leon'),'Mary-Jane De Leon')
+  assert.equal(formatRegistrationInput('guardianRelationship','legal guardian'),'Legal Guardian')
+})
+
+test('suffix, email, program, and section use their approved formatting',()=>{
+  assert.equal(formatRegistrationInput('suffix','jr'),'Jr.')
+  assert.equal(formatRegistrationInput('suffix','iii'),'III')
+  assert.equal(formatRegistrationInput('email','Student.Name@GMAIL.COM'),'student.name@gmail.com')
+  assert.equal(formatRegistrationInput('program','bsit'),'BSIT')
+  assert.equal(formatRegistrationInput('section','a602'),'A602')
+})
+
+test('submission normalization trims non-sensitive values without altering passwords',()=>{
+  const normalized=normalizeRegistration({...validRegistration,firstName:' jose ',email:' TEST@Example.COM ',program:' bsit ',password:' Password@123 '})
+  assert.equal(normalized.firstName,'Jose')
+  assert.equal(normalized.email,'test@example.com')
+  assert.equal(normalized.program,'BSIT')
+  assert.equal(normalized.password,' Password@123 ')
 })
