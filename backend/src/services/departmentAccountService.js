@@ -12,17 +12,17 @@ const createDepartmentAccountService = ({ pool, accountService = createAccountAd
   };
 
   const list = (filters = {}) => accountService.list({ ...filters, role: 'DEPARTMENT_HEAD' });
-  const options = async () => ({ departments: (await pool.query('SELECT id,department_name FROM departments WHERE is_active=TRUE ORDER BY department_name')).rows });
+  const options = async () => ({ departments: (await pool.query('SELECT id,department_code,department_name FROM departments WHERE is_active=TRUE ORDER BY department_code,department_name')).rows });
 
   const create = async ({ actorId, username, departmentId }) => {
     if (!isPositiveId(departmentId)) throw new ApiError(400, 'VALIDATION_ERROR', 'Select an active department');
-    const department = (await pool.query('SELECT id,department_name FROM departments WHERE id=$1 AND is_active=TRUE', [Number(departmentId)])).rows[0];
+    const department = (await pool.query('SELECT id,department_code,department_name FROM departments WHERE id=$1 AND is_active=TRUE', [Number(departmentId)])).rows[0];
     if (!department) throw new ApiError(400, 'VALIDATION_ERROR', 'Select an active department');
     return accountService.create({
       actorId,
       username,
       role: 'DEPARTMENT_HEAD',
-      firstName: department.department_name,
+      firstName: department.department_code,
       lastName: 'Account',
       departmentId: Number(departmentId),
       enforceSingleDepartmentAccount: true

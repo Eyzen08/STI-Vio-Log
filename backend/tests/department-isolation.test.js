@@ -37,8 +37,8 @@ test('department time-out credit is capped at the remaining requirement',()=>{
 });
 
 test('Department Account creation requests transactional single-account enforcement',async()=>{
-  let createInput;const service=createDepartmentAccountService({pool:{query:async(sql)=>String(sql).includes('FROM departments')?{rows:[{id:7,department_name:'Library Department'}]}:{rows:[]}},accountService:{list:async()=>({}),create:async(input)=>{createInput=input;return{account:{id:3}}},setStatus:async()=>({}),resetPassword:async()=>({})}});
-  await service.create({actorId:1,username:'library.department',departmentId:7});assert.equal(createInput.enforceSingleDepartmentAccount,true);assert.equal(createInput.departmentId,7);
+  let createInput;const service=createDepartmentAccountService({pool:{query:async(sql)=>String(sql).includes('FROM departments')?{rows:[{id:7,department_code:'Library Department',department_name:'Officer Name'}]}:{rows:[]}},accountService:{list:async()=>({}),create:async(input)=>{createInput=input;return{account:{id:3}}},setStatus:async()=>({}),resetPassword:async()=>({})}});
+  await service.create({actorId:1,username:'library.department',departmentId:7});assert.equal(createInput.enforceSingleDepartmentAccount,true);assert.equal(createInput.departmentId,7);assert.equal(createInput.firstName,'Library Department');
 });
 
 test('single Department Account creation takes a transaction-scoped department lock',async()=>{

@@ -21,6 +21,7 @@ const getCommunityServiceAssignments = async (req, res) => {
                 s.student_number,
                 s.first_name,
                 s.last_name,
+                d.department_code,
                 d.department_name,
                 dh.first_name AS department_head_first_name,
                 dh.last_name AS department_head_last_name,
@@ -79,6 +80,7 @@ const getCommunityServiceAssignmentById = async (req, res) => {
                 s.student_number,
                 s.first_name,
                 s.last_name,
+                d.department_code,
                 d.department_name,
                 dh.first_name AS department_head_first_name,
                 dh.last_name AS department_head_last_name,
@@ -162,7 +164,7 @@ const createCommunityServiceAssignment = async (req, res) => {
         await client.query("BEGIN");
 
         const destination = (await client.query(
-            `SELECT dh.id, dh.user_id, d.department_name, dh.first_name, dh.last_name
+            `SELECT dh.id, dh.user_id, d.department_code, d.department_name, dh.first_name, dh.last_name
              FROM department_heads dh
              JOIN users u ON u.id = dh.user_id AND u.role = 'DEPARTMENT_HEAD' AND u.is_active = TRUE
              JOIN departments d ON d.id = dh.department_id AND d.is_active = TRUE
@@ -239,14 +241,14 @@ const createCommunityServiceAssignment = async (req, res) => {
         const assignment = result.rows[0];
         await notifyStudent(client, student_id, {
             title: 'Community service assigned',
-            message: `${required} required hour${required === 1 ? '' : 's'} assigned at ${destination.department_name} under ${destination.first_name} ${destination.last_name}.`,
+            message: `${required} required hour${required === 1 ? '' : 's'} assigned at ${destination.department_code} under ${destination.first_name} ${destination.last_name}.`,
             type: 'SERVICE_ASSIGNED',
             eventKey: `service:${assignment.id}:assigned:student`
         });
         await insertNotification(client, {
             userId: destination.user_id,
             title: 'New student service assignment',
-            message: `A student community-service assignment was routed to ${destination.department_name}.`,
+            message: `A student community-service assignment was routed to ${destination.department_code}.`,
             type: 'SERVICE_ASSIGNED',
             eventKey: `service:${assignment.id}:assigned:head`
         });
@@ -285,7 +287,7 @@ const getCommunityServiceAssignmentOptions = async (req, res) => {
              JOIN department_heads dh ON dh.department_id = d.id
              JOIN users u ON u.id = dh.user_id
              WHERE d.is_active = TRUE AND u.is_active = TRUE AND u.role = 'DEPARTMENT_HEAD'
-             ORDER BY d.department_name, dh.last_name, dh.first_name, dh.id`
+             ORDER BY d.department_code, dh.last_name, dh.first_name, dh.id`
         );
         return res.json({ success: true, destinations: result.rows });
     } catch (error) {

@@ -2856,9 +2856,9 @@ function App() {
                 </label>
 
                 <label>
-                  Service department
+                  Service department type
                   <select name="department_id" value={communityServiceForm.department_id} onChange={handleCommunityServiceFieldChange} required>
-                    <option value="">Select a department</option>
+                    <option value="">Select a department type</option>
                     {departmentOptions.map((department) => (
                       <option key={department.id} value={department.id}>{department.name}</option>
                     ))}
@@ -2982,7 +2982,7 @@ function App() {
                             }
                           </td>
 
-                          <td>{assignment.department_name || 'Historical assignment'}</td>
+                          <td>{assignment.department_code || assignment.department_name || 'Historical assignment'}</td>
 
                           <td>{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
 

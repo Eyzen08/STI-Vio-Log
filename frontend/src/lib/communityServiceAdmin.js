@@ -37,6 +37,6 @@ export const serviceDepartmentOptions = (destinations = []) =>
     {
       id: Number(destination.department_id),
       code: destination.department_code || '',
-      name: destination.department_name || 'Unnamed department'
+      name: destination.department_code || destination.department_name || 'Unnamed department'
     }
   ])).values()]

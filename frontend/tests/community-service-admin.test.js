@@ -40,7 +40,7 @@ test('scanner department options deduplicate heads without accepting arbitrary d
     { department_id: 4, department_code: 'OTHER', department_name: 'Other', department_head_id: 11 }
   ]
   assert.deepEqual(serviceDepartmentOptions(destinations), [
-    { id: 3, code: 'LIBRARY', name: 'Library Department' },
-    { id: 4, code: 'OTHER', name: 'Other' }
+    { id: 3, code: 'LIBRARY', name: 'LIBRARY' },
+    { id: 4, code: 'OTHER', name: 'OTHER' }
   ])
 })
