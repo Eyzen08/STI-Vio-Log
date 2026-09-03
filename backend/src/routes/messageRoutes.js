@@ -1,9 +1,11 @@
 const express = require('express');
-const { listConversations, createConversation, getConversation, sendMessage, markConversationRead } = require('../controllers/messageController');
+const { listConversations, listRecipients, createConversation, getConversation, sendMessage, markConversationRead, updateConversationStatus } = require('../controllers/messageController');
 const router = express.Router();
 router.get('/conversations', listConversations);
+router.get('/recipients', listRecipients);
 router.post('/conversations', createConversation);
 router.get('/conversations/:id', getConversation);
 router.post('/conversations/:id/messages', sendMessage);
 router.patch('/conversations/:id/read', markConversationRead);
+router.patch('/conversations/:id/status', updateConversationStatus);
 module.exports = router;

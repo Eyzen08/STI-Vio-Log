@@ -639,15 +639,17 @@ PUT /api/notifications/:id/read
 
 ```text
 GET   /api/messages/conversations
+GET   /api/messages/recipients
 POST  /api/messages/conversations
 GET   /api/messages/conversations/:id
 POST  /api/messages/conversations/:id/messages
 PATCH /api/messages/conversations/:id/read
+PATCH /api/messages/conversations/:id/status
 ```
 
 - Students may open conversations with the Discipline Office and access only their own conversations.
 - Admin and Discipline Office accounts may contact an individual student and reply to student conversations.
-- Department Heads may contact only students assigned to or served by their authenticated department.
+- Department Heads may discover department-served students, but can access only conversations explicitly assigned to their authenticated department.
 - Messaging remains text-only with bounded message length. Authenticated Socket.IO refresh events now update open conversations and unread badges immediately, while REST remains authoritative and periodic polling remains the recovery fallback.
 - Messages are append-only and auditable, with no silent edit or delete endpoint.
 - Unread counts appear in the relevant role navigation.

@@ -280,7 +280,7 @@ function App() {
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
   useEffect(() => {
-    if (!isLoggedIn || !token || isDepartmentHead) {
+    if (!isLoggedIn || !token) {
       setUnreadMessages(0)
       return undefined
     }
@@ -291,7 +291,7 @@ function App() {
           headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
         })
         const data = await response.json().catch(() => ({}))
-        if (response.ok) setUnreadMessages(unreadMessageCount(data.conversations))
+        if (response.ok) setUnreadMessages(Number(data.unread_total ?? unreadMessageCount(data.conversations)))
       } catch (loadError) {
         if (loadError.name !== 'AbortError') return
       }
@@ -301,7 +301,7 @@ function App() {
     realtimeSocket?.on('messages:changed', handleMessageChange)
     const interval = window.setInterval(refresh, 30000)
     return () => { controller.abort(); window.clearInterval(interval); realtimeSocket?.off('messages:changed', handleMessageChange) }
-  }, [isDepartmentHead, isLoggedIn, token, realtimeSocket])
+  }, [isLoggedIn, token, realtimeSocket])
 
   useEffect(() => {
     if (!token || !isAdmin) {

@@ -36,3 +36,5 @@ Migration `005_google_identity_links.sql` adds only the identity-link storage fo
 Migration `019_student_password_auth.sql` adds email-verification state, pending Student password registrations, hashed single-use OTP records, and hashed short-lived password-reset authorizations. Existing user accounts are marked verified to preserve access. New Student password accounts are created only after successful OTP verification.
 
 Migration `020_student_password_registration_profile.sql` extends pending Student registrations with separate identity, contact, academic, and guardian fields. OTP verification uses these fields to create a complete Student profile and primary guardian record. The new columns remain nullable so registrations started before the migration can still be verified safely.
+
+Migration `021_message_department_scope.sql` adds an explicit optional department assignment to official conversations. Existing conversations remain scoped to the Discipline Office. Department Heads can access only conversations explicitly assigned to their authenticated department.

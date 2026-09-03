@@ -151,7 +151,7 @@ app.use(
 );
 
 app.use('/api/certificates', certificateRoutes);
-app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'STUDENT'), messageRoutes);
+app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), messageRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 

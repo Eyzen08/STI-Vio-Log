@@ -12,7 +12,7 @@ Standard statuses are 400 validation/business rules, 401 authentication, 403 aut
 
 Socket.IO connects to the API origin using the current JWT in `handshake.auth.token`. The server revalidates the active account, session version, forced-password-change state, role, and Department Account assignment before joining private rooms.
 
-- `messages:changed` is sent only to the affected student account and authorized Admin/Discipline Office role rooms.
+- `messages:changed` is sent only to the affected student account, authorized Admin/Discipline Office role rooms, and the explicitly assigned Department Head department room when applicable.
 - `community-service:changed` is sent only to the assigned department, affected student, and Admin/Discipline Office role rooms.
 - Event payloads contain refresh identifiers only. Clients retrieve authoritative records through the existing REST endpoints.
 - Existing periodic REST polling remains enabled as a reconnect and service-degradation fallback.
@@ -68,7 +68,7 @@ Administrative reports include violations, community service, DTR, non-complianc
 
 ## Secure messaging
 
-`/api/messages/conversations` provides text-only, append-only conversations. Students never submit an ownership identifier and can access only conversations attached to their authenticated student record. Admin and Discipline Office users may communicate with individual students. Department Heads may access only students with service attendance in their authenticated department. Conversation detail, reply, and read-state endpoints repeat the same backend scope check; inaccessible conversations return 404. Messages are bounded to 2000 characters and have no update or delete endpoint.
+`/api/messages/conversations` provides paginated, searchable, text-only, append-only conversation summaries; message history is loaded separately and paginated. Students never submit an ownership identifier and can access only conversations attached to their authenticated student record. Admin and Discipline Office users may communicate with individual students and change a conversation between `OPEN` and `CLOSED`. Department Heads can access only conversations explicitly assigned to their authenticated department; historical attendance alone does not reveal a thread. Recipient discovery is role-scoped by the backend. Conversation detail, reply, read-state, and status endpoints repeat authorization checks, and inaccessible conversation IDs return 404. Messages are bounded to 1,000 characters and have no update or delete endpoint.
 
 ## Parent and guardian contact
 
