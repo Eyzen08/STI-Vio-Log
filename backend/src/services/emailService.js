@@ -57,7 +57,34 @@ const createEmailService = ({ env = process.env, transport, fetchImpl = global.f
     }
   };
 
-  return { sendOtp };
+  const sendCertificate = async ({ to, studentName, certificateNumber, pdf }) => {
+    const subject = 'STI Vio-Log Certificate of Compliance';
+    const text = `Good day ${studentName},\n\nYour Certificate of Compliance (${certificateNumber}) is attached. Keep this official document for your records.`;
+    try {
+      if (useBrevo) {
+        if (typeof fetchImpl !== 'function') throw new Error('HTTPS email client is unavailable');
+        const response = await fetchImpl(BREVO_EMAIL_ENDPOINT, {
+          method: 'POST',
+          headers: { accept: 'application/json', 'api-key': env.BREVO_API_KEY, 'content-type': 'application/json' },
+          body: JSON.stringify({
+            sender: { name: env.BREVO_SENDER_NAME || 'STI Vio-Log', email: env.BREVO_SENDER_EMAIL },
+            to: [{ email: to }], subject, textContent: text,
+            attachment: [{ name: `${certificateNumber}.pdf`, content: pdf.toString('base64') }]
+          }),
+          signal: AbortSignal.timeout(timeout)
+        });
+        if (!response.ok) throw new Error('Email provider rejected the request');
+        return;
+      }
+      if (!smtpTransport) throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Certificate email is temporarily unavailable');
+      await smtpTransport.sendMail({ from: env.MAIL_FROM || env.SMTP_USER, to, subject, text, attachments: [{ filename: `${certificateNumber}.pdf`, content: pdf, contentType: 'application/pdf' }] });
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, 'EMAIL_DELIVERY_FAILED', 'Certificate email could not be delivered');
+    }
+  };
+
+  return { sendOtp, sendCertificate };
 };
 
 module.exports = { createEmailService, BREVO_EMAIL_ENDPOINT };

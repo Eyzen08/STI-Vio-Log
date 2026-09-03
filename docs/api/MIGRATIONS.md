@@ -42,3 +42,5 @@ Migration `021_message_department_scope.sql` adds an explicit optional departmen
 Migration `022_unified_department_officers.sql` adds a department type and an optional department relationship to Discipline Office staff profiles. This supports the atomic Admin workflow that creates a department and its accountable officer together while preserving existing Department Head relationships.
 
 Migration `023_admin_account_profiles.sql` adds administrator identity and verified recovery-email records, extends the existing hashed OTP store for Admin email verification, and records the latest successful account login timestamp.
+
+Migration `024_clearance_certificates.sql` adds managed Discipline Officer e-signatures, immutable PDF certificate snapshots, certificate versions and revocation state, selected-signature snapshots, and email-delivery status. Issued certificates are retained permanently; corrections require revocation and a new version.

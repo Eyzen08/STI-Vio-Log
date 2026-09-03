@@ -133,7 +133,7 @@ app.use(
 
 app.use(
   express.json({
-    limit: "1mb"
+    limit: "2mb"
   })
 );
 

@@ -1,15 +1,70 @@
 const crypto = require('crypto');
+const PDFDocument = require('pdfkit');
+const { ApiError } = require('../utils/api');
 
 const secret = () => process.env.JWT_SECRET || '';
-const signatureFor = (clearanceId) => crypto.createHmac('sha256', secret()).update(`clearance:${clearanceId}`).digest('base64url');
-const certificateCode = (clearanceId) => `CLR-${clearanceId}-${signatureFor(clearanceId)}`;
-
+const signatureFor = (id) => crypto.createHmac('sha256', secret()).update(`clearance:${id}`).digest('base64url');
+const certificateCode = (id) => `CLR-${id}-${signatureFor(id)}`;
 const clearanceIdFromCode = (code) => {
   const match = /^CLR-(\d+)-([A-Za-z0-9_-]{43})$/.exec(String(code || ''));
   if (!match || !secret()) return null;
-  const expected = signatureFor(match[1]);
-  const supplied = match[2];
-  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(supplied)) ? Number(match[1]) : null;
+  const supplied = Buffer.from(match[2]);
+  const expected = Buffer.from(signatureFor(match[1]));
+  return supplied.length === expected.length && crypto.timingSafeEqual(expected, supplied) ? Number(match[1]) : null;
 };
 
-module.exports = { certificateCode, clearanceIdFromCode };
+const SMALL = ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen'];
+const TENS = ['', '', 'twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety'];
+const integerWords = (value) => value < 20 ? SMALL[value]
+  : value < 100 ? `${TENS[Math.floor(value / 10)]}${value % 10 ? `-${SMALL[value % 10]}` : ''}`
+    : value < 1000 ? `${SMALL[Math.floor(value / 100)]} hundred${value % 100 ? ` ${integerWords(value % 100)}` : ''}`
+      : value < 1000000 ? `${integerWords(Math.floor(value / 1000))} thousand${value % 1000 ? ` ${integerWords(value % 1000)}` : ''}` : String(value);
+const hoursInWords = (value) => {
+  const hours = Number(value);
+  if (!Number.isFinite(hours) || hours < 0) throw new ApiError(400, 'INVALID_HOURS', 'Completed hours are invalid');
+  const whole = Math.floor(hours);
+  const minutes = Math.round((hours - whole) * 60);
+  return `${integerWords(whole)}${minutes ? ` hours and ${integerWords(minutes)} minutes` : ''}`;
+};
+
+const renderCertificatePdf = ({ certificateNumber, studentName, program, completedHours, issueDate, signatures }) => new Promise((resolve, reject) => {
+  const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 52, info: { Title: `Certificate of Compliance ${certificateNumber}`, Author: 'STI Vio-Log' } });
+  const chunks = [];
+  doc.on('data', (chunk) => chunks.push(chunk));
+  doc.on('error', reject);
+  doc.on('end', () => resolve(Buffer.concat(chunks)));
+  const blue = '#063b82';
+  const yellow = '#ffd400';
+  doc.lineWidth(6).strokeColor(blue).rect(24, 24, 794, 547).stroke();
+  doc.lineWidth(2).strokeColor(yellow).rect(34, 34, 774, 527).stroke();
+  doc.fillColor(blue).font('Helvetica-Bold').fontSize(14).text('STI COLLEGE - GLOBAL CITY', 52, 55, { align: 'center' });
+  doc.fillColor('#0c1d3b').fontSize(30).text('CERTIFICATE OF COMPLIANCE', 52, 112, { align: 'center', characterSpacing: 1.2 });
+  doc.moveTo(235, 158).lineTo(607, 158).lineWidth(2).strokeColor(yellow).stroke();
+  const words = hoursInWords(completedHours);
+  const numeric = Number(completedHours).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  doc.fillColor('#27354f').font('Helvetica').fontSize(15).text('This is to certify that', 100, 195, { width: 642, align: 'center' });
+  doc.fillColor(blue).font('Helvetica-Bold').fontSize(studentName.length > 45 ? 22 : 27).text(studentName.toUpperCase(), 90, 230, { width: 662, align: 'center' });
+  doc.fillColor('#27354f').font('Helvetica').fontSize(15).text(`is enrolled at STI College-Global City under the ${program} and has successfully completed his or her community service for a total of ${words} (${numeric}) hours.`, 110, 278, { width: 622, align: 'center', lineGap: 7 });
+  doc.fontSize(13).text(`Issued on ${new Date(`${issueDate}T00:00:00`).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}.`, 110, 356, { width: 622, align: 'center' });
+  const width = Math.min(230, 660 / Math.max(signatures.length, 1));
+  const start = (842 - width * Math.max(signatures.length, 1)) / 2;
+  signatures.forEach((entry, index) => {
+    const x = start + index * width;
+    try { doc.image(entry.image_data, x + 35, 397, { fit: [width - 70, 55], align: 'center', valign: 'bottom' }); } catch (_) {}
+    doc.moveTo(x + 22, 458).lineTo(x + width - 22, 458).lineWidth(1).strokeColor('#27354f').stroke();
+    doc.fillColor('#0c1d3b').font('Helvetica-Bold').fontSize(11).text(entry.full_name, x + 8, 466, { width: width - 16, align: 'center' });
+    doc.font('Helvetica').fontSize(10).text(entry.position || 'Discipline Officer', x + 8, 483, { width: width - 16, align: 'center' });
+  });
+  doc.fillColor('#6b7890').fontSize(8).text(`Certificate No. ${certificateNumber} • Generated by STI Vio-Log`, 52, 535, { align: 'center' });
+  doc.end();
+});
+
+const parseSignatureImage = (dataUrl) => {
+  const match = /^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
+  if (!match) throw new ApiError(400, 'INVALID_SIGNATURE_IMAGE', 'Upload a PNG or JPEG signature image');
+  const buffer = Buffer.from(match[2], 'base64');
+  if (!buffer.length || buffer.length > 1024 * 1024) throw new ApiError(400, 'INVALID_SIGNATURE_IMAGE', 'Signature image must be 1 MB or smaller');
+  return { mimeType: match[1], buffer };
+};
+
+module.exports = { certificateCode, clearanceIdFromCode, hoursInWords, renderCertificatePdf, parseSignatureImage };

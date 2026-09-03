@@ -4335,3 +4335,33 @@ a {
 .one-time-secret code { padding: 12px; border-radius: 8px; background: #eef5fc; overflow-wrap: anywhere; }
 @media (max-width: 900px) { .admin-settings-grid { grid-template-columns: 1fr; } .department-summary-grid { grid-template-columns: repeat(2,1fr); } .officer-directory { grid-template-columns: 1fr; } .directory-toolbar { grid-template-columns: 1fr 1fr; } .directory-toolbar input { grid-column: 1/-1; } }
 @media (max-width: 600px) { .department-officer-tabs,.department-officer-tabs button { width: 100%; } .department-summary-grid,.directory-toolbar { grid-template-columns: 1fr; } .directory-toolbar input { grid-column: auto; } .compact-stepper { gap: 6px; font-size: .73rem; } .compact-stepper span { display: none; } .officer-directory dl,.detail-summary dl { grid-template-columns: 1fr; } }
+
+/* Clearance certificate issuance */
+.certificate-admin { display: grid; gap: 18px; margin-bottom: 22px; }
+.certificate-hero { display: flex; justify-content: space-between; align-items: center; padding: 22px; border-top: 4px solid #ffd400; }
+.certificate-hero h2,.certificate-hero p { margin: 3px 0; }
+.certificate-hero > span { padding: 8px 12px; border-radius: 999px; background: #e8f4ff; color: #075eb4; font-weight: 800; font-size: .76rem; }
+.certificate-grid { display: grid; grid-template-columns: minmax(300px,.78fr) minmax(440px,1.22fr); gap: 18px; align-items: start; }
+.certificate-student-list { display: grid; gap: 8px; max-height: 520px; overflow: auto; }
+.certificate-student-list button { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--color-border); border-radius: 11px; background: #fbfdff; color: #142b4a; text-align: left; }
+.certificate-student-list button:hover,.certificate-student-list button.selected { border-color: #0870cf; background: #edf7ff; box-shadow: inset 4px 0 #0870cf; }
+.certificate-student-list span,.certificate-student-list small { color: #67758a; }
+.certificate-preview { margin: 18px 0; padding: 28px 36px; border: 5px double #07539d; background: #fffef9; text-align: center; box-shadow: 0 8px 24px rgba(15,52,91,.08); }
+.certificate-preview > p:first-child { color: #075eb4; font-weight: 800; letter-spacing: .12em; }
+.certificate-preview h3 { color: #132c50; font-size: 1.45rem; letter-spacing: .06em; }
+.certificate-preview > strong { display: block; margin: 13px 0; color: #075eb4; font-size: 1.35rem; text-transform: uppercase; }
+.signature-picker { display: grid; gap: 8px; margin: 0 0 16px; padding: 13px; border: 1px solid var(--color-border); border-radius: 11px; }
+.signature-picker label { display: grid; grid-template-columns: auto 80px 1fr; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7faff; }
+.signature-picker img { width: 80px; height: 38px; object-fit: contain; }
+.signature-picker span,.signature-picker small { display: block; }
+.signature-picker small { color: #6b7890; }
+.signature-form { display: grid; grid-template-columns: 1fr 1fr 1.2fr auto auto; gap: 12px; align-items: end; }
+.signature-form label { display: grid; gap: 6px; font-weight: 700; }
+.signature-form input { min-height: 42px; padding: 8px 11px; border: 1px solid var(--color-border); border-radius: 9px; font: inherit; box-sizing: border-box; }
+.signature-form > img { width: 100px; height: 55px; object-fit: contain; border: 1px dashed #b8c8da; }
+.signature-directory { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; margin-top: 16px; }
+.signature-directory article { display: grid; gap: 5px; justify-items: center; padding: 13px; border: 1px solid var(--color-border); border-radius: 10px; text-align: center; }
+.signature-directory img { width: 130px; height: 55px; object-fit: contain; }
+.signature-directory span { color: #6b7890; font-size: .78rem; }
+@media (max-width: 1050px) { .certificate-grid { grid-template-columns: 1fr; } .signature-form { grid-template-columns: 1fr 1fr; } .signature-directory { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 600px) { .certificate-hero { align-items: flex-start; flex-direction: column; gap: 10px; } .signature-form,.signature-directory { grid-template-columns: 1fr; } .certificate-preview { padding: 20px 14px; } .signature-picker label { grid-template-columns: auto 60px 1fr; } }

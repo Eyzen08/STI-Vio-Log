@@ -43,3 +43,13 @@ test('email service converts SMTP failures into a bounded service error', async 
   const service=createEmailService({env:{MAIL_FROM:'STI Vio-Log <no-reply@example.test>'},transport:{async sendMail(){throw new Error('SMTP connection failed')}}});
   await assert.rejects(service.sendOtp({to:'student@example.test',code:'123456',purpose:'STUDENT_PASSWORD_RESET'}),error=>error.statusCode===503&&error.code==='EMAIL_DELIVERY_FAILED');
 });
+
+test('certificate email uses only the registered recipient and attaches the generated PDF', async () => {
+  let request;
+  const service=createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test'},fetchImpl:async(url,options)=>{request={url,options};return{ok:true,status:201}}});
+  await service.sendCertificate({to:'student@example.test',studentName:'Maria Santos',certificateNumber:'STI-GC-COC-001',pdf:Buffer.from('%PDF-test')});
+  const body=JSON.parse(request.options.body);
+  assert.deepEqual(body.to,[{email:'student@example.test'}]);
+  assert.equal(body.attachment[0].name,'STI-GC-COC-001.pdf');
+  assert.equal(Buffer.from(body.attachment[0].content,'base64').toString(),'%PDF-test');
+});

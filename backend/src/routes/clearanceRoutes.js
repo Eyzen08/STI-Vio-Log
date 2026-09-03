@@ -12,6 +12,17 @@ const {
 
 const router = express.Router();
 const { authorizeRoles } = require("../middleware/authMiddleware");
+const certificate = require('../controllers/clearanceCertificateController');
+
+router.get('/certificates/eligible', certificate.getEligibleStudents);
+router.get('/certificates', certificate.listCertificates);
+router.post('/certificates', certificate.issueCertificate);
+router.get('/certificates/:id/pdf', certificate.downloadCertificate);
+router.post('/certificates/:id/revoke', certificate.revokeCertificate);
+router.post('/certificates/:id/email', certificate.resendCertificate);
+router.get('/signatures', certificate.listSignatures);
+router.post('/signatures', certificate.saveSignature);
+router.put('/signatures/:id', certificate.updateSignature);
 
 
 // =====================================================

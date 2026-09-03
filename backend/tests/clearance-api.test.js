@@ -20,4 +20,7 @@ test('clearance routes expose full CRUD surface', () => {
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('get')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('put')));
   assert(routes.some((route) => route.path === '/:id' && route.methods.includes('delete')));
+  for (const [path, method] of [['/certificates/eligible','get'],['/certificates','get'],['/certificates','post'],['/certificates/:id/pdf','get'],['/certificates/:id/revoke','post'],['/certificates/:id/email','post'],['/signatures','get'],['/signatures','post'],['/signatures/:id','put']]) {
+    assert(routes.some((route) => route.path === path && route.methods.includes(method)), `missing ${method} ${path}`);
+  }
 });

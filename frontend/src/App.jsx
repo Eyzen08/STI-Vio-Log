@@ -27,6 +27,7 @@ import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
 import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
 import AdminAccountSettings from './components/AdminAccountSettings.jsx'
+import AdminClearanceCertificates from './components/AdminClearanceCertificates.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -1926,6 +1927,7 @@ function App() {
             error={clearanceCertificateError || dashboardError}
             certificate={clearanceCertificate}
             onLoadCertificate={loadClearanceCertificate}
+            token={token}
           />
         )
       }
@@ -3095,6 +3097,7 @@ function App() {
     ) {
       return (
         <>
+          <AdminClearanceCertificates token={token} />
           {isAdmin && (
             <section className="table-card form-card">
               <div className="table-header">
