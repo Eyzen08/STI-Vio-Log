@@ -35,3 +35,16 @@ test('QR input rejects non-string, oversized, and unsupported request data', asy
     assert.equal(res.statusCode, 400);
   }
 });
+
+test('QR verification requires an active linked student account', async () => {
+  const originalQuery = database.query;
+  let studentSql = '';
+  database.query = async (sql) => { studentSql = String(sql); return { rows: [] }; };
+  try {
+    const res = response();
+    await scanQrCode({ user: { role: 'DEPARTMENT_HEAD' }, staffDepartmentId: 5, body: { qr_code: 'opaque-code' } }, res);
+    assert.equal(res.statusCode, 404);
+    assert.match(studentSql, /JOIN users u ON u\.id=s\.user_id/);
+    assert.match(studentSql, /u\.is_active=TRUE/);
+  } finally { database.query = originalQuery; }
+});

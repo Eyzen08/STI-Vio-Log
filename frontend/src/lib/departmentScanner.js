@@ -24,3 +24,16 @@ export const assignmentProgress = (assignment) => {
   const remaining = Math.max(0, Number(assignment?.remaining_hours) || 0)
   return { required, completed, remaining }
 }
+
+export const attendanceState = (assignment) => assignment?.active_session_id
+  ? { active: true, label: 'Currently timed in' }
+  : { active: false, label: 'Not timed in' }
+
+export const formatServiceMinutes = (value) => {
+  const minutes = Math.max(0, Math.round(Number(value) || 0))
+  const hours = Math.floor(minutes / 60)
+  const remainder = minutes % 60
+  if (!hours) return `${remainder} min`
+  if (!remainder) return `${hours} hr${hours===1?'':'s'}`
+  return `${hours} hr${hours===1?'':'s'} ${remainder} min`
+}

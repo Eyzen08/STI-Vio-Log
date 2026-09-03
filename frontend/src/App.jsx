@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Html5Qrcode } from 'html5-qrcode'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 import LoginPage from './components/LoginPage.jsx'
@@ -50,6 +50,9 @@ function App() {
   const [initialSession] = useState(loadSession)
   const [qrScanner, setQrScanner] = useState(null)
   const [isQrScanning, setIsQrScanning] = useState(false)
+  const [qrFacingMode, setQrFacingMode] = useState('environment')
+  const qrDecodeBusyRef = useRef(false)
+  const qrActionBusyRef = useRef(false)
 
   /*
    * IMPORTANT:
@@ -217,6 +220,7 @@ function App() {
   const [qrResult, setQrResult] = useState(null)
   const [verifiedQr, setVerifiedQr] = useState('')
   const [qrSubmitting, setQrSubmitting] = useState(false)
+  const [recentQrScans, setRecentQrScans] = useState([])
 
   const [clearanceRecords, setClearanceRecords] = useState([])
 
@@ -1162,7 +1166,7 @@ function App() {
    * ============================================================
    */
 
-  const startQrScanner = async () => {
+  const startQrScanner = async (facingMode = qrFacingMode, restart = false) => {
     setQrError('')
     setQrResult(null)
 
@@ -1173,7 +1177,7 @@ function App() {
       })
       if (unavailable) throw new Error(unavailable)
 
-      if (qrScanner) {
+      if (qrScanner && !restart) {
         return
       }
 
@@ -1184,7 +1188,7 @@ function App() {
       setIsQrScanning(true)
 
       await scanner.start(
-        { facingMode: 'environment' },
+        { facingMode },
 
         {
           fps: 15,
@@ -1195,6 +1199,8 @@ function App() {
         },
 
         (decodedText) => {
+          if (qrDecodeBusyRef.current) return
+          qrDecodeBusyRef.current = true
           setQrForm((current) => ({
             ...current,
             qr_code: decodedText.trim()
@@ -1204,7 +1210,7 @@ function App() {
           setQrResult(null)
           setQrError('QR detected. Verify the student before recording attendance.')
 
-          stopQrScanner(scanner)
+          stopQrScanner(scanner).finally(() => { qrDecodeBusyRef.current = false })
         },
 
         () => {
@@ -1264,6 +1270,13 @@ function App() {
     setQrScanner(null)
   }
 
+  const switchQrCamera = async () => {
+    const nextFacingMode = qrFacingMode === 'environment' ? 'user' : 'environment'
+    await stopQrScanner()
+    setQrFacingMode(nextFacingMode)
+    await startQrScanner(nextFacingMode, true)
+  }
+
   /*
    * Stop QR scanner when leaving the QR page or unmounting.
    */
@@ -1306,7 +1319,7 @@ function App() {
           : value
     }))
 
-    if (name === 'qr_code') {
+    if (name === 'qr_code' || name === 'department_id') {
       setVerifiedQr('')
       setQrResult(null)
       setQrError('')
@@ -1314,6 +1327,8 @@ function App() {
   }
 
   const handleQrAction = async (action) => {
+    if (qrActionBusyRef.current) return
+    qrActionBusyRef.current = true
     setQrError('')
     setQrSubmitting(true)
 
@@ -1329,6 +1344,13 @@ function App() {
       if (!isDepartmentHead && !qrForm.department_id) {
         throw new Error('Select the department responsible for this attendance record.')
       }
+
+      if (action === 'time-out' && !qrForm.condition) {
+        throw new Error('Select the student service condition before Time Out.')
+      }
+      if (action !== 'scan' && !window.confirm(action === 'time-in'
+        ? 'Confirm this student’s community-service Time In?'
+        : 'Confirm Time Out and credit the server-calculated service duration?')) return
 
       const response = await fetch(`${API_URL}/api/qr/${action}`, {
         method: 'POST',
@@ -1365,10 +1387,24 @@ function App() {
         session: data.session || null
       })
       setVerifiedQr(qrForm.qr_code.trim())
+      if (action !== 'scan') {
+        setRecentQrScans((current) => [{
+          key: `${Date.now()}-${action}`,
+          studentName: `${data.student?.first_name||''} ${data.student?.last_name||''}`.trim(),
+          studentNumber: data.student?.student_number||'',
+          action: action === 'time-in' ? 'Time In' : 'Time Out',
+          time: data.session?.time_out||data.session?.time_in||new Date().toISOString(),
+          department: data.assignment?.department_name||serviceDepartmentOptions(communityServiceDestinations).find((item)=>Number(item.id)===Number(qrForm.department_id))?.name||'Assigned department'
+        },...current].slice(0,5))
+        const refreshed=await fetch(`${API_URL}/api/qr/scan`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({qr_code:qrForm.qr_code.trim(),...(isDepartmentHead?{}:{department_id:Number(qrForm.department_id)}),notes:''})})
+        const refreshedData=await refreshed.json().catch(()=>({}))
+        if(refreshed.ok&&refreshedData.success)setQrResult((current)=>({...current,student:refreshedData.student,assignment:refreshedData.assignment}))
+      }
     } catch (qrErrorObject) {
       setQrError(qrErrorObject.message)
     } finally {
       setQrSubmitting(false)
+      qrActionBusyRef.current = false
     }
   }
 
@@ -3036,8 +3072,19 @@ function App() {
      * ==========================================================
      */
 
+    if (activeView === 'QR Scan') {
+      const scannerDepartments = serviceDepartmentOptions(communityServiceDestinations)
+      const assignedDepartments = isDepartmentHead
+        ? [{ id:Number(user?.department_id), name:user?.department_name||'Assigned department', code:user?.department_code||'' }]
+        : scannerDepartments
+      return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr}
+        isScanning={isQrScanning} isSubmitting={qrSubmitting} departments={assignedDepartments} recorder={user}
+        recentScans={recentQrScans} onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
+        onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}/>
+    }
+
     if (
-      activeView === 'QR Scan'
+      activeView === 'Legacy QR Scan'
     ) {
       if (isDepartmentHead) {
         return (

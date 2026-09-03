@@ -79,7 +79,7 @@ function mockResult(sql, params = []) {
     return { rows: [] };
   }
 
-  if (text.includes('FROM students') && text.includes('WHERE qr_code = $1')) {
+  if (text.includes('FROM students') && (text.includes('WHERE qr_code = $1') || text.includes('WHERE s.qr_code=$1'))) {
     return { rows: [{ id: 40, student_number: '02000123456', first_name: 'Test', last_name: 'Student', qr_code: 'QR-40' }] };
   }
 

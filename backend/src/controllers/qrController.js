@@ -19,11 +19,20 @@ const validateQrBody = (req) => {
 };
 
 const findStudentAndAssignment = async (qrCode, departmentId) => {
-    const studentResult = await pool.query(`SELECT id, student_number, first_name, last_name, qr_code FROM students WHERE qr_code = $1`, [qrCode]);
+    const studentResult = await pool.query(
+        `SELECT s.id,s.student_number,s.first_name,s.last_name,s.program,s.section,s.year_level,s.qr_code
+         FROM students s JOIN users u ON u.id=s.user_id
+         WHERE s.qr_code=$1 AND u.is_active=TRUE`, [qrCode]);
     if (!studentResult.rows.length) throw new CommunityServiceSessionError("Student not found", 404);
     const student = studentResult.rows[0];
     const assignmentResult = await pool.query(
-        `SELECT a.* FROM community_service_assignments a JOIN violations v ON v.id = a.violation_id
+        `SELECT a.*,d.department_name,d.department_code,
+            active.id AS active_session_id,active.time_in AS active_time_in,
+            latest.activity_at AS last_activity_at,latest.attendance_type AS last_activity_type
+         FROM community_service_assignments a JOIN violations v ON v.id = a.violation_id
+         JOIN departments d ON d.id=a.department_id
+         LEFT JOIN LATERAL (SELECT css.id,css.time_in FROM community_service_sessions css WHERE css.assignment_id=a.id AND css.time_out IS NULL ORDER BY css.time_in DESC LIMIT 1) active ON TRUE
+         LEFT JOIN LATERAL (SELECT csa.scanned_at AS activity_at,csa.attendance_type FROM community_service_attendance csa WHERE csa.assignment_id=a.id ORDER BY csa.scanned_at DESC,csa.id DESC LIMIT 1) latest ON TRUE
          WHERE a.student_id = $1 AND a.status IN ('OPEN', 'IN_PROGRESS') AND v.status = 'OPEN'
            AND a.department_id = $2
          ORDER BY a.id DESC LIMIT 1`, [student.id, departmentId]);

@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 
-import { assignmentProgress, cameraUnavailableMessage, isVerifiedQr, normalizeQrValue, scannerQrBox } from '../src/lib/departmentScanner.js'
+import { assignmentProgress, attendanceState, cameraUnavailableMessage, formatServiceMinutes, isVerifiedQr, normalizeQrValue, scannerQrBox } from '../src/lib/departmentScanner.js'
 
 test('attendance actions require an exact verified opaque QR value', () => {
   assert.equal(isVerifiedQr(' QR-42 ', 'QR-42'), true)
@@ -14,6 +14,13 @@ test('assignment progress normalizes numeric database values', () => {
   assert.deepEqual(assignmentProgress({
     required_hours: '4.00', completed_hours: '1.50', remaining_hours: '2.50'
   }), { required: 4, completed: 1.5, remaining: 2.5 })
+})
+
+test('verified assignment state controls time-in and time-out availability', () => {
+  assert.deepEqual(attendanceState({ active_session_id: 17 }), { active: true, label: 'Currently timed in' })
+  assert.deepEqual(attendanceState({ active_session_id: null }), { active: false, label: 'Not timed in' })
+  assert.equal(formatServiceMinutes(150), '2 hrs 30 min')
+  assert.equal(formatServiceMinutes(60), '1 hr')
 })
 
 test('mobile scanner box remains inside small viewfinders', () => {
