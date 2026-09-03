@@ -40,3 +40,5 @@ Migration `020_student_password_registration_profile.sql` extends pending Studen
 Migration `021_message_department_scope.sql` adds an explicit optional department assignment to official conversations. Existing conversations remain scoped to the Discipline Office. Department Heads can access only conversations explicitly assigned to their authenticated department.
 
 Migration `022_unified_department_officers.sql` adds a department type and an optional department relationship to Discipline Office staff profiles. This supports the atomic Admin workflow that creates a department and its accountable officer together while preserving existing Department Head relationships.
+
+Migration `023_admin_account_profiles.sql` adds administrator identity and verified recovery-email records, extends the existing hashed OTP store for Admin email verification, and records the latest successful account login timestamp.

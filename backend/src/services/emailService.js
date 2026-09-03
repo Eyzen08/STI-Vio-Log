@@ -20,7 +20,7 @@ const createEmailService = ({ env = process.env, transport, fetchImpl = global.f
     : null);
 
   const sendOtp = async ({ to, code, purpose }) => {
-    const reset = purpose === 'STUDENT_PASSWORD_RESET';
+    const reset = purpose === 'STUDENT_PASSWORD_RESET' || purpose === 'ADMIN_PASSWORD_RESET';
     const subject = reset ? 'STI Vio-Log password reset code' : 'Verify your STI Vio-Log email';
     const text = `${reset ? 'Your password reset' : 'Your email verification'} code is ${code}. It expires in 10 minutes. Do not share this code.`;
     try {

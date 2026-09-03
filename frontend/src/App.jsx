@@ -26,6 +26,7 @@ import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
 import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
+import AdminAccountSettings from './components/AdminAccountSettings.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -2182,6 +2183,10 @@ function App() {
 
     if (userRole === 'ADMIN' && activeView === 'Departments & Officer Accounts') {
       return <AdminDepartmentOfficers token={token} />
+    }
+
+    if (userRole === 'ADMIN' && activeView === 'Account Settings') {
+      return <AdminAccountSettings token={token} onSession={acceptSession} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Audit Log') {

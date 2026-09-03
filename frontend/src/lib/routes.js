@@ -6,6 +6,7 @@ export const ROLE_GROUPS = {
 
 export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
+  { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ['ADMIN'] },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
   { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },

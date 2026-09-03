@@ -130,14 +130,16 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   const requestPasswordReset = async ({ identifier }) => {
     const value = clean(identifier, 255).toLowerCase();
     const account = (await pool.query(
-      `SELECT u.id,s.email FROM users u JOIN students s ON s.user_id=u.id
-       WHERE u.role='STUDENT' AND u.is_active=TRUE AND u.email_verified=TRUE
-       AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)) LIMIT 1`,
+      `SELECT u.id,COALESCE(s.email,ap.email) email,
+              CASE WHEN u.role='ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
+       FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
+       WHERE u.is_active=TRUE AND ((u.role='STUDENT' AND u.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)))
+          OR (u.role='ADMIN' AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) LIMIT 1`,
       [value]
     )).rows[0];
     if (account?.email) {
       try {
-        await otpService.issue({ purpose: 'STUDENT_PASSWORD_RESET', userId: account.id, email: account.email });
+        await otpService.issue({ purpose: account.purpose || 'STUDENT_PASSWORD_RESET', userId: account.id, email: account.email });
       } catch (_) {
         // Password-recovery responses must not reveal account existence,
         // SMTP state, or per-account resend cooldown state.
@@ -152,12 +154,13 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
     try {
       await client.query('BEGIN');
       const account = (await client.query(
-        `SELECT u.id FROM users u JOIN students s ON s.user_id=u.id
-         WHERE u.role='STUDENT' AND u.is_active=TRUE AND u.email_verified=TRUE
-         AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)) FOR UPDATE`, [value]
+        `SELECT u.id,CASE WHEN u.role='ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
+         FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
+         WHERE u.is_active=TRUE AND ((u.role='STUDENT' AND u.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)))
+          OR (u.role='ADMIN' AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) FOR UPDATE OF u`, [value]
       )).rows[0];
       if (!account) throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
-      await otpService.verify({ purpose: 'STUDENT_PASSWORD_RESET', userId: account.id, code, client });
+      await otpService.verify({ purpose: account.purpose || 'STUDENT_PASSWORD_RESET', userId: account.id, code, client });
       await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL', [account.id]);
       rawToken = randomBytes(32).toString('base64url');
       await client.query(
@@ -185,15 +188,15 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
         [hashSecret(resetToken || '')]
       )).rows[0];
       if (!authorization) throw new ApiError(401, 'RESET_AUTHORIZATION_INVALID', 'Password reset authorization is invalid or expired');
-      const user = (await client.query('SELECT password_hash FROM users WHERE id=$1 FOR UPDATE', [authorization.user_id])).rows[0];
+      const user = (await client.query('SELECT password_hash,role FROM users WHERE id=$1 FOR UPDATE', [authorization.user_id])).rows[0];
       if (await comparePassword(newPassword, user.password_hash)) throw new ApiError(409, 'PASSWORD_REUSE', 'New password must be different from the current password');
       const passwordHash = await hashPassword(newPassword);
       await client.query('UPDATE users SET password_hash=$2,must_change_password=FALSE,session_version=session_version+1,password_changed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [authorization.user_id, passwordHash]);
       await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [authorization.id]);
       await client.query(
         `INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
-         VALUES($1,'STUDENT_PASSWORD_RESET','users',$1,'Student completed verified password reset',$2)`,
-        [authorization.user_id, ipAddress]
+         VALUES($1,$2,'users',$1,$3,$4)`,
+        [authorization.user_id, user.role==='ADMIN'?'ADMIN_PASSWORD_RESET':'STUDENT_PASSWORD_RESET', user.role==='ADMIN'?'Administrator completed verified password reset':'Student completed verified password reset', ipAddress]
       );
       await client.query('COMMIT');
     } catch (error) {

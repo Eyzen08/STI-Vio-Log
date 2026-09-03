@@ -14,6 +14,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       );
       const user=result.rows[0];
       if(!user||!(await comparePassword(password,user.password_hash)))return res.status(401).json({success:false,message:'Invalid username or password'});
+      await database.query('UPDATE users SET last_login_at=CURRENT_TIMESTAMP WHERE id=$1',[user.id]);
       const token=issueToken(user,{env:{JWT_SECRET:jwtSecret()}});
       return res.json({success:true,message:'Login successful',token,user:{id:user.id,username:user.username,role:user.role,password_change_required:Boolean(user.must_change_password)}});
     } catch(error) {

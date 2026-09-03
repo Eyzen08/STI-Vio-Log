@@ -4,9 +4,9 @@ const jwt=require('jsonwebtoken');
 const router=require('../src/routes/accountRoutes');
 const {issueSessionToken}=require('../src/services/sessionTokenService');
 
-test('account route exposes only authenticated self-service password change',()=>{
+test('account route exposes password and administrator self-service settings',()=>{
   const routes=router.stack.filter(layer=>layer.route).map(layer=>({path:layer.route.path,methods:Object.keys(layer.route.methods)}));
-  assert.deepEqual(routes,[{path:'/password-change',methods:['post']}]);
+  assert.deepEqual(routes,[{path:'/password-change',methods:['post']},{path:'/admin-profile',methods:['get']},{path:'/admin-profile',methods:['patch']},{path:'/admin-profile/email/resend',methods:['post']},{path:'/admin-profile/email/verify',methods:['post']}]);
 });
 
 test('session tokens carry version and forced-change state',()=>{
