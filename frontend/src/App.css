@@ -4291,3 +4291,41 @@ a {
   .chat-composer { grid-template-columns: 1fr auto; padding: 10px; }
   .chat-composer > p { display: none; }
 }
+
+/* Unified department and officer administration */
+.department-officer-page { display: grid; gap: 18px; }
+.department-officer-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.department-officer-tabs button { border: 1px solid #b9cce1; background: white; color: #164b80; }
+.department-officer-tabs button.active { border-color: #0767bd; background: #0767bd; color: white; }
+.department-summary-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
+.department-summary-grid article { display: grid; gap: 3px; padding: 17px; border: 1px solid var(--color-border); border-radius: 14px; background: white; box-shadow: var(--shadow-sm); }
+.department-summary-grid b { color: #075eb4; font-size: 1.6rem; }
+.department-summary-grid span { color: #64748b; font-size: .78rem; }
+.department-officer-create { max-width: 920px; margin-inline: auto; width: 100%; box-sizing: border-box; }
+.compact-stepper { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 24px; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); }
+.compact-stepper button { display: flex; align-items: center; gap: 8px; border: 0; background: transparent; color: #64748b; }
+.compact-stepper button b { display: grid; width: 29px; height: 29px; place-items: center; border-radius: 50%; background: #e6edf5; }
+.compact-stepper button.active { color: #075eb4; }
+.compact-stepper button.active b { background: #075eb4; color: white; }
+.section-heading { margin-bottom: 18px; }
+.section-heading h3,.section-heading p { margin: 0 0 5px; }
+.full-field { grid-column: 1/-1; }
+.wizard-actions { display: flex; justify-content: space-between; margin-top: 20px; }
+.directory-toolbar { display: grid; grid-template-columns: minmax(250px,1fr) 210px 170px; gap: 10px; margin-bottom: 18px; }
+.directory-toolbar :is(input,select) { min-height: 43px; padding: 9px 12px; border: 1px solid var(--color-border); border-radius: 9px; font: inherit; }
+.officer-directory { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.officer-directory > article { padding: 18px; border: 1px solid var(--color-border); border-radius: 13px; background: #fbfdff; }
+.officer-directory h3 { margin: 9px 0 5px; }
+.officer-directory p { margin: 3px 0; color: #65748a; }
+.officer-directory .officer-name { color: #142b4a; font-weight: 800; }
+.officer-directory dl,.detail-summary dl { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+.officer-directory dl div,.detail-summary dl div { min-width: 0; }
+.officer-directory dt,.detail-summary dt { color: #6b7890; font-size: .7rem; }
+.officer-directory dd,.detail-summary dd { margin: 3px 0; overflow-wrap: anywhere; }
+.status-badge--muted { background: #edf0f4; color: #586579; }
+.danger-button { color: #a62222 !important; border-color: #e8bcbc !important; }
+.one-time-secret { display: grid; gap: 12px; }
+.one-time-secret label { display: grid; gap: 5px; }
+.one-time-secret code { padding: 12px; border-radius: 8px; background: #eef5fc; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .department-summary-grid { grid-template-columns: repeat(2,1fr); } .officer-directory { grid-template-columns: 1fr; } .directory-toolbar { grid-template-columns: 1fr 1fr; } .directory-toolbar input { grid-column: 1/-1; } }
+@media (max-width: 600px) { .department-officer-tabs,.department-officer-tabs button { width: 100%; } .department-summary-grid,.directory-toolbar { grid-template-columns: 1fr; } .directory-toolbar input { grid-column: auto; } .compact-stepper { gap: 6px; font-size: .73rem; } .compact-stepper span { display: none; } .officer-directory dl,.detail-summary dl { grid-template-columns: 1fr; } }

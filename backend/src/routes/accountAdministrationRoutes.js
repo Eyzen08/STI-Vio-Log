@@ -1,9 +1,11 @@
 const express=require('express');
-const {list,create,status,assignment,reset}=require('../controllers/accountAdministrationController');
+const {list,create,createDepartmentOfficer,status,assignment,profile,reset}=require('../controllers/accountAdministrationController');
 const router=express.Router();
 router.get('/',list);
 router.post('/',create);
+router.post('/department-officer',createDepartmentOfficer);
 router.patch('/:id/status',status);
 router.patch('/:id/assignment',assignment);
+router.patch('/:id/profile',profile);
 router.post('/:id/password-reset',reset);
 module.exports=router;

@@ -8,9 +8,7 @@ export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
-  { path: '/admin/department-accounts', label: 'Department Accounts', view: 'Department Accounts', roles: ['ADMIN'] },
-  { path: '/admin/accounts', label: 'Staff Accounts', view: 'Accounts', roles: ['ADMIN'] },
-  { path: '/admin/departments', label: 'Departments', view: 'Departments', roles: ['ADMIN'] },
+  { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },
   { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['ADMIN'] },
   { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Duplicate Review', roles: ['ADMIN'] },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
@@ -48,10 +46,12 @@ export const resolveRoute = (path, role) => {
   if (['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(path)) return { status: 'public', route: null }
   if (path === '/unauthorized') return { status: 'unauthorized', route: null }
 
-  const route = APP_ROUTES.find((candidate) => candidate.path === path)
+  const legacyAdminRoutes = ['/admin/department-accounts','/admin/accounts','/admin/departments']
+  const normalizedPath = legacyAdminRoutes.includes(path) ? '/admin/departments-officers' : path
+  const route = APP_ROUTES.find((candidate) => candidate.path === normalizedPath)
 
   if (!route) return { status: 'not_found', route: null }
   if (!route.roles.includes(role)) return { status: 'unauthorized', route }
 
-  return { status: 'allowed', route }
+  return { status: 'allowed', route, redirectTo: normalizedPath !== path ? normalizedPath : null }
 }

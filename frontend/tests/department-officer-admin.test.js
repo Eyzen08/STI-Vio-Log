@@ -1,0 +1,7 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { buildDepartmentOfficerPayload, departmentStepValid, filterDepartmentOfficers, officerStepValid } from '../src/lib/departmentOfficerAdmin.js'
+
+test('unified creation payload normalizes department and officer values',()=>{assert.deepEqual(buildDepartmentOfficerPayload({departmentName:'  Student  Affairs ',departmentType:' student services ',departmentStatus:'active',username:'  Office.Head ',role:'department_head',firstName:' Ana ',lastName:' Cruz ',email:' ANA@EXAMPLE.COM '}),{department_name:'Student Affairs',department_type:'STUDENT SERVICES',description:undefined,department_status:'active',username:'office.head',role:'DEPARTMENT_HEAD',first_name:'Ana',last_name:'Cruz',employee_number:undefined,email:'ana@example.com'})})
+test('wizard validates each grouped step',()=>{assert.equal(departmentStepValid({departmentName:'Library',departmentType:'Support'}),true);assert.equal(officerStepValid({firstName:'A',lastName:'B',username:'officer',role:'ADMIN'}),false)})
+test('directory filters linked officers by department, role, and status',()=>{const accounts=[{id:1,first_name:'Ana',last_name:'Cruz',username:'ana',role:'DEPARTMENT_HEAD',is_active:true,department_id:4},{id:2,first_name:'Ben',last_name:'Lim',username:'ben',role:'DISCIPLINE_OFFICE',is_active:false}];const departments=[{id:4,department_name:'Library'}];assert.deepEqual(filterDepartmentOfficers(accounts,departments,{search:'library',role:'DEPARTMENT_HEAD',status:'ACTIVE'}).map(x=>x.id),[1])})

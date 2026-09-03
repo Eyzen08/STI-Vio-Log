@@ -22,12 +22,10 @@ import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
 import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
-import DepartmentAccounts from './components/DepartmentAccounts.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
-import AdminDepartments from './components/AdminDepartments.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
 import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
-import AdminAccounts from './components/AdminAccounts.jsx'
+import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -361,9 +359,13 @@ function App() {
     }
 
     if (routeResolution.status === 'allowed') {
+      if (routeResolution.redirectTo) {
+        navigateTo(routeResolution.redirectTo, { replace: true })
+        return
+      }
       setActiveView(routeResolution.route.view)
     }
-  }, [isLoggedIn, routePath, routeResolution.route, routeResolution.status, user, userRole])
+  }, [isLoggedIn, routePath, routeResolution.redirectTo, routeResolution.route, routeResolution.status, user, userRole])
 
   const openViolationsCount = violations.filter(
     (violation) =>
@@ -2178,16 +2180,8 @@ function App() {
       return <GoogleRegistrationReview token={token} onPendingCountChange={updatePendingStudentCount} />
     }
 
-    if (isAdmin && activeView === 'Department Accounts') {
-      return <DepartmentAccounts token={token} />
-    }
-
-    if (userRole === 'ADMIN' && activeView === 'Accounts') {
-      return <AdminAccounts token={token} students={students} />
-    }
-
-    if (userRole === 'ADMIN' && activeView === 'Departments') {
-      return <AdminDepartments token={token} />
+    if (userRole === 'ADMIN' && activeView === 'Departments & Officer Accounts') {
+      return <AdminDepartmentOfficers token={token} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Audit Log') {
