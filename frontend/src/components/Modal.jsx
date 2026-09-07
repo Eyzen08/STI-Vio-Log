@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-function Modal({ title, onClose, children, wide = false }) {
+function Modal({ title, onClose, children, wide = false, drawer = false }) {
   const titleId = useId()
   const closeButtonRef = useRef(null)
   const onCloseRef = useRef(onClose)
@@ -23,7 +23,7 @@ function Modal({ title, onClose, children, wide = false }) {
 
   return createPortal(
     <div className="app-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className={`app-modal${wide ? ' app-modal--wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <section className={`app-modal${wide ? ' app-modal--wide' : ''}${drawer ? ' app-modal--drawer' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="app-modal-header">
           <h2 id={titleId}>{title}</h2>
           <button ref={closeButtonRef} type="button" className="app-modal-close" onClick={onClose} aria-label={`Close ${title}`}>×</button>

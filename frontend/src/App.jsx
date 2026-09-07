@@ -73,6 +73,7 @@ function App() {
 
   const [routePath, setRoutePath] = useState(() => window.location.pathname)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [activeView, setActiveView] = useState('Dashboard')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -170,6 +171,7 @@ function App() {
 
   const [studentFormError, setStudentFormError] = useState('')
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
+  const [isStudentFormOpen, setIsStudentFormOpen] = useState(false)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
   const [reviewedStudentViolations, setReviewedStudentViolations] = useState([])
@@ -196,6 +198,7 @@ function App() {
 
   const [violationFormError, setViolationFormError] = useState('')
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
+  const [isViolationFormOpen, setIsViolationFormOpen] = useState(false)
 
   const [communityServiceAssignments, setCommunityServiceAssignments] =
     useState([])
@@ -216,6 +219,7 @@ function App() {
 
   const [communityServiceFormSuccess, setCommunityServiceFormSuccess] =
     useState('')
+  const [isCommunityServiceFormOpen, setIsCommunityServiceFormOpen] = useState(false)
 
   const [qrForm, setQrForm] = useState({
     qr_code: '',
@@ -1009,6 +1013,7 @@ function App() {
           refreshedData.students || []
         )
       }
+      setIsStudentFormOpen(false)
     } catch (studentError) {
       setStudentFormError(
         studentError.message
@@ -1101,6 +1106,7 @@ function App() {
           refreshedData.violations || []
         )
       }
+      setIsViolationFormOpen(false)
     } catch (violationError) {
       setViolationFormError(
         violationError.message
@@ -1193,6 +1199,7 @@ function App() {
             refreshedData.assignments || []
           )
         }
+        setIsCommunityServiceFormOpen(false)
       } catch (assignmentError) {
         setCommunityServiceFormError(
           assignmentError.message
@@ -2256,9 +2263,23 @@ function App() {
       const visibleStudents = filterAdminStudents(students, studentRosterSearch)
       const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, reviewedStudentViolations) : null
       const sanctionGuidance = handbookSanctionGuidance(reviewedStudentSummary?.categoryCounts || [])
+      const studentsWithViolations = new Set(violations.map((item) => Number(item.student_id))).size
+      const studentsInService = new Set(communityServiceAssignments.filter((item) => !['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase())).map((item) => Number(item.student_id))).size
+      const clearedStudents = students.filter((student) => summarizeStudentCondition(student.id, violations).open === 0).length
       return (
         <>
-          <section className="table-card form-card">
+          <header className="management-page-header">
+            <div><span className="page-breadcrumb">Home / Students</span><h2>Students Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
+            <button type="button" className="primary-action" onClick={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }}>＋ Add Student</button>
+          </header>
+          <section className="management-metrics" aria-label="Student summary">
+            <article className="management-metric metric-blue"><i>◎</i><div><strong>{students.length}</strong><span>Total Students</span></div></article>
+            <article className="management-metric metric-red"><i>△</i><div><strong>{studentsWithViolations}</strong><span>With Violations</span></div></article>
+            <article className="management-metric metric-orange"><i>◷</i><div><strong>{studentsInService}</strong><span>Ongoing Community Service</span></div></article>
+            <article className="management-metric metric-green"><i>✓</i><div><strong>{clearedStudents}</strong><span>No Open Violations</span></div></article>
+          </section>
+          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create a student record</strong><span>Use the student's official school information.</span></div>
+          <section className="drawer-form-card">
             <div className="table-header">
               <h3>
                 Add student
@@ -2473,14 +2494,11 @@ function App() {
                 Save Student
               </button>
             </form>
-          </section>
+          </section></Modal>}
 
           <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Student roster
-              </h3>
-
+            <div className="table-header management-table-header">
+              <div><h3>Student Directory</h3><p>Search and review the records available to your account.</p></div>
               <span>
                 {dashboardLoading
                   ? 'Loading...'
@@ -2521,7 +2539,8 @@ function App() {
                         Year
                       </th>
                       <th>Violations</th>
-                      <th>Condition</th>
+                      <th>Community Service</th>
+                      <th>Clearance</th>
                       <th>Action</th>
                     </tr>
                   </thead>
@@ -2530,6 +2549,11 @@ function App() {
                     {visibleStudents.map(
                       (student) => {
                         const condition = summarizeStudentCondition(student.id, violations)
+                        const assignment = communityServiceAssignments.find((item) => Number(item.student_id) === Number(student.id))
+                        const required = Number(assignment?.required_hours || 0)
+                        const remaining = Number(assignment?.remaining_hours ?? required)
+                        const completed = Math.max(0, required - remaining)
+                        const progress = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0
                         return (
                         <tr
                           key={
@@ -2564,8 +2588,9 @@ function App() {
                             }
                           </td>
                           <td>{condition.total} total / {condition.open} open</td>
-                          <td><span className="status-badge">{condition.condition}</span></td>
-                          <td><div className="table-actions"><button type="button" className="secondary-button" onClick={()=>loadReviewedStudentHistory(student)}>View condition</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)}>Guardian contact</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
+                          <td>{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
+                          <td><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
+                          <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="icon-row-action" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian contact for ${student.first_name} ${student.last_name}`}>☎</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
                         </tr>
                         )
                       }
@@ -2576,10 +2601,10 @@ function App() {
             )}
           </section>
 
-          {guardianContactStudent && <Modal title="Guardian contact" wide onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
+          {guardianContactStudent && <Modal title="Guardian contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
 
           {reviewedStudent && reviewedCondition && (
-            <Modal title={`Student condition — ${reviewedStudent.student_number}`} wide onClose={()=>setReviewedStudent(null)}>
+            <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
@@ -2607,9 +2632,26 @@ function App() {
     ) {
       const selectedType = selectedViolationType(violationTypes, violationForm.violation_type_id)
       const exactOffenses = offensesForType(selectedType)
+      const violationStatusCount = (status) => violations.filter((item) => String(item.status).toUpperCase() === status).length
+      const violationSeverityCount = (severity) => violations.filter((item) => String(item.severity).toUpperCase().includes(severity)).length
       return (
         <>
-          <section className="table-card form-card">
+          <header className="management-page-header">
+            <div><span className="page-breadcrumb">Home / Violations</span><h2>Violations Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
+            <button type="button" className="primary-action" onClick={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }}>＋ Record Violation</button>
+          </header>
+          <section className="management-metrics management-metrics--wide" aria-label="Violation summary">
+            <article className="management-metric metric-red"><i>△</i><div><strong>{violations.length}</strong><span>Total Violations</span></div></article>
+            <article className="management-metric metric-orange"><i>!</i><div><strong>{violationSeverityCount('MINOR')}</strong><span>Minor</span></div></article>
+            <article className="management-metric metric-red"><i>!</i><div><strong>{violationSeverityCount('MAJOR')}</strong><span>Major</span></div></article>
+            <article className="management-metric metric-purple"><i>!</i><div><strong>{violationSeverityCount('GRAVE')}</strong><span>Grave</span></div></article>
+            <article className="management-metric metric-blue"><i>□</i><div><strong>{violationStatusCount('OPEN')}</strong><span>Open</span></div></article>
+            <article className="management-metric metric-orange"><i>◷</i><div><strong>{violationStatusCount('PENDING')}</strong><span>Pending</span></div></article>
+            <article className="management-metric metric-green"><i>✓</i><div><strong>{violationStatusCount('COMPLETED')}</strong><span>Completed</span></div></article>
+            <article className="management-metric metric-green"><i>◇</i><div><strong>{violationStatusCount('CLEARED')}</strong><span>Cleared</span></div></article>
+          </section>
+          {isViolationFormOpen && <Modal title="Record Violation" drawer onClose={() => setIsViolationFormOpen(false)}><div className="drawer-intro"><strong>Create an incident record</strong><span>Choose the exact handbook classification and document only verified facts.</span></div>
+          <section className="drawer-form-card">
             <div className="table-header">
               <h3>
                 Add violation
@@ -2764,10 +2806,10 @@ function App() {
                 Save Violation
               </button>
             </form>
-          </section>
+          </section></Modal>}
 
           {editingViolation && (
-            <section className="table-card form-card">
+            <Modal title={`Edit violation #${editingViolation.id}`} drawer onClose={()=>setEditingViolation(null)}><section className="drawer-form-card">
               <div className="table-header"><h3>Edit violation #{editingViolation.id}</h3><span>Open cases only</span></div>
               <form className="student-form" onSubmit={handleViolationUpdate}>
                 <div className="student-form-grid">
@@ -2777,14 +2819,12 @@ function App() {
                 {violationEditError && <p className="error-message" role="alert">{violationEditError}</p>}
                 <div className="registration-review-actions"><button type="submit">Save audited changes</button><button type="button" className="secondary-button" onClick={()=>setEditingViolation(null)}>Cancel</button></div>
               </form>
-            </section>
+            </section></Modal>
           )}
 
           <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Recent violations
-              </h3>
+            <div className="table-header management-table-header">
+              <div><h3>Violation Records</h3><p>Most recent incidents and their current status.</p></div>
 
               <span>
                 {dashboardLoading
@@ -2812,6 +2852,10 @@ function App() {
                       </th>
 
                       <th>Incident</th>
+
+                      <th>Offense</th>
+
+                      <th>Classification</th>
 
                       <th>
                         Status
@@ -2843,6 +2887,10 @@ function App() {
                             </td>
 
                             <td>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
+
+                            <td>{violation.exact_offense || violation.violation_name || 'Not recorded'}</td>
+
+                            <td>{violation.severity || '—'}</td>
 
                             <td>
                               <span className="status-badge">
@@ -2881,9 +2929,25 @@ function App() {
       )
       const departmentOptions = serviceDepartmentOptions(communityServiceDestinations)
       const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
+      const activeAssignments = communityServiceAssignments.filter((item) => !['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase()))
+      const timedInAssignments = communityServiceAssignments.filter((item) => ['TIMED_IN', 'IN_PROGRESS'].includes(String(item.status).toUpperCase())).length
+      const nearCompletionAssignments = activeAssignments.filter((item) => Number(item.remaining_hours) > 0 && Number(item.remaining_hours) <= 2).length
+      const completedAssignments = communityServiceAssignments.filter((item) => ['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase())).length
       return (
         <>
-          <section className="table-card form-card">
+          <header className="management-page-header">
+            <div><span className="page-breadcrumb">Home / Community Service</span><h2>Community Service</h2><p>Track assignments, time logs, accountable departments, and student progress.</p></div>
+            <button type="button" className="primary-action" onClick={() => { setCommunityServiceFormError(''); setCommunityServiceFormSuccess(''); setIsCommunityServiceFormOpen(true) }}>＋ Assign Service</button>
+          </header>
+          <section className="management-metrics management-metrics--five" aria-label="Community service summary">
+            <article className="management-metric metric-blue"><i>◎</i><div><strong>{activeAssignments.length}</strong><span>Active Assignments</span></div></article>
+            <article className="management-metric metric-green"><i>◷</i><div><strong>{timedInAssignments}</strong><span>Students Timed In</span></div></article>
+            <article className="management-metric metric-orange"><i>⚑</i><div><strong>{nearCompletionAssignments}</strong><span>Near Completion</span></div></article>
+            <article className="management-metric metric-red"><i>!</i><div><strong>{activeAssignments.filter((item) => Number(item.remaining_hours) >= Number(item.required_hours || 0)).length}</strong><span>Not Started</span></div></article>
+            <article className="management-metric metric-green"><i>✓</i><div><strong>{completedAssignments}</strong><span>Completed</span></div></article>
+          </section>
+          {isCommunityServiceFormOpen && <Modal title="Assign Community Service" drawer onClose={() => setIsCommunityServiceFormOpen(false)}><div className="drawer-intro"><strong>Create a service assignment</strong><span>Connect an open violation to an accountable department head.</span></div>
+          <section className="drawer-form-card">
             <div className="table-header">
               <h3>
                 Assign community service
@@ -3029,13 +3093,11 @@ function App() {
                 Save Assignment
               </button>
             </form>
-          </section>
+          </section></Modal>}
 
           <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Community service tracking
-              </h3>
+            <div className="table-header management-table-header">
+              <div><h3>Community Service Tracking</h3><p>Required, completed, and remaining time per assignment.</p></div>
 
               <span>
                 {
@@ -3079,6 +3141,8 @@ function App() {
                         Remaining
                       </th>
 
+                      <th>Progress</th>
+
                       <th>
                         Status
                       </th>
@@ -3087,7 +3151,11 @@ function App() {
 
                   <tbody>
                     {communityServiceAssignments.map(
-                      (assignment) => (
+                      (assignment) => {
+                        const required = Number(assignment.required_hours || 0)
+                        const remaining = Number(assignment.remaining_hours ?? required)
+                        const progress = required > 0 ? Math.min(100, Math.round(((required - remaining) / required) * 100)) : 0
+                        return (
                         <tr
                           key={
                             assignment.id
@@ -3123,6 +3191,8 @@ function App() {
                             {formatDuration(assignment.remaining_hours ?? assignment.required_hours ?? 0)}
                           </td>
 
+                          <td><div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{progress}%</small></div></td>
+
                           <td>
                             <span className="status-badge">
                               {
@@ -3132,7 +3202,8 @@ function App() {
                             </span>
                           </td>
                         </tr>
-                      )
+                        )
+                      }
                     )}
                   </tbody>
                 </table>
@@ -3465,17 +3536,12 @@ function App() {
       activeView === 'Reports'
     ) {
       return (
-        <>
-          <section className="table-card form-card">
-            <div className="table-header">
-              <h3>
-                Generate Report
-              </h3>
-
-              <span>
-                Filter and export
-              </span>
-            </div>
+        <div className="reports-workspace">
+          <header className="management-page-header">
+            <div><span className="page-breadcrumb">Home / Reports</span><h2>Reports</h2><p>Generate operational reports using current records and supported filters.</p></div>
+          </header>
+          <section className="table-card report-filter-card">
+            <div className="table-header management-table-header"><div><h3>Filters</h3><p>Choose a report type, scope, date range, and sort order.</p></div><span>{reportData.length ? `${reportData.length} current results` : 'Ready to generate'}</span></div>
 
             {reportError && <p className="error-message" role="alert">{reportError}</p>}
 
@@ -3617,14 +3683,9 @@ function App() {
               </label>
             </div>
 
-            <div
-              style={{
-                display: 'flex',
-                gap: '10px'
-              }}
-            >
+            <div className="report-filter-actions">
               <button
-                className="submit-btn"
+                className="secondary-button"
                 onClick={
                   fetchReport
                 }
@@ -3645,20 +3706,15 @@ function App() {
                 disabled={
                   reportData.length === 0
                 }
-                style={{
-                  background: '#059669'
-                }}
               >
                 Export CSV
               </button>
             </div>
           </section>
 
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Report Results
-              </h3>
+          <section className="table-card report-results-card">
+            <div className="table-header management-table-header">
+              <div><h3>Generated Report</h3><p>Results use the live data available to your role.</p></div>
 
               <span>
                 {reportData.length}{' '}
@@ -3731,7 +3787,7 @@ function App() {
               </div>
             )}
           </section>
-        </>
+        </div>
       )
     }
 
@@ -4018,7 +4074,7 @@ function App() {
    */
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}`}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       {isLoggedIn && isMobileNavOpen && (
         <button
           className="sidebar-backdrop"
@@ -4043,6 +4099,9 @@ function App() {
             onClick={() => setIsMobileNavOpen(false)}
           >
             <span aria-hidden="true">×</span>
+          </button>
+          <button className="sidebar-collapse" type="button" aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={!isSidebarCollapsed} onClick={() => setIsSidebarCollapsed((value) => !value)}>
+            <PortalIcon name="menu" />
           </button>
         </div>
 
