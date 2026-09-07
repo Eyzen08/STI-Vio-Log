@@ -9,7 +9,13 @@ const {
     insertViolationAudit,
     transitionViolation
 } = require("../services/violationWorkflowService");
+const { recalculateOffenseStatus } = require("../services/offenseEscalationService");
 const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils/validators");
+
+const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))
+    && !Number.isNaN(new Date(`${value}T00:00:00+08:00`).getTime());
+const isTimeOfDay = (value) => value === null || value === undefined || value === ''
+    || /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(String(value));
 
 
 // =====================================================
@@ -44,9 +50,17 @@ const getViolations = async (req, res) => {
         assertAllowedFields(req.query, ["page", "limit"]);
         const { page, limit, offset } = parsePagination(req.query);
         const result = await pool.query(`
-            SELECT *
-            FROM violations
-            ORDER BY incident_date DESC, id DESC
+            SELECT v.*, vt.violation_code, vt.violation_name, vt.severity,
+                s.student_number,
+                CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name,
+                ose.indicator_level AS offense_indicator_level,
+                ose.minor_count, ose.major_count, ose.grave_count,
+                ose.major_level_review_required
+            FROM violations v
+            JOIN violation_types vt ON vt.id = v.violation_type_id
+            JOIN students s ON s.id = v.student_id
+            LEFT JOIN student_offense_escalations ose ON ose.student_id = v.student_id
+            ORDER BY v.incident_date DESC, v.id DESC
             LIMIT $1 OFFSET $2
         `, [limit, offset]);
 
@@ -80,9 +94,17 @@ const getViolationById = async (req, res) => {
 
         const result = await pool.query(
             `
-            SELECT *
-            FROM violations
-            WHERE id = $1
+            SELECT v.*, vt.violation_code, vt.violation_name, vt.severity,
+                s.student_number,
+                CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name,
+                ose.indicator_level AS offense_indicator_level,
+                ose.minor_count, ose.major_count, ose.grave_count,
+                ose.major_level_review_required
+            FROM violations v
+            JOIN violation_types vt ON vt.id = v.violation_type_id
+            JOIN students s ON s.id = v.student_id
+            LEFT JOIN student_offense_escalations ose ON ose.student_id = v.student_id
+            WHERE v.id = $1
             `,
             [id]
         );
@@ -133,11 +155,12 @@ const createViolation = async (req, res) => {
     const client = await pool.connect();
 
     try {
-        assertAllowedFields(req.body, ["student_id", "violation_type_id", "incident_date", "description"]);
+        assertAllowedFields(req.body, ["student_id", "violation_type_id", "incident_date", "incident_time", "description"]);
         const {
             student_id,
             violation_type_id,
             incident_date,
+            incident_time,
             description,
         } = req.body;
 
@@ -153,6 +176,10 @@ const createViolation = async (req, res) => {
             });
         }
 
+        if (!isIsoDate(incident_date) || !isTimeOfDay(incident_time)) {
+            return res.status(400).json({ success: false, message: "Enter a valid incident date and time" });
+        }
+
         await client.query("BEGIN");
 
         // -------------------------------------------------
@@ -166,6 +193,7 @@ const createViolation = async (req, res) => {
                 violation_type_id,
                 reported_by,
                 incident_date,
+                incident_time,
                 description,
                 status,
                 required_service_hours,
@@ -181,7 +209,8 @@ const createViolation = async (req, res) => {
                 $6,
                 $7,
                 $8,
-                $9
+                $9,
+                $10
             )
             RETURNING *
             `,
@@ -190,6 +219,7 @@ const createViolation = async (req, res) => {
                 violation_type_id,
                 req.user.id,
                 incident_date,
+                incident_time || null,
                 description || null,
                 "OPEN",
                 0,
@@ -227,6 +257,9 @@ const createViolation = async (req, res) => {
             violation.student_id,
             client
         );
+        const offenseStatus = await recalculateOffenseStatus({
+            client, studentId: violation.student_id, actor: req.user, ipAddress: req.ip
+        });
 
         await notifyStudent(client, violation.student_id, {
             title: 'New violation recorded',
@@ -250,7 +283,8 @@ const createViolation = async (req, res) => {
             violation,
             assignment,
             history,
-            clearanceSync
+            clearanceSync,
+            offenseStatus
         });
 
     } catch (error) {
@@ -300,10 +334,16 @@ const createViolation = async (req, res) => {
 const updateViolation = async (req, res) => {
     const client = await pool.connect();
     try {
-        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "description", "required_service_hours", "reason"]);
+        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "incident_time", "description", "required_service_hours", "reason"]);
         const { id } = req.params;
         const reason = String(req.body.reason || "").trim();
         if (!reason) return res.status(400).json({ success: false, message: "reason is required for an audited violation update" });
+        if (req.body.incident_date !== undefined && !isIsoDate(req.body.incident_date)) {
+            return res.status(400).json({ success: false, message: "incident_date must be a valid date" });
+        }
+        if (req.body.incident_time !== undefined && !isTimeOfDay(req.body.incident_time)) {
+            return res.status(400).json({ success: false, message: "incident_time must be a valid 24-hour time" });
+        }
 
         if (req.body.required_service_hours !== undefined) {
             const requiredHours = Number(req.body.required_service_hours);
@@ -319,6 +359,7 @@ const updateViolation = async (req, res) => {
         const allowedFields = [
             "violation_type_id",
             "incident_date",
+            "incident_time",
             "description",
             "required_service_hours"
         ];
@@ -541,6 +582,9 @@ const updateViolation = async (req, res) => {
                 violation.student_id,
                 client
             );
+        const offenseStatus = await recalculateOffenseStatus({
+            client, studentId: violation.student_id, actor: req.user, ipAddress: req.ip
+        });
 
         // -------------------------------------------------
         // Audit log
@@ -564,7 +608,8 @@ const updateViolation = async (req, res) => {
             success: true,
             violation,
             assignment,
-            clearanceSync
+            clearanceSync,
+            offenseStatus
         });
 
     } catch (error) {
@@ -589,7 +634,7 @@ const getStudentViolationHistory = async (req, res) => {
         const studentId = Number(req.params.studentId);
         if (!isPositiveId(studentId)) return res.status(400).json({ success: false, message: "studentId must be a positive ID" });
         const { page, limit, offset } = parsePagination(req.query);
-        const [records, count, summaryResult, categoryResult] = await Promise.all([
+        const [records, count, summaryResult, categoryResult, escalationResult] = await Promise.all([
             pool.query(`
                 SELECT v.*, vt.violation_code, vt.violation_name, vt.severity
                 FROM violations v
@@ -609,11 +654,12 @@ const getStudentViolationHistory = async (req, res) => {
                 FROM violations v JOIN violation_types vt ON vt.id = v.violation_type_id
                 WHERE v.student_id = $1 AND vt.violation_code LIKE 'HANDBOOK_%'
                 GROUP BY vt.violation_code, vt.violation_name
-                ORDER BY vt.violation_code`, [studentId])
+                ORDER BY vt.violation_code`, [studentId]),
+            pool.query('SELECT * FROM student_offense_escalations WHERE student_id = $1', [studentId])
         ]);
         const total = count.rows[0]?.total || 0;
         const aggregate = summaryResult.rows[0] || {};
-        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing', categoryCounts: categoryResult.rows.map((row) => ({ code: row.violation_code, name: row.violation_name, count: row.offense_count })) }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
+        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing', categoryCounts: categoryResult.rows.map((row) => ({ code: row.violation_code, name: row.violation_name, count: row.offense_count })), offenseStatus: escalationResult.rows[0] || null }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
     } catch (error) {
         console.error("Get student violation history error:", error);
         return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to get student violation history" });
@@ -649,7 +695,8 @@ const performViolationAction = async (req, res) => {
             violation: result.violation,
             assignment: result.assignment,
             history: result.history,
-            clearanceSync: result.clearanceSync
+            clearanceSync: result.clearanceSync,
+            offenseStatus: result.offenseStatus
         });
     } catch (error) {
         if (error instanceof ViolationWorkflowError) {

@@ -6,7 +6,7 @@ export const ROLE_GROUPS = {
 
 export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
-  { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ['ADMIN'] },
+  { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registrations', view: 'Registrations', roles: ROLE_GROUPS.administration },
   { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },
@@ -18,11 +18,18 @@ export const APP_ROUTES = [
   { path: '/admin/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.administration },
   { path: '/admin/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.administration },
   { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
+  { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
+  { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department },
+  { path: '/department/students', label: 'Assigned Students', view: 'Students', roles: ROLE_GROUPS.department },
   { path: '/department/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.department },
   { path: '/department/community-service', label: 'Service Results', view: 'Community Service', roles: ROLE_GROUPS.department },
+  { path: '/department/dtr', label: 'Attendance', view: 'DTR', roles: ROLE_GROUPS.department },
+  { path: '/department/non-compliance', label: 'Follow-up', view: 'Non-Compliance', roles: ROLE_GROUPS.department },
+  { path: '/department/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.department },
   { path: '/department/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
+  { path: '/student/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.student },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },
   { path: '/student/violations', label: 'My Violations', view: 'My Violations', roles: ROLE_GROUPS.student },
   { path: '/student/community-service', label: 'My Service', view: 'My Service', roles: ROLE_GROUPS.student },
@@ -34,7 +41,7 @@ export const APP_ROUTES = [
 const HOME_PATHS = {
   ADMIN: '/admin/dashboard',
   DISCIPLINE_OFFICE: '/admin/dashboard',
-  DEPARTMENT_HEAD: '/department/qr-scan',
+  DEPARTMENT_HEAD: '/department/dashboard',
   STUDENT: '/student/dashboard'
 }
 

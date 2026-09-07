@@ -408,6 +408,34 @@
 .guardian-contact-form { border-top: 1px solid #e1e8f2; border-bottom: 1px solid #e1e8f2; padding: 20px 0; margin: 20px 0; }
 .table-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 
+.student-cell { align-items: center; display: flex; gap: 10px; min-width: 190px; }
+.student-cell > span:last-child { display: grid; gap: 2px; }
+.student-cell small { color: var(--color-text-muted, #697a90); }
+.offense-indicator { align-items: center; color: #33465d; display: inline-flex; font-size: .78rem; font-weight: 700; gap: 8px; }
+.offense-dot { background: #9aa8b7; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px #718096; flex: 0 0 auto; height: 12px; width: 12px; }
+.offense-yellow .offense-dot { background: #f3c623; box-shadow: 0 0 0 1px #9a7410; }
+.offense-orange .offense-dot { background: #ed8615; box-shadow: 0 0 0 1px #a64b08; }
+.offense-red .offense-dot { background: #d73a32; box-shadow: 0 0 0 1px #8f211c; }
+.offense-critical .offense-dot { background: #8f151d; box-shadow: 0 0 0 2px #ffd5d8; }
+.offense-summary { background: #f7f9fc; border: 1px solid #dbe4ef; border-radius: 10px; margin: 14px 0; padding: 12px 14px; }
+.offense-legend { align-items: center; color: #687990; display: flex; flex-wrap: wrap; font-size: .76rem; gap: 14px; padding: 0 0 14px; }
+.account-settings-page { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); }
+.account-summary-card { align-content: start; display: grid; gap: 24px; }
+.account-summary-card h2 { margin: 4px 0 8px; }
+.account-summary-card p { color: #687990; }
+.account-summary-card dl { display: grid; gap: 16px; margin: 0; }
+.account-summary-card dt { color: #687990; font-size: .75rem; text-transform: uppercase; }
+.account-summary-card dd { margin: 5px 0 0; }
+.account-password-form { max-width: none; }
+@media (max-width: 800px) { .account-settings-page { grid-template-columns: 1fr; } }
+
+@media (min-width: 1024px) {
+  .app-shell { grid-template-columns: 232px minmax(0, 1fr); }
+  .sidebar { height: max-content; min-height: 100vh; overflow: visible; padding-inline: 14px; }
+  .nav { gap: 6px; }
+  .nav-item { min-height: 40px; padding-block: 9px; }
+}
+
 .danger-button {
   background: #fff0f0;
   color: #a62929;

@@ -20,10 +20,20 @@ export const communityServiceViolationLabel = (violation = {}) => {
   return `#${violation.id} — ${name}${date}`
 }
 
+export const normalizedRequiredMinutes = (form = {}) => {
+  const rawHours = Math.max(0, Number(form.required_hours) || 0)
+  if ((form.required_minutes === undefined || form.required_minutes === '') && !Number.isInteger(rawHours)) {
+    return Math.round(rawHours * 60)
+  }
+  const hours = Math.trunc(rawHours)
+  const minutes = Math.max(0, Math.trunc(Number(form.required_minutes) || 0))
+  return (hours * 60) + minutes
+}
+
 export const buildCommunityServiceAssignmentPayload = (form = {}) => ({
   violation_id: Number(form.violation_id),
   student_id: Number(form.student_id),
-  required_hours: Number(form.required_hours || 0),
+  required_hours: normalizedRequiredMinutes(form) / 60,
   department_id: Number(form.department_id),
   department_head_id: Number(form.department_head_id)
 })

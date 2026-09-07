@@ -214,7 +214,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
     body: { student_id: 40, violation_type_id: 1, incident_date: '2026-08-27' }
   })).status, 201);
   assert.equal(capturedViolationParams[2], 2);
-  assert.equal(capturedViolationParams[5], 'OPEN');
+  assert.equal(capturedViolationParams[6], 'OPEN');
   assert.equal(capturedViolationParams[7], 0);
   assert.equal((await request(baseUrl, '/api/community-service', { token: discipline })).status, 200);
   assert.equal((await request(baseUrl, '/api/clearance', { token: discipline })).status, 200);

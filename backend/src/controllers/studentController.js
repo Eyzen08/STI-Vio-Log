@@ -11,9 +11,13 @@ const getStudents = async (req, res) => {
             SELECT
                 id, student_number, first_name, middle_name, last_name,
                 suffix, email, phone_number, program, section, year_level,
-                qr_code, profile_image, created_at, updated_at
-            FROM students
-            ORDER BY last_name ASC, first_name ASC
+                qr_code, profile_image, s.created_at, s.updated_at,
+                ose.indicator_level AS offense_indicator_level,
+                ose.minor_count, ose.major_count, ose.grave_count,
+                ose.major_level_review_required
+            FROM students s
+            LEFT JOIN student_offense_escalations ose ON ose.student_id = s.id
+            ORDER BY s.last_name ASC, s.first_name ASC
             LIMIT $1 OFFSET $2
         `, [limit, offset]);
 
@@ -37,10 +41,15 @@ const getStudentById = async (req, res) => {
         const { id } = req.params;
         const result = await pool.query(
             `SELECT
-                id, student_number, first_name, middle_name, last_name,
-                suffix, email, phone_number, program, section, year_level,
-                qr_code, profile_image, created_at, updated_at
-             FROM students WHERE id = $1`,
+                s.id, s.student_number, s.first_name, s.middle_name, s.last_name,
+                s.suffix, s.email, s.phone_number, s.program, s.section, s.year_level,
+                s.qr_code, s.profile_image, s.created_at, s.updated_at,
+                ose.indicator_level AS offense_indicator_level,
+                ose.minor_count, ose.major_count, ose.grave_count,
+                ose.major_level_review_required
+             FROM students s
+             LEFT JOIN student_offense_escalations ose ON ose.student_id = s.id
+             WHERE s.id = $1`,
             [id]
         );
 
@@ -318,6 +327,7 @@ const getMyViolations = async (req, res) => {
                 vt.violation_name,
                 vt.severity,
                 v.incident_date,
+                v.incident_time,
                 v.description,
                 v.status,
                 COALESCE(cs.required_hours, v.required_service_hours) AS required_service_hours,
@@ -356,6 +366,11 @@ const getMyViolations = async (req, res) => {
             [student.id]
         );
 
+        const escalationResult = await pool.query(
+            'SELECT * FROM student_offense_escalations WHERE student_id = $1',
+            [student.id]
+        );
+
         return res.json({
             success: true,
             student_id: Number(student.id),
@@ -364,7 +379,8 @@ const getMyViolations = async (req, res) => {
                 first_name: student.first_name,
                 last_name: student.last_name
             },
-            violations: result.rows
+            violations: result.rows,
+            offense_status: escalationResult.rows[0] || null
         });
 
     } catch (error) {

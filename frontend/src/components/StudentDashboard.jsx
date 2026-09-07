@@ -1,6 +1,5 @@
 import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
-
-const formatHours = (hours) => Number(hours).toFixed(Number(hours) % 1 === 0 ? 0 : 2)
+import { formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
 
 function StudentDashboard({
   profile,
@@ -54,7 +53,7 @@ function StudentDashboard({
         </article>
         <article className="stat-card">
           <span>Service remaining</span>
-          <strong>{formatHours(summary.remainingHours)} hrs</strong>
+          <strong>{formatDuration(summary.remainingHours)}</strong>
         </article>
         <article className="stat-card">
           <span>Clearance</span>
@@ -81,7 +80,7 @@ function StudentDashboard({
                 <li key={violation.id}>
                   <div>
                     <strong>Violation #{violation.id}</strong>
-                    <span>{new Date(violation.incident_date).toLocaleDateString()}</span>
+                    <span>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</span>
                   </div>
                   <span className="status-badge">{violation.status}</span>
                 </li>

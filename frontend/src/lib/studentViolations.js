@@ -1,3 +1,5 @@
+import { formatDuration } from './displayFormat.js'
+
 const asHours = (value) => {
   const hours = Number(value)
   return Number.isFinite(hours) && hours > 0 ? hours : 0
@@ -7,6 +9,8 @@ export const formatHours = (value) => {
   const hours = asHours(value)
   return hours.toFixed(hours % 1 === 0 ? 0 : 2)
 }
+
+export { formatDuration }
 
 export const normalizeViolation = (violation) => ({
   ...violation,

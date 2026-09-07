@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from '../src/lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, normalizedRequiredMinutes, resolveCommunityServiceStudent, serviceDepartmentOptions } from '../src/lib/communityServiceAdmin.js'
 
 const students = [{ id: 7, student_number: '02000123456', first_name: 'Jose Pedro', last_name: 'Reyes' }]
 
@@ -9,6 +9,13 @@ test('community-service student search resolves an exact roster option', () => {
   assert.equal(label, '02000123456 - Jose Pedro Reyes')
   assert.equal(resolveCommunityServiceStudent(students, label), 7)
   assert.equal(resolveCommunityServiceStudent(students, 'Jose'), '')
+})
+
+test('required service normalizes hours and minutes before sending legacy decimal hours', () => {
+  assert.equal(normalizedRequiredMinutes({ required_hours: 0, required_minutes: 30 }), 30)
+  assert.equal(normalizedRequiredMinutes({ required_hours: 1, required_minutes: 60 }), 120)
+  assert.equal(normalizedRequiredMinutes({ required_hours: 0, required_minutes: 90 }), 90)
+  assert.equal(normalizedRequiredMinutes({ required_hours: 0, required_minutes: 315 }), 315)
 })
 
 test('eligible violations belong to the selected student, are open, and are unassigned', () => {

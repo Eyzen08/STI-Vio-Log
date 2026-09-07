@@ -6,18 +6,18 @@ import { getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
 test('each supported role receives its own dashboard and navigation', () => {
   assert.equal(getHomePath('ADMIN'), '/admin/dashboard')
   assert.equal(getHomePath('DISCIPLINE_OFFICE'), '/admin/dashboard')
-  assert.equal(getHomePath('DEPARTMENT_HEAD'), '/department/qr-scan')
+  assert.equal(getHomePath('DEPARTMENT_HEAD'), '/department/dashboard')
   assert.equal(getHomePath('STUDENT'), '/student/dashboard')
   assert.deepEqual(getNavItems('STUDENT').map(({ label }) => label), [
-    'Dashboard', 'My Profile', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
+    'Dashboard', 'My Profile', 'Account Settings', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
   ])
-  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['QR Scan', 'Service Results', 'Messages'])
+  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Account Settings', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Messages'])
 })
 
 test('protected routes permit only their declared roles', () => {
   assert.equal(resolveRoute('/admin/students', 'ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/account-settings', 'ADMIN').status, 'allowed')
-  assert.equal(resolveRoute('/admin/account-settings', 'DISCIPLINE_OFFICE').status, 'unauthorized')
+  assert.equal(resolveRoute('/admin/account-settings', 'DISCIPLINE_OFFICE').status, 'allowed')
   assert.equal(resolveRoute('/admin/students', 'DISCIPLINE_OFFICE').status, 'allowed')
   assert.equal(resolveRoute('/admin/students', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/admin/registrations', 'ADMIN').status, 'allowed')
@@ -31,18 +31,18 @@ test('protected routes permit only their declared roles', () => {
   assert.equal(resolveRoute('/admin/departments', 'ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/departments', 'DISCIPLINE_OFFICE').status, 'unauthorized')
   assert.equal(resolveRoute('/department/qr-scan', 'DEPARTMENT_HEAD').status, 'allowed')
-  assert.equal(resolveRoute('/department/dtr', 'DEPARTMENT_HEAD').status, 'not_found')
-  assert.equal(resolveRoute('/department/students', 'DEPARTMENT_HEAD').status, 'not_found')
+  assert.equal(resolveRoute('/department/dtr', 'DEPARTMENT_HEAD').status, 'allowed')
+  assert.equal(resolveRoute('/department/students', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/community-service', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/department/community-service', 'STUDENT').status, 'unauthorized')
-  assert.equal(resolveRoute('/department/non-compliance', 'DEPARTMENT_HEAD').status, 'not_found')
-  assert.equal(resolveRoute('/department/reports', 'DEPARTMENT_HEAD').status, 'not_found')
+  assert.equal(resolveRoute('/department/non-compliance', 'DEPARTMENT_HEAD').status, 'allowed')
+  assert.equal(resolveRoute('/department/reports', 'DEPARTMENT_HEAD').status, 'allowed')
   assert.equal(resolveRoute('/student/notifications', 'STUDENT').status, 'allowed')
   assert.equal(resolveRoute('/student/notifications', 'DEPARTMENT_HEAD').status, 'unauthorized')
   assert.equal(resolveRoute('/student/messages', 'STUDENT').status, 'allowed')
   assert.equal(resolveRoute('/admin/messages', 'DISCIPLINE_OFFICE').status, 'allowed')
   assert.equal(resolveRoute('/department/messages', 'DEPARTMENT_HEAD').status, 'allowed')
-  assert.equal(resolveRoute('/department/dtr', 'STUDENT').status, 'not_found')
+  assert.equal(resolveRoute('/department/dtr', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/department/qr-scan', 'ADMIN').status, 'unauthorized')
 })
 

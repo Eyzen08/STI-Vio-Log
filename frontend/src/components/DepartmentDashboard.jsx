@@ -1,4 +1,5 @@
 import { formatDuration, summarizeDepartmentDtr } from '../lib/departmentDashboard.js'
+import { formatDuration as formatHourDuration } from '../lib/displayFormat.js'
 
 const displayDate = (value) => {
   const date = new Date(value)
@@ -66,7 +67,7 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner }) {
                 <dl>
                   <div><dt>Sessions</dt><dd>{row.total_completed_sessions}</dd></div>
                   <div><dt>Credited</dt><dd>{formatDuration(row.total_credited_minutes)}</dd></div>
-                  <div><dt>Remaining</dt><dd>{Number(row.remaining_hours || 0).toFixed(2)} hrs</dd></div>
+                  <div><dt>Remaining</dt><dd>{formatHourDuration(row.remaining_hours)}</dd></div>
                 </dl>
                 <span className="department-latest">Latest: {displayDate(row.latest_attendance_at)}</span>
               </article>

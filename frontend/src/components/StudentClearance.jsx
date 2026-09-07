@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { clearanceBlockers, clearanceLabel, summarizeClearance } from '../lib/studentClearance.js'
+import { formatDuration } from '../lib/displayFormat.js'
 
 const displayDate = (value) => {
   const date = new Date(value)
@@ -72,7 +73,7 @@ function StudentClearance({ eligibility, records, loading, error, certificate, o
 
       <section className="table-card clearance-history-card"><div className="table-header"><div><p className="eyebrow">Permanent documents</p><h3>Issued certificates</h3></div><span>{issuedCertificates.length} records</span></div>
         {certificateHistoryError && <p className="error-message" role="alert">{certificateHistoryError}</p>}
-        {issuedCertificates.length === 0 ? <div className="clearance-empty"><h4>No certificate issued yet</h4><p>The Discipline Office will issue one after final approval.</p></div> : <div className="clearance-record-list">{issuedCertificates.map((entry) => <article key={entry.id}><div><strong>{entry.certificate_number}</strong><span>Version {entry.version}</span></div><span className={`status-badge status-${entry.status.toLowerCase()}`}>{entry.status}</span><dl><div><dt>Issued</dt><dd>{displayDate(entry.issue_date)}</dd></div><div><dt>Hours</dt><dd>{entry.completed_hours}</dd></div></dl><button type="button" onClick={() => download(entry)}>Download PDF</button></article>)}</div>}
+        {issuedCertificates.length === 0 ? <div className="clearance-empty"><h4>No certificate issued yet</h4><p>The Discipline Office will issue one after final approval.</p></div> : <div className="clearance-record-list">{issuedCertificates.map((entry) => <article key={entry.id}><div><strong>{entry.certificate_number}</strong><span>Version {entry.version}</span></div><span className={`status-badge status-${entry.status.toLowerCase()}`}>{entry.status}</span><dl><div><dt>Issued</dt><dd>{displayDate(entry.issue_date)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(entry.completed_hours)}</dd></div></dl><button type="button" onClick={() => download(entry)}>Download PDF</button></article>)}</div>}
       </section>
 
       <section className="table-card clearance-history-card">

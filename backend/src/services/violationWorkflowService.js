@@ -9,6 +9,7 @@ const MAX_REASON_LENGTH = 1000;
 const {
     syncClearanceStatusForStudent
 } = require("../controllers/clearanceController");
+const { recalculateOffenseStatus } = require('./offenseEscalationService');
 
 class ViolationWorkflowError extends Error {
     constructor(message, statusCode, code) {
@@ -230,12 +231,16 @@ const transitionViolationWithClient = async ({
         current.student_id,
         client
     );
+    const offenseStatus = await recalculateOffenseStatus({
+        client, studentId: current.student_id, actor, ipAddress
+    });
 
     return {
         violation: updatedResult.rows[0],
         assignment,
         history,
-        clearanceSync
+        clearanceSync,
+        offenseStatus
     };
 };
 

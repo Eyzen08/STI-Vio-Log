@@ -28,6 +28,8 @@ import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
 import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
 import AdminAccountSettings from './components/AdminAccountSettings.jsx'
 import AdminClearanceCertificates from './components/AdminClearanceCertificates.jsx'
+import OffenseIndicator from './components/OffenseIndicator.jsx'
+import AccountSecuritySettings from './components/AccountSecuritySettings.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -42,6 +44,7 @@ import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, c
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
+import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -179,6 +182,7 @@ function App() {
     student_search: '',
     violation_type_id: '',
     incident_date: '',
+    incident_time: '',
     exact_offense: '',
     incident_details: '',
   })
@@ -199,6 +203,7 @@ function App() {
     student_id: '',
     student_search: '',
     required_hours: '',
+    required_minutes: '',
     department_id: '',
     department_head_id: ''
   })
@@ -1000,13 +1005,14 @@ function App() {
 
       if (
         !payload.student_id ||
-        !payload.violation_type_id ||
-        !payload.incident_date ||
-        !violationForm.exact_offense.trim() ||
+          !payload.violation_type_id ||
+          !payload.incident_date ||
+          !violationForm.incident_time ||
+          !violationForm.exact_offense.trim() ||
         !violationForm.incident_details.trim()
       ) {
         throw new Error(
-          'Student, classification, exact offense, incident date, and incident details are required.'
+          'Student, classification, exact offense, incident date and time, and incident details are required.'
         )
       }
 
@@ -1044,6 +1050,7 @@ function App() {
         student_search: '',
         violation_type_id: '',
         incident_date: '',
+        incident_time: '',
         exact_offense: '',
         incident_details: ''
       })
@@ -1135,6 +1142,7 @@ function App() {
           student_id: '',
           student_search: '',
           required_hours: '',
+          required_minutes: '',
           department_id: '',
           department_head_id: ''
         })
@@ -2187,6 +2195,10 @@ function App() {
       return <AdminDepartmentOfficers token={token} />
     }
 
+    if (activeView === 'Account Settings' && userRole !== 'ADMIN') {
+      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
+    }
+
     if (userRole === 'ADMIN' && activeView === 'Account Settings') {
       return <AdminAccountSettings token={token} onSession={acceptSession} />
     }
@@ -2446,6 +2458,9 @@ function App() {
             <div className="noncompliance-toolbar">
               <label><span>Search students</span><input type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
             </div>
+            <div className="offense-legend" aria-label="Offense indicator legend">
+              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
+            </div>
 
             {visibleStudents.length === 0 &&
             !dashboardLoading ? (
@@ -2489,8 +2504,10 @@ function App() {
                           }
                         >
                           <td>
-                            {student.first_name}{' '}
-                            {student.last_name}
+                            <div className="student-cell">
+                              <OffenseIndicator level={student.offense_indicator_level} compact />
+                              <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
+                            </div>
                           </td>
 
                           <td>
@@ -2532,10 +2549,11 @@ function App() {
             <Modal title={`Student condition — ${reviewedStudent.student_number}`} wide onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
-              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{Number(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours).toFixed(2)} hrs</strong></article></section>
+              {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
+              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
               {reviewedStudentError&&<p className="error-message" role="alert">{reviewedStudentError}</p>}
-              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{violation.incident_date || 'Incident date unavailable'} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{Number(violation.required_service_hours||0).toFixed(2)} hrs</dd></div><div><dt>Completed service</dt><dd>{Number(violation.completed_service_hours||0).toFixed(2)} hrs</dd></div></dl></article>)}</div>}
+              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl></article>)}</div>}
               {reviewedStudentHasMore&&<button type="button" className="secondary-button" disabled={reviewedStudentLoading} onClick={()=>loadReviewedStudentHistory(reviewedStudent,reviewedStudentPage+1,true)}>{reviewedStudentLoading?'Loading...':'Load older violations'}</button>}
               <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
             </section>
@@ -2567,6 +2585,9 @@ function App() {
               <span>
                 New record
               </span>
+            </div>
+            <div className="offense-legend" aria-label="Offense indicator legend">
+              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
             </div>
 
             <form
@@ -2634,6 +2655,17 @@ function App() {
                     onChange={
                       handleViolationFieldChange
                     }
+                  />
+                </label>
+
+                <label>
+                  Incident time
+                  <input
+                    type="time"
+                    name="incident_time"
+                    value={violationForm.incident_time}
+                    onChange={handleViolationFieldChange}
+                    required
                   />
                 </label>
 
@@ -2746,6 +2778,8 @@ function App() {
                         Student
                       </th>
 
+                      <th>Incident</th>
+
                       <th>
                         Status
                       </th>
@@ -2769,10 +2803,13 @@ function App() {
                             </td>
 
                             <td>
-                              {
-                                violation.student_id
-                              }
+                              <div className="student-cell">
+                                <OffenseIndicator level={violation.offense_indicator_level} compact />
+                                <span><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></span>
+                              </div>
                             </td>
+
+                            <td>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
 
                             <td>
                               <span className="status-badge">
@@ -2884,7 +2921,7 @@ function App() {
                 </label>
 
                 <label>
-                  Required Hours
+                  Required hours
 
                   <input
                     type="number"
@@ -2895,10 +2932,23 @@ function App() {
                     onChange={
                       handleCommunityServiceFieldChange
                     }
-                    min="0.5"
-                    step="0.5"
-                    required
+                    min="0"
+                    step="1"
                   />
+                </label>
+
+                <label>
+                  Required minutes
+                  <input
+                    type="number"
+                    name="required_minutes"
+                    value={communityServiceForm.required_minutes}
+                    onChange={handleCommunityServiceFieldChange}
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                  />
+                  <span>Values of 60 or more are automatically converted to hours.</span>
                 </label>
 
                 <label>
@@ -3033,18 +3083,11 @@ function App() {
                           <td>{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
 
                           <td>
-                            {
-                              assignment.required_hours ||
-                              0
-                            }
+                            {formatDuration(assignment.required_hours)}
                           </td>
 
                           <td>
-                            {
-                              assignment.remaining_hours ??
-                              assignment.required_hours ??
-                              0
-                            }
+                            {formatDuration(assignment.remaining_hours ?? assignment.required_hours ?? 0)}
                           </td>
 
                           <td>
@@ -3813,12 +3856,10 @@ function App() {
                         }
                       >
                         <td>
-                          {
-                            student.first_name
-                          }{' '}
-                          {
-                            student.last_name
-                          }
+                          <div className="student-cell">
+                            <OffenseIndicator level={student.offense_indicator_level} compact />
+                            <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
+                          </div>
                         </td>
 
                         <td>
@@ -3881,13 +3922,13 @@ function App() {
                       Student
                     </th>
 
+                    <th>Incident</th>
+
                     <th>
                       Status
                     </th>
 
-                    <th>
-                      Hours
-                    </th>
+                    <th>Required service</th>
                   </tr>
                 </thead>
 
@@ -3906,10 +3947,13 @@ function App() {
                           </td>
 
                           <td>
-                            {
-                              violation.student_id
-                            }
+                            <div className="student-cell">
+                              <OffenseIndicator level={violation.offense_indicator_level} compact />
+                              <span><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></span>
+                            </div>
                           </td>
+
+                          <td>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
 
                           <td>
                             <span className="status-badge">
@@ -3920,10 +3964,7 @@ function App() {
                           </td>
 
                           <td>
-                            {
-                              violation.required_service_hours ||
-                              0
-                            }
+                            {formatDuration(violation.required_service_hours)}
                           </td>
                         </tr>
                       )

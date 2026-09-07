@@ -44,3 +44,5 @@ Migration `022_unified_department_officers.sql` adds a department type and an op
 Migration `023_admin_account_profiles.sql` adds administrator identity and verified recovery-email records, extends the existing hashed OTP store for Admin email verification, and records the latest successful account login timestamp.
 
 Migration `024_clearance_certificates.sql` adds managed Discipline Officer e-signatures, immutable PDF certificate snapshots, certificate versions and revocation state, selected-signature snapshots, and email-delivery status. Issued certificates are retained permanently; corrections require revocation and a new version.
+
+Migration `025_offense_escalation_incident_time.sql` adds optional incident time without changing historical incident dates, plus one derived offense-status row per student. The temporary policy scope is `ALL_HISTORY` because the application has no authoritative academic-term relation for violations. Invalid/cancelled records are excluded; completed and cleared records remain part of retained history. Source violation severities are never rewritten.

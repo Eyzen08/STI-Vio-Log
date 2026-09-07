@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { formatHours, normalizeViolation, statusLabel } from '../lib/studentViolations.js'
+import { normalizeViolation, statusLabel } from '../lib/studentViolations.js'
+import { formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
 
 const formatDate = (value, includeTime = false) => {
   if (!value) return 'Not recorded'
@@ -23,9 +24,9 @@ function ServiceProgress({ violation }) {
         <span style={{ width: `${percentage}%` }} />
       </div>
       <dl className="service-hours-grid">
-        <div><dt>Required</dt><dd>{formatHours(required)} hrs</dd></div>
-        <div><dt>Completed</dt><dd>{formatHours(completed)} hrs</dd></div>
-        <div><dt>Remaining</dt><dd>{formatHours(violation.remaining_service_hours)} hrs</dd></div>
+        <div><dt>Required</dt><dd>{formatDuration(required)}</dd></div>
+        <div><dt>Completed</dt><dd>{formatDuration(completed)}</dd></div>
+        <div><dt>Remaining</dt><dd>{formatDuration(violation.remaining_service_hours)}</dd></div>
       </dl>
     </section>
   )
@@ -83,7 +84,7 @@ function StudentViolations({ violations, loading, error }) {
                       <span className={`status-badge status-${violation.status.toLowerCase().replaceAll('_', '-')}`}>{statusLabel(violation.status)}</span>
                     </div>
                     <h3>{violation.violation_name}</h3>
-                    <p>{violation.violation_code || `Record #${violation.id}`} · Incident {formatDate(violation.incident_date)}</p>
+                    <p>{violation.violation_code || `Record #${violation.id}`} · Incident {formatIncidentDateTime(violation.incident_date, violation.incident_time)}</p>
                   </div>
                   <span className="violation-toggle" aria-hidden="true">{expanded ? '−' : '+'}</span>
                 </button>
