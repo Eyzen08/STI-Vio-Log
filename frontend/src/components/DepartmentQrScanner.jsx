@@ -1,7 +1,8 @@
 import { assignmentProgress, attendanceState, formatServiceMinutes, isVerifiedQr } from '../lib/departmentScanner.js'
+import { formatManilaDateTime } from '../lib/displayFormat.js'
 
 const roleLabel=(role='')=>role.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
-const displayDate=(value)=>{const date=new Date(value);return Number.isNaN(date.getTime())?'No activity recorded':date.toLocaleString()}
+const displayDate=(value)=>formatManilaDateTime(value,'No activity recorded')
 
 function DepartmentQrScanner({ form, result, error, verifiedQr, isScanning, isSubmitting, departments=[], recorder, recentScans=[], onFieldChange, onStartCamera, onStopCamera, onSwitchCamera, onAction }) {
   const verified=isVerifiedQr(form.qr_code,verifiedQr)&&Boolean(result?.student)
@@ -11,7 +12,7 @@ function DepartmentQrScanner({ form, result, error, verifiedQr, isScanning, isSu
   const departmentLocked=recorder?.role==='DEPARTMENT_HEAD'
 
   return <section className="qr-attendance" aria-labelledby="qr-attendance-title">
-    <header className="qr-attendance-header"><div><p className="eyebrow">Administration</p><h2 id="qr-attendance-title">QR Attendance</h2><p>Scan and verify a student before recording community-service attendance.</p></div><span className={`scanner-state${isScanning?' active':''}`}><i aria-hidden="true"/>{isScanning?'Scanner active':'Scanner ready'}</span></header>
+    <header className="qr-attendance-header"><div><p className="page-breadcrumb">Home / QR Attendance</p><h2 id="qr-attendance-title">QR Attendance</h2><p>Scan and verify a student before recording community-service attendance.</p></div><span className={`scanner-state${isScanning?' active':''}`}><i aria-hidden="true"/>{isScanning?'Scanner active':'Scanner ready'}</span></header>
     <div className="qr-stage-grid">
       <article className="qr-stage-card scan-stage"><h3><b>1</b> Scan Student QR</h3>
         <div className={`scanner-viewfinder${isScanning?' active':''}`}><div id="qr-reader" aria-label="Camera QR scanner"/><div className="scanner-frame" aria-hidden="true"><span/><strong>{isScanning?'Position the student QR code inside the frame':'Camera preview is stopped'}</strong></div><em>{isScanning?'Camera active':'Camera ready'}</em></div>

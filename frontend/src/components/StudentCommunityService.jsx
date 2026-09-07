@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { formatMinutes, summarizeStudentService, validateDateRange } from '../lib/studentService.js'
+import { formatManilaDateTime } from '../lib/displayFormat.js'
 
-const dateTime = (value) => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()
-}
+const dateTime = (value) => formatManilaDateTime(value, '—')
 
 function StudentCommunityService({ dtr, loading, error, onFilter }) {
   const [filters, setFilters] = useState({ from: '', to: '' })

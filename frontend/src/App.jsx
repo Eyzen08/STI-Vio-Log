@@ -46,7 +46,7 @@ import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, c
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
+import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
 import './App.css'
 
@@ -193,12 +193,14 @@ function App() {
   })
   const [violationTypes, setViolationTypes] = useState([])
   const [editingViolation, setEditingViolation] = useState(null)
+  const [viewingViolation, setViewingViolation] = useState(null)
   const [violationEditForm, setViolationEditForm] = useState({description:'',reason:''})
   const [violationEditError, setViolationEditError] = useState('')
 
   const [violationFormError, setViolationFormError] = useState('')
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
   const [isViolationFormOpen, setIsViolationFormOpen] = useState(false)
+  const [violationTableFilters, setViolationTableFilters] = useState({ search: '', status: 'ALL', severity: 'ALL' })
 
   const [communityServiceAssignments, setCommunityServiceAssignments] =
     useState([])
@@ -220,6 +222,8 @@ function App() {
   const [communityServiceFormSuccess, setCommunityServiceFormSuccess] =
     useState('')
   const [isCommunityServiceFormOpen, setIsCommunityServiceFormOpen] = useState(false)
+  const [viewingServiceAssignment, setViewingServiceAssignment] = useState(null)
+  const [serviceTableFilters, setServiceTableFilters] = useState({ search: '', status: 'ALL', department: 'ALL' })
 
   const [qrForm, setQrForm] = useState({
     qr_code: '',
@@ -2091,9 +2095,7 @@ function App() {
                           <td>
                             {
                               record.cleared_at
-                                ? new Date(
-                                    record.cleared_at
-                                  ).toLocaleString()
+                                ? formatManilaDateTime(record.cleared_at)
                                 : '—'
                             }
                           </td>
@@ -2634,6 +2636,13 @@ function App() {
       const exactOffenses = offensesForType(selectedType)
       const violationStatusCount = (status) => violations.filter((item) => String(item.status).toUpperCase() === status).length
       const violationSeverityCount = (severity) => violations.filter((item) => String(item.severity).toUpperCase().includes(severity)).length
+      const visibleViolations = violations.filter((item) => {
+        const query = violationTableFilters.search.trim().toLowerCase()
+        const matchesSearch = !query || [item.student_name, item.student_number, item.exact_offense, item.violation_name].filter(Boolean).join(' ').toLowerCase().includes(query)
+        const matchesStatus = violationTableFilters.status === 'ALL' || String(item.status).toUpperCase() === violationTableFilters.status
+        const matchesSeverity = violationTableFilters.severity === 'ALL' || String(item.severity).toUpperCase().includes(violationTableFilters.severity)
+        return matchesSearch && matchesStatus && matchesSeverity
+      })
       return (
         <>
           <header className="management-page-header">
@@ -2832,11 +2841,12 @@ function App() {
                   : `${violations.length} entries`}
               </span>
             </div>
+            <div className="directory-toolbar management-filter-bar"><input type="search" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
 
-            {violations.length === 0 &&
+            {visibleViolations.length === 0 &&
             !dashboardLoading ? (
               <p className="empty-state">
-                No violations available.
+                No violations match the selected filters.
               </p>
             ) : (
               <div className="table-wrap">
@@ -2866,7 +2876,7 @@ function App() {
                   </thead>
 
                   <tbody>
-                    {violations
+                    {visibleViolations
                       .slice(0, 10)
                       .map(
                         (violation) => (
@@ -2900,7 +2910,7 @@ function App() {
                               </span>
                             </td>
 
-                            <td>{violation.status === 'OPEN' ? <button type="button" className="secondary-button" onClick={()=>startViolationEdit(violation)}>Edit</button> : 'Locked'}</td>
+                            <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{violation.status === 'OPEN' && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
                           </tr>
                         )
                       )}
@@ -2909,6 +2919,7 @@ function App() {
               </div>
             )}
           </section>
+          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{viewingViolation.status}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{viewingViolation.status === 'OPEN' && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>Edit audited record</button>}</div></Modal>}
         </>
       )
     }
@@ -2933,6 +2944,14 @@ function App() {
       const timedInAssignments = communityServiceAssignments.filter((item) => ['TIMED_IN', 'IN_PROGRESS'].includes(String(item.status).toUpperCase())).length
       const nearCompletionAssignments = activeAssignments.filter((item) => Number(item.remaining_hours) > 0 && Number(item.remaining_hours) <= 2).length
       const completedAssignments = communityServiceAssignments.filter((item) => ['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase())).length
+      const visibleAssignments = communityServiceAssignments.filter((item) => {
+        const query = serviceTableFilters.search.trim().toLowerCase()
+        const matchesSearch = !query || [item.first_name, item.last_name, item.student_number, item.department_name, item.department_code].filter(Boolean).join(' ').toLowerCase().includes(query)
+        const matchesStatus = serviceTableFilters.status === 'ALL' || String(item.status || 'OPEN').toUpperCase() === serviceTableFilters.status
+        const departmentValue = String(item.department_id || item.department_code || '')
+        const matchesDepartment = serviceTableFilters.department === 'ALL' || departmentValue === serviceTableFilters.department
+        return matchesSearch && matchesStatus && matchesDepartment
+      })
       return (
         <>
           <header className="management-page-header">
@@ -3106,11 +3125,11 @@ function App() {
                 assignments
               </span>
             </div>
+            <div className="directory-toolbar management-filter-bar"><input type="search" aria-label="Search service assignments" value={serviceTableFilters.search} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,search:event.target.value})} placeholder="Search student, number, or department…"/><select aria-label="Filter service department" value={serviceTableFilters.department} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,department:event.target.value})}><option value="ALL">All departments</option>{departmentOptions.map((department)=><option value={String(department.id)} key={department.id}>{department.name}</option>)}</select><select aria-label="Filter service status" value={serviceTableFilters.status} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
 
-            {communityServiceAssignments.length === 0 ? (
+            {visibleAssignments.length === 0 ? (
               <p className="empty-state">
-                No community service
-                assignments yet.
+                No community service assignments match the selected filters.
               </p>
             ) : (
               <div className="table-wrap">
@@ -3146,11 +3165,13 @@ function App() {
                       <th>
                         Status
                       </th>
+
+                      <th>Action</th>
                     </tr>
                   </thead>
 
                   <tbody>
-                    {communityServiceAssignments.map(
+                    {visibleAssignments.map(
                       (assignment) => {
                         const required = Number(assignment.required_hours || 0)
                         const remaining = Number(assignment.remaining_hours ?? required)
@@ -3201,6 +3222,7 @@ function App() {
                               }
                             </span>
                           </td>
+                          <td><button type="button" className="primary-row-action" onClick={()=>setViewingServiceAssignment(assignment)}>View</button></td>
                         </tr>
                         )
                       }
@@ -3210,6 +3232,7 @@ function App() {
               </div>
             )}
           </section>
+          {viewingServiceAssignment && (() => { const required = Number(viewingServiceAssignment.required_hours || 0); const remaining = Number(viewingServiceAssignment.remaining_hours ?? required); const completed = Math.max(0, required - remaining); const progress = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0; return <Modal title={`Service assignment #${viewingServiceAssignment.id}`} drawer onClose={()=>setViewingServiceAssignment(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Community service assignment</span><h3>{[viewingServiceAssignment.first_name, viewingServiceAssignment.last_name].filter(Boolean).join(' ') || viewingServiceAssignment.student_number || 'Student record'}</h3><p>{viewingServiceAssignment.student_number || `Student #${viewingServiceAssignment.student_id}`}</p></div><span className="status-badge">{viewingServiceAssignment.status || 'OPEN'}</span></header><dl><div><dt>Violation</dt><dd>#{viewingServiceAssignment.violation_id}</dd></div><div><dt>Department</dt><dd>{viewingServiceAssignment.department_name || viewingServiceAssignment.department_code || 'Historical assignment'}</dd></div><div><dt>Department head</dt><dd>{[viewingServiceAssignment.department_head_first_name, viewingServiceAssignment.department_head_last_name].filter(Boolean).join(' ') || 'Not recorded'}</dd></div><div><dt>Required time</dt><dd>{formatDuration(required)}</dd></div><div><dt>Completed time</dt><dd>{formatDuration(completed)}</dd></div><div><dt>Remaining time</dt><dd>{formatDuration(remaining)}</dd></div></dl><section><div className="record-progress-heading"><h4>Service progress</h4><strong>{progress}%</strong></div><div className="record-progress"><span style={{width:`${progress}%`}} /></div></section></div></Modal> })()}
         </>
       )
     }
@@ -4123,6 +4146,7 @@ function App() {
                 }}
                 type="button"
                 aria-current={routePath === item.path ? 'page' : undefined}
+                title={isSidebarCollapsed ? item.label : undefined}
               >
                 <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
                 {item.view === 'Messages' && formatUnreadMessageCount(unreadMessages) && (
@@ -4143,8 +4167,8 @@ function App() {
             ))}
           </div>)}
           <div className="nav-account-actions">
-            <button type="button" className="nav-item" onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path || getHomePath(userRole))}><span className="nav-item-label"><PortalIcon name="settings"/><span>Account settings</span></span></button>
-            <button type="button" className="nav-item" onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
+            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Account settings' : undefined} onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path || getHomePath(userRole))}><span className="nav-item-label"><PortalIcon name="settings"/><span>Account settings</span></span></button>
+            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
           </div>
         </nav>
       </aside>}

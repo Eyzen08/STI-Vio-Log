@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
-import { formatDuration } from '../lib/displayFormat.js'
+import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
+import { formatProgramName } from '../lib/programNames.js'
+import Modal from './Modal.jsx'
 
 const jsonRequest = async (path, token, options = {}) => {
   const response = await fetch(`${API_URL}${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(options.headers || {}) } })
@@ -84,7 +86,13 @@ function AdminClearanceCertificates({ token }) {
   }
 
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
-    <div className="table-card certificate-hero"><div><p className="eyebrow">Official records</p><h2 id="certificate-management-title">Clearance certificates</h2><p>Issue permanent, verifiable Certificates of Compliance only after all requirements are complete.</p></div><span>Authorized staff only</span></div>
+    <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review eligible students and issue permanent, verifiable Certificates of Compliance.</p></div><span className="readonly-badge">Authorized staff only</span></header>
+    <section className="management-metrics" aria-label="Clearance certificate summary">
+      <article className="management-metric metric-green"><i>◎</i><div><strong>{students.length}</strong><span>Eligible Students</span></div></article>
+      <article className="management-metric metric-blue"><i>◇</i><div><strong>{certificates.filter((entry) => entry.status === 'ISSUED').length}</strong><span>Issued Certificates</span></div></article>
+      <article className="management-metric metric-red"><i>!</i><div><strong>{certificates.filter((entry) => entry.status === 'REVOKED').length}</strong><span>Revoked Certificates</span></div></article>
+      <article className="management-metric metric-orange"><i>✓</i><div><strong>{signatures.filter((entry) => entry.is_active).length}</strong><span>Active Signatures</span></div></article>
+    </section>
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
     <div className="certificate-grid">
       <section className="table-card"><div className="table-header"><h3>Eligible students</h3><span>{students.length} ready</span></div>
@@ -92,14 +100,14 @@ function AdminClearanceCertificates({ token }) {
           <strong>{student.student_name}</strong><span>{student.student_number} • {student.program || 'Program not recorded'}</span><small>{formatDuration(student.completed_hours)} of {formatDuration(student.required_hours)} completed{student.has_issued_certificate ? ' • Certificate issued' : ''}</small>
         </button>) : <p className="empty-state">No students currently satisfy every certificate requirement.</p>}</div>
       </section>
-      <section className="table-card certificate-review"><div className="table-header"><h3>Review and issue</h3><span>{selected ? 'Draft preview' : 'Select a student'}</span></div>
-        {!selected ? <p className="empty-state">Select an eligible student to prepare a certificate. Review fields affect this certificate only.</p> : <>
+      {selected && <Modal title={`Review clearance — ${selected.student_number}`} drawer onClose={() => setSelected(null)}><section className="certificate-review"><div className="table-header"><h3>Review and issue</h3><span>Draft preview</span></div>
+        <>
           <div className="student-form-grid"><label>Certificate name<input value={draft.student_name} onChange={(e) => setDraft({ ...draft, student_name: e.target.value })} /></label><label>Program or course<input value={draft.program} onChange={(e) => setDraft({ ...draft, program: e.target.value })} /></label></div>
-          <div className="certificate-preview"><p>STI COLLEGE - GLOBAL CITY</p><h3>CERTIFICATE OF COMPLIANCE</h3><p>This is to certify that</p><strong>{draft.student_name}</strong><p>is enrolled under the <b>{draft.program}</b> and has successfully completed community service for <b>{formatDuration(selected.completed_hours)}</b>.</p><small>Issued on {new Date().toLocaleDateString()}</small></div>
+          <div className="certificate-preview"><p>STI COLLEGE - GLOBAL CITY</p><h3>CERTIFICATE OF COMPLIANCE</h3><p>This is to certify that</p><strong>{draft.student_name}</strong><p>is enrolled under the <b>{formatProgramName(draft.program)}</b> and has successfully completed community service for <b>{formatDuration(selected.completed_hours)}</b>.</p><small>Issued on {formatManilaDate(new Date())}</small></div>
           <fieldset className="signature-picker"><legend>Authorized signatures</legend>{signatures.filter((entry) => entry.is_active).map((entry) => <label key={entry.id}><input type="checkbox" checked={selectedSignatures.includes(Number(entry.id))} onChange={(e) => setSelectedSignatures((value) => e.target.checked ? [...value, Number(entry.id)].slice(0, 3) : value.filter((id) => id !== Number(entry.id)))} /><img src={entry.image_data_url} alt="" /><span>{entry.full_name}<small>{entry.position}</small></span></label>)}</fieldset>
           <button className="submit-btn" type="button" disabled={busy || !draft.student_name.trim() || !draft.program.trim() || !selectedSignatures.length} onClick={issue}>{busy ? 'Issuing Certificate…' : 'Issue, Email & Prepare PDF'}</button>
-        </>}
-      </section>
+        </>
+      </section></Modal>}
     </div>
     <section className="table-card signature-management"><div className="table-header"><h3>E-Signature Management</h3><span>PNG/JPEG • max 1 MB</span></div>
       <form onSubmit={saveSignature} className="signature-form"><label>Officer full name<input required value={signatureForm.full_name} onChange={(e) => setSignatureForm({ ...signatureForm, full_name: e.target.value })} /></label><label>Position<input required value={signatureForm.position} onChange={(e) => setSignatureForm({ ...signatureForm, position: e.target.value })} /></label><label>Signature image<input required={!signatureForm.image_data_url} type="file" accept="image/png,image/jpeg" onChange={readSignature} /></label>{signatureForm.image_data_url && <img src={signatureForm.image_data_url} alt="Signature preview" />}<button disabled={busy} className="submit-btn">Save signature</button></form>

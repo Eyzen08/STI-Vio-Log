@@ -12,7 +12,6 @@ export const nonComplianceSummary = (report = {}) => {
 export const nonComplianceSortQuery = (sortBy) => ['date', 'hours', 'violations'].includes(sortBy) ? `sort_by=${sortBy}` : ''
 
 export const readableIncidentDate = (value) => {
-  if (!value) return 'Not recorded'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Not recorded' : date.toLocaleDateString()
+  return formatManilaDate(value)
 }
+import { formatManilaDate } from './displayFormat.js'

@@ -3,6 +3,6 @@ export const notificationLabel = (value) => String(value || 'GENERAL').replaceAl
 export const notificationSummary = (items = []) => ({ total: items.length, unread: items.filter((item) => !item.is_read).length })
 
 export const notificationDate = (value) => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Date unavailable' : date.toLocaleString()
+  return formatManilaDateTime(value, 'Date unavailable')
 }
+import { formatManilaDateTime } from './displayFormat.js'

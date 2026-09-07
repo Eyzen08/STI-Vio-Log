@@ -1,12 +1,9 @@
 import { useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { clearanceBlockers, clearanceLabel, summarizeClearance } from '../lib/studentClearance.js'
-import { formatDuration } from '../lib/displayFormat.js'
+import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 
-const displayDate = (value) => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleString()
-}
+const displayDate = (value) => formatManilaDateTime(value, '—')
 
 function StudentClearance({ eligibility, records, loading, error, certificate, onLoadCertificate, token }) {
   const summary = summarizeClearance({ eligibility, records })

@@ -1,11 +1,8 @@
 import { formatDuration, summarizeDepartmentDtr } from '../lib/departmentDashboard.js'
-import { formatDuration as formatHourDuration } from '../lib/displayFormat.js'
+import { formatDuration as formatHourDuration, formatManilaTime } from '../lib/displayFormat.js'
 import PortalIcon from './PortalIcon.jsx'
 
-const displayTime = (value) => {
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Not recorded' : date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-}
+const displayTime = (value) => formatManilaTime(value, 'Not recorded')
 
 function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate }) {
   const rows = Array.isArray(report?.data) ? report.data : []

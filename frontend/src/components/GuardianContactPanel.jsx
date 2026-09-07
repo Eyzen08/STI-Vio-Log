@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '../lib/api.js'
 import { buildParentContactPayload, CONTACT_METHODS, CONTACT_OUTCOMES, contactLabel } from '../lib/parentContact.js'
+import { formatManilaDateTime } from '../lib/displayFormat.js'
 
 function GuardianContactPanel({ token, student, onClose, showClose = true }) {
   const [data, setData] = useState(null)
@@ -40,7 +41,7 @@ function GuardianContactPanel({ token, student, onClose, showClose = true }) {
           <div className="student-form-grid"><label>Parent/Guardian<select value={form.guardianId} onChange={(event) => setForm({ ...form, guardianId: event.target.value })} required>{guardians.map((guardian) => <option key={guardian.id} value={guardian.id}>{guardian.guardian_name}</option>)}</select></label><label>Contact method<select value={form.method} onChange={(event) => setForm({ ...form, method: event.target.value })}>{CONTACT_METHODS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Outcome<select value={form.outcome} onChange={(event) => setForm({ ...form, outcome: event.target.value })}>{CONTACT_OUTCOMES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Notes<textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} maxLength="1000" placeholder="Optional factual follow-up note" /></label></div>
           <button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Record contact attempt'}</button>
         </form>
-        <div className="registration-review-list"><div className="table-header"><h3>Contact history</h3><span>{contacts.length} records</span></div>{contacts.length === 0 ? <p className="empty-state">No contact attempts recorded yet.</p> : contacts.map((contact) => <article key={contact.id}><div className="registration-review-heading"><div><h4>{contactLabel(contact.contact_method)} · {contactLabel(contact.outcome)}</h4><p>{new Date(contact.created_at).toLocaleString()}</p></div><span className="status-badge">{contact.contacted_by_role.replaceAll('_', ' ')}</span></div><p>{contact.notes || 'No notes recorded.'}</p><small>{[contact.contacted_by_first_name, contact.contacted_by_last_name].filter(Boolean).join(' ')}{contact.department_name ? ` · ${contact.department_name}` : ''}</small></article>)}</div>
+        <div className="registration-review-list"><div className="table-header"><h3>Contact history</h3><span>{contacts.length} records</span></div>{contacts.length === 0 ? <p className="empty-state">No contact attempts recorded yet.</p> : contacts.map((contact) => <article key={contact.id}><div className="registration-review-heading"><div><h4>{contactLabel(contact.contact_method)} · {contactLabel(contact.outcome)}</h4><p>{formatManilaDateTime(contact.created_at)}</p></div><span className="status-badge">{contact.contacted_by_role.replaceAll('_', ' ')}</span></div><p>{contact.notes || 'No notes recorded.'}</p><small>{[contact.contacted_by_first_name, contact.contacted_by_last_name].filter(Boolean).join(' ')}{contact.department_name ? ` · ${contact.department_name}` : ''}</small></article>)}</div>
       </>}
       <p className="scope-note">Guardian information is private. Use it only for authorized student support and discipline follow-up.</p>
     </section>

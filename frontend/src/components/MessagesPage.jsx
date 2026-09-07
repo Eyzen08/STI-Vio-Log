@@ -2,11 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { conversationMatchesTab, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../lib/messageUi.js'
 import { unreadMessageCount } from '../lib/messageUnread.js'
+import { formatManilaDate, formatManilaTime } from '../lib/displayFormat.js'
 import Modal from './Modal.jsx'
 
 const roleLabel=(role='')=>role.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
-const shortTime=(value)=>{const date=new Date(value);return Number.isNaN(date.getTime())?'':date.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
-const shortDate=(value)=>{const date=new Date(value);if(Number.isNaN(date.getTime()))return '';const today=new Date();return date.toDateString()===today.toDateString()?shortTime(value):date.toLocaleDateString([],{month:'short',day:'numeric'})}
+const shortTime=(value)=>formatManilaTime(value)
+const shortDate=(value)=>formatManilaDate(value,'')===formatManilaDate(new Date(),'')?shortTime(value):formatManilaDate(value,'')
 
 function MessagesPage({token,role,onUnreadChange,realtimeSocket}){
   const [conversations,setConversations]=useState([])
@@ -77,7 +78,7 @@ function MessagesPage({token,role,onUnreadChange,realtimeSocket}){
   const visibleConversations=conversations.filter((conversation)=>conversationMatchesTab(conversation,tab))
   const participant=selected?messageParticipant(selected,role):null
   return <div className={`messages-page messages-inbox${selected?' has-open-thread':''}`}>
-    <section className="messages-page-heading"><div><p className="eyebrow">Secure communication</p><h2>Messages</h2><p>Official, text-only conversations with authorized school participants.</p></div><button type="button" className="messages-new-button" onClick={loadRecipients} disabled={recipientLoading}>{recipientLoading?'Loading…':'New Message'}</button></section>
+    <section className="messages-page-heading"><div><p className="page-breadcrumb">Home / Messages</p><h2>Messages</h2><p>Official, text-only conversations with authorized school participants.</p></div><button type="button" className="messages-new-button" onClick={loadRecipients} disabled={recipientLoading}>{recipientLoading?'Loading…':'＋ New Message'}</button></section>
     {error&&<p className="error-message" role="alert">{error}</p>}
     <div className="messages-workspace">
       <section className="conversation-pane" aria-label="Conversations"><div className="conversation-pane-header"><h3>Conversations</h3><label className="conversation-search"><span className="sr-only">Search conversations</span><input type="search" value={search} onChange={(event)=>setSearch(event.target.value)} placeholder="Search conversations"/></label><div className="conversation-tabs" role="tablist" aria-label="Conversation filters">{['ALL','UNREAD','CLOSED'].map((value)=><button key={value} type="button" role="tab" aria-selected={tab===value} onClick={()=>setTab(value)}>{value[0]+value.slice(1).toLowerCase()}{value==='UNREAD'&&unreadTotal>0?<b>{unreadTotal}</b>:null}</button>)}</div></div>

@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import { normalizeViolation, statusLabel } from '../lib/studentViolations.js'
-import { formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
+import { formatDuration, formatIncidentDateTime, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
 
 const formatDate = (value, includeTime = false) => {
   if (!value) return 'Not recorded'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'Not recorded'
-  return includeTime ? date.toLocaleString() : date.toLocaleDateString()
+  return includeTime ? formatManilaDateTime(value) : formatManilaDate(value)
 }
 
 function ServiceProgress({ violation }) {

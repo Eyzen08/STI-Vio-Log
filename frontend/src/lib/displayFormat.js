@@ -1,4 +1,45 @@
 const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0
+const MANILA_TIME_ZONE = 'Asia/Manila'
+
+const validDate = (value) => {
+  if (value === null || value === undefined || value === '') return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+export const formatManilaDate = (value, fallback = 'Not recorded') => {
+  const date = validDate(value)
+  if (!date) return fallback
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: MANILA_TIME_ZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(date)
+}
+
+export const formatManilaDateTime = (value, fallback = 'Not recorded') => {
+  const date = validDate(value)
+  if (!date) return fallback
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: MANILA_TIME_ZONE,
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date)
+}
+
+export const formatManilaTime = (value, fallback = '') => {
+  const date = validDate(value)
+  if (!date) return fallback
+  return new Intl.DateTimeFormat('en-PH', {
+    timeZone: MANILA_TIME_ZONE,
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date)
+}
 
 export const hoursToMinutes = (hours) => Math.max(0, Math.round(number(hours) * 60))
 
@@ -25,4 +66,3 @@ export const formatIncidentDateTime = (incidentDate, incidentTime) => {
     hour: 'numeric', minute: '2-digit'
   }).format(date).replace(' at ', ' at ')
 }
-

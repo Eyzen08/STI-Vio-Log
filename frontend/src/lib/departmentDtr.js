@@ -20,7 +20,6 @@ export const departmentDtrSummary = (report = {}) => ({
 })
 
 export const displayDepartmentDtrDate = (value) => {
-  if (!value) return 'Not recorded'
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? 'Not recorded' : date.toLocaleString()
+  return formatManilaDateTime(value)
 }
+import { formatManilaDateTime } from './displayFormat.js'
