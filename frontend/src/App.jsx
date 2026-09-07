@@ -30,6 +30,8 @@ import AdminAccountSettings from './components/AdminAccountSettings.jsx'
 import AdminClearanceCertificates from './components/AdminClearanceCertificates.jsx'
 import OffenseIndicator from './components/OffenseIndicator.jsx'
 import AccountSecuritySettings from './components/AccountSecuritySettings.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
+import PortalIcon from './components/PortalIcon.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -45,6 +47,7 @@ import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
+import { iconNameForView } from './lib/portalNavigation.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -260,6 +263,31 @@ function App() {
   const isLoggedIn = Boolean(user)
 
   const navItems = getNavItems(user?.role)
+
+  const navGroupName = (item) => {
+    if (item.view === 'Dashboard') return 'Overview'
+    if (['Students','Registrations','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
+    if (['Violations','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
+    if (item.view === 'Departments & Officer Accounts') return 'Management'
+    if (item.view === 'Messages') return 'Communication'
+    if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
+    return 'Account'
+  }
+
+  const navGroups = navItems.filter((item) => item.view !== 'Account Settings').reduce((groups, item) => {
+    const name = navGroupName(item)
+    const group = groups.find((candidate) => candidate.name === name)
+    if (group) group.items.push(item)
+    else groups.push({ name, items: [item] })
+    return groups
+  }, [])
+
+  const mobileNavItems = [
+    navItems.find(({ view }) => view === 'Dashboard'),
+    navItems.find(({ view }) => ['Students','Assigned Students','My Violations'].includes(view)),
+    navItems.find(({ view }) => ['Violations','QR Scan','My Service'].includes(view)),
+    navItems.find(({ view }) => view === 'Messages')
+  ].filter(Boolean)
 
   const userRole = user?.role || null
 
@@ -2116,6 +2144,7 @@ function App() {
           loading={dashboardLoading}
           error={dashboardError}
           onOpenScanner={() => navigateTo('/department/qr-scan')}
+          onNavigate={navigateTo}
         />
       )
     }
@@ -2163,6 +2192,10 @@ function App() {
 
     if (isDepartmentHead && activeView === 'Reports') {
       return <DepartmentReports dtr={departmentDtr} nonCompliance={departmentNonCompliance} loading={dashboardLoading} error={dashboardError} />
+    }
+
+    if (activeView === 'Dashboard') {
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
     }
 
     /*
@@ -4014,8 +4047,9 @@ function App() {
         </div>
 
         <nav className="nav" aria-label="Primary navigation">
-          {navItems.map(
-            (item) => (
+          {navGroups.map((group) => <div className="nav-group" key={group.name}>
+            {group.name !== 'Overview' && <span className="nav-group-label">{group.name}</span>}
+            {group.items.map((item) => (
               <button
                 key={item.path}
                 className={`nav-item ${
@@ -4031,7 +4065,7 @@ function App() {
                 type="button"
                 aria-current={routePath === item.path ? 'page' : undefined}
               >
-                <span>{item.label}</span>
+                <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
                 {item.view === 'Messages' && formatUnreadMessageCount(unreadMessages) && (
                   <span className="nav-pending-badge" aria-label={`${formatUnreadMessageCount(unreadMessages)} unread messages`}>
                     {formatUnreadMessageCount(unreadMessages)}
@@ -4047,8 +4081,12 @@ function App() {
                   </span>
                 )}
               </button>
-            )
-          )}
+            ))}
+          </div>)}
+          <div className="nav-account-actions">
+            <button type="button" className="nav-item" onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path || getHomePath(userRole))}><span className="nav-item-label"><PortalIcon name="settings"/><span>Account settings</span></span></button>
+            <button type="button" className="nav-item" onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
+          </div>
         </nav>
       </aside>}
 
@@ -4066,38 +4104,21 @@ function App() {
               <span aria-hidden="true">☰</span>
             </button>
 
-            <div>
-            <p className="eyebrow">
-              {isStudent
-                ? 'Student Portal'
-                : isDepartmentHead
-                  ? 'Department Head'
-                  : 'Administration'}
-            </p>
-
-            <h1>
-              {routeResolution.route?.label || 'Portal'}
-            </h1>
-            </div>
+            <form className="topbar-search" onSubmit={(event)=>{event.preventDefault(); if(isAdmin)navigateTo('/admin/students'); else if(isDepartmentHead)navigateTo('/department/students')}}>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="portal-search">Search portal</label><input id="portal-search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isStudent?'Search your portal…':'Search students, violations, or reports…'}/>
+            </form>
           </div>
 
           {isLoggedIn && (
             <div className="account-actions">
-              <div className="account-summary">
-                <strong>{user?.username}</strong>
-                <span>{userRole?.replaceAll('_', ' ')}</span>
-              </div>
-              <button
-                className="logout-btn"
-                onClick={handleLogout}
-              >
-                Logout
-              </button>
+              <button className="notification-button" type="button" aria-label={`${unreadMessages} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/messages':'/admin/messages')}><PortalIcon name="bell"/>{unreadMessages>0&&<b>{unreadMessages}</b>}</button>
+              <details className="account-menu"><summary><span className="account-avatar">{String(user?.username||'U').slice(0,2).toUpperCase()}</span><span className="account-summary"><strong>{user?.username}</strong><small>{userRole?.replaceAll('_', ' ')}</small></span><span aria-hidden="true">⌄</span></summary><div><button type="button" onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path)}>Account settings</button><button type="button" onClick={handleLogout}>Logout</button></div></details>
             </div>
           )}
         </header>}
 
-        {renderContent()}
+        <div className="page-content">{renderContent()}</div>
+        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={routePath===item.path?'active':''} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
     </div>
   )
