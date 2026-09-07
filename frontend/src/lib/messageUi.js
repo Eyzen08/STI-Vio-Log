@@ -1,3 +1,5 @@
+import { formatManilaDate } from './displayFormat.js'
+
 export const MESSAGE_MAX_LENGTH = 1000
 export const messageParticipant = (conversation, role) => role === 'STUDENT'
   ? { name:conversation.school_participant || conversation.department_name || 'Discipline Office', detail:conversation.assigned_department_id?'Department Head':'Discipline Office' }
@@ -24,4 +26,3 @@ export const groupMessagesByDate = (messages) => messages.reduce((groups,message
   else groups.push({label,messages:[message]})
   return groups
 },[])
-import { formatManilaDate } from './displayFormat.js'
