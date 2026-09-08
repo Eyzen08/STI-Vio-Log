@@ -6,7 +6,7 @@ import Modal from './Modal.jsx'
 const fullName = (item) => [item.first_name,item.middle_name,item.last_name,item.suffix].filter(Boolean).join(' ')
 const statuses = ['PENDING','APPROVED','REJECTED']
 
-function GoogleRegistrationReview({ token, onPendingCountChange }) {
+function GoogleRegistrationReview({ token, onPendingCountChange, embedded = false }) {
   const [registrations,setRegistrations] = useState([])
   const [selected,setSelected] = useState(null)
   const [queueStatus,setQueueStatus] = useState('PENDING')
@@ -50,8 +50,8 @@ function GoogleRegistrationReview({ token, onPendingCountChange }) {
   const duplicateCount=registrations.filter((item)=>item.review_flag==='POTENTIAL_DUPLICATE').length
   const linkedCount=registrations.filter((item)=>item.google_linked).length
 
-  return <section className="registration-management" aria-labelledby="registration-review-title">
-    <header className="management-page-header"><div><span className="page-breadcrumb">Home / Registration Review</span><h2 id="registration-review-title">Registration Review</h2><p>Validate student identity, official-record matching, and account-link status before granting access.</p></div><span className="readonly-badge">Secure identity review</span></header>
+  return <section className="registration-management" aria-label={embedded ? 'Registration review' : undefined} aria-labelledby={embedded ? undefined : 'registration-review-title'}>
+    {!embedded && <header className="management-page-header"><div><span className="page-breadcrumb">Home / Registration Review</span><h2 id="registration-review-title">Registration Review</h2><p>Validate student identity, official-record matching, and account-link status before granting access.</p></div><span className="readonly-badge">Secure identity review</span></header>}
     <section className="management-metrics" aria-label="Registration review summary"><article className="management-metric metric-orange"><i>!</i><div><strong>{registrations.length}</strong><span>{queueStatus.replaceAll('_',' ')}</span></div></article><article className="management-metric metric-red"><i>!</i><div><strong>{duplicateCount}</strong><span>Potential Duplicates</span></div></article><article className="management-metric metric-green"><i>✓</i><div><strong>{linkedCount}</strong><span>Google Accounts Linked</span></div></article><article className="management-metric metric-blue"><i>@</i><div><strong>{registrations.length}</strong><span>Google Verified</span></div></article></section>
     {error&&<p className="error-message" role="alert">{error}</p>}
     <section className="table-card registration-directory">

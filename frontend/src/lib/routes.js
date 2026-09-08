@@ -8,10 +8,10 @@ export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
-  { path: '/admin/registrations', label: 'Registration Review', view: 'Registrations', roles: ROLE_GROUPS.administration },
+  { path: '/admin/registrations', label: 'Registration & Duplicate Review', view: 'Registrations', roles: ROLE_GROUPS.administration },
   { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },
   { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['ADMIN'] },
-  { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Duplicate Review', roles: ['ADMIN'] },
+  { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Registrations', roles: ['ADMIN'], navigation: false, redirectTo: '/admin/registrations' },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
   { path: '/admin/community-service', label: 'Community Service', view: 'Community Service', roles: ROLE_GROUPS.administration },
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
@@ -50,7 +50,7 @@ const HOME_PATHS = {
 export const getHomePath = (role) => HOME_PATHS[role] || '/unauthorized'
 
 export const getNavItems = (role) =>
-  APP_ROUTES.filter((route) => route.roles.includes(role))
+  APP_ROUTES.filter((route) => route.roles.includes(role) && route.navigation !== false)
 
 export const resolveRoute = (path, role) => {
   if (['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(path)) return { status: 'public', route: null }
@@ -63,5 +63,5 @@ export const resolveRoute = (path, role) => {
   if (!route) return { status: 'not_found', route: null }
   if (!route.roles.includes(role)) return { status: 'unauthorized', route }
 
-  return { status: 'allowed', route, redirectTo: normalizedPath !== path ? normalizedPath : null }
+  return { status: 'allowed', route, redirectTo: route.redirectTo || (normalizedPath !== path ? normalizedPath : null) }
 }

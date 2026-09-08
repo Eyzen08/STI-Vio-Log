@@ -4895,6 +4895,11 @@ a {
 /* Duplicate comparison workspace */
 .duplicate-workspace { max-width: 1500px; margin: 0 auto; }
 .readonly-badge { padding: 7px 11px; border: 1px solid #c8d8e8; border-radius: 999px; background: white; color: #526b89; font-size: .66rem; font-weight: 800; }
+.review-workspace-tabs { display: inline-flex; gap: 4px; margin: 0 0 16px; padding: 4px; border: 1px solid #d8e3ed; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(9,47,96,.06); }
+.review-workspace-tabs button { min-height: 42px; padding: 0 20px; border: 0; border-radius: 9px; background: transparent; color: #12355e; font-weight: 800; }
+.review-workspace-tabs button.active { background: #0868b9; color: #fff; }
+.registration-review-workspace > .registration-management,
+.registration-review-workspace > .duplicate-workspace { display: grid; gap: 16px; }
 .duplicate-review-grid { display: grid; grid-template-columns: minmax(300px,.72fr) minmax(520px,1.28fr); gap: 12px; align-items: start; }
 .duplicate-list-pane,.duplicate-compare-pane { min-width: 0; padding: 0; overflow: hidden; border-radius: 9px; }
 .duplicate-list-pane .management-table-header,.duplicate-compare-pane .management-table-header { padding: 15px 16px 10px; }
@@ -4928,6 +4933,8 @@ a {
 .duplicate-safety-note strong { font-size: .68rem; }
 .duplicate-safety-note span { font-size: .61rem; line-height: 1.4; }
 @media (max-width: 900px) {
+  .review-workspace-tabs { display: flex; width: 100%; box-sizing: border-box; }
+  .review-workspace-tabs button { flex: 1; padding-inline: 10px; }
   .duplicate-review-grid { grid-template-columns: 1fr; }
   .duplicate-list { max-height: 330px; }
 }

@@ -21,10 +21,9 @@ import MessagesPage from './components/MessagesPage.jsx'
 import StudentProfile from './components/StudentProfile.jsx'
 import StudentQr from './components/StudentQr.jsx'
 import StudentViolations from './components/StudentViolations.jsx'
-import GoogleRegistrationReview from './components/GoogleRegistrationReview.jsx'
+import AdminRegistrationReviewWorkspace from './components/AdminRegistrationReviewWorkspace.jsx'
 import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
 import AdminAuditLog from './components/AdminAuditLog.jsx'
-import AdminDuplicateReview from './components/AdminDuplicateReview.jsx'
 import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
 import AdminAccountSettings from './components/AdminAccountSettings.jsx'
 import AdminClearanceCertificates from './components/AdminClearanceCertificates.jsx'
@@ -2305,7 +2304,7 @@ function App() {
     }
 
     if (isAdmin && activeView === 'Registrations') {
-      return <GoogleRegistrationReview token={token} onPendingCountChange={updatePendingStudentCount} />
+      return <AdminRegistrationReviewWorkspace token={token} role={userRole} onPendingCountChange={updatePendingStudentCount} />
     }
 
     if (userRole === 'ADMIN' && activeView === 'Departments & Officer Accounts') {
@@ -2322,10 +2321,6 @@ function App() {
 
     if (userRole === 'ADMIN' && activeView === 'Audit Log') {
       return <AdminAuditLog token={token} />
-    }
-
-    if (userRole === 'ADMIN' && activeView === 'Duplicate Review') {
-      return <AdminDuplicateReview token={token} />
     }
 
     /*

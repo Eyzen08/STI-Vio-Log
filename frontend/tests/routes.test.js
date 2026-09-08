@@ -12,6 +12,8 @@ test('each supported role receives its own dashboard and navigation', () => {
     'Dashboard', 'My Profile', 'Account Settings', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
   ])
   assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Account Settings', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Messages', 'Notifications'])
+  const adminReviewItems = getNavItems('ADMIN').filter(({ view }) => view === 'Registrations')
+  assert.deepEqual(adminReviewItems.map(({ label }) => label), ['Registration & Duplicate Review'])
 })
 
 test('protected routes permit only their declared roles', () => {

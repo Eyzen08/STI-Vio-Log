@@ -9,7 +9,7 @@ const SUMMARY_ITEMS = [
   ['google_identity', 'Google identity']
 ]
 
-function AdminDuplicateReview({ token }) {
+function AdminDuplicateReview({ token, embedded = false }) {
   const [conflicts, setConflicts] = useState([])
   const [summary, setSummary] = useState({})
   const [selectedId, setSelectedId] = useState('')
@@ -46,11 +46,11 @@ function AdminDuplicateReview({ token }) {
   }, [conflicts, search])
   const selected = visible.find((conflict) => conflict.id === selectedId) || visible[0] || null
 
-  return <section className="duplicate-workspace" aria-labelledby="duplicate-review-title">
-    <header className="management-page-header">
+  return <section className="duplicate-workspace" aria-label={embedded ? 'Duplicate review' : undefined} aria-labelledby={embedded ? undefined : 'duplicate-review-title'}>
+    {!embedded && <header className="management-page-header">
       <div><span className="page-breadcrumb">Home / Students / Duplicate Review</span><h2 id="duplicate-review-title">Duplicate Review</h2><p>Identify possible account conflicts while preserving every source record for audited review.</p></div>
       <span className="readonly-badge">Read-only review</span>
-    </header>
+    </header>}
 
     <section className="management-metrics" aria-label="Duplicate review summary">
       {SUMMARY_ITEMS.map(([key, label], index) => <article className={`management-metric ${index === 1 ? 'metric-red' : index === 3 ? 'metric-orange' : index === 2 ? 'metric-green' : 'metric-blue'}`} key={key}><i>{index === 0 ? '◎' : index === 1 ? '!' : index === 2 ? '✓' : '◷'}</i><div><strong>{Number(summary[key]) || 0}</strong><span>{label} conflicts</span></div></article>)}
