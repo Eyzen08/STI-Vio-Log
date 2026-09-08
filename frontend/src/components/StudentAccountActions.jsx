@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { buildGoogleRecoveryPayload } from '../lib/accountAdmin.js'
 import Modal from './Modal.jsx'
@@ -7,6 +7,15 @@ const editableFields = ['student_number','first_name','middle_name','last_name',
 const initialEdit = (student) => Object.fromEntries(editableFields.map((field) => [field, student[field] ?? '']))
 
 function StudentAccountActions({ token, student, onUpdated }) {
+  const menuRef = useRef(null)
+  useEffect(() => {
+    const dismiss = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) menuRef.current.open = false }
+    const escape = (event) => { if (event.key === 'Escape' && menuRef.current?.open) { menuRef.current.open = false; menuRef.current.querySelector('summary')?.focus() } }
+    document.addEventListener('pointerdown', dismiss)
+    document.addEventListener('focusin', dismiss)
+    document.addEventListener('keydown', escape)
+    return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('focusin', dismiss); document.removeEventListener('keydown', escape) }
+  }, [])
   const [mode,setMode]=useState(''),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState(''),[secret,setSecret]=useState(null)
   const [edit,setEdit]=useState(()=>initialEdit(student))
   const headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'}
@@ -34,18 +43,18 @@ function StudentAccountActions({ token, student, onUpdated }) {
 
   const title=secret?'Temporary student credentials':mode==='edit'?'Edit student information':mode==='password'?'Issue temporary password':mode==='google'?'Remove Google access':'Action completed'
   return <div className="student-access-removal">
-    <details className="row-action-menu">
+    <details ref={menuRef} name="student-row-actions" className="row-action-menu" onClick={(event) => { if (event.target.closest('button')) menuRef.current.open = false }}>
       <summary aria-label={`More actions for ${student.first_name} ${student.last_name}`}>⋮</summary>
       <div><button type="button" onClick={()=>open('edit')}>Edit information</button><button type="button" onClick={()=>open('password')}>Issue password</button><button type="button" className="danger-text" onClick={()=>open('google')}>Remove Google access</button></div>
     </details>
-    {(mode||secret)&&<Modal title={title} wide={mode==='edit'} onClose={close}>
+    {(mode||secret)&&<Modal title={title} wide={mode==='edit'} dirty={!secret && mode !== 'success' && (Boolean(reason.trim()) || mode === 'edit' && JSON.stringify(edit) !== JSON.stringify(initialEdit(student)))} onClose={() => !busy && close()}>
       {secret?<div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{secret.username}</code></p><p>Temporary password: <code>{secret.password}</code></p><p>The student must change this password after first sign-in.</p><button type="button" onClick={close}>I stored it securely</button></div>:mode==='success'?<div><p className="success-message" role="status">{success}</p><button type="button" onClick={close}>Done</button></div>:<form className="student-access-removal" onSubmit={submit}>
         {mode==='edit'&&<div className="student-form-grid"><label>Student Number<input value={edit.student_number} onChange={e=>setEdit({...edit,student_number:e.target.value})} required/></label><label>First name<input value={edit.first_name} onChange={e=>setEdit({...edit,first_name:e.target.value})} required/></label><label>Middle name<input value={edit.middle_name} onChange={e=>setEdit({...edit,middle_name:e.target.value})}/></label><label>Last name<input value={edit.last_name} onChange={e=>setEdit({...edit,last_name:e.target.value})} required/></label><label>Suffix<input value={edit.suffix} onChange={e=>setEdit({...edit,suffix:e.target.value})}/></label><label>Email<input type="email" value={edit.email} onChange={e=>setEdit({...edit,email:e.target.value})}/></label><label>Phone number<input value={edit.phone_number} onChange={e=>setEdit({...edit,phone_number:e.target.value})}/></label><label>Program<input value={edit.program} onChange={e=>setEdit({...edit,program:e.target.value})}/></label><label>Section<input value={edit.section} onChange={e=>setEdit({...edit,section:e.target.value})}/></label><label>Year level<input type="number" min="1" max="8" value={edit.year_level} onChange={e=>setEdit({...edit,year_level:e.target.value})}/></label></div>}
         {mode==='password'&&<p>This creates a one-time temporary password for Student Number <strong>{student.student_number}</strong>, invalidates existing sessions, and requires a password change at first sign-in. Google sign-in remains available.</p>}
         {mode==='google'&&<p>The student record and local password access remain preserved. Only the Google link and existing sessions are revoked.</p>}
         <label>Required reason<textarea value={reason} onChange={e=>setReason(e.target.value)} maxLength="1000" required autoFocus={mode!=='edit'}/></label>
         {error&&<p className="error-message" role="alert">{error}</p>}
-        <div className="registration-review-actions"><button type="submit" className={mode==='google'?'danger-button':''} disabled={busy}>{busy?'Saving…':'Confirm action'}</button><button type="button" className="secondary-button" onClick={close} disabled={busy}>Cancel</button></div>
+        <div className="registration-review-actions"><button type="submit" className={mode==='google'?'danger-button':''} disabled={busy}>{busy?'Saving…':'Confirm action'}</button><button type="button" className="secondary-button" data-modal-dismiss disabled={busy}>Cancel</button></div>
       </form>}
     </Modal>}
   </div>

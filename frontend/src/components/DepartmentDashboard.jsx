@@ -2,6 +2,7 @@ import { formatDuration, summarizeDepartmentDtr } from '../lib/departmentDashboa
 import { formatDuration as formatHourDuration, formatManilaTime } from '../lib/displayFormat.js'
 import PortalIcon from './PortalIcon.jsx'
 import DashboardQuickActions from './DashboardQuickActions.jsx'
+import { serviceProgress, nearCompletionAssignments } from '../lib/serviceProgress.js'
 
 const displayTime = (value) => formatManilaTime(value, 'Not recorded')
 
@@ -10,7 +11,8 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
   const summary = summarizeDepartmentDtr(report)
   const departmentName = rows[0]?.department_name || 'Your Department'
   const timedIn = rows.filter((row) => row.active_session || row.time_out_at == null && row.time_in_at).length
-  const nearCompletion = rows.filter((row) => Number(row.remaining_hours) > 0 && Number(row.remaining_hours) <= 2).length
+  const nearCompletionRows = nearCompletionAssignments(rows)
+  const nearCompletion = nearCompletionRows.length
   const missingTimeout = rows.filter((row) => row.time_in_at && !row.time_out_at).length
   const requiredHours = rows.reduce((sum, row) => sum + (Number(row.required_hours) || 0), 0)
   const remainingHours = rows.reduce((sum, row) => sum + (Number(row.remaining_hours) || 0), 0)
@@ -35,7 +37,7 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
       <article className="dashboard-card progress-ring-card"><header><h3>Service progress</h3></header><div className="progress-ring" style={{'--progress':`${progress * 3.6}deg`}}><strong>{progress}%</strong><span>Completed</span></div><dl><div><dt>Completed</dt><dd>{formatHourDuration(requiredHours-remainingHours)}</dd></div><div><dt>Remaining</dt><dd>{formatHourDuration(remainingHours)}</dd></div><div><dt>Total required</dt><dd>{formatHourDuration(requiredHours)}</dd></div></dl></article>
     </section>
 
-    <section className="dashboard-card dashboard-table-card"><header className="dashboard-section-heading"><div><h3>Students near completion</h3><p>Prioritize students with the least remaining service time.</p></div></header>{rows.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Student number</th><th>Sessions</th><th>Credited</th><th>Remaining</th><th>Progress</th></tr></thead><tbody>{[...rows].sort((a,b)=>Number(a.remaining_hours)-Number(b.remaining_hours)).slice(0,6).map((row)=><tr key={row.assignment_id}><td><strong>{row.first_name} {row.last_name}</strong></td><td>{row.student_number}</td><td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_credited_minutes)}</td><td>{formatHourDuration(row.remaining_hours)}</td><td><div className="mini-progress"><span style={{width:`${Math.max(0,100-(Number(row.remaining_hours)||0)*10)}%`}}/></div></td></tr>)}</tbody></table></div> : <p className="empty-state">No active assignments yet.</p>}</section>
+    <section className="dashboard-card dashboard-table-card"><header className="dashboard-section-heading"><div><h3>Students near completion</h3><p>Prioritize students with the least remaining service time.</p></div></header>{nearCompletionRows.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Student number</th><th>Sessions</th><th>Credited</th><th>Remaining</th><th>Progress</th></tr></thead><tbody>{nearCompletionRows.slice(0,6).map((row)=><tr key={row.assignment_id}><td><strong>{row.first_name} {row.last_name}</strong></td><td>{row.student_number}</td><td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_credited_minutes)}</td><td>{formatHourDuration(row.remaining_hours)}</td><td><div className="mini-progress" role="progressbar" aria-label={`Service progress for ${row.first_name} ${row.last_name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={serviceProgress(row.required_hours, row.remaining_hours).percent}><span style={{width:`${serviceProgress(row.required_hours, row.remaining_hours).percent}%`}}/></div></td></tr>)}</tbody></table></div> : <p className="empty-state">No assignments currently have two hours or less remaining.</p>}</section>
     <p className="scope-note">Dashboard data is restricted to your assigned department.</p>
   </div>
 }

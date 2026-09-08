@@ -44,6 +44,7 @@ import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './l
 import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
+import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
@@ -180,6 +181,8 @@ function App() {
   const [isStudentFormOpen, setIsStudentFormOpen] = useState(false)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
+  const [reportPage, setReportPage] = useState(1)
+  const [reportGenerated, setReportGenerated] = useState(false)
   const [reviewedStudentViolations, setReviewedStudentViolations] = useState([])
   const [reviewedStudentPage, setReviewedStudentPage] = useState(1)
   const [reviewedStudentHasMore, setReviewedStudentHasMore] = useState(false)
@@ -1442,9 +1445,7 @@ function App() {
       if (action !== 'scan' && !qrForm.supervising_officer_id) {
         throw new Error('Select the authorized officer supervising this session.')
       }
-      if (action !== 'scan' && !window.confirm(action === 'time-in'
-        ? 'Confirm this student’s community-service Time In?'
-        : 'Confirm Time Out and credit the server-calculated service duration?')) return
+
 
       const response = await fetch(`${API_URL}/api/qr/${action}`, {
         method: 'POST',
@@ -1806,6 +1807,13 @@ function App() {
    */
 
   const fetchReport = async () => {
+    if (reportLoading) return
+    if (reportFilters.from_date && reportFilters.to_date && reportFilters.from_date > reportFilters.to_date) {
+      setReportError('Choose an end date on or after the start date.')
+      return
+    }
+    setReportGenerated(false)
+    setReportPage(1)
     setReportLoading(true)
     setReportError('')
 
@@ -1833,6 +1841,7 @@ function App() {
         setReportData(
           data.data || []
         )
+        setReportGenerated(true)
       } else {
         setReportData([])
         setReportError(data.message || 'Unable to generate this report.')
@@ -1891,7 +1900,7 @@ function App() {
       return
     }
 
-    const csvContent = createDepartmentReportCsv(reportData)
+    const csvContent = createDepartmentReportCsv(presentedReportRows(reportData))
 
     const blob =
       new Blob(
@@ -2681,6 +2690,7 @@ function App() {
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
+              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Program', reviewedStudent.program], ['Section', reviewedStudent.section], ['Year level', reviewedStudent.year_level], ['Email', reviewedStudent.email], ['Phone', reviewedStudent.phone_number]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
@@ -3825,11 +3835,9 @@ function App() {
               </span>
             </div>
 
-            {reportData.length === 0 ? (
+            {reportLoading ? <p className="empty-state" role="status">Generating your report…</p> : reportData.length === 0 ? (
               <p className="empty-state">
-                No data to display.
-                Generate a report to see
-                results.
+                {reportError ? 'The report could not be generated. Review the message above and try again.' : reportGenerated ? 'No records match these filters. Try a wider date range or another status.' : 'Choose filters and generate a report to see results.'}
               </p>
             ) : (
               <div className="table-wrap">
@@ -3841,12 +3849,7 @@ function App() {
                       ).map(
                         (key) => (
                           <th key={key}>
-                            {key
-                              .replace(
-                                /_/g,
-                                ' '
-                              )
-                              .toUpperCase()}
+                            {reportColumnLabel(key)}
                           </th>
                         )
                       )}
@@ -3855,7 +3858,7 @@ function App() {
 
                   <tbody>
                     {reportData
-                      .slice(0, 50)
+                      .slice((reportPage - 1) * 50, reportPage * 50)
                       .map(
                         (row, idx) => (
                           <tr
@@ -3873,12 +3876,7 @@ function App() {
                                     cellIdx
                                   }
                                 >
-                                  {typeof value ===
-                                  'boolean'
-                                    ? value
-                                      ? 'Yes'
-                                      : 'No'
-                                    : value}
+                                  {reportCell(Object.keys(row)[cellIdx], value)}
                                 </td>
                               )
                             )}
@@ -3889,6 +3887,7 @@ function App() {
                 </table>
               </div>
             )}
+            {reportData.length > 50 && <nav className="report-pagination" aria-label="Report result pages"><button type="button" className="secondary-button" disabled={reportPage === 1} onClick={() => setReportPage((page) => page - 1)}>Previous</button><span role="status">Page {reportPage} of {Math.ceil(reportData.length / 50)} · {reportData.length} records</span><button type="button" className="secondary-button" disabled={reportPage >= Math.ceil(reportData.length / 50)} onClick={() => setReportPage((page) => page + 1)}>Next</button></nav>}
           </section>
         </div>
       )
