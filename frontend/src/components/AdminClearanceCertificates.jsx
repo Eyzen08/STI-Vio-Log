@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
+import { readableOfficerName, readSignatureFile } from '../lib/signatureImage.js'
 import Modal from './Modal.jsx'
 
 const jsonRequest = async (path, token, options = {}) => {
@@ -26,6 +27,10 @@ function AdminClearanceCertificates({ token }) {
   const [selectedSignatures, setSelectedSignatures] = useState([])
   const [draft, setDraft] = useState({ student_name: '', program: '' })
   const [signatureForm, setSignatureForm] = useState({ full_name: '', position: 'Discipline Officer', image_data_url: '' })
+  const [editing, setEditing] = useState(null)
+  const [editForm, setEditForm] = useState({ full_name: '', position: '', image_data_url: '' })
+  const [editErrors, setEditErrors] = useState({})
+  const [deactivating, setDeactivating] = useState(null)
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -43,11 +48,11 @@ function AdminClearanceCertificates({ token }) {
   const chooseStudent = (student) => {
     setSelected(student); setDraft({ student_name: student.student_name, program: student.program || '' }); setSelectedSignatures([]); setError(''); setMessage('')
   }
-  const readSignature = (event) => {
+  const readSignature = async (event) => {
     const file = event.target.files?.[0]
     if (!file) return
-    if (!['image/png', 'image/jpeg'].includes(file.type) || file.size > 1024 * 1024) { setError('Use a PNG or JPEG signature no larger than 1 MB.'); return }
-    const reader = new FileReader(); reader.onload = () => setSignatureForm((value) => ({ ...value, image_data_url: reader.result })); reader.readAsDataURL(file)
+    try { const image = await readSignatureFile(file); setSignatureForm((value) => ({ ...value, image_data_url: image })); setError('') }
+    catch (imageError) { setError(imageError.message); event.target.value = '' }
   }
   const saveSignature = async (event) => {
     event.preventDefault(); setBusy(true); setError(''); setMessage('')
@@ -55,19 +60,27 @@ function AdminClearanceCertificates({ token }) {
     catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
   const toggleSignature = async (entry) => {
-    if (entry.is_active && !window.confirm(`Deactivate the signature for ${entry.full_name}? It will remain on already-issued certificates.`)) return
     setBusy(true); setError('')
-    try { await jsonRequest(`/api/clearance/signatures/${entry.id}`, token, { method: 'PUT', body: JSON.stringify({ is_active: !entry.is_active }) }); await load() }
+    try { await jsonRequest(`/api/clearance/signatures/${entry.id}`, token, { method: 'PUT', body: JSON.stringify({ is_active: !entry.is_active }) }); setDeactivating(null); setMessage(`${readableOfficerName(entry.full_name)}'s signature ${entry.is_active ? 'deactivated' : 'activated'}.`); await load() }
     catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
   }
-  const editSignature = async (entry) => {
-    const fullName = window.prompt('Officer full name:', entry.full_name)
-    if (!fullName?.trim()) return
-    const position = window.prompt('Officer position:', entry.position)
-    if (!position?.trim()) return
+  const editSignature = (entry) => {
+    setEditing(entry); setEditForm({ full_name: entry.full_name, position: entry.position, image_data_url: '' }); setEditErrors({}); setError('')
+  }
+  const saveSignatureEdit = async (event) => {
+    event.preventDefault(); if (busy) return
+    const nextErrors = { full_name: editForm.full_name.trim() ? '' : 'Officer full name is required.', position: editForm.position.trim() ? '' : 'Position or role is required.' }
+    setEditErrors(nextErrors)
+    if (nextErrors.full_name || nextErrors.position) return
     setBusy(true); setError('')
-    try { await jsonRequest(`/api/clearance/signatures/${entry.id}`, token, { method: 'PUT', body: JSON.stringify({ full_name: fullName, position }) }); setMessage('Officer signature details updated.'); await load() }
-    catch (requestError) { setError(requestError.message) } finally { setBusy(false) }
+    try { await jsonRequest(`/api/clearance/signatures/${editing.id}`, token, { method: 'PUT', body: JSON.stringify(editForm) }); setEditing(null); setMessage(editForm.image_data_url ? 'E-signature details and image updated.' : 'E-signature details updated.'); await load() }
+    catch (requestError) { setEditErrors({ form: requestError.message }) } finally { setBusy(false) }
+  }
+  const readEditSignature = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    try { const image = await readSignatureFile(file); setEditForm((value) => ({ ...value, image_data_url: image })); setEditErrors((value) => ({ ...value, image: '' })) }
+    catch (imageError) { setEditErrors((value) => ({ ...value, image: imageError.message })); event.target.value = '' }
   }
   const issue = async () => {
     if (!selected || !selectedSignatures.length) return
@@ -86,7 +99,7 @@ function AdminClearanceCertificates({ token }) {
   }
 
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
-    <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review eligible students and issue permanent, verifiable Certificates of Compliance.</p></div><span className="readonly-badge">Authorized staff only</span></header>
+    <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
     <section className="management-metrics" aria-label="Clearance certificate summary">
       <article className="management-metric metric-green"><i>◎</i><div><strong>{students.length}</strong><span>Eligible Students</span></div></article>
       <article className="management-metric metric-blue"><i>◇</i><div><strong>{certificates.filter((entry) => entry.status === 'ISSUED').length}</strong><span>Issued Certificates</span></div></article>
@@ -111,9 +124,11 @@ function AdminClearanceCertificates({ token }) {
     </div>
     <section className="table-card signature-management"><div className="table-header"><h3>E-Signature Management</h3><span>PNG/JPEG • max 1 MB</span></div>
       <form onSubmit={saveSignature} className="signature-form"><label>Officer full name<input required value={signatureForm.full_name} onChange={(e) => setSignatureForm({ ...signatureForm, full_name: e.target.value })} /></label><label>Position<input required value={signatureForm.position} onChange={(e) => setSignatureForm({ ...signatureForm, position: e.target.value })} /></label><label>Signature image<input required={!signatureForm.image_data_url} type="file" accept="image/png,image/jpeg" onChange={readSignature} /></label>{signatureForm.image_data_url && <img src={signatureForm.image_data_url} alt="Signature preview" />}<button disabled={busy} className="submit-btn">Save signature</button></form>
-      <div className="signature-directory">{signatures.map((entry) => <article key={entry.id}><img src={entry.image_data_url} alt={`Signature of ${entry.full_name}`} /><strong>{entry.full_name}</strong><span>{entry.position}</span><div className="inline-actions"><button type="button" disabled={busy} onClick={() => editSignature(entry)}>Edit</button><button type="button" disabled={busy} onClick={() => toggleSignature(entry)}>{entry.is_active ? 'Deactivate' : 'Activate'}</button></div></article>)}</div>
+      <div className="signature-directory">{signatures.map((entry) => <article key={entry.id}><div className="signature-card-heading"><span className={`status-badge ${entry.is_active ? 'status-completed' : 'status-inactive'}`}>{entry.is_active ? 'Active' : 'Inactive'}</span><small>Updated {formatManilaDate(entry.updated_at)}</small></div><img src={entry.image_data_url} alt={`Signature of ${readableOfficerName(entry.full_name)}`} /><strong>{readableOfficerName(entry.full_name)}</strong><span>{entry.position}</span><div className="inline-actions"><button type="button" disabled={busy} onClick={() => editSignature(entry)}>Edit</button><button className={entry.is_active ? 'danger-button' : ''} type="button" disabled={busy} onClick={() => entry.is_active ? setDeactivating(entry) : toggleSignature(entry)}>{entry.is_active ? 'Deactivate' : 'Activate'}</button></div></article>)}</div>
     </section>
     <section className="table-card"><div className="table-header"><h3>Issued certificate history</h3><span>{certificates.length} records</span></div><div className="table-wrap"><table><thead><tr><th>Certificate</th><th>Student</th><th>Completed service</th><th>Status</th><th>Email</th><th>Actions</th></tr></thead><tbody>{certificates.map((entry) => <tr key={entry.id}><td>{entry.certificate_number}<br/><small>Version {entry.version}</small></td><td>{entry.student_name}<br/><small>{entry.student_number}</small></td><td>{formatDuration(entry.completed_hours)}</td><td><span className="status-badge">{entry.status}</span></td><td>{entry.email_status}</td><td><div className="inline-actions"><button type="button" onClick={() => downloadPdf(`/api/clearance/certificates/${entry.id}/pdf`, token, `${entry.certificate_number}.pdf`)}>Download</button>{entry.status === 'ISSUED' && <><button type="button" onClick={() => jsonRequest(`/api/clearance/certificates/${entry.id}/email`, token, { method: 'POST', body: '{}' }).then(load).catch((e) => setError(e.message))}>Email</button><button className="danger-button" type="button" onClick={() => revoke(entry)}>Revoke</button></>}</div></td></tr>)}</tbody></table></div></section>
+    {editing && <Modal title="Edit E-Signature" onClose={() => !busy && setEditing(null)}><form className="signature-edit-form" onSubmit={saveSignatureEdit} noValidate><p className="modal-help">Update the officer details and optionally replace the current signature image.</p>{editErrors.form && <p className="error-message" role="alert">{editErrors.form}</p>}<label>Officer Full Name<input value={editForm.full_name} aria-invalid={Boolean(editErrors.full_name)} onChange={(event) => setEditForm({ ...editForm, full_name: event.target.value })} />{editErrors.full_name && <small className="field-error">{editErrors.full_name}</small>}</label><label>Position/Role<input value={editForm.position} aria-invalid={Boolean(editErrors.position)} onChange={(event) => setEditForm({ ...editForm, position: event.target.value })} />{editErrors.position && <small className="field-error">{editErrors.position}</small>}</label><div className="signature-preview-grid"><figure><figcaption>Current signature</figcaption><img src={editing.image_data_url} alt={`Current signature of ${readableOfficerName(editing.full_name)}`} /></figure><figure><figcaption>Replacement preview</figcaption>{editForm.image_data_url ? <img src={editForm.image_data_url} alt="Replacement signature preview" /> : <span>Current image will be kept</span>}</figure></div><label>Signature Image <small>Optional · PNG/JPEG · max 1 MB</small><input type="file" accept="image/png,image/jpeg" onChange={readEditSignature} />{editErrors.image && <small className="field-error">{editErrors.image}</small>}</label><footer className="modal-actions"><button type="button" disabled={busy} onClick={() => setEditing(null)}>Cancel</button><button className="submit-btn" disabled={busy}>{busy ? 'Saving changes…' : 'Save Changes'}</button></footer></form></Modal>}
+    {deactivating && <Modal title="Deactivate E-Signature" onClose={() => !busy && setDeactivating(null)}><div className="confirmation-dialog"><p>Deactivate the signature for <strong>{readableOfficerName(deactivating.full_name)}</strong>?</p><p>It will remain on certificates that have already been issued.</p><footer className="modal-actions"><button type="button" disabled={busy} onClick={() => setDeactivating(null)}>Cancel</button><button className="danger-button" type="button" disabled={busy} onClick={() => toggleSignature(deactivating)}>{busy ? 'Deactivating…' : 'Deactivate'}</button></footer></div></Modal>}
   </section>
 }
 

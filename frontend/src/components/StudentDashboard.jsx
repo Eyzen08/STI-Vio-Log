@@ -2,6 +2,7 @@ import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
 import { formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
+import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const hours = (value) => Math.max(0, Number(value) || 0)
 
@@ -26,6 +27,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     </section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     {summary.activeViolations > 0 && <section className="student-standing-alert"><OffenseIndicator level={offenseLevel}/><div><strong>{offenseLevel === 'MAJOR_LEVEL' ? 'Major-level status' : 'Requirements need attention'}</strong><span>Review your record and complete any remaining requirements.</span></div></section>}
+    <DashboardQuickActions role="STUDENT" onNavigate={onNavigate}/>
 
     <section className="stats-grid student-stats" aria-label="Student status summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="reports"/></i><div><span>Total violations</span><strong>{violations.length}</strong><small>{summary.activeViolations} currently open</small></div></article>

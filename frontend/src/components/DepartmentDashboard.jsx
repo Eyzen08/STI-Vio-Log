@@ -1,6 +1,7 @@
 import { formatDuration, summarizeDepartmentDtr } from '../lib/departmentDashboard.js'
 import { formatDuration as formatHourDuration, formatManilaTime } from '../lib/displayFormat.js'
 import PortalIcon from './PortalIcon.jsx'
+import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const displayTime = (value) => formatManilaTime(value, 'Not recorded')
 
@@ -19,6 +20,7 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
 
   return <div className="department-dashboard portal-dashboard">
     <section className="portal-welcome"><div><h2>{departmentName} Dashboard</h2><p>Monitor student community service and attendance for your department.</p></div><time>{new Intl.DateTimeFormat('en-PH',{dateStyle:'long'}).format(new Date())}</time></section>
+    <DashboardQuickActions role="DEPARTMENT_HEAD" onNavigate={(path) => path === '/department/qr-scan' ? onOpenScanner?.() : onNavigate?.(path)}/>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="stats-grid department-stats" aria-label="Department attendance summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="students"/></i><div><span>Assigned students</span><strong>{summary.studentsServed}</strong><small>Your department only</small></div></article>
@@ -31,7 +33,6 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
     <section className="department-overview-grid">
       <article className="dashboard-card attendance-card"><header className="dashboard-section-heading"><div><h3>Today's attendance</h3><p>Latest department activity</p></div><button className="text-button" type="button" onClick={()=>onNavigate?.('/department/dtr')}>View all</button></header>{rows.length ? <div className="table-wrap"><table><thead><tr><th>Time</th><th>Student</th><th>Activity</th><th>Status</th></tr></thead><tbody>{rows.slice(0,5).map((row,index)=><tr key={`${row.assignment_id}-${index}`}><td>{displayTime(row.latest_attendance_at || row.time_in_at)}</td><td><strong>{row.first_name} {row.last_name}</strong></td><td>{row.time_out_at ? 'Time out' : 'Time in'}</td><td><span className="status-badge">{row.time_out_at ? 'Completed' : 'On-going'}</span></td></tr>)}</tbody></table></div> : <p className="empty-state">No attendance recorded today.</p>}</article>
       <article className="dashboard-card progress-ring-card"><header><h3>Service progress</h3></header><div className="progress-ring" style={{'--progress':`${progress * 3.6}deg`}}><strong>{progress}%</strong><span>Completed</span></div><dl><div><dt>Completed</dt><dd>{formatHourDuration(requiredHours-remainingHours)}</dd></div><div><dt>Remaining</dt><dd>{formatHourDuration(remainingHours)}</dd></div><div><dt>Total required</dt><dd>{formatHourDuration(requiredHours)}</dd></div></dl></article>
-      <article className="dashboard-card department-quick-actions"><header><h3>Quick actions</h3></header><button type="button" onClick={onOpenScanner}><PortalIcon name="qr"/><span><strong>Scan QR code</strong><small>Time in / time out</small></span></button><button type="button" onClick={()=>onNavigate?.('/department/students')}><PortalIcon name="students"/><span><strong>View assigned students</strong><small>Manage student list</small></span></button><button type="button" onClick={()=>onNavigate?.('/department/community-service')}><PortalIcon name="clock"/><span><strong>Service monitoring</strong><small>Track progress</small></span></button><button type="button" onClick={()=>onNavigate?.('/department/reports')}><PortalIcon name="reports"/><span><strong>Generate report</strong><small>Department summary</small></span></button></article>
     </section>
 
     <section className="dashboard-card dashboard-table-card"><header className="dashboard-section-heading"><div><h3>Students near completion</h3><p>Prioritize students with the least remaining service time.</p></div></header>{rows.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Student number</th><th>Sessions</th><th>Credited</th><th>Remaining</th><th>Progress</th></tr></thead><tbody>{[...rows].sort((a,b)=>Number(a.remaining_hours)-Number(b.remaining_hours)).slice(0,6).map((row)=><tr key={row.assignment_id}><td><strong>{row.first_name} {row.last_name}</strong></td><td>{row.student_number}</td><td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_credited_minutes)}</td><td>{formatHourDuration(row.remaining_hours)}</td><td><div className="mini-progress"><span style={{width:`${Math.max(0,100-(Number(row.remaining_hours)||0)*10)}%`}}/></div></td></tr>)}</tbody></table></div> : <p className="empty-state">No active assignments yet.</p>}</section>

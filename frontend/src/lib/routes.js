@@ -6,7 +6,7 @@ export const ROLE_GROUPS = {
 
 export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
-  { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration },
+  { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registration & Duplicate Review', view: 'Registrations', roles: ROLE_GROUPS.administration },
   { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },
@@ -20,7 +20,7 @@ export const APP_ROUTES = [
   { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/admin/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.administration },
   { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
-  { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department },
+  { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department, navigation: false },
   { path: '/department/students', label: 'Assigned Students', view: 'Students', roles: ROLE_GROUPS.department },
   { path: '/department/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.department },
   { path: '/department/community-service', label: 'Service Results', view: 'Community Service', roles: ROLE_GROUPS.department },
@@ -31,7 +31,7 @@ export const APP_ROUTES = [
   { path: '/department/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
-  { path: '/student/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.student },
+  { path: '/student/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.student, navigation: false },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },
   { path: '/student/violations', label: 'My Violations', view: 'My Violations', roles: ROLE_GROUPS.student },
   { path: '/student/community-service', label: 'My Service', view: 'My Service', roles: ROLE_GROUPS.student },

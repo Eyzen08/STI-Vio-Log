@@ -87,7 +87,10 @@ const updateSignature = async (req, res) => {
     const active = req.body.is_active === undefined ? current.is_active : req.body.is_active === true;
     const row = (await client.query(`UPDATE discipline_officer_signatures SET full_name=$2,position=$3,image_data=$4,image_mime_type=$5,is_active=$6,updated_by=$7,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING id,full_name,position,is_active,image_mime_type,created_at,updated_at`,
       [current.id, fullName, position, image.buffer, image.mimeType, active, req.user.id])).rows[0];
-    await audit(client, req.user.id, active ? 'SIGNATURE_UPDATE' : 'SIGNATURE_DEACTIVATE', 'discipline_officer_signatures', current.id, `Updated e-signature for ${fullName}`, req.ip);
+    const action = current.is_active !== active
+      ? (active ? 'SIGNATURE_ACTIVATE' : 'SIGNATURE_DEACTIVATE')
+      : req.body.image_data_url ? 'SIGNATURE_REPLACE' : 'SIGNATURE_UPDATE';
+    await audit(client, req.user.id, action, 'discipline_officer_signatures', current.id, `${action === 'SIGNATURE_REPLACE' ? 'Replaced' : 'Updated'} e-signature for ${fullName}`, req.ip);
     await client.query('COMMIT');
     return res.json({ success: true, signature: row });
   } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} return handle(res, error, 'Failed to update officer signature'); }

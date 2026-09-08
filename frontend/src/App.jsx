@@ -31,6 +31,7 @@ import OffenseIndicator from './components/OffenseIndicator.jsx'
 import AccountSecuritySettings from './components/AccountSecuritySettings.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
 import PortalIcon from './components/PortalIcon.jsx'
+import ProfileMenu from './components/ProfileMenu.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -3332,6 +3333,8 @@ function App() {
      * ==========================================================
      */
 
+    if (activeView === 'Clearance') return <AdminClearanceCertificates token={token} />
+
     if (
       activeView === 'Clearance'
     ) {
@@ -4243,7 +4246,6 @@ function App() {
             ))}
           </div>)}
           <div className="nav-account-actions">
-            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Account settings' : undefined} onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path || getHomePath(userRole))}><span className="nav-item-label"><PortalIcon name="settings"/><span>Account settings</span></span></button>
             <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
           </div>
         </nav>
@@ -4271,7 +4273,7 @@ function App() {
           {isLoggedIn && (
             <div className="account-actions">
               <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
-              <details className="account-menu"><summary><span className="account-avatar">{String(user?.username||'U').slice(0,2).toUpperCase()}</span><span className="account-summary"><strong>{user?.username}</strong><small>{userRole?.replaceAll('_', ' ')}</small></span><span aria-hidden="true">⌄</span></summary><div><button type="button" onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path)}>Account settings</button><button type="button" onClick={handleLogout}>Logout</button></div></details>
+              <ProfileMenu user={user} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
             </div>
           )}
         </header>}
