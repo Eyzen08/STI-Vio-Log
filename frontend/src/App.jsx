@@ -49,6 +49,7 @@ import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
 import './App.css'
+import './styles/portal-system.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 

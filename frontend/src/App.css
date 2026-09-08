@@ -3415,7 +3415,7 @@ th {
 }
 
 /* Shared interface primitives */
-.main-panel button:not(.text-button):not(.mobile-menu-button) {
+:where(.main-panel) :where(button:not(.text-button):not(.mobile-menu-button)) {
   min-height: 42px;
   padding: 10px 16px;
   border: 1px solid transparent;
@@ -3427,7 +3427,7 @@ th {
   cursor: pointer;
 }
 
-.main-panel button:not(.text-button):not(.mobile-menu-button):hover:not(:disabled) {
+:where(.main-panel) :where(button:not(.text-button):not(.mobile-menu-button)):hover:not(:disabled) {
   background: var(--color-primary-dark);
 }
 

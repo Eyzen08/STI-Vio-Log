@@ -1,12 +1,14 @@
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-function Modal({ title, onClose, children, wide = false, drawer = false }) {
+function Modal({ title, onClose, children, wide = false, drawer = false, dirty = false }) {
+  const [confirmDiscard, setConfirmDiscard] = useState(false)
+  const requestClose = () => dirty ? setConfirmDiscard(true) : onClose()
   const titleId = useId()
   const closeButtonRef = useRef(null)
   const dialogRef = useRef(null)
-  const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  const onCloseRef = useRef(requestClose)
+  onCloseRef.current = requestClose
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow
@@ -46,13 +48,13 @@ function Modal({ title, onClose, children, wide = false, drawer = false }) {
   }, [])
 
   return createPortal(
-    <div className="app-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section ref={dialogRef} tabIndex="-1" className={`app-modal${wide ? ' app-modal--wide' : ''}${drawer ? ' app-modal--drawer' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+    <div className="app-modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && requestClose()}>
+      <section ref={dialogRef} tabIndex="-1" onClickCapture={(event) => { if (event.target.closest('[data-modal-dismiss]')) { event.preventDefault(); event.stopPropagation(); requestClose() } }} className={`app-modal${wide ? ' app-modal--wide' : ''}${drawer ? ' app-modal--drawer' : ''}`} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="app-modal-header">
           <h2 id={titleId}>{title}</h2>
-          <button ref={closeButtonRef} type="button" className="app-modal-close" onClick={onClose} aria-label={`Close ${title}`}>×</button>
+          <button ref={closeButtonRef} type="button" className="app-modal-close" onClick={requestClose} aria-label={`Close ${title}`}>×</button>
         </header>
-        <div className="app-modal-body">{children}</div>
+        <div className="app-modal-body">{confirmDiscard ? <section className="discard-edits" role="alert"><strong>Discard unsaved changes?</strong><p>Your changes have not been saved.</p><div><button type="button" onClick={() => setConfirmDiscard(false)}>Keep editing</button><button type="button" className="danger-button" onClick={onClose}>Discard changes</button></div></section> : children}</div>
       </section>
     </div>,
     document.body

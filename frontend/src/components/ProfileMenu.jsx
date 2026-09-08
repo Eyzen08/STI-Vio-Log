@@ -15,11 +15,20 @@ function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
   useEffect(() => {
     if (!open) return undefined
     const outside = (event) => { if (!rootRef.current?.contains(event.target)) close(false) }
-    const keyboard = (event) => { if (event.key === 'Escape') { event.preventDefault(); close(true) } }
+    const keyboard = (event) => {
+      if (event.key === 'Escape') { event.preventDefault(); close(true); return }
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      const items = [...rootRef.current.querySelectorAll('[role="menuitem"]')]
+      const current = items.indexOf(document.activeElement)
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+      event.preventDefault(); items[next]?.focus()
+    }
+    const focusOutside = (event) => { if (!rootRef.current?.contains(event.target)) close(false) }
+    document.addEventListener('focusin', focusOutside)
     document.addEventListener('pointerdown', outside)
     document.addEventListener('keydown', keyboard)
     firstItemRef.current?.focus()
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', keyboard) }
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', keyboard); document.removeEventListener('focusin', focusOutside) }
   }, [open])
 
   const username = user?.full_name || user?.username || 'Portal User'
