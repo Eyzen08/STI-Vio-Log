@@ -3,12 +3,10 @@ import { formatDuration } from '../lib/departmentDashboard.js'
 import { formatDuration as formatHourDuration } from '../lib/displayFormat.js'
 import { displayDepartmentDtrDate } from '../lib/departmentDtr.js'
 import { buildDepartmentStudentRoster, filterDepartmentStudents } from '../lib/departmentStudents.js'
-import GuardianContactPanel from './GuardianContactPanel.jsx'
 
-function DepartmentStudents({ report, loading, error, onOpenDtr, token }) {
+function DepartmentStudents({ report, loading, error, onOpenDtr }) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('ALL')
-  const [contactStudent, setContactStudent] = useState(null)
   const roster = useMemo(() => buildDepartmentStudentRoster(report), [report])
   const visibleStudents = useMemo(() => filterDepartmentStudents(roster, query, status), [roster, query, status])
 
@@ -39,14 +37,12 @@ function DepartmentStudents({ report, loading, error, onOpenDtr, token }) {
                 <div className="student-roster-heading"><div className="student-avatar" aria-hidden="true">{student.name.charAt(0)}</div><div><h4>{student.name}</h4><span>{student.studentNumber}</span></div><span className={`status-badge ${student.hasActiveService ? 'status-open' : 'status-complete'}`}>{student.hasActiveService ? 'Active service' : 'No remaining service'}</span></div>
                 <dl><div><dt>Assignments</dt><dd>{student.assignments}</dd></div><div><dt>Sessions</dt><dd>{student.completedSessions}</dd></div><div><dt>Credited</dt><dd>{formatDuration(student.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatHourDuration(student.remainingHours)}</dd></div></dl>
                 <p>Latest attendance: {displayDepartmentDtrDate(student.latestAttendanceAt)}</p>
-                <button type="button" className="secondary-button" onClick={() => setContactStudent(student)}>Parent/Guardian contact</button>
               </article>
             ))}
           </div>
         )}
       </section>
-      {contactStudent && <GuardianContactPanel token={token} student={contactStudent} onClose={() => setContactStudent(null)} />}
-      <p className="scope-note">This roster includes only students with attendance in your authenticated department.</p>
+      <p className="scope-note">This roster includes only students with attendance in your authenticated department. Private Guardian Contact details are restricted to authorized Administration and Discipline Office staff.</p>
     </div>
   )
 }

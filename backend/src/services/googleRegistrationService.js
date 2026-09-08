@@ -10,7 +10,9 @@ const publicRegistration = (row) => ({
   id: Number(row.id),
   student_number: row.student_number,
   first_name: row.first_name,
+  middle_name: row.middle_name || null,
   last_name: row.last_name,
+  suffix: row.suffix || null,
   phone_number: row.phone_number || null,
   program: row.program || null,
   section: row.section || null,
@@ -19,6 +21,12 @@ const publicRegistration = (row) => ({
   guardian_relationship: row.guardian_relationship || null,
   guardian_phone_number: row.guardian_phone_number || null,
   google_email: row.google_email || null,
+  identity_source: 'GOOGLE',
+  email_verification_status: 'GOOGLE_VERIFIED',
+  google_linked: Boolean(row.google_linked),
+  student_number_in_use: Boolean(row.student_number_in_use),
+  email_in_use: Boolean(row.email_in_use),
+  review_flag: row.student_number_in_use || row.email_in_use ? 'POTENTIAL_DUPLICATE' : 'MANUAL_RECORD_MATCH',
   status: row.status,
   review_reason: row.review_reason || null,
   reviewed_at: row.reviewed_at || null,
@@ -35,12 +43,15 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 100) throw new ApiError(400, 'VALIDATION_ERROR', 'limit must be an integer between 1 and 100');
     const safeLimit = parsedLimit;
     const result = await pool.query(
-      `SELECT id, student_number, first_name, last_name, google_email, phone_number,
-              program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status,
-              review_reason, reviewed_at, created_at
-       FROM google_student_registrations
-       WHERE status = $1
-       ORDER BY created_at ASC, id ASC
+      `SELECT g.id,g.student_number,g.first_name,g.middle_name,g.last_name,g.suffix,g.google_email,g.phone_number,
+              g.program,g.section,g.year_level,g.guardian_name,g.guardian_relationship,g.guardian_phone_number,g.status,
+              g.review_reason,g.reviewed_at,g.created_at,
+              EXISTS(SELECT 1 FROM students s WHERE s.student_number=g.student_number) AS student_number_in_use,
+              EXISTS(SELECT 1 FROM students s WHERE g.google_email IS NOT NULL AND LOWER(s.email)=LOWER(g.google_email)) AS email_in_use,
+              EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.google_subject=g.google_subject AND gil.revoked_at IS NULL) AS google_linked
+       FROM google_student_registrations g
+       WHERE g.status = $1
+       ORDER BY g.created_at ASC,g.id ASC
        LIMIT $2`,
       [normalizedStatus, safeLimit]
     );

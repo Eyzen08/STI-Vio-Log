@@ -14,6 +14,7 @@ export const buildAdminReportQuery = (type, filters = {}) => {
   const params = new URLSearchParams()
   const add = (key,value) => { if (String(value ?? '').trim()) params.set(key,String(value).trim()) }
   if (['violations','community-service','clearance'].includes(type)) add('status',filters.status)
+  if (type === 'violations') add('search', filters.search)
   if (type !== 'non-compliance') add('student_id',filters.student_id)
   if (['violations','parent-contacts'].includes(type)) { add('from_date',filters.from_date);add('to_date',filters.to_date) }
   if (type === 'dtr') { add('from',filters.from_date);add('to',filters.to_date) }

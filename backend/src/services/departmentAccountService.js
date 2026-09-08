@@ -24,8 +24,7 @@ const createDepartmentAccountService = ({ pool, accountService = createAccountAd
       role: 'DEPARTMENT_HEAD',
       firstName: department.department_code,
       lastName: 'Account',
-      departmentId: Number(departmentId),
-      enforceSingleDepartmentAccount: true
+      departmentId: Number(departmentId)
     });
   };
 

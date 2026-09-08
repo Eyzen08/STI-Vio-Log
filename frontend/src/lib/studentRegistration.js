@@ -3,7 +3,7 @@ import { passwordIsStrong } from './passwordPolicy.js'
 export const REGISTRATION_STEPS = [
   { label: 'Student Identity', shortLabel: 'Identity' },
   { label: 'Academic Information', shortLabel: 'Academic' },
-  { label: 'Parent/Guardian Information', shortLabel: 'Guardian' },
+  { label: 'Guardian Contact Information', shortLabel: 'Guardian' },
   { label: 'Account Security', shortLabel: 'Security' },
   { label: 'Review and Submit', shortLabel: 'Review' },
 ]

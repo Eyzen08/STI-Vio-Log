@@ -11,7 +11,7 @@ test('each supported role receives its own dashboard and navigation', () => {
   assert.deepEqual(getNavItems('STUDENT').map(({ label }) => label), [
     'Dashboard', 'My Profile', 'Account Settings', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
   ])
-  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Account Settings', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Messages'])
+  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Account Settings', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Messages', 'Notifications'])
 })
 
 test('protected routes permit only their declared roles', () => {

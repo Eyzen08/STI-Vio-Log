@@ -22,8 +22,10 @@ const initializeRealtime = (httpServer, allowedOrigins) => {
       if (!token) return next(new Error('Authentication required'));
       const decoded = jwt.verify(token, getJwtSecret());
       const account = (await pool.query(
-        `SELECT u.id,u.role,u.session_version,u.must_change_password,dh.department_id
-         FROM users u LEFT JOIN department_heads dh ON dh.user_id=u.id
+        `SELECT u.id,u.role,u.session_version,u.must_change_password,COALESCE(dh.department_id,sp.department_id) AS department_id
+         FROM users u
+         LEFT JOIN department_heads dh ON dh.user_id=u.id
+         LEFT JOIN staff_profiles sp ON sp.user_id=u.id
          WHERE u.id=$1 AND u.is_active=TRUE LIMIT 1`,
         [decoded.id]
       )).rows[0];
@@ -44,7 +46,7 @@ const initializeRealtime = (httpServer, allowedOrigins) => {
   io.on('connection', (socket) => {
     socket.join(room.user(socket.user.id));
     socket.join(room.role(socket.user.role));
-    if (socket.user.role === 'DEPARTMENT_HEAD' && socket.user.department_id) {
+    if (['DEPARTMENT_HEAD', 'DISCIPLINE_OFFICE'].includes(socket.user.role) && socket.user.department_id) {
       socket.join(room.department(socket.user.department_id));
     }
   });

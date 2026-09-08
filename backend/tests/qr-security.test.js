@@ -18,8 +18,9 @@ test('disabled Department Head scanner permission is denied from current databas
     await requireAuthorizedDepartment(req, res, () => { continued = true; });
     assert.equal(res.statusCode, 403);
     assert.equal(continued, false);
-    assert.match(query.sql, /qr_scanner_enabled = TRUE/);
-    assert.deepEqual(query.params, [12, 5]);
+    assert.match(query.sql, /qr_scanner_enabled/);
+    assert.match(query.sql, /officer_department_assignments/);
+    assert.deepEqual(query.params, [12, 5, 'DEPARTMENT_HEAD']);
   } finally { database.query = originalQuery; }
 });
 

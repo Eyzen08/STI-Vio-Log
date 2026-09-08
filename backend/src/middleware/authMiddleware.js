@@ -85,10 +85,12 @@ const authenticateToken = async (req, res, next) => {
                 u.email_verified,
                 u.session_version,
                 u.must_change_password,
-                dh.department_id
+                COALESCE(dh.department_id, sp.department_id) AS department_id
             FROM users u
             LEFT JOIN department_heads dh
                 ON dh.user_id = u.id
+            LEFT JOIN staff_profiles sp
+                ON sp.user_id = u.id
             WHERE u.id = $1
               AND u.is_active = TRUE
             LIMIT 1
@@ -163,7 +165,8 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
 };
 
 const requireAuthorizedDepartment = async (req, res, next) => {
-    const departmentId = req.user.role === "DEPARTMENT_HEAD"
+    const scopedOfficer = ["DEPARTMENT_HEAD", "DISCIPLINE_OFFICE"].includes(req.user.role) && req.user.department_id;
+    const departmentId = scopedOfficer
         ? req.user.department_id
         : req.body.department_id;
 
@@ -175,13 +178,15 @@ const requireAuthorizedDepartment = async (req, res, next) => {
     }
 
     try {
-        const result = req.user.role === "DEPARTMENT_HEAD"
+        const result = scopedOfficer
             ? await pool.query(
-                `SELECT d.id FROM department_heads dh
-                 JOIN departments d ON d.id = dh.department_id
-                 WHERE dh.user_id = $1 AND dh.department_id = $2
-                   AND dh.qr_scanner_enabled = TRUE AND d.is_active = TRUE`,
-                [req.user.id, departmentId]
+                `SELECT d.id FROM officer_department_assignments oda
+                 JOIN departments d ON d.id=oda.department_id
+                 LEFT JOIN department_heads dh ON dh.user_id=oda.officer_user_id
+                 WHERE oda.officer_user_id=$1 AND oda.department_id=$2 AND oda.status='ACTIVE'
+                   AND oda.starts_at<=CURRENT_TIMESTAMP AND (oda.ends_at IS NULL OR oda.ends_at>CURRENT_TIMESTAMP)
+                   AND d.is_active=TRUE AND ($3::text<>'DEPARTMENT_HEAD' OR COALESCE(dh.qr_scanner_enabled,FALSE)=TRUE)`,
+                [req.user.id, departmentId, req.user.role]
             )
             : await pool.query(
                 "SELECT id FROM departments WHERE id = $1 AND is_active = TRUE",
@@ -189,9 +194,9 @@ const requireAuthorizedDepartment = async (req, res, next) => {
             );
 
         if (result.rows.length === 0) {
-            return res.status(req.user.role === "DEPARTMENT_HEAD" ? 403 : 400).json({
+            return res.status(scopedOfficer ? 403 : 400).json({
                 success: false,
-                message: req.user.role === "DEPARTMENT_HEAD"
+                message: scopedOfficer
                     ? "QR scanner access is not enabled for this account"
                     : "A valid staff department is required"
             });

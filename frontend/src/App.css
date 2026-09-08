@@ -28,6 +28,13 @@
 .notification-list p { color: #4d6077; line-height: 1.55; margin: 8px 0; }
 .notification-list time { color: #7a899c; font-size: .78rem; }
 .notification-list .secondary-button { display: block; margin-top: 12px; padding: 8px 12px; width: fit-content; }
+.notification-toolbar { align-items: end; gap: 18px; }
+.notification-filters { align-items: end; display: flex; flex-wrap: wrap; gap: 10px; }
+.notification-filters label { display: grid; gap: 5px; }
+.notification-filters label > span { color: #61758d; font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+.notification-filters select { min-width: 140px; }
+.notification-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 12px; }
+.notification-actions .secondary-button { margin-top: 12px; }
 .report-selector { background: #e8eef5; border-radius: 12px; display: flex; gap: 5px; padding: 5px; width: fit-content; }
 .report-selector button { background: transparent; color: #43566d; }
 .report-selector button.active { background: white; box-shadow: 0 2px 8px #17334f1c; color: #07547a; }
@@ -4464,6 +4471,27 @@ a {
 @media (max-width: 900px) { .admin-settings-grid { grid-template-columns: 1fr; } .department-summary-grid { grid-template-columns: repeat(2,1fr); } .officer-directory { grid-template-columns: 1fr; } .directory-toolbar { grid-template-columns: 1fr 1fr; } .directory-toolbar input { grid-column: 1/-1; } }
 @media (max-width: 600px) { .department-officer-tabs,.department-officer-tabs button { width: 100%; } .department-summary-grid,.directory-toolbar { grid-template-columns: 1fr; } .directory-toolbar input { grid-column: auto; } .compact-stepper { gap: 6px; font-size: .73rem; } .compact-stepper span { display: none; } .officer-directory dl,.detail-summary dl { grid-template-columns: 1fr; } }
 
+/* Officer responsibility and availability */
+.availability-available { background:#dcfce7; color:#087443; }
+.availability-unavailable { background:#fff3cd; color:#8a5a00; }
+.availability-absent { background:#feef2; color:#b42332; }
+.responsibility-panel { display:grid; gap:16px; }
+.responsibility-panel > header { align-items:flex-start; display:flex; justify-content:space-between; gap:12px; }
+.responsibility-panel h3,.responsibility-panel h4 { margin:0; color:#102b53; }
+.responsibility-panel header p { color:#64748b; margin:5px 0 0; }
+.responsibility-list { display:grid; gap:10px; }
+.responsibility-list > article { background:#f8fbff; border:1px solid #d9e5f1; border-radius:10px; display:grid; gap:10px; padding:14px; }
+.responsibility-list > article > div:first-child { display:grid; gap:3px; }
+.responsibility-list > article > div:first-child span { color:#66788f; font-size:.76rem; }
+.assignment-badges { display:flex; flex-wrap:wrap; gap:6px; }
+.responsibility-list dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; margin:0; }
+.responsibility-list dt { color:#6d7f95; font-size:.72rem; }
+.responsibility-list dd { margin:2px 0 0; overflow-wrap:anywhere; }
+.assignment-history { border-top:1px solid #dfe8f1; padding-top:13px; }
+.assignment-history summary { color:#0755a3; cursor:pointer; font-weight:750; }
+.assignment-history p { border-bottom:1px solid #edf1f5; color:#53677e; font-size:.82rem; margin:0; padding:9px 0; }
+@media (max-width:600px) { .responsibility-panel > header { display:grid; } .responsibility-list dl { grid-template-columns:1fr; } }
+
 /* Clearance certificate issuance */
 .certificate-admin { display: grid; gap: 18px; margin-bottom: 22px; }
 .certificate-hero { display: flex; justify-content: space-between; align-items: center; padding: 22px; border-top: 4px solid #ffd400; }
@@ -4944,7 +4972,10 @@ a {
 .registration-management,.audit-workspace { max-width: 1500px; margin: 0 auto; }
 .registration-directory,.audit-filter-card,.audit-results-card { padding: 0; overflow: hidden; border-radius: 9px; }
 .registration-directory .management-table-header,.audit-filter-card .management-table-header,.audit-results-card .management-table-header { padding: 15px 16px 10px; }
-.registration-toolbar { grid-template-columns: 1fr; margin: 0 15px 12px; }
+.registration-toolbar { align-items: end; grid-template-columns: auto minmax(240px,1fr) minmax(180px,.45fr); margin: 0 15px 12px; }
+.registration-toolbar .segmented-control { display: flex; gap: 4px; padding: 3px; border: 1px solid #d8e2ed; border-radius: 8px; background: #f5f8fc; }
+.registration-toolbar .segmented-control button { min-height: 36px; padding: 7px 11px; border: 0; background: transparent; color: #385675; }
+.registration-toolbar .segmented-control button.active { background: #0867bd; color: #fff; box-shadow: 0 2px 6px rgba(8,64,115,.16); }
 .registration-directory table { min-width: 940px; }
 .registration-directory td small { display: block; margin-top: 2px; color: #73859a; font-size: .59rem; }
 .registration-review-drawer { display: grid; gap: 16px; }
@@ -4971,8 +5002,23 @@ a {
 .audit-results-card table { min-width: 900px; }
 .audit-results-card > .registration-review-actions { justify-content: flex-end; padding: 12px 15px; border-top: 1px solid #e2e9f1; }
 @media (max-width: 560px) {
+  .registration-toolbar { grid-template-columns: 1fr; }
+  .registration-toolbar .segmented-control { overflow-x: auto; }
+  .registration-toolbar .segmented-control button { flex: 1 0 auto; }
   .registration-review-drawer dl div { grid-template-columns: 1fr; gap: 3px; }
   .drawer-action-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 760px) {
+  .notification-toolbar { align-items: stretch; flex-direction: column; }
+  .notification-filters { align-items: stretch; display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .notification-filters .secondary-button { grid-column: 1 / -1; width: 100%; }
+  .active-session-card table { min-width: 720px; }
+}
+
+@media (max-width: 480px) {
+  .notification-filters { grid-template-columns: 1fr; }
+  .notification-filters .secondary-button { grid-column: auto; }
 }
 
 /* Keyboard and motion accessibility */

@@ -43,6 +43,11 @@ function mockResult(sql, params = []) {
     return { rows: Number(params[0]) === 3 && Number(params[1]) === 9 ? [{ id: 9 }] : [] };
   }
 
+  if (text.includes('FROM officer_department_assignments oda') && text.includes('JOIN departments d')) {
+    if (text.includes('SELECT DISTINCT ON')) return { rows: [{ assignment_id: 30, officer_user_id: 3, role:'DEPARTMENT_HEAD', first_name:'Test', last_name:'Officer', department_name:'Library bloc', availability_status:'AVAILABLE', assignment_type:'PERMANENT' }] };
+    return { rows: Number(params[0]) === 3 && Number(params[1]) === 9 ? [{ id: 9 }] : [] };
+  }
+
   if (text.includes('FROM students') && text.includes('WHERE user_id = $1')) {
     return { rows: [{ id: 40, student_number: '02000123456', first_name: 'Test', last_name: 'Student', email: 'student@example.test', program: 'BSIT', section: 'A', year_level: 2, qr_code: 'QR-40' }] };
   }

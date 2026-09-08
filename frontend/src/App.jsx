@@ -101,6 +101,7 @@ function App() {
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
   const [studentNotifications, setStudentNotifications] = useState([])
+  const [activeServiceSessions, setActiveServiceSessions] = useState([])
   const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
   const [unreadMessages, setUnreadMessages] = useState(0)
@@ -120,13 +121,17 @@ function App() {
     if (!realtimeSocket) return undefined
     const refreshServiceData = () => setDashboardRefreshKey((current) => current + 1)
     realtimeSocket.on('community-service:changed', refreshServiceData)
-    return () => realtimeSocket.off('community-service:changed', refreshServiceData)
+    realtimeSocket.on('notifications:changed', refreshServiceData)
+    return () => {
+      realtimeSocket.off('community-service:changed', refreshServiceData)
+      realtimeSocket.off('notifications:changed', refreshServiceData)
+    }
   }, [realtimeSocket])
 
   const markNotificationRead = async (notificationId) => {
     setNotificationActionError('')
     try {
-      const response = await fetch(`${API_URL}/api/students/me/notifications/${notificationId}/read`, {
+      const response = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({})
@@ -228,6 +233,7 @@ function App() {
   const [qrForm, setQrForm] = useState({
     qr_code: '',
     department_id: '',
+    supervising_officer_id: '',
     notes: '',
     condition: ''
   })
@@ -261,6 +267,7 @@ function App() {
   const [reportError, setReportError] = useState('')
 
   const [reportFilters, setReportFilters] = useState({
+    search: '',
     status: '',
     student_id: '',
     from_date: '',
@@ -280,6 +287,20 @@ function App() {
     if (item.view === 'Messages') return 'Communication'
     if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
     return 'Account'
+  }
+
+  const markAllNotificationsRead = async (category = 'ALL') => {
+    setNotificationActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/notifications/read-all`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ category })
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to mark notifications as read.')
+      setStudentNotifications((items) => items.map((item) => category === 'ALL' || item.category === category ? { ...item, is_read: true, read_at: new Date().toISOString() } : item))
+    } catch (error) { setNotificationActionError(error.message) }
   }
 
   const navGroups = navItems.filter((item) => item.view !== 'Account Settings').reduce((groups, item) => {
@@ -491,6 +512,7 @@ function App() {
       setStudentDtr(null)
       setStudentDtrError('')
       setStudentNotifications([])
+      setActiveServiceSessions([])
       return
     }
 
@@ -516,7 +538,9 @@ function App() {
             violationTypesResponse,
             assignmentsResponse,
             clearanceResponse,
-            destinationsResponse
+            destinationsResponse,
+            notificationsResponse,
+            activeSessionsResponse
           ] = await Promise.all([
             fetch(`${API_URL}/api/students`, {
               headers: authHeaders
@@ -540,7 +564,9 @@ function App() {
 
             fetch(`${API_URL}/api/community-service/assignment-options`, {
               headers: authHeaders
-            })
+            }),
+            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/community-service/active-sessions`, { headers: authHeaders })
           ])
 
           if (
@@ -549,7 +575,9 @@ function App() {
             !violationTypesResponse.ok ||
             !assignmentsResponse.ok ||
             !clearanceResponse.ok ||
-            !destinationsResponse.ok
+            !destinationsResponse.ok ||
+            !notificationsResponse.ok ||
+            !activeSessionsResponse.ok
           ) {
             throw new Error(
               'Unable to load administration data'
@@ -572,6 +600,8 @@ function App() {
             await clearanceResponse.json()
 
           const destinationsData = await destinationsResponse.json()
+          const notificationsData = await notificationsResponse.json()
+          const activeSessionsData = await activeSessionsResponse.json()
 
           setStudents(
             studentsData.students || []
@@ -591,6 +621,8 @@ function App() {
             assignmentsData.assignments || []
           )
           setCommunityServiceDestinations(destinationsData.destinations || [])
+          setStudentNotifications(notificationsData.notifications || [])
+          setActiveServiceSessions(activeSessionsData.sessions || [])
 
           setClearanceRecords(
             clearanceData.clearanceRecords || []
@@ -606,10 +638,14 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const assignmentsResponse = await fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders })
+          const [assignmentsResponse, notificationsResponse] = await Promise.all([
+            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
+          ])
           const assignmentsData = await assignmentsResponse.json().catch(() => ({}))
+          const notificationsData = await notificationsResponse.json().catch(() => ({}))
 
-          if (!assignmentsResponse.ok) throw new Error(assignmentsData.message || 'Unable to load assigned community service')
+          if (!assignmentsResponse.ok || !notificationsResponse.ok) throw new Error(assignmentsData.message || notificationsData.message || 'Unable to load assigned community service')
 
           setStudents([])
           setViolations([])
@@ -617,6 +653,7 @@ function App() {
           setClearanceRecords([])
           setDepartmentDtr(null)
           setDepartmentNonCompliance(null)
+          setStudentNotifications(notificationsData.notifications || [])
 
           return
         }
@@ -635,7 +672,7 @@ function App() {
             fetch(`${API_URL}/api/students/me/violations`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/community-service`, { headers: authHeaders }),
             fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/students/me/notifications?limit=100`, { headers: authHeaders }),
+            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance`, { headers: authHeaders }),
             fetch(`${API_URL}/api/student/clearance/eligibility`, { headers: authHeaders })
           ])
@@ -676,6 +713,7 @@ function App() {
         setDepartmentDtr(null)
         setStudentDtr(null)
         setStudentNotifications([])
+        setActiveServiceSessions([])
       } finally {
         setDashboardLoading(false)
       }
@@ -1365,7 +1403,7 @@ function App() {
       ...current,
 
       [name]:
-        ['department_id'].includes(name)
+        ['department_id', 'supervising_officer_id'].includes(name)
           ? Number(value) || ''
           : value
     }))
@@ -1374,6 +1412,7 @@ function App() {
       setVerifiedQr('')
       setQrResult(null)
       setQrError('')
+      setQrForm((current) => ({ ...current, supervising_officer_id: '' }))
     }
   }
 
@@ -1399,6 +1438,9 @@ function App() {
       if (action === 'time-out' && !qrForm.condition) {
         throw new Error('Select the student service condition before Time Out.')
       }
+      if (action !== 'scan' && !qrForm.supervising_officer_id) {
+        throw new Error('Select the authorized officer supervising this session.')
+      }
       if (action !== 'scan' && !window.confirm(action === 'time-in'
         ? 'Confirm this student’s community-service Time In?'
         : 'Confirm Time Out and credit the server-calculated service duration?')) return
@@ -1415,6 +1457,7 @@ function App() {
             department_id: Number(qrForm.department_id)
           }),
           notes: qrForm.notes.trim(),
+          ...(action === 'scan' ? {} : { supervising_officer_id: Number(qrForm.supervising_officer_id) }),
           ...(action === 'time-out' ? { condition: qrForm.condition } : {})
         })
       })
@@ -1435,8 +1478,14 @@ function App() {
         studentId: data.studentId || null,
         notes: data.notes || null,
         assignment: data.assignment || qrResult?.assignment || null,
-        session: data.session || null
+        session: data.session || null,
+        supervising_officer: data.supervising_officer || null,
+        available_officers: data.available_officers || qrResult?.available_officers || []
       })
+      if (action === 'scan') {
+        const officers = data.available_officers || []
+        setQrForm((current) => ({ ...current, supervising_officer_id: officers.length === 1 ? Number(officers[0].officer_user_id) : '' }))
+      }
       setVerifiedQr(qrForm.qr_code.trim())
       if (action !== 'scan') {
         setRecentQrScans((current) => [{
@@ -1449,7 +1498,7 @@ function App() {
         },...current].slice(0,5))
         const refreshed=await fetch(`${API_URL}/api/qr/scan`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({qr_code:qrForm.qr_code.trim(),...(isDepartmentHead?{}:{department_id:Number(qrForm.department_id)}),notes:''})})
         const refreshedData=await refreshed.json().catch(()=>({}))
-        if(refreshed.ok&&refreshedData.success)setQrResult((current)=>({...current,student:refreshedData.student,assignment:refreshedData.assignment}))
+        if(refreshed.ok&&refreshedData.success){setQrResult((current)=>({...current,student:refreshedData.student,assignment:refreshedData.assignment,available_officers:refreshedData.available_officers||[]}));const officers=refreshedData.available_officers||[];setQrForm((current)=>({...current,supervising_officer_id:officers.length===1?Number(officers[0].officer_user_id):current.supervising_officer_id}))}
       }
     } catch (qrErrorObject) {
       setQrError(qrErrorObject.message)
@@ -1814,8 +1863,30 @@ function App() {
     }))
   }
 
-  const exportReportCSV = () => {
-    if (reportData.length === 0) {
+  const exportReportCSV = async () => {
+    if (reportType !== 'violations' && reportData.length === 0) {
+      return
+    }
+
+    if (reportType === 'violations') {
+      setReportError('')
+      try {
+        const params = buildAdminReportQuery(reportType, reportFilters)
+        const response = await fetch(`${API_URL}/api/reports/violations.csv${params ? `?${params}` : ''}`, { headers:{ Authorization:`Bearer ${token}` } })
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          throw new Error(data.message || 'Unable to export this report.')
+        }
+        const blob = await response.blob()
+        const disposition = response.headers.get('content-disposition') || ''
+        const filename = disposition.match(/filename="([^"]+)"/)?.[1] || `violations-report-${new Date().toISOString().slice(0,10)}.csv`
+        const url = window.URL.createObjectURL(blob)
+        const anchor = document.createElement('a')
+        anchor.href = url
+        anchor.download = filename
+        anchor.click()
+        window.URL.revokeObjectURL(url)
+      } catch (error) { setReportError(error.message) }
       return
     }
 
@@ -1980,7 +2051,7 @@ function App() {
       }
 
       if (activeView === 'Notifications') {
-        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} />
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience="STUDENT" />
       }
 
       if (activeView === 'Legacy Clearance') {
@@ -2203,8 +2274,12 @@ function App() {
       return <DepartmentReports dtr={departmentDtr} nonCompliance={departmentNonCompliance} loading={dashboardLoading} error={dashboardError} />
     }
 
+    if (activeView === 'Notifications') {
+      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience={isStudent ? 'STUDENT' : 'STAFF'} />
+    }
+
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
     }
 
     /*
@@ -2592,7 +2667,7 @@ function App() {
                           <td>{condition.total} total / {condition.open} open</td>
                           <td>{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
                           <td><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
-                          <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="icon-row-action" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian contact for ${student.first_name} ${student.last_name}`}>☎</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
+                          <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/>Guardian Contact</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
                         </tr>
                         )
                       }
@@ -2603,7 +2678,7 @@ function App() {
             )}
           </section>
 
-          {guardianContactStudent && <Modal title="Guardian contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
+          {guardianContactStudent && <Modal title="Guardian Contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
 
           {reviewedStudent && reviewedCondition && (
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
@@ -3575,6 +3650,12 @@ function App() {
               }}
             >
               <label>
+                Search
+
+                <input type="search" name="search" value={reportFilters.search} onChange={handleReportFilterChange} placeholder="Student or violation" disabled={reportType !== 'violations'} />
+              </label>
+
+              <label>
                 Report Type
 
                 <select
@@ -3603,7 +3684,7 @@ function App() {
                   <option value="non-compliance">
                     Non-Compliance Report
                   </option>
-                  <option value="parent-contacts">Parent Contact Report</option>
+                  <option value="parent-contacts">Guardian Contact Report</option>
                   <option value="clearance">Clearance Report</option>
                   <option value="good-standing">Good-Standing Report</option>
                 </select>
@@ -3727,7 +3808,7 @@ function App() {
                   exportReportCSV
                 }
                 disabled={
-                  reportData.length === 0
+                  reportLoading || (reportType !== 'violations' && reportData.length === 0)
                 }
               >
                 Export CSV
@@ -4194,7 +4275,7 @@ function App() {
 
           {isLoggedIn && (
             <div className="account-actions">
-              <button className="notification-button" type="button" aria-label={`${unreadMessages} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/messages':'/admin/messages')}><PortalIcon name="bell"/>{unreadMessages>0&&<b>{unreadMessages}</b>}</button>
+              <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
               <details className="account-menu"><summary><span className="account-avatar">{String(user?.username||'U').slice(0,2).toUpperCase()}</span><span className="account-summary"><strong>{user?.username}</strong><small>{userRole?.replaceAll('_', ' ')}</small></span><span aria-hidden="true">⌄</span></summary><div><button type="button" onClick={()=>navigateTo(navItems.find(({view})=>view==='Account Settings')?.path)}>Account settings</button><button type="button" onClick={handleLogout}>Logout</button></div></details>
             </div>
           )}

@@ -10,6 +10,8 @@ const emitAttendanceChange = async (result, departmentId) => {
     emitToDepartment(departmentId, 'community-service:changed', payload);
     emitToRole('ADMIN', 'community-service:changed', payload);
     emitToRole('DISCIPLINE_OFFICE', 'community-service:changed', payload);
+    emitToRole('ADMIN', 'notifications:changed', payload);
+    emitToRole('DISCIPLINE_OFFICE', 'notifications:changed', payload);
     const student = (await pool.query('SELECT user_id FROM students WHERE id=$1', [result.assignment.student_id])).rows[0];
     if (student?.user_id) emitToUser(student.user_id, 'community-service:changed', payload);
   } catch (error) {
@@ -17,4 +19,10 @@ const emitAttendanceChange = async (result, departmentId) => {
   }
 };
 
-module.exports = { emitAttendanceChange };
+const emitNotificationChange = (departmentId, payload = {}) => {
+  emitToRole('ADMIN', 'notifications:changed', payload);
+  emitToRole('DISCIPLINE_OFFICE', 'notifications:changed', payload);
+  if (departmentId) emitToDepartment(departmentId, 'notifications:changed', payload);
+};
+
+module.exports = { emitAttendanceChange, emitNotificationChange };

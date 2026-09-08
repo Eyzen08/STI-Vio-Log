@@ -7,62 +7,52 @@ const validateId = (value) => { if (value !== undefined && (!/^\d+$/.test(String
 const validateDate = (name, value) => { if (value !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(value))) bad(`${name} must use YYYY-MM-DD`); };
 const fail = (res, error, message) => res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : message });
 
+const violationQuery = (filters) => {
+  const { status, student_id, sort_by, from_date, to_date, search } = filters;
+  validateId(student_id); validateDate('from_date', from_date); validateDate('to_date', to_date);
+  if (status && !REPORT_STATUSES.has(status)) bad('Unsupported report status');
+  if (sort_by && !['date_desc', 'date_asc', 'status'].includes(sort_by)) bad('Unsupported sort_by value');
+  if (from_date && to_date && from_date > to_date) bad('from_date cannot be after to_date');
+  let query = `SELECT s.first_name,s.last_name,s.student_number,vt.violation_name,v.incident_date,v.status,v.description
+    FROM violations v JOIN students s ON v.student_id=s.id JOIN violation_types vt ON v.violation_type_id=vt.id WHERE 1=1`;
+  const params = [];
+  if (status) { query += ` AND v.status=$${params.length + 1}`; params.push(status); }
+  if (student_id) { query += ` AND v.student_id=$${params.length + 1}`; params.push(student_id); }
+  if (from_date) { query += ` AND v.incident_date >= $${params.length + 1}`; params.push(from_date); }
+  if (to_date) { query += ` AND v.incident_date <= $${params.length + 1}`; params.push(to_date); }
+  if (search) {
+    const normalizedSearch = String(search).trim();
+    if (normalizedSearch.length > 100) bad('search must not exceed 100 characters');
+    query += ` AND (s.first_name ILIKE $${params.length + 1} OR s.last_name ILIKE $${params.length + 1} OR s.student_number ILIKE $${params.length + 1} OR vt.violation_name ILIKE $${params.length + 1})`;
+    params.push(`%${normalizedSearch}%`);
+  }
+  query += sort_by === 'date_asc' ? ' ORDER BY v.incident_date ASC' : sort_by === 'status' ? ' ORDER BY v.status,v.incident_date DESC' : ' ORDER BY v.incident_date DESC';
+  return { query, params };
+};
+
+const csvCell = (value) => {
+  let text = value == null ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  return `"${text.replaceAll('"', '""')}"`;
+};
+const manilaDate = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Manila', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date(value));
+  const part = (type) => parts.find((item) => item.type === type)?.value || '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
+};
+const violationCsv = (rows) => {
+  const headers = ['FIRST NAME', 'LAST NAME', 'STUDENT NUMBER', 'VIOLATION NAME', 'INCIDENT DATE', 'STATUS', 'DESCRIPTION'];
+  const body = rows.map((row) => [row.first_name,row.last_name,row.student_number,row.violation_name,manilaDate(row.incident_date),row.status,row.description].map(csvCell).join(','));
+  return `\uFEFF${[headers.join(','), ...body].join('\r\n')}\r\n`;
+};
+
 // Violation Report
 const getViolationReport = async (req, res) => {
   try {
-    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by', 'from_date', 'to_date']);
-    const { status, student_id, sort_by, from_date, to_date } = req.query;
-    validateId(student_id); validateDate('from_date', from_date); validateDate('to_date', to_date);
-    if (status && !REPORT_STATUSES.has(status)) bad('Unsupported report status');
-    if (sort_by && !['date_desc', 'date_asc', 'status'].includes(sort_by)) bad('Unsupported sort_by value');
-    if (from_date && to_date && from_date > to_date) bad('from_date cannot be after to_date');
-
-    let query = `
-      SELECT
-        s.first_name,
-        s.last_name,
-        s.student_number,
-        vt.violation_name,
-        v.incident_date,
-        v.status,
-        v.description
-      FROM violations v
-      JOIN students s ON v.student_id = s.id
-      JOIN violation_types vt ON v.violation_type_id = vt.id
-      WHERE 1=1
-    `;
-    const params = [];
-
-    if (status) {
-      query += ` AND v.status = $${params.length + 1}`;
-      params.push(status);
-    }
-
-    if (student_id) {
-      query += ` AND v.student_id = $${params.length + 1}`;
-      params.push(student_id);
-    }
-
-    if (from_date) {
-      query += ` AND v.incident_date >= $${params.length + 1}`;
-      params.push(from_date);
-    }
-
-    if (to_date) {
-      query += ` AND v.incident_date <= $${params.length + 1}`;
-      params.push(to_date);
-    }
-
-    if (sort_by === 'date_desc') {
-      query += ` ORDER BY v.incident_date DESC`;
-    } else if (sort_by === 'date_asc') {
-      query += ` ORDER BY v.incident_date ASC`;
-    } else if (sort_by === 'status') {
-      query += ` ORDER BY v.status, v.incident_date DESC`;
-    } else {
-      query += ` ORDER BY v.incident_date DESC`;
-    }
-
+    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by', 'from_date', 'to_date', 'search']);
+    const { query, params } = violationQuery(req.query);
     const result = await pool.query(query, params);
 
     return res.json({
@@ -75,6 +65,23 @@ const getViolationReport = async (req, res) => {
   } catch (error) {
     console.error('Violation report error:', error);
     return fail(res, error, 'Failed to generate violation report');
+  }
+};
+
+const exportViolationReportCsv = async (req, res) => {
+  try {
+    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by', 'from_date', 'to_date', 'search']);
+    const { query, params } = violationQuery(req.query);
+    const result = await pool.query(query, params);
+    const dateParts = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Manila', year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(new Date());
+    const value = (type) => dateParts.find((item) => item.type === type)?.value || '';
+    const stamp = `${value('year')}-${value('month')}-${value('day')}`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="STI_Vio-Log_Student_Violation_Report_${stamp}.csv"`);
+    return res.status(200).send(violationCsv(result.rows));
+  } catch (error) {
+    console.error('Violation CSV export error:', error);
+    return fail(res, error, 'Failed to export violation report');
   }
 };
 
@@ -203,6 +210,9 @@ const getNonComplianceReport = async (req, res) => {
 
 module.exports = {
   getViolationReport,
+  exportViolationReportCsv,
   getCommunityServiceReport,
-  getNonComplianceReport
+  getNonComplianceReport,
+  violationCsv,
+  violationQuery
 };

@@ -1,6 +1,6 @@
 const pool = require("../config/database");
 const { transitionViolationWithClient } = require("./violationWorkflowService");
-const { notifyStudent } = require('./notificationService');
+const { notifyStudent, notifyAttendanceStaff } = require('./notificationService');
 
 class CommunityServiceSessionError extends Error {
     constructor(message, statusCode, code) {
@@ -38,6 +38,51 @@ const validateEligible = (assignment, expectedStudentId, departmentId) => {
     }
 };
 
+const availableSupervisors = async (client, departmentId) => (await client.query(
+    `SELECT DISTINCT ON (oda.officer_user_id)
+            oda.id AS assignment_id,oda.officer_user_id,oda.assignment_type,oda.original_officer_user_id,
+            u.role,COALESCE(sp.first_name,dh.first_name) AS first_name,
+            COALESCE(sp.last_name,dh.last_name) AS last_name,d.department_name,
+            COALESCE(oa.availability_status,'AVAILABLE') AS availability_status
+     FROM officer_department_assignments oda
+     JOIN users u ON u.id=oda.officer_user_id
+     JOIN departments d ON d.id=oda.department_id
+     LEFT JOIN staff_profiles sp ON sp.user_id=u.id
+     LEFT JOIN department_heads dh ON dh.user_id=u.id
+     LEFT JOIN officer_availability oa ON oa.officer_user_id=u.id
+     WHERE oda.department_id=$1 AND oda.status='ACTIVE'
+       AND oda.starts_at<=CURRENT_TIMESTAMP AND (oda.ends_at IS NULL OR oda.ends_at>CURRENT_TIMESTAMP)
+       AND u.is_active=TRUE AND u.role IN ('DISCIPLINE_OFFICE','DEPARTMENT_HEAD')
+       AND d.is_active=TRUE AND COALESCE(oa.availability_status,'AVAILABLE')='AVAILABLE'
+       AND (oda.assignment_type='TEMPORARY' OR NOT EXISTS (
+         SELECT 1 FROM officer_department_assignments transfer
+         WHERE transfer.department_id=oda.department_id
+           AND transfer.original_officer_user_id=oda.officer_user_id
+           AND transfer.assignment_type='TEMPORARY' AND transfer.status='ACTIVE'
+           AND transfer.starts_at<=CURRENT_TIMESTAMP
+           AND (transfer.ends_at IS NULL OR transfer.ends_at>CURRENT_TIMESTAMP)
+       ))
+     ORDER BY oda.officer_user_id,oda.assignment_type DESC,oda.starts_at DESC`,
+    [Number(departmentId)]
+)).rows;
+
+const chooseSupervisor = async (client, { departmentId, selectedOfficerId, currentOfficerId = null }) => {
+    const officers = await availableSupervisors(client, departmentId);
+    if (!officers.length) throw new CommunityServiceSessionError('No authorized officer is available. Contact the Discipline Office before recording attendance.', 409, 'NO_AVAILABLE_OFFICER');
+    const selected = selectedOfficerId
+        ? officers.find((item) => Number(item.officer_user_id) === Number(selectedOfficerId))
+        : currentOfficerId
+            ? officers.find((item) => Number(item.officer_user_id) === Number(currentOfficerId)) || (officers.length === 1 ? officers[0] : null)
+            : officers.length === 1 ? officers[0] : null;
+    if (!selectedOfficerId && !selected) throw new CommunityServiceSessionError('Select the authorized officer supervising this session.', 400, 'OFFICER_SELECTION_REQUIRED');
+    if (!selected) throw new CommunityServiceSessionError('The selected supervising officer is not active, available, or authorized for this department.', 403, 'UNAUTHORIZED_OFFICER');
+    if (currentOfficerId && Number(selected.officer_user_id) !== Number(currentOfficerId)
+        && !(selected.assignment_type === 'TEMPORARY' && Number(selected.original_officer_user_id) === Number(currentOfficerId))) {
+        throw new CommunityServiceSessionError('The supervising officer can change only through an active authorized transfer.', 409, 'OFFICER_TRANSFER_REQUIRED');
+    }
+    return selected;
+};
+
 const insertAttendance = async ({ client, assignment, departmentId, actorId, type, notes }) => {
     const result = await client.query(
         `INSERT INTO community_service_attendance
@@ -55,7 +100,7 @@ const insertAudit = ({ client, actor, action, sessionId, assignmentId, descripti
         [actor.id, action, sessionId, JSON.stringify({ assignment_id: Number(assignmentId), ...description }), ipAddress || null]
     );
 
-const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, actor, notes, ipAddress, writeQrLog = false }) => {
+const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, ipAddress, writeQrLog = false }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -69,14 +114,22 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, act
         );
         if (active.rows.length) throw new CommunityServiceSessionError("Assignment already has an active community service session", 409, "ACTIVE_SESSION_EXISTS");
 
+        const supervisor = await chooseSupervisor(client, { departmentId, selectedOfficerId: supervisingOfficerId });
+
         const attendance = await insertAttendance({ client, assignment, departmentId, actorId: actor.id, type: "TIME_IN", notes });
         const sessionResult = await client.query(
             `INSERT INTO community_service_sessions
-                (assignment_id, department_id, time_in_by_user_id, time_in_attendance_id, notes)
-             VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-            [assignmentId, departmentId, actor.id, attendance.id, notes || null]
+                (assignment_id, department_id, supervising_officer_user_id, time_in_by_user_id, time_in_attendance_id, notes)
+             VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+            [assignmentId, departmentId, supervisor.officer_user_id, actor.id, attendance.id, notes || null]
         );
         const session = sessionResult.rows[0];
+        await client.query(
+            `INSERT INTO community_service_session_officer_history
+                (session_id,officer_user_id,officer_assignment_id,reason,changed_by_user_id)
+             VALUES($1,$2,$3,'Selected for community-service time-in',$4)`,
+            [session.id, supervisor.officer_user_id, supervisor.assignment_id, actor.id]
+        );
         let scanLog = null;
         if (writeQrLog) {
             scanLog = (await client.query(
@@ -86,15 +139,16 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, act
                 [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null]
             )).rows[0];
         }
-        await insertAudit({ client, actor, action: "TIME_IN", sessionId: session.id, assignmentId, description: { department_id: Number(departmentId) }, ipAddress });
+        await insertAudit({ client, actor, action: "TIME_IN", sessionId: session.id, assignmentId, description: { department_id: Number(departmentId), supervising_officer_user_id: Number(supervisor.officer_user_id) }, ipAddress });
         await notifyStudent(client, assignment.student_id, {
             title: 'Community service time-in recorded',
             message: `Time-in was recorded for assignment #${assignment.id}.`,
             type: 'SERVICE_TIME_IN',
             eventKey: `service-session:${session.id}:time-in`
         });
+        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, action:'TIME_IN', occurredAt:session.time_in });
         await client.query("COMMIT");
-        return { assignment, attendance, session, scanLog };
+        return { assignment, attendance, session, supervising_officer: supervisor, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         if (error.code === "23505" && error.constraint === "uq_community_service_active_session") {
@@ -115,7 +169,7 @@ const calculateSessionCredit = ({ requiredHours, completedHours, workedMinutes }
     return { requiredMinutes, previousMinutes, creditedMinutes, newMinutes, remainingMinutes: Math.max(requiredMinutes - newMinutes, 0) };
 };
 
-const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, actor, notes, condition, ipAddress, writeQrLog = false }) => {
+const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, condition, ipAddress, writeQrLog = false }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -129,6 +183,17 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
         validateEligible(assignment, expectedStudentId, departmentId);
         const session = sessionResult.rows[0];
         if (Number(session.department_id) !== Number(departmentId)) throw new CommunityServiceSessionError("No active community service session found", 409, "NO_ACTIVE_SESSION");
+        const supervisor = await chooseSupervisor(client, { departmentId, selectedOfficerId: supervisingOfficerId, currentOfficerId: session.supervising_officer_user_id });
+        const supervisorChanged = Number(supervisor.officer_user_id) !== Number(session.supervising_officer_user_id);
+        if (supervisorChanged) {
+            await client.query(`UPDATE community_service_session_officer_history SET ends_at=CURRENT_TIMESTAMP WHERE session_id=$1 AND ends_at IS NULL`, [session.id]);
+            await client.query(
+                `INSERT INTO community_service_session_officer_history
+                    (session_id,officer_user_id,officer_assignment_id,reason,changed_by_user_id)
+                 VALUES($1,$2,$3,'Authorized responsibility transfer during active session',$4)`,
+                [session.id, supervisor.officer_user_id, supervisor.assignment_id, actor.id]
+            );
+        }
 
         const attendance = await insertAttendance({ client, assignment, departmentId, actorId: actor.id, type: "TIME_OUT", notes });
         const duration = (await client.query(
@@ -148,13 +213,14 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
             `UPDATE community_service_sessions
              SET time_out = CURRENT_TIMESTAMP, worked_minutes = $1, credited_minutes = $7,
                  status = 'COMPLETED', time_out_by_user_id = $2,
+                 time_out_supervising_officer_user_id = $8,
                  time_out_attendance_id = $3, service_condition = $5,
                  result_notes = $6, review_status = 'APPROVED',
                  reviewed_by_user_id = $2, reviewed_at = CURRENT_TIMESTAMP,
                  review_notes = 'Automatically credited at department time-out',
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $4 AND time_out IS NULL RETURNING *`,
-            [duration, actor.id, attendance.id, session.id, normalizedCondition, notes || null, creditedMinutes]
+            [duration, actor.id, attendance.id, session.id, normalizedCondition, notes || null, creditedMinutes, supervisor.officer_user_id]
         )).rows[0];
         if (!completedSession) throw new CommunityServiceSessionError("Community service session was already completed", 409);
 
@@ -192,15 +258,17 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, ac
                 [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null]
             )).rows[0];
         }
-        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), credited_minutes: creditedMinutes, service_condition: normalizedCondition }, ipAddress });
+        await client.query(`UPDATE community_service_session_officer_history SET ends_at=CURRENT_TIMESTAMP WHERE session_id=$1 AND ends_at IS NULL`, [session.id]);
+        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), credited_minutes: creditedMinutes, service_condition: normalizedCondition, supervising_officer_user_id: Number(supervisor.officer_user_id), supervisor_changed: supervisorChanged }, ipAddress });
         await notifyStudent(client, assignment.student_id, {
             title: assignmentStatus === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
             message: `${creditedMinutes} service minute${creditedMinutes === 1 ? '' : 's'} credited at department time-out.`,
             type: assignmentStatus === 'COMPLETED' ? 'SERVICE_COMPLETED' : 'SERVICE_TIME_OUT',
             eventKey: `service-session:${session.id}:time-out`
         });
+        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, action:'TIME_OUT', occurredAt:completedSession.time_out });
         await client.query("COMMIT");
-        return { assignment: updatedAssignment, attendance, session: completedSession, violation, clearanceSync, scanLog };
+        return { assignment: updatedAssignment, attendance, session: completedSession, supervising_officer: supervisor, violation, clearanceSync, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         throw error;
@@ -235,4 +303,4 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
     }catch(error){try{await client.query('ROLLBACK')}catch(_){}throw error}finally{client.release()}
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, CONDITIONS };
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, availableSupervisors, chooseSupervisor, CONDITIONS };

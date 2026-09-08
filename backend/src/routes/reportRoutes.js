@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
 const {
   getViolationReport,
+  exportViolationReportCsv,
   getCommunityServiceReport,
   getNonComplianceReport
 } = require('../controllers/reportController');
@@ -11,6 +12,7 @@ const { getParentContactReport, getClearanceReport, getGoodStandingReport } = re
 const router = express.Router();
 
 // All reports require authentication and ADMIN/DISCIPLINE_OFFICE role
+router.get('/violations.csv', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), exportViolationReportCsv);
 router.get('/violations', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getViolationReport);
 router.get('/community-service', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getCommunityServiceReport);
 router.get('/dtr', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getDTRReport);

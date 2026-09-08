@@ -3,6 +3,17 @@ const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewService
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
 const { emitAttendanceChange } = require('../services/realtimeEventService');
+const { emitNotificationChange } = require('../services/realtimeEventService');
+const { notifyAttendanceFailure } = require('../services/notificationService');
+
+const rejectionCodes = new Set(['ACTIVE_SESSION_EXISTS', 'NO_ACTIVE_SESSION', 'NO_AVAILABLE_OFFICER', 'OFFICER_SELECTION_REQUIRED', 'UNAUTHORIZED_OFFICER', 'OFFICER_TRANSFER_REQUIRED']);
+const recordFailureNotice = async (req, action, error) => {
+    if (!rejectionCodes.has(error.code) || !req.body?.student_id || !req.staffDepartmentId) return;
+    try {
+        await notifyAttendanceFailure(pool, { studentId:req.body.student_id, departmentId:req.staffDepartmentId, supervisorId:req.body.supervising_officer_id, action, status:error.code });
+        emitNotificationChange(req.staffDepartmentId, { action, status:'REJECTED' });
+    } catch (notificationError) { console.error('Attendance failure notification error:', notificationError.message); }
+};
 
 const sendError = (res, error, operation) => {
     console.error(`${operation} error:`, error);
@@ -13,29 +24,29 @@ const sendError = (res, error, operation) => {
 const communityServiceTimeIn = async (req, res) => {
     try {
         const allowedFields = req.user.role === "DEPARTMENT_HEAD"
-            ? ["assignment_id", "student_id", "notes"]
-            : ["assignment_id", "student_id", "notes", "department_id"];
+            ? ["assignment_id", "student_id", "notes", "supervising_officer_id"]
+            : ["assignment_id", "student_id", "notes", "department_id", "supervising_officer_id"];
         assertAllowedFields(req.body, allowedFields);
         const { assignment_id, student_id, notes } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
-        const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, ipAddress: req.ip });
+        const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, ipAddress: req.ip });
         await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-in recorded successfully", ...result });
-    } catch (error) { return sendError(res, error, "record community service time-in"); }
+    } catch (error) { await recordFailureNotice(req, 'TIME_IN_REJECTED', error); return sendError(res, error, "record community service time-in"); }
 };
 
 const communityServiceTimeOut = async (req, res) => {
     try {
         const allowedFields = req.user.role === "DEPARTMENT_HEAD"
-            ? ["assignment_id", "student_id", "notes", "condition"]
-            : ["assignment_id", "student_id", "notes", "condition", "department_id"];
+            ? ["assignment_id", "student_id", "notes", "condition", "supervising_officer_id"]
+            : ["assignment_id", "student_id", "notes", "condition", "department_id", "supervising_officer_id"];
         assertAllowedFields(req.body, allowedFields);
         const { assignment_id, student_id, notes, condition } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
-        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, actor: req.user, notes, condition, ipAddress: req.ip });
+        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, condition, ipAddress: req.ip });
         await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
-    } catch (error) { return sendError(res, error, "record community service time-out"); }
+    } catch (error) { await recordFailureNotice(req, 'TIME_OUT_REJECTED', error); return sendError(res, error, "record community service time-out"); }
 };
 
 const reviewCommunityServiceResult = async (req,res) => {
@@ -55,20 +66,37 @@ const getPendingServiceResults = async (_req,res) => {
 
 const getActiveDepartmentSessions = async (req, res) => {
     try {
+        const query = req.query || {};
+        assertAllowedFields(query, ['department_id']);
+        const role = req.user?.role || 'DEPARTMENT_HEAD';
+        const scopedDepartment = role === 'ADMIN'
+            ? (query.department_id ? Number(query.department_id) : null)
+            : Number(req.staffDepartmentId || req.user?.department_id);
+        if (query.department_id && (!Number.isInteger(Number(query.department_id)) || Number(query.department_id) <= 0)) return res.status(400).json({ success: false, message: 'A valid department_id is required' });
+        if (role !== 'ADMIN' && !scopedDepartment) return res.status(403).json({ success: false, message: 'No authorized department is assigned to this account' });
+        const departmentWhere = scopedDepartment ? 'css.department_id=$1 AND a.department_id=$1' : '$1::bigint IS NULL';
         const result = await pool.query(
             `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.notes,
                     FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int AS elapsed_seconds,
                     CURRENT_TIMESTAMP AS server_time,
                     a.student_id, a.required_hours, a.completed_hours, a.remaining_hours,
-                    s.student_number, s.first_name, s.last_name
+                    s.student_number, s.first_name, s.last_name,d.department_name,
+                    css.supervising_officer_user_id,
+                    COALESCE(sp.first_name,dh.first_name) AS supervising_officer_first_name,
+                    COALESCE(sp.last_name,dh.last_name) AS supervising_officer_last_name,
+                    supervisor.role AS supervising_officer_role
              FROM community_service_sessions css
              JOIN community_service_assignments a ON a.id=css.assignment_id
              JOIN students s ON s.id=a.student_id
-             WHERE css.department_id=$1 AND a.department_id=$1
+             JOIN departments d ON d.id=css.department_id
+             JOIN users supervisor ON supervisor.id=css.supervising_officer_user_id
+             LEFT JOIN staff_profiles sp ON sp.user_id=supervisor.id
+             LEFT JOIN department_heads dh ON dh.user_id=supervisor.id
+             WHERE ${departmentWhere}
                AND css.time_out IS NULL AND css.status='ACTIVE'
                AND a.status IN ('OPEN','IN_PROGRESS')
              ORDER BY css.time_in ASC, css.id ASC`,
-            [req.staffDepartmentId]
+            [scopedDepartment]
         );
         return res.json({ success: true, server_time: new Date().toISOString(), sessions: result.rows });
     } catch (error) { return sendError(res, error, "get active department sessions"); }
@@ -103,10 +131,16 @@ const getCommunityServiceSessions = async (req, res) => {
         const result = await pool.query(
             `SELECT css.*, d.department_name, a.student_id, a.violation_id,
                     a.required_hours, a.completed_hours, a.remaining_hours,
-                    s.student_number, s.first_name, s.last_name
+                    s.student_number, s.first_name, s.last_name,
+                    COALESCE(sp.first_name,dh.first_name) AS supervising_officer_first_name,
+                    COALESCE(sp.last_name,dh.last_name) AS supervising_officer_last_name,
+                    supervisor.role AS supervising_officer_role
              FROM community_service_sessions css
              JOIN community_service_assignments a ON a.id = css.assignment_id
              JOIN students s ON s.id = a.student_id JOIN departments d ON d.id = css.department_id
+             JOIN users supervisor ON supervisor.id=css.supervising_officer_user_id
+             LEFT JOIN staff_profiles sp ON sp.user_id=supervisor.id
+             LEFT JOIN department_heads dh ON dh.user_id=supervisor.id
              WHERE css.assignment_id = $1${filters}
              ORDER BY css.time_in DESC, css.id DESC`, params);
         return res.json({ success: true, assignment_id: Number(req.params.assignmentId), total_sessions: result.rows.length, sessions: result.rows });

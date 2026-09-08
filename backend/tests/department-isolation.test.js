@@ -36,16 +36,16 @@ test('department time-out credit is capped at the remaining requirement',()=>{
   assert.equal(calculateSessionCredit({requiredHours:4,completedHours:1,workedMinutes:45}).creditedMinutes,45);
 });
 
-test('Department Account creation requests transactional single-account enforcement',async()=>{
+test('Department Account creation allows multiple accountable officers per department',async()=>{
   let createInput;const service=createDepartmentAccountService({pool:{query:async(sql)=>String(sql).includes('FROM departments')?{rows:[{id:7,department_code:'Library Department',department_name:'Officer Name'}]}:{rows:[]}},accountService:{list:async()=>({}),create:async(input)=>{createInput=input;return{account:{id:3}}},setStatus:async()=>({}),resetPassword:async()=>({})}});
-  await service.create({actorId:1,username:'library.department',departmentId:7});assert.equal(createInput.enforceSingleDepartmentAccount,true);assert.equal(createInput.departmentId,7);assert.equal(createInput.firstName,'Library Department');
+  await service.create({actorId:1,username:'library.department',departmentId:7});assert.equal('enforceSingleDepartmentAccount' in createInput,false);assert.equal(createInput.departmentId,7);assert.equal(createInput.firstName,'Library Department');
 });
 
-test('single Department Account creation takes a transaction-scoped department lock',async()=>{
+test('Department Account creation records an authoritative permanent assignment',async()=>{
   const queries=[];
   const client={query:async(sql)=>{const text=String(sql);queries.push(text);if(text.includes('SELECT 1 FROM users'))return{rows:[]};if(text.includes('SELECT id FROM departments'))return{rows:[{id:7}]};if(text.includes('INSERT INTO users'))return{rows:[{id:5,username:'library.department',role:'DEPARTMENT_HEAD',is_active:true,must_change_password:true,session_version:0,created_at:new Date()}]};return{rows:[]}},release(){}};
   const service=createAccountAdministrationService({pool:{connect:async()=>client},hashPassword:async()=> 'hashed',randomBytes:()=>Buffer.alloc(18,1)});
-  await service.create({actorId:1,username:'library.department',role:'DEPARTMENT_HEAD',firstName:'Library',lastName:'Officer',departmentId:7,enforceSingleDepartmentAccount:true});
-  assert.equal(queries.some(sql=>sql.includes('pg_advisory_xact_lock')),true);
-  assert.equal(queries.some(sql=>sql.includes("u.role='DEPARTMENT_HEAD'")&&sql.includes('u.is_active=TRUE')),true);
+  await service.create({actorId:1,username:'library.department',role:'DEPARTMENT_HEAD',firstName:'Library',lastName:'Officer',departmentId:7});
+  assert.equal(queries.some(sql=>sql.includes('INSERT INTO officer_department_assignments')),true);
+  assert.equal(queries.some(sql=>sql.includes('INSERT INTO officer_availability')),true);
 });

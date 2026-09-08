@@ -129,8 +129,7 @@ router.post(
 
 router.get(
     "/active-sessions",
-    authorizeRoles("DEPARTMENT_HEAD"),
-    requireAuthorizedDepartment,
+    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
     getActiveDepartmentSessions
 );
 

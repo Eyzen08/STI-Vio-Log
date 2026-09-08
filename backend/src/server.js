@@ -25,10 +25,14 @@ const googleLinkAdministrationRoutes = require('./routes/googleLinkAdministratio
 const duplicateAccountReviewRoutes = require('./routes/duplicateAccountReviewRoutes');
 const certificateRoutes = require('./routes/certificateRoutes');
 const messageRoutes = require('./routes/messageRoutes');
+const officerResponsibilityRoutes = require('./routes/officerResponsibilityRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const officerResponsibilityController = require('./controllers/officerResponsibilityController');
 const pool = require("./config/database");
 const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
-const { initializeRealtime } = require('./realtime');
+const { initializeRealtime, emitToRole } = require('./realtime');
+const { createOverdueAttendanceNotifications } = require('./services/notificationService');
 
 const {
   authenticateToken,
@@ -152,12 +156,15 @@ app.use(
 
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/messages', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), messageRoutes);
+app.use('/api/notifications', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), notificationRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, authorizeRoles('ADMIN'), accountAdministrationRoutes);
 app.use('/api/department-accounts', authenticateToken, authorizeRoles('ADMIN'), require('./routes/departmentAccountRoutes'));
 app.use('/api/admin/departments', authenticateToken, authorizeRoles('ADMIN'), departmentAdministrationRoutes);
+app.use('/api/admin/officer-responsibilities', authenticateToken, authorizeRoles('ADMIN'), officerResponsibilityRoutes);
+app.get('/api/officer-responsibilities/available', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD'), officerResponsibilityController.available);
 app.use('/api/admin/students', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), googleLinkAdministrationRoutes);
 app.use('/api/admin/duplicate-review', authenticateToken, authorizeRoles('ADMIN'), duplicateAccountReviewRoutes);
 
@@ -402,6 +409,18 @@ app.use(errorHandler);
 if (require.main === module) {
 const httpServer = http.createServer(app);
 initializeRealtime(httpServer, allowedOrigins);
+const refreshOverdueAttendance = async () => {
+  try {
+    const overdueCount = await createOverdueAttendanceNotifications(pool);
+    if (overdueCount > 0) {
+      const payload = { reason: 'OVERDUE_ATTENDANCE_REFRESH', overdue_count: overdueCount };
+      emitToRole('ADMIN', 'notifications:changed', payload);
+      emitToRole('DISCIPLINE_OFFICE', 'notifications:changed', payload);
+    }
+  } catch (error) {
+    console.error('Overdue attendance notification refresh failed:', error.message);
+  }
+};
 httpServer.listen(
   PORT,
   "0.0.0.0",
@@ -412,6 +431,9 @@ httpServer.listen(
     console.log(
       `📱 LAN access: http://192.168.100.81:${PORT}`
     );
+    refreshOverdueAttendance();
+    const overdueAttendanceTimer = setInterval(refreshOverdueAttendance, 5 * 60 * 1000);
+    overdueAttendanceTimer.unref();
   }
 );
 }

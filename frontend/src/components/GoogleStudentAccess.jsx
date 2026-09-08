@@ -211,7 +211,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
               placeholder="Example: A103" autoComplete="off" disabled={isBusy} required />
           </label>
           <label htmlFor="google-guardian-name">
-            Parent/Guardian name
+            Guardian Contact name
             <input id="google-guardian-name" name="guardianName" value={linkForm.guardianName}
               onChange={(event) => setLinkForm({ ...linkForm, guardianName: event.target.value })}
               placeholder="Example: Maria Reyes" autoComplete="name" disabled={isBusy} required />
@@ -223,7 +223,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
               placeholder="Example: Mother" autoComplete="off" disabled={isBusy} required />
           </label>
           <label htmlFor="google-guardian-phone-number">
-            Parent/Guardian phone number
+            Guardian Contact phone number
             <input id="google-guardian-phone-number" name="guardianPhoneNumber" value={linkForm.guardianPhoneNumber}
               onChange={(event) => setLinkForm({ ...linkForm, guardianPhoneNumber: event.target.value })}
               placeholder="Example: 09181234567" autoComplete="tel" inputMode="tel" disabled={isBusy} required />

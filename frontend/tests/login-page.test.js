@@ -48,7 +48,7 @@ test('manual Student registration collects the complete school profile', () => {
   }
 
   assert.match(registrationSource, /Student Identity/)
-  assert.match(registrationSource, /Parent\/Guardian Information/)
+  assert.match(registrationSource, /Guardian Contact Information/)
   assert.match(registrationSource, /Account Security/)
   assert.match(registrationValidationSource, /Review and Submit/)
   assert.match(registrationSource, /Creating Account…/)
