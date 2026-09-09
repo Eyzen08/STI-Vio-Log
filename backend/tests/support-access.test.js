@@ -38,6 +38,19 @@ test('approval requires a different administrator and scopes remain a requested 
   await assert.rejects(()=>createSupportAccessService({pool:{connect:async()=>makeClient()}}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.GUARDIAN_CONTACT_VIEW],decisionReason:'Approved for ticket review'}),/subset/);
 });
 
+test('approval remains successful when its follow-up notification cannot be delivered', async () => {
+  const request={id:4,requester_user_id:10,status:'PENDING',requested_scopes:[PERMISSIONS.REPORT_VIEW]};
+  const queries=[];
+  const client={async query(sql){queries.push(sql);if(sql.startsWith('SELECT *'))return{rows:[request]};if(sql.startsWith('UPDATE support_access_requests'))return{rows:[{...request,status:'APPROVED'}]};return{rows:[]}},release(){}};
+  const pool={connect:async()=>client,query:async()=>{throw Object.assign(new Error('notification unavailable'),{code:'NOTIFICATION_FAILURE'})}};
+  const originalError=console.error;console.error=()=>{};
+  try {
+    const result=await createSupportAccessService({pool}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.REPORT_VIEW],decisionReason:'Approved for incident investigation'});
+    assert.equal(result.status,'APPROVED');
+    assert.ok(queries.includes('COMMIT'));
+  } finally { console.error=originalError; }
+});
+
 test('active grants are loaded from current status, expiry, and revocation state on every request', () => {
   const source=fs.readFileSync(require.resolve('../src/middleware/authMiddleware'),'utf8');
   assert.match(source,/sar\.status='APPROVED'/);

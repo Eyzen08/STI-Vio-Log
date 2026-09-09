@@ -2,7 +2,10 @@ const pool = require('../config/database');
 const { createSupportAccessService } = require('../services/supportAccessService');
 const { assertAllowedFields } = require('../utils/validators');
 const service = createSupportAccessService({ pool });
-const fail = (res, error) => res.status(error.statusCode || 500).json({ success:false, error:{ code:error.code || 'SUPPORT_ACCESS_FAILED', message:error.statusCode ? error.message : 'Support access operation failed' } });
+const fail = (res, error) => {
+  if (!error.statusCode) console.error('[SUPPORT_ACCESS] Operation failed', { code: error.code || 'UNKNOWN' });
+  return res.status(error.statusCode || 500).json({ success:false, error:{ code:error.code || 'SUPPORT_ACCESS_FAILED', message:error.statusCode ? error.message : 'Support access operation failed' } });
+};
 
 module.exports = {
   request: async (req,res) => { try { assertAllowedFields(req.body,['reason','affected_module','scopes','duration_minutes','ticket_reference','read_only','write_operation','write_justification']); return res.status(201).json({success:true,request:await service.request({requesterId:req.user.id,reason:req.body.reason,affectedModule:req.body.affected_module,scopes:req.body.scopes,durationMinutes:req.body.duration_minutes,ticketReference:req.body.ticket_reference,readOnly:req.body.read_only,writeOperation:req.body.write_operation,writeJustification:req.body.write_justification})}); } catch(error){return fail(res,error);} },

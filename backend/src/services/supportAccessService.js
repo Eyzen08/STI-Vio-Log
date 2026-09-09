@@ -13,6 +13,14 @@ const READ_SCOPES = new Set([
 const clean = (value, max = 1000) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 const uniqueScopes = (values) => [...new Set(Array.isArray(values) ? values.map((value) => clean(value, 100)) : [])];
 const apiError = (statusCode, code, message) => Object.assign(new Error(message), { statusCode, code });
+const notifySafely = async (database, notification) => {
+  try {
+    return await insertNotification(database, notification);
+  } catch (error) {
+    console.error('[SUPPORT_ACCESS] Notification delivery failed');
+    return null;
+  }
+};
 
 const expireSupportAccessGrants = async (database) => {
   const expired=(await database.query(`UPDATE support_access_requests SET status='EXPIRED',updated_at=CURRENT_TIMESTAMP
@@ -22,8 +30,8 @@ const expireSupportAccessGrants = async (database) => {
   const disciplineAdmins=(await database.query("SELECT id FROM users WHERE role='DISCIPLINE_ADMIN' AND is_active=TRUE")).rows;
   for(const grant of expired){
     await database.query("INSERT INTO audit_logs(action,table_name,record_id,description)VALUES('SUPPORT_ACCESS_EXPIRED','support_access_requests',$1,'Temporary support access expired automatically')",[grant.id]);
-    await insertNotification(database,{userId:grant.requester_user_id,title:'Support access expired',message:`Temporary read-only access to ${grant.affected_module} has expired.`,type:'SUPPORT_ACCESS_EXPIRED',eventKey:`support-access:${grant.id}:expired:requester`,category:'SECURITY',severity:'INFO',resourceType:'support_access_requests',resourceId:grant.id,linkPath:'/system/support-access'});
-    for(const recipient of disciplineAdmins)await insertNotification(database,{userId:recipient.id,title:'Support access expired',message:`Approved technical access to ${grant.affected_module} has expired.`,type:'SUPPORT_ACCESS_EXPIRED',eventKey:`support-access:${grant.id}:expired:${recipient.id}`,category:'SECURITY',severity:'INFO',resourceType:'support_access_requests',resourceId:grant.id,linkPath:'/admin/support-access'});
+    await notifySafely(database,{userId:grant.requester_user_id,title:'Support access expired',message:`Temporary read-only access to ${grant.affected_module} has expired.`,type:'SUPPORT_ACCESS_EXPIRED',eventKey:`support-access:${grant.id}:expired:requester`,category:'SECURITY',severity:'INFO',resourceType:'support_access_requests',resourceId:grant.id,linkPath:'/system/support-access'});
+    for(const recipient of disciplineAdmins)await notifySafely(database,{userId:recipient.id,title:'Support access expired',message:`Approved technical access to ${grant.affected_module} has expired.`,type:'SUPPORT_ACCESS_EXPIRED',eventKey:`support-access:${grant.id}:expired:${recipient.id}`,category:'SECURITY',severity:'INFO',resourceType:'support_access_requests',resourceId:grant.id,linkPath:'/admin/support-access'});
     await recordSecurityEvent({actor:null,action:'SUPPORT_ACCESS_EXPIRED',targetType:'SUPPORT_ACCESS_REQUEST',targetId:grant.id,targetLabel:grant.affected_module,details:{expired_at:grant.expires_at},reason:'Configured duration elapsed',result:'SUCCESS',supportAccessRequestId:grant.id,database});
   }
   return expired.length;
@@ -48,7 +56,7 @@ const createSupportAccessService = ({ pool } = {}) => ({
       [Number(requesterId), clean(reason), clean(affectedModule, 100), requestedScopes, duration, clean(ticketReference, 100) || null, `Requested read-only support access for ${clean(affectedModule, 100)}`]
     )).rows[0];
     const recipients=(await pool.query("SELECT id FROM users WHERE role='DISCIPLINE_ADMIN' AND is_active=TRUE")).rows;
-    for(const recipient of recipients) await insertNotification(pool,{userId:recipient.id,title:'Support access review required',message:`A System Administrator requested read-only access to ${clean(affectedModule,100)}.`,type:'SUPPORT_ACCESS_REQUEST',eventKey:`support-access:${row.id}:requested:${recipient.id}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:row.id,linkPath:'/admin/support-access'});
+    for(const recipient of recipients) await notifySafely(pool,{userId:recipient.id,title:'Support access review required',message:`A System Administrator requested read-only access to ${clean(affectedModule,100)}.`,type:'SUPPORT_ACCESS_REQUEST',eventKey:`support-access:${row.id}:requested:${recipient.id}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:row.id,linkPath:'/admin/support-access'});
     return row;
   },
   async decide({ approverId, requestId, approve, scopes, decisionReason }) {
@@ -72,8 +80,8 @@ const createSupportAccessService = ({ pool } = {}) => ({
         [request.id, status, Number(approverId), approve ? approvedScopes : [], why]
       )).rows[0];
       await client.query("INSERT INTO audit_logs(user_id,action,table_name,record_id,description)VALUES($1,$2,'support_access_requests',$3,$4)", [Number(approverId), `SUPPORT_ACCESS_${status}`, request.id, `${status} support access request: ${why}`]);
-      await insertNotification(client,{userId:request.requester_user_id,title:`Support access ${status.toLowerCase()}`,message:approve?'Your temporary read-only support access was approved.':'Your support-access request was rejected.',type:`SUPPORT_ACCESS_${status}`,eventKey:`support-access:${request.id}:${status.toLowerCase()}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:request.id,linkPath:'/system/support-access'});
       await client.query('COMMIT');
+      await notifySafely(pool,{userId:request.requester_user_id,title:`Support access ${status.toLowerCase()}`,message:approve?'Your temporary read-only support access was approved.':'Your support-access request was rejected.',type:`SUPPORT_ACCESS_${status}`,eventKey:`support-access:${request.id}:${status.toLowerCase()}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:request.id,linkPath:'/system/support-access'});
       return row;
     } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; } finally { client.release(); }
   },
@@ -102,7 +110,7 @@ const createSupportAccessService = ({ pool } = {}) => ({
        SELECT $2,'SUPPORT_ACCESS_REVOKED','support_access_requests',id,$4 FROM changed)
        SELECT id FROM changed`, [Number(requestId), Number(actorId), actorRole, `Revoked support access: ${why}`]);
     if (!result.rowCount) throw apiError(404, 'ACTIVE_SUPPORT_GRANT_NOT_FOUND', 'Active support grant not found');
-    await insertNotification(pool,{userId:result.rows[0].requester_user_id,title:'Support access revoked',message:'Temporary support access was revoked and is no longer active.',type:'SUPPORT_ACCESS_REVOKED',eventKey:`support-access:${result.rows[0].id}:revoked`,category:'SECURITY',resourceType:'support_access_requests',resourceId:result.rows[0].id,linkPath:'/system/support-access'});
+    await notifySafely(pool,{userId:result.rows[0].requester_user_id,title:'Support access revoked',message:'Temporary support access was revoked and is no longer active.',type:'SUPPORT_ACCESS_REVOKED',eventKey:`support-access:${result.rows[0].id}:revoked`,category:'SECURITY',resourceType:'support_access_requests',resourceId:result.rows[0].id,linkPath:'/system/support-access'});
     return { id: Number(result.rows[0].id), status: 'REVOKED' };
   }
 });
