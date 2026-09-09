@@ -3,7 +3,7 @@ import AdminDuplicateReview from './AdminDuplicateReview.jsx'
 import GoogleRegistrationReview from './GoogleRegistrationReview.jsx'
 
 function AdminRegistrationReviewWorkspace({ token, role, onPendingCountChange }) {
-  const canReviewDuplicates = role === 'ADMIN'
+  const canReviewDuplicates = role === 'DISCIPLINE_ADMIN'
   const [activeTab, setActiveTab] = useState('registrations')
 
   return <section className="registration-review-workspace" aria-labelledby="registration-workspace-title">

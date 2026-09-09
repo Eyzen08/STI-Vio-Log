@@ -1,5 +1,7 @@
 const express = require('express');
-const { authenticateToken, authorizeRoles } = require('../middleware/authMiddleware');
+const { authenticateToken, authorizePermissions } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../security/permissions');
+const { auditAdministrativeRequest } = require('../middleware/administrativeAuditMiddleware');
 const {
   getViolationReport,
   exportViolationReportCsv,
@@ -11,14 +13,14 @@ const { getParentContactReport, getClearanceReport, getGoodStandingReport } = re
 
 const router = express.Router();
 
-// All reports require authentication and ADMIN/DISCIPLINE_OFFICE role
-router.get('/violations.csv', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), exportViolationReportCsv);
-router.get('/violations', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getViolationReport);
-router.get('/community-service', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getCommunityServiceReport);
-router.get('/dtr', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getDTRReport);
-router.get('/non-compliance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getNonComplianceReport);
-router.get('/parent-contacts', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getParentContactReport);
-router.get('/clearance', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getClearanceReport);
-router.get('/good-standing', authenticateToken, authorizeRoles('ADMIN', 'DISCIPLINE_OFFICE'), getGoodStandingReport);
+const canViewReport = authorizePermissions(PERMISSIONS.REPORT_VIEW);
+router.get('/violations.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportCsv);
+router.get('/violations', authenticateToken, canViewReport, getViolationReport);
+router.get('/community-service', authenticateToken, canViewReport, getCommunityServiceReport);
+router.get('/dtr', authenticateToken, canViewReport, getDTRReport);
+router.get('/non-compliance', authenticateToken, canViewReport, getNonComplianceReport);
+router.get('/parent-contacts', authenticateToken, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.GUARDIAN_CONTACT_VIEW), getParentContactReport);
+router.get('/clearance', authenticateToken, canViewReport, getClearanceReport);
+router.get('/good-standing', authenticateToken, canViewReport, getGoodStandingReport);
 
 module.exports = router;

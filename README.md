@@ -26,8 +26,11 @@ Web-based Student Violation, Community Service, QR Attendance, Parent/Guardian C
 
 - STUDENT
 - DEPARTMENT_HEAD
-- DO_ADMIN
+- DISCIPLINE_OFFICE
+- DISCIPLINE_ADMIN
 - SYSTEM_ADMIN
+
+`DISCIPLINE_ADMIN` owns institutional operations, while `SYSTEM_ADMIN` is restricted to technical administration. See [the administrator security model](docs/administrator-security-model.md) and [secure bootstrap guide](docs/administrator-bootstrap.md).
 
 ## Development Order
 

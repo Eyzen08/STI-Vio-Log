@@ -1,7 +1,7 @@
 import PortalIcon from './PortalIcon.jsx'
 
 const ACTIONS = {
-  ADMIN: [
+  DISCIPLINE_ADMIN: [
     ['students', 'Add Student', '/admin/students'], ['violations', 'Issue Violation', '/admin/violations'],
     ['qr', 'Record Attendance', '/admin/qr-scan'], ['registrations', 'Review Registrations', '/admin/registrations'],
     ['reports', 'Generate Report', '/admin/reports']

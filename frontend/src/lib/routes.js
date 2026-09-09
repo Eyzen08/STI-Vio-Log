@@ -1,17 +1,21 @@
 export const ROLE_GROUPS = {
-  administration: ['ADMIN', 'DISCIPLINE_OFFICE'],
+  administration: ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'],
   department: ['DEPARTMENT_HEAD'],
   student: ['STUDENT']
 }
 
 export const APP_ROUTES = [
+  { path: '/system/dashboard', label: 'System Status', view: 'System Dashboard', roles: ['SYSTEM_ADMIN'] },
+  { path: '/system/support-access', label: 'Support Access', view: 'Support Access', roles: ['SYSTEM_ADMIN'] },
+  { path: '/system/notifications', label: 'Notifications', view: 'Notifications', roles: ['SYSTEM_ADMIN'], navigation: false },
+  { path: '/system/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ['SYSTEM_ADMIN'], navigation: false },
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
   { path: '/admin/registrations', label: 'Registration & Duplicate Review', view: 'Registrations', roles: ROLE_GROUPS.administration },
-  { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['ADMIN'] },
-  { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['ADMIN'] },
-  { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Registrations', roles: ['ADMIN'], navigation: false, redirectTo: '/admin/registrations' },
+  { path: '/admin/departments-officers', label: 'Departments & Officer Accounts', view: 'Departments & Officer Accounts', roles: ['DISCIPLINE_ADMIN'] },
+  { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['DISCIPLINE_ADMIN'] },
+  { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Registrations', roles: ['DISCIPLINE_ADMIN'], navigation: false, redirectTo: '/admin/registrations' },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
   { path: '/admin/community-service', label: 'Community Service', view: 'Community Service', roles: ROLE_GROUPS.administration },
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
@@ -19,6 +23,7 @@ export const APP_ROUTES = [
   { path: '/admin/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.administration },
   { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/admin/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.administration },
+  { path: '/admin/support-access', label: 'Support Access', view: 'Support Access', roles: ['DISCIPLINE_ADMIN'] },
   { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
   { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department, navigation: false },
   { path: '/department/students', label: 'Assigned Students', view: 'Students', roles: ROLE_GROUPS.department },
@@ -41,7 +46,8 @@ export const APP_ROUTES = [
 ]
 
 const HOME_PATHS = {
-  ADMIN: '/admin/dashboard',
+  SYSTEM_ADMIN: '/system/dashboard',
+  DISCIPLINE_ADMIN: '/admin/dashboard',
   DISCIPLINE_OFFICE: '/admin/dashboard',
   DEPARTMENT_HEAD: '/department/dashboard',
   STUDENT: '/student/dashboard'

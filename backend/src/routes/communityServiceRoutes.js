@@ -1,168 +1,29 @@
-const express = require("express");
+const router = require('express').Router();
+const service = require('../controllers/communityServiceController');
+const attendance = require('../controllers/communityServiceAttendanceController');
+const { authorizeRoles, authorizePermissions, requireAuthorizedDepartment } = require('../middleware/authMiddleware');
+const { PERMISSIONS } = require('../security/permissions');
 
-const {
-    getCommunityServiceAssignments,
-    getCommunityServiceAssignmentById,
-    getMyCommunityServiceAssignment,
-    createCommunityServiceAssignment,
-    getCommunityServiceAssignmentOptions,
-    updateCommunityServiceAssignment,
-    deleteCommunityServiceAssignment
-} = require("../controllers/communityServiceController");
+const operationalStaff = authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE');
+const serviceReaders = authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD');
+const canReadAssignments = authorizePermissions(PERMISSIONS.STUDENT_BASIC_VIEW);
+const canManageAssignments = authorizePermissions(PERMISSIONS.SERVICE_ASSIGNMENT_MANAGE);
+const canScan = authorizePermissions(PERMISSIONS.ATTENDANCE_SCAN);
+const canCorrectDtr = authorizePermissions(PERMISSIONS.DTR_CORRECT);
 
-const {
-    communityServiceTimeIn,
-    communityServiceTimeOut,
-    getCommunityServiceAttendance,
-    getCommunityServiceSessions,
-    reviewCommunityServiceResult,
-    getPendingServiceResults,
-    getActiveDepartmentSessions
-} = require("../controllers/communityServiceAttendanceController");
-
-const {
-    authorizeRoles,
-    requireAuthorizedDepartment
-} = require("../middleware/authMiddleware");
-
-const router = express.Router();
-
-
-// =====================================================
-// STUDENT - OWN COMMUNITY SERVICE
-// =====================================================
-// Students can only view their own community-service
-// assignments through the controller using req.user.id.
-// =====================================================
-
-router.get(
-    "/my-assignment",
-    authorizeRoles("STUDENT"),
-    getMyCommunityServiceAssignment
-);
-
-
-// =====================================================
-// COMMUNITY SERVICE ATTENDANCE
-// =====================================================
-// Only authorized staff can record/view attendance.
-// =====================================================
-
-router.post(
-    "/attendance/time-in",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
-    ),
-    requireAuthorizedDepartment,
-    communityServiceTimeIn
-);
-
-
-router.post(
-    "/attendance/time-out",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
-    ),
-    requireAuthorizedDepartment,
-    communityServiceTimeOut
-);
-
-
-router.get("/results/pending", authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), getPendingServiceResults);
-router.post("/results/:sessionId/review", authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"), reviewCommunityServiceResult);
-
-router.get(
-    "/:assignmentId/sessions",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
-    getCommunityServiceSessions
-);
-
-router.get(
-    "/attendance/:assignmentId",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
-    ),
-    getCommunityServiceAttendance
-);
-
-
-// =====================================================
-// COMMUNITY SERVICE ASSIGNMENTS
-// =====================================================
-// Management access:
-// - ADMIN
-// - DISCIPLINE_OFFICE
-// - DEPARTMENT_HEAD
-// =====================================================
-
-router.get(
-    "/assignment-options",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
-    getCommunityServiceAssignmentOptions
-);
-
-router.get(
-    "/",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
-    ),
-    getCommunityServiceAssignments
-);
-
-
-router.post(
-    "/",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE"
-    ),
-    createCommunityServiceAssignment
-);
-
-router.get(
-    "/active-sessions",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE", "DEPARTMENT_HEAD"),
-    getActiveDepartmentSessions
-);
-
-
-router.get(
-    "/:id",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE",
-        "DEPARTMENT_HEAD"
-    ),
-    getCommunityServiceAssignmentById
-);
-
-
-router.put(
-    "/:id",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE"
-    ),
-    updateCommunityServiceAssignment
-);
-
-
-router.delete(
-    "/:id",
-    authorizeRoles(
-        "ADMIN",
-        "DISCIPLINE_OFFICE"
-    ),
-    deleteCommunityServiceAssignment
-);
-
+router.get('/my-assignment', authorizeRoles('STUDENT'), service.getMyCommunityServiceAssignment);
+router.post('/attendance/time-in', canScan, serviceReaders, requireAuthorizedDepartment, attendance.communityServiceTimeIn);
+router.post('/attendance/time-out', canScan, serviceReaders, requireAuthorizedDepartment, attendance.communityServiceTimeOut);
+router.get('/results/pending', canCorrectDtr, operationalStaff, attendance.getPendingServiceResults);
+router.post('/results/:sessionId/review', canCorrectDtr, operationalStaff, attendance.reviewCommunityServiceResult);
+router.get('/assignment-options', canManageAssignments, operationalStaff, service.getCommunityServiceAssignmentOptions);
+router.get('/active-sessions', canReadAssignments, serviceReaders, attendance.getActiveDepartmentSessions);
+router.get('/:assignmentId/sessions', canReadAssignments, serviceReaders, attendance.getCommunityServiceSessions);
+router.get('/attendance/:assignmentId', canReadAssignments, serviceReaders, attendance.getCommunityServiceAttendance);
+router.get('/', canReadAssignments, serviceReaders, service.getCommunityServiceAssignments);
+router.post('/', canManageAssignments, operationalStaff, service.createCommunityServiceAssignment);
+router.get('/:id', canReadAssignments, serviceReaders, service.getCommunityServiceAssignmentById);
+router.put('/:id', canManageAssignments, operationalStaff, service.updateCommunityServiceAssignment);
+router.delete('/:id', canManageAssignments, operationalStaff, service.deleteCommunityServiceAssignment);
 
 module.exports = router;

@@ -7,10 +7,11 @@ const {
 } = require("../controllers/qrController");
 
 const router = express.Router();
-const { requireAuthorizedDepartment } = require("../middleware/authMiddleware");
+const { requireAuthorizedDepartment, authorizePermissions } = require("../middleware/authMiddleware");
+const { PERMISSIONS } = require('../security/permissions');
 
-router.post("/scan", requireAuthorizedDepartment, scanQrCode);
-router.post("/time-in", requireAuthorizedDepartment, timeIn);
-router.post("/time-out", requireAuthorizedDepartment, timeOut);
+router.post("/scan", authorizePermissions(PERMISSIONS.ATTENDANCE_SCAN), requireAuthorizedDepartment, scanQrCode);
+router.post("/time-in", authorizePermissions(PERMISSIONS.ATTENDANCE_SCAN), requireAuthorizedDepartment, timeIn);
+router.post("/time-out", authorizePermissions(PERMISSIONS.ATTENDANCE_SCAN), requireAuthorizedDepartment, timeOut);
 
 module.exports = router;

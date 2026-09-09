@@ -855,7 +855,7 @@ const approveClearanceRecord = async (req, res) => {
         // Role verification
         // -------------------------------------------------
 
-        if (!["ADMIN", "DISCIPLINE_OFFICE"].includes(req.user.role)) {
+        if (!["DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"].includes(req.user.role)) {
             return res.status(403).json({
                 success: false,
                 message:

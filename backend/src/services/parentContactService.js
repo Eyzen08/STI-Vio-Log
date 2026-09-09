@@ -10,7 +10,7 @@ const createParentContactService = ({ pool } = {}) => {
 
   const assertScope = async ({ executor = pool, actor, studentId }) => {
     if (!isPositiveId(studentId)) throw new ApiError(400, 'VALIDATION_ERROR', 'A valid student is required');
-    if (!['ADMIN', 'DISCIPLINE_OFFICE'].includes(actor?.role)) throw new ApiError(403, 'PARENT_CONTACT_FORBIDDEN', 'Student contact information is not available');
+    if (!['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(actor?.role)) throw new ApiError(403, 'PARENT_CONTACT_FORBIDDEN', 'Student contact information is not available');
     const result = await executor.query(
       `SELECT s.id, s.student_number, s.first_name, s.last_name
        FROM students s

@@ -15,20 +15,20 @@ const fakePool = (handler) => {
   return { calls, pool: { async connect() { return client; }, async query(sql, params = []) { calls.push({ sql: String(sql), params }); return handler(String(sql), params); } } };
 };
 
-test('department review verifies an active Admin inside the transaction', async () => {
+test('department review verifies an active Discipline Admin inside the transaction', async () => {
   const db = fakePool(() => ({ rows: [] }));
   const service = createGoogleDepartmentRegistrationService({ pool: db.pool });
   await assert.rejects(
     service.review({ registrationId: 9, reviewerId: 4, decision: 'REJECTED', reason: 'Not employed' }),
     (error) => error.statusCode === 403 && error.code === 'REVIEWER_FORBIDDEN'
   );
-  assert.ok(db.calls.some((call) => call.sql.includes("role='ADMIN'") && call.sql.includes('FOR UPDATE')));
+  assert.ok(db.calls.some((call) => call.sql.includes("role='DISCIPLINE_ADMIN'") && call.sql.includes('FOR UPDATE')));
   assert.ok(db.calls.some((call) => call.sql === 'ROLLBACK'));
 });
 
 test('department approval serializes subject and employee ownership and rechecks cross-role claims', async () => {
   const db = fakePool((sql) => {
-    if (sql.includes("role='ADMIN'")) return { rows: [{ id: 1 }] };
+    if (sql.includes("role='DISCIPLINE_ADMIN'")) return { rows: [{ id: 1 }] };
     if (sql.includes('FROM google_department_registrations WHERE id')) return { rows: [pending] };
     if (sql.includes('FROM departments WHERE id=')) return { rows: [{ id: 3 }] };
     if (sql.includes('SELECT 1 FROM users')) return { rows: [{ exists: 1 }] };

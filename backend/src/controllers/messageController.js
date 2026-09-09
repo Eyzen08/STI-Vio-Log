@@ -42,7 +42,7 @@ const emitMessageChange = async (conversation, actorUserId = null) => {
     const payload = { conversation_id: Number(conversation.id) };
     if (student?.user_id) emitToUser(student.user_id, 'messages:changed', payload);
     if (actorUserId) emitToUser(actorUserId, 'messages:changed', payload);
-    emitToRole('ADMIN', 'messages:changed', payload);
+    emitToRole('DISCIPLINE_ADMIN', 'messages:changed', payload);
     emitToRole('DISCIPLINE_OFFICE', 'messages:changed', payload);
     if (conversation.assigned_department_id) emitToDepartment(conversation.assigned_department_id, 'messages:changed', payload);
   } catch (error) {
@@ -211,7 +211,7 @@ const markConversationRead = async (req,res) => {
 
 const updateConversationStatus = async (req,res) => {
   try {
-    if(!['ADMIN','DISCIPLINE_OFFICE'].includes(req.user.role))throw httpError(403,'Only authorized office staff can update conversation status');
+    if(!['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE'].includes(req.user.role))throw httpError(403,'Only authorized office staff can update conversation status');
     assertAllowedFields(req.body,['status']);
     const status=String(req.body.status||'').toUpperCase();
     if(!['OPEN','CLOSED'].includes(status))bad('status must be OPEN or CLOSED');

@@ -11,18 +11,19 @@ const {
 } = require("../controllers/clearanceController");
 
 const router = express.Router();
-const { authorizeRoles } = require("../middleware/authMiddleware");
+const { authorizePermissions } = require("../middleware/authMiddleware");
+const { PERMISSIONS } = require('../security/permissions');
 const certificate = require('../controllers/clearanceCertificateController');
 
-router.get('/certificates/eligible', certificate.getEligibleStudents);
-router.get('/certificates', certificate.listCertificates);
-router.post('/certificates', certificate.issueCertificate);
-router.get('/certificates/:id/pdf', certificate.downloadCertificate);
-router.post('/certificates/:id/revoke', certificate.revokeCertificate);
-router.post('/certificates/:id/email', certificate.resendCertificate);
-router.get('/signatures', certificate.listSignatures);
-router.post('/signatures', certificate.saveSignature);
-router.put('/signatures/:id', certificate.updateSignature);
+router.get('/certificates/eligible', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.getEligibleStudents);
+router.get('/certificates', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.listCertificates);
+router.post('/certificates', authorizePermissions(PERMISSIONS.CLEARANCE_CERTIFICATE_ISSUE), certificate.issueCertificate);
+router.get('/certificates/:id/pdf', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.downloadCertificate);
+router.post('/certificates/:id/revoke', authorizePermissions(PERMISSIONS.CLEARANCE_CERTIFICATE_ISSUE), certificate.revokeCertificate);
+router.post('/certificates/:id/email', authorizePermissions(PERMISSIONS.CLEARANCE_CERTIFICATE_ISSUE), certificate.resendCertificate);
+router.get('/signatures', authorizePermissions(PERMISSIONS.ESIGNATURE_MANAGE), certificate.listSignatures);
+router.post('/signatures', authorizePermissions(PERMISSIONS.ESIGNATURE_MANAGE), certificate.saveSignature);
+router.put('/signatures/:id', authorizePermissions(PERMISSIONS.ESIGNATURE_MANAGE), certificate.updateSignature);
 
 
 // =====================================================
@@ -31,7 +32,7 @@ router.put('/signatures/:id', certificate.updateSignature);
 
 router.get(
     "/student/:studentId/eligibility",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW),
     getStudentClearanceEligibilityController
 );
 
@@ -42,7 +43,7 @@ router.get(
 
 router.put(
     "/:id/approve",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_APPROVE),
     approveClearanceRecord
 );
 
@@ -53,31 +54,31 @@ router.put(
 
 router.get(
     "/",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW),
     getClearanceRecords
 );
 
 router.post(
     "/",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW),
     createClearanceRecord
 );
 
 router.get(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW),
     getClearanceRecordById
 );
 
 router.put(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW),
     updateClearanceRecord
 );
 
 router.delete(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizePermissions(PERMISSIONS.CLEARANCE_APPROVE),
     deleteClearanceRecord
 );
 

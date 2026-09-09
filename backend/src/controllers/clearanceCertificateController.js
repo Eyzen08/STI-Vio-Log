@@ -57,7 +57,7 @@ const saveSignature = async (req, res) => {
     const position = clean(req.body.position || 'Discipline Officer', 120);
     if (!fullName || !position) throw new ApiError(400, 'VALIDATION_ERROR', 'Officer name and position are required');
     if (req.body.officer_user_id) {
-      const officer = (await client.query("SELECT id FROM users WHERE id=$1 AND role IN ('ADMIN','DISCIPLINE_OFFICE')", [req.body.officer_user_id])).rows[0];
+      const officer = (await client.query("SELECT id FROM users WHERE id=$1 AND role IN ('DISCIPLINE_ADMIN','DISCIPLINE_OFFICE')", [req.body.officer_user_id])).rows[0];
       if (!officer) throw new ApiError(400, 'INVALID_OFFICER', 'Selected officer is not authorized');
     }
     const image = parseSignatureImage(req.body.image_data_url);

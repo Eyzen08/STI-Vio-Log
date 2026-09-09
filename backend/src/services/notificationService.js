@@ -4,15 +4,26 @@ const localDateTime = (value = new Date()) => new Intl.DateTimeFormat('en-PH', {
   timeZone: 'Asia/Manila', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
 }).format(new Date(value))
 
-const insertNotification = async (client, { userId, title, message, type, eventKey, category = 'SYSTEM', resourceType = null, resourceId = null, linkPath = null, metadata = {} }) => {
+const insertNotification = async (client, { userId, title, message, type, eventKey, category = 'SYSTEM', severity = 'INFO', resourceType = null, resourceId = null, linkPath = null, metadata = {} }) => {
   if (!client?.query || !userId || !title || !message || !eventKey) return null
   return (await client.query(
     `INSERT INTO notifications
-       (user_id,title,message,notification_type,event_key,category,resource_type,resource_id,link_path,metadata)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb)
+       (user_id,title,message,notification_type,event_key,category,severity,resource_type,resource_id,link_path,metadata)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb)
      ON CONFLICT (event_key) WHERE event_key IS NOT NULL DO NOTHING RETURNING id`,
-    [userId, title, message, type || null, eventKey, category, resourceType, resourceId, linkPath, JSON.stringify(metadata || {})]
+    [userId, title, message, type || null, eventKey, category, severity, resourceType, resourceId, linkPath, JSON.stringify(metadata || {})]
   )).rows[0] || null
+}
+
+const notifyDisciplineSupportUse = async (client, { requestId, module }) => {
+  if(!requestId)return []
+  const recipients=(await client.query("SELECT id FROM users WHERE role='DISCIPLINE_ADMIN' AND is_active=TRUE")).rows
+  const created=[]
+  for(const recipient of recipients){
+    const row=await insertNotification(client,{userId:recipient.id,title:'Temporary support access used',message:`Approved technical support access was used for ${String(module||'a protected module').slice(0,100)}.`,type:'SUPPORT_ACCESS_USED',eventKey:`support-access:${requestId}:used:${recipient.id}`,category:'SECURITY',severity:'WARNING',resourceType:'support_access_requests',resourceId:requestId,linkPath:'/admin/support-access'})
+    if(row)created.push(row)
+  }
+  return created
 }
 
 const notifyStudent = async (client, studentId, notification) => {
@@ -37,7 +48,7 @@ const attendanceRecipients = async (client, departmentId) => (await client.query
    LEFT JOIN officer_department_assignments oda ON oda.officer_user_id=u.id
      AND oda.department_id=$1 AND oda.status='ACTIVE'
      AND oda.starts_at<=CURRENT_TIMESTAMP AND (oda.ends_at IS NULL OR oda.ends_at>CURRENT_TIMESTAMP)
-   WHERE u.is_active=TRUE AND (u.role='ADMIN' OR (u.role='DISCIPLINE_OFFICE' AND oda.id IS NOT NULL))`,
+   WHERE u.is_active=TRUE AND (u.role='DISCIPLINE_ADMIN' OR (u.role='DISCIPLINE_OFFICE' AND oda.id IS NOT NULL))`,
   [Number(departmentId)]
 )).rows.map((row) => Number(row.id))
 
@@ -85,4 +96,4 @@ const createOverdueAttendanceNotifications = async (client, thresholdHours = 8) 
   return sessions.length
 }
 
-module.exports = { insertNotification, notifyStudent, notifyAttendanceStaff, notifyAttendanceFailure, createOverdueAttendanceNotifications, localDateTime }
+module.exports = { insertNotification, notifyDisciplineSupportUse, notifyStudent, notifyAttendanceStaff, notifyAttendanceFailure, createOverdueAttendanceNotifications, localDateTime }

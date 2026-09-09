@@ -11,6 +11,14 @@
 .department-noncompliance { display: grid; gap: 22px; }
 .department-reports-page { display: grid; gap: 22px; }
 .student-notifications-page { display: grid; gap: 22px; }
+.support-access-page { display: grid; gap: 18px; }
+.support-request-form { padding: 18px; }
+.support-request-form fieldset { border: 1px solid var(--line, #d5dfeb); border-radius: 12px; margin: 18px 0; padding: 16px; }
+.support-request-form legend { font-weight: 700; padding: 0 8px; }
+.support-request-form .full-width { grid-column: 1 / -1; }
+.support-scope-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+.support-scope-grid label { align-items: center; display: flex; gap: 9px; }
+.action-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .notifications-hero { align-items: center; background: linear-gradient(125deg, #123e63, #2a70a0); border-radius: 22px; color: white; display: flex; justify-content: space-between; padding: 28px 30px; }
 .notifications-hero h2 { margin: 5px 0 8px; }
 .notifications-hero p:last-child { color: #d7ebf7; margin: 0; }
@@ -4566,6 +4574,8 @@ a {
 
 .app-shell:not(.auth-shell) .main-panel { grid-column: 2; width: 100%; min-height: 100vh; padding: 0; }
 .page-content { padding: 18px 20px 30px; }
+.support-access-banner { position: sticky; z-index: 19; top: 58px; display: flex; justify-content: center; gap: 12px; padding: 9px 16px; border-bottom: 1px solid #d79b00; background: #fff3bf; color: #684900; font-size: .78rem; }
+.support-access-banner strong { text-transform: uppercase; letter-spacing: .04em; }
 .topbar { position: sticky; z-index: 20; top: 0; min-height: 58px; margin: 0; padding: 8px 20px; border-bottom: 1px solid #e1e9f2; background: rgba(255,255,255,.94); box-shadow: 0 2px 12px rgba(16,52,91,.04); backdrop-filter: blur(12px); }
 .topbar-title { flex: 1; }
 .topbar-search { width: min(430px,48vw); min-height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 7px; background: #f0f5fa; color: #6b7f96; }

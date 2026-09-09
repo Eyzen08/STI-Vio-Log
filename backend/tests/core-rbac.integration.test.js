@@ -13,7 +13,7 @@ const pool = require('../src/config/database');
 const app = require('../src/server');
 
 const accounts = {
-  1: { id: 1, username: 'admin', role: 'ADMIN', session_version:1, must_change_password:false, department_id: null },
+  1: { id: 1, username: 'admin', role: 'DISCIPLINE_ADMIN', session_version:1, must_change_password:false, department_id: null },
   2: { id: 2, username: 'discipline', role: 'DISCIPLINE_OFFICE', session_version:1, must_change_password:false, department_id: null },
   3: { id: 3, username: 'head', role: 'DEPARTMENT_HEAD', session_version:1, must_change_password:false, department_id: 9 },
   4: { id: 4, username: 'student', role: 'STUDENT', session_version:1, must_change_password:false, email_verified:true, department_id: null }

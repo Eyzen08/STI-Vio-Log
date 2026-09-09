@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PortalIcon from './PortalIcon.jsx'
 
-const roleLabel = (role) => ({ ADMIN: 'Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
+const roleLabel = (role) => ({ SYSTEM_ADMIN: 'System Administrator', DISCIPLINE_ADMIN: 'Discipline Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
 const settingsPath = (role) => role === 'STUDENT' ? '/student/account-settings' : role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
 
 function ProfileMenu({ user, routePath, onNavigate, onLogout }) {

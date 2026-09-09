@@ -35,7 +35,7 @@ function MessagesPage({token,role,onUnreadChange,realtimeSocket}){
   const selectedRef=useRef(null)
   const threadEndRef=useRef(null)
   const isStudent=role==='STUDENT'
-  const canManageStatus=['ADMIN','DISCIPLINE_OFFICE'].includes(role)
+  const canManageStatus=['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE'].includes(role)
   const authHeaders={Authorization:`Bearer ${token}`}
   const jsonHeaders={...authHeaders,'Content-Type':'application/json'}
 

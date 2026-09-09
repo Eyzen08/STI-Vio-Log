@@ -11,6 +11,7 @@
     "test:migrations": "node --test tests/migrations.pgtest.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js status",
+    "bootstrap:admin": "node scripts/bootstrap-administrator.js",
     "backup": "node scripts/backup.js",
     "backup:verify": "node scripts/backup.js verify",
     "production:check": "node scripts/production-check.js",

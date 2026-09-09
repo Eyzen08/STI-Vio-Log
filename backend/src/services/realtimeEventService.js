@@ -8,9 +8,9 @@ const emitAttendanceChange = async (result, departmentId) => {
       action: result.session.time_out ? 'TIME_OUT' : 'TIME_IN'
     };
     emitToDepartment(departmentId, 'community-service:changed', payload);
-    emitToRole('ADMIN', 'community-service:changed', payload);
+    emitToRole('DISCIPLINE_ADMIN', 'community-service:changed', payload);
     emitToRole('DISCIPLINE_OFFICE', 'community-service:changed', payload);
-    emitToRole('ADMIN', 'notifications:changed', payload);
+    emitToRole('DISCIPLINE_ADMIN', 'notifications:changed', payload);
     emitToRole('DISCIPLINE_OFFICE', 'notifications:changed', payload);
     const student = (await pool.query('SELECT user_id FROM students WHERE id=$1', [result.assignment.student_id])).rows[0];
     if (student?.user_id) emitToUser(student.user_id, 'community-service:changed', payload);
@@ -20,7 +20,7 @@ const emitAttendanceChange = async (result, departmentId) => {
 };
 
 const emitNotificationChange = (departmentId, payload = {}) => {
-  emitToRole('ADMIN', 'notifications:changed', payload);
+  emitToRole('DISCIPLINE_ADMIN', 'notifications:changed', payload);
   emitToRole('DISCIPLINE_OFFICE', 'notifications:changed', payload);
   if (departmentId) emitToDepartment(departmentId, 'notifications:changed', payload);
 };

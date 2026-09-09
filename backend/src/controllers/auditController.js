@@ -16,6 +16,10 @@ const createAuditController = ({ database = pool } = {}) => {
       const clauses = [];
       const params = [];
       const add = (sql, value) => { params.push(value); clauses.push(sql.replace('?', `$${params.length}`)); };
+      if (req.user?.role === 'SYSTEM_ADMIN') {
+        params.push(['AUTH_%','LOGIN_%','SYSTEM_%','INTEGRATION_%','SUPPORT_ACCESS_%','ACCOUNT_PASSWORD_%','ACCOUNT_LOCK%']);
+        clauses.push(`al.action LIKE ANY($${params.length}::text[])`);
+      }
       if (action) add('al.action = ?', String(action).trim().toUpperCase());
       if (userId) add('al.user_id = ?', userId);
       if (tableName) add('al.table_name = ?', String(tableName).trim());
@@ -51,9 +55,12 @@ const createAuditController = ({ database = pool } = {}) => {
       return sendError(res, error.statusCode || 500, error.code || 'INTERNAL_ERROR', error.statusCode ? error.message : 'Failed to retrieve audit logs');
     }
   };
-  const getAuditLogStats = async (_req, res) => {
+  const getAuditLogStats = async (req, res) => {
     try {
-      const result = await database.query('SELECT action, COUNT(*)::int AS count, MAX(created_at) AS last_occurrence FROM audit_logs GROUP BY action ORDER BY count DESC');
+      const technical = req.user?.role === 'SYSTEM_ADMIN';
+      const params = technical ? [['AUTH_%','LOGIN_%','SYSTEM_%','INTEGRATION_%','SUPPORT_ACCESS_%','ACCOUNT_PASSWORD_%','ACCOUNT_LOCK%']] : [];
+      const where = technical ? 'WHERE action LIKE ANY($1::text[])' : '';
+      const result = await database.query(`SELECT action, COUNT(*)::int AS count, MAX(created_at) AS last_occurrence FROM audit_logs ${where} GROUP BY action ORDER BY count DESC`, params);
       return res.json({ success: true, data: result.rows });
     } catch (_error) { return sendError(res, 500, 'INTERNAL_ERROR', 'Failed to retrieve audit log statistics'); }
   };

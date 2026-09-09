@@ -131,10 +131,10 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
     const value = clean(identifier, 255).toLowerCase();
     const account = (await pool.query(
       `SELECT u.id,COALESCE(s.email,ap.email) email,
-              CASE WHEN u.role='ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
+              CASE WHEN u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
        FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
        WHERE u.is_active=TRUE AND ((u.role='STUDENT' AND u.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)))
-          OR (u.role='ADMIN' AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) LIMIT 1`,
+          OR (u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) LIMIT 1`,
       [value]
     )).rows[0];
     if (account?.email) {
@@ -154,10 +154,10 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
     try {
       await client.query('BEGIN');
       const account = (await client.query(
-        `SELECT u.id,CASE WHEN u.role='ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
+        `SELECT u.id,CASE WHEN u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
          FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
          WHERE u.is_active=TRUE AND ((u.role='STUDENT' AND u.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)))
-          OR (u.role='ADMIN' AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) FOR UPDATE OF u`, [value]
+          OR (u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) FOR UPDATE OF u`, [value]
       )).rows[0];
       if (!account) throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
       await otpService.verify({ purpose: account.purpose || 'STUDENT_PASSWORD_RESET', userId: account.id, code, client });
@@ -196,7 +196,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       await client.query(
         `INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
          VALUES($1,$2,'users',$1,$3,$4)`,
-        [authorization.user_id, user.role==='ADMIN'?'ADMIN_PASSWORD_RESET':'STUDENT_PASSWORD_RESET', user.role==='ADMIN'?'Administrator completed verified password reset':'Student completed verified password reset', ipAddress]
+        [authorization.user_id, ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(user.role)?'ADMIN_PASSWORD_RESET':'STUDENT_PASSWORD_RESET', ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(user.role)?'Administrator completed verified password reset':'Student completed verified password reset', ipAddress]
       );
       await client.query('COMMIT');
     } catch (error) {

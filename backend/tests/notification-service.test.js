@@ -17,7 +17,7 @@ test('insertNotification writes a retry-safe event without recipient-controlled 
   });
   assert.deepEqual(result, { id: 44 });
   assert.match(calls[0].sql, /ON CONFLICT \(event_key\).*DO NOTHING/s);
-  assert.deepEqual(calls[0].params, [7, 'Service assigned', 'You have a new assignment.', 'SERVICE_ASSIGNED', 'service:12:assigned:student', 'SYSTEM', null, null, null, '{}']);
+  assert.deepEqual(calls[0].params, [7, 'Service assigned', 'You have a new assignment.', 'SERVICE_ASSIGNED', 'service:12:assigned:student', 'SYSTEM', 'INFO', null, null, null, '{}']);
 });
 
 test('notifyStudent resolves the recipient from the student record', async () => {

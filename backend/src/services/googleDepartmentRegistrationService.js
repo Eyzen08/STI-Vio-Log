@@ -44,7 +44,7 @@ const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value
     try {
       await client.query('BEGIN');
       const reviewer = (await client.query(
-        `SELECT id FROM users WHERE id=$1 AND role='ADMIN' AND is_active=TRUE FOR UPDATE`,
+        `SELECT id FROM users WHERE id=$1 AND role='DISCIPLINE_ADMIN' AND is_active=TRUE FOR UPDATE`,
         [Number(reviewerId)]
       )).rows[0];
       if (!reviewer) throw new ApiError(403, 'REVIEWER_FORBIDDEN', FAILURE);

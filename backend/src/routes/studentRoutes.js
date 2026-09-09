@@ -45,37 +45,37 @@ router.patch("/me/notifications/:id/read", authorizeRoles("STUDENT"), markMyNoti
 
 router.get(
     "/",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     getStudents
 );
 
 router.post(
     "/",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     createStudent
 );
 
 router.get(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     getStudentById
 );
 
 router.put(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     updateStudent
 );
 
 router.post(
     "/:id/password-reset",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     resetStudentPassword
 );
 
 router.delete(
     "/:id",
-    authorizeRoles("ADMIN", "DISCIPLINE_OFFICE"),
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     deleteStudent
 );
 

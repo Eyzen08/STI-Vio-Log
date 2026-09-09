@@ -8,7 +8,7 @@ const createAdminAccountService = ({ pool, otpService } = {}) => {
   if (!pool?.connect || !otpService) throw new TypeError('Admin account dependencies are required');
   const getProfile = async ({ userId }) => {
     if (!isPositiveId(userId)) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid account');
-    const row = (await pool.query(`SELECT u.id,u.username,u.role,ap.first_name,ap.last_name,ap.email,ap.email_verified FROM users u LEFT JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role='ADMIN'`, [Number(userId)])).rows[0];
+    const row = (await pool.query(`SELECT u.id,u.username,u.role,ap.first_name,ap.last_name,ap.email,ap.email_verified FROM users u LEFT JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN')`, [Number(userId)])).rows[0];
     if (!row) throw new ApiError(403, 'ADMIN_REQUIRED', 'Administrator access is required');
     return publicProfile(row);
   };
@@ -18,7 +18,7 @@ const createAdminAccountService = ({ pool, otpService } = {}) => {
     const client = await pool.connect(); let emailChanged = false;
     try {
       await client.query('BEGIN');
-      const current = (await client.query(`SELECT u.id,u.username,ap.email FROM users u LEFT JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role='ADMIN' FOR UPDATE OF u`, [Number(userId)])).rows[0];
+      const current = (await client.query(`SELECT u.id,u.username,ap.email FROM users u LEFT JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') FOR UPDATE OF u`, [Number(userId)])).rows[0];
       if (!current) throw new ApiError(403, 'ADMIN_REQUIRED', 'Administrator access is required');
       const duplicate = (await client.query(`SELECT 1 FROM (SELECT email FROM students UNION ALL SELECT email FROM staff_profiles UNION ALL SELECT email FROM department_heads UNION ALL SELECT email FROM admin_profiles WHERE user_id<>$2) identities WHERE email IS NOT NULL AND LOWER(email)=LOWER($1) LIMIT 1`, [values.email,Number(userId)])).rows[0];
       if (duplicate) throw new ApiError(409, 'ACCOUNT_CONFLICT', 'Username or email is already registered');
@@ -43,7 +43,7 @@ const createAdminAccountService = ({ pool, otpService } = {}) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const account = (await client.query(`SELECT u.id FROM users u JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role='ADMIN' AND ap.email IS NOT NULL FOR UPDATE OF u`, [Number(userId)])).rows[0];
+      const account = (await client.query(`SELECT u.id FROM users u JOIN admin_profiles ap ON ap.user_id=u.id WHERE u.id=$1 AND u.role IN ('SYSTEM_ADMIN','DISCIPLINE_ADMIN') AND ap.email IS NOT NULL FOR UPDATE OF u`, [Number(userId)])).rows[0];
       if (!account) throw new ApiError(403,'ADMIN_REQUIRED','Administrator access is required');
       await otpService.verify({ purpose:'ADMIN_EMAIL_VERIFICATION', userId:Number(userId), code, client });
       await client.query('UPDATE admin_profiles SET email_verified=TRUE,updated_at=CURRENT_TIMESTAMP WHERE user_id=$1', [account.id]);

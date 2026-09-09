@@ -29,6 +29,8 @@ import AdminClearanceCertificates from './components/AdminClearanceCertificates.
 import OffenseIndicator from './components/OffenseIndicator.jsx'
 import AccountSecuritySettings from './components/AccountSecuritySettings.jsx'
 import AdminDashboard from './components/AdminDashboard.jsx'
+import SystemDashboard from './components/SystemDashboard.jsx'
+import SupportAccessPanel from './components/SupportAccessPanel.jsx'
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import { API_URL, login } from './lib/api.js'
@@ -141,6 +143,24 @@ function App() {
       if (!response.ok) throw new Error(data.message || 'Unable to mark this notification as read.')
       setStudentNotifications((items) => items.map((item) => Number(item.id) === Number(notificationId)
         ? { ...item, is_read: true, read_at: data.notification?.read_at || new Date().toISOString() }
+        : item))
+    } catch (error) {
+      setNotificationActionError(error.message)
+    }
+  }
+
+  const acknowledgeNotification = async (notificationId) => {
+    setNotificationActionError('')
+    try {
+      const response = await fetch(`${API_URL}/api/notifications/${notificationId}/acknowledge`, {
+        method: 'PATCH',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || 'Unable to acknowledge this security notification.')
+      setStudentNotifications((items) => items.map((item) => Number(item.id) === Number(notificationId)
+        ? { ...item, is_read: true, read_at: data.notification?.read_at, acknowledged_at: data.notification?.acknowledged_at }
         : item))
     } catch (error) {
       setNotificationActionError(error.message)
@@ -268,6 +288,7 @@ function App() {
   const [reportData, setReportData] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState('')
+  const [activeSupportGrant, setActiveSupportGrant] = useState(null)
 
   const [reportFilters, setReportFilters] = useState({
     search: '',
@@ -286,7 +307,7 @@ function App() {
     if (item.view === 'Dashboard') return 'Overview'
     if (['Students','Registrations','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
     if (['Violations','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
-    if (item.view === 'Departments & Officer Accounts') return 'Management'
+    if (['Departments & Officer Accounts','Support Access'].includes(item.view)) return 'Management'
     if (item.view === 'Messages') return 'Communication'
     if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
     return 'Account'
@@ -324,7 +345,7 @@ function App() {
   const userRole = user?.role || null
 
   const isAdmin =
-    userRole === 'ADMIN' ||
+    userRole === 'DISCIPLINE_ADMIN' ||
     userRole === 'DISCIPLINE_OFFICE'
 
   const isDepartmentHead =
@@ -334,6 +355,18 @@ function App() {
     userRole === 'STUDENT'
 
   const routeResolution = resolveRoute(routePath, userRole)
+
+  useEffect(() => {
+    if (!token || userRole !== 'SYSTEM_ADMIN') { setActiveSupportGrant(null); return undefined }
+    const controller = new AbortController()
+    const refresh = () => fetch(`${API_URL}/api/support-access`, { headers:{Authorization:`Bearer ${token}`}, signal:controller.signal })
+      .then((response)=>response.ok?response.json():null)
+      .then((data)=>setActiveSupportGrant((data?.requests||[]).find((item)=>item.status==='APPROVED' && new Date(item.expires_at)>new Date())||null))
+      .catch((loadError)=>{if(loadError.name!=='AbortError')setActiveSupportGrant(null)})
+    refresh()
+    const timer=window.setInterval(refresh,30000)
+    return ()=>{window.clearInterval(timer);controller.abort()}
+  },[token,userRole])
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined
@@ -526,6 +559,14 @@ function App() {
       try {
         const authHeaders = {
           Authorization: `Bearer ${token}`
+        }
+
+        if (userRole === 'SYSTEM_ADMIN') {
+          const notificationsResponse = await fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
+          const notificationsData = await notificationsResponse.json().catch(() => ({}))
+          if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load system notifications')
+          setStudentNotifications(notificationsData.notifications || [])
+          return
         }
 
         /*
@@ -1960,6 +2001,18 @@ function App() {
       )
     }
 
+    if (userRole === 'SYSTEM_ADMIN' && activeView === 'System Dashboard') {
+      return <SystemDashboard token={token} />
+    }
+
+    if (userRole === 'SYSTEM_ADMIN' && activeView === 'Account Settings') {
+      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
+    }
+
+    if (activeView === 'Support Access' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
+      return <SupportAccessPanel token={token} role={userRole} />
+    }
+
     if (activeView === 'Messages') {
       return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
     }
@@ -2062,7 +2115,7 @@ function App() {
       }
 
       if (activeView === 'Notifications') {
-        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience="STUDENT" />
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience="STUDENT" />
       }
 
       if (activeView === 'Legacy Clearance') {
@@ -2286,7 +2339,7 @@ function App() {
     }
 
     if (activeView === 'Notifications') {
-      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience={isStudent ? 'STUDENT' : 'STAFF'} />
+      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience={isStudent ? 'STUDENT' : 'STAFF'} />
     }
 
     if (activeView === 'Dashboard') {
@@ -2319,19 +2372,19 @@ function App() {
       return <AdminRegistrationReviewWorkspace token={token} role={userRole} onPendingCountChange={updatePendingStudentCount} />
     }
 
-    if (userRole === 'ADMIN' && activeView === 'Departments & Officer Accounts') {
+    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Departments & Officer Accounts') {
       return <AdminDepartmentOfficers token={token} />
     }
 
-    if (activeView === 'Account Settings' && userRole !== 'ADMIN') {
+    if (activeView === 'Account Settings' && userRole !== 'DISCIPLINE_ADMIN') {
       return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
     }
 
-    if (userRole === 'ADMIN' && activeView === 'Account Settings') {
+    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Account Settings') {
       return <AdminAccountSettings token={token} onSession={acceptSession} />
     }
 
-    if (userRole === 'ADMIN' && activeView === 'Audit Log') {
+    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Audit Log') {
       return <AdminAuditLog token={token} />
     }
 
@@ -4273,12 +4326,13 @@ function App() {
 
           {isLoggedIn && (
             <div className="account-actions">
-              <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
+              <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
               <ProfileMenu user={user} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
             </div>
           )}
         </header>}
 
+        {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
         <div className="page-content">{renderContent()}</div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={routePath===item.path?'active':''} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
