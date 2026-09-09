@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Html5Qrcode } from 'html5-qrcode'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 import LoginPage from './components/LoginPage.jsx'
 import DepartmentDashboard from './components/DepartmentDashboard.jsx'
@@ -1274,8 +1273,10 @@ function App() {
         return
       }
 
-      const scanner =
-        new Html5Qrcode('qr-reader')
+      // Camera scanning is a specialist workflow, so keep its sizeable decoder
+      // out of the initial portal bundle and load it only when the user starts it.
+      const { Html5Qrcode } = await import('html5-qrcode')
+      const scanner = new Html5Qrcode('qr-reader')
 
       setQrScanner(scanner)
       setIsQrScanning(true)
