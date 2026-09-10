@@ -70,6 +70,12 @@ test('student and violation legends include the grave offense indicator', () => 
   assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 2)
 })
 
+test('segmented navigation uses readable light hover and selected states', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.main-panel :is\(\.review-workspace-tabs,[^}]*button:hover:not\(:disabled\) \{[^}]*background: #edf6ff !important;[^}]*color: #063f7c !important;/s)
+  assert.match(css, /button:is\(\.active, \[aria-selected='true'\], \[aria-current='page'\]\) \{[^}]*background: #dceeff !important;[^}]*color: #063b75 !important;/s)
+})
+
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /pointerdown/)
