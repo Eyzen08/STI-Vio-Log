@@ -269,21 +269,6 @@ function App() {
 
   const [clearanceRecords, setClearanceRecords] = useState([])
 
-  const [clearanceForm, setClearanceForm] = useState({
-    student_id: '',
-    academic_year: `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
-    semester: '1st Semester',
-    status: 'NOT_ELIGIBLE',
-    has_active_violation: false,
-    has_pending_service: false,
-    cleared_by: '',
-    cleared_at: '',
-    remarks: ''
-  })
-
-  const [clearanceFormError, setClearanceFormError] = useState('')
-  const [clearanceFormSuccess, setClearanceFormSuccess] = useState('')
-
   const [reportType, setReportType] = useState('violations')
   const [reportData, setReportData] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
@@ -336,7 +321,7 @@ function App() {
   }, [])
 
   const mobileNavItems = [
-    navItems.find(({ view }) => view === 'Dashboard'),
+    navItems.find(({ view }) => ['Dashboard', 'System Dashboard'].includes(view)),
     navItems.find(({ view }) => ['Students','Assigned Students','My Violations'].includes(view)),
     navItems.find(({ view }) => ['Violations','QR Scan','My Service'].includes(view)),
     navItems.find(({ view }) => view === 'Messages')
@@ -1554,202 +1539,6 @@ function App() {
 
   /*
    * ============================================================
-   * CLEARANCE FORM
-   * ============================================================
-   */
-
-  const handleClearanceFieldChange = (
-    event
-  ) => {
-    const {
-      name,
-      value,
-      type,
-      checked
-    } = event.target
-
-    setClearanceForm((current) => ({
-      ...current,
-
-      [name]:
-        type === 'checkbox'
-          ? checked
-          : value
-    }))
-  }
-
-  const handleClearanceSubmit = async (
-    event
-  ) => {
-    event.preventDefault()
-
-    setClearanceFormError('')
-    setClearanceFormSuccess('')
-
-    try {
-      const payload = {
-        student_id:
-          Number(
-            clearanceForm.student_id
-          ),
-
-        academic_year:
-          String(
-            clearanceForm.academic_year
-          ).trim(),
-
-        semester:
-          clearanceForm.semester,
-
-        remarks:
-          clearanceForm.remarks.trim()
-      }
-
-      if (
-        !payload.student_id ||
-        !payload.academic_year ||
-        !payload.semester
-      ) {
-        throw new Error(
-          'Student ID, academic year, and semester are required.'
-        )
-      }
-
-      const response =
-        await fetch(
-          `${API_URL}/api/clearance`,
-          {
-            method: 'POST',
-
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-
-            body: JSON.stringify(payload)
-          }
-        )
-
-      const data =
-        await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.message ||
-          'Unable to create clearance record.'
-        )
-      }
-
-      setClearanceFormSuccess(
-        `Clearance record was created for student #${payload.student_id}.`
-      )
-
-      setClearanceForm({
-        student_id: '',
-        academic_year:
-          `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`,
-        semester: '1st Semester',
-        status: 'NOT_ELIGIBLE',
-        has_active_violation: false,
-        has_pending_service: false,
-        cleared_by: '',
-        cleared_at: '',
-        remarks: ''
-      })
-
-      const refreshedClearance =
-        await fetch(
-          `${API_URL}/api/clearance`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        )
-
-      if (refreshedClearance.ok) {
-        const refreshedData =
-          await refreshedClearance.json()
-
-        setClearanceRecords(
-          refreshedData.clearanceRecords || []
-        )
-      }
-    } catch (clearanceError) {
-      setClearanceFormError(
-        clearanceError.message
-      )
-    }
-  }
-
-  /*
-   * ============================================================
-   * APPROVE CLEARANCE
-   * ============================================================
-   */
-
-  const handleClearanceApprove = async (
-    clearanceId
-  ) => {
-    setClearanceFormError('')
-    setClearanceFormSuccess('')
-
-    try {
-      const response =
-        await fetch(
-          `${API_URL}/api/clearance/${clearanceId}/approve`,
-          {
-            method: 'PUT',
-
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        )
-
-      const data =
-        await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.message ||
-          'Unable to approve clearance.'
-        )
-      }
-
-      setClearanceFormSuccess(
-        `Clearance #${clearanceId} was approved successfully.`
-      )
-
-      const refreshedClearance =
-        await fetch(
-          `${API_URL}/api/clearance`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        )
-
-      if (refreshedClearance.ok) {
-        const refreshedData =
-          await refreshedClearance.json()
-
-        setClearanceRecords(
-          refreshedData.clearanceRecords || []
-        )
-      }
-    } catch (approvalError) {
-      setClearanceFormError(
-        approvalError.message
-      )
-    }
-  }
-
-  /*
-   * ============================================================
    * LOGIN
    * ============================================================
    */
@@ -2138,7 +1927,7 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table>
+                <table className="management-record-table">
                   <thead>
                     <tr>
                       <th>
@@ -2183,19 +1972,19 @@ function App() {
                             record.id
                           }
                         >
-                          <td>
+                          <td data-label="Student">
                             {
                               record.academic_year
                             }
                           </td>
 
-                          <td>
+                          <td data-label="Program">
                             {
                               record.semester
                             }
                           </td>
 
-                          <td>
+                          <td data-label="Section">
                             <span className="status-badge">
                               {
                                 record.status
@@ -2203,7 +1992,7 @@ function App() {
                             </span>
                           </td>
 
-                          <td>
+                          <td data-label="Year">
                             {
                               record.has_active_violation
                                 ? 'Yes'
@@ -2724,10 +2513,10 @@ function App() {
                               '—'
                             }
                           </td>
-                          <td>{condition.total} total / {condition.open} open</td>
-                          <td>{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
-                          <td><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
-                          <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/>Guardian Contact</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
+                          <td data-label="Violations">{condition.total} total / {condition.open} open</td>
+                          <td data-label="Service progress">{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
+                          <td data-label="Clearance"><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
+                          <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/>Guardian Contact</button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
                         </tr>
                         )
                       }
@@ -2986,7 +2775,7 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table>
+                <table className="management-record-table">
                   <thead>
                     <tr>
                       <th>
@@ -3021,24 +2810,24 @@ function App() {
                               violation.id
                             }
                           >
-                            <td>
+                            <td data-label="Record ID" className="internal-record-id">
                               #{violation.id}
                             </td>
 
-                            <td>
+                            <td data-label="Student">
                               <div className="student-cell">
                                 <OffenseIndicator level={violation.offense_indicator_level} compact />
                                 <span><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></span>
                               </div>
                             </td>
 
-                            <td>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
+                            <td data-label="Incident">{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
 
-                            <td>{violation.exact_offense || violation.violation_name || 'Not recorded'}</td>
+                            <td data-label="Offense">{violation.exact_offense || violation.violation_name || 'Not recorded'}</td>
 
-                            <td>{violation.severity || '—'}</td>
+                            <td data-label="Classification">{violation.severity || '—'}</td>
 
-                            <td>
+                            <td data-label="Status">
                               <span className="status-badge">
                                 {
                                   violation.status
@@ -3046,7 +2835,7 @@ function App() {
                               </span>
                             </td>
 
-                            <td><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{violation.status === 'OPEN' && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
+                            <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{violation.status === 'OPEN' && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
                           </tr>
                         )
                       )}
@@ -3269,7 +3058,7 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table>
+                <table className="management-record-table">
                   <thead>
                     <tr>
                       <th>
@@ -3318,11 +3107,11 @@ function App() {
                             assignment.id
                           }
                         >
-                          <td>
+                          <td data-label="Record ID" className="internal-record-id">
                             #{assignment.id}
                           </td>
 
-                          <td>
+                          <td data-label="Student">
                             <strong>{assignment.student_number || `Student #${assignment.student_id}`}</strong>
                             {(assignment.first_name || assignment.last_name) && (
                               <span className="table-cell-detail">{assignment.first_name} {assignment.last_name}</span>
@@ -3330,27 +3119,27 @@ function App() {
                           </td>
 
 
-                          <td>
+                          <td data-label="Violation">
                             {
                               `#${assignment.violation_id}`
                             }
                           </td>
 
-                          <td>{assignment.department_code || assignment.department_name || 'Historical assignment'}</td>
+                          <td data-label="Department">{assignment.department_code || assignment.department_name || 'Historical assignment'}</td>
 
-                          <td>{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
+                          <td data-label="Department head">{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
 
-                          <td>
+                          <td data-label="Required">
                             {formatDuration(assignment.required_hours)}
                           </td>
 
-                          <td>
+                          <td data-label="Remaining">
                             {formatDuration(assignment.remaining_hours ?? assignment.required_hours ?? 0)}
                           </td>
 
-                          <td><div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{progress}%</small></div></td>
+                          <td data-label="Progress"><div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{progress}%</small></div></td>
 
-                          <td>
+                          <td data-label="Status">
                             <span className="status-badge">
                               {
                                 assignment.status ||
@@ -3358,7 +3147,7 @@ function App() {
                               }
                             </span>
                           </td>
-                          <td><button type="button" className="primary-row-action" onClick={()=>setViewingServiceAssignment(assignment)}>View</button></td>
+                          <td data-label="Action"><button type="button" className="primary-row-action" onClick={()=>setViewingServiceAssignment(assignment)}>View</button></td>
                         </tr>
                         )
                       }
@@ -3399,293 +3188,6 @@ function App() {
      */
 
     if (activeView === 'Clearance') return <AdminClearanceCertificates token={token} />
-
-    if (
-      activeView === 'Clearance'
-    ) {
-      return (
-        <>
-          <AdminClearanceCertificates token={token} />
-          {isAdmin && (
-            <section className="table-card form-card">
-              <div className="table-header">
-                <h3>
-                  Clearance Record
-                </h3>
-
-                <span>
-                  New record
-                </span>
-              </div>
-
-              <form
-                className="student-form"
-                onSubmit={
-                  handleClearanceSubmit
-                }
-              >
-                <div className="student-form-grid">
-                  <label>
-                    Student ID
-
-                    <input
-                      type="number"
-                      name="student_id"
-                      value={
-                        clearanceForm.student_id
-                      }
-                      onChange={
-                        handleClearanceFieldChange
-                      }
-                      min="1"
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Academic Year
-
-                    <input
-                      type="text"
-                      name="academic_year"
-                      value={
-                        clearanceForm.academic_year
-                      }
-                      onChange={
-                        handleClearanceFieldChange
-                      }
-                      placeholder="2025-2026"
-                      required
-                    />
-                  </label>
-
-                  <label>
-                    Semester
-
-                    <select
-                      name="semester"
-                      value={
-                        clearanceForm.semester
-                      }
-                      onChange={
-                        handleClearanceFieldChange
-                      }
-                    >
-                      <option value="1st Semester">
-                        1st Semester
-                      </option>
-
-                      <option value="2nd Semester">
-                        2nd Semester
-                      </option>
-
-                      <option value="Summer">
-                        Summer
-                      </option>
-                    </select>
-                  </label>
-
-                  <label className="full-width-field">
-                    Remarks
-
-                    <textarea
-                      name="remarks"
-                      value={
-                        clearanceForm.remarks
-                      }
-                      onChange={
-                        handleClearanceFieldChange
-                      }
-                      rows="3"
-                      placeholder="Add clearance notes"
-                    />
-                  </label>
-                </div>
-
-                {clearanceFormError && (
-                  <p className="error-message">
-                    {
-                      clearanceFormError
-                    }
-                  </p>
-                )}
-
-                {clearanceFormSuccess && (
-                  <p className="success-message">
-                    {
-                      clearanceFormSuccess
-                    }
-                  </p>
-                )}
-
-                <button
-                  type="submit"
-                  className="submit-btn"
-                >
-                  Create Clearance
-                </button>
-              </form>
-            </section>
-          )}
-
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                Clearance Records
-              </h3>
-
-              <span>
-                {
-                  clearanceRecords.length
-                }{' '}
-                records
-              </span>
-            </div>
-
-            {clearanceRecords.length === 0 ? (
-              <p className="empty-state">
-                No clearance records yet.
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>
-                        ID
-                      </th>
-
-                      <th>
-                        Student
-                      </th>
-
-                      <th>
-                        Academic Year
-                      </th>
-
-                      <th>
-                        Semester
-                      </th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>
-                        Active Violation
-                      </th>
-
-                      <th>
-                        Pending Service
-                      </th>
-
-                      <th>
-                        Cleared By
-                      </th>
-
-                      <th>
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {clearanceRecords.map(
-                      (record) => (
-                        <tr
-                          key={
-                            record.id
-                          }
-                        >
-                          <td>
-                            #{record.id}
-                          </td>
-
-                          <td>
-                            {record.first_name ||
-                            record.last_name
-                              ? `${record.first_name || ''} ${record.last_name || ''}`.trim()
-                              : `Student #${record.student_id}`}
-                          </td>
-
-                          <td>
-                            {
-                              record.academic_year
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.semester
-                            }
-                          </td>
-
-                          <td>
-                            <span className="status-badge">
-                              {
-                                record.status
-                              }
-                            </span>
-                          </td>
-
-                          <td>
-                            {
-                              record.has_active_violation
-                                ? 'Yes'
-                                : 'No'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.has_pending_service
-                                ? 'Yes'
-                                : 'No'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.cleared_by
-                                ? `User #${record.cleared_by}`
-                                : '—'
-                            }
-                          </td>
-
-                          <td>
-                            {isDepartmentHead &&
-                            record.status ===
-                              'PENDING' &&
-                            !record.has_active_violation &&
-                            !record.has_pending_service ? (
-                              <button
-                                type="button"
-                                className="submit-btn"
-                                onClick={() =>
-                                  handleClearanceApprove(
-                                    record.id
-                                  )
-                                }
-                              >
-                                Approve
-                              </button>
-                            ) : (
-                              <span>
-                                —
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        </>
-      )
-    }
 
     /*
      * ==========================================================
@@ -4319,9 +3821,14 @@ function App() {
               <span aria-hidden="true">☰</span>
             </button>
 
-            <form className="topbar-search" onSubmit={(event)=>{event.preventDefault(); if(isAdmin)navigateTo('/admin/students'); else if(isDepartmentHead)navigateTo('/department/students')}}>
-              <PortalIcon name="search"/><label className="sr-only" htmlFor="portal-search">Search portal</label><input id="portal-search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isStudent?'Search your portal…':'Search students, violations, or reports…'}/>
-            </form>
+            <button className="mobile-brand" type="button" onClick={() => navigateTo(getHomePath(userRole))} aria-label="STI Vio-Log home">
+              <img src={stiVioLogLogo} alt="" />
+              <span>STI Vio-Log</span>
+            </button>
+
+            {(isAdmin || isDepartmentHead) && <form className="topbar-search" role="search" onSubmit={(event)=>{event.preventDefault(); navigateTo(isAdmin?'/admin/students':'/department/students')}}>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search student directory…'}/>
+            </form>}
           </div>
 
           {isLoggedIn && (

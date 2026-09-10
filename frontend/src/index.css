@@ -1,14 +1,14 @@
 :root {
   /* STI Vio-Log design foundation */
-  --color-primary: #005bac;
-  --color-primary-dark: #003b70;
-  --color-secondary: #0072ce;
-  --color-accent: #f5c400;
-  --color-page: #f4f7fb;
+  --color-primary: #1463d6;
+  --color-primary-dark: #0f4fac;
+  --color-secondary: #1463d6;
+  --color-accent: #f4c542;
+  --color-page: #f5f7fb;
   --color-surface: #ffffff;
-  --color-text: #172b4d;
-  --color-text-secondary: #667085;
-  --color-border: #d7e0ea;
+  --color-text: #172033;
+  --color-text-secondary: #526174;
+  --color-border: #dee5ef;
   --color-success: #198754;
   --color-warning: #f59e0b;
   --color-danger: #dc3545;

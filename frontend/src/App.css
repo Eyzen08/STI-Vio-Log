@@ -4650,7 +4650,7 @@ a {
 .profile-menu-popover button:hover { background: var(--portal-light-blue); }
 .profile-menu-popover hr { width: 100%; margin: 5px 0; border: 0; border-top: 1px solid var(--portal-line); }
 .profile-menu-popover .profile-logout { color: #b42334; }
-.mobile-bottom-nav { display: none; }
+.mobile-bottom-nav,.mobile-brand { display: none; }
 
 .portal-dashboard { display: grid; gap: 12px; max-width: 1500px; margin: 0 auto; }
 .portal-welcome { min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
@@ -4803,11 +4803,13 @@ a {
   .sidebar-close { display: grid; margin-left: auto; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 50%; background: rgba(255,255,255,.1); color: white; }
   .nav-account-actions { position: static; }
   .app-shell:not(.auth-shell) .main-panel { display: block; min-height: 100vh; padding: 0 0 68px; }
-  .topbar { min-height: 58px; padding: 8px 13px; background: linear-gradient(90deg,#003a79,#00549b); border: 0; color: white; }
+  .topbar { min-height: 60px; flex-direction: row; padding: 8px 13px; background: var(--color-primary); border: 0; color: white; }
+  .topbar-title,.account-actions { min-width: 0; flex-direction: row; align-items: center; }
   .mobile-menu-button { display: grid; width: 34px; height: 34px; place-items: center; padding: 0 !important; border: 0; background: transparent !important; color: white !important; }
-  .topbar-search { width: auto; flex: 1; padding: 0; background: transparent; color: white; }
+  .mobile-brand { min-width: 0; display: flex; flex: 1; align-items: center; gap: 8px; padding: 0 4px !important; border: 0 !important; background: transparent !important; color: white !important; font-size: .9rem; font-weight: 800; white-space: nowrap; }
+  .mobile-brand img { width: 30px; height: 30px; object-fit: contain; }
+  .topbar-search { display: none; }
   .topbar-search svg,.topbar-search input { display: none; }
-  .topbar-search::before { content: 'STI Vio-Log'; color: white; font-size: .9rem; font-weight: 800; }
   .notification-button { color: white !important; }
   .profile-menu-trigger { min-width: auto; color: white; }
   .profile-menu-trigger .account-summary,.profile-menu-trigger > span:last-child { display: none; }
@@ -4828,7 +4830,7 @@ a {
   .student-standing-alert strong { color: #9e2434; font-size: .7rem; }
   .student-standing-alert span { color: #7f5760; font-size: .58rem; }
   .portal-dashboard .stats-grid,.admin-stats,.department-stats { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
-  .portal-dashboard .stat-card { min-height: 70px; gap: 7px; padding: 9px; }
+  .portal-dashboard .stat-card { min-height: 76px; gap: 7px; padding: 10px; }
   .portal-dashboard .stat-card i { width: 31px; height: 31px; }
   .portal-dashboard .stat-card i svg { width: 16px; }
   .portal-dashboard .stat-card span { font-size: .57rem; }

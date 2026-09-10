@@ -16,21 +16,25 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
   const completed = Math.max(0, required-remaining)
   const progress = required ? Math.min(100,Math.round(completed/required*100)) : 0
   const firstLabel = role === 'DISCIPLINE_OFFICE' ? 'Discipline Officer' : 'Admin'
-  const metrics = [
+  const primaryMetrics = [
     ['students','Total students',students.length,'Registered records','blue'],
     ['violations','Open violations',openViolations,'Requires review','red'],
+    ['clock','Students timed in',timedIn,'Currently on site','blue'],
+    ['registrations','Pending reviews',pendingRegistrations,'Needs review','purple']
+  ]
+  const additionalMetrics = [
     ['students','Non-compliant students',nonCompliant,'Needs follow-up','orange'],
     ['service','Active service assignments',activeAssignments,'Ongoing service','green'],
-    ['clock','Students timed in',timedIn,'Currently on site','blue'],
-    ['registrations','Pending registrations',pendingRegistrations,'Needs review','purple'],
     ['check','Clearance ready',clearanceReady,'For evaluation','green'],
     ['messages','Unread messages',unreadMessages,'From portal users','blue']
   ]
+  const metricCard = ([icon,label,value,note,tone]) => <article className={`stat-card metric-${tone}`} key={label}><i><PortalIcon name={icon}/></i><div><span>{label}</span><strong>{loading ? '—' : value}</strong><small>{note}</small></div></article>
 
   return <div className="admin-dashboard portal-dashboard">
     <section className="portal-welcome"><div><h2>Welcome back, {firstLabel}!</h2><p>Here’s what’s happening at STI Global City today.</p></div><time>{new Intl.DateTimeFormat('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())}</time></section>
     <DashboardQuickActions role={role} onNavigate={onNavigate} pendingRegistrations={pendingRegistrations}/>
-    <section className="stats-grid admin-stats" aria-label="Administrative summary">{metrics.map(([icon,label,value,note,tone])=><article className={`stat-card metric-${tone}`} key={label}><i><PortalIcon name={icon}/></i><div><span>{label}</span><strong>{loading ? '—' : value}</strong><small>{note}</small></div></article>)}</section>
+    <section className="stats-grid admin-stats" aria-label="Priority administrative summary">{primaryMetrics.map(metricCard)}</section>
+    <details className="dashboard-additional-metrics"><summary>View additional totals</summary><section className="stats-grid admin-stats" aria-label="Additional administrative totals">{additionalMetrics.map(metricCard)}</section></details>
     <section className="admin-dashboard-grid">
       <article className="dashboard-card recent-violations-card"><header className="dashboard-section-heading"><div><h3>Recent violations</h3><p>Latest recorded student cases</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/violations')}>View all</button></header>{violations.length ? <div className="table-wrap"><table><thead><tr><th>Student</th><th>Offense</th><th>Date</th><th>Status</th></tr></thead><tbody>{violations.slice(0,5).map((item)=><tr key={item.id}><td><strong>{item.student_name || `Student #${item.student_id}`}</strong><small>{item.student_number}</small></td><td><span className="offense-table-type"><OffenseIndicator level={item.offense_indicator_level} compact/>{item.exact_offense || item.violation_type_name || 'Recorded offense'}</span></td><td>{formatIncidentDateTime(item.incident_date,item.incident_time)}</td><td><span className={`status-badge status-${String(item.status).toLowerCase()}`}>{item.status}</span></td></tr>)}</tbody></table></div> : <p className="empty-state">No violations available.</p>}</article>
       <article className="dashboard-card progress-ring-card admin-service-overview"><header className="dashboard-section-heading"><div><h3>Community service overview</h3><p>Overall completion</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/community-service')}>View all</button></header><div className="progress-ring" style={{'--progress':`${progress*3.6}deg`}}><strong>{progress}%</strong><span>{formatDuration(completed)} complete</span></div><dl><div><dt>Completed</dt><dd>{formatDuration(completed)}</dd></div><div><dt>Remaining</dt><dd>{formatDuration(remaining)}</dd></div><div><dt>Assignments</dt><dd>{activeAssignments}</dd></div></dl></article>

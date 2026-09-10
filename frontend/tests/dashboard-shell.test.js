@@ -11,12 +11,38 @@ test('quick actions are role scoped and navigate only within the role portal', (
   assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/reports/)
 })
 
+test('admin dashboard prioritizes four operational metrics and keeps additional totals accessible', () => {
+  const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
+  assert.match(source, /const primaryMetrics = \[/)
+  assert.match(source, /View additional totals/)
+  assert.match(source, /dashboard-additional-metrics/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)
   assert.match(source, /\/student\/account-settings/)
   assert.match(source, /\/department\/account-settings/)
   assert.match(source, /\/admin\/account-settings/)
+  assert.match(source, /SYSTEM_ADMIN: '\/system\/account-settings'/)
+})
+
+test('mobile shell exposes real branding, scoped directory search, and the system dashboard', () => {
+  const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.match(source, /className="mobile-brand"/)
+  assert.match(source, /aria-label="STI Vio-Log home"/)
+  assert.match(source, /\['Dashboard', 'System Dashboard'\]\.includes\(view\)/)
+  assert.match(source, /\(isAdmin \|\| isDepartmentHead\).*className="topbar-search"/s)
+  assert.doesNotMatch(source, /topbar-search::before/)
+})
+
+test('primary management tables expose labeled mobile record cards', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.equal((app.match(/className="management-record-table"/g) || []).length, 3)
+  for (const label of ['Student', 'Status', 'Actions', 'Service progress']) assert.match(app, new RegExp(`data-label="${label}"`))
+  assert.match(css, /\.management-record-table td::before/)
+  assert.match(css, /content: attr\(data-label\)/)
 })
 
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {

@@ -47,6 +47,9 @@
 .portal-dashboard .stat-card i { width: 44px; height: 44px; border-radius: 12px; }
 .dashboard-quick-actions > div { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
 .dashboard-quick-actions button { font-size: 12px; min-height: 44px; }
+.dashboard-additional-metrics { max-width: 1500px; }
+.dashboard-additional-metrics > summary { width: max-content; margin-left: auto; padding: 6px 2px; color: var(--color-primary-dark); cursor: pointer; font-size: 13px; font-weight: 600; }
+.dashboard-additional-metrics[open] > summary { margin-bottom: 8px; }
 .portal-dashboard .text-button { font-size: 12px; }
 .admin-dashboard-grid { grid-template-columns: minmax(0,1.7fr) minmax(300px,1fr); gap: 18px; }
 .department-overview-grid { grid-template-columns: minmax(0,1.6fr) minmax(260px,1fr); gap: 18px; }
@@ -128,11 +131,11 @@
   .portal-welcome h2 { font-size: 24px; }
   .portal-welcome p { font-size: 12px; }
   .dashboard-card { padding: 16px; }
-  .portal-dashboard .stat-card { min-height: 112px; padding: 12px; gap: 9px; }
+  .portal-dashboard .stat-card { min-height: 76px; padding: 10px; gap: 8px; }
   .portal-dashboard .stat-card strong { font-size: 24px; }
   .portal-dashboard .stat-card span { font-size: 11px; }
   .portal-dashboard .stat-card i { width: 32px; height: 32px; }
-  .portal-dashboard .stat-card small { display: block; font-size: 10px; }
+  .portal-dashboard .stat-card small { display: none; }
   .student-overview-grid { grid-template-columns: minmax(0,1fr); }
   .standing-card,.clearance-summary-card,.recent-violations-card,.recent-activity-card,.dashboard-table-card { display: block; }
   .student-dashboard .student-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -147,5 +150,23 @@
   .signature-form,.duplicate-filters { grid-template-columns: minmax(0,1fr); }
   .auth-card.login-card { padding: 24px; }
   .auth-card .login-form input { font-size: 16px; }
+  .table-card:has(.management-table-header) table,
+  .registration-directory table { min-width: 0; }
+  .table-actions { flex-wrap: wrap; }
+  .table-actions button { width: auto; min-height: 44px; }
+  .dashboard-additional-metrics > summary { margin-left: 0; min-height: 44px; display: flex; align-items: center; }
+  .management-record-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .management-record-table,.management-record-table tbody { display: block; }
+  .management-record-table tbody { padding: 0 12px 12px; }
+  .management-record-table tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px 16px; margin-bottom: 10px; padding: 14px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
+  .management-record-table tr:last-child { margin-bottom: 0; }
+  .management-record-table td { min-width: 0; display: grid; align-content: start; gap: 3px; padding: 0 !important; border: 0 !important; overflow-wrap: anywhere; }
+  .management-record-table td::before { content: attr(data-label); color: var(--color-text-secondary); font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+  .management-record-table td[data-label="Student"],.management-record-table td[data-label="Actions"],.management-record-table td[data-label="Action"] { grid-column: 1 / -1; }
+  .management-record-table .internal-record-id { display: none; }
+  .management-record-table .student-cell { min-width: 0; }
+  .management-record-table .table-progress { min-width: 0; }
+  .management-record-table .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .management-record-table .inline-actions button { min-height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { .duplicate-skeleton span { animation: none; } }
