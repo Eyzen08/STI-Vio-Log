@@ -3,9 +3,9 @@ import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.
 const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
 const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
-const DepartmentDtr = lazy(() => import('./components/DepartmentDtr.jsx'))
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
 const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
+import DepartmentDtr from './components/DepartmentDtr.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
