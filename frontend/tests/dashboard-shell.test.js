@@ -92,6 +92,15 @@ test('mobile profile uses circular initials in the trigger and opened menu', () 
   assert.match(css, /\.profile-menu-popover header \.account-avatar \{ width: 42px; height: 42px;[^}]*border-radius: 50%/s)
 })
 
+test('mobile header keeps its controls visible and logout forces a clean sign-out', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.topbar \{[\s\S]*?background: linear-gradient\([^}]*!important;/)
+  assert.match(css, /\.mobile-menu-button \{[^}]*display: grid !important;[^}]*color: #fff !important;/s)
+  assert.match(css, /\.notification-button \{[^}]*color: #fff !important;/s)
+  assert.match(app, /const handleLogout = \(\) => \{[\s\S]*?clearSession\(\)[\s\S]*?setIsMobileNavOpen\(false\)[\s\S]*?window\.location\.replace\('\/login'\)/)
+})
+
 test('signature image validation accepts only PNG or JPEG up to 1 MB', () => {
   assert.equal(validateSignatureFile({ type: 'image/png', size: 1024 }), '')
   assert.equal(validateSignatureFile({ type: 'image/jpeg', size: 1024 * 1024 }), '')

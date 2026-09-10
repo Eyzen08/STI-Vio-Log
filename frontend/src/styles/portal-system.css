@@ -315,7 +315,31 @@
 .profile-menu-popover { border-color: #d6e2ee; box-shadow: 0 22px 56px rgba(8,47,104,.18); }
 
 @media (max-width: 767px) {
-  .topbar { padding-top: max(10px,env(safe-area-inset-top)); }
+  .topbar {
+    min-height: calc(64px + env(safe-area-inset-top));
+    padding: max(10px,env(safe-area-inset-top)) 12px 10px;
+    border-bottom: 0;
+    background: linear-gradient(105deg,#0759ad,#0871cd) !important;
+    box-shadow: 0 7px 22px rgba(7,53,107,.18);
+    color: #fff;
+  }
+  .topbar-title { display: flex; flex: 1; align-items: center; gap: 7px; }
+  .mobile-menu-button {
+    display: grid !important; flex: 0 0 40px; width: 40px; height: 40px; place-items: center;
+    color: #fff !important; opacity: 1;
+  }
+  .mobile-brand {
+    display: flex !important; min-width: 0; align-items: center; gap: 8px;
+    color: #fff !important; opacity: 1;
+  }
+  .mobile-brand img { width: 46px; height: 32px; object-fit: contain; }
+  .mobile-brand span { overflow: hidden; color: #fff; text-overflow: ellipsis; white-space: nowrap; }
+  .account-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 4px; }
+  .notification-button { display: grid !important; color: #fff !important; opacity: 1; }
+  .main-panel .profile-menu-trigger { color: #fff; opacity: 1; }
+  .profile-menu-trigger .account-avatar {
+    border: 1px solid rgba(255,255,255,.5); background: rgba(255,255,255,.2); color: #fff;
+  }
   .page-content { padding: 18px 14px calc(26px + env(safe-area-inset-bottom)); }
   .management-page-header { gap: 10px; margin-bottom: 18px; }
   .management-page-header p { display: block; font-size: .76rem; line-height: 1.5; }

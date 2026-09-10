@@ -1616,6 +1616,10 @@ function App() {
   const handleLogout = () => {
     clearSession()
 
+    realtimeSocket?.disconnect()
+    setRealtimeSocket(null)
+    setIsMobileNavOpen(false)
+
     setToken('')
     setUser(null)
     setError('')
@@ -1635,7 +1639,10 @@ function App() {
     setClearanceRecords([])
 
     setActiveView('Dashboard')
-    navigateTo('/login', { replace: true })
+
+    // Force a clean document load after sign-out so Safari cannot retain a
+    // protected route or an authenticated in-memory component tree.
+    window.location.replace('/login')
   }
 
   /*
