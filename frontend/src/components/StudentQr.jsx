@@ -64,7 +64,7 @@ function StudentQr({ profile, loading, error }) {
 
             <div className="student-qr-frame">
               {imageUrl
-                ? <img src={imageUrl} alt="Your STI Vio-Log attendance QR code" />
+                ? <img src={imageUrl} alt="Your STI Vio-Log attendance QR code" width="320" height="320" />
                 : <div className="skeleton qr-code-skeleton" aria-label="Generating QR code" />}
             </div>
 

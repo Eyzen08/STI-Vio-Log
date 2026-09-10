@@ -3764,6 +3764,8 @@ function App() {
             className="brand-logo"
             src={stiVioLogLogo}
             alt="STI Vio-Log Discipline Office Portal"
+            width="620"
+            height="248"
           />
 
           <button
@@ -3838,7 +3840,7 @@ function App() {
             </button>
 
             <button className="mobile-brand" type="button" onClick={() => navigateTo(getHomePath(userRole))} aria-label="STI Vio-Log home">
-              <img src={stiVioLogLogo} alt="" />
+              <img src={stiVioLogLogo} alt="" width="620" height="248" />
               <span>STI Vio-Log</span>
             </button>
 

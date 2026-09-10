@@ -12,14 +12,14 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   return <section className={`login-page${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title">
     <div className="login-intro" style={{backgroundImage:`linear-gradient(180deg, rgba(0, 48, 116, .28), rgba(0, 45, 103, .9)), url(${buildingImage})`}}>
-      <div className="login-brand-mark"><img src={stiLogo} alt="STI Global City"/><span>GLOBAL CITY</span></div>
+      <div className="login-brand-mark"><img src={stiLogo} alt="STI Global City" width="420" height="250"/><span>GLOBAL CITY</span></div>
       <div className="login-intro-content"><span className="login-kicker">STI GLOBAL CITY</span><h2>STI Vio-Log</h2><p className="login-tagline">Discipline. Accountability. A Brighter Tomorrow.</p><p>A unified system for student discipline management, community service, and clearance at STI Global City.</p></div>
       <div className="login-assurance" aria-label="Portal assurance"><span>Real People. Real Opportunities.</span><small>© {new Date().getFullYear()} STI Global City</small></div>
     </div>
     <div className="login-form-panel">
       <div className="login-card auth-card"><div className="card-header auth-card-header"><div>{!studentFlow&&<span className="badge"><ShieldIcon/> Secure access</span>}<h3 id="login-title">{studentFlow?'Student account security':'Sign In'}</h3><p>{studentFlow?'Complete the secure student account process below.':'Access your STI Vio-Log account'}</p></div></div>
         {studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate}/> : <>
-          <form className="login-form" onSubmit={onSubmit}><label htmlFor="username">Username / Student Number<input id="username" type="text" name="username" placeholder="Enter username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} required autoFocus/></label>
+          <form className="login-form" onSubmit={onSubmit}><label htmlFor="username">Username / Student Number<input id="username" type="text" name="username" placeholder="Enter username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} required/></label>
             <PasswordField id="password" label="Password" placeholder="Enter your password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password"/>
             {error&&<p className="error-message" role="alert" aria-live="polite">{error}</p>}<button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting?'Signing in…':'Sign In'}</button>
           </form>
