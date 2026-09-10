@@ -111,6 +111,14 @@
 .duplicate-source-grid :is(dt,dd) { font-size: 12px; }
 .signature-directory article { gap: 12px; padding: 18px; }
 .certificate-admin .certificate-student-list { max-height: none; }
+.violations-page .violation-summary,
+.violations-page .violation-summary:hover,
+.violations-page .violation-summary:active,
+.violations-page .violation-summary[aria-expanded="true"] { background: #eaf2ff !important; color: #172033 !important; }
+.violations-page .violation-summary[aria-expanded="true"] { border-bottom: 1px solid #cbdcf5; }
+.violations-page .violation-summary-main h3 { color: #172033; }
+.violations-page .violation-summary-main > p { color: #40546d; }
+.violations-page .violation-toggle { border: 1px solid #bfd2ec; background: #fff; color: #0f4fac; }
 .login-form-panel { background: var(--color-page); }
 .auth-card.login-card { border: 1px solid var(--color-border); box-shadow: var(--shadow-md); padding: 32px; border-radius: 16px; }
 .auth-card .login-form label { font-size: 13px; }

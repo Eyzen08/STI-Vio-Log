@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import { formatHours, normalizeViolation, statusLabel } from '../src/lib/studentViolations.js'
 
@@ -35,4 +36,10 @@ test('canonical lifecycle values receive student-readable labels', () => {
   assert.equal(statusLabel('COMPLETE'), 'Completed')
   assert.equal(statusLabel('INVALID_CANCEL'), 'Invalid / cancelled')
   assert.equal(statusLabel('REOPEN'), 'Reopened')
+})
+
+test('expanded violation summaries retain readable light-surface contrast', async () => {
+  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.violations-page \.violation-summary\[aria-expanded="true"\][^{]*\{ background: #eaf2ff !important; color: #172033 !important; \}/)
+  assert.match(css, /\.violations-page \.violation-summary-main > p \{ color: #40546d; \}/)
 })
