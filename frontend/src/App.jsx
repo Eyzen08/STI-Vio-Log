@@ -1617,7 +1617,11 @@ function App() {
   const handleLogout = () => {
     clearSession()
 
-    realtimeSocket?.disconnect()
+    try {
+      realtimeSocket?.disconnect()
+    } catch {
+      // A stale real-time connection must never prevent local sign-out.
+    }
     setRealtimeSocket(null)
     setIsMobileNavOpen(false)
 
@@ -1643,7 +1647,7 @@ function App() {
 
     // Force a clean document load after sign-out so Safari cannot retain a
     // protected route or an authenticated in-memory component tree.
-    window.location.replace('/login')
+    window.location.replace(new URL('/login', window.location.href).href)
   }
 
   /*

@@ -47,6 +47,12 @@ function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
   const username = user?.full_name || user?.username || 'Portal User'
   const initials = username.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
   const choose = (action) => { close(false); action() }
+  const logout = (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    close(false)
+    onLogout?.()
+  }
 
   return <div className="profile-menu" ref={rootRef}>
     <button ref={triggerRef} type="button" className="profile-menu-trigger" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
@@ -57,7 +63,7 @@ function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
       <button ref={firstItemRef} role="menuitem" type="button" onClick={() => choose(() => onNavigate(profilePath(user?.role)))}><PortalIcon name="user"/><span>View Profile</span></button>
       <button role="menuitem" type="button" onClick={() => choose(() => onNavigate(settingsPath(user?.role)))}><PortalIcon name="settings"/><span>Account Settings</span></button>
       <hr/>
-      <button role="menuitem" type="button" className="profile-logout" onClick={() => choose(onLogout)}><PortalIcon name="logout"/><span>Logout</span></button>
+      <button role="menuitem" type="button" className="profile-logout" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></button>
     </div>}
   </div>
 }
