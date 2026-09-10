@@ -21,6 +21,8 @@ test('redesigned login keeps every existing authentication entry point', () => {
   assert.match(source, /onNavigate\('\/register'\)/)
   assert.match(source, /<GoogleStudentAccess clientId=\{googleClientId\} onSession=\{onGoogleSession\}/)
   assert.match(source, /<PasswordField/)
+  assert.match(source, /onNavigate\('\/privacy'\)/)
+  assert.match(source, /onNavigate\('\/terms'\)/)
 })
 
 test('login branding uses local imported building and logo assets', () => {

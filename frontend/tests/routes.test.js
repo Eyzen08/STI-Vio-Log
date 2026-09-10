@@ -56,6 +56,8 @@ test('public, unauthorized, and unknown locations resolve explicitly', () => {
   assert.equal(resolveRoute('/forgot-password', null).status, 'public')
   assert.equal(resolveRoute('/reset-password/verify', null).status, 'public')
   assert.equal(resolveRoute('/reset-password/new', null).status, 'public')
+  assert.equal(resolveRoute('/privacy', null).status, 'public')
+  assert.equal(resolveRoute('/terms', null).status, 'public')
   assert.equal(resolveRoute('/department/register', null).status, 'not_found')
   assert.equal(resolveRoute('/unauthorized', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/not-a-real-page', 'DISCIPLINE_ADMIN').status, 'not_found')

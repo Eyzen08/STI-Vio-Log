@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /login
+Allow: /privacy
+Allow: /terms
+Disallow: /admin/
+Disallow: /department/
+Disallow: /student/
+Disallow: /system/
+Disallow: /account/
+Disallow: /register
+Disallow: /verify-email
+Disallow: /forgot-password
+Disallow: /reset-password/
+
+Sitemap: https://sti-vio-log.vercel.app/sitemap.xml

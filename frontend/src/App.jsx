@@ -33,6 +33,7 @@ import SystemDashboard from './components/SystemDashboard.jsx'
 import SupportAccessPanel from './components/SupportAccessPanel.jsx'
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
+import PublicPolicyPage from './components/PublicPolicyPage.jsx'
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
@@ -429,7 +430,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn) {
-      if (!['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(routePath)) navigateTo('/login', { replace: true })
+      if (routePath === '/' || routeResolution.status === 'unauthorized') navigateTo('/login', { replace: true })
       return
     }
 
@@ -1773,6 +1774,14 @@ function App() {
      * LOGIN SCREEN
      * ==========================================================
      */
+
+    if (routePath === '/privacy' || routePath === '/terms') {
+      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} />
+    }
+
+    if (!isLoggedIn && routeResolution.status === 'not_found') {
+      return <RouteStatePage type="not_found" onGoHome={() => navigateTo('/login')} actionLabel="Return to sign in" />
+    }
 
     if (!isLoggedIn) {
       return (

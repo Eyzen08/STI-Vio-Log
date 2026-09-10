@@ -4,6 +4,8 @@ export const ROLE_GROUPS = {
   student: ['STUDENT']
 }
 
+export const PUBLIC_ROUTES = ['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
+
 export const APP_ROUTES = [
   { path: '/system/dashboard', label: 'System Status', view: 'System Dashboard', roles: ['SYSTEM_ADMIN'] },
   { path: '/system/support-access', label: 'Support Access', view: 'Support Access', roles: ['SYSTEM_ADMIN'] },
@@ -59,7 +61,7 @@ export const getNavItems = (role) =>
   APP_ROUTES.filter((route) => route.roles.includes(role) && route.navigation !== false)
 
 export const resolveRoute = (path, role) => {
-  if (['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'].includes(path)) return { status: 'public', route: null }
+  if (PUBLIC_ROUTES.includes(path)) return { status: 'public', route: null }
   if (path === '/unauthorized') return { status: 'unauthorized', route: null }
 
   const legacyAdminRoutes = ['/admin/department-accounts','/admin/accounts','/admin/departments']

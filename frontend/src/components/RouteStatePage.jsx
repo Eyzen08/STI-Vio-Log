@@ -1,4 +1,4 @@
-function RouteStatePage({ type, onGoHome }) {
+function RouteStatePage({ type, onGoHome, actionLabel = 'Return to dashboard' }) {
   const isUnauthorized = type === 'unauthorized'
 
   return (
@@ -16,7 +16,7 @@ function RouteStatePage({ type, onGoHome }) {
           : 'The address may be incorrect, or the page may have moved.'}
       </p>
       <button type="button" className="submit-btn" onClick={onGoHome}>
-        Return to dashboard
+        {actionLabel}
       </button>
     </section>
   )

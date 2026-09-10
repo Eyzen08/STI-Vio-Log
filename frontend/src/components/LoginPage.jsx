@@ -27,6 +27,11 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
           <details className="google-access-details"><summary>Continue with Google</summary><GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/><small>For eligible linked student accounts only</small></details>
         </>}
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
+        <nav className="auth-legal-links" aria-label="Legal information">
+          <button type="button" onClick={()=>onNavigate('/privacy')}>Privacy Policy</button>
+          <span aria-hidden="true">&bull;</span>
+          <button type="button" onClick={()=>onNavigate('/terms')}>Terms of Use</button>
+        </nav>
       </div>
     </div>
   </section>

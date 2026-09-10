@@ -4156,6 +4156,81 @@ a {
 .auth-role-note p { margin: 0; font-size: .84rem; line-height: 1.45; }
 .auth-card .auth-help { margin-top: 14px; font-size: .78rem; }
 
+.auth-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  color: #738096;
+  font-size: .72rem;
+}
+
+.auth-legal-links button {
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: #0759b8;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.public-policy-page {
+  min-height: 100vh;
+  padding: 24px clamp(16px, 5vw, 72px) 56px;
+  background: linear-gradient(180deg, #e9f3ff 0, #f5f8fc 280px);
+  color: #172033;
+}
+
+.public-policy-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(980px, 100%);
+  margin: 0 auto 24px;
+}
+
+.public-policy-brand,
+.public-policy-signin,
+.public-policy-footer button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.public-policy-brand { display: flex; align-items: center; gap: 10px; padding: 0; color: #082e68; }
+.public-policy-brand span { display: grid; width: 46px; height: 46px; place-items: center; border-radius: 12px; background: #ffd51f; color: #075ba7; font-weight: 900; }
+.public-policy-brand strong { font-size: 1.05rem; }
+.public-policy-signin { min-height: 42px; padding: 9px 18px; border-radius: 10px; background: #075fc0; color: white; font-weight: 750; }
+.public-policy-card { width: min(980px, 100%); margin: 0 auto; overflow: hidden; border: 1px solid #d7e2ee; border-radius: 22px; background: white; box-shadow: 0 18px 48px rgba(18,52,91,.09); }
+.public-policy-intro { padding: clamp(28px, 5vw, 54px); border-bottom: 1px solid #e0e7ef; background: linear-gradient(135deg, #fff, #f3f8ff); }
+.public-policy-intro .eyebrow { margin-bottom: 9px; color: #075fc0; font-size: .75rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.public-policy-intro h1 { margin: 0 0 12px; color: #082e68; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.05; letter-spacing: -.035em; }
+.public-policy-intro > p:not(.eyebrow) { max-width: 720px; margin-bottom: 18px; color: #53667d; font-size: clamp(1rem, 2vw, 1.15rem); }
+.public-policy-intro small { color: #6d7b8d; }
+.public-policy-sections { display: grid; gap: 0; padding: 8px clamp(24px, 5vw, 54px); }
+.public-policy-sections section { padding: 25px 0; border-bottom: 1px solid #e5ebf2; }
+.public-policy-sections section:last-child { border-bottom: 0; }
+.public-policy-sections h2 { margin: 0 0 8px; color: #123968; font-size: 1.05rem; }
+.public-policy-sections p { margin: 0; color: #4f6075; line-height: 1.72; }
+.public-policy-footer { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 22px clamp(24px, 5vw, 54px); border-top: 1px solid #e0e7ef; background: #f8fafc; }
+.public-policy-footer nav { display: flex; gap: 14px; }
+.public-policy-footer nav button { padding: 3px 0; color: #0759b8; text-decoration: underline; text-underline-offset: 3px; }
+.public-policy-footer .public-policy-primary { min-height: 44px; padding: 10px 18px; border-radius: 10px; background: #075fc0; color: white; font-weight: 750; }
+
+@media (max-width: 600px) {
+  .public-policy-page { padding: 14px 10px 32px; }
+  .public-policy-header { margin-bottom: 14px; padding-inline: 4px; }
+  .public-policy-brand span { width: 40px; height: 40px; border-radius: 10px; }
+  .public-policy-card { border-radius: 16px; }
+  .public-policy-intro { padding: 28px 22px; }
+  .public-policy-sections { padding-inline: 22px; }
+  .public-policy-footer { align-items: stretch; flex-direction: column; padding: 20px 22px; }
+  .public-policy-footer nav { justify-content: center; }
+  .public-policy-footer .public-policy-primary { width: 100%; }
+}
+
 .login-page--student-flow .login-form-panel { align-items: start; overflow: visible; }
 .login-page--student-flow .login-card { width: min(760px, 100%); margin-block: 24px; }
 
