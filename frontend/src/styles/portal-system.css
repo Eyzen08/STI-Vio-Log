@@ -174,5 +174,33 @@
   .management-record-table .table-progress { min-width: 0; }
   .management-record-table .inline-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   .management-record-table .inline-actions button { min-height: 44px; }
+  .management-record-table td[data-label="Actions"],
+  .management-record-table td[data-label="Action"] { align-content: start; }
+  .management-record-table .table-actions { width: 100%; display: flex; flex-direction: row !important; align-items: center !important; justify-content: flex-start; gap: 8px; }
+  .management-record-table .table-actions button { width: auto !important; min-width: 72px; min-height: 44px; margin: 0; padding: 9px 14px !important; }
+  .management-record-table .table-actions .icon-row-action { width: 44px !important; min-width: 44px; padding: 0 !important; }
+  .messages-page-heading { display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+  .messages-page-heading h2 { margin: 0; font-size: 24px; text-align: left; }
+  .messages-page-heading .page-breadcrumb,
+  .messages-page-heading > div > p:last-child { display: none; }
+  .messages-new-button { width: auto; min-width: 132px; min-height: 44px; padding: 9px 14px !important; white-space: nowrap; }
+  .messages-inbox { gap: 12px; }
+  .messages-workspace { min-height: calc(100dvh - 172px); border-radius: 10px; }
+  .conversation-pane-header { gap: 10px; padding: 12px; }
+  .main-panel .conversation-list > button:not(.conversation-load-more) { min-height: 82px; padding: 12px; }
+  .chat-pane { min-height: calc(100dvh - 172px); }
+  .chat-header { min-height: 58px; padding: 9px 10px; }
+  .chat-history { padding: 12px 10px 6px; }
+  .message-record-note { padding: 6px 10px; font-size: 11px; }
+  .chat-composer { position: sticky; bottom: 0; grid-template-columns: minmax(0,1fr) 48px; padding: 8px; }
+  .chat-composer textarea { min-height: 48px; max-height: 104px; font-size: 16px; }
+  .chat-composer > button { width: 48px; min-width: 48px; height: 48px; padding: 0 !important; }
+}
+
+@media (max-width: 390px) {
+  .messages-page-heading h2 { font-size: 22px; }
+  .messages-new-button { min-width: 124px; padding-inline: 11px !important; }
+  .management-record-table tr { grid-template-columns: 1fr; }
+  .management-record-table td[data-label] { grid-column: 1; }
 }
 @media (prefers-reduced-motion: reduce) { .duplicate-skeleton span { animation: none; } }

@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 
 import { conversationMatchesTab, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../src/lib/messageUi.js'
 
@@ -8,6 +9,13 @@ test('message UI helpers expose the required text limit and filters', () => {
   assert.equal(conversationMatchesTab({ unread_count: 2, status: 'OPEN' }, 'UNREAD'), true)
   assert.equal(conversationMatchesTab({ unread_count: 0, status: 'OPEN' }, 'UNREAD'), false)
   assert.equal(conversationMatchesTab({ unread_count: 0, status: 'CLOSED' }, 'CLOSED'), true)
+})
+
+test('mobile messages keep a compact heading and keyboard-safe composer', async () => {
+  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.messages-page-heading \{ display: flex; flex-direction: row;/)
+  assert.match(css, /\.chat-composer \{ position: sticky; bottom: 0;/)
+  assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
 })
 
 test('participants reveal only role-appropriate conversation metadata', () => {

@@ -43,6 +43,7 @@ test('primary management tables expose labeled mobile record cards', () => {
   for (const label of ['Student', 'Status', 'Actions', 'Service progress']) assert.match(app, new RegExp(`data-label="${label}"`))
   assert.match(css, /\.management-record-table td::before/)
   assert.match(css, /content: attr\(data-label\)/)
+  assert.match(css, /\.management-record-table \.table-actions \{[^}]*flex-direction: row !important/s)
 })
 
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
