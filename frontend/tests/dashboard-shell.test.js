@@ -65,6 +65,11 @@ test('administrative forms use aligned labels and consistent enhanced dropdowns'
   assert.match(scanner, /className="record-field-label">Attendance note <small>Optional<\/small>/)
 })
 
+test('student and violation legends include the grave offense indicator', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 2)
+})
+
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /pointerdown/)

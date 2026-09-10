@@ -2451,7 +2451,7 @@ function App() {
               <label><span>Search students</span><input type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
             </div>
             <div className="offense-legend" aria-label="Offense indicator legend">
-              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
+              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
             </div>
 
             {visibleStudents.length === 0 &&
@@ -2611,7 +2611,7 @@ function App() {
               </span>
             </div>
             <div className="offense-legend" aria-label="Offense indicator legend">
-              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
+              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
             </div>
 
             <form
