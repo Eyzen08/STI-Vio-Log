@@ -38,17 +38,16 @@ function ProfileMenu({ user, routePath, onLogout }) {
     }
     const focusOutside = (event) => { if (!rootRef.current?.contains(event.target)) close(false) }
     document.addEventListener('focusin', focusOutside)
-    document.addEventListener('pointerdown', outside)
+    document.addEventListener('click', outside)
     document.addEventListener('keydown', keyboard)
     firstItemRef.current?.focus()
-    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', keyboard); document.removeEventListener('focusin', focusOutside) }
+    return () => { document.removeEventListener('click', outside); document.removeEventListener('keydown', keyboard); document.removeEventListener('focusin', focusOutside) }
   }, [open])
 
   const username = user?.full_name || user?.username || 'Portal User'
   const initials = username.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
   const logout = (event) => {
     event.stopPropagation()
-    close(false)
     onLogout?.()
   }
 
@@ -58,8 +57,8 @@ function ProfileMenu({ user, routePath, onLogout }) {
     </button>
     {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
       <header><span className="account-avatar">{initials}</span><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
-      <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onClick={() => close(false)}><PortalIcon name="user"/><span>View Profile</span></a>
-      <a role="menuitem" href={settingsPath(user?.role)} onClick={() => close(false)}><PortalIcon name="settings"/><span>Account Settings</span></a>
+      <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)}><PortalIcon name="user"/><span>View Profile</span></a>
+      <a role="menuitem" href={settingsPath(user?.role)}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>
       <a role="menuitem" className="profile-logout" href="/login?logout=1" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></a>
     </div>}
