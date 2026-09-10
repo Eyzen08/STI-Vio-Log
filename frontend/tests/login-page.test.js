@@ -13,6 +13,7 @@ const registrationValidationSource = await readFile(
 )
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8')
+const portalCssSource = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
 
 test('redesigned login keeps every existing authentication entry point', () => {
   assert.match(source, /onSubmit=\{onSubmit\}/)
@@ -58,4 +59,10 @@ test('portal branding uses the supplied local dashboard logo and favicon', () =>
   assert.match(appSource, /import stiVioLogLogo from '\.\/assets\/sti-vio-log-logo\.png'/)
   assert.match(appSource, /alt="STI Vio-Log Discipline Office Portal"/)
   assert.match(htmlSource, /href="\/sti-vio-log-favicon\.png"/)
+})
+
+test('password visibility control is positioned inside the password field', () => {
+  assert.match(portalCssSource, /\.auth-card \.password-input-wrap \{ position: relative; display: block; \}/)
+  assert.match(portalCssSource, /\.auth-card \.password-visibility \{ position: absolute;/)
+  assert.match(portalCssSource, /padding-right: 52px/)
 })
