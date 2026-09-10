@@ -4,14 +4,15 @@ const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
 const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
 const DepartmentDtr = lazy(() => import('./components/DepartmentDtr.jsx'))
-const DepartmentNonCompliance = lazy(() => import('./components/DepartmentNonCompliance.jsx'))
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
 const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
-const DepartmentStudents = lazy(() => import('./components/DepartmentStudents.jsx'))
+import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
+import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
 const Modal = lazy(() => import('./components/Modal.jsx'))
 import RouteStatePage from './components/RouteStatePage.jsx'
+import RouteErrorBoundary from './components/RouteErrorBoundary.jsx'
 const StudentDashboard = lazy(() => import('./components/StudentDashboard.jsx'))
 const StudentCommunityService = lazy(() => import('./components/StudentCommunityService.jsx'))
 const StudentClearance = lazy(() => import('./components/StudentClearance.jsx'))
@@ -3855,7 +3856,7 @@ function App() {
         </header>}
 
         {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
-        <div className="page-content"><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></div>
+        <div className="page-content"><RouteErrorBoundary key={routePath}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={routePath===item.path?'active':''} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
     </div>
