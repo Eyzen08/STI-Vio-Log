@@ -4738,15 +4738,15 @@ a {
 .account-menu > div { position: absolute; top: calc(100% + 9px); right: 0; width: 170px; display: grid; padding: 6px; border: 1px solid var(--portal-line); border-radius: 9px; background: white; box-shadow: 0 16px 36px rgba(15,43,78,.16); }
 .account-menu > div button { min-height: 35px; padding: 7px 9px; border: 0; border-radius: 6px; background: transparent; color: #18365e; text-align: left; }
 .account-menu > div button:hover { background: #f0f5fa; }
-.profile-menu { position: relative; }
+.profile-menu { position: relative; z-index: 101; }
 .profile-menu-trigger { min-width: 175px; display: flex; align-items: center; gap: 9px; padding: 3px 6px; border: 0; border-radius: 9px; background: transparent; color: var(--portal-text); text-align: left; cursor: pointer; }
 .profile-menu-trigger:hover,.profile-menu-trigger[aria-expanded="true"] { background: var(--portal-light-blue); }
-.profile-menu-popover { position: absolute; z-index: 100; top: calc(100% + 9px); right: 0; width: min(260px,calc(100vw - 24px)); display: grid; padding: 7px; border: 1px solid var(--portal-line); border-radius: 11px; background: white; box-shadow: 0 18px 44px rgba(15,43,78,.18); }
+.profile-menu-popover { position: absolute; z-index: 102; top: calc(100% + 9px); right: 0; width: min(260px,calc(100vw - 24px)); display: grid; padding: 7px; border: 1px solid var(--portal-line); border-radius: 11px; background: white; box-shadow: 0 18px 44px rgba(15,43,78,.18); pointer-events: auto; isolation: isolate; }
 .profile-menu-popover header { display: flex; align-items: center; gap: 10px; padding: 9px; }
 .profile-menu-popover header div { min-width: 0; display: grid; }
 .profile-menu-popover header strong { overflow: hidden; color: var(--portal-text); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
 .profile-menu-popover header small { color: var(--portal-muted); font-size: .62rem; }
-.profile-menu-popover button,.profile-menu-popover a[role="menuitem"] { min-height: 38px; display: flex; align-items: center; gap: 9px; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--portal-text); text-align: left; text-decoration: none; }
+.profile-menu-popover button,.profile-menu-popover a[role="menuitem"] { width: 100%; min-height: 38px; display: flex; align-items: center; gap: 9px; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--portal-text); text-align: left; text-decoration: none; cursor: pointer; pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: rgba(7,113,206,.12); }
 .profile-menu-popover button:hover,.profile-menu-popover a[role="menuitem"]:hover { background: var(--portal-light-blue); }
 .profile-menu-popover hr { width: 100%; margin: 5px 0; border: 0; border-top: 1px solid var(--portal-line); }
 .profile-menu-popover .profile-logout { color: #b42334; }
@@ -4913,7 +4913,7 @@ a {
   .notification-button { color: white !important; }
   .profile-menu-trigger { min-width: auto; color: white; }
   .profile-menu-trigger .account-summary,.profile-menu-trigger > span:last-child { display: none; }
-  .profile-menu-popover { position: fixed; top: 54px; right: 8px; }
+  .profile-menu-popover { position: absolute; top: calc(100% + 8px); right: 0; }
   .account-avatar { background: rgba(255,255,255,.2); }
   .page-content { padding: 14px 12px 20px; }
   .mobile-bottom-nav { position: fixed; z-index: 60; inset: auto 0 0; min-height: 64px; display: grid; grid-template-columns: repeat(5,1fr); padding: 5px 4px max(5px,env(safe-area-inset-bottom)); border-top: 1px solid #dce5ee; background: rgba(255,255,255,.97); box-shadow: 0 -5px 18px rgba(9,44,84,.09); backdrop-filter: blur(12px); }

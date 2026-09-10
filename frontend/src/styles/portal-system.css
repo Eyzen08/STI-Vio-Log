@@ -146,7 +146,7 @@
   .topbar { min-height: 64px; padding: 10px 12px; background: var(--color-primary); }
   .page-content { padding: 20px 12px 28px; }
   .profile-menu-trigger .account-summary { display: none; }
-  .profile-menu-popover { top: 62px; }
+  .profile-menu-popover { top: calc(100% + 8px); }
   .profile-menu-trigger { width: 44px; height: 44px; min-width: 44px; display: grid; place-items: center; padding: 4px; border-radius: 50%; }
   .profile-menu-trigger .account-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.2); color: white; }
   .profile-menu-popover header { display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 12px; }

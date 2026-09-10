@@ -83,6 +83,7 @@ test('segmented navigation uses readable light hover and selected states', () =>
 
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
   assert.match(source, /pointerdown/)
   assert.match(source, /event\.key === 'Escape'/)
   assert.match(source, /\[routePath\]/)
@@ -92,6 +93,9 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /href=\{profilePath\(user\?\.role\)\}/)
   assert.match(source, /href=\{settingsPath\(user\?\.role\)\}/)
   assert.match(source, /aria-haspopup="menu"/)
+  assert.match(css, /\.profile-menu-popover \{ position: absolute;[^}]*pointer-events: auto;/)
+  assert.doesNotMatch(css, /\.profile-menu-popover \{ position: fixed;/)
+  assert.match(css, /touch-action: manipulation/)
 })
 
 test('mobile profile uses circular initials in the trigger and opened menu', () => {
