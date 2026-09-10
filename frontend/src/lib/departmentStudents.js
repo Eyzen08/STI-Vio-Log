@@ -4,8 +4,10 @@ const numeric = (value) => {
 }
 
 export const buildDepartmentStudentRoster = (report = {}) => {
+  const safeReport = report && typeof report === 'object' ? report : {}
   const students = new Map()
-  for (const row of Array.isArray(report.data) ? report.data : []) {
+  for (const row of Array.isArray(safeReport.data) ? safeReport.data : []) {
+    if (!row || typeof row !== 'object') continue
     const id = Number(row.student_id)
     if (!Number.isFinite(id)) continue
     const current = students.get(id) || {
@@ -33,8 +35,8 @@ export const buildDepartmentStudentRoster = (report = {}) => {
 }
 
 export const filterDepartmentStudents = (students, query = '', status = 'ALL') => {
-  const term = query.trim().toLocaleLowerCase()
-  return students.filter((student) => {
+  const term = String(query || '').trim().toLocaleLowerCase()
+  return (Array.isArray(students) ? students : []).filter((student) => {
     const matchesQuery = !term || `${student.name} ${student.studentNumber}`.toLocaleLowerCase().includes(term)
     const matchesStatus = status === 'ALL' || (status === 'ACTIVE' ? student.hasActiveService : !student.hasActiveService)
     return matchesQuery && matchesStatus

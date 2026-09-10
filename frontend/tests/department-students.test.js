@@ -20,3 +20,9 @@ test('department student roster supports search and service-standing filters', (
   assert.deepEqual(filterDepartmentStudents(roster, '', 'ACTIVE').map(({ name }) => name), ['Ana Reyes'])
   assert.deepEqual(filterDepartmentStudents(roster, '', 'COMPLETE').map(({ name }) => name), ['Ben Cruz'])
 })
+
+test('department student roster safely handles an unloaded or malformed report', () => {
+  assert.deepEqual(buildDepartmentStudentRoster(null), [])
+  assert.deepEqual(buildDepartmentStudentRoster({ data: [null, 'invalid'] }), [])
+  assert.deepEqual(filterDepartmentStudents(null, null, 'ALL'), [])
+})

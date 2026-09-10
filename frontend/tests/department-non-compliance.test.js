@@ -11,3 +11,8 @@ test('department non-compliance sends only canonical sort values', () => {
   assert.equal(nonComplianceSortQuery('department_id=99'), '')
   assert.equal(readableIncidentDate('invalid'), 'Not recorded')
 })
+
+test('department non-compliance safely summarizes unloaded and malformed reports', () => {
+  assert.deepEqual(nonComplianceSummary(null), { students: 0, openViolations: 0, pendingHours: 0 })
+  assert.deepEqual(nonComplianceSummary({ data: [null, 'invalid'] }), { students: 0, openViolations: 0, pendingHours: 0 })
+})

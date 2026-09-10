@@ -15,3 +15,10 @@ test('department DTR handles absent or invalid attendance dates', () => {
   assert.equal(displayDepartmentDtrDate(null), 'Not recorded')
   assert.equal(displayDepartmentDtrDate('not-a-date'), 'Not recorded')
 })
+
+test('department DTR safely summarizes an unloaded or malformed report', () => {
+  const empty = { records: 0, completedSessions: 0, workedMinutes: 0, creditedMinutes: 0 }
+  assert.deepEqual(departmentDtrSummary(null), empty)
+  assert.deepEqual(departmentDtrSummary('invalid'), empty)
+  assert.deepEqual(departmentDtrSummary({ totals: null }), empty)
+})

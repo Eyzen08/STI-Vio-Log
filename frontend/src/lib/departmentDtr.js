@@ -12,12 +12,16 @@ export const buildDepartmentDtrQuery = (filters = {}) => {
   return query.toString()
 }
 
-export const departmentDtrSummary = (report = {}) => ({
-  records: numberOrZero(report.total_records),
-  completedSessions: numberOrZero(report.totals?.completed_sessions),
-  workedMinutes: numberOrZero(report.totals?.worked_minutes),
-  creditedMinutes: numberOrZero(report.totals?.credited_minutes)
-})
+export const departmentDtrSummary = (report = {}) => {
+  const safeReport = report && typeof report === 'object' ? report : {}
+  const totals = safeReport.totals && typeof safeReport.totals === 'object' ? safeReport.totals : {}
+  return {
+    records: numberOrZero(safeReport.total_records),
+    completedSessions: numberOrZero(totals.completed_sessions),
+    workedMinutes: numberOrZero(totals.worked_minutes),
+    creditedMinutes: numberOrZero(totals.credited_minutes)
+  }
+}
 
 export const displayDepartmentDtrDate = (value) => {
   return formatManilaDateTime(value)
