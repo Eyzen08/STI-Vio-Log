@@ -65,4 +65,5 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /\.auth-card \.password-input-wrap \{ position: relative; display: block; \}/)
   assert.match(portalCssSource, /\.auth-card \.password-visibility \{ position: absolute;/)
   assert.match(portalCssSource, /padding-right: 52px/)
+  assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: 44px !important/)
 })

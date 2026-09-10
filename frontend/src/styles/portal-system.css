@@ -116,8 +116,9 @@
 .auth-card .login-form label { font-size: 13px; }
 .auth-card .login-form input { min-height: 46px; font-size: 14px; }
 .auth-card .password-input-wrap { position: relative; display: block; }
-.auth-card .password-input-wrap input { width: 100%; padding-right: 52px; }
-.auth-card .password-visibility { position: absolute; inset: 3px 3px 3px auto; min-width: 42px; min-height: 40px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: var(--color-primary); }
+.auth-card .password-input-wrap input { width: 100%; padding-right: 52px; -webkit-appearance: none; appearance: none; }
+.auth-card .password-visibility { position: absolute; z-index: 2; top: 3px; right: 3px; bottom: 3px; left: auto; width: 44px !important; min-width: 44px; min-height: 40px; margin: 0; padding: 0 !important; border: 0; border-radius: 7px; background: transparent; color: var(--color-primary); transform: none; }
+.auth-card .password-visibility svg { width: 20px; height: 20px; pointer-events: none; }
 .auth-card .password-visibility:hover { background: var(--color-selected); }
 .auth-card-header p,.auth-card .auth-help { font-size: 12px; }
 .auth-card .login-form .login-submit { min-height: 46px; font-size: 14px; background: var(--color-primary); }
