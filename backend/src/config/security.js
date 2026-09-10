@@ -25,4 +25,17 @@ const allowedOriginsFor = (environment = process.env) => {
   return [...new Set(origins)];
 };
 
-module.exports = { allowedOriginsFor, CORS_METHODS, parseOrigins, validateSecureConfig };
+const enforceHttps = (environment = process.env) => (req, res, next) => {
+  if (environment.NODE_ENV !== 'production' || req.secure || req.protocol === 'https') return next();
+
+  const configuredOrigin = parseOrigins(environment.FRONTEND_URL)[0];
+  const requestHost = req.get('host');
+  const safeHost = /^[a-z0-9.-]+(?::\d{1,5})?$/i.test(requestHost || '') ? requestHost : null;
+  const fallbackHost = configuredOrigin ? new URL(configuredOrigin).host : null;
+  const host = safeHost || fallbackHost;
+  if (!host) return res.status(400).json({ success: false, message: 'A secure HTTPS request is required' });
+
+  return res.redirect(308, `https://${host}${req.originalUrl || '/'}`);
+};
+
+module.exports = { allowedOriginsFor, CORS_METHODS, enforceHttps, parseOrigins, validateSecureConfig };

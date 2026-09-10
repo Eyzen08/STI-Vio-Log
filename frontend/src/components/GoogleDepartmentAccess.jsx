@@ -39,7 +39,7 @@ function GoogleDepartmentAccess({ clientId, mode='login', onSession, onNavigate 
   }
 
   if (!isGoogleClientConfigured(clientId)) return <p className="error-message">Google sign-in is not configured.</p>
-  if (pending) return <div className="registration-pending" role="status"><h4>Administrator verification pending</h4><p>Your request was submitted. Portal access remains disabled until an administrator verifies your office and assigns your account to a department.</p><button type="button" className="secondary-button" onClick={() => onNavigate('/department/login')}>Back to department sign in</button></div>
+  if (pending) return <div className="registration-pending" role="status"><h4>Administrator verification pending</h4><p>Your request was submitted. Portal access remains disabled until an administrator verifies your office and assigns your account to a department.</p><button type="button" className="secondary-button" onClick={() => onNavigate('/login')}>Back to sign in</button></div>
 
   return <section className="google-access" aria-labelledby="department-google-title">
     <div className="auth-divider"><span>Department officer access</span></div>

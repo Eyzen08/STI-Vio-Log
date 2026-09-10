@@ -1,45 +1,45 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
-import LoginPage from './components/LoginPage.jsx'
-import DepartmentDashboard from './components/DepartmentDashboard.jsx'
-import DepartmentCommunityService from './components/DepartmentCommunityService.jsx'
-import DepartmentDtr from './components/DepartmentDtr.jsx'
-import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
-import DepartmentQrScanner from './components/DepartmentQrScanner.jsx'
-import DepartmentReports from './components/DepartmentReports.jsx'
-import DepartmentStudents from './components/DepartmentStudents.jsx'
-import StudentAccountActions from './components/StudentAccountActions.jsx'
+const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
+const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
+const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
+const DepartmentDtr = lazy(() => import('./components/DepartmentDtr.jsx'))
+const DepartmentNonCompliance = lazy(() => import('./components/DepartmentNonCompliance.jsx'))
+const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
+const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
+const DepartmentStudents = lazy(() => import('./components/DepartmentStudents.jsx'))
+const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
-import Modal from './components/Modal.jsx'
+const Modal = lazy(() => import('./components/Modal.jsx'))
 import RouteStatePage from './components/RouteStatePage.jsx'
-import StudentDashboard from './components/StudentDashboard.jsx'
-import StudentCommunityService from './components/StudentCommunityService.jsx'
-import StudentClearance from './components/StudentClearance.jsx'
-import StudentNotifications from './components/StudentNotifications.jsx'
-import MessagesPage from './components/MessagesPage.jsx'
-import StudentProfile from './components/StudentProfile.jsx'
-import StudentQr from './components/StudentQr.jsx'
-import StudentViolations from './components/StudentViolations.jsx'
-import AdminRegistrationReviewWorkspace from './components/AdminRegistrationReviewWorkspace.jsx'
-import PasswordChangeRequired from './components/PasswordChangeRequired.jsx'
-import AdminAuditLog from './components/AdminAuditLog.jsx'
-import AdminDepartmentOfficers from './components/AdminDepartmentOfficers.jsx'
-import AdminAccountSettings from './components/AdminAccountSettings.jsx'
-import AdminClearanceCertificates from './components/AdminClearanceCertificates.jsx'
+const StudentDashboard = lazy(() => import('./components/StudentDashboard.jsx'))
+const StudentCommunityService = lazy(() => import('./components/StudentCommunityService.jsx'))
+const StudentClearance = lazy(() => import('./components/StudentClearance.jsx'))
+const StudentNotifications = lazy(() => import('./components/StudentNotifications.jsx'))
+const MessagesPage = lazy(() => import('./components/MessagesPage.jsx'))
+const StudentProfile = lazy(() => import('./components/StudentProfile.jsx'))
+const StudentQr = lazy(() => import('./components/StudentQr.jsx'))
+const StudentViolations = lazy(() => import('./components/StudentViolations.jsx'))
+const AdminRegistrationReviewWorkspace = lazy(() => import('./components/AdminRegistrationReviewWorkspace.jsx'))
+const PasswordChangeRequired = lazy(() => import('./components/PasswordChangeRequired.jsx'))
+const AdminAuditLog = lazy(() => import('./components/AdminAuditLog.jsx'))
+const AdminDepartmentOfficers = lazy(() => import('./components/AdminDepartmentOfficers.jsx'))
+const AdminAccountSettings = lazy(() => import('./components/AdminAccountSettings.jsx'))
+const AdminClearanceCertificates = lazy(() => import('./components/AdminClearanceCertificates.jsx'))
 import OffenseIndicator from './components/OffenseIndicator.jsx'
-import AccountSecuritySettings from './components/AccountSecuritySettings.jsx'
-import AdminDashboard from './components/AdminDashboard.jsx'
-import SystemDashboard from './components/SystemDashboard.jsx'
-import SupportAccessPanel from './components/SupportAccessPanel.jsx'
+const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
+const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
+const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
+const SupportAccessPanel = lazy(() => import('./components/SupportAccessPanel.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
-import PublicPolicyPage from './components/PublicPolicyPage.jsx'
+const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
-import stiVioLogLogo from './assets/sti-vio-log-logo.png'
+import stiVioLogLogo from './assets/sti-vio-log-logo-web.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
@@ -51,6 +51,7 @@ import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnrea
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
+import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import './App.css'
 import './styles/portal-system.css'
 
@@ -341,6 +342,10 @@ function App() {
     userRole === 'STUDENT'
 
   const routeResolution = resolveRoute(routePath, userRole)
+
+  useEffect(() => {
+    applyPageMetadata(metadataForRoute(routePath, routeResolution.route?.label))
+  }, [routePath, routeResolution.route?.label])
 
   useEffect(() => {
     if (!token || userRole !== 'SYSTEM_ADMIN') { setActiveSupportGrant(null); return undefined }
@@ -3742,6 +3747,7 @@ function App() {
 
   return (
     <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       {isLoggedIn && isMobileNavOpen && (
         <button
           className="sidebar-backdrop"
@@ -3816,7 +3822,7 @@ function App() {
         </nav>
       </aside>}
 
-      <main className="main-panel">
+      <main className="main-panel" id="main-content" tabIndex="-1">
         {isLoggedIn && <header className="topbar">
           <div className="topbar-title">
             <button
@@ -3849,7 +3855,7 @@ function App() {
         </header>}
 
         {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
-        <div className="page-content">{renderContent()}</div>
+        <div className="page-content"><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={routePath===item.path?'active':''} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
     </div>

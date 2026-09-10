@@ -1,8 +1,8 @@
 import GoogleStudentAccess from './GoogleStudentAccess.jsx'
 import PasswordField from './PasswordField.jsx'
 import StudentPasswordAccess from './StudentPasswordAccess.jsx'
-import buildingImage from '../assets/sti-global-city-building.jpg'
-import stiLogo from '../assets/sti-logo.png'
+import buildingImage from '../assets/sti-global-city-building-web.jpg'
+import stiLogo from '../assets/sti-logo-web.png'
 
 const STUDENT_AUTH_PATHS = new Set(['/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'])
 

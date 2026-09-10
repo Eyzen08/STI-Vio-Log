@@ -8,6 +8,7 @@ const POLICY_CONTENT = {
       ['Why information is used', 'Information is used to authenticate users, administer student discipline, coordinate assigned community service, determine clearance eligibility, communicate with authorized users, protect the portal, and maintain accountable school records.'],
       ['Who can access information', 'Access is limited according to assigned roles. Students can review information made available to their own account. Authorized Discipline Office personnel, designated department personnel, and approved system support administrators can access only the information and functions required for their responsibilities.'],
       ['Retention and protection', 'Records are retained according to applicable STI Global City policies and legitimate administrative requirements. The portal uses access controls, audit records, encrypted connections in production, and other safeguards intended to prevent unauthorized access or alteration.'],
+      ['Cookies, local storage, and analytics', 'The portal does not currently use advertising cookies or third-party behavioral analytics. It stores the signed-in session in browser storage so the account can remain available during normal portal use. If optional analytics or nonessential cookies are introduced, this policy and the appropriate consent controls must be updated before they are enabled.'],
       ['Your responsibilities and choices', 'Keep your credentials private, sign out on shared devices, and report suspected account misuse promptly. Requests to review or correct personal information should be directed to the Discipline Office so identity and authority can be verified.'],
       ['Questions or concerns', 'For privacy questions, record corrections, or account concerns, contact the STI Global City Discipline Office through an official school communication channel. Do not send passwords or other authentication secrets.'],
     ],
@@ -31,7 +32,7 @@ function PublicPolicyPage({ type, onNavigate }) {
   const policy = POLICY_CONTENT[type] || POLICY_CONTENT.privacy
 
   return (
-    <main className="public-policy-page">
+    <section className="public-policy-page">
       <header className="public-policy-header">
         <button type="button" className="public-policy-brand" onClick={() => onNavigate('/login')}>
           <span aria-hidden="true">STI</span>
@@ -65,7 +66,7 @@ function PublicPolicyPage({ type, onNavigate }) {
           <button type="button" className="public-policy-primary" onClick={() => onNavigate('/login')}>Return to sign in</button>
         </footer>
       </article>
-    </main>
+    </section>
   )
 }
 

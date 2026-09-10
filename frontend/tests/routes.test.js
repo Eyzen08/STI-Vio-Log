@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 
 import { getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
+import { readFile } from 'node:fs/promises'
 
 test('each supported role receives its own dashboard and navigation', () => {
   assert.equal(getHomePath('SYSTEM_ADMIN'), '/system/dashboard')
@@ -61,4 +62,11 @@ test('public, unauthorized, and unknown locations resolve explicitly', () => {
   assert.equal(resolveRoute('/department/register', null).status, 'not_found')
   assert.equal(resolveRoute('/unauthorized', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/not-a-real-page', 'DISCIPLINE_ADMIN').status, 'not_found')
+})
+
+test('deprecated department authentication links do not point to missing pages', async () => {
+  const source = await readFile(new URL('../src/components/GoogleDepartmentAccess.jsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /\/department\/login/)
+  assert.doesNotMatch(source, /\/department\/register/)
+  assert.match(source, /onNavigate\('\/login'\)/)
 })

@@ -33,7 +33,7 @@ const systemAdministrationRoutes = require('./routes/systemAdministrationRoutes'
 const supportAccessRoutes = require('./routes/supportAccessRoutes');
 const officerResponsibilityController = require('./controllers/officerResponsibilityController');
 const pool = require("./config/database");
-const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('./config/security');
+const { allowedOriginsFor, CORS_METHODS, enforceHttps, validateSecureConfig } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 const { initializeRealtime, emitToRole } = require('./realtime');
 const { createOverdueAttendanceNotifications } = require('./services/notificationService');
@@ -104,6 +104,8 @@ const allowedOrigins = allowedOriginsFor(process.env);
 // =====================================================
 // GLOBAL MIDDLEWARE
 // =====================================================
+
+app.use(enforceHttps(process.env));
 
 app.use(
   helmet({

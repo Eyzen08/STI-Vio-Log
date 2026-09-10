@@ -26,8 +26,8 @@ test('redesigned login keeps every existing authentication entry point', () => {
 })
 
 test('login branding uses local imported building and logo assets', () => {
-  assert.match(source, /import buildingImage from '\.\.\/assets\/sti-global-city-building\.jpg'/)
-  assert.match(source, /import stiLogo from '\.\.\/assets\/sti-logo\.png'/)
+  assert.match(source, /import buildingImage from '\.\.\/assets\/sti-global-city-building-web\.jpg'/)
+  assert.match(source, /import stiLogo from '\.\.\/assets\/sti-logo-web\.png'/)
   assert.match(source, /alt="STI Global City"/)
 })
 
@@ -58,9 +58,9 @@ test('manual Student registration collects the complete school profile', () => {
 })
 
 test('portal branding uses the supplied local dashboard logo and favicon', () => {
-  assert.match(appSource, /import stiVioLogLogo from '\.\/assets\/sti-vio-log-logo\.png'/)
+  assert.match(appSource, /import stiVioLogLogo from '\.\/assets\/sti-vio-log-logo-web\.png'/)
   assert.match(appSource, /alt="STI Vio-Log Discipline Office Portal"/)
-  assert.match(htmlSource, /href="\/sti-vio-log-favicon\.png"/)
+  assert.match(htmlSource, /href="\/favicon-32\.png"/)
 })
 
 test('password visibility control is positioned inside the password field', () => {

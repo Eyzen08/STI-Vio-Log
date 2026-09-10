@@ -82,6 +82,22 @@ body {
   color: var(--color-text);
 }
 
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 10000;
+  padding: 10px 14px;
+  transform: translateY(-150%);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #07366f;
+  font-weight: 800;
+  box-shadow: 0 5px 18px rgba(0, 31, 73, .24);
+}
+
+.skip-link:focus { transform: translateY(0); }
+
 button, input, select, textarea {
   font: inherit;
 }
