@@ -17,7 +17,7 @@ const profilePath = (role) => ({
   STUDENT: '/student/profile'
 }[role] || '/unauthorized')
 
-function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
+function ProfileMenu({ user, routePath, onLogout }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const triggerRef = useRef(null)
@@ -46,7 +46,6 @@ function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
 
   const username = user?.full_name || user?.username || 'Portal User'
   const initials = username.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
-  const choose = (action) => { close(false); action() }
   const logout = (event) => {
     event.stopPropagation()
     close(false)
@@ -59,8 +58,8 @@ function ProfileMenu({ user, routePath, onNavigate, onLogout }) {
     </button>
     {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
       <header><span className="account-avatar">{initials}</span><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
-      <button ref={firstItemRef} role="menuitem" type="button" onClick={() => choose(() => onNavigate(profilePath(user?.role)))}><PortalIcon name="user"/><span>View Profile</span></button>
-      <button role="menuitem" type="button" onClick={() => choose(() => onNavigate(settingsPath(user?.role)))}><PortalIcon name="settings"/><span>Account Settings</span></button>
+      <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onClick={() => close(false)}><PortalIcon name="user"/><span>View Profile</span></a>
+      <a role="menuitem" href={settingsPath(user?.role)} onClick={() => close(false)}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>
       <a role="menuitem" className="profile-logout" href="/login?logout=1" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></a>
     </div>}
