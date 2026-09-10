@@ -22,5 +22,5 @@ test('application shell includes canonical social and icon metadata', () => {
   assert.match(html, /rel="canonical"/)
   assert.match(html, /rel="icon" type="image\/png" sizes="32x32" href="\/favicon-32\.png"/)
   assert.doesNotMatch(html, /rel="icon" type="image\/svg\+xml"/)
-  assert.match(html, /apple-touch-icon\.png/)
+  assert.match(html, /rel="apple-touch-icon" href="\/sti-vio-log-favicon\.png"/)
 })
