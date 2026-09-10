@@ -74,9 +74,9 @@ const createSupportAccessService = ({ pool } = {}) => ({
     const result = await pool.query(
       `WITH changed AS (
          UPDATE support_access_requests
-         SET status=$2,approver_user_id=$3,approved_scopes=$4::text[],decision_reason=$5,
-             approved_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP ELSE NULL END,
-             expires_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP + (requested_duration_minutes * INTERVAL '1 minute') ELSE NULL END,
+         SET status=$2::support_access_status,approver_user_id=$3,approved_scopes=$4::text[],decision_reason=$5,
+             approved_at=CASE WHEN $2::support_access_status='APPROVED' THEN CURRENT_TIMESTAMP ELSE NULL END,
+             expires_at=CASE WHEN $2::support_access_status='APPROVED' THEN CURRENT_TIMESTAMP + (requested_duration_minutes * INTERVAL '1 minute') ELSE NULL END,
              updated_at=CURRENT_TIMESTAMP
          WHERE id=$1 AND status='PENDING' AND requester_user_id<>$3
            AND ($6::boolean=FALSE OR $4::text[] <@ requested_scopes)

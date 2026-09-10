@@ -47,6 +47,7 @@ test('approval remains successful when its follow-up notification cannot be deli
     const result=await createSupportAccessService({pool}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.REPORT_VIEW],decisionReason:'Approved for incident investigation'});
     assert.equal(result.status,'APPROVED');
     assert.ok(queries.some((sql)=>sql.includes('WITH changed AS')));
+    assert.ok(queries.some((sql)=>sql.includes('$2::support_access_status')));
   } finally { console.error=originalError; }
 });
 
