@@ -3050,8 +3050,11 @@ th {
   content: '';
 }
 
-.department-welcome .eyebrow,
-.department-welcome p {
+.department-welcome .eyebrow {
+  color: #ffffff;
+}
+
+.department-welcome p:not(.eyebrow) {
   color: #d8e9f8;
 }
 

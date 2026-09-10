@@ -313,6 +313,13 @@
 .app-modal-header { background: linear-gradient(180deg,#fff,#fbfdff); }
 .app-modal-close { display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px !important; }
 .profile-menu-popover { border-color: #d6e2ee; box-shadow: 0 22px 56px rgba(8,47,104,.18); }
+.staff-profile-card { max-width: 1120px; margin-inline: auto; }
+.staff-profile-identity { min-width: 0; }
+.profile-readonly-badge { display: inline-flex; align-items: center; gap: 6px; }
+.profile-readonly-badge svg { width: 15px; height: 15px; }
+.staff-profile-footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+.staff-profile-footer p { margin: 0; }
+.staff-profile-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; }
 
 @media (max-width: 767px) {
   .topbar {
@@ -340,6 +347,11 @@
   .profile-menu-trigger .account-avatar {
     border: 1px solid rgba(255,255,255,.5); background: rgba(255,255,255,.2); color: #fff;
   }
+  .staff-profile-card .profile-hero { align-items: flex-start; flex-wrap: wrap; }
+  .staff-profile-card .profile-readonly-badge { width: fit-content; margin-left: 90px; }
+  .staff-profile-card .profile-section { grid-template-columns: 1fr; gap: 18px; }
+  .staff-profile-footer { align-items: stretch; flex-direction: column; }
+  .staff-profile-footer button { width: 100%; min-height: 44px; }
   .page-content { padding: 18px 14px calc(26px + env(safe-area-inset-bottom)); }
   .management-page-header { gap: 10px; margin-bottom: 18px; }
   .management-page-header p { display: block; font-size: .76rem; line-height: 1.5; }

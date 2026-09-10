@@ -25,6 +25,11 @@ test('profile menu resolves readable roles and preserved account routes', () => 
   assert.match(source, /\/department\/account-settings/)
   assert.match(source, /\/admin\/account-settings/)
   assert.match(source, /SYSTEM_ADMIN: '\/system\/account-settings'/)
+  assert.match(source, /SYSTEM_ADMIN: '\/system\/profile'/)
+  assert.match(source, /DISCIPLINE_OFFICE: '\/admin\/profile'/)
+  assert.match(source, /DEPARTMENT_HEAD: '\/department\/profile'/)
+  assert.match(source, /STUDENT: '\/student\/profile'/)
+  assert.match(source, /View Profile/)
 })
 
 test('mobile shell exposes real branding, scoped directory search, and the system dashboard', () => {

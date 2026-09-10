@@ -19,6 +19,7 @@ const StudentClearance = lazy(() => import('./components/StudentClearance.jsx'))
 const StudentNotifications = lazy(() => import('./components/StudentNotifications.jsx'))
 const MessagesPage = lazy(() => import('./components/MessagesPage.jsx'))
 const StudentProfile = lazy(() => import('./components/StudentProfile.jsx'))
+const StaffProfile = lazy(() => import('./components/StaffProfile.jsx'))
 const StudentQr = lazy(() => import('./components/StudentQr.jsx'))
 const StudentViolations = lazy(() => import('./components/StudentViolations.jsx'))
 const AdminRegistrationReviewWorkspace = lazy(() => import('./components/AdminRegistrationReviewWorkspace.jsx'))
@@ -1826,6 +1827,10 @@ function App() {
 
     if (activeView === 'Messages') {
       return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
+    }
+
+    if (activeView === 'Profile' && !isStudent) {
+      return <StaffProfile user={user} onNavigate={navigateTo} />
     }
 
     if (user?.password_change_required) {

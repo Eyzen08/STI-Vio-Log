@@ -19,6 +19,12 @@ test('each supported role receives its own dashboard and navigation', () => {
 })
 
 test('protected routes permit only their declared roles', () => {
+  assert.equal(resolveRoute('/system/profile', 'SYSTEM_ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/profile', 'DISCIPLINE_ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/profile', 'DISCIPLINE_OFFICE').status, 'allowed')
+  assert.equal(resolveRoute('/department/profile', 'DEPARTMENT_HEAD').status, 'allowed')
+  assert.equal(resolveRoute('/student/profile', 'STUDENT').status, 'allowed')
+  assert.equal(resolveRoute('/department/profile', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/admin/students', 'DISCIPLINE_ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/account-settings', 'DISCIPLINE_ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/account-settings', 'DISCIPLINE_OFFICE').status, 'allowed')
