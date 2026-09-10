@@ -131,6 +131,7 @@
 .department-dtr { display: grid; gap: 22px; }
 .dtr-intro { align-items: center; background: linear-gradient(125deg, #073a5d, #12658b); border-radius: 22px; color: white; display: flex; justify-content: space-between; padding: 28px 30px; }
 .dtr-intro h2 { margin: 5px 0 8px; }
+.dtr-intro .eyebrow { color: #fff; opacity: 1; }
 .dtr-intro p:last-child { color: #d5eaf4; margin: 0; }
 .dtr-intro > span { background: #ffffff1f; border: 1px solid #ffffff40; border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
 .department-dtr-filters { align-items: end; background: white; border: 1px solid #dfe7ef; border-radius: 16px; display: grid; gap: 14px; grid-template-columns: repeat(4, minmax(120px, 1fr)) auto; padding: 18px; }
@@ -4745,8 +4746,8 @@ a {
 .profile-menu-popover header div { min-width: 0; display: grid; }
 .profile-menu-popover header strong { overflow: hidden; color: var(--portal-text); font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
 .profile-menu-popover header small { color: var(--portal-muted); font-size: .62rem; }
-.profile-menu-popover button { min-height: 38px; display: flex; align-items: center; gap: 9px; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--portal-text); text-align: left; }
-.profile-menu-popover button:hover { background: var(--portal-light-blue); }
+.profile-menu-popover button,.profile-menu-popover a[role="menuitem"] { min-height: 38px; display: flex; align-items: center; gap: 9px; box-sizing: border-box; padding: 8px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--portal-text); text-align: left; text-decoration: none; }
+.profile-menu-popover button:hover,.profile-menu-popover a[role="menuitem"]:hover { background: var(--portal-light-blue); }
 .profile-menu-popover hr { width: 100%; margin: 5px 0; border: 0; border-top: 1px solid var(--portal-line); }
 .profile-menu-popover .profile-logout { color: #b42334; }
 .mobile-bottom-nav,.mobile-brand { display: none; }

@@ -77,8 +77,8 @@
 .account-summary { display: grid; gap: 3px; }
 .account-summary strong { font-size: 13px; }
 .account-summary small { font-size: 11px; color: var(--color-text-secondary); }
-.main-panel .profile-menu-popover button { min-height: 44px; background: transparent; color: var(--color-text); font-size: 13px; }
-.main-panel .profile-menu-popover button:hover { background: var(--portal-light-blue); }
+.main-panel .profile-menu-popover button,.main-panel .profile-menu-popover a[role="menuitem"] { min-height: 44px; background: transparent; color: var(--color-text); font-size: 13px; }
+.main-panel .profile-menu-popover button:hover,.main-panel .profile-menu-popover a[role="menuitem"]:hover { background: var(--portal-light-blue); }
 .main-panel .profile-menu-popover .profile-logout { color: var(--color-danger); }
 .profile-menu-popover header strong { font-size: 13px; }
 .profile-menu-popover header small { font-size: 11px; }

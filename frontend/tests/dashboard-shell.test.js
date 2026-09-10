@@ -86,9 +86,9 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /pointerdown/)
   assert.match(source, /event\.key === 'Escape'/)
   assert.match(source, /\[routePath\]/)
-  assert.match(source, /event\.preventDefault\(\)/)
   assert.match(source, /event\.stopPropagation\(\)/)
   assert.match(source, /onLogout\?\.\(\)/)
+  assert.match(source, /href="\/login\?logout=1"/)
   assert.match(source, /aria-haspopup="menu"/)
 })
 
@@ -106,6 +106,7 @@ test('mobile header keeps its controls visible and logout forces a clean sign-ou
   assert.match(css, /\.mobile-menu-button \{[^}]*display: grid !important;[^}]*color: #fff !important;/s)
   assert.match(css, /\.notification-button \{[^}]*color: #fff !important;/s)
   assert.match(app, /const handleLogout = \(\) => \{[\s\S]*?clearSession\(\)[\s\S]*?setIsMobileNavOpen\(false\)[\s\S]*?window\.location\.replace\(new URL\('\/login', window\.location\.href\)\.href\)/)
+  assert.match(app, /new URLSearchParams\(window\.location\.search\)[\s\S]*?get\('logout'\) === '1'[\s\S]*?clearSession\(\)/)
 })
 
 test('signature image validation accepts only PNG or JPEG up to 1 MB', () => {

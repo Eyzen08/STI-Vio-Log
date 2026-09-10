@@ -60,7 +60,14 @@ import './styles/portal-system.css'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 function App() {
-  const [initialSession] = useState(loadSession)
+  const [initialSession] = useState(() => {
+    const logoutRequested = new URLSearchParams(window.location.search).get('logout') === '1'
+    if (!logoutRequested) return loadSession()
+
+    clearSession()
+    window.history.replaceState({}, '', '/login')
+    return { token: '', user: null }
+  })
   const [qrScanner, setQrScanner] = useState(null)
   const [isQrScanning, setIsQrScanning] = useState(false)
   const [qrFacingMode, setQrFacingMode] = useState('environment')
