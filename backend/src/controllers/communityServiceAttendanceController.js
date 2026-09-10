@@ -69,11 +69,12 @@ const getActiveDepartmentSessions = async (req, res) => {
         const query = req.query || {};
         assertAllowedFields(query, ['department_id']);
         const role = req.user?.role || 'DEPARTMENT_HEAD';
-        const scopedDepartment = role === 'DISCIPLINE_ADMIN'
+        const isOperationalStaff = ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role);
+        const scopedDepartment = isOperationalStaff
             ? (query.department_id ? Number(query.department_id) : null)
             : Number(req.staffDepartmentId || req.user?.department_id);
         if (query.department_id && (!Number.isInteger(Number(query.department_id)) || Number(query.department_id) <= 0)) return res.status(400).json({ success: false, message: 'A valid department_id is required' });
-        if (role !== 'DISCIPLINE_ADMIN' && !scopedDepartment) return res.status(403).json({ success: false, message: 'No authorized department is assigned to this account' });
+        if (!isOperationalStaff && !scopedDepartment) return res.status(403).json({ success: false, message: 'No authorized department is assigned to this account' });
         const departmentWhere = scopedDepartment ? 'css.department_id=$1 AND a.department_id=$1' : '$1::bigint IS NULL';
         const result = await pool.query(
             `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.notes,

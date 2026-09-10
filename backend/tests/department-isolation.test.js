@@ -31,6 +31,12 @@ test('live sessions are restricted to the authenticated Department Account scope
   try{const res=response();await getActiveDepartmentSessions({staffDepartmentId:7},res);assert.equal(res.statusCode,200);assert.match(captured.sql,/css\.department_id=\$1 AND a\.department_id=\$1/);assert.deepEqual(captured.params,[7])}finally{pool.query=originalQuery}
 });
 
+test('Discipline Officer can load active sessions without a department assignment',async()=>{
+  const originalQuery=pool.query;let captured;
+  pool.query=async(sql,params)=>{captured={sql:String(sql),params};return{rows:[]}};
+  try{const res=response();await getActiveDepartmentSessions({user:{role:'DISCIPLINE_OFFICE'},query:{}},res);assert.equal(res.statusCode,200);assert.match(captured.sql,/\$1::bigint IS NULL/);assert.deepEqual(captured.params,[null])}finally{pool.query=originalQuery}
+});
+
 test('department time-out credit is capped at the remaining requirement',()=>{
   assert.deepEqual(calculateSessionCredit({requiredHours:4,completedHours:3.5,workedMinutes:90}),{requiredMinutes:240,previousMinutes:210,creditedMinutes:30,newMinutes:240,remainingMinutes:0});
   assert.equal(calculateSessionCredit({requiredHours:4,completedHours:1,workedMinutes:45}).creditedMinutes,45);
