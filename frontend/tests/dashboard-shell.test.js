@@ -93,8 +93,8 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /href="\/login\?logout=1"/)
   assert.match(source, /href=\{profilePath\(user\?\.role\)\}/)
   assert.match(source, /href=\{settingsPath\(user\?\.role\)\}/)
-  assert.doesNotMatch(source, /href=\{profilePath\(user\?\.role\)\} onClick/)
-  assert.doesNotMatch(source, /href=\{settingsPath\(user\?\.role\)\} onClick/)
+  assert.match(source, /onTouchEnd=\{\(event\) => navigateOnTouch\(event, profilePath\(user\?\.role\)\)\}/)
+  assert.match(source, /window\.location\.assign\(new URL\(path, window\.location\.href\)\.href\)/)
   assert.match(source, /aria-haspopup="menu"/)
   assert.match(css, /\.profile-menu-popover \{ position: absolute;[^}]*pointer-events: auto;/)
   assert.doesNotMatch(css, /\.profile-menu-popover \{ position: fixed;/)
@@ -103,8 +103,8 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
 
 test('mobile profile uses circular initials in the trigger and opened menu', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.match(css, /\.profile-menu-trigger \{ width: 44px; height: 44px;/)
-  assert.match(css, /\.profile-menu-trigger \.account-avatar \{ width: 36px; height: 36px; border-radius: 50%/)
+  assert.match(css, /\.main-panel \.profile-menu-trigger,[^}]*width: 44px; height: 44px;[^}]*background: transparent !important;[^}]*transform: none !important;/s)
+  assert.match(css, /\.profile-menu-trigger \.account-avatar \{ width: 42px; height: 42px; border-radius: 50%/)
   assert.match(css, /\.profile-menu-popover header \.account-avatar \{ width: 42px; height: 42px;[^}]*border-radius: 50%/s)
 })
 

@@ -147,8 +147,8 @@
   .page-content { padding: 20px 12px 28px; }
   .profile-menu-trigger .account-summary { display: none; }
   .profile-menu-popover { top: calc(100% + 8px); }
-  .profile-menu-trigger { width: 44px; height: 44px; min-width: 44px; display: grid; place-items: center; padding: 4px; border-radius: 50%; }
-  .profile-menu-trigger .account-avatar { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.2); color: white; }
+  .main-panel .profile-menu-trigger,.main-panel .profile-menu-trigger:hover,.main-panel .profile-menu-trigger[aria-expanded="true"] { width: 44px; height: 44px; min-width: 44px; min-height: 44px; display: grid; place-items: center; padding: 0 !important; border: 0 !important; border-radius: 50%; background: transparent !important; box-shadow: none !important; transform: none !important; }
+  .profile-menu-trigger .account-avatar { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.2); color: white; }
   .profile-menu-popover header { display: grid; grid-template-columns: 42px minmax(0,1fr); align-items: center; gap: 12px; }
   .profile-menu-popover header .account-avatar { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--color-primary); color: white; font-size: 13px; font-weight: 700; }
   .profile-menu-popover header > div { min-width: 0; }

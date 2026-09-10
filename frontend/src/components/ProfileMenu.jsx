@@ -46,6 +46,12 @@ function ProfileMenu({ user, routePath, onLogout }) {
 
   const username = user?.full_name || user?.username || 'Portal User'
   const initials = username.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
+  const navigateOnTouch = (event, path, action) => {
+    event.preventDefault()
+    event.stopPropagation()
+    action?.()
+    window.location.assign(new URL(path, window.location.href).href)
+  }
   const logout = (event) => {
     event.stopPropagation()
     onLogout?.()
@@ -57,10 +63,10 @@ function ProfileMenu({ user, routePath, onLogout }) {
     </button>
     {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
       <header><span className="account-avatar">{initials}</span><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
-      <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)}><PortalIcon name="user"/><span>View Profile</span></a>
-      <a role="menuitem" href={settingsPath(user?.role)}><PortalIcon name="settings"/><span>Account Settings</span></a>
+      <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, profilePath(user?.role))}><PortalIcon name="user"/><span>View Profile</span></a>
+      <a role="menuitem" href={settingsPath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, settingsPath(user?.role))}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>
-      <a role="menuitem" className="profile-logout" href="/login?logout=1" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></a>
+      <a role="menuitem" className="profile-logout" href="/login?logout=1" onClick={logout} onTouchEnd={(event) => navigateOnTouch(event, '/login?logout=1', onLogout)}><PortalIcon name="logout"/><span>Logout</span></a>
     </div>}
   </div>
 }
