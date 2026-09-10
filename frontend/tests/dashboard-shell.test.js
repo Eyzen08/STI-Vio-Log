@@ -54,6 +54,17 @@ test('guardian contact action keeps its phone icon aligned with its label', () =
   assert.match(css, /\.table-actions \.guardian-contact-button svg \{[^}]*flex: 0 0 16px;/s)
 })
 
+test('administrative forms use aligned labels and consistent enhanced dropdowns', () => {
+  const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
+  const accountActions = fs.readFileSync(new URL('../src/components/StudentAccountActions.jsx', import.meta.url), 'utf8')
+  const scanner = fs.readFileSync(new URL('../src/components/DepartmentQrScanner.jsx', import.meta.url), 'utf8')
+  assert.match(css, /\.main-panel select \{[^}]*appearance: none;[^}]*color-scheme: light;[^}]*background-image:/s)
+  assert.match(css, /\.student-form-grid > label \{[^}]*display: grid;/s)
+  assert.match(accountActions, /className="student-form account-action-form"/)
+  assert.match(accountActions, /className="account-reason-field"/)
+  assert.match(scanner, /className="record-field-label">Attendance note <small>Optional<\/small>/)
+})
+
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /pointerdown/)
