@@ -63,27 +63,34 @@ const createSupportAccessService = ({ pool } = {}) => ({
     const approvedScopes = uniqueScopes(scopes);
     const why = clean(decisionReason);
     if (!why || (approve && (!approvedScopes.length || approvedScopes.some((scope) => !READ_SCOPES.has(scope))))) throw apiError(400, 'INVALID_SUPPORT_DECISION', 'A reason and valid approved scopes are required');
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const request = (await client.query('SELECT * FROM support_access_requests WHERE id=$1 FOR UPDATE', [Number(requestId)])).rows[0];
-      if (!request) throw apiError(404, 'SUPPORT_REQUEST_NOT_FOUND', 'Support request not found');
-      if (request.status !== 'PENDING') throw apiError(409, 'SUPPORT_REQUEST_DECIDED', 'Support request has already been decided');
-      if (Number(request.requester_user_id) === Number(approverId)) throw apiError(403, 'SEPARATION_OF_DUTIES_REQUIRED', 'A different Discipline Administrator must decide this request');
-      if (approve && approvedScopes.some((scope) => !request.requested_scopes.includes(scope))) throw apiError(400, 'SCOPE_NOT_REQUESTED', 'Approved scopes must be a subset of requested scopes');
-      const status = approve ? 'APPROVED' : 'REJECTED';
-      const row = (await client.query(
-        `UPDATE support_access_requests SET status=$2,approver_user_id=$3,approved_scopes=$4::text[],decision_reason=$5,
-         approved_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP ELSE NULL END,
-         expires_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP + (requested_duration_minutes * INTERVAL '1 minute') ELSE NULL END,
-         updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,
-        [request.id, status, Number(approverId), approve ? approvedScopes : [], why]
-      )).rows[0];
-      await client.query("INSERT INTO audit_logs(user_id,action,table_name,record_id,description)VALUES($1,$2,'support_access_requests',$3,$4)", [Number(approverId), `SUPPORT_ACCESS_${status}`, request.id, `${status} support access request: ${why}`]);
-      await client.query('COMMIT');
-      await notifySafely(pool,{userId:request.requester_user_id,title:`Support access ${status.toLowerCase()}`,message:approve?'Your temporary read-only support access was approved.':'Your support-access request was rejected.',type:`SUPPORT_ACCESS_${status}`,eventKey:`support-access:${request.id}:${status.toLowerCase()}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:request.id,linkPath:'/system/support-access'});
-      return row;
-    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; } finally { client.release(); }
+    const id = Number(requestId);
+    const approver = Number(approverId);
+    const status = approve ? 'APPROVED' : 'REJECTED';
+    const requested = (await pool.query('SELECT id,requester_user_id,status,requested_scopes FROM support_access_requests WHERE id=$1', [id])).rows[0];
+    if (!requested) throw apiError(404, 'SUPPORT_REQUEST_NOT_FOUND', 'Support request not found');
+    if (requested.status !== 'PENDING') throw apiError(409, 'SUPPORT_REQUEST_DECIDED', 'Support request has already been decided');
+    if (Number(requested.requester_user_id) === approver) throw apiError(403, 'SEPARATION_OF_DUTIES_REQUIRED', 'A different Discipline Administrator must decide this request');
+    if (approve && approvedScopes.some((scope) => !requested.requested_scopes.includes(scope))) throw apiError(400, 'SCOPE_NOT_REQUESTED', 'Approved scopes must be a subset of requested scopes');
+    const result = await pool.query(
+      `WITH changed AS (
+         UPDATE support_access_requests
+         SET status=$2,approver_user_id=$3,approved_scopes=$4::text[],decision_reason=$5,
+             approved_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP ELSE NULL END,
+             expires_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP + (requested_duration_minutes * INTERVAL '1 minute') ELSE NULL END,
+             updated_at=CURRENT_TIMESTAMP
+         WHERE id=$1 AND status='PENDING' AND requester_user_id<>$3
+           AND ($6::boolean=FALSE OR $4::text[] <@ requested_scopes)
+         RETURNING *
+       ), logged AS (
+         INSERT INTO audit_logs(user_id,action,table_name,record_id,description)
+         SELECT $3,$7,'support_access_requests',id,$8 FROM changed
+       ) SELECT * FROM changed`,
+      [id, status, approver, approve ? approvedScopes : [], why, Boolean(approve), `SUPPORT_ACCESS_${status}`, `${status} support access request: ${why}`]
+    );
+    const row = result.rows[0];
+    if (!row) throw apiError(409, 'SUPPORT_REQUEST_DECIDED', 'Support request was already decided; refresh the review queue');
+    await notifySafely(pool,{userId:requested.requester_user_id,title:`Support access ${status.toLowerCase()}`,message:approve?'Your temporary read-only support access was approved.':'Your support-access request was rejected.',type:`SUPPORT_ACCESS_${status}`,eventKey:`support-access:${requested.id}:${status.toLowerCase()}`,category:'SECURITY',resourceType:'support_access_requests',resourceId:requested.id,linkPath:'/system/support-access'});
+    return row;
   },
   async list({ actorId, actorRole }) {
     await expireSupportAccessGrants(pool);

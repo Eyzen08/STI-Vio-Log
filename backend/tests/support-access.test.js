@@ -33,21 +33,20 @@ test('support requests accept only bounded read scopes and explicitly refuse wri
 
 test('approval requires a different administrator and scopes remain a requested subset', async () => {
   const request={id:4,requester_user_id:10,status:'PENDING',requested_scopes:[PERMISSIONS.REPORT_VIEW]};
-  const makeClient=()=>({queries:[],async query(sql){this.queries.push(sql);if(sql.startsWith('SELECT *'))return{rows:[request]};return{rows:[request]};},release(){}});
-  await assert.rejects(()=>createSupportAccessService({pool:{connect:async()=>makeClient()}}).decide({approverId:10,requestId:4,approve:true,scopes:[PERMISSIONS.REPORT_VIEW],decisionReason:'Approved for ticket review'}),/different Discipline Administrator/);
-  await assert.rejects(()=>createSupportAccessService({pool:{connect:async()=>makeClient()}}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.GUARDIAN_CONTACT_VIEW],decisionReason:'Approved for ticket review'}),/subset/);
+  const pool={query:async()=>({rows:[request]})};
+  await assert.rejects(()=>createSupportAccessService({pool}).decide({approverId:10,requestId:4,approve:true,scopes:[PERMISSIONS.REPORT_VIEW],decisionReason:'Approved for ticket review'}),/different Discipline Administrator/);
+  await assert.rejects(()=>createSupportAccessService({pool}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.GUARDIAN_CONTACT_VIEW],decisionReason:'Approved for ticket review'}),/subset/);
 });
 
 test('approval remains successful when its follow-up notification cannot be delivered', async () => {
   const request={id:4,requester_user_id:10,status:'PENDING',requested_scopes:[PERMISSIONS.REPORT_VIEW]};
   const queries=[];
-  const client={async query(sql){queries.push(sql);if(sql.startsWith('SELECT *'))return{rows:[request]};if(sql.startsWith('UPDATE support_access_requests'))return{rows:[{...request,status:'APPROVED'}]};return{rows:[]}},release(){}};
-  const pool={connect:async()=>client,query:async()=>{throw Object.assign(new Error('notification unavailable'),{code:'NOTIFICATION_FAILURE'})}};
+  const pool={async query(sql){queries.push(sql);if(sql.startsWith('SELECT id,'))return{rows:[request]};if(sql.includes('WITH changed AS'))return{rows:[{...request,status:'APPROVED'}]};throw Object.assign(new Error('notification unavailable'),{code:'NOTIFICATION_FAILURE'})}};
   const originalError=console.error;console.error=()=>{};
   try {
     const result=await createSupportAccessService({pool}).decide({approverId:11,requestId:4,approve:true,scopes:[PERMISSIONS.REPORT_VIEW],decisionReason:'Approved for incident investigation'});
     assert.equal(result.status,'APPROVED');
-    assert.ok(queries.includes('COMMIT'));
+    assert.ok(queries.some((sql)=>sql.includes('WITH changed AS')));
   } finally { console.error=originalError; }
 });
 
