@@ -55,6 +55,13 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /aria-haspopup="menu"/)
 })
 
+test('mobile profile uses circular initials in the trigger and opened menu', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.profile-menu-trigger \{ width: 44px; height: 44px;/)
+  assert.match(css, /\.profile-menu-trigger \.account-avatar \{ width: 36px; height: 36px; border-radius: 50%/)
+  assert.match(css, /\.profile-menu-popover header \.account-avatar \{ width: 42px; height: 42px;[^}]*border-radius: 50%/s)
+})
+
 test('signature image validation accepts only PNG or JPEG up to 1 MB', () => {
   assert.equal(validateSignatureFile({ type: 'image/png', size: 1024 }), '')
   assert.equal(validateSignatureFile({ type: 'image/jpeg', size: 1024 * 1024 }), '')
