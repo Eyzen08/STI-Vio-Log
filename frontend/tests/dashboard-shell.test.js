@@ -46,6 +46,14 @@ test('primary management tables expose labeled mobile record cards', () => {
   assert.match(css, /\.management-record-table \.table-actions \{[^}]*flex-direction: row !important/s)
 })
 
+test('guardian contact action keeps its phone icon aligned with its label', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
+  assert.match(app, /className="secondary-button guardian-contact-button"[\s\S]*?<PortalIcon name="phone"\/><span>Guardian Contact<\/span>/)
+  assert.match(css, /\.table-actions \.guardian-contact-button \{[^}]*display: inline-flex;[^}]*align-items: center;[^}]*gap: 6px;/s)
+  assert.match(css, /\.table-actions \.guardian-contact-button svg \{[^}]*flex: 0 0 16px;/s)
+})
+
 test('profile menu provides outside, Escape, navigation, and logout close behavior', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /pointerdown/)

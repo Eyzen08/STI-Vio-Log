@@ -3163,6 +3163,26 @@ th {
   align-items: center;
 }
 
+.table-actions .guardian-contact-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.table-actions .guardian-contact-button svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.table-actions .guardian-contact-button span {
+  display: block;
+}
+
 .table-actions button {
   min-height: 38px;
   padding: 8px 12px;
