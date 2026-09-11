@@ -22,6 +22,14 @@ test('discipline administrators receive operational permissions but no technical
     assert.equal(roleHasPermission('DISCIPLINE_ADMIN', PERMISSIONS.MAINTENANCE_TOOLS_USE), false);
 });
 
+test('discipline officers share clearance and e-signature responsibilities', () => {
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.CLEARANCE_REVIEW), true);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.CLEARANCE_APPROVE), true);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.CLEARANCE_CERTIFICATE_ISSUE), true);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.ESIGNATURE_MANAGE), true);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.STAFF_ACCOUNT_MANAGE), false);
+});
+
 test('unknown and legacy administrator roles default to no permissions', () => {
     assert.deepEqual([...permissionsForRole('ADMIN')], []);
     assert.deepEqual([...permissionsForRole('UNKNOWN')], []);
