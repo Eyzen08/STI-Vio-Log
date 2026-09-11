@@ -451,7 +451,7 @@
   z-index: 1;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   margin: 0;
   padding: 0 0 1rem;
@@ -546,6 +546,7 @@
 }
 
 .auth-shell .auth-trust-note svg { width: 1.15rem; height: 1.15rem; }
+.auth-shell .auth-trust-note strong { font-weight: 850; }
 .auth-shell .login-form { gap: .95rem; }
 
 .auth-shell .login-form label {
