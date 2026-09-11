@@ -75,6 +75,13 @@ test('student and violation legends include the grave offense indicator', () => 
   assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 2)
 })
 
+test('desktop sidebar scrolls vertically without hover-created horizontal overflow', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.sidebar \.nav \{ max-width: 100%; overflow-x: hidden; \}/)
+  assert.match(css, /\.sidebar \.nav-item \{[^}]*max-width: 100%;[^}]*box-sizing: border-box;/)
+  assert.doesNotMatch(css, /\.sidebar \.nav-item:hover:not\(\.active\)[^{]*\{[^}]*translateX/)
+})
+
 test('segmented navigation uses readable light hover and selected states', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(css, /\.main-panel :is\(\.review-workspace-tabs,[^}]*button:hover:not\(:disabled\) \{[^}]*background: #edf6ff !important;[^}]*color: #063f7c !important;/s)
