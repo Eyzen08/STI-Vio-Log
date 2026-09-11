@@ -229,8 +229,8 @@
 .main-panel .department-officer-tabs {
   display: inline-grid;
   grid-template-columns: auto auto;
-  gap: 6px;
-  padding: 5px;
+  gap: 8px;
+  padding: 6px;
   border: 1px solid #d5e2ee;
   border-radius: 14px;
   background: #f4f8fc;
@@ -239,21 +239,21 @@
 .main-panel .department-officer-tabs button {
   min-height: 44px;
   padding: 9px 15px !important;
-  border: 1px solid #a9cfee !important;
+  border: 1px solid #78b7eb !important;
   border-radius: 10px !important;
-  background: #e6f3ff !important;
-  color: #0a4d8f !important;
-  box-shadow: 0 2px 7px rgba(8,103,197,.08) !important;
+  background: #d9ecff !important;
+  color: #074985 !important;
+  box-shadow: 0 3px 9px rgba(8,103,197,.14) !important;
 }
 .main-panel .department-officer-tabs button:hover:not(:disabled) {
   border-color: #72b1e8 !important;
   background: #d8ecff !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
-  border-color: #5aa3e3 !important;
-  background: #cfe7ff !important;
+  border-color: #358ed8 !important;
+  background: #bdddff !important;
   color: #063b75 !important;
-  box-shadow: 0 4px 12px rgba(8,103,197,.12) !important;
+  box-shadow: inset 0 0 0 1px rgba(8,103,197,.1),0 4px 12px rgba(8,103,197,.18) !important;
 }
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
