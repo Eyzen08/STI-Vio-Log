@@ -4656,7 +4656,8 @@ a {
 .certificate-student-list .status-awaiting-clearance { background: #e6f1ff; color: #075eb4; }
 .certificate-student-list .status-needs-service { background: #fff1d7; color: #945600; }
 .certificate-student-list .status-blocked { background: #ffe5e8; color: #b42335; }
-.certificate-student-list em { color: #0870cf; font-size: .7rem; font-style: normal; font-weight: 800; }
+.certificate-student-list .clearance-approve-button { width: fit-content; margin-top: 5px; padding: 8px 13px; border-radius: 7px; background: #0870cf; color: #fff; box-shadow: 0 3px 8px rgba(8,112,207,.2); font-size: .72rem; font-style: normal; font-weight: 800; }
+.certificate-student-list button:hover .clearance-approve-button { background: #055eaf; }
 @media (max-width: 620px) { .clearance-directory-filters { grid-template-columns: 1fr; } }
 .certificate-preview { margin: 18px 0; padding: 28px 36px; border: 5px double #07539d; background: #fffef9; text-align: center; box-shadow: 0 8px 24px rgba(15,52,91,.08); }
 .certificate-preview > p:first-child { color: #075eb4; font-weight: 800; letter-spacing: .12em; }
