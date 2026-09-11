@@ -250,10 +250,10 @@
   background: #d8ecff !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
-  border-color: #358ed8 !important;
-  background: #bdddff !important;
-  color: #063b75 !important;
-  box-shadow: inset 0 0 0 1px rgba(8,103,197,.1),0 4px 12px rgba(8,103,197,.18) !important;
+  border-color: #78b7eb !important;
+  background: #d9ecff !important;
+  color: #074985 !important;
+  box-shadow: inset 0 0 0 2px rgba(8,103,197,.14),0 3px 9px rgba(8,103,197,.14) !important;
 }
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
