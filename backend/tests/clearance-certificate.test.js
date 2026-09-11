@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 process.env.JWT_SECRET = 'certificate-test-secret-with-enough-length';
-const { certificateCode, clearanceIdFromCode, hoursInWords, parseSignatureImage, renderCertificatePdf } = require('../src/services/clearanceCertificateService');
+const { certificateCode, clearanceIdFromCode, hoursInWords, formatProgramName, parseSignatureImage, renderCertificatePdf } = require('../src/services/clearanceCertificateService');
 
 test('clearance certificate codes are signed and tamper evident', () => {
   const code = certificateCode(42);
@@ -29,6 +29,12 @@ test('certificate hours are rendered in words and signature uploads are bounded 
   assert.equal(parsed.mimeType, 'image/png');
   assert.deepEqual(parsed.buffer, Buffer.from('png'));
   assert.throws(() => parseSignatureImage('data:text/plain;base64,dGVzdA=='), /PNG or JPEG/);
+});
+
+test('certificate course abbreviations are expanded to their official names', () => {
+  assert.equal(formatProgramName('BSCS'), 'Bachelor of Science in Computer Science');
+  assert.equal(formatProgramName('bsit'), 'Bachelor of Science in Information Technology');
+  assert.equal(formatProgramName('Custom Program'), 'Custom Program');
 });
 
 test('certificate PDF is printable and contains a single PDF document', async () => {

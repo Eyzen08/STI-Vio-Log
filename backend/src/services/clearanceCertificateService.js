@@ -2,6 +2,21 @@ const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const { ApiError } = require('../utils/api');
 
+const PROGRAM_NAMES = Object.freeze({
+  BSCS: 'Bachelor of Science in Computer Science',
+  BSIT: 'Bachelor of Science in Information Technology',
+  BSA: 'Bachelor of Science in Accountancy',
+  BSBA: 'Bachelor of Science in Business Administration',
+  BSHM: 'Bachelor of Science in Hospitality Management',
+  BSTM: 'Bachelor of Science in Tourism Management',
+  BSOA: 'Bachelor of Science in Office Administration'
+});
+const formatProgramName = (value, fallback = 'Program not recorded') => {
+  const program = String(value || '').trim();
+  if (!program) return fallback;
+  return PROGRAM_NAMES[program.toUpperCase()] || program;
+};
+
 const secret = () => process.env.JWT_SECRET || '';
 const signatureFor = (id) => crypto.createHmac('sha256', secret()).update(`clearance:${id}`).digest('base64url');
 const certificateCode = (id) => `CLR-${id}-${signatureFor(id)}`;
@@ -44,7 +59,7 @@ const renderCertificatePdf = ({ certificateNumber, studentName, program, complet
   const numeric = Number(completedHours).toLocaleString(undefined, { maximumFractionDigits: 2 });
   doc.fillColor('#27354f').font('Helvetica').fontSize(15).text('This is to certify that', 100, 195, { width: 642, align: 'center' });
   doc.fillColor(blue).font('Helvetica-Bold').fontSize(studentName.length > 45 ? 22 : 27).text(studentName.toUpperCase(), 90, 230, { width: 662, align: 'center' });
-  doc.fillColor('#27354f').font('Helvetica').fontSize(15).text(`is enrolled at STI College-Global City under the ${program} and has successfully completed his or her community service for a total of ${words} (${numeric}) hours.`, 110, 278, { width: 622, align: 'center', lineGap: 7 });
+  doc.fillColor('#27354f').font('Helvetica').fontSize(15).text(`is enrolled at STI College-Global City under the ${formatProgramName(program)} and has successfully completed his or her community service for a total of ${words} (${numeric}) hours.`, 110, 278, { width: 622, align: 'center', lineGap: 7 });
   doc.fontSize(13).text(`Issued on ${new Date(`${issueDate}T00:00:00`).toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })}.`, 110, 356, { width: 622, align: 'center' });
   const width = Math.min(230, 660 / Math.max(signatures.length, 1));
   const start = (842 - width * Math.max(signatures.length, 1)) / 2;
@@ -67,4 +82,4 @@ const parseSignatureImage = (dataUrl) => {
   return { mimeType: match[1], buffer };
 };
 
-module.exports = { certificateCode, clearanceIdFromCode, hoursInWords, renderCertificatePdf, parseSignatureImage };
+module.exports = { certificateCode, clearanceIdFromCode, hoursInWords, formatProgramName, renderCertificatePdf, parseSignatureImage };
