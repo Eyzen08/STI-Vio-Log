@@ -12,7 +12,12 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const user = (await client.query('SELECT id,username,role,password_hash,session_version FROM users WHERE id=$1 AND is_active=TRUE FOR UPDATE', [Number(userId)])).rows[0];
+      const user = (await client.query(`SELECT u.id,u.username,u.role,u.password_hash,u.session_version,
+        COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
+        COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name
+        FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN department_heads dh ON dh.user_id=u.id
+        LEFT JOIN staff_profiles sp ON sp.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
+        WHERE u.id=$1 AND u.is_active=TRUE FOR UPDATE OF u`, [Number(userId)])).rows[0];
       if (!user || !(await comparePassword(currentPassword,user.password_hash))) throw new ApiError(401,'INVALID_CREDENTIALS','Current password is incorrect');
       if (await comparePassword(newPassword,user.password_hash)) throw new ApiError(409,'PASSWORD_REUSE','New password must be different from the current password');
       const passwordHash = await hashPassword(newPassword);
@@ -26,7 +31,8 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
          VALUES ($1,'ACCOUNT_PASSWORD_CHANGE','users',$1,'Account password changed and existing sessions invalidated',$2)`, [user.id,ipAddress]
       );
       await client.query('COMMIT');
-      return { token:issueToken(updated), user:{id:Number(updated.id),username:updated.username,role:updated.role,password_change_required:false} };
+      const firstName=user.first_name||null,lastName=user.last_name||null;
+      return { token:issueToken(updated), user:{id:Number(updated.id),username:updated.username,role:updated.role,first_name:firstName,last_name:lastName,full_name:[firstName,lastName].filter(Boolean).join(' ')||null,password_change_required:false} };
     } catch(error) { try{await client.query('ROLLBACK');}catch(_){} throw error; }
     finally{client.release();}
   };

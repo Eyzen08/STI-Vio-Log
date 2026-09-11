@@ -1,4 +1,5 @@
 import { displayProfileValue, formatStudentName, formatYearLevel } from '../lib/studentProfile.js'
+import { avatarInitials } from '../lib/avatarInitials.js'
 
 function ProfileField({ label, value }) {
   const isMissing = value === 'Not provided'
@@ -32,10 +33,7 @@ function StudentProfile({ profile, username, loading, error }) {
     )
   }
 
-  const initials = [profile.first_name, profile.last_name]
-    .filter(Boolean)
-    .map((name) => name.trim().charAt(0).toUpperCase())
-    .join('') || 'ST'
+  const initials = avatarInitials({ ...profile, username })
 
   return (
     <section className="profile-card">

@@ -1,4 +1,5 @@
 import PortalIcon from './PortalIcon.jsx'
+import { avatarInitials } from '../lib/avatarInitials.js'
 
 const roleLabels = {
   SYSTEM_ADMIN: 'System Administrator',
@@ -19,7 +20,7 @@ function ProfileField({ label, value }) {
 
 function StaffProfile({ user, onNavigate }) {
   const displayName = valueOrFallback(user?.full_name, [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Portal User')
-  const initials = displayName.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
+  const initials = avatarInitials(user)
   const role = roleLabels[user?.role] || valueOrFallback(String(user?.role || '').replaceAll('_', ' '), 'Portal User')
   const department = valueOrFallback(user?.department_name || user?.department_code, 'Not assigned')
   const settingsPath = user?.role === 'SYSTEM_ADMIN' ? '/system/account-settings' : user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'

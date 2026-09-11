@@ -7,7 +7,11 @@ const FAILURE = 'Unable to register this department account';
 const LOGIN_FAILURE = 'Google account is not linked to an active department account';
 const PENDING = 'Department registration submitted for administrator verification';
 const clean = (value) => typeof value === 'string' ? value.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
-const publicUser = (row) => ({ id: Number(row.id), username: row.username, role: row.role });
+const publicUser = (row) => ({
+  id: Number(row.id), username: row.username, role: row.role,
+  first_name: row.first_name || null, last_name: row.last_name || null,
+  full_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || null
+});
 
 const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken }) => {
   if (!pool?.connect || typeof verifyIdentity !== 'function') throw new TypeError('Google department identity dependencies are required');
@@ -86,7 +90,8 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
     try {
       await client.query('BEGIN');
       const account = (await client.query(
-        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, gil.id AS link_id
+        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password,
+                dh.first_name, dh.last_name, gil.id AS link_id
          FROM google_identity_links gil
          JOIN users u ON u.id = gil.user_id
          JOIN department_heads dh ON dh.user_id = u.id

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import PortalIcon from './PortalIcon.jsx'
+import { avatarInitials } from '../lib/avatarInitials.js'
 
 const roleLabel = (role) => ({ SYSTEM_ADMIN: 'System Administrator', DISCIPLINE_ADMIN: 'Discipline Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
 const settingsPath = (role) => ({
@@ -45,7 +46,7 @@ function ProfileMenu({ user, routePath, onLogout }) {
   }, [open])
 
   const username = user?.full_name || user?.username || 'Portal User'
-  const initials = username.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U'
+  const initials = avatarInitials(user)
   const navigateOnTouch = (event, path, action) => {
     event.preventDefault()
     event.stopPropagation()

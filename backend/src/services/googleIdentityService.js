@@ -13,7 +13,11 @@ const namesMatch = (account, firstName, lastName) =>
   normalizeName(`${account?.first_name || ''} ${account?.last_name || ''}`)
   === normalizeName(`${firstName || ''} ${lastName || ''}`);
 
-const publicUser = (row) => ({ id: Number(row.id), username: row.username, role: row.role });
+const publicUser = (row) => ({
+  id: Number(row.id), username: row.username, role: row.role,
+  first_name: row.first_name || null, last_name: row.last_name || null,
+  full_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || null
+});
 const sessionResult = (row, issueToken) => ({ token: issueToken(row), user: publicUser(row) });
 
 const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken }) => {
@@ -154,8 +158,10 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     try {
       await client.query('BEGIN');
       const result = await client.query(
-        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, gil.id AS link_id
+        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password,
+                s.first_name, s.last_name, gil.id AS link_id
          FROM google_identity_links gil JOIN users u ON u.id = gil.user_id
+         JOIN students s ON s.user_id = u.id
          WHERE gil.google_subject = $1 AND gil.revoked_at IS NULL AND u.role = 'STUDENT' AND u.is_active = TRUE
          FOR UPDATE OF gil`,
         [identity.subject]

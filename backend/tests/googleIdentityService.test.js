@@ -20,7 +20,7 @@ test('Google identity linking normalizes names, commits link and audit, then iss
   });
   const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: (user) => `token-${user.id}` });
   const result = await service.linkStudent({ credential: 'verified-token', studentNumber: '02000123456', firstName: '  MARIA ANA ', lastName: 'de leon', ...profile, ipAddress: '127.0.0.1' });
-  assert.deepEqual(result, { token: 'token-44', user: { id: 44, username: 'student44', role: 'STUDENT' } });
+  assert.deepEqual(result, { token: 'token-44', user: { id: 44, username: 'student44', role: 'STUDENT', first_name: 'Maria Ana', last_name: 'De Leon', full_name: 'Maria Ana De Leon' } });
   assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
   assert.ok(db.calls.some((call) => call.sql.includes("'GOOGLE_LINK'")));
   assert.equal(db.calls.some((call) => call.sql.includes('verified-token') || call.params.includes('verified-token')), false);
@@ -80,9 +80,9 @@ test('duplicate Google links roll back and create a token-free rejection audit',
 });
 
 test('linked Google login updates metadata and audit atomically', async () => {
-  const db = fakeDatabase((sql) => sql.includes('FROM google_identity_links gil') ? { rows: [{ id: 44, username: 'student44', role: 'STUDENT', link_id: 91 }] } : { rows: [] });
+  const db = fakeDatabase((sql) => sql.includes('FROM google_identity_links gil') ? { rows: [{ id: 44, username: 'student44', role: 'STUDENT', first_name: 'Maria', last_name: 'Santos', link_id: 91 }] } : { rows: [] });
   const service = createGoogleIdentityService({ pool: db.pool, verifyIdentity: async () => identity, issueToken: () => 'session-token' });
-  assert.deepEqual(await service.loginStudent({ credential: 'token' }), { token: 'session-token', user: { id: 44, username: 'student44', role: 'STUDENT' } });
+  assert.deepEqual(await service.loginStudent({ credential: 'token' }), { token: 'session-token', user: { id: 44, username: 'student44', role: 'STUDENT', first_name: 'Maria', last_name: 'Santos', full_name: 'Maria Santos' } });
   assert.ok(db.calls.some((call) => call.sql.includes('last_login_at = CURRENT_TIMESTAMP')));
   assert.ok(db.calls.some((call) => call.sql.includes("'GOOGLE_LOGIN'")));
   assert.ok(db.calls.some((call) => call.sql === 'COMMIT'));
