@@ -46,4 +46,5 @@ test('all authorized staff roles use the single three-stage attendance workspace
   assert.match(scannerSource, /Student Verification/)
   assert.match(scannerSource, /Record Attendance/)
   assert.match(scannerSource, /departmentLocked/)
+  assert.match(scannerSource, /!departmentLocked&&<label>Department/)
 })

@@ -1730,7 +1730,7 @@ function App() {
     }))
   }
 
-  const exportReportCSV = async () => {
+  const exportReport = async () => {
     if (reportType !== 'violations' && reportData.length === 0) {
       return
     }
@@ -1739,14 +1739,14 @@ function App() {
       setReportError('')
       try {
         const params = buildAdminReportQuery(reportType, reportFilters)
-        const response = await fetch(`${API_URL}/api/reports/violations.csv${params ? `?${params}` : ''}`, { headers:{ Authorization:`Bearer ${token}` } })
+        const response = await fetch(`${API_URL}/api/reports/violations.xlsx${params ? `?${params}` : ''}`, { headers:{ Authorization:`Bearer ${token}` } })
         if (!response.ok) {
           const data = await response.json().catch(() => ({}))
           throw new Error(data.message || 'Unable to export this report.')
         }
         const blob = await response.blob()
         const disposition = response.headers.get('content-disposition') || ''
-        const filename = disposition.match(/filename="([^"]+)"/)?.[1] || `violations-report-${new Date().toISOString().slice(0,10)}.csv`
+        const filename = disposition.match(/filename="([^"]+)"/)?.[1] || `violations-report-${new Date().toISOString().slice(0,10)}.xlsx`
         const url = window.URL.createObjectURL(blob)
         const anchor = document.createElement('a')
         anchor.href = url
@@ -3408,13 +3408,13 @@ function App() {
               <button
                 className="submit-btn"
                 onClick={
-                  exportReportCSV
+                  exportReport
                 }
                 disabled={
                   reportLoading || (reportType !== 'violations' && reportData.length === 0)
                 }
               >
-                Export CSV
+                {reportType === 'violations' ? 'Export Excel' : 'Export CSV'}
               </button>
             </div>
           </section>

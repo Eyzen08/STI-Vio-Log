@@ -5,6 +5,7 @@ const { auditAdministrativeRequest } = require('../middleware/administrativeAudi
 const {
   getViolationReport,
   exportViolationReportCsv,
+  exportViolationReportXlsx,
   getCommunityServiceReport,
   getNonComplianceReport
 } = require('../controllers/reportController');
@@ -15,6 +16,7 @@ const router = express.Router();
 
 const canViewReport = authorizePermissions(PERMISSIONS.REPORT_VIEW);
 router.get('/violations.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportCsv);
+router.get('/violations.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportXlsx);
 router.get('/violations', authenticateToken, canViewReport, getViolationReport);
 router.get('/community-service', authenticateToken, canViewReport, getCommunityServiceReport);
 router.get('/dtr', authenticateToken, canViewReport, getDTRReport);

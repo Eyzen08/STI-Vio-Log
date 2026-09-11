@@ -1,5 +1,6 @@
 const pool = require('../config/database');
 const { assertAllowedFields } = require('../utils/validators');
+const ExcelJS = require('exceljs');
 
 const REPORT_STATUSES = new Set(['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CLEARED', 'ADMIN_CLOSED', 'INVALID_CANCELLED']);
 const bad = (message) => { const error = new Error(message); error.statusCode = 400; throw error; };
@@ -48,6 +49,59 @@ const violationCsv = (rows) => {
   return `\uFEFF${[headers.join(','), ...body].join('\r\n')}\r\n`;
 };
 
+const titleCaseStatus = (value) => String(value || '').replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+const displayManilaDate = (value) => {
+  const date = manilaDate(value);
+  if (!date) return '';
+  const [year, month, day] = date.split('-').map(Number);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(Date.UTC(year, month - 1, day)));
+};
+const createViolationWorkbook = (rows) => {
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'STI Vio-Log';
+  workbook.created = new Date();
+  const sheet = workbook.addWorksheet('Violation Report', {
+    views: [{ state: 'frozen', ySplit: 1 }],
+    pageSetup: { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }
+  });
+  sheet.columns = [
+    { header: 'First Name', key: 'first_name', width: 18 },
+    { header: 'Last Name', key: 'last_name', width: 20 },
+    { header: 'Student Number', key: 'student_number', width: 18 },
+    { header: 'Violation Name', key: 'vi_name', width: 34 },
+    { header: 'Incident Date', key: 'incident_date', width: 18 },
+    { header: 'Status', key: 'status', width: 18 },
+    { header: 'Description', key: 'description', width: 80 }
+  ];
+  rows.forEach((row) => sheet.addRow({
+    first_name: row.first_name || '',
+    last_name: row.last_name || '',
+    student_number: row.student_number || '',
+    violation_name: row.violation_name || '',
+    incident_date: displayManilaDate(row.incident_date),
+    status: titleCaseStatus(row.status),
+    description: row.description || ''
+  }));
+  const header = sheet.getRow(1);
+  header.height = 26;
+  header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+  header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B4F96' } };
+  header.alignment = { vertical: 'middle', horizontal: 'left' };
+  sheet.autoFilter = { from: 'A1', to: 'G1' };
+  sheet.eachRow((row, rowNumber) => {
+    if (rowNumber > 1) {
+      row.height = 30;
+      if (rowNumber % 2 === 0) row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F9FD' } };
+    }
+    row.eachCell((cell) => {
+      cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
+      cell.border = { bottom: { style: 'thin', color: { argb: 'FFD5E1EE' } } };
+    });
+  });
+  sheet.getColumn('student_number').numFmt = '@';
+  return workbook;
+};
+
 // Violation Report
 const getViolationReport = async (req, res) => {
   try {
@@ -81,6 +135,23 @@ const exportViolationReportCsv = async (req, res) => {
     return res.status(200).send(violationCsv(result.rows));
   } catch (error) {
     console.error('Violation CSV export error:', error);
+    return fail(res, error, 'Failed to export violation report');
+  }
+};
+
+const exportViolationReportXlsx = async (req, res) => {
+  try {
+    assertAllowedFields(req.query, ['status', 'student_id', 'sort_by', 'from_date', 'to_date', 'search']);
+    const { query, params } = violationQuery(req.query);
+    const result = await pool.query(query, params);
+    const stamp = manilaDate(new Date());
+    const workbook = createViolationWorkbook(result.rows);
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="STI_Vio-Log_Student_Violation_Report_${stamp}.xlsx"`);
+    return res.status(200).send(Buffer.from(buffer));
+  } catch (error) {
+    console.error('Violation Excel export error:', error);
     return fail(res, error, 'Failed to export violation report');
   }
 };
@@ -211,8 +282,10 @@ const getNonComplianceReport = async (req, res) => {
 module.exports = {
   getViolationReport,
   exportViolationReportCsv,
+  exportViolationReportXlsx,
   getCommunityServiceReport,
   getNonComplianceReport,
   violationCsv,
-  violationQuery
+  violationQuery,
+  createViolationWorkbook
 };
