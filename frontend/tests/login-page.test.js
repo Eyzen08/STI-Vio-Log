@@ -27,7 +27,7 @@ test('redesigned login keeps every existing authentication entry point', () => {
 
 test('login branding uses local imported building and logo assets', () => {
   assert.match(source, /import buildingImage from '\.\.\/assets\/sti-global-city-building-web\.jpg'/)
-  assert.match(source, /import stiVioLogLogo from '\.\.\/assets\/sti-vio-log-logo-web\.png'/)
+  assert.match(source, /import stiVioLogLogo from '\.\.\/assets\/sti-vio-log-logo-transparent\.png'/)
   assert.match(source, /alt="STI Vio-Log"/)
   assert.match(source, /alt="STI Global City campus building"/)
   assert.match(source, /width="1200" height="825" fetchPriority="high"/)
@@ -36,6 +36,7 @@ test('login branding uses local imported building and logo assets', () => {
 test('login uses accessible form status and semantic navigation', () => {
   assert.match(source, /aria-busy=\{isSubmitting\}/)
   assert.match(source, /aria-live="polite"/)
+  assert.match(source, /getModifierState\('CapsLock'\)/)
   assert.match(source, /<nav className="auth-entry-actions"/)
   assert.match(source, /<nav className="auth-legal-links"/)
   assert.doesNotMatch(source, /auth-text-link/)

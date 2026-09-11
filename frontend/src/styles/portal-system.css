@@ -303,8 +303,12 @@
   --auth-border: #d8e0e8;
   min-height: 100vh;
   min-height: 100dvh;
+  padding: clamp(.75rem, 2.1vw, 1.5rem);
   overflow-x: hidden;
-  background: var(--auth-canvas);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(7, 92, 173, .1), transparent 24rem),
+    radial-gradient(circle at 92% 88%, rgba(243, 202, 34, .13), transparent 21rem),
+    var(--auth-canvas);
 }
 
 .auth-shell .main-panel {
@@ -316,22 +320,24 @@
 
 .auth-shell .login-page {
   display: grid;
-  width: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  grid-template-columns: minmax(31rem, 1.16fr) minmax(27rem, .84fr);
+  width: min(90rem, 100%);
+  min-height: calc(100vh - clamp(1.5rem, 4.2vw, 3rem));
+  min-height: calc(100dvh - clamp(1.5rem, 4.2vw, 3rem));
+  margin-inline: auto;
+  grid-template-columns: minmax(31rem, 1.22fr) minmax(27rem, 1fr);
   gap: 0;
   align-items: stretch;
-  overflow-x: clip;
+  overflow: hidden;
+  border-radius: 1.4rem;
   background: var(--auth-canvas);
+  box-shadow: 0 1.75rem 5rem rgba(8, 38, 76, .16);
 }
 
 .auth-shell .login-intro {
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: 100vh;
-  min-height: 100dvh;
+  min-height: inherit;
   flex-direction: column;
   justify-content: space-between;
   padding: clamp(2rem, 4vw, 4.5rem);
@@ -375,12 +381,8 @@
 .auth-shell .login-brand-mark {
   position: relative;
   z-index: 1;
-  width: clamp(12.5rem, 20vw, 18rem);
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, .52);
-  border-radius: .85rem;
-  background: rgba(255, 255, 255, .94);
-  box-shadow: 0 1.2rem 3rem rgba(1, 17, 38, .24);
+  width: clamp(10.5rem, 15vw, 13.5rem);
+  filter: drop-shadow(0 .7rem 1.4rem rgba(1, 17, 38, .28));
 }
 
 .auth-shell .login-brand-mark img {
@@ -416,10 +418,10 @@
 }
 
 .auth-shell .login-intro h2 {
-  max-width: 11ch;
+  max-width: 13ch;
   margin: 0 0 1rem;
   color: #fff;
-  font-size: clamp(3rem, 5.6vw, 5.8rem);
+  font-size: clamp(2.5rem, 4.25vw, 4.25rem);
   font-weight: 800;
   line-height: .94;
   letter-spacing: -.055em;
@@ -486,6 +488,18 @@
   inset: 1.5rem;
   pointer-events: none;
   border: 1px solid rgba(8, 38, 76, .08);
+}
+
+.auth-shell .login-form-panel::after {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: 8%;
+  width: 8rem;
+  height: 8rem;
+  opacity: .2;
+  background-image: radial-gradient(var(--auth-blue-600) 1px, transparent 1px);
+  background-size: .8rem .8rem;
 }
 
 .auth-shell .auth-card.login-card {
@@ -671,11 +685,18 @@
   color: #8b2331;
 }
 
+.auth-shell .caps-lock-note {
+  margin: -.45rem 0 0;
+  color: #8a5a00;
+  font-size: .75rem;
+  font-weight: 700;
+}
+
 .auth-shell .login-page--student-flow .login-form-panel { align-items: start; overflow: visible; }
 .auth-shell .login-page--student-flow .login-card { width: min(48rem, 100%); margin-block: clamp(1.25rem, 4vh, 3rem); }
 
 @media (min-width: 1800px) {
-  .auth-shell .login-page { width: min(110rem, 100%); margin-inline: auto; box-shadow: 0 0 5rem rgba(8, 38, 76, .09); }
+  .auth-shell .login-page { width: min(90rem, 100%); }
   .auth-shell { display: grid; place-items: center; }
 }
 
@@ -688,11 +709,14 @@
 }
 
 @media (max-width: 767px) {
+  .auth-shell { padding: 0; }
   .auth-shell .login-page {
     display: flex;
     min-height: 100vh;
     min-height: 100dvh;
     flex-direction: column;
+    border-radius: 0;
+    box-shadow: none;
     background: var(--auth-canvas);
   }
 
@@ -704,7 +728,7 @@
   .auth-shell .login-campus-image { object-position: center 43%; }
   .auth-shell .login-intro::before { background: linear-gradient(180deg, rgba(4, 26, 57, .18), rgba(3, 22, 47, .91)); }
   .auth-shell .login-intro::after { right: 1rem; width: 6rem; height: .22rem; }
-  .auth-shell .login-brand-mark { width: min(11rem, 48vw); border-radius: .6rem; }
+  .auth-shell .login-brand-mark { width: min(9.5rem, 42vw); }
   .auth-shell .login-intro-content { margin: auto 0 0; }
   .auth-shell .login-kicker { margin-bottom: .65rem; font-size: .65rem; }
   .auth-shell .login-kicker::before { width: 1.3rem; }
@@ -724,6 +748,7 @@
   }
 
   .auth-shell .login-form-panel::before { display: none; }
+  .auth-shell .login-form-panel::after { display: none; }
   .auth-shell .auth-card.login-card { width: 100%; padding: 1.35rem 1.15rem; border-radius: 1rem; box-shadow: 0 1.2rem 2.7rem rgba(8, 38, 76, .15); }
   .auth-shell .auth-card-header h3 { font-size: 1.55rem; }
   .auth-shell .auth-card-header p { font-size: .82rem; }

@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import GoogleStudentAccess from './GoogleStudentAccess.jsx'
 import PasswordField from './PasswordField.jsx'
 import StudentPasswordAccess from './StudentPasswordAccess.jsx'
 import buildingImage from '../assets/sti-global-city-building-web.jpg'
-import stiVioLogLogo from '../assets/sti-vio-log-logo-web.png'
+import stiVioLogLogo from '../assets/sti-vio-log-logo-transparent.png'
 
 const STUDENT_AUTH_PATHS = new Set(['/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'])
 
@@ -10,6 +11,7 @@ const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"
 
 function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
+  const [capsLockOn, setCapsLockOn] = useState(false)
   const navigate = (event, path, disabled=false) => {
     event.preventDefault()
     if (disabled) return
@@ -22,9 +24,8 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
       <div className="login-brand-mark"><img src={stiVioLogLogo} alt="STI Vio-Log" width="620" height="349" fetchPriority="high"/></div>
       <div className="login-intro-content">
         <span className="login-kicker">STI Global City</span>
-        <h2>Accountability starts here.</h2>
-        <p className="login-tagline">A clear path from discipline to resolution.</p>
-        <p>Manage student records, community service, and clearance securely in one campus portal.</p>
+        <h2>Student accountability, made clearer.</h2>
+        <p>Manage violations, community service, attendance, and clearance through one secure campus portal.</p>
       </div>
       <div className="login-assurance" aria-label="Portal information"><span>Real People. Real Opportunities.</span><small>© {new Date().getFullYear()} STI Global City</small></div>
     </aside>
@@ -34,9 +35,12 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         {studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate}/> : <>
           <div className="auth-trust-note"><CampusIcon/><span>Official STI Global City portal</span></div>
           <form className="login-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
-            <label htmlFor="username">Username / Student Number<input id="username" type="text" name="username" placeholder="Enter username or student number…" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} required/></label>
-            <PasswordField id="password" label="Password" placeholder="Enter your password…" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password"/>
-            {error&&<p className="error-message" role="alert" aria-live="polite">{error}</p>}
+            <label htmlFor="username">Username or student number<input id="username" type="text" name="username" placeholder="Enter your username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
+            <div onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
+              <PasswordField id="password" label="Password" placeholder="Enter your password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={Boolean(error)} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
+            </div>
+            {capsLockOn&&<p className="caps-lock-note" id="caps-lock-note" role="status">Caps Lock is on</p>}
+            {error&&<p className="error-message" id="login-error" role="alert" aria-live="polite">{error}</p>}
             <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing in…':'Sign In'}</button>
           </form>
           <nav className="auth-entry-actions" aria-label="Account help">
