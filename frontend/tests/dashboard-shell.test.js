@@ -121,7 +121,11 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
 })
 
 test('mobile profile uses circular initials in the trigger and opened menu', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(app, /profile=\{isStudent \? studentProfile : null\}/)
+  assert.match(source, /avatarInitials\(\{ \.\.\.user, \.\.\.profile \}\)/)
   assert.match(css, /\.main-panel \.profile-menu-trigger,[^}]*width: 44px; height: 44px;[^}]*background: transparent !important;[^}]*transform: none !important;/s)
   assert.match(css, /\.profile-menu-trigger \.account-avatar \{ width: 42px; height: 42px; border-radius: 50%/)
   assert.match(css, /\.profile-menu-popover header \.account-avatar \{ width: 42px; height: 42px;[^}]*border-radius: 50%/s)

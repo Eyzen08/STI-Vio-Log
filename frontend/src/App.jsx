@@ -3875,7 +3875,7 @@ function App() {
           {isLoggedIn && (
             <div className="account-actions">
               <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
-              <ProfileMenu user={user} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
+              <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
             </div>
           )}
         </header>}

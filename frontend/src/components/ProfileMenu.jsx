@@ -18,7 +18,7 @@ const profilePath = (role) => ({
   STUDENT: '/student/profile'
 }[role] || '/unauthorized')
 
-function ProfileMenu({ user, routePath, onLogout }) {
+function ProfileMenu({ user, profile, routePath, onLogout }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const triggerRef = useRef(null)
@@ -46,7 +46,7 @@ function ProfileMenu({ user, routePath, onLogout }) {
   }, [open])
 
   const username = user?.full_name || user?.username || 'Portal User'
-  const initials = avatarInitials(user)
+  const initials = avatarInitials({ ...user, ...profile })
   const navigateOnTouch = (event, path, action) => {
     event.preventDefault()
     event.stopPropagation()
