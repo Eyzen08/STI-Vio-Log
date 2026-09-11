@@ -2484,7 +2484,7 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table>
+                <table className="management-record-table student-directory-table">
                   <thead>
                     <tr>
                       <th>
@@ -2524,28 +2524,28 @@ function App() {
                             student.id
                           }
                         >
-                          <td>
+                          <td data-label="Student">
                             <div className="student-cell">
                               <OffenseIndicator level={student.offense_indicator_level} compact />
                               <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
                             </div>
                           </td>
 
-                          <td>
+                          <td data-label="Program">
                             {
                               student.program ||
                               '—'
                             }
                           </td>
 
-                          <td>
+                          <td data-label="Section">
                             {
                               student.section ||
                               '—'
                             }
                           </td>
 
-                          <td>
+                          <td data-label="Year">
                             {
                               student.year_level ||
                               '—'
