@@ -87,9 +87,13 @@ test('student and violation legends include the grave offense indicator', () => 
 
 test('desktop sidebar scrolls vertically without hover-created horizontal overflow', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const appCss = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
   assert.match(css, /\.sidebar \.nav \{ max-width: 100%; overflow-x: hidden; \}/)
   assert.match(css, /\.sidebar \.nav-item \{[^}]*max-width: 100%;[^}]*box-sizing: border-box;/)
   assert.doesNotMatch(css, /\.sidebar \.nav-item:hover:not\(\.active\)[^{]*\{[^}]*translateX/)
+  assert.match(appCss, /sidebar-collapsed \.brand-logo \{ display: none; \}/)
+  assert.match(appCss, /sidebar-collapsed \.nav-item \{[^}]*width: 100%;[^}]*overflow: hidden;/s)
+  assert.match(appCss, /sidebar-collapsed \.nav-item-label > span,[\s\S]*?sidebar-collapsed \.nav-pending-badge \{ display: none; \}/)
 })
 
 test('segmented navigation uses readable light hover and selected states', () => {

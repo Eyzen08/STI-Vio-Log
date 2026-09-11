@@ -5093,15 +5093,49 @@ a {
 
 /* Keep the collapsed desktop shell authoritative over the base portal shell. */
 @media (min-width: 768px) {
-  .app-shell:not(.auth-shell).sidebar-collapsed { grid-template-columns: 72px minmax(0,1fr); }
-  .app-shell:not(.auth-shell).sidebar-collapsed .sidebar { width: 72px; padding-inline: 9px; }
-  .app-shell:not(.auth-shell).sidebar-collapsed .brand { margin-inline: 0; }
-  .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo { width: 52px; object-fit: cover; object-position: left; }
+  .app-shell:not(.auth-shell).sidebar-collapsed { grid-template-columns: 80px minmax(0,1fr); }
+  .app-shell:not(.auth-shell).sidebar-collapsed .sidebar { width: 80px; padding-inline: 12px; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .brand {
+    min-width: 0;
+    justify-content: center;
+    margin-inline: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+  .app-shell:not(.auth-shell).sidebar-collapsed .brand::before {
+    content: "VL";
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.48);
+    border-radius: 11px;
+    background: rgba(255,255,255,.14);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 850;
+    letter-spacing: .04em;
+    box-shadow: 0 7px 18px rgba(4,38,77,.16);
+  }
+  .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo { display: none; }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-group-label,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label > span,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge { display: none; }
-  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item { justify-content: center; padding-inline: 8px; }
-  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label { justify-content: center; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav,
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-group,
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-account-actions { width: 100%; min-width: 0; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+    padding-inline: 0;
+    overflow: hidden;
+  }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label { width: 100%; min-width: 0; justify-content: center; gap: 0; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label svg { width: 18px; height: 18px; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .sidebar-collapse { right: -13px; }
 }
 
 /* Duplicate comparison workspace */
