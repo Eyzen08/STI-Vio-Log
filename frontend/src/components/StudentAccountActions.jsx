@@ -8,9 +8,11 @@ const initialEdit = (student) => Object.fromEntries(editableFields.map((field) =
 
 function StudentAccountActions({ token, student, onUpdated }) {
   const menuRef = useRef(null)
+  const triggerRef = useRef(null)
+  const [menuOpen,setMenuOpen]=useState(false)
   useEffect(() => {
-    const dismiss = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) menuRef.current.open = false }
-    const escape = (event) => { if (event.key === 'Escape' && menuRef.current?.open) { menuRef.current.open = false; menuRef.current.querySelector('summary')?.focus() } }
+    const dismiss = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false) }
+    const escape = (event) => { if (event.key === 'Escape') { setMenuOpen(false); triggerRef.current?.focus() } }
     document.addEventListener('pointerdown', dismiss)
     document.addEventListener('focusin', dismiss)
     document.addEventListener('keydown', escape)
@@ -20,7 +22,7 @@ function StudentAccountActions({ token, student, onUpdated }) {
   const [edit,setEdit]=useState(()=>initialEdit(student))
   const headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'}
   const close=()=>{setMode('');setReason('');setError('');setSuccess('');setSecret(null)}
-  const open=(nextMode)=>{setEdit(initialEdit(student));setMode(nextMode);setReason('');setError('');setSuccess('');setSecret(null)}
+  const open=(nextMode)=>{setMenuOpen(false);setEdit(initialEdit(student));setMode(nextMode);setReason('');setError('');setSuccess('');setSecret(null)}
 
   const submit=async(event)=>{
     event.preventDefault();const why=reason.trim();if(!why)return setError('Enter a reason before continuing.');setBusy(true);setError('');setSuccess('')
@@ -43,10 +45,10 @@ function StudentAccountActions({ token, student, onUpdated }) {
 
   const title=secret?'Temporary student credentials':mode==='edit'?'Edit student information':mode==='password'?'Issue temporary password':mode==='google'?'Remove Google access':'Action completed'
   return <div className="student-access-removal">
-    <details ref={menuRef} name="student-row-actions" className="row-action-menu" onClick={(event) => { if (event.target.closest('button')) menuRef.current.open = false }}>
-      <summary aria-label={`More actions for ${student.first_name} ${student.last_name}`}>⋮</summary>
-      <div><button type="button" onClick={()=>open('edit')}>Edit information</button><button type="button" onClick={()=>open('password')}>Issue password</button><button type="button" className="danger-text" onClick={()=>open('google')}>Remove Google access</button></div>
-    </details>
+    <div ref={menuRef} className="row-action-menu">
+      <button ref={triggerRef} type="button" className="row-action-trigger" aria-label={`More actions for ${student.first_name} ${student.last_name}`} aria-expanded={menuOpen} aria-haspopup="menu" onClick={()=>setMenuOpen((value)=>!value)}>⋮</button>
+      {menuOpen&&<div role="menu"><button role="menuitem" type="button" onClick={()=>open('edit')}>Edit information</button><button role="menuitem" type="button" onClick={()=>open('password')}>Issue password</button><button role="menuitem" type="button" className="danger-text" onClick={()=>open('google')}>Remove Google access</button></div>}
+    </div>
     {(mode||secret)&&<Modal title={title} wide={mode==='edit'} dirty={!secret && mode !== 'success' && (Boolean(reason.trim()) || mode === 'edit' && JSON.stringify(edit) !== JSON.stringify(initialEdit(student)))} onClose={() => !busy && close()}>
       {secret?<div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{secret.username}</code></p><p>Temporary password: <code>{secret.password}</code></p><p>The student must change this password after first sign-in.</p><button type="button" onClick={close}>I stored it securely</button></div>:mode==='success'?<div><p className="success-message" role="status">{success}</p><button type="button" onClick={close}>Done</button></div>:<form className="student-form account-action-form" onSubmit={submit}>
         {mode==='edit'&&<div className="student-form-grid"><label>Student Number<input value={edit.student_number} onChange={e=>setEdit({...edit,student_number:e.target.value})} required/></label><label>First name<input value={edit.first_name} onChange={e=>setEdit({...edit,first_name:e.target.value})} required/></label><label>Middle name<input value={edit.middle_name} onChange={e=>setEdit({...edit,middle_name:e.target.value})}/></label><label>Last name<input value={edit.last_name} onChange={e=>setEdit({...edit,last_name:e.target.value})} required/></label><label>Suffix<input value={edit.suffix} onChange={e=>setEdit({...edit,suffix:e.target.value})}/></label><label>Email<input type="email" value={edit.email} onChange={e=>setEdit({...edit,email:e.target.value})}/></label><label>Phone number<input value={edit.phone_number} onChange={e=>setEdit({...edit,phone_number:e.target.value})}/></label><label>Program<input value={edit.program} onChange={e=>setEdit({...edit,program:e.target.value})}/></label><label>Section<input value={edit.section} onChange={e=>setEdit({...edit,section:e.target.value})}/></label><label>Year level<input type="number" min="1" max="8" value={edit.year_level} onChange={e=>setEdit({...edit,year_level:e.target.value})}/></label></div>}

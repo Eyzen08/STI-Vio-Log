@@ -5024,15 +5024,15 @@ a {
 .table-card:has(.management-table-header) tbody tr:nth-child(even) { background: #fbfdff; }
 .table-card:has(.management-table-header) tbody tr:nth-child(even):hover { background: #f5faff; }
 .table-actions { flex-wrap: nowrap; align-items: center; }
-.icon-row-action,.row-action-menu summary { width: 31px; height: 31px; display: grid; place-items: center; padding: 0 !important; border: 1px solid #cddbeb !important; border-radius: 6px !important; background: white !important; color: #0a4e98 !important; cursor: pointer; }
+.icon-row-action,.row-action-trigger { width: 31px; height: 31px; display: grid; place-items: center; padding: 0 !important; border: 1px solid #cddbeb !important; border-radius: 6px !important; background: white !important; color: #0a4e98 !important; cursor: pointer; }
 .table-progress { min-width: 86px; display: grid; gap: 3px; }
 .table-progress > div { height: 6px; overflow: hidden; border-radius: 99px; background: #e2eaf3; }
 .table-progress > div span { display: block; height: 100%; border-radius: inherit; background: #1682f6; }
 .table-progress small { color: #607894; font-size: .58rem; }
 
 .row-action-menu { position: relative; }
-.row-action-menu summary { list-style: none; font-size: 1.05rem; font-weight: 800; }
-.row-action-menu summary::-webkit-details-marker { display: none; }
+.row-action-trigger { font-size: 1.05rem; font-weight: 800; }
+.row-action-trigger[aria-expanded="true"] { border-color: #7eb5e6 !important; background: #edf6ff !important; }
 .row-action-menu > div { position: absolute; z-index: 20; top: calc(100% + 5px); right: 0; width: 175px; display: grid; padding: 5px; border: 1px solid #d8e2ed; border-radius: 8px; background: white; box-shadow: 0 12px 28px rgba(10,43,80,.18); }
 .row-action-menu > div button { min-height: 34px; padding: 7px 9px !important; border: 0 !important; border-radius: 5px !important; background: transparent !important; color: #173b68 !important; text-align: left; font-size: .67rem; }
 .row-action-menu > div button:hover { background: #eef5fb !important; }

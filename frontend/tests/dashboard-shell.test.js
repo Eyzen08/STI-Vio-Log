@@ -70,6 +70,16 @@ test('administrative forms use aligned labels and consistent enhanced dropdowns'
   assert.match(scanner, /className="record-field-label">Attendance note <small>Optional<\/small>/)
 })
 
+test('student row actions use a controlled accessible menu on mobile', () => {
+  const accountActions = fs.readFileSync(new URL('../src/components/StudentAccountActions.jsx', import.meta.url), 'utf8')
+  assert.match(accountActions, /aria-expanded=\{menuOpen\}/)
+  assert.match(accountActions, /aria-haspopup="menu"/)
+  assert.match(accountActions, /onClick=\{\(\)=>open\('edit'\)\}/)
+  assert.match(accountActions, /onClick=\{\(\)=>open\('password'\)\}/)
+  assert.match(accountActions, /onClick=\{\(\)=>open\('google'\)\}/)
+  assert.doesNotMatch(accountActions, /<details/)
+})
+
 test('student and violation legends include the grave offense indicator', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 2)
