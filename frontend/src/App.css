@@ -4676,7 +4676,10 @@ a {
 .signature-card-heading small { color: var(--portal-muted,#64748b); font-size: .6rem; }
 .signature-edit-form,.confirmation-dialog { display: grid; gap: 14px; }
 .signature-edit-form > label,.confirmation-dialog label { display: grid; gap: 6px; color: var(--portal-text,#17345b); font-weight: 700; }
-.signature-edit-form input,.confirmation-dialog textarea { min-height: 43px; padding: 9px 11px; border: 1px solid var(--portal-line,#d7e3f1); border-radius: 8px; font: inherit; box-sizing: border-box; }
+.signature-edit-form input,.confirmation-dialog :is(input,select,textarea) { min-height: 43px; padding: 9px 11px; border: 1px solid var(--portal-line,#d7e3f1); border-radius: 8px; background: #fff; font: inherit; box-sizing: border-box; }
+.approval-term-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.approval-term-fields label { display: grid; gap: 6px; }
+@media (max-width: 520px) { .approval-term-fields { grid-template-columns: 1fr; } }
 .signature-preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .signature-preview-grid figure { min-height: 112px; display: grid; align-content: center; justify-items: center; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--portal-line,#d7e3f1); border-radius: 9px; background: var(--portal-light-blue,#eaf4ff); }
 .signature-preview-grid figcaption { color: var(--portal-muted,#64748b); font-size: .68rem; font-weight: 700; }

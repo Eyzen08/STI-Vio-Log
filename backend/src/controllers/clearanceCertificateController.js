@@ -26,7 +26,7 @@ const getEligibleStudents = async (req, res) => {
   try {
     assertAllowedFields(req.query, []);
     const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.program,s.email,
-      sc.id AS clearance_id,sc.status AS clearance_status,sc.cleared_at,
+      sc.id AS clearance_id,sc.status AS clearance_status,sc.academic_year,sc.semester,sc.cleared_at,
       COALESCE(SUM(a.required_hours),0)::numeric AS required_hours,COALESCE(SUM(a.completed_hours),0)::numeric AS completed_hours,
       COUNT(a.id)::int AS assignment_count,
       EXISTS(SELECT 1 FROM clearance_certificates cc WHERE cc.student_id=s.id AND cc.status='ISSUED') AS has_issued_certificate
@@ -54,7 +54,7 @@ const getCertificateStudentDirectory = async (req, res) => {
       FROM students s
       JOIN users u ON u.id=s.user_id
       LEFT JOIN LATERAL (
-        SELECT clearance.id,clearance.status,clearance.cleared_at
+        SELECT clearance.id,clearance.status,clearance.academic_year,clearance.semester,clearance.cleared_at
         FROM student_clearance clearance
         WHERE clearance.student_id=s.id
         ORDER BY clearance.updated_at DESC,clearance.id DESC
@@ -93,6 +93,54 @@ const getCertificateStudentDirectory = async (req, res) => {
     });
     return res.json({ success: true, students });
   } catch (error) { return handle(res, error, 'Failed to load clearance student directory'); }
+};
+
+const approveCertificateStudent = async (req, res) => {
+  const client = await pool.connect();
+  try {
+    assertAllowedFields(req.body, ['academic_year', 'semester']);
+    if (!isPositiveId(req.params.studentId)) throw new ApiError(400, 'VALIDATION_ERROR', 'Invalid student ID');
+    await client.query('BEGIN');
+    await client.query('SELECT pg_advisory_xact_lock($1)', [Number(req.params.studentId)]);
+    const student = (await client.query(`SELECT s.id,s.student_number,s.first_name,s.last_name,u.is_active,
+      EXISTS(SELECT 1 FROM violations v WHERE v.student_id=s.id AND v.status='OPEN') AS has_open_violation,
+      COALESCE(service.assignment_count,0)::int AS assignment_count,COALESCE(service.service_complete,FALSE) AS service_complete
+      FROM students s JOIN users u ON u.id=s.user_id
+      LEFT JOIN LATERAL (SELECT COUNT(*) AS assignment_count,
+        BOOL_AND(a.status='COMPLETED' AND a.remaining_hours=0 AND a.completed_hours>=a.required_hours) AS service_complete
+        FROM community_service_assignments a WHERE a.student_id=s.id) service ON TRUE
+      WHERE s.id=$1`, [req.params.studentId])).rows[0];
+    if (!student || !student.is_active) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Active student not found');
+    if (student.has_open_violation || Number(student.assignment_count) < 1 || !student.service_complete) {
+      throw new ApiError(400, 'CLEARANCE_NOT_ELIGIBLE', 'Student has an unresolved violation or incomplete community service hours');
+    }
+    let clearance = (await client.query(`SELECT * FROM student_clearance WHERE student_id=$1
+      ORDER BY updated_at DESC,id DESC LIMIT 1 FOR UPDATE`, [student.id])).rows[0];
+    if (clearance?.status === 'CLEARED') throw new ApiError(409, 'CLEARANCE_ALREADY_APPROVED', 'Student clearance is already approved');
+    let created = false;
+    if (!clearance) {
+      const academicYear = clean(req.body.academic_year, 20);
+      const semester = clean(req.body.semester, 50);
+      const match = /^(\d{4})-(\d{4})$/.exec(academicYear);
+      if (!match || Number(match[2]) !== Number(match[1]) + 1 || !['1st Semester', '2nd Semester', 'Summer'].includes(semester)) {
+        throw new ApiError(400, 'VALIDATION_ERROR', 'A valid academic year (YYYY-YYYY) and semester are required');
+      }
+      clearance = (await client.query(`INSERT INTO student_clearance(student_id,academic_year,semester,status,has_active_violation,has_pending_service)
+        VALUES($1,$2,$3,'PENDING',FALSE,FALSE) RETURNING *`, [student.id, academicYear, semester])).rows[0];
+      created = true;
+    }
+    const approved = (await client.query(`UPDATE student_clearance SET status='CLEARED',has_active_violation=FALSE,
+      has_pending_service=FALSE,cleared_by=$2,cleared_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,
+      [clearance.id, req.user.id])).rows[0];
+    await audit(client, req.user.id, 'CLEARANCE_APPROVE', 'student_clearance', approved.id,
+      `Approved clearance for student ${student.student_number}`, req.ip);
+    await client.query('COMMIT');
+    return res.json({ success: true, message: 'Clearance approved successfully', created, clearanceRecord: approved });
+  } catch (error) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    if (error.code === '23505') return handle(res, new ApiError(409, 'CLEARANCE_CONFLICT', 'A clearance record already exists for this student'), 'Failed to approve clearance');
+    return handle(res, error, 'Failed to approve clearance');
+  } finally { client.release(); }
 };
 
 const listSignatures = async (_req, res) => {
@@ -276,4 +324,4 @@ const verifyClearanceCertificate = async (req, res) => {
   } catch (error) { return handle(res, error, 'Failed to verify certificate'); }
 };
 
-module.exports = { getEligibleStudents, getCertificateStudentDirectory, listSignatures, saveSignature, updateSignature, issueCertificate, listCertificates, downloadCertificate, revokeCertificate, resendCertificate, getMyClearanceCertificate, verifyClearanceCertificate };
+module.exports = { getEligibleStudents, getCertificateStudentDirectory, approveCertificateStudent, listSignatures, saveSignature, updateSignature, issueCertificate, listCertificates, downloadCertificate, revokeCertificate, resendCertificate, getMyClearanceCertificate, verifyClearanceCertificate };

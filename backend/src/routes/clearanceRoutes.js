@@ -17,6 +17,7 @@ const certificate = require('../controllers/clearanceCertificateController');
 
 router.get('/certificates/eligible', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.getEligibleStudents);
 router.get('/certificates/students', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.getCertificateStudentDirectory);
+router.post('/certificates/students/:studentId/approve', authorizePermissions(PERMISSIONS.CLEARANCE_APPROVE), certificate.approveCertificateStudent);
 router.get('/certificates', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.listCertificates);
 router.post('/certificates', authorizePermissions(PERMISSIONS.CLEARANCE_CERTIFICATE_ISSUE), certificate.issueCertificate);
 router.get('/certificates/:id/pdf', authorizePermissions(PERMISSIONS.CLEARANCE_REVIEW), certificate.downloadCertificate);
