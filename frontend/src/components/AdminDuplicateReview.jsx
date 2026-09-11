@@ -60,21 +60,21 @@ function AdminDuplicateReview({ token, embedded = false }) {
     </section>
 
     {error && <p className="error-message" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>}
-    <div className={`duplicate-review-grid${!loading && !error && conflicts.length === 0 ? ' duplicate-review-grid--empty' : ''}`}>
+    <div className="duplicate-review-grid">
       <section className="table-card duplicate-list-pane">
         <div className="table-header management-table-header"><div><h3>Possible Duplicate Records</h3><p>{duplicateSummaryTotal(summary)} conflicts require verification</p></div></div>
         <div className="duplicate-filters"><label><span className="sr-only">Search conflicts</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, identifier, username, or source…" /></label><label><span>Conflict type</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="ALL">All conflict types</option>{SUMMARY_ITEMS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="MOST_MATCHES">Most matches</option><option value="IDENTIFIER">Identifier A–Z</option></select></label>{(search || typeFilter !== 'ALL' || sort !== 'MOST_MATCHES') && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL'); setSort('MOST_MATCHES') }}>Clear filters</button>}</div>
         {loading ? <div className="duplicate-skeleton" aria-live="polite"><span/><span/><span/><p>Checking account identifiers…</p></div> : !error && visible.length === 0 ? <div className="department-empty"><h4>{conflicts.length ? 'No search results' : 'No conflicts found'}</h4><p>{conflicts.length ? 'Try changing or clearing the filters.' : 'Active records and pending requests use distinct identifiers.'}</p>{conflicts.length > 0 && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL') }}>Clear filters</button>}</div> : <div className="duplicate-list">{visible.map((conflict) => <button type="button" key={conflict.id} className={selected?.id === conflict.id ? 'selected' : ''} onClick={() => setSelectedId(conflict.id)}><span><strong>{duplicateTypeLabel(conflict.type)}</strong><small>{conflict.identifier}</small></span><b>{conflict.occurrences} matches</b></button>)}</div>}
       </section>
 
-      {(loading || error || conflicts.length > 0) && <section className="table-card duplicate-compare-pane">
+      <section className="table-card duplicate-compare-pane">
         <div className="table-header management-table-header"><div><h3>Compare Source Records</h3><p>Confirm the school records before any separate audited account action.</p></div>{selected && <span>{selected.occurrences} sources</span>}</div>
-        {!selected ? <p className="empty-state">Select a possible conflict to compare its sources.</p> : <>
+        {!selected ? <div className="department-empty"><h4>{loading ? 'Preparing comparison' : conflicts.length ? 'Select a possible conflict' : 'Nothing to compare'}</h4><p>{loading ? 'Potential conflicts are still being checked.' : conflicts.length ? 'Choose a record from the list to compare its sources.' : 'No duplicate source records are currently available for comparison.'}</p></div> : <>
           <div className="duplicate-match-banner"><span>{duplicateTypeLabel(selected.type)}</span><strong>{selected.identifier}</strong></div>
           <div className="duplicate-source-grid">{selected.sources.map((source, index) => <article key={`${source.source}-${source.record_id}-${index}`}><header><i>{String.fromCharCode(65 + index)}</i><div><strong>Record {String.fromCharCode(65 + index)}</strong><span>{source.source_label}</span></div></header><dl><div><dt>Conflict field</dt><dd>{duplicateTypeLabel(selected.type)}</dd></div><div><dt>Displayed value</dt><dd>{source.display}</dd></div><div><dt>Source</dt><dd>{source.source_label}</dd></div><div><dt>Comparison</dt><dd><span className="match-label">● Exact identifier match</span></dd></div></dl></article>)}</div>
           <div className="duplicate-safety-note"><strong>No automatic merge is available.</strong><span>This workspace intentionally does not expose Google identity claims, delete records, or combine accounts.</span></div>
         </>}
-      </section>}
+      </section>
     </div>
   </section>
 }
