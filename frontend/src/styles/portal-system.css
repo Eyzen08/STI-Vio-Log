@@ -385,11 +385,28 @@
   .audit-workspace,
   .table-card,
   .table-wrap { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .main-panel :is(section,article,form,fieldset,label,div) { min-width: 0; }
+  .main-panel :is(input,select,textarea) { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .main-panel :is(img,svg,canvas,video) { max-width: 100%; }
   .certificate-admin :is(.certificate-grid,.certificate-student-list,.signature-form,.signature-directory),
   .audit-workspace :is(.student-form,.student-form-grid) { min-width: 0; max-width: 100%; }
   .certificate-admin :is(input,select,textarea,button),
   .audit-workspace :is(input,select,textarea,button) { min-width: 0; max-width: 100%; }
   .certificate-admin input[type="file"] { width: 100%; overflow: hidden; }
+
+  .qr-attendance,
+  .qr-stage-grid,
+  .qr-stage-card,
+  .record-fields,
+  .record-fields label,
+  .attendance-footer,
+  .attendance-footer > div { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .record-fields :is(input,select),.qr-manual-field input { width: 100%; max-width: 100%; box-sizing: border-box; }
+  .record-field-label { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
+  .record-field-label small { max-width: 100%; white-space: normal; }
+  .attendance-footer { align-items: stretch; }
+  .attendance-footer > div { min-width: 0; }
+  .attendance-footer button { width: 100%; white-space: normal; }
 
   .management-page-header { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; }
   .management-page-header p { display: block; max-width: 48ch; }
@@ -399,6 +416,11 @@
   .management-metric { overflow: hidden; }
   .management-metric div { min-width: 0; }
   .management-metric span { overflow-wrap: anywhere; }
+
+  .dashboard-quick-actions { overflow: visible; }
+  .dashboard-quick-actions > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); overflow: visible; gap: 8px; padding: 0; scroll-snap-type: none; }
+  .dashboard-quick-actions button { min-width: 0; width: 100%; justify-content: flex-start; text-align: left; white-space: normal; }
+  .department-quick-actions > button:not(:first-of-type) { display: flex; }
 
   .audit-results-card .table-wrap { overflow: visible; border: 0; border-radius: 0; }
   .audit-results-card .audit-record-table { min-width: 0; background: transparent; }
@@ -411,6 +433,25 @@
   .audit-record-table td::before { content: attr(data-label); color: var(--color-text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .02em; }
   .audit-record-table td[data-label="Description"] { grid-column: 1 / -1; }
   .audit-record-table .status-badge { width: fit-content; max-width: 100%; white-space: normal; }
+
+  .portal-dashboard .table-wrap,
+  .recent-stage .responsive-table { overflow: visible; border: 0; border-radius: 0; }
+  .portal-dashboard .responsive-record-table,
+  .recent-stage .responsive-record-table { min-width: 0; background: transparent; }
+  .responsive-record-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); }
+  .responsive-record-table,.responsive-record-table tbody { display: block; }
+  .responsive-record-table tbody { display: grid; gap: 10px; }
+  .responsive-record-table tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px 16px; padding: 13px; border: 1px solid var(--color-border); border-radius: 10px; background: #fbfdff; }
+  .responsive-record-table td { min-width: 0; display: grid !important; align-content: start; gap: 3px; padding: 0 !important; border: 0 !important; overflow-wrap: anywhere; }
+  .responsive-record-table td::before { content: attr(data-label); color: var(--color-text-secondary); font-size: 10px; font-weight: 650; letter-spacing: .02em; }
+  .responsive-record-table td[data-label="Student"],
+  .responsive-record-table td[data-label="Offense"],
+  .responsive-record-table td[data-label="Supervising officer"] { grid-column: 1 / -1; }
+  .responsive-record-table .status-badge { width: fit-content; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal; }
+  .responsive-record-table .mini-progress { width: 100%; max-width: 10rem; }
+  .dashboard-card .dashboard-section-heading { align-items: flex-start; }
+  .dashboard-card .dashboard-section-heading > div { min-width: 0; }
+  .dashboard-card .text-button { flex: 0 0 auto; white-space: nowrap; }
 }
 
 @media (max-width: 390px) {
@@ -418,4 +459,7 @@
   .readonly-badge { display: none; }
   .audit-record-table tr { grid-template-columns: 1fr; }
   .audit-record-table td[data-label] { grid-column: 1; }
+  .responsive-record-table tr { grid-template-columns: 1fr; }
+  .responsive-record-table td[data-label] { grid-column: 1; }
+  .dashboard-quick-actions > div { grid-template-columns: 1fr; }
 }
