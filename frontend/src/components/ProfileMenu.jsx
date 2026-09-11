@@ -59,7 +59,7 @@ function ProfileMenu({ user, routePath, onLogout }) {
 
   return <div className="profile-menu" ref={rootRef}>
     <button ref={triggerRef} type="button" className="profile-menu-trigger" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-      <span className="account-avatar">{initials}</span><span className="account-summary"><strong>{username}</strong><small>{roleLabel(user?.role)}</small></span><span aria-hidden="true">⌄</span>
+      <span className="account-avatar">{initials}</span><span className="account-summary"><strong>{username}</strong><small>{roleLabel(user?.role)}</small></span><span className="profile-menu-chevron" aria-hidden="true">{open ? '⏶' : '⏷'}</span>
     </button>
     {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
       <header><span className="account-avatar">{initials}</span><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>

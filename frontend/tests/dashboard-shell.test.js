@@ -113,6 +113,8 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /onTouchEnd=\{\(event\) => navigateOnTouch\(event, profilePath\(user\?\.role\)\)\}/)
   assert.match(source, /window\.location\.assign\(new URL\(path, window\.location\.href\)\.href\)/)
   assert.match(source, /aria-haspopup="menu"/)
+  assert.match(source, /className="profile-menu-chevron"/)
+  assert.match(source, /open \? '⏶' : '⏷'/)
   assert.match(css, /\.profile-menu-popover \{ position: absolute;[^}]*pointer-events: auto;/)
   assert.doesNotMatch(css, /\.profile-menu-popover \{ position: fixed;/)
   assert.match(css, /touch-action: manipulation/)
