@@ -30,6 +30,12 @@ test('discipline officers share clearance and e-signature responsibilities', () 
     assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.STAFF_ACCOUNT_MANAGE), false);
 });
 
+test('department heads can view only department-scoped reports', () => {
+    assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.DEPARTMENT_REPORT_VIEW), true);
+    assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.REPORT_VIEW), false);
+    assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.DATA_EXPORT), false);
+});
+
 test('unknown and legacy administrator roles default to no permissions', () => {
     assert.deepEqual([...permissionsForRole('ADMIN')], []);
     assert.deepEqual([...permissionsForRole('UNKNOWN')], []);
