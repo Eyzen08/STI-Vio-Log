@@ -5082,7 +5082,9 @@ a {
 .review-workspace-tabs button.active { background: #0868b9; color: #fff; }
 .registration-review-workspace > .registration-management,
 .registration-review-workspace > .duplicate-workspace { display: grid; gap: 16px; }
-.duplicate-review-grid { display: grid; grid-template-columns: minmax(300px,.72fr) minmax(520px,1.28fr); gap: 12px; align-items: start; }
+.registration-review-workspace > .duplicate-workspace .management-metrics { margin-bottom: 0; }
+.duplicate-review-grid { width: 100%; display: grid; grid-template-columns: minmax(320px,.85fr) minmax(0,1.15fr); gap: 12px; align-items: start; }
+.duplicate-review-grid > .table-card { width: 100%; margin: 0; box-sizing: border-box; }
 .duplicate-list-pane,.duplicate-compare-pane { min-width: 0; padding: 0; overflow: hidden; border-radius: 9px; }
 .duplicate-list-pane .management-table-header,.duplicate-compare-pane .management-table-header { padding: 15px 16px 10px; }
 .duplicate-search { display: block; padding: 10px 14px; border-block: 1px solid #e1e9f1; background: #f8fbfe; }
@@ -5091,7 +5093,6 @@ a {
 .duplicate-filters label { display: grid; gap: 3px; color: var(--portal-muted); font-size: .58rem; }
 .duplicate-filters input,.duplicate-filters select { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid var(--portal-line); border-radius: 7px; background: white; color: var(--portal-text); font: inherit; font-size: .68rem; box-sizing: border-box; }
 .duplicate-filters button { align-self: end; min-height: 39px; }
-.duplicate-review-grid--empty { grid-template-columns: minmax(300px,720px); justify-content: center; }
 .duplicate-skeleton { display: grid; gap: 9px; padding: 16px; }
 .duplicate-skeleton span { height: 55px; border-radius: 8px; background: linear-gradient(90deg,#edf3f9,#f8fbfe,#edf3f9); background-size: 200% 100%; animation: duplicate-shimmer 1.2s linear infinite; }
 .duplicate-skeleton p { margin: 0; color: var(--portal-muted); text-align: center; }
@@ -5101,7 +5102,6 @@ a {
 .duplicate-filters label { display: grid; gap: 3px; color: var(--portal-muted); font-size: .58rem; }
 .duplicate-filters input,.duplicate-filters select { width: 100%; min-height: 39px; padding: 8px 10px; border: 1px solid var(--portal-line); border-radius: 7px; background: white; color: var(--portal-text); font: inherit; font-size: .68rem; box-sizing: border-box; }
 .duplicate-filters button { align-self: end; min-height: 39px; }
-.duplicate-review-grid--empty { grid-template-columns: minmax(300px,720px); justify-content: center; }
 .duplicate-skeleton { display: grid; gap: 9px; padding: 16px; }
 .duplicate-skeleton span { height: 55px; border-radius: 8px; background: linear-gradient(90deg,#edf3f9,#f8fbfe,#edf3f9); background-size: 200% 100%; animation: duplicate-shimmer 1.2s linear infinite; }
 .duplicate-skeleton p { margin: 0; color: var(--portal-muted); text-align: center; }
@@ -5138,10 +5138,14 @@ a {
   .review-workspace-tabs { display: flex; width: 100%; box-sizing: border-box; }
   .review-workspace-tabs button { flex: 1; padding-inline: 10px; }
   .duplicate-review-grid { grid-template-columns: 1fr; }
+  .duplicate-review-grid > .table-card { max-width: none; }
   .duplicate-list { max-height: 330px; }
   .duplicate-filters { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
+  .registration-review-workspace > .duplicate-workspace { gap: 12px; }
+  .duplicate-review-grid { gap: 10px; }
+  .duplicate-list-pane .management-table-header,.duplicate-compare-pane .management-table-header { padding: 13px 12px 9px; }
   .readonly-badge { display: none; }
   .duplicate-source-grid { grid-template-columns: 1fr; }
   .duplicate-filters { grid-template-columns: 1fr; }
