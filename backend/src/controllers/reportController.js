@@ -68,7 +68,7 @@ const createViolationWorkbook = (rows) => {
     { header: 'First Name', key: 'first_name', width: 18 },
     { header: 'Last Name', key: 'last_name', width: 20 },
     { header: 'Student Number', key: 'student_number', width: 18 },
-    { header: 'Violation Name', key: 'vi_name', width: 34 },
+    { header: 'Violation Name', key: 'violation_name', width: 34 },
     { header: 'Incident Date', key: 'incident_date', width: 18 },
     { header: 'Status', key: 'status', width: 18 },
     { header: 'Description', key: 'description', width: 80 }
@@ -84,18 +84,14 @@ const createViolationWorkbook = (rows) => {
   }));
   const header = sheet.getRow(1);
   header.height = 26;
-  header.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  header.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0B4F96' } };
+  header.font = { bold: true };
   header.alignment = { vertical: 'middle', horizontal: 'left' };
-  sheet.autoFilter = { from: 'A1', to: 'G1' };
   sheet.eachRow((row, rowNumber) => {
     if (rowNumber > 1) {
       row.height = 30;
-      if (rowNumber % 2 === 0) row.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F9FD' } };
     }
     row.eachCell((cell) => {
       cell.alignment = { vertical: 'top', horizontal: 'left', wrapText: true };
-      cell.border = { bottom: { style: 'thin', color: { argb: 'FFD5E1EE' } } };
     });
   });
   sheet.getColumn('student_number').numFmt = '@';
