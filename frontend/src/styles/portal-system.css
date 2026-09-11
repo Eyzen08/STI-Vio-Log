@@ -197,6 +197,9 @@
   .management-record-table .inline-actions button { min-height: 44px; }
   .management-record-table td[data-label="Actions"],
   .management-record-table td[data-label="Action"] { align-content: start; }
+  .registration-review-table .status-badge { width: fit-content; max-width: 100%; white-space: normal; word-break: normal; overflow-wrap: normal; }
+  .registration-review-table td[data-label="Student"] small { overflow-wrap: anywhere; }
+  .registration-review-table td[data-label="Action"] button { width: 100%; min-height: 44px; }
   .management-record-table .table-actions { width: 100%; display: flex; flex-direction: row !important; align-items: center !important; justify-content: flex-start; gap: 8px; }
   .management-record-table .table-actions button { width: auto !important; min-width: 72px; min-height: 44px; margin: 0; padding: 9px 14px !important; }
   .management-record-table .table-actions .icon-row-action { width: 44px !important; min-width: 44px; padding: 0 !important; }
