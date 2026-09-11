@@ -47,6 +47,7 @@ test('all authorized staff roles use the single three-stage attendance workspace
   assert.match(scannerSource, /Record Attendance/)
   assert.match(scannerSource, /departmentLocked/)
   assert.match(scannerSource, /!departmentLocked&&<label>Department/)
+  assert.match(scannerSource, /className="record-field-label">Supervising officer/)
   assert.match(scannerSource, /<option value="">Select Status<\/option>/)
   assert.match(scannerSource, /<option value="SATISFACTORY">Completed<\/option>/)
   assert.match(scannerSource, /<option value="NEEDS_FOLLOW_UP">Needs Action<\/option>/)
