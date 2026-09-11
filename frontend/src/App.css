@@ -4642,22 +4642,20 @@ a {
 .certificate-hero > span { padding: 8px 12px; border-radius: 999px; background: #e8f4ff; color: #075eb4; font-weight: 800; font-size: .76rem; }
 .certificate-grid { display: grid; grid-template-columns: minmax(300px,.78fr) minmax(440px,1.22fr); gap: 18px; align-items: start; }
 .certificate-student-list { display: grid; gap: 8px; max-height: 520px; overflow: auto; }
-.certificate-student-list button { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--color-border); border-radius: 11px; background: #fbfdff; color: #142b4a; text-align: left; }
-.certificate-student-list button:hover,.certificate-student-list button.selected { border-color: #0870cf; background: #edf7ff; box-shadow: inset 4px 0 #0870cf; }
+.certificate-student-card { display: grid; gap: 4px; padding: 14px; border: 1px solid var(--color-border); border-radius: 11px; background: #fbfdff; color: #142b4a; text-align: left; }
+.certificate-student-card.selected { border-color: #0870cf; background: #edf7ff; box-shadow: inset 4px 0 #0870cf; }
 .certificate-student-list span,.certificate-student-list small { color: #67758a; }
 .clearance-directory-filters { display: grid; grid-template-columns: minmax(240px,1fr) 220px; gap: 10px; padding: 0 15px 12px; }
 .clearance-directory-filters input,.clearance-directory-filters select { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: 8px; background: #fff; color: #17345d; font: inherit; }
 .clearance-status-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; padding: 0 15px 12px; color: #60738b; font-size: .75rem; }
 .clearance-status-legend b { color: #123d70; }
-.certificate-student-list button:disabled { cursor: default; opacity: .78; }
-.certificate-student-list button:disabled:hover { border-color: var(--color-border); background: #fbfdff; box-shadow: none; }
 .certificate-student-list .clearance-directory-status { width: fit-content; padding: 3px 7px; border-radius: 999px; background: #eef2f6; color: #52677f; font-size: .65rem; font-weight: 800; }
 .certificate-student-list .status-qualified { background: #dff7e9; color: #087443; }
 .certificate-student-list .status-awaiting-clearance { background: #e6f1ff; color: #075eb4; }
 .certificate-student-list .status-needs-service { background: #fff1d7; color: #945600; }
 .certificate-student-list .status-blocked { background: #ffe5e8; color: #b42335; }
-.certificate-student-list .clearance-approve-button { width: fit-content; margin-top: 5px; padding: 8px 13px; border-radius: 7px; background: #0870cf; color: #fff; box-shadow: 0 3px 8px rgba(8,112,207,.2); font-size: .72rem; font-style: normal; font-weight: 800; }
-.certificate-student-list button:hover .clearance-approve-button { background: #055eaf; }
+.certificate-student-list :is(.clearance-approve-button,.clearance-issue-button) { width: fit-content; margin-top: 7px; padding: 8px 13px; border: 0; border-radius: 7px; background: #0870cf; color: #fff; box-shadow: 0 3px 8px rgba(8,112,207,.2); font: inherit; font-size: .72rem; font-weight: 800; cursor: pointer; }
+.certificate-student-list :is(.clearance-approve-button,.clearance-issue-button):hover { background: #055eaf; }
 @media (max-width: 620px) { .clearance-directory-filters { grid-template-columns: 1fr; } }
 .certificate-preview { margin: 18px 0; padding: 28px 36px; border: 5px double #07539d; background: #fffef9; text-align: center; box-shadow: 0 8px 24px rgba(15,52,91,.08); }
 .certificate-preview > p:first-child { color: #075eb4; font-weight: 800; letter-spacing: .12em; }
@@ -5201,7 +5199,7 @@ a {
 .certificate-admin .certificate-grid > .table-card { padding: 0; }
 .certificate-admin .certificate-grid > .table-card > .table-header { padding: 15px 16px 10px; }
 .certificate-admin .certificate-student-list { grid-template-columns: repeat(2,minmax(0,1fr)); max-height: 420px; padding: 0 15px 15px; }
-.certificate-admin .certificate-student-list button { border-radius: 8px; }
+.certificate-admin .certificate-student-card { border-radius: 8px; }
 .app-modal--drawer .certificate-review { padding: 0; }
 .app-modal--drawer .certificate-review > .table-header { margin-bottom: 12px; }
 .app-modal--drawer .certificate-review .student-form-grid { grid-template-columns: 1fr; }
