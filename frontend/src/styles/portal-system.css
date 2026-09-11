@@ -371,3 +371,51 @@
   .portal-welcome h2,.management-page-header h2,.messages-page-heading h2 { font-size: 1.35rem; }
   .portal-dashboard .stat-card,.management-metric { min-width: 0; }
 }
+
+/* Mobile management workspaces: contain intrinsic controls and replace dense
+   audit columns with records that can be scanned comfortably on a phone. */
+@media (max-width: 767px) {
+  html,body,#root { max-width: 100%; overflow-x: clip; }
+  .app-shell:not(.auth-shell),
+  .app-shell:not(.auth-shell) .main-panel,
+  .page-content,
+  .management-page-header,
+  .management-metrics,
+  .certificate-admin,
+  .audit-workspace,
+  .table-card,
+  .table-wrap { min-width: 0; max-width: 100%; box-sizing: border-box; }
+  .certificate-admin :is(.certificate-grid,.certificate-student-list,.signature-form,.signature-directory),
+  .audit-workspace :is(.student-form,.student-form-grid) { min-width: 0; max-width: 100%; }
+  .certificate-admin :is(input,select,textarea,button),
+  .audit-workspace :is(input,select,textarea,button) { min-width: 0; max-width: 100%; }
+  .certificate-admin input[type="file"] { width: 100%; overflow: hidden; }
+
+  .management-page-header { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; }
+  .management-page-header p { display: block; max-width: 48ch; }
+  .management-page-header .page-breadcrumb { display: none; }
+  .readonly-badge { align-self: start; white-space: nowrap; }
+  .management-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .management-metric { overflow: hidden; }
+  .management-metric div { min-width: 0; }
+  .management-metric span { overflow-wrap: anywhere; }
+
+  .audit-results-card .table-wrap { overflow: visible; border: 0; border-radius: 0; }
+  .audit-results-card .audit-record-table { min-width: 0; background: transparent; }
+  .audit-record-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); }
+  .audit-record-table,.audit-record-table tbody { display: block; }
+  .audit-record-table tbody { padding: 0 12px 12px; }
+  .audit-record-table tr { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px 16px; margin-bottom: 10px; padding: 14px; border: 1px solid var(--color-border); border-radius: 10px; background: white; box-shadow: var(--shadow-sm); }
+  .audit-record-table tr:last-child { margin-bottom: 0; }
+  .audit-record-table td { min-width: 0; display: grid; align-content: start; gap: 3px; padding: 0 !important; border: 0 !important; overflow-wrap: anywhere; }
+  .audit-record-table td::before { content: attr(data-label); color: var(--color-text-secondary); font-size: 11px; font-weight: 650; letter-spacing: .02em; }
+  .audit-record-table td[data-label="Description"] { grid-column: 1 / -1; }
+  .audit-record-table .status-badge { width: fit-content; max-width: 100%; white-space: normal; }
+}
+
+@media (max-width: 390px) {
+  .management-page-header { grid-template-columns: 1fr; }
+  .readonly-badge { display: none; }
+  .audit-record-table tr { grid-template-columns: 1fr; }
+  .audit-record-table td[data-label] { grid-column: 1; }
+}
