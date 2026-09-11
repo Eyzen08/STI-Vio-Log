@@ -28,7 +28,7 @@ test('redesigned login keeps every existing authentication entry point', () => {
 test('login branding uses local imported building and logo assets', () => {
   assert.match(source, /import buildingImage from '\.\.\/assets\/sti-global-city-building-web\.jpg'/)
   assert.match(source, /import stiLogo from '\.\.\/assets\/sti-logo-web\.png'/)
-  assert.match(source, /alt="STI Global City"/)
+  assert.match(source, /alt="STI Vio-Log"/)
 })
 
 test('manual Student registration collects the complete school profile', () => {

@@ -12,7 +12,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   return <section className={`login-page${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title">
     <div className="login-intro" style={{backgroundImage:`linear-gradient(180deg, rgba(0, 48, 116, .28), rgba(0, 45, 103, .9)), url(${buildingImage})`}}>
-      <div className="login-brand-mark"><img src={stiLogo} alt="STI Global City" width="420" height="250"/><span>GLOBAL CITY</span></div>
+      <div className="login-brand-mark"><img src={stiLogo} alt="STI Vio-Log" width="420" height="236"/></div>
       <div className="login-intro-content"><span className="login-kicker">STI GLOBAL CITY</span><h2>STI Vio-Log</h2><p className="login-tagline">Discipline. Accountability. A Brighter Tomorrow.</p><p>A unified system for student discipline management, community service, and clearance at STI Global City.</p></div>
       <div className="login-assurance" aria-label="Portal assurance"><span>Real People. Real Opportunities.</span><small>© {new Date().getFullYear()} STI Global City</small></div>
     </div>
