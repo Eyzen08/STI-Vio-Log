@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
@@ -21,6 +21,8 @@ const downloadPdf = async (path, token, filename) => {
 
 function AdminClearanceCertificates({ token }) {
   const [students, setStudents] = useState([])
+  const [studentSearch, setStudentSearch] = useState('')
+  const [studentStatus, setStudentStatus] = useState('ALL')
   const [signatures, setSignatures] = useState([])
   const [certificates, setCertificates] = useState([])
   const [selected, setSelected] = useState(null)
@@ -41,12 +43,19 @@ function AdminClearanceCertificates({ token }) {
   const load = useCallback(async () => {
     try {
       const [eligible, officers, issued] = await Promise.all([
-        jsonRequest('/api/clearance/certificates/eligible', token), jsonRequest('/api/clearance/signatures', token), jsonRequest('/api/clearance/certificates', token)
+        jsonRequest('/api/clearance/certificates/students', token), jsonRequest('/api/clearance/signatures', token), jsonRequest('/api/clearance/certificates', token)
       ])
       setStudents(eligible.students || []); setSignatures(officers.signatures || []); setCertificates(issued.certificates || [])
     } catch (requestError) { setError(requestError.message) }
   }, [token])
   useEffect(() => { load() }, [load])
+
+  const qualifiedStudents = useMemo(() => students.filter((student) => student.certificate_eligible), [students])
+  const visibleStudents = useMemo(() => {
+    const query = studentSearch.trim().toLowerCase()
+    return students.filter((student) => (studentStatus === 'ALL' || student.qualification_status === studentStatus)
+      && (!query || [student.student_name, student.student_number, student.program].some((value) => String(value || '').toLowerCase().includes(query))))
+  }, [students, studentSearch, studentStatus])
 
   const chooseStudent = (student) => {
     setSelected(student); setDraft({ student_name: student.student_name, program: student.program || '' }); setSelectedSignatures([]); setError(''); setMessage('')
@@ -106,17 +115,19 @@ function AdminClearanceCertificates({ token }) {
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
     <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
     <section className="management-metrics" aria-label="Clearance certificate summary">
-      <article className="management-metric metric-green"><i>◎</i><div><strong>{students.length}</strong><span>Eligible Students</span></div></article>
+      <article className="management-metric metric-green"><i>◎</i><div><strong>{qualifiedStudents.length}</strong><span>Qualified Students</span></div></article>
       <article className="management-metric metric-blue"><i>◇</i><div><strong>{certificates.filter((entry) => entry.status === 'ISSUED').length}</strong><span>Issued Certificates</span></div></article>
       <article className="management-metric metric-red"><i>!</i><div><strong>{certificates.filter((entry) => entry.status === 'REVOKED').length}</strong><span>Revoked Certificates</span></div></article>
       <article className="management-metric metric-orange"><i>✓</i><div><strong>{signatures.filter((entry) => entry.is_active).length}</strong><span>Active Signatures</span></div></article>
     </section>
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
     <div className="certificate-grid">
-      <section className="table-card"><div className="table-header"><h3>Eligible students</h3><span>{students.length} ready</span></div>
-        <div className="certificate-student-list">{students.length ? students.map((student) => <button type="button" key={student.id} className={selected?.id === student.id ? 'selected' : ''} onClick={() => chooseStudent(student)}>
-          <strong>{student.student_name}</strong><span>{student.student_number} • {student.program || 'Program not recorded'}</span><small>{formatDuration(student.completed_hours)} of {formatDuration(student.required_hours)} completed{student.has_issued_certificate ? ' • Certificate issued' : ''}</small>
-        </button>) : <p className="empty-state">No students currently satisfy every certificate requirement.</p>}</div>
+      <section className="table-card"><div className="table-header"><h3>Student clearance status</h3><span>{visibleStudents.length} of {students.length} students</span></div>
+        <div className="clearance-directory-filters"><label><span className="sr-only">Search students</span><input type="search" placeholder="Search by name, student number, or program…" value={studentSearch} onChange={(event) => setStudentSearch(event.target.value)} /></label><label><span className="sr-only">Filter by clearance status</span><select value={studentStatus} onChange={(event) => setStudentStatus(event.target.value)}><option value="ALL">All statuses</option><option value="QUALIFIED">Qualified</option><option value="AWAITING_CLEARANCE">Awaiting clearance</option><option value="NEEDS_SERVICE">Needs service hours</option><option value="BLOCKED">Blocked</option><option value="NO_SERVICE_REQUIRED">No service assignment</option></select></label></div>
+        <div className="clearance-status-legend"><span><b>{qualifiedStudents.length}</b> qualified</span><span><b>{students.filter((student) => student.qualification_status === 'NEEDS_SERVICE').length}</b> need hours</span><span><b>{students.filter((student) => student.qualification_status === 'AWAITING_CLEARANCE').length}</b> awaiting approval</span></div>
+        <div className="certificate-student-list">{visibleStudents.length ? visibleStudents.map((student) => <button type="button" key={student.id} disabled={!student.certificate_eligible || student.has_issued_certificate} className={selected?.id === student.id ? 'selected' : ''} onClick={() => chooseStudent(student)}>
+          <span className={`clearance-directory-status status-${student.qualification_status.toLowerCase().replaceAll('_', '-')}`}>{student.qualification_status.replaceAll('_', ' ')}</span><strong>{student.student_name}</strong><span>{student.student_number} • {student.program || 'Program not recorded'}</span><small>{student.assignment_count ? `${formatDuration(student.completed_hours)} of ${formatDuration(student.required_hours)} completed` : 'No assigned community service hours'} • {student.qualification_reason}</small>
+        </button>) : <p className="empty-state">No students match this search and status filter.</p>}</div>
       </section>
       {selected && <Modal title={`Review clearance — ${selected.student_number}`} drawer onClose={() => setSelected(null)}><section className="certificate-review"><div className="table-header"><h3>Review and issue</h3><span>Draft preview</span></div>
         <>

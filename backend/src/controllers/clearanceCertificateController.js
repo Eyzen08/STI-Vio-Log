@@ -40,6 +40,55 @@ const getEligibleStudents = async (req, res) => {
   } catch (error) { return handle(res, error, 'Failed to load certificate eligibility'); }
 };
 
+const getCertificateStudentDirectory = async (req, res) => {
+  try {
+    assertAllowedFields(req.query, []);
+    const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.program,s.email,
+      sc.id AS clearance_id,sc.status AS clearance_status,sc.cleared_at,
+      COALESCE(service.required_hours,0)::numeric AS required_hours,
+      COALESCE(service.completed_hours,0)::numeric AS completed_hours,
+      COALESCE(service.assignment_count,0)::int AS assignment_count,
+      COALESCE(service.service_complete,FALSE) AS service_complete,
+      EXISTS(SELECT 1 FROM violations v WHERE v.student_id=s.id AND v.status='OPEN') AS has_open_violation,
+      EXISTS(SELECT 1 FROM clearance_certificates cc WHERE cc.student_id=s.id AND cc.status='ISSUED') AS has_issued_certificate
+      FROM students s
+      JOIN users u ON u.id=s.user_id
+      LEFT JOIN student_clearance sc ON sc.student_id=s.id
+      LEFT JOIN LATERAL (
+        SELECT SUM(a.required_hours) AS required_hours,SUM(a.completed_hours) AS completed_hours,COUNT(*) AS assignment_count,
+          BOOL_AND(a.status='COMPLETED' AND a.remaining_hours=0 AND a.completed_hours>=a.required_hours) AS service_complete
+        FROM community_service_assignments a WHERE a.student_id=s.id
+      ) service ON TRUE
+      WHERE u.is_active=TRUE
+      ORDER BY s.last_name,s.first_name`);
+    const students = result.rows.map((row) => {
+      const assignmentCount = Number(row.assignment_count);
+      const hasOpenViolation = row.has_open_violation === true;
+      const serviceComplete = assignmentCount > 0 && row.service_complete === true;
+      const certificateEligible = row.clearance_status === 'CLEARED' && serviceComplete && !hasOpenViolation;
+      let qualification_status = 'NEEDS_SERVICE';
+      let qualification_reason = 'Community service hours are incomplete.';
+      if (!assignmentCount) {
+        qualification_status = hasOpenViolation ? 'BLOCKED' : 'NO_SERVICE_REQUIRED';
+        qualification_reason = hasOpenViolation ? 'Has an unresolved violation.' : 'No community service assignment.';
+      } else if (hasOpenViolation) {
+        qualification_status = 'BLOCKED';
+        qualification_reason = 'Has an unresolved violation.';
+      } else if (serviceComplete && row.clearance_status !== 'CLEARED') {
+        qualification_status = 'AWAITING_CLEARANCE';
+        qualification_reason = 'Service is complete; final clearance approval is still required.';
+      } else if (certificateEligible) {
+        qualification_status = 'QUALIFIED';
+        qualification_reason = row.has_issued_certificate ? 'Certificate already issued.' : 'Ready for certificate issuance.';
+      }
+      return { ...row, id: Number(row.id), clearance_id: row.clearance_id ? Number(row.clearance_id) : null,
+        required_hours: Number(row.required_hours), completed_hours: Number(row.completed_hours), assignment_count: assignmentCount,
+        student_name: studentName(row), certificate_eligible: certificateEligible, qualification_status, qualification_reason };
+    });
+    return res.json({ success: true, students });
+  } catch (error) { return handle(res, error, 'Failed to load clearance student directory'); }
+};
+
 const listSignatures = async (_req, res) => {
   try {
     const result = await pool.query(`SELECT id,officer_user_id,full_name,position,is_active,image_mime_type,
@@ -221,4 +270,4 @@ const verifyClearanceCertificate = async (req, res) => {
   } catch (error) { return handle(res, error, 'Failed to verify certificate'); }
 };
 
-module.exports = { getEligibleStudents, listSignatures, saveSignature, updateSignature, issueCertificate, listCertificates, downloadCertificate, revokeCertificate, resendCertificate, getMyClearanceCertificate, verifyClearanceCertificate };
+module.exports = { getEligibleStudents, getCertificateStudentDirectory, listSignatures, saveSignature, updateSignature, issueCertificate, listCertificates, downloadCertificate, revokeCertificate, resendCertificate, getMyClearanceCertificate, verifyClearanceCertificate };
