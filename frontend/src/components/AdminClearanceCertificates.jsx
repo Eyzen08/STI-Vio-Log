@@ -47,7 +47,8 @@ function AdminClearanceCertificates({ token }) {
       const [eligible, officers, issued] = await Promise.all([
         jsonRequest('/api/clearance/certificates/students', token), jsonRequest('/api/clearance/signatures', token), jsonRequest('/api/clearance/certificates', token)
       ])
-      setStudents(eligible.students || []); setSignatures(officers.signatures || []); setCertificates(issued.certificates || [])
+      const uniqueStudents = [...new Map((eligible.students || []).map((student) => [String(student.id), student])).values()]
+      setStudents(uniqueStudents); setSignatures(officers.signatures || []); setCertificates(issued.certificates || [])
     } catch (requestError) { setError(requestError.message) }
   }, [token])
   useEffect(() => { load() }, [load])

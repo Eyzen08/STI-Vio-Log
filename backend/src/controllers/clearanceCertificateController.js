@@ -53,7 +53,13 @@ const getCertificateStudentDirectory = async (req, res) => {
       EXISTS(SELECT 1 FROM clearance_certificates cc WHERE cc.student_id=s.id AND cc.status='ISSUED') AS has_issued_certificate
       FROM students s
       JOIN users u ON u.id=s.user_id
-      LEFT JOIN student_clearance sc ON sc.student_id=s.id
+      LEFT JOIN LATERAL (
+        SELECT clearance.id,clearance.status,clearance.cleared_at
+        FROM student_clearance clearance
+        WHERE clearance.student_id=s.id
+        ORDER BY clearance.updated_at DESC,clearance.id DESC
+        LIMIT 1
+      ) sc ON TRUE
       LEFT JOIN LATERAL (
         SELECT SUM(a.required_hours) AS required_hours,SUM(a.completed_hours) AS completed_hours,COUNT(*) AS assignment_count,
           BOOL_AND(a.status='COMPLETED' AND a.remaining_hours=0 AND a.completed_hours>=a.required_hours) AS service_complete
