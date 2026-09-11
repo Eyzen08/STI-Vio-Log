@@ -2569,7 +2569,7 @@ function App() {
 
           {reviewedStudent && reviewedCondition && (
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
-            <section className="table-card modal-content-card">
+            <section className="table-card modal-content-card student-record-drawer">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
               <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Program', reviewedStudent.program], ['Section', reviewedStudent.section], ['Year level', reviewedStudent.year_level], ['Email', reviewedStudent.email], ['Phone', reviewedStudent.phone_number]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}

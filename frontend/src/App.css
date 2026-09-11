@@ -5027,7 +5027,13 @@ a {
 .row-action-menu > div .danger-text { color: #c92136 !important; }
 
 .app-modal-backdrop:has(.app-modal--drawer) { justify-content: flex-end; padding: 0; background: rgba(8,31,60,.38); }
-.app-modal--drawer { width: min(540px,100vw); max-width: none; height: 100vh; max-height: 100vh; margin: 0; border-radius: 0; animation: drawer-in .2s ease-out; }
+.app-modal--drawer { width: min(540px,100vw); max-width: none; height: 100vh; height: 100dvh; max-height: 100vh; max-height: 100dvh; margin: 0; border-radius: 0; animation: drawer-in .2s ease-out; }
+.app-modal--drawer:has(.student-record-drawer) { width: min(780px,100vw); }
+.app-modal--drawer:has(.student-record-drawer) .app-modal-body { overflow-x: hidden; }
+.student-record-drawer.modal-content-card { width: 100%; max-width: 100%; margin: 0; box-sizing: border-box; }
+.student-record-drawer .department-stats { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.student-record-drawer .stat-card { min-width: 0; }
+.student-record-drawer .stat-card span,.student-record-drawer .stat-card strong { overflow-wrap: anywhere; }
 .app-modal--drawer .app-modal-header { position: sticky; z-index: 2; top: 0; min-height: 64px; padding: 14px 20px; background: white; }
 .app-modal--drawer .app-modal-body { padding: 18px 20px 28px; }
 .app-modal--drawer .student-form-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -5046,6 +5052,15 @@ a {
 }
 @media (max-width: 900px) {
   .management-metrics,.management-metrics--wide,.management-metrics--five { grid-template-columns: repeat(2,1fr); }
+}
+@media (max-width: 620px) {
+  .student-record-drawer .student-record-overview dl,
+  .student-record-drawer .department-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 390px) {
+  .student-record-drawer .student-record-overview dl { grid-template-columns: 1fr; }
+  .student-record-drawer .department-stats { gap: 8px; }
+  .student-record-drawer .stat-card { min-height: 82px; padding: 10px; }
 }
 @media (max-width: 767px) {
   .management-page-header { align-items: flex-start; }
