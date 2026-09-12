@@ -337,7 +337,10 @@
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: inherit;
+  height: calc(100vh - clamp(1.5rem, 4.2vw, 3rem));
+  height: calc(100dvh - clamp(1.5rem, 4.2vw, 3rem));
+  min-height: 36rem;
+  align-self: start;
   flex-direction: column;
   justify-content: space-between;
   padding: clamp(2rem, 4vw, 4.5rem);
@@ -722,7 +725,9 @@
   }
 
   .auth-shell .login-intro {
+    height: 15.5rem;
     min-height: 15.5rem;
+    flex: 0 0 15.5rem;
     padding: max(1rem, env(safe-area-inset-top)) 1rem 2.8rem;
   }
 
@@ -764,7 +769,7 @@
 }
 
 @media (max-width: 350px) {
-  .auth-shell .login-intro { min-height: 14rem; }
+  .auth-shell .login-intro { height: 14rem; min-height: 14rem; flex-basis: 14rem; }
   .auth-shell .auth-card.login-card { padding-inline: .9rem; }
   .auth-shell .auth-entry-actions { align-items: flex-start; flex-direction: column; gap: 0; }
   .auth-shell .auth-entry-actions a { min-height: 2.5rem; }

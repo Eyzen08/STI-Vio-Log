@@ -80,3 +80,9 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /padding-right: 52px/)
   assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: 44px !important/)
 })
+
+test('authentication background keeps a stable crop while forms change height', () => {
+  assert.match(portalCssSource, /height: calc\(100dvh - clamp\(1\.5rem, 4\.2vw, 3rem\)\)/)
+  assert.match(portalCssSource, /height: 15\.5rem;\s+min-height: 15\.5rem;\s+flex: 0 0 15\.5rem/)
+  assert.match(portalCssSource, /height: 14rem; min-height: 14rem; flex-basis: 14rem/)
+})
