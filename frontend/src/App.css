@@ -4978,6 +4978,97 @@ a {
   .mobile-bottom-nav button span { max-width: 55px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
+/* Keep the multi-step registration flow fluid. The compact sign-in card rules
+   above intentionally cap regular authentication forms at 410px. */
+.login-page--student-flow .auth-card.login-card {
+  width: min(760px, 100%);
+}
+
+.registration-profile-form,
+.registration-step-panel,
+.registration-review,
+.registration-review-section {
+  min-width: 0;
+}
+
+.registration-review {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.registration-review dl > div {
+  grid-template-columns: minmax(7rem, .8fr) minmax(0, 1.2fr);
+  align-items: start;
+}
+
+.registration-review :is(dt, dd) {
+  line-height: 1.45;
+}
+
+.registration-review dd {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1200px) and (min-width: 768px) {
+  .login-page--student-flow .registration-review,
+  .login-page--student-flow .registration-security-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  .login-page--student-flow .login-card {
+    width: 100%;
+  }
+
+  .registration-profile-form {
+    gap: 15px;
+  }
+
+  .registration-stepper {
+    padding-inline: 2px;
+  }
+
+  .registration-stepper li:not(:last-child)::after {
+    left: calc(50% + 17px);
+    width: calc(100% - 34px);
+  }
+
+  .registration-stepper li > span {
+    width: 30px;
+    height: 30px;
+  }
+
+  .registration-step-panel {
+    padding: clamp(13px, 4vw, 18px);
+  }
+
+  .registration-review {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .registration-review dl > div {
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+    gap: 12px;
+  }
+
+  .registration-navigation {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+
+  .registration-profile-form .registration-navigation button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .registration-profile-form .registration-navigation .auth-text-link {
+    min-height: 40px;
+  }
+}
+
 /* Management workspaces: compact institutional tables and contextual drawers */
 .management-page-header {
   display: flex;
