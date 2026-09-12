@@ -696,7 +696,17 @@
   font-weight: 700;
 }
 
-.auth-shell .login-page--student-flow .login-form-panel { align-items: start; overflow: visible; }
+.auth-shell .login-page--student-flow { overflow: visible; }
+.auth-shell .login-page--student-flow .login-intro {
+  position: sticky;
+  top: clamp(.75rem, 2.1vw, 1.5rem);
+  border-radius: 1.4rem 0 0 1.4rem;
+}
+.auth-shell .login-page--student-flow .login-form-panel {
+  align-items: start;
+  overflow: visible;
+  border-radius: 0 1.4rem 1.4rem 0;
+}
 .auth-shell .login-page--student-flow .login-card { width: min(48rem, 100%); margin-block: clamp(1.25rem, 4vh, 3rem); }
 
 @media (min-width: 1800px) {
@@ -766,6 +776,12 @@
   .auth-shell .auth-entry-actions a { font-size: .72rem; }
   .auth-shell .login-page--student-flow .login-form-panel { margin-top: -1.45rem; padding-inline: .65rem; }
   .auth-shell .login-page--student-flow .login-card { margin: 0; }
+  .auth-shell .login-page--student-flow .login-intro {
+    position: relative;
+    top: auto;
+    border-radius: 0;
+  }
+  .auth-shell .login-page--student-flow .login-form-panel { border-radius: 0; }
 }
 
 @media (max-width: 350px) {
