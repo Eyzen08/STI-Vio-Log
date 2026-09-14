@@ -1,6 +1,18 @@
 import { formatManilaDate } from './displayFormat.js'
 
 export const MESSAGE_MAX_LENGTH = 1000
+
+export const conversationParties = (conversation = {}) => {
+  const student = conversation.student_name
+    || `${conversation.first_name || ''} ${conversation.last_name || ''}`.trim()
+    || 'Student'
+  const school = conversation.school_participant
+    || conversation.department_name
+    || 'Discipline Office'
+
+  return { student, school, label: `${student} ↔ ${school}` }
+}
+
 export const messageParticipant = (conversation, role) => role === 'STUDENT'
   ? { name:conversation.school_participant || conversation.department_name || 'Discipline Office', detail:conversation.assigned_department_id?'Department Head':'Discipline Office' }
   : { name:conversation.student_name || `${conversation.first_name||''} ${conversation.last_name||''}`.trim() || 'Student', detail:`${conversation.student_number || 'Student number unavailable'} · Student` }

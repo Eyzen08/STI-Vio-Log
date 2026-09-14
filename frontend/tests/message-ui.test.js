@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
-import { conversationMatchesTab, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../src/lib/messageUi.js'
+import { conversationMatchesTab, conversationParties, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../src/lib/messageUi.js'
 
 test('message UI helpers expose the required text limit and filters', () => {
   assert.equal(MESSAGE_MAX_LENGTH, 1000)
@@ -56,6 +56,18 @@ test('participants reveal only role-appropriate conversation metadata', () => {
     messageParticipant({ student_name: 'Jose Reyes', student_number: '02000123456' }, 'ADMIN'),
     { name: 'Jose Reyes', detail: '02000123456 · Student' }
   )
+})
+
+test('conversation parties identify the student and institutional recipient', () => {
+  assert.deepEqual(
+    conversationParties({ student_name: 'Pedro Makisig', school_participant: 'Discipline Office' }),
+    { student: 'Pedro Makisig', school: 'Discipline Office', label: 'Pedro Makisig ↔ Discipline Office' }
+  )
+  assert.equal(
+    conversationParties({ first_name: 'Ana', last_name: 'Montana', department_name: 'IT Department' }).label,
+    'Ana Montana ↔ IT Department'
+  )
+  assert.equal(conversationParties({}).label, 'Student ↔ Discipline Office')
 })
 
 test('message history is grouped into accessible date sections', () => {
