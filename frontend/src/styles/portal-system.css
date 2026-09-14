@@ -297,6 +297,7 @@
   box-shadow: inset 0 1px 2px rgba(23,52,91,.05);
 }
 .main-panel .department-officer-tabs button {
+  position: relative;
   min-height: 44px;
   padding: 9px 16px !important;
   border: 1px solid #e3b800 !important;
@@ -315,11 +316,48 @@
   border-color: #e3b800 !important;
   background: var(--portal-yellow) !important;
   color: #08244b !important;
-  box-shadow: inset 0 0 0 2px #075cad, 0 3px 8px rgba(122,91,0,.16) !important;
+  box-shadow: 0 2px 5px rgba(122,91,0,.1) !important;
+}
+.main-panel .department-officer-tabs button[aria-selected="true"]::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 3px;
+  left: 14px;
+  height: 3px;
+  border-radius: 3px;
+  background: #08244b;
 }
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
   .main-panel .department-officer-tabs button { width: 100%; }
+}
+
+/* Search controls and their previews must shrink inside every portal surface. */
+.main-panel :is(.topbar-search,.directory-toolbar,.management-filter-bar,.registration-toolbar,.duplicate-filters,.clearance-directory-filters,.student-roster-tools,.operations-filter,.conversation-search) {
+  min-width: 0;
+  max-width: 100%;
+}
+.main-panel :is(.topbar-search,.directory-toolbar,.management-filter-bar,.registration-toolbar,.duplicate-filters,.clearance-directory-filters,.student-roster-tools,.operations-filter,.conversation-search) :is(label,input,select) {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.main-panel :is(.conversation-list,.duplicate-list,.registration-review-list,.officer-directory) {
+  min-width: 0;
+  max-width: 100%;
+}
+.main-panel :is(.conversation-summary,.conversation-primary,.conversation-preview,.conversation-subject-detail,.duplicate-list button span,.registration-review-heading > div,.officer-directory article) {
+  min-width: 0;
+  max-width: 100%;
+}
+.main-panel :is(.conversation-preview,.conversation-subject-detail,.conversation-primary strong) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.main-panel :is(.registration-review-heading,.duplicate-list button,.officer-directory article) :is(strong,small,p) {
+  overflow-wrap: anywhere;
 }
 
 /* Light, high-contrast states for segmented navigation controls. */

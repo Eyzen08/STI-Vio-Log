@@ -2562,7 +2562,7 @@ function App() {
             </div>
 
             <div className="noncompliance-toolbar">
-              <label><span>Search students</span><input type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
+              <label><span>Search students</span><input type="search" name="student-directory-filter" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
             </div>
             <div className="offense-legend" aria-label="Offense indicator legend">
               <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
@@ -2742,6 +2742,7 @@ function App() {
                     type="search"
                     name="student_search"
                     list="violation-student-options"
+                    autoComplete="off"
                     placeholder="Type a student number or name"
                     value={
                       violationForm.student_search
@@ -2897,7 +2898,7 @@ function App() {
                   : `${violations.length} entries`}
               </span>
             </div>
-            <div className="directory-toolbar management-filter-bar"><input type="search" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
+            <div className="directory-toolbar management-filter-bar"><input type="search" name="violation-directory-filter" autoComplete="off" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
 
             {visibleViolations.length === 0 &&
             !dashboardLoading ? (
@@ -3048,6 +3049,7 @@ function App() {
                     type="search"
                     name="student_search"
                     list="community-service-student-options"
+                    autoComplete="off"
                     placeholder="Type a student number or name"
                     value={
                       communityServiceForm.student_search
@@ -3184,7 +3186,7 @@ function App() {
                 assignments
               </span>
             </div>
-            <div className="directory-toolbar management-filter-bar"><input type="search" aria-label="Search service assignments" value={serviceTableFilters.search} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,search:event.target.value})} placeholder="Search student, number, or department…"/><select aria-label="Filter service department" value={serviceTableFilters.department} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,department:event.target.value})}><option value="ALL">All departments</option>{departmentOptions.map((department)=><option value={String(department.id)} key={department.id}>{department.name}</option>)}</select><select aria-label="Filter service status" value={serviceTableFilters.status} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
+            <div className="directory-toolbar management-filter-bar"><input type="search" name="service-assignment-filter" autoComplete="off" aria-label="Search service assignments" value={serviceTableFilters.search} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,search:event.target.value})} placeholder="Search student, number, or department…"/><select aria-label="Filter service department" value={serviceTableFilters.department} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,department:event.target.value})}><option value="ALL">All departments</option>{departmentOptions.map((department)=><option value={String(department.id)} key={department.id}>{department.name}</option>)}</select><select aria-label="Filter service status" value={serviceTableFilters.status} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
 
             {visibleAssignments.length === 0 ? (
               <p className="empty-state">
@@ -3351,7 +3353,7 @@ function App() {
               <label>
                 Search
 
-                <input type="search" name="search" value={reportFilters.search} onChange={handleReportFilterChange} placeholder="Student or violation" disabled={reportType !== 'violations'} />
+                <input type="search" name="report-search-filter" autoComplete="off" value={reportFilters.search} onChange={handleReportFilterChange} placeholder="Student or violation" disabled={reportType !== 'violations'} />
               </label>
 
               <label>
@@ -3959,7 +3961,7 @@ function App() {
             </button>
 
             {(isAdmin || isDepartmentHead) && <form className="topbar-search" role="search" onSubmit={(event)=>{event.preventDefault(); navigateTo(isAdmin?'/admin/students':'/department/students')}}>
-              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search student directory…'}/>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search student directory…'}/>
             </form>}
           </div>
 

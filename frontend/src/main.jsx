@@ -3,8 +3,10 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { installMutationRequestGuard } from './lib/api.js'
+import { installSearchInputGuard } from './lib/searchControls.js'
 
 installMutationRequestGuard(window)
+installSearchInputGuard(document)
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault()

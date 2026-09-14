@@ -20,7 +20,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
       {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
 
       <section className="student-roster-tools" aria-label="Filter department students">
-        <label><span>Search roster</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or student number" /></label>
+        <label><span>Search roster</span><input type="search" name="department-student-roster-filter" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or student number" /></label>
         <label><span>Service standing</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="ALL">All students</option><option value="ACTIVE">Active service</option><option value="COMPLETE">No remaining service</option></select></label>
       </section>
 
