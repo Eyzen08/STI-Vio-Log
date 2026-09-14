@@ -3848,7 +3848,7 @@ function App() {
         </nav>
       </aside>}
 
-      <main className="main-panel" id="main-content" tabIndex="-1">
+      <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">
         {isLoggedIn && <header className="topbar">
           <div className="topbar-title">
             <button

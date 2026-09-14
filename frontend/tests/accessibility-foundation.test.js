@@ -8,7 +8,7 @@ const css = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 
 test('application shell provides a keyboard skip link and focusable main landmark', () => {
   assert.match(app, /href="#main-content">Skip to main content/)
-  assert.match(app, /<main className="main-panel" id="main-content" tabIndex="-1">/)
+  assert.match(app, /<main className=\{`main-panel\$\{activeView === 'Messages' \? ' main-panel--messages' : ''\}`\} id="main-content" tabIndex="-1">/)
   assert.match(css, /\.skip-link:focus/)
 })
 

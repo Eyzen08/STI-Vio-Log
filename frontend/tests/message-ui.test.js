@@ -12,10 +12,21 @@ test('message UI helpers expose the required text limit and filters', () => {
 })
 
 test('mobile messages keep a compact heading and keyboard-safe composer', async () => {
+  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(app, /activeView === 'Messages' \? ' main-panel--messages' : ''/)
   assert.match(css, /\.messages-page-heading \{ display: flex; flex-direction: row;/)
   assert.match(css, /\.chat-composer \{ position: sticky; bottom: 0;/)
   assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
+})
+
+test('message workspace keeps the composer visible and scrolls both content columns', async () => {
+  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.main-panel--messages\s*\{[^}]*height:\s*100dvh;[^}]*display:\s*flex;[^}]*overflow:\s*hidden;/s)
+  assert.match(css, /\.main-panel--messages > \.page-content\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1 1 auto;[^}]*overflow:\s*hidden;/s)
+  assert.match(css, /\.main-panel--messages \.messages-inbox\s*\{[^}]*height:\s*100%;[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s)
+  assert.match(css, /\.main-panel--messages \.messages-workspace\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1 1 auto;/s)
+  assert.match(css, /\.main-panel--messages :is\(\.conversation-list, \.chat-history\)\s*\{[^}]*overflow-y:\s*auto;[^}]*overscroll-behavior:\s*contain;/s)
 })
 
 test('messages sent by the signed-in account align to the right', async () => {

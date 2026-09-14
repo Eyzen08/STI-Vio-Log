@@ -950,6 +950,88 @@
 .main-panel :where(input,select,textarea):focus-visible,.auth-shell :where(input,select,textarea):focus-visible {
   outline: 0; border-color: var(--portal-blue); box-shadow: 0 0 0 3px rgba(9,105,199,.15),inset 0 1px 2px rgba(14,55,101,.025);
 }
+
+/* Keep the Messages composer visible while each message column scrolls independently. */
+.app-shell:not(.auth-shell) .main-panel--messages {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-panel--messages > .topbar,
+.main-panel--messages > .support-access-banner {
+  flex: 0 0 auto;
+}
+
+.main-panel--messages > .page-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-panel--messages .messages-inbox {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-panel--messages .messages-page-heading,
+.main-panel--messages .messages-inbox > .error-message {
+  flex: 0 0 auto;
+}
+
+.main-panel--messages .messages-workspace {
+  height: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.main-panel--messages :is(.conversation-pane, .chat-pane) {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-panel--messages :is(.conversation-list, .chat-history) {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 12px;
+}
+
+.main-panel--messages .chat-composer {
+  z-index: 2;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .app-shell:not(.auth-shell) .main-panel--messages {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+  }
+
+  .main-panel--messages > .page-content {
+    padding-bottom: 12px;
+  }
+
+  .main-panel--messages .messages-workspace,
+  .main-panel--messages .chat-pane {
+    min-height: 0;
+  }
+
+  .main-panel--messages .chat-composer {
+    bottom: 0;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
 .main-panel select,.auth-shell select { color-scheme: light; }
 .main-panel :where(input,textarea)::placeholder,.auth-shell :where(input,textarea)::placeholder { color: #788ba2; opacity: 1; }
 .table-wrap { scrollbar-color: #b5c8da #eef3f8; scrollbar-width: thin; }
