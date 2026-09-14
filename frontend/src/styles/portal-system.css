@@ -275,15 +275,17 @@
 .main-panel .department-officer-tabs button {
   min-height: 44px;
   padding: 9px 16px !important;
-  border: 1px solid transparent !important;
+  border: 1px solid #b7cee4 !important;
   border-radius: 8px !important;
-  background: transparent !important;
+  background: #f8fbff !important;
   color: #264b70 !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 5px rgba(23,52,91,.07) !important;
 }
 .main-panel .department-officer-tabs button:hover:not(:disabled) {
-  background: #f7fbff !important;
+  border-color: #78aeda !important;
+  background: #eaf4ff !important;
   color: #073e76 !important;
+  box-shadow: 0 3px 8px rgba(23,52,91,.1) !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
   border-color: #e3b800 !important;
