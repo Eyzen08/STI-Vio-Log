@@ -275,23 +275,23 @@
 .main-panel .department-officer-tabs button {
   min-height: 44px;
   padding: 9px 16px !important;
-  border: 1px solid #b7cee4 !important;
+  border: 1px solid #e3b800 !important;
   border-radius: 8px !important;
-  background: #f8fbff !important;
-  color: #264b70 !important;
-  box-shadow: 0 2px 5px rgba(23,52,91,.07) !important;
+  background: var(--portal-yellow) !important;
+  color: #08244b !important;
+  box-shadow: 0 2px 5px rgba(122,91,0,.1) !important;
 }
 .main-panel .department-officer-tabs button:hover:not(:disabled) {
-  border-color: #78aeda !important;
-  background: #eaf4ff !important;
-  color: #073e76 !important;
-  box-shadow: 0 3px 8px rgba(23,52,91,.1) !important;
+  border-color: #d4a900 !important;
+  background: #ffdd4d !important;
+  color: #08244b !important;
+  box-shadow: 0 3px 8px rgba(122,91,0,.14) !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
   border-color: #e3b800 !important;
   background: var(--portal-yellow) !important;
   color: #08244b !important;
-  box-shadow: 0 3px 8px rgba(122,91,0,.14) !important;
+  box-shadow: inset 0 0 0 2px #075cad, 0 3px 8px rgba(122,91,0,.16) !important;
 }
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
