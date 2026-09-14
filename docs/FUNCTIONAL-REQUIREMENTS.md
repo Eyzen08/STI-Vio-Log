@@ -43,10 +43,12 @@
 
 ## System Administration
 
-1. System Admin can manage Student and Department Accounts, including password reset, deactivation/deletion, and Google-link revocation where applicable.
-2. System Admin can manage departments.
-3. System Admin can manage roles and permissions.
-4. System Admin can review audit logs.
+1. System Admin can inspect sanitized component health, authentication activity, and append-only security events.
+2. System Admin can search for an account and request a lock or controlled recovery after password re-authentication.
+3. A different active Discipline Administrator must approve high-risk requests; approval is short-lived and execution requires a fresh password confirmation.
+4. System Admin can request exact-scope, time-limited, read-only access to sensitive institutional information.
+5. Broader account, department, role, and institutional modules remain disabled until their actions have registered approval-aware executors and pass acceptance testing.
+6. System Admin cannot view secrets, impersonate users, run arbitrary SQL, delete audit evidence, or bypass domain business rules.
 
 ## Reports and exports
 

@@ -1,71 +1,31 @@
-import { useEffect, useState } from 'react'
-import { API_URL } from '../lib/api.js'
-import { formatManilaDateTime } from '../lib/displayFormat.js'
+import {useCallback,useEffect,useState} from 'react'
+import {API_URL} from '../lib/api.js'
+import {formatManilaDateTime} from '../lib/displayFormat.js'
 import PortalIcon from './PortalIcon.jsx'
 
-const readable = (value = '') => String(value).replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
+const readable=(value='')=>String(value).replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
+const json=async(response)=>{const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error?.message||'The request could not be completed.');return data}
 
-function SystemDashboard({ token }) {
-  const [system, setSystem] = useState(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [securityEvents, setSecurityEvents] = useState([])
-  const [authActivity, setAuthActivity] = useState([])
-  const [accountAction, setAccountAction] = useState({ target_id:'', reason:'' })
-  const [accountActionError, setAccountActionError] = useState('')
-  const [temporaryCredential, setTemporaryCredential] = useState(null)
-  const [accountBusy, setAccountBusy] = useState(false)
+export default function SystemDashboard({token}){
+ const [system,setSystem]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[events,setEvents]=useState([]),[authActivity,setAuthActivity]=useState([])
+ const [eventSearch,setEventSearch]=useState(''),[eventResult,setEventResult]=useState(''),[accountSearch,setAccountSearch]=useState(''),[accounts,setAccounts]=useState([])
+ const [action,setAction]=useState({target_id:'',reason:'',password:''}),[actionError,setActionError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false)
 
-  useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    fetch(`${API_URL}/api/system/status`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
-      .then(async (response) => {
-        const data = await response.json().catch(() => null)
-        if (!response.ok || !data?.system) throw new Error(data?.error?.message || 'System status is temporarily unavailable.')
-        setSystem(data.system)
-      })
-      .catch((loadError) => { if (loadError.name !== 'AbortError') setError(loadError.message) })
-      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [token])
+ const loadStatus=useCallback(async()=>{setLoading(true);setError('');try{const response=await fetch(`${API_URL}/api/system/status`,{headers:{Authorization:`Bearer ${token}`}});setSystem((await json(response)).system)}catch(e){setError(e.message)}finally{setLoading(false)}},[token])
+ const loadEvents=useCallback(async(search='',result='')=>{const query=new URLSearchParams({limit:'50'});if(search)query.set('search',search);if(result)query.set('result',result);try{const headers={Authorization:`Bearer ${token}`};const [eventResponse,authResponse]=await Promise.all([fetch(`${API_URL}/api/system/security-events?${query}`,{headers}),fetch(`${API_URL}/api/system/authentication-activity?limit=20`,{headers})]);if(eventResponse.ok)setEvents((await eventResponse.json()).events||[]);if(authResponse.ok)setAuthActivity((await authResponse.json()).activity||[])}catch{setEvents([])}},[token])
+ useEffect(()=>{loadStatus();loadEvents()},[loadStatus,loadEvents])
+ useEffect(()=>{const controller=new AbortController();const timer=window.setTimeout(()=>fetch(`${API_URL}/api/system/accounts?search=${encodeURIComponent(accountSearch)}&limit=20`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal}).then((r)=>r.ok?r.json():null).then((data)=>setAccounts(data?.accounts||[])).catch(()=>{}),250);return()=>{window.clearTimeout(timer);controller.abort()}},[accountSearch,token])
 
-  useEffect(() => {
-    const headers = { Authorization: `Bearer ${token}` }
-    Promise.all([
-      fetch(`${API_URL}/api/system/security-events?limit=20`, { headers }),
-      fetch(`${API_URL}/api/system/authentication-activity?limit=20`, { headers })
-    ]).then(async ([eventsResponse, activityResponse]) => {
-      const [eventsData, activityData] = await Promise.all([eventsResponse.json().catch(()=>({})), activityResponse.json().catch(()=>({}))])
-      if (eventsResponse.ok) setSecurityEvents(eventsData.events || [])
-      if (activityResponse.ok) setAuthActivity(activityData.activity || [])
-    }).catch(()=>{})
-  }, [token])
+ const requestAction=async(actionType)=>{setBusy(true);setActionError('');setNotice('');try{let response=await fetch(`${API_URL}/api/high-risk-actions/step-up`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({password:action.password,action_type:actionType,target_type:'USER_ACCOUNT',target_id:action.target_id})});const step=(await json(response)).step_up;response=await fetch(`${API_URL}/api/high-risk-actions`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({action_type:actionType,target_id:action.target_id,reason:action.reason,step_up_token:step.token})});const data=await json(response);setNotice(`Request #${data.request.id} is awaiting Discipline Administrator approval.`);setAction({target_id:'',reason:'',password:''})}catch(e){setActionError(e.message)}finally{setBusy(false)}}
+ const components=Object.entries(system?.components||{})
 
-  const integrations = Object.entries(system?.integrations || {})
-  const runAccountAction = async (kind) => {
-    setAccountBusy(true);setAccountActionError('');setTemporaryCredential(null)
-    try {
-      const response=await fetch(`${API_URL}/api/system/accounts/${accountAction.target_id}/${kind==='lock'?'lock':'recovery'}`,{method:kind==='lock'?'PATCH':'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({reason:accountAction.reason})})
-      const data=await response.json().catch(()=>({}))
-      if(!response.ok)throw new Error(data.error?.message||'Sensitive account action failed.')
-      if(data.recovery?.temporary_password)setTemporaryCredential({username:data.recovery.account.username,password:data.recovery.temporary_password})
-      setAccountAction({target_id:'',reason:''})
-    }catch(actionError){setAccountActionError(actionError.message)}finally{setAccountBusy(false)}
-  }
-  return <section className="system-dashboard" aria-labelledby="system-dashboard-title">
-    <header className="management-page-header"><div><span className="page-breadcrumb">Technical administration</span><h2 id="system-dashboard-title">System Administration</h2><p>Sanitized service health and deployment information. Institutional disciplinary records are not available in this workspace.</p></div><span className={`status-badge status-${String(system?.status || '').toLowerCase()}`}>{loading ? 'Checking…' : readable(system?.status || 'Unavailable')}</span></header>
-    {error && <p className="error-message" role="alert">{error}</p>}
-    <div className="stats-grid">
-      <article className="stat-card"><i><PortalIcon name="dashboard" /></i><div><span>Application</span><strong>{system?.application || 'STI Vio-Log'}</strong><small>{system?.environment || '—'}</small></div></article>
-      <article className="stat-card"><i><PortalIcon name="reports" /></i><div><span>Version</span><strong>{system?.version || '—'}</strong><small>Sanitized deployment identifier</small></div></article>
-      <article className="stat-card"><i><PortalIcon name="clearance" /></i><div><span>Database</span><strong>{readable(system?.database || (loading ? 'CHECKING' : 'UNAVAILABLE'))}</strong><small>Connectivity only; no credentials exposed</small></div></article>
-    </div>
-    <section className="table-card"><div className="table-header"><div><h3>Integration status</h3><p>Configuration presence only. Secret values are never returned.</p></div><span>{system?.checked_at ? formatManilaDateTime(system.checked_at) : 'Not checked'}</span></div>{integrations.length ? <div className="table-wrap"><table><thead><tr><th>Integration</th><th>Status</th></tr></thead><tbody>{integrations.map(([name, value]) => <tr key={name}><td>{readable(name)}</td><td><span className="status-badge">{readable(value)}</span></td></tr>)}</tbody></table></div> : <p className="empty-state">{loading ? 'Checking integrations…' : 'No integration status is available.'}</p>}</section>
-    <section className="table-card"><div className="table-header"><div><h3>Security events</h3><p>Append-only successful, denied, and failed administrative security activity.</p></div><span>{securityEvents.length} recent</span></div><div className="table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Result</th></tr></thead><tbody>{securityEvents.map((event)=><tr key={event.id}><td>{formatManilaDateTime(event.occurred_at)}</td><td>{event.actor_readable_name || 'Unauthenticated'}<br/><small>{readable(event.actor_role || 'Unknown')}</small></td><td>{readable(event.action)}</td><td>{event.target_label || event.target_type || '—'}</td><td><span className="status-badge">{event.result}</span></td></tr>)}{!securityEvents.length&&<tr><td colSpan="5"><p className="empty-state">No security events recorded.</p></td></tr>}</tbody></table></div></section>
-    <section className="table-card"><div className="table-header"><div><h3>Authentication activity</h3><p>Administrator authentication and password-security activity.</p></div><span>{authActivity.length} recent</span></div><div className="table-wrap"><table><thead><tr><th>Time</th><th>Account</th><th>Action</th><th>Result</th></tr></thead><tbody>{authActivity.map((event)=><tr key={event.id}><td>{formatManilaDateTime(event.occurred_at)}</td><td>{event.actor_readable_name || event.target_label || 'Unknown account'}</td><td>{readable(event.action)}</td><td><span className="status-badge">{event.result}</span></td></tr>)}{!authActivity.length&&<tr><td colSpan="4"><p className="empty-state">No authentication activity recorded.</p></td></tr>}</tbody></table></div></section>
-    <section className="table-card support-request-form"><div className="table-header"><div><h3>Account security tools</h3><p>Lock a compromised account or initiate controlled recovery. Both actions invalidate existing sessions.</p></div></div>{accountActionError&&<p className="error-message" role="alert">{accountActionError}</p>}<div className="form-grid"><label><span>Target account ID</span><input inputMode="numeric" value={accountAction.target_id} onChange={(event)=>setAccountAction({...accountAction,target_id:event.target.value.replace(/\D/g,'')})}/></label><label className="full-width"><span>Required reason</span><textarea minLength="10" maxLength="1000" value={accountAction.reason} onChange={(event)=>setAccountAction({...accountAction,reason:event.target.value})}/></label></div><div className="action-row"><button type="button" className="danger-button" disabled={accountBusy||!accountAction.target_id||accountAction.reason.trim().length<10} onClick={()=>runAccountAction('lock')}>Lock compromised account</button><button type="button" disabled={accountBusy||!accountAction.target_id||accountAction.reason.trim().length<10} onClick={()=>runAccountAction('recovery')}>Initiate recovery</button></div>{temporaryCredential&&<div className="temporary-credential" role="status"><strong>Copy this one-time credential now</strong><p>Username: <code>{temporaryCredential.username}</code></p><p>Temporary password: <code>{temporaryCredential.password}</code></p><button type="button" className="secondary-button" onClick={()=>setTemporaryCredential(null)}>I have stored it securely</button></div>}</section>
-  </section>
+ return <section className="system-dashboard" aria-labelledby="system-dashboard-title">
+  <header className="management-page-header"><div><span className="page-breadcrumb">Technical administration</span><h2 id="system-dashboard-title">System operations</h2><p>Sanitized diagnostics, security activity, and two-person account controls.</p></div><span className={`status-badge status-${String(system?.status||'').toLowerCase()}`}>{loading?'Checking…':readable(system?.status||'Unavailable')}</span></header>
+  {error&&<p className="error-message" role="alert">{error}</p>}
+  <div className="stats-grid"><article className="stat-card"><i><PortalIcon name="dashboard"/></i><div><span>Application</span><strong>{system?.application||'STI Vio-Log'}</strong><small>{system?.environment||'—'}</small></div></article><article className="stat-card"><i><PortalIcon name="reports"/></i><div><span>Version</span><strong>{system?.version||'—'}</strong><small>Sanitized deployment identifier</small></div></article><article className="stat-card"><i><PortalIcon name="clearance"/></i><div><span>Database</span><strong>{readable(system?.database||(loading?'CHECKING':'UNAVAILABLE'))}</strong><small>{system?.components?.database?.latency_ms!=null?`${system.components.database.latency_ms} ms response`:'Connectivity only'}</small></div></article></div>
+  <section className="table-card"><div className="table-header"><div><h3>Component health</h3><p>Actionable checks without credentials or raw configuration.</p></div><button type="button" className="secondary-button" disabled={loading} onClick={loadStatus}>{loading?'Checking…':'Refresh checks'}</button></div><div className="component-health-grid">{components.map(([name,item])=><article key={name}><div><strong>{readable(name)}</strong><span className="status-badge">{readable(item.status)}</span></div>{item.latency_ms!=null&&<p>{item.latency_ms} ms response time</p>}{item.remediation&&<small>{item.remediation}</small>}</article>)}</div><p className="health-checked">Last checked {system?.checked_at?formatManilaDateTime(system.checked_at):'not yet'}</p></section>
+  <section className="table-card"><div className="table-header"><div><h3>Security events</h3><p>Search the append-only administrative security record.</p></div><span>{events.length} shown</span></div><form className="operations-filter" role="search" onSubmit={(e)=>{e.preventDefault();loadEvents(eventSearch,eventResult)}}><label><span>Search events</span><input value={eventSearch} onChange={(e)=>setEventSearch(e.target.value)} placeholder="Action, actor, or target"/></label><label><span>Result</span><select value={eventResult} onChange={(e)=>setEventResult(e.target.value)}><option value="">All results</option><option>SUCCESS</option><option>FAILED</option><option>DENIED</option></select></label><button>Apply filters</button></form><div className="table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Target</th><th>Result</th></tr></thead><tbody>{events.map((event)=><tr key={event.id}><td>{formatManilaDateTime(event.occurred_at)}</td><td>{event.actor_readable_name||'Unauthenticated'}<br/><small>{readable(event.actor_role||'Unknown')}</small></td><td>{readable(event.action)}</td><td>{event.target_label||event.target_type||'—'}</td><td><span className="status-badge">{event.result}</span></td></tr>)}{!events.length&&<tr><td colSpan="5"><p className="empty-state">No events match these filters.</p></td></tr>}</tbody></table></div></section>
+  <section className="table-card"><div className="table-header"><div><h3>Authentication activity</h3><p>Recent administrator sign-in and password-security activity.</p></div><span>{authActivity.length} recent</span></div><div className="table-wrap"><table><thead><tr><th>Time</th><th>Account</th><th>Action</th><th>Result</th></tr></thead><tbody>{authActivity.map((event)=><tr key={event.id}><td>{formatManilaDateTime(event.occurred_at)}</td><td>{event.actor_readable_name||event.target_label||'Unknown account'}</td><td>{readable(event.action)}</td><td><span className="status-badge">{event.result}</span></td></tr>)}{!authActivity.length&&<tr><td colSpan="4"><p className="empty-state">No authentication activity recorded.</p></td></tr>}</tbody></table></div></section>
+  <section className="table-card support-request-form"><div className="table-header"><div><h3>Controlled account actions</h3><p>Confirm your password, then obtain independent approval before execution.</p></div></div>{actionError&&<p className="error-message" role="alert">{actionError}</p>}{notice&&<p className="success-message" role="status">{notice}</p>}<div className="form-grid"><label><span>Find account</span><input value={accountSearch} onChange={(e)=>setAccountSearch(e.target.value)} placeholder="Search name or username"/></label><label><span>Target account</span><select value={action.target_id} onChange={(e)=>setAction({...action,target_id:e.target.value})}><option value="">Select an account</option>{accounts.map((account)=><option key={account.id} value={account.id}>{[account.first_name,account.last_name].filter(Boolean).join(' ')||account.username} · {readable(account.role)} · {account.is_active?'Active':'Inactive'} · ID {account.id}</option>)}</select></label><label><span>Current password</span><input type="password" autoComplete="current-password" value={action.password} onChange={(e)=>setAction({...action,password:e.target.value})}/></label><label className="full-width"><span>Required reason</span><textarea minLength="10" maxLength="1000" value={action.reason} onChange={(e)=>setAction({...action,reason:e.target.value})}/></label></div><div className="action-row"><button type="button" className="danger-button" disabled={busy||!action.target_id||!action.password||action.reason.trim().length<10} onClick={()=>requestAction('ACCOUNT_LOCK')}>Request account lock</button><button type="button" disabled={busy||!action.target_id||!action.password||action.reason.trim().length<10} onClick={()=>requestAction('ACCOUNT_RECOVERY')}>Request recovery</button></div></section>
+ </section>
 }
-
-export default SystemDashboard

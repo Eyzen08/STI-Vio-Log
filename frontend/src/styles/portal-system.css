@@ -1227,3 +1227,12 @@
   .student-directory-table .guardian-contact-button { grid-column: 1 / -1; grid-row: 2; }
   .student-directory-table .student-access-removal { grid-column: 2; grid-row: 1; }
 }
+.component-health-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(15rem,1fr)); gap:.75rem; margin-top:1rem; }
+.component-health-grid article { background:#f4f8fc; border-left:.2rem solid #1769aa; border-radius:.45rem; padding:1rem; }
+.component-health-grid article > div { align-items:center; display:flex; justify-content:space-between; gap:.75rem; }
+.component-health-grid p,.component-health-grid small,.health-checked { color:#526a83; }
+.operations-filter { align-items:end; display:grid; grid-template-columns:minmax(14rem,2fr) minmax(10rem,1fr) auto; gap:.75rem; margin:1rem 0; }
+.operations-filter label { display:grid; gap:.35rem; }
+.operations-filter label span { color:#274765; font-size:.78rem; font-weight:650; }
+.operations-filter input,.operations-filter select { min-height:2.75rem; }
+@media (max-width:700px) { .operations-filter { grid-template-columns:1fr; } }

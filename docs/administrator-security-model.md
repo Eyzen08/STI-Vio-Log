@@ -22,6 +22,12 @@ Technical support access is read-only, exact-scope, approved by a different acti
 
 Temporary write elevation and emergency break-glass access are intentionally **not implemented**. They must not be represented by a frontend-only control. Before either feature is introduced, it requires recent re-authentication, exact operation scopes, short expiry, explicit approval, durable alerts, post-event review, and complete automated tests. Break-glass must also require MFA once a fully tested MFA lifecycle exists.
 
+## Controlled super-administration rollout
+
+The operations console adds searchable account targeting, sanitized component latency and remediation guidance, filterable security events, and two-person high-risk action requests. Account lock and recovery are the first registered executors. A System Administrator confirms the current password to receive a single-use, action-bound token, obtains approval from a distinct active Discipline Administrator, and confirms the password again before execution. Approval expires after 15 minutes; any intervening target change invalidates the request.
+
+`SYSTEM_SUPER_ADMIN_PHASE3_ENABLED` remains disabled until every institutional action has an explicit registry entry, approval guard, stale-target rule, and acceptance test. The flag alone grants no authority. Direct legacy account actions remain disabled unless `ALLOW_LEGACY_SYSTEM_ACCOUNT_ACTIONS=true` is deliberately enabled for rollback compatibility.
+
 ## Auditing and notifications
 
 Administrative security events are append-only and use database-generated IDs and timestamps. Application roles are denied update/delete access by migration. Logged details are recursively redacted and must never contain passwords, hashes, OTPs, tokens, credentials, secrets, message bodies, or unnecessary personal data.

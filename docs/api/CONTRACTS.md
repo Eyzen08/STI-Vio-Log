@@ -139,3 +139,13 @@ An active department cannot be deactivated while active Department Head accounts
 DTR reports whitelist `from`, `to`, `department_id`, `student_id`, and `assignment_id`; student DTR allows only `from` and `to`. Dates are UTC calendar dates in strict `YYYY-MM-DD` form. Department Heads are always scoped to their mapped department.
 
 Large-list pagination uses `page` and `limit` where exposed. The contract default is 25 and maximum is 100. Unknown privileged body fields are rejected on stabilized create/update endpoints rather than silently applied.
+# System operations and high-risk actions
+
+- `GET /api/system/status` returns sanitized component states, database latency, remediation text, deployment metadata, and recent failed/denied event summaries.
+- `GET /api/system/accounts?search=&limit=` returns only account targeting fields needed by System Administrators.
+- `GET /api/system/security-events` accepts `search`, `result`, `from`, `to`, `page`, and `limit`.
+- `POST /api/high-risk-actions/step-up` verifies the current System Administrator password and returns a five-minute, single-use token bound to an action and target.
+- `POST /api/high-risk-actions` creates a registered request. Arbitrary endpoints and SQL are rejected.
+- `PATCH /api/high-risk-actions/:id/decision` is restricted to a distinct active Discipline Administrator.
+- `PATCH /api/high-risk-actions/:id/cancel` lets the requester cancel a pending or approved request.
+- `POST /api/high-risk-actions/:id/execute` requires a fresh bound step-up token, current approval, and an unchanged target.

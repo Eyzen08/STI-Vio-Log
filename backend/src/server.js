@@ -31,6 +31,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const { auditAdministrativeRequest } = require('./middleware/administrativeAuditMiddleware');
 const systemAdministrationRoutes = require('./routes/systemAdministrationRoutes');
 const supportAccessRoutes = require('./routes/supportAccessRoutes');
+const highRiskActionRoutes = require('./routes/highRiskActionRoutes');
 const officerResponsibilityController = require('./controllers/officerResponsibilityController');
 const pool = require("./config/database");
 const { allowedOriginsFor, CORS_METHODS, enforceHttps, validateSecureConfig } = require('./config/security');
@@ -176,6 +177,7 @@ app.use('/api/notifications', authenticateToken, authorizeRoles('SYSTEM_ADMIN', 
 app.use('/api/account', authenticateToken, accountRoutes);
 app.use('/api/system', authenticateToken, systemAdministrationRoutes);
 app.use('/api/support-access', authenticateToken, supportAccessRoutes);
+app.use('/api/high-risk-actions', authenticateToken, auditAdministrativeRequest, highRiskActionRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.STAFF_ACCOUNT_MANAGE), accountAdministrationRoutes);
 app.use('/api/department-accounts', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.STAFF_ACCOUNT_MANAGE), require('./routes/departmentAccountRoutes'));

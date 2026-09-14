@@ -33,6 +33,7 @@ const AccountSecuritySettings = lazy(() => import('./components/AccountSecurityS
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const SupportAccessPanel = lazy(() => import('./components/SupportAccessPanel.jsx'))
+const HighRiskActionPanel = lazy(() => import('./components/HighRiskActionPanel.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
@@ -1834,6 +1835,9 @@ function App() {
 
     if (activeView === 'Support Access' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
       return <SupportAccessPanel token={token} role={userRole} />
+    }
+    if (activeView === 'Action Requests' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
+      return <HighRiskActionPanel token={token} role={userRole} />
     }
 
     if (activeView === 'Messages') {

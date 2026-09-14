@@ -4,5 +4,5 @@ export const iconNameForView = (view = '') => ({
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', DTR: 'clock', Attendance: 'clock',
   'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'My Clearance': 'clearance', Reports: 'reports',
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings', 'Support Access': 'clearance',
-  'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations'
+  'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations', 'Action Requests': 'clearance'
 }[view] || 'dashboard')

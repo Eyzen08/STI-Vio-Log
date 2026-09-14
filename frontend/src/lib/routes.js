@@ -9,6 +9,7 @@ export const PUBLIC_ROUTES = ['/login','/register','/verify-email','/forgot-pass
 export const APP_ROUTES = [
   { path: '/system/dashboard', label: 'System Status', view: 'System Dashboard', roles: ['SYSTEM_ADMIN'] },
   { path: '/system/support-access', label: 'Support Access', view: 'Support Access', roles: ['SYSTEM_ADMIN'] },
+  { path: '/system/action-requests', label: 'Action Requests', view: 'Action Requests', roles: ['SYSTEM_ADMIN'] },
   { path: '/system/notifications', label: 'Notifications', view: 'Notifications', roles: ['SYSTEM_ADMIN'], navigation: false },
   { path: '/system/profile', label: 'Profile', view: 'Profile', roles: ['SYSTEM_ADMIN'], navigation: false },
   { path: '/system/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ['SYSTEM_ADMIN'], navigation: false },
@@ -28,6 +29,7 @@ export const APP_ROUTES = [
   { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/admin/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.administration },
   { path: '/admin/support-access', label: 'Support Access', view: 'Support Access', roles: ['DISCIPLINE_ADMIN'] },
+  { path: '/admin/action-requests', label: 'Action Approvals', view: 'Action Requests', roles: ['DISCIPLINE_ADMIN'] },
   { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
   { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department, navigation: false },
   { path: '/department/profile', label: 'Profile', view: 'Profile', roles: ROLE_GROUPS.department, navigation: false },
