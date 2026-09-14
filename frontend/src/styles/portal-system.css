@@ -261,35 +261,35 @@
   color: #08244b !important;
 }
 
-/* Department directory tabs use equal, tactile cards in both states. */
+/* Department directory tabs read as one cohesive segmented control. */
 .main-panel .department-officer-tabs {
   display: inline-grid;
   grid-template-columns: auto auto;
-  gap: 8px;
-  padding: 6px;
-  border: 1px solid #d5e2ee;
-  border-radius: 14px;
-  background: #f4f8fc;
-  box-shadow: inset 0 1px 2px rgba(23,52,91,.04);
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #bed2e6;
+  border-radius: 12px;
+  background: #eaf2fa;
+  box-shadow: inset 0 1px 2px rgba(23,52,91,.05);
 }
 .main-panel .department-officer-tabs button {
   min-height: 44px;
-  padding: 9px 15px !important;
-  border: 1px solid #78b7eb !important;
-  border-radius: 10px !important;
-  background: #d9ecff !important;
-  color: #074985 !important;
-  box-shadow: 0 3px 9px rgba(8,103,197,.14) !important;
+  padding: 9px 16px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #264b70 !important;
+  box-shadow: none !important;
 }
 .main-panel .department-officer-tabs button:hover:not(:disabled) {
-  border-color: #72b1e8 !important;
-  background: #d8ecff !important;
+  background: #f7fbff !important;
+  color: #073e76 !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
-  border-color: #78b7eb !important;
-  background: #d9ecff !important;
-  color: #074985 !important;
-  box-shadow: inset 0 0 0 2px rgba(8,103,197,.14),0 3px 9px rgba(8,103,197,.14) !important;
+  border-color: #e3b800 !important;
+  background: var(--portal-yellow) !important;
+  color: #08244b !important;
+  box-shadow: 0 3px 8px rgba(122,91,0,.14) !important;
 }
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
