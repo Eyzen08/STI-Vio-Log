@@ -94,6 +94,8 @@ test('desktop sidebar scrolls vertically without hover-created horizontal overfl
   assert.match(appCss, /sidebar-collapsed \.brand-logo \{ display: none; \}/)
   assert.match(appCss, /sidebar-collapsed \.nav-item \{[^}]*width: 100%;[^}]*overflow: hidden;/s)
   assert.match(appCss, /sidebar-collapsed \.nav-item-label > span,[\s\S]*?sidebar-collapsed \.nav-pending-badge \{ display: none; \}/)
+  assert.match(css, /\.sidebar \.nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\);[^}]*color:\s*#08244b;/s)
+  assert.match(css, /\.mobile-bottom-nav button\.active\s*\{[^}]*background:\s*var\(--portal-yellow\) !important/s)
 })
 
 test('segmented navigation uses readable light hover and selected states', () => {
