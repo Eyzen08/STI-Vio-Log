@@ -86,9 +86,9 @@ const createHighRiskActionService = ({ pool, comparePassword = bcrypt.compare, r
 
   const decide = async ({ approverId, requestId, approve, reason }) => {
     const why=clean(reason); if(why.length<10)throw apiError(400,'REASON_REQUIRED','Enter a decision reason of at least 10 characters');
-    const result=await pool.query(`UPDATE high_risk_action_requests SET status=$2,approver_user_id=$3,decision_reason=$4,
-      approved_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP END,
-      approval_expires_at=CASE WHEN $2='APPROVED' THEN CURRENT_TIMESTAMP+INTERVAL '15 minutes' END,updated_at=CURRENT_TIMESTAMP
+    const result=await pool.query(`UPDATE high_risk_action_requests SET status=$2::varchar,approver_user_id=$3,decision_reason=$4,
+      approved_at=CASE WHEN $2::varchar='APPROVED' THEN CURRENT_TIMESTAMP END,
+      approval_expires_at=CASE WHEN $2::varchar='APPROVED' THEN CURRENT_TIMESTAMP+INTERVAL '15 minutes' END,updated_at=CURRENT_TIMESTAMP
       WHERE id=$1 AND status='PENDING' AND requester_user_id<>$3
         AND EXISTS(SELECT 1 FROM users WHERE id=$3 AND role='DISCIPLINE_ADMIN' AND is_active=TRUE) RETURNING *`,[Number(requestId),approve?'APPROVED':'REJECTED',Number(approverId),why]);
     if(!result.rowCount)throw apiError(409,'ACTION_NOT_DECIDABLE','Request is unavailable, already decided, or cannot be self-approved');
