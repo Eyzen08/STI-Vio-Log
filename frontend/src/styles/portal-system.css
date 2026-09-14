@@ -846,7 +846,31 @@
   box-shadow: 10px 0 32px rgba(8,47,104,.12);
   overflow-x: hidden;
 }
-.sidebar .brand { border: 1px solid rgba(255,255,255,.7); box-shadow: 0 10px 24px rgba(4,42,88,.14); }
+.sidebar .brand {
+  position: relative;
+  min-height: 76px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.38);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #e9f4ff, #d9eaff);
+  box-shadow: 0 10px 24px rgba(4,42,88,.18), inset 0 1px rgba(255,255,255,.85);
+}
+.sidebar .brand::after {
+  content: '';
+  position: absolute;
+  inset: auto 10px 0;
+  height: 3px;
+  border-radius: 999px 999px 0 0;
+  background: var(--portal-yellow);
+}
+.sidebar .brand-logo {
+  width: 100%;
+  max-height: 68px;
+  object-position: center;
+  mix-blend-mode: multiply;
+  transform: scale(1.08);
+}
 .sidebar .nav { max-width: 100%; overflow-x: hidden; }
 .sidebar .nav-item { position: relative; max-width: 100%; box-sizing: border-box; transition: background-color 180ms ease,color 180ms ease; }
 .sidebar .nav-item:hover:not(.active) { background: rgba(255,255,255,.12); }

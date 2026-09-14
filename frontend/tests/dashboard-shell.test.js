@@ -98,6 +98,15 @@ test('desktop sidebar scrolls vertically without hover-created horizontal overfl
   assert.match(css, /\.mobile-bottom-nav button\.active\s*\{[^}]*background:\s*var\(--portal-yellow\) !important/s)
 })
 
+test('sidebar brand presents the official logo as an integrated lockup', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(app, /alt="STI Vio-Log Discipline Office Portal"\s+width="620"\s+height="349"/)
+  assert.match(css, /\.sidebar \.brand\s*\{[^}]*background:\s*linear-gradient\(145deg, #e9f4ff, #d9eaff\);/s)
+  assert.match(css, /\.sidebar \.brand::after\s*\{[^}]*background:\s*var\(--portal-yellow\);/s)
+  assert.match(css, /\.sidebar \.brand-logo\s*\{[^}]*mix-blend-mode:\s*multiply;[^}]*transform:\s*scale\(1\.08\);/s)
+})
+
 test('segmented navigation uses readable light hover and selected states', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(css, /\.main-panel :is\(\.review-workspace-tabs,[^}]*button:hover:not\(:disabled\) \{[^}]*background: #edf6ff !important;[^}]*color: #063f7c !important;/s)
