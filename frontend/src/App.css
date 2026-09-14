@@ -551,6 +551,7 @@
   height: auto;
   object-fit: contain;
 }
+.brand-favicon { display: none; }
 
 .sidebar-close,
 .mobile-menu-button,
@@ -5259,25 +5260,28 @@ a {
     background: transparent;
     box-shadow: none;
   }
-  .app-shell:not(.auth-shell).sidebar-collapsed .brand::before {
-    content: "VL";
-    display: grid;
+  .app-shell:not(.auth-shell).sidebar-collapsed .brand-favicon {
+    display: block;
     width: 42px;
     height: 42px;
-    place-items: center;
+    padding: 5px;
+    object-fit: contain;
+    box-sizing: border-box;
     border: 1px solid rgba(255,255,255,.48);
     border-radius: 11px;
     background: rgba(255,255,255,.14);
-    color: #fff;
-    font-size: .78rem;
-    font-weight: 850;
-    letter-spacing: .04em;
     box-shadow: 0 7px 18px rgba(4,38,77,.16);
   }
   .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo { display: none; }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-group-label,
-  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label > span,
-  .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge { display: inline-flex; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label > span { display: none !important; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge {
+    display: inline-flex;
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    z-index: 1;
+  }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-group,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-account-actions { width: 100%; min-width: 0; }
@@ -5286,7 +5290,7 @@ a {
     min-width: 0;
     justify-content: center;
     padding-inline: 0;
-    overflow: hidden;
+    overflow: visible;
   }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label { width: 100%; min-width: 0; justify-content: center; gap: 0; }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label svg { width: 18px; height: 18px; }

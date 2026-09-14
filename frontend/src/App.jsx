@@ -3888,6 +3888,7 @@ function App() {
             width="620"
             height="349"
           />
+          <img className="brand-favicon" src="/favicon-32.png" alt="STI Vio-Log" width="32" height="32" />
 
           <button
             className="sidebar-close"
