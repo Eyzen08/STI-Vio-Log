@@ -1826,7 +1826,7 @@ function App() {
     }
 
     if (userRole === 'SYSTEM_ADMIN' && activeView === 'System Dashboard') {
-      return <SystemDashboard token={token} />
+      return <SystemDashboard token={token} user={user} />
     }
 
     if (userRole === 'SYSTEM_ADMIN' && activeView === 'Account Settings') {
@@ -1837,7 +1837,7 @@ function App() {
       return <SupportAccessPanel token={token} role={userRole} />
     }
     if (activeView === 'Action Requests' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
-      return <HighRiskActionPanel token={token} role={userRole} />
+      return <HighRiskActionPanel token={token} role={userRole} user={user} />
     }
 
     if (activeView === 'Messages') {
