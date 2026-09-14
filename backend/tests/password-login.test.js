@@ -18,6 +18,17 @@ test('invalid username and invalid password use the same generic response',async
   assert.equal(first.statusCode,401);assert.equal(second.statusCode,401);assert.equal(first.body.message,second.body.message);
 });
 
+test('student password login accepts the official student number when it differs from the username',async()=>{
+  const queries=[];
+  const controller=createAuthController({database:{async query(sql,params){queries.push({sql,params});if(sql.startsWith('UPDATE users'))return{rows:[]};return{rows:[{id:9,username:'student.portal',role:'STUDENT',password_hash:'hash',session_version:1,email_verified:true,first_name:'Ana',last_name:'Montana'}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:()=> 'student-token',auditSecurityEvent:async()=>true});
+  const res=response();await controller.loginUser(requestFor('02000123456','Password@123'),res);
+  assert.equal(res.statusCode,200);
+  assert.equal(res.body.token,'student-token');
+  assert.equal(queries[0].params[0],'02000123456');
+  assert.match(queries[0].sql,/s\.student_number=\$1/);
+  assert.match(queries[0].sql,/u\.role='STUDENT'/);
+});
+
 test('administrator login auditing records outcomes without credentials',async()=>{
   const events=[];
   const controller=createAuthController({database:{async query(sql){return sql.startsWith('UPDATE users')?{rows:[]}:{rows:[{id:4,username:'sys.admin',role:'SYSTEM_ADMIN',password_hash:'private-hash',session_version:1}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:()=> 'private-token',auditSecurityEvent:async(event)=>events.push(event)});

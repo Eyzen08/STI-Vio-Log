@@ -14,6 +14,7 @@ const registrationValidationSource = await readFile(
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const portalCssSource = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+const appCssSource = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
 
 test('redesigned login keeps every existing authentication entry point', () => {
   assert.match(source, /onSubmit=\{onSubmit\}/)
@@ -87,4 +88,10 @@ test('authentication background keeps a stable crop while forms change height', 
   assert.match(portalCssSource, /\.auth-shell \.login-page--student-flow \.login-intro \{\s+position: sticky;/)
   assert.match(portalCssSource, /height: 15\.5rem;\s+min-height: 15\.5rem;\s+flex: 0 0 15\.5rem/)
   assert.match(portalCssSource, /height: 14rem; min-height: 14rem; flex-basis: 14rem/)
+})
+
+test('Safari mobile authentication uses a covered hero image and dynamic viewport units', () => {
+  assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*position:\s*absolute;[^}]*object-fit:\s*cover;/s)
+  assert.match(appCssSource, /min-height:\s*100dvh/)
+  assert.match(appCssSource, /env\(safe-area-inset-top\)/)
 })

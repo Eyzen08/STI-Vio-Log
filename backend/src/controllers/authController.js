@@ -17,7 +17,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
          LEFT JOIN department_heads dh ON dh.user_id=u.id
          LEFT JOIN staff_profiles sp ON sp.user_id=u.id
          LEFT JOIN admin_profiles ap ON ap.user_id=u.id
-         WHERE u.username=$1 AND u.is_active=TRUE
+         WHERE (u.username=$1 OR (u.role='STUDENT' AND s.student_number=$1)) AND u.is_active=TRUE
          AND (u.role<>'STUDENT' OR u.email_verified=TRUE) LIMIT 1`, [username]
       );
       const user=result.rows[0];

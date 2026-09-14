@@ -3875,6 +3875,7 @@ a {
 /* STI Global City authentication experience */
 .auth-shell .main-panel {
   min-height: 100vh;
+  min-height: 100dvh;
   padding: 0;
   place-items: stretch;
 }
@@ -3982,6 +3983,7 @@ a {
 .login-page {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   grid-template-columns: minmax(520px, 1.08fr) minmax(480px, .92fr);
   gap: 0;
   align-items: stretch;
@@ -3994,11 +3996,30 @@ a {
   flex-direction: column;
   justify-content: space-between;
   min-height: 100vh;
+  min-height: 100dvh;
   padding: clamp(32px, 4.2vw, 68px);
   overflow: hidden;
   background-position: center;
   background-size: cover;
   color: white;
+}
+
+.login-campus-image {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.login-intro::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(3, 35, 78, .28), rgba(3, 31, 70, .82));
 }
 
 .login-intro::after {
@@ -4448,8 +4469,9 @@ a {
 
 @media (max-width: 767px) {
   .auth-shell .main-panel { padding: 0; }
-  .login-page { display: block; min-height: 100vh; }
-  .login-intro { min-height: auto; padding: 22px 20px 26px; background-position: center 32%; }
+  .login-page { display: block; min-height: 100vh; min-height: 100dvh; }
+  .login-intro { min-height: auto; padding: max(22px, env(safe-area-inset-top)) 20px 26px; }
+  .login-campus-image { object-position: center 42%; }
   .login-brand-mark { width: min(240px, 58vw); }
   .login-intro-content { margin: 30px 0 22px; }
   .login-intro .login-kicker { margin-bottom: 12px; }
@@ -5807,6 +5829,7 @@ a {
 
 .message-bubble-row.mine {
   flex-direction: row-reverse;
+  justify-content: flex-start;
 }
 
 .message-sender-avatar {
@@ -5895,7 +5918,7 @@ a {
   }
 
   .messages-workspace {
-    min-height: calc(100dvh - 210px);
+    min-height: calc(100dvh - 210px - env(safe-area-inset-bottom));
   }
 
   .main-panel .chat-mobile-back {
@@ -5917,7 +5940,7 @@ a {
   }
 
   .messages-workspace {
-    min-height: calc(100dvh - 190px);
+    min-height: calc(100dvh - 190px - env(safe-area-inset-bottom));
   }
 
   .conversation-pane-header {

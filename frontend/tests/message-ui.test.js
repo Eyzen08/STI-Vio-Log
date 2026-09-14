@@ -18,6 +18,11 @@ test('mobile messages keep a compact heading and keyboard-safe composer', async 
   assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
 })
 
+test('messages sent by the signed-in account align to the right', async () => {
+  const css = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
+  assert.match(css, /\.message-bubble-row\.mine\s*\{[^}]*flex-direction:\s*row-reverse;[^}]*justify-content:\s*flex-start;/s)
+})
+
 test('participants reveal only role-appropriate conversation metadata', () => {
   assert.deepEqual(
     messageParticipant({ school_participant: 'IT Department', assigned_department_id: 3 }, 'STUDENT'),
