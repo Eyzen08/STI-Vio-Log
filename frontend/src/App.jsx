@@ -34,8 +34,10 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const SupportAccessPanel = lazy(() => import('./components/SupportAccessPanel.jsx'))
 const HighRiskActionPanel = lazy(() => import('./components/HighRiskActionPanel.jsx'))
+const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
+import AsyncActionButton from './components/AsyncActionButton.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
@@ -46,14 +48,15 @@ import stiVioLogLogo from './assets/sti-vio-log-logo-web.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
-import { formatPendingRegistrationCount, pendingRegistrationCount } from './lib/pendingRegistrations.js'
+import { pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
-import { formatUnreadMessageCount, unreadMessageCount } from './lib/messageUnread.js'
+import { unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
+import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import './App.css'
 import './styles/portal-system.css'
@@ -120,7 +123,17 @@ function App() {
   const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const [pendingActionCounts, setPendingActionCounts] = useState({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
+  const [pendingRefreshKey, setPendingRefreshKey] = useState(0)
   const [realtimeSocket, setRealtimeSocket] = useState(null)
+  const runAction = useActionLock()
+  const [mutationBusy, setMutationBusy] = useState({})
+  const performMutation = useCallback((key, action) => runAction(key, async () => {
+    setMutationBusy((current) => ({ ...current, [key]: true }))
+    try { return await action() }
+    finally { setMutationBusy((current) => ({ ...current, [key]: false })) }
+  }), [runAction])
+  const refreshPendingActions = useCallback(() => setPendingRefreshKey((value) => value + 1), [])
 
   useEffect(() => {
     if (!token || user?.password_change_required) {
@@ -134,16 +147,16 @@ function App() {
 
   useEffect(() => {
     if (!realtimeSocket) return undefined
-    const refreshServiceData = () => setDashboardRefreshKey((current) => current + 1)
+    const refreshServiceData = () => { setDashboardRefreshKey((current) => current + 1); refreshPendingActions() }
     realtimeSocket.on('community-service:changed', refreshServiceData)
     realtimeSocket.on('notifications:changed', refreshServiceData)
     return () => {
       realtimeSocket.off('community-service:changed', refreshServiceData)
       realtimeSocket.off('notifications:changed', refreshServiceData)
     }
-  }, [realtimeSocket])
+  }, [realtimeSocket, refreshPendingActions])
 
-  const markNotificationRead = async (notificationId) => {
+  const markNotificationRead = async (notificationId) => performMutation(`notification-${notificationId}`, async () => {
     setNotificationActionError('')
     try {
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
@@ -159,9 +172,9 @@ function App() {
     } catch (error) {
       setNotificationActionError(error.message)
     }
-  }
+  })
 
-  const acknowledgeNotification = async (notificationId) => {
+  const acknowledgeNotification = async (notificationId) => performMutation(`notification-${notificationId}`, async () => {
     setNotificationActionError('')
     try {
       const response = await fetch(`${API_URL}/api/notifications/${notificationId}/acknowledge`, {
@@ -177,7 +190,7 @@ function App() {
     } catch (error) {
       setNotificationActionError(error.message)
     }
-  }
+  })
 
   const loadClearanceCertificate = async () => {
     setClearanceCertificateError('')
@@ -310,7 +323,7 @@ function App() {
     return 'Account'
   }
 
-  const markAllNotificationsRead = async (category = 'ALL') => {
+  const markAllNotificationsRead = async (category = 'ALL') => performMutation('notificationsReadAll', async () => {
     setNotificationActionError('')
     try {
       const response = await fetch(`${API_URL}/api/notifications/read-all`, {
@@ -322,7 +335,7 @@ function App() {
       if (!response.ok) throw new Error(data.message || 'Unable to mark notifications as read.')
       setStudentNotifications((items) => items.map((item) => category === 'ALL' || item.category === category ? { ...item, is_read: true, read_at: new Date().toISOString() } : item))
     } catch (error) { setNotificationActionError(error.message) }
-  }
+  })
 
   const navGroups = navItems.filter((item) => item.view !== 'Account Settings').reduce((groups, item) => {
     const name = navGroupName(item)
@@ -430,6 +443,68 @@ function App() {
 
     return () => controller.abort()
   }, [token, isAdmin, userRole])
+
+  useEffect(() => {
+    if (!token || !userRole) {
+      setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
+      return undefined
+    }
+
+    const controller = new AbortController()
+    const headers = { Authorization: `Bearer ${token}` }
+    const refresh = async () => {
+      const requests = []
+      const keys = []
+      if (['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(userRole)) {
+        keys.push('serviceResults')
+        requests.push(fetch(`${API_URL}/api/community-service/results/pending`, { headers, signal: controller.signal }))
+      }
+      if (userRole === 'DISCIPLINE_ADMIN') {
+        keys.push('supportAccess', 'actionRequests')
+        requests.push(
+          fetch(`${API_URL}/api/support-access`, { headers, signal: controller.signal }),
+          fetch(`${API_URL}/api/high-risk-actions`, { headers, signal: controller.signal })
+        )
+      } else if (userRole === 'SYSTEM_ADMIN') {
+        keys.push('actionRequests')
+        requests.push(fetch(`${API_URL}/api/high-risk-actions`, { headers, signal: controller.signal }))
+      }
+      if (!requests.length) {
+        setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
+        return
+      }
+      try {
+        const responses = await Promise.all(requests)
+        const payloads = await Promise.all(responses.map((response) => response.ok ? response.json() : null))
+        const next = { serviceResults: 0, supportAccess: 0, actionRequests: 0 }
+        keys.forEach((key, index) => {
+          const data = payloads[index]
+          if (key === 'serviceResults') next[key] = Array.isArray(data?.results) ? data.results.length : 0
+          if (key === 'supportAccess') next[key] = (data?.requests || []).filter((item) => item.status === 'PENDING').length
+          if (key === 'actionRequests') {
+            const actionableStatus = userRole === 'SYSTEM_ADMIN' ? 'APPROVED' : 'PENDING'
+            next[key] = (data?.requests || []).filter((item) => item.status === actionableStatus).length
+          }
+        })
+        setPendingActionCounts(next)
+      } catch (loadError) {
+        if (loadError.name !== 'AbortError') setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
+      }
+    }
+    refresh()
+    const interval = window.setInterval(refresh, 30000)
+    return () => { controller.abort(); window.clearInterval(interval) }
+  }, [token, userRole, pendingRefreshKey])
+
+  const badgeForNavigationItem = (item) => {
+    if (item.view === 'Messages') return { count: unreadMessages, label: 'unread messages' }
+    if (item.view === 'Notifications') return { count: studentNotifications.filter((notification) => !notification.is_read).length, label: 'unread notifications' }
+    if (item.view === 'Registrations') return { count: pendingAccountCounts.students, label: 'pending registrations' }
+    if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'pending service reviews' }
+    if (item.path === '/admin/support-access') return { count: pendingActionCounts.supportAccess, label: 'pending support approvals' }
+    if (item.path.endsWith('/action-requests')) return { count: pendingActionCounts.actionRequests, label: userRole === 'SYSTEM_ADMIN' ? 'approved actions awaiting execution' : 'pending action approvals' }
+    return { count: 0, label: '' }
+  }
 
   const navigateTo = (path, { replace = false } = {}) => {
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
@@ -867,6 +942,7 @@ function App() {
 
   const handleViolationUpdate = async (event) => {
     event.preventDefault()
+    return performMutation('violationUpdate', async () => {
     setViolationEditError('')
     const payload = buildViolationUpdatePayload(violationEditForm)
     if (!payload.description || !payload.reason) return setViolationEditError('Updated details and an audit reason are required.')
@@ -883,6 +959,7 @@ function App() {
     } catch (error) {
       setViolationEditError(error.message)
     }
+    })
   }
 
   /*
@@ -991,6 +1068,7 @@ function App() {
 
   const handleStudentSubmit = async (event) => {
     event.preventDefault()
+    return performMutation('studentCreate', async () => {
 
     setStudentFormError('')
     setStudentFormSuccess('')
@@ -1106,6 +1184,7 @@ function App() {
         studentError.message
       )
     }
+    })
   }
 
   /*
@@ -1116,6 +1195,7 @@ function App() {
 
   const handleViolationSubmit = async (event) => {
     event.preventDefault()
+    return performMutation('violationCreate', async () => {
 
     setViolationFormError('')
     setViolationFormSuccess('')
@@ -1199,6 +1279,7 @@ function App() {
         violationError.message
       )
     }
+    })
   }
 
   /*
@@ -1210,6 +1291,7 @@ function App() {
   const handleCommunityServiceSubmit =
     async (event) => {
       event.preventDefault()
+      return performMutation('serviceCreate', async () => {
 
       setCommunityServiceFormError('')
       setCommunityServiceFormSuccess('')
@@ -1292,6 +1374,7 @@ function App() {
           assignmentError.message
         )
       }
+      })
     }
 
   /*
@@ -1561,6 +1644,7 @@ function App() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    return runAction('login', async () => {
 
     setIsSubmitting(true)
     setError('')
@@ -1605,6 +1689,7 @@ function App() {
     } finally {
       setIsSubmitting(false)
     }
+    })
   }
 
   const acceptSession = (data) => {
@@ -1834,10 +1919,10 @@ function App() {
     }
 
     if (activeView === 'Support Access' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
-      return <SupportAccessPanel token={token} role={userRole} />
+      return <SupportAccessPanel token={token} role={userRole} onChanged={refreshPendingActions} />
     }
     if (activeView === 'Action Requests' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
-      return <HighRiskActionPanel token={token} role={userRole} user={user} />
+      return <HighRiskActionPanel token={token} role={userRole} user={user} onChanged={refreshPendingActions} />
     }
 
     if (activeView === 'Messages') {
@@ -1946,7 +2031,7 @@ function App() {
       }
 
       if (activeView === 'Notifications') {
-        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience="STUDENT" />
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} actionBusy={mutationBusy} audience="STUDENT" />
       }
 
       if (activeView === 'Legacy Clearance') {
@@ -2170,7 +2255,7 @@ function App() {
     }
 
     if (activeView === 'Notifications') {
-      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} audience={isStudent ? 'STUDENT' : 'STAFF'} />
+      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} actionBusy={mutationBusy} audience={isStudent ? 'STUDENT' : 'STAFF'} />
     }
 
     if (activeView === 'Dashboard') {
@@ -2455,12 +2540,14 @@ function App() {
                 </p>
               )}
 
-              <button
+              <AsyncActionButton
                 type="submit"
                 className="submit-btn"
+                busy={mutationBusy.studentCreate}
+                busyLabel="Saving student…"
               >
                 Save Student
-              </button>
+              </AsyncActionButton>
             </form>
           </section></Modal>}
 
@@ -2775,12 +2862,14 @@ function App() {
                 </p>
               )}
 
-              <button
+              <AsyncActionButton
                 type="submit"
                 className="submit-btn"
+                busy={mutationBusy.violationCreate}
+                busyLabel="Saving violation…"
               >
                 Save Violation
-              </button>
+              </AsyncActionButton>
             </form>
           </section></Modal>}
 
@@ -2793,7 +2882,7 @@ function App() {
                   <label className="full-width-field">Reason for change<textarea rows="3" value={violationEditForm.reason} onChange={(event)=>setViolationEditForm({...violationEditForm,reason:event.target.value})} placeholder="Explain why this record is being updated" required/></label>
                 </div>
                 {violationEditError && <p className="error-message" role="alert">{violationEditError}</p>}
-                <div className="registration-review-actions"><button type="submit">Save audited changes</button><button type="button" className="secondary-button" onClick={()=>setEditingViolation(null)}>Cancel</button></div>
+                <div className="registration-review-actions"><AsyncActionButton type="submit" busy={mutationBusy.violationUpdate} busyLabel="Saving changes…">Save audited changes</AsyncActionButton><button type="button" className="secondary-button" disabled={mutationBusy.violationUpdate} onClick={()=>setEditingViolation(null)}>Cancel</button></div>
               </form>
             </section></Modal>
           )}
@@ -2932,6 +3021,7 @@ function App() {
             <article className="management-metric metric-red"><i>!</i><div><strong>{activeAssignments.filter((item) => Number(item.remaining_hours) >= Number(item.required_hours || 0)).length}</strong><span>Not Started</span></div></article>
             <article className="management-metric metric-green"><i>✓</i><div><strong>{completedAssignments}</strong><span>Completed</span></div></article>
           </section>
+          {isAdmin && <ServiceResultReview token={token} onChanged={() => { refreshPendingActions(); setDashboardRefreshKey((current) => current + 1) }} />}
           {isCommunityServiceFormOpen && <Modal title="Assign Community Service" drawer onClose={() => setIsCommunityServiceFormOpen(false)}><div className="drawer-intro"><strong>Create a service assignment</strong><span>Connect an open violation to an accountable department head.</span></div>
           <section className="drawer-form-card">
             <div className="table-header">
@@ -3072,12 +3162,14 @@ function App() {
                 </p>
               )}
 
-              <button
+              <AsyncActionButton
                 type="submit"
                 className="submit-btn"
+                busy={mutationBusy.serviceCreate}
+                busyLabel="Saving assignment…"
               >
                 Save Assignment
-              </button>
+              </AsyncActionButton>
             </form>
           </section></Modal>}
 
@@ -3808,7 +3900,7 @@ function App() {
         <nav className="nav" aria-label="Primary navigation">
           {navGroups.map((group) => <div className="nav-group" key={group.name}>
             {group.name !== 'Overview' && <span className="nav-group-label">{group.name}</span>}
-            {group.items.map((item) => (
+            {group.items.map((item) => { const badge = badgeForNavigationItem(item); return (
               <button
                 key={item.path}
                 className={`nav-item${item.view === 'Messages' ? ' messages-nav-item' : ''} ${
@@ -3826,22 +3918,9 @@ function App() {
                 title={isSidebarCollapsed ? item.label : undefined}
               >
                 <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
-                {item.view === 'Messages' && formatUnreadMessageCount(unreadMessages) && (
-                  <span className="nav-pending-badge" aria-label={`${formatUnreadMessageCount(unreadMessages)} unread messages`}>
-                    {formatUnreadMessageCount(unreadMessages)}
-                  </span>
-                )}
-                {formatPendingRegistrationCount(
-                  item.view === 'Registrations'
-                    ? pendingAccountCounts.students
-                    : 0
-                ) && (
-                  <span className="nav-pending-badge" aria-label={`${item.label}: ${pendingAccountCounts.students} pending`}>
-                    {formatPendingRegistrationCount(pendingAccountCounts.students)}
-                  </span>
-                )}
+                {formatActionCount(badge.count) && <span className="nav-pending-badge" aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</span>}
               </button>
-            ))}
+            )})}
           </div>)}
           <div className="nav-account-actions">
             <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
@@ -3894,7 +3973,7 @@ function App() {
 
         {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
-        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
+        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
     </div>
   )

@@ -2,6 +2,9 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { installMutationRequestGuard } from './lib/api.js'
+
+installMutationRequestGuard(window)
 
 window.addEventListener('vite:preloadError', (event) => {
   event.preventDefault()

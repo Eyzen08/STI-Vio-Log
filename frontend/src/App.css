@@ -3947,6 +3947,8 @@ a {
 .app-shell.sidebar-collapsed .nav-item-label > span,
 .app-shell.sidebar-collapsed .nav-pending-badge { display: none; }
 .app-shell.sidebar-collapsed .nav-item { justify-content: center; padding-inline: 8px; }
+.app-shell.sidebar-collapsed .nav-item { position: relative; }
+.app-shell.sidebar-collapsed .nav-item .nav-pending-badge { display: inline-flex; position: absolute; top: 3px; right: 2px; }
 .app-shell.sidebar-collapsed .nav-item-label { justify-content: center; }
 .app-shell.sidebar-collapsed .main-panel { grid-column: 2; }
 
@@ -5275,7 +5277,7 @@ a {
   .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo { display: none; }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-group-label,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label > span,
-  .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge { display: none; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge { display: inline-flex; }
   .app-shell:not(.auth-shell).sidebar-collapsed .nav,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-group,
   .app-shell:not(.auth-shell).sidebar-collapsed .nav-account-actions { width: 100%; min-width: 0; }

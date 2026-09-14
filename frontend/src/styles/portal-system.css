@@ -675,6 +675,31 @@
 
 @keyframes login-spin { to { transform: rotate(360deg); } }
 
+.action-spinner {
+  display: inline-block;
+  width: .9em;
+  height: .9em;
+  margin-right: .5rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -.12em;
+  animation: login-spin .7s linear infinite;
+}
+
+button.mutation-in-flight::before {
+  content: '';
+  display: inline-block;
+  width: .9em;
+  height: .9em;
+  margin-right: .5rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: -.12em;
+  animation: login-spin .7s linear infinite;
+}
+
 .auth-shell .auth-entry-actions {
   display: flex;
   align-items: center;
@@ -860,6 +885,7 @@
 @media (prefers-reduced-motion: reduce) {
   .auth-shell .login-campus-image { transform: none; }
   .login-submit-spinner { animation: none; border-color: rgba(255, 255, 255, .75); }
+  .action-spinner, button.mutation-in-flight::before { animation: none; border-right-color: currentColor; opacity: .7; }
 }
 
 /* Premium interface refinement: normalize legacy page styles with one STI system. */
