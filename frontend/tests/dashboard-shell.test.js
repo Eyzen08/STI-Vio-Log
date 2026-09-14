@@ -107,6 +107,20 @@ test('sidebar brand presents the official logo as an integrated lockup', () => {
   assert.match(css, /\.sidebar \.brand-logo\s*\{[^}]*mix-blend-mode:\s*multiply;[^}]*transform:\s*scale\(1\.08\);/s)
 })
 
+test('desktop sidebar toggle lives in the top bar without clipped positioning', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
+  const brand = app.match(/<div className="brand">([\s\S]*?)<\/div>/)?.[1] || ''
+  const topbarTitle = app.match(/<div className="topbar-title">([\s\S]*?)<form className="topbar-search"/)?.[1] || ''
+  assert.doesNotMatch(brand, /sidebar-collapse/)
+  assert.match(topbarTitle, /className="sidebar-collapse"[\s\S]*?aria-controls="portal-navigation"[\s\S]*?aria-expanded=\{!isSidebarCollapsed\}/)
+  assert.match(topbarTitle, /isSidebarCollapsed \? 'panel-left-open' : 'panel-left-close'/)
+  assert.match(css, /\.sidebar-collapse \{[^}]*width: 38px;[^}]*border-radius: 9px !important;/s)
+  assert.match(css, /\.sidebar-collapse:focus-visible \{[^}]*outline: 3px solid/s)
+  assert.doesNotMatch(css, /\.sidebar-collapse \{[^}]*(?:right:\s*-|position:\s*absolute)/s)
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.sidebar-collapse \{ display: none; \}/)
+})
+
 test('segmented navigation uses readable light hover and selected states', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(css, /\.main-panel :is\(\.review-workspace-tabs,[^}]*button:hover:not\(:disabled\) \{[^}]*background: #edf6ff !important;[^}]*color: #063f7c !important;/s)

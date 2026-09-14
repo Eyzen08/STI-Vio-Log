@@ -3799,9 +3799,6 @@ function App() {
           >
             <span aria-hidden="true">×</span>
           </button>
-          <button className="sidebar-collapse" type="button" aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={!isSidebarCollapsed} onClick={() => setIsSidebarCollapsed((value) => !value)}>
-            <PortalIcon name="menu" />
-          </button>
         </div>
 
         <nav className="nav" aria-label="Primary navigation">
@@ -3851,6 +3848,17 @@ function App() {
       <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">
         {isLoggedIn && <header className="topbar">
           <div className="topbar-title">
+            <button
+              className="sidebar-collapse"
+              type="button"
+              aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+              aria-controls="portal-navigation"
+              aria-expanded={!isSidebarCollapsed}
+              onClick={() => setIsSidebarCollapsed((value) => !value)}
+            >
+              <PortalIcon name={isSidebarCollapsed ? 'panel-left-open' : 'panel-left-close'} />
+            </button>
+
             <button
               className="mobile-menu-button"
               type="button"
