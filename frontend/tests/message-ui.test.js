@@ -23,6 +23,15 @@ test('messages sent by the signed-in account align to the right', async () => {
   assert.match(css, /\.message-bubble-row\.mine\s*\{[^}]*flex-direction:\s*row-reverse;[^}]*justify-content:\s*flex-start;/s)
 })
 
+test('Messages navigation and conversation previews use the STI yellow accent', async () => {
+  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(app, /messages-nav-item/)
+  assert.match(css, /\.sidebar \.nav-item\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\)/s)
+  assert.match(css, /\.conversation-list > button:not\(\.conversation-load-more\)\s*\{[^}]*background:\s*var\(--portal-yellow\)/s)
+  assert.match(css, /\.mobile-bottom-nav button\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\) !important/s)
+})
+
 test('participants reveal only role-appropriate conversation metadata', () => {
   assert.deepEqual(
     messageParticipant({ school_participant: 'IT Department', assigned_department_id: 3 }, 'STUDENT'),

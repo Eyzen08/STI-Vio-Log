@@ -228,6 +228,39 @@
   .management-record-table td[data-label] { grid-column: 1; }
 }
 
+/* Use the primary STI yellow consistently for Messages navigation and inbox previews. */
+.sidebar .nav-item.messages-nav-item.active {
+  border-color: #e4b900;
+  background: var(--portal-yellow);
+  color: #08244b;
+  box-shadow: inset 3px 0 #e5b700, 0 6px 16px rgba(122, 91, 0, .16);
+}
+
+.main-panel .conversation-list > button:not(.conversation-load-more) {
+  border-bottom-color: #e7c94f;
+  background: var(--portal-yellow);
+  color: #08244b;
+}
+
+.main-panel .conversation-list > button:not(.conversation-load-more):hover {
+  background: #ffdd4d;
+}
+
+.main-panel .conversation-list > button.active {
+  background: #f3ca22;
+  box-shadow: inset 4px 0 #075cad;
+}
+
+.main-panel .conversation-list > button.unread:not(.active) {
+  background: #ffe15c;
+}
+
+.mobile-bottom-nav button.messages-nav-item.active {
+  border-radius: 8px;
+  background: var(--portal-yellow) !important;
+  color: #08244b !important;
+}
+
 /* Department directory tabs use equal, tactile cards in both states. */
 .main-panel .department-officer-tabs {
   display: inline-grid;

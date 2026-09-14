@@ -3810,7 +3810,7 @@ function App() {
             {group.items.map((item) => (
               <button
                 key={item.path}
-                className={`nav-item ${
+                className={`nav-item${item.view === 'Messages' ? ' messages-nav-item' : ''} ${
                   routePath === item.path
                     ? 'active'
                     : ''
@@ -3882,7 +3882,7 @@ function App() {
 
         {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
-        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={routePath===item.path?'active':''} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
+        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=><button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{item.view==='Messages'&&unreadMessages>0&&<b>{unreadMessages}</b>}</button>)}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
     </div>
   )
