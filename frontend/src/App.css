@@ -4549,10 +4549,10 @@ a {
 .conversation-list > button.active { box-shadow: inset 4px 0 #0870cf; background: #eaf4ff; }
 .conversation-avatar { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: linear-gradient(145deg,#073b88,#0879dc); color: white; font-weight: 850; }
 .conversation-summary { min-width: 0; display: grid; gap: 4px; padding-right: 38px; }
-.conversation-subject { display: flex; justify-content: space-between; gap: 8px; }
-.conversation-subject strong,.conversation-preview,.conversation-parties { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.conversation-subject time { flex: 0 0 auto; color: #6c7990; font-size: .7rem; }
-.conversation-parties,.conversation-preview { color: #68778d; font-size: .74rem; }
+.conversation-primary { display: flex; justify-content: space-between; gap: 8px; }
+.conversation-primary strong,.conversation-preview,.conversation-subject-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.conversation-primary time { flex: 0 0 auto; color: #6c7990; font-size: .7rem; }
+.conversation-subject-detail,.conversation-preview { color: #68778d; font-size: .74rem; }
 .conversation-status { position: absolute; right: 13px; bottom: 12px; padding: 3px 7px; border-radius: 999px; font-size: .6rem; font-weight: 800; }
 .conversation-status.open,.chat-status.open { background: #e4f7e8; color: #16732a; }
 .conversation-status.closed,.chat-status.closed { background: #eef1f5; color: #5e6877; }
@@ -5748,7 +5748,7 @@ a {
   background: #f8fbff;
 }
 
-.conversation-list > button.unread .conversation-subject strong,
+.conversation-list > button.unread .conversation-primary strong,
 .conversation-list > button.unread .conversation-preview {
   color: #082f67;
   font-weight: 800;
@@ -5772,7 +5772,7 @@ a {
   gap: 3px;
 }
 
-.conversation-subject strong {
+.conversation-primary strong {
   font-size: .78rem;
 }
 

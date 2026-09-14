@@ -70,6 +70,14 @@ test('conversation parties identify the student and institutional recipient', ()
   assert.equal(conversationParties({}).label, 'Student ↔ Discipline Office')
 })
 
+test('participant names are the primary conversation title and subject is secondary', async () => {
+  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
+  assert.match(component, /className="conversation-primary"><strong title=\{parties\.label\}>\{parties\.label\}<\/strong>/)
+  assert.match(component, /className="conversation-subject-detail" title=\{`Subject: \$\{conversation\.subject\}`\}>Subject: \{conversation\.subject\}<\/span>/)
+  assert.match(component, /<h3 title=\{selectedParties\.label\}>\{selectedParties\.label\}<\/h3>/)
+  assert.match(component, /Conversation between \$\{parties\.student\} and \$\{parties\.school\}, subject: \$\{conversation\.subject\}/)
+})
+
 test('message history is grouped into accessible date sections', () => {
   const messages = [
     { id: 1, created_at: '2025-01-01T09:00:00Z' },
