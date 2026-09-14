@@ -930,6 +930,31 @@
    audit columns with records that can be scanned comfortably on a phone. */
 @media (max-width: 767px) {
   html,body,#root { max-width: 100%; overflow-x: clip; }
+  .app-shell.auth-shell {
+    width: 100%;
+    width: 100vw;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+  }
+  .app-shell.auth-shell .main-panel,
+  .app-shell.auth-shell .login-page,
+  .app-shell.auth-shell .login-intro,
+  .app-shell.auth-shell .login-form-panel {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    margin-inline: 0;
+    box-sizing: border-box;
+  }
+  .app-shell.auth-shell .login-page {
+    display: flex;
+    grid-template-columns: none;
+  }
+  .app-shell.auth-shell .login-campus-image {
+    max-width: none;
+  }
   .app-shell:not(.auth-shell),
   .app-shell:not(.auth-shell) .main-panel,
   .page-content,

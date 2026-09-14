@@ -94,4 +94,6 @@ test('Safari mobile authentication uses a covered hero image and dynamic viewpor
   assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*position:\s*absolute;[^}]*object-fit:\s*cover;/s)
   assert.match(appCssSource, /min-height:\s*100dvh/)
   assert.match(appCssSource, /env\(safe-area-inset-top\)/)
+  assert.match(portalCssSource, /\.app-shell\.auth-shell\s*\{[^}]*width:\s*100vw;[^}]*max-width:\s*none;[^}]*padding:\s*0;/s)
+  assert.match(portalCssSource, /\.app-shell\.auth-shell \.main-panel,[\s\S]*?\.app-shell\.auth-shell \.login-form-panel\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*none;/s)
 })
