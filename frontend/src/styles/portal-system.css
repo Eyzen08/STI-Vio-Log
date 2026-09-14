@@ -228,7 +228,7 @@
   .management-record-table td[data-label] { grid-column: 1; }
 }
 
-/* Use the primary STI yellow consistently for Messages navigation and inbox previews. */
+/* Keep Messages navigation branded while conversation previews use calmer blue cards. */
 .sidebar .nav-item.messages-nav-item.active {
   border-color: #e4b900;
   background: var(--portal-yellow);
@@ -236,24 +236,48 @@
   box-shadow: inset 3px 0 #e5b700, 0 6px 16px rgba(122, 91, 0, .16);
 }
 
+.main-panel .conversation-list {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 8px;
+  background: #f5f9fe;
+}
+
 .main-panel .conversation-list > button:not(.conversation-load-more) {
-  border-bottom-color: #e7c94f;
-  background: var(--portal-yellow);
-  color: #08244b;
+  min-height: 96px;
+  padding: 15px 16px;
+  border: 1px solid #c7dced;
+  border-radius: 10px;
+  background: #edf6ff;
+  color: #173b63;
+  box-shadow: 0 3px 10px rgba(25,78,126,.07);
 }
 
 .main-panel .conversation-list > button:not(.conversation-load-more):hover {
-  background: #ffdd4d;
+  border-color: #8dbce2;
+  background: #e3f1ff;
+  box-shadow: 0 5px 14px rgba(25,78,126,.11);
+}
+
+.main-panel .conversation-list > button:not(.conversation-load-more):focus-visible {
+  position: relative;
+  z-index: 1;
+  border-color: #397fba;
 }
 
 .main-panel .conversation-list > button.active {
-  background: #f3ca22;
-  box-shadow: inset 4px 0 #075cad;
+  border-color: #4b91c9;
+  background: #d9ecff;
+  box-shadow: inset 4px 0 #075cad, 0 5px 14px rgba(25,78,126,.12);
 }
 
 .main-panel .conversation-list > button.unread:not(.active) {
-  background: #ffe15c;
+  border-color: #9fc8e9;
+  background: #e2f1ff;
 }
+
+.main-panel .conversation-summary { padding-right: 46px; }
 
 .mobile-bottom-nav button.messages-nav-item.active {
   border-radius: 8px;

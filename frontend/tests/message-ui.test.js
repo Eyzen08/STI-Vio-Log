@@ -23,12 +23,16 @@ test('messages sent by the signed-in account align to the right', async () => {
   assert.match(css, /\.message-bubble-row\.mine\s*\{[^}]*flex-direction:\s*row-reverse;[^}]*justify-content:\s*flex-start;/s)
 })
 
-test('Messages navigation and conversation previews use the STI yellow accent', async () => {
+test('Messages navigation stays yellow while previews use spaced light-blue cards', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(app, /messages-nav-item/)
   assert.match(css, /\.sidebar \.nav-item\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\)/s)
-  assert.match(css, /\.conversation-list > button:not\(\.conversation-load-more\)\s*\{[^}]*background:\s*var\(--portal-yellow\)/s)
+  assert.match(css, /\.main-panel \.conversation-list\s*\{[^}]*gap:\s*8px;[^}]*padding:\s*8px;/s)
+  assert.match(css, /\.conversation-list > button:not\(\.conversation-load-more\)\s*\{[^}]*border:\s*1px solid #c7dced;[^}]*border-radius:\s*10px;[^}]*background:\s*#edf6ff;/s)
+  assert.match(css, /\.conversation-list > button\.active\s*\{[^}]*background:\s*#d9ecff;[^}]*inset 4px 0 #075cad/s)
+  assert.match(css, /\.conversation-list > button\.unread:not\(\.active\)\s*\{[^}]*background:\s*#e2f1ff;/s)
+  assert.match(css, /\.conversation-summary\s*\{\s*padding-right:\s*46px;/s)
   assert.match(css, /\.mobile-bottom-nav button\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\) !important/s)
 })
 
