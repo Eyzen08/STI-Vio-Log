@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const jwt = require('jsonwebtoken');
+const sessionService=require('../src/services/browserSessionService');
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'this-is-a-secure-test-secret-123456';
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
@@ -20,20 +20,18 @@ const accounts = {
 };
 
 function tokenFor(id, options = {}) {
-  return jwt.sign(
-    { id, username: accounts[id]?.username || 'unknown', role: options.claimedRole || accounts[id]?.role, session_version:1 },
-    process.env.JWT_SECRET,
-    { expiresIn: options.expiresIn || '1h' }
-  );
+  return options.expiresIn==='-1s'?`expired-${id}`:`session-${id}`;
 }
 
 function mockResult(sql, params = []) {
   const text = String(sql).replace(/\s+/g, ' ').trim();
 
-  if (text.includes('FROM users u') && text.includes('LEFT JOIN department_heads')) {
-    const account = accounts[Number(params[0])];
-    return { rows: account ? [account] : [] };
+  if (text.includes('FROM browser_sessions bs') && text.includes('JOIN users u')) {
+    const id=Object.keys(accounts).find(value=>sessionService.hash(`session-${value}`)===params[0]);
+    const account = accounts[Number(id)];
+    return { rows: account ? [{...account,browser_session_id:Number(id),csrf_hash:sessionService.hash('test-csrf',process.env.CSRF_SIGNING_KEY),absolute_expires_at:new Date(Date.now()+60000)}] : [] };
   }
+  if(text.startsWith('UPDATE browser_sessions'))return{rows:[]};
 
   if (text.includes('FROM departments') && text.includes('is_active = TRUE')) {
     return { rows: Number(params[0]) === 9 ? [{ id: 9 }] : [] };
@@ -115,7 +113,7 @@ async function request(baseUrl, path, { token, method = 'GET', body } = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? { Cookie: `sti_session=${token}; sti_csrf=test-csrf`, 'X-CSRF-Token':'test-csrf' } : {}),
       ...(body ? { 'Content-Type': 'application/json' } : {})
     },
     ...(body ? { body: JSON.stringify(body) } : {})

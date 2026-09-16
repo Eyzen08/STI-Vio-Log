@@ -7,7 +7,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
   if (!pool?.connect) throw new TypeError('Password change dependencies are required');
   const change = async ({ userId, currentPassword, newPassword, ipAddress = null }) => {
     if (!Number.isInteger(Number(userId)) || Number(userId) < 1 || typeof currentPassword !== 'string' || !passwordIsStrong(newPassword)) {
-      throw new ApiError(400, 'VALIDATION_ERROR', 'Use an 8-128 character password with uppercase, number, and symbol');
+      throw new ApiError(400, 'VALIDATION_ERROR', 'Use a unique 12-128 character password with uppercase, number, and symbol');
     }
     const client = await pool.connect();
     try {

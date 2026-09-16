@@ -6,7 +6,7 @@ const validRegistration = {
   firstName:'Jose',middleName:'Pedro',lastName:'Reyes',suffix:'',studentNumber:'02000123456',
   email:'student@example.com',phoneNumber:'09171234567',program:'BSIT',section:'A103',yearLevel:'2',
   guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567',
-  password:'Password@123',confirmPassword:'Password@123',
+  password:'UniquePass@1234',confirmPassword:'UniquePass@1234',
 }
 
 test('each registration wizard step validates its own required fields',()=>{
@@ -44,9 +44,9 @@ test('suffix, email, program, and section use their approved formatting',()=>{
 })
 
 test('submission normalization trims non-sensitive values without altering passwords',()=>{
-  const normalized=normalizeRegistration({...validRegistration,firstName:' jose ',email:' TEST@Example.COM ',program:' bsit ',password:' Password@123 '})
+  const normalized=normalizeRegistration({...validRegistration,firstName:' jose ',email:' TEST@Example.COM ',program:' bsit ',password:' UniquePass@1234 '})
   assert.equal(normalized.firstName,'Jose')
   assert.equal(normalized.email,'test@example.com')
   assert.equal(normalized.program,'BSIT')
-  assert.equal(normalized.password,' Password@123 ')
+  assert.equal(normalized.password,' UniquePass@1234 ')
 })

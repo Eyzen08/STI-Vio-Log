@@ -95,6 +95,15 @@ test('unlinked Google login is generic and rolls back', async () => {
   assert.ok(db.calls.some((call) => call.sql === 'ROLLBACK'));
 });
 
+test('Google login throttles by verified account identifier and IP', async () => {
+  const db = fakeDatabase((sql) => sql.includes('FROM google_identity_links gil') ? { rows: [] } : { rows: [] });
+  const calls=[];
+  const authThrottle={async assertAllowed(input){calls.push(['assert',input])},async failure(input){calls.push(['failure',input])},async success(input){calls.push(['success',input])}};
+  const service = createGoogleIdentityService({ pool:db.pool, verifyIdentity:async()=>identity, issueToken:()=>null, authThrottle });
+  await assert.rejects(service.loginStudent({credential:'token',ipAddress:'203.0.113.8'}),/linked to an active student/i);
+  assert.deepEqual(calls.map(([kind,input])=>[kind,input.identifier,input.ip]),[['assert',identity.subject,'203.0.113.8'],['failure',identity.subject,'203.0.113.8']]);
+});
+
 test('name normalization is Unicode-aware and collapses whitespace', () => {
   assert.equal(normalizeName('  MARIA\t Ana '), 'maria ana');
   assert.equal(normalizeName(null), '');

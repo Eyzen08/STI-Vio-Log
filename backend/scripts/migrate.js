@@ -49,6 +49,7 @@ const runMigrations = async (pool, { directory = migrationsDirectory, logger = c
 };
 
 const main = async () => {
+    if(process.env.MIGRATION_DATABASE_URL)process.env.DATABASE_URL=process.env.MIGRATION_DATABASE_URL;
     const pool = require("../src/config/database");
     try {
         if (process.argv[2] === "status") {

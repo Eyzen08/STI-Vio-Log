@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
 const pool = require("../config/database");
+const sessionService = require('../services/browserSessionService');
 const { permissionsForRole } = require('../security/permissions');
 const { recordSecurityEvent } = require('../services/securityEventService');
 const { notifyDisciplineSupportUse } = require('../services/notificationService');
@@ -23,75 +23,16 @@ const denyAuthorization = (req, res, { code = 'FORBIDDEN', message = 'Permission
 
 
 // =====================================================
-// GET JWT SECRET
-// =====================================================
-
-const getJwtSecret = () => {
-    const secret = process.env.JWT_SECRET;
-
-    const insecureDefaults = [
-        "sti-vio-log-dev-secret-change-me",
-        "change-this-to-a-long-random-secret"
-    ];
-
-    if (
-        !secret ||
-        insecureDefaults.includes(secret) ||
-        secret.length < 32
-    ) {
-        const error = new Error(
-            "JWT_SECRET is not configured securely. Set a strong environment secret before launch."
-        );
-
-        error.statusCode = 500;
-
-        throw error;
-    }
-
-    return secret;
-};
-
-
-// =====================================================
-// AUTHENTICATE TOKEN
+// AUTHENTICATE OPAQUE COOKIE SESSION
 // =====================================================
 
 const authenticateToken = async (req, res, next) => {
-    const authHeader = req.headers.authorization;
-
-    const token =
-        authHeader &&
-        authHeader.startsWith("Bearer ")
-            ? authHeader.substring(7)
-            : null;
+    const token = sessionService.parseCookies(req.headers.cookie)[sessionService.COOKIE_NAME];
 
     if (!token) {
         return res.status(401).json({
             success: false,
-            message: "Access token required"
-        });
-    }
-
-    let decoded;
-
-    try {
-        decoded = jwt.verify(
-            token,
-            getJwtSecret()
-        );
-    } catch (error) {
-        console.error("[AUTH] Token verification failed:", error.message);
-
-        if (error.message && error.message.toLowerCase().includes("jwt_secret")) {
-            return res.status(500).json({
-                success: false,
-                message: "JWT_SECRET is not configured securely. Set a strong environment secret before launch."
-            });
-        }
-
-        return res.status(401).json({
-            success: false,
-            message: "Invalid or expired token"
+            message: "Authenticated session required"
         });
     }
 
@@ -105,6 +46,11 @@ const authenticateToken = async (req, res, next) => {
                 u.email_verified,
                 u.session_version,
                 u.must_change_password,
+                COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
+                COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name,
+                bs.id AS browser_session_id,
+                bs.csrf_hash,
+                bs.absolute_expires_at,
                 COALESCE(dh.department_id, sp.department_id) AS department_id
                 ,CASE WHEN u.role='SYSTEM_ADMIN' THEN COALESCE((
                     SELECT jsonb_agg(DISTINCT scope)
@@ -118,16 +64,20 @@ const authenticateToken = async (req, res, next) => {
                       AND sar.read_only=TRUE AND sar.revoked_at IS NULL AND sar.expires_at>CURRENT_TIMESTAMP
                     ORDER BY sar.expires_at ASC LIMIT 1
                 ) ELSE NULL END AS support_access_request_id
-            FROM users u
+            FROM browser_sessions bs
+            JOIN users u ON u.id=bs.user_id
             LEFT JOIN department_heads dh
                 ON dh.user_id = u.id
             LEFT JOIN staff_profiles sp
                 ON sp.user_id = u.id
-            WHERE u.id = $1
+            LEFT JOIN students s ON s.user_id=u.id
+            LEFT JOIN admin_profiles ap ON ap.user_id=u.id
+            WHERE bs.token_hash = $1 AND bs.revoked_at IS NULL
+              AND bs.idle_expires_at>CURRENT_TIMESTAMP AND bs.absolute_expires_at>CURRENT_TIMESTAMP
               AND u.is_active = TRUE
             LIMIT 1
             `,
-            [decoded.id]
+            [sessionService.hash(token)]
         );
 
         if (accountResult.rows.length === 0) {
@@ -143,10 +93,6 @@ const authenticateToken = async (req, res, next) => {
             return res.status(401).json({ success:false, message:'Student email verification is required' });
         }
 
-        if (!Number.isInteger(decoded.session_version) || Number(decoded.session_version) !== Number(account.session_version)) {
-            return res.status(401).json({ success: false, message: "Session has been invalidated", error: { code: "SESSION_INVALIDATED", message: "Session has been invalidated" } });
-        }
-
         req.user = {
             id: Number(account.id),
             username: account.username,
@@ -155,14 +101,21 @@ const authenticateToken = async (req, res, next) => {
             must_change_password: Boolean(account.must_change_password),
             department_id: account.department_id
                 ? Number(account.department_id)
-                : null
+                : null,
+            first_name:account.first_name||null,
+            last_name:account.last_name||null
         };
         req.user.support_scopes = Array.isArray(account.support_scopes) ? account.support_scopes : [];
         req.user.support_access_request_id = account.support_access_request_id ? Number(account.support_access_request_id) : null;
         req.user.base_permissions = [...permissionsForRole(account.role)];
         req.user.permissions = [...new Set([...req.user.base_permissions, ...req.user.support_scopes])];
 
-        return next();
+        const idleMinutes=['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(account.role)?30:120;
+        await pool.query(`UPDATE browser_sessions SET last_seen_at=CURRENT_TIMESTAMP,
+          idle_expires_at=LEAST(absolute_expires_at,CURRENT_TIMESTAMP+($2||' minutes')::interval) WHERE id=$1`,[account.browser_session_id,idleMinutes]);
+        req.session={id:Number(account.browser_session_id),csrfHash:account.csrf_hash,absoluteExpiresAt:account.absolute_expires_at};
+
+        return requireCsrf(req,res,next);
 
     } catch (error) {
         console.error("Authenticated account lookup failed:", error);
@@ -171,6 +124,18 @@ const authenticateToken = async (req, res, next) => {
             message: "Failed to validate authenticated account"
         });
     }
+};
+
+const requireCsrf = (req,res,next) => {
+    if (['GET','HEAD','OPTIONS'].includes(req.method)) return next();
+    if (!req.session) return res.status(401).json({success:false,message:'Authentication required'});
+    const cookies=sessionService.parseCookies(req.headers.cookie);
+    const cookieToken=cookies[sessionService.CSRF_COOKIE];
+    const headerToken=req.get('x-csrf-token');
+    if (!cookieToken || !headerToken || cookieToken!==headerToken || sessionService.hash(headerToken,process.env.CSRF_SIGNING_KEY)!==req.session.csrfHash) {
+      return res.status(403).json({success:false,message:'CSRF validation failed',error:{code:'CSRF_INVALID',message:'CSRF validation failed'}});
+    }
+    return next();
 };
 
 
@@ -299,5 +264,6 @@ module.exports = {
     authorizeRoles,
     authorizePermissions,
     authorizeAnyPermission,
+    requireCsrf,
     requireAuthorizedDepartment
 };

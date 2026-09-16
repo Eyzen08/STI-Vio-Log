@@ -15,12 +15,12 @@ test('student number and email validation follow the registration contract', () 
 });
 
 test('shared password policy enforces every required class', () => {
-  assert.equal(passwordIsStrong('Password@123'), true);
+  assert.equal(passwordIsStrong('UniquePass@1234'), true);
   assert.equal(passwordIsStrong('short1!'), false);
   assert.equal(passwordIsStrong('password@123'), false);
   assert.equal(passwordIsStrong('Password@Test'), false);
   assert.equal(passwordIsStrong('Password123'), false);
-  assert.deepEqual(passwordRequirements('Password@123'), {length:true,uppercase:true,number:true,special:true});
+  assert.deepEqual(passwordRequirements('UniquePass@1234'), {length:true,uppercase:true,number:true,special:true,uncommon:true});
 });
 
 test('OTP generation is six digits and hashing does not expose the code', () => {
@@ -70,14 +70,14 @@ test('correct OTP is consumed exactly once',async()=>{
 test('invalid registrations are rejected before any database mutation',async()=>{
   const pool={connect:async()=>{throw new Error('database must not be reached')}};
   const service=createStudentPasswordAuthService({pool,otpService:{issue:async()=>{}}});
-  const base={firstName:'Jose',middleName:'Pedro',lastName:'Reyes',suffix:'',studentNumber:'02000123456',email:'student@example.test',phoneNumber:'09171234567',program:'BSIT',section:'A103',yearLevel:2,guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567',password:'Password@123',confirmPassword:'Password@123'};
+  const base={firstName:'Jose',middleName:'Pedro',lastName:'Reyes',suffix:'',studentNumber:'02000123456',email:'student@example.test',phoneNumber:'09171234567',program:'BSIT',section:'A103',yearLevel:2,guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567',password:'UniquePass@1234',confirmPassword:'UniquePass@1234'};
   for(const override of [{studentNumber:'123'},{email:'bad-email'},{phoneNumber:'12'},{yearLevel:0},{guardianName:''},{password:'weak',confirmPassword:'weak'},{confirmPassword:'Different@123'}, {firstName:''},{lastName:''}])await assert.rejects(service.register({...base,...override}));
 });
 
 test('registration controller maps complete student and guardian information only',async()=>{
   let received;
   const controller=createStudentPasswordAuthController({service:{async register(input){received=input;return{registration_id:7,email:input.email}}}});
-  const body={full_name:'Jose Pedro Reyes',first_name:'Jose',middle_name:'Pedro',last_name:'Reyes',suffix:'',student_number:'02000123456',email:'student@example.test',phone_number:'09171234567',program:'BSIT',section:'A103',year_level:2,guardian_name:'Maria Reyes',guardian_relationship:'Mother',guardian_phone_number:'09181234567',password:'Password@123',confirm_password:'Password@123'};
+  const body={full_name:'Jose Pedro Reyes',first_name:'Jose',middle_name:'Pedro',last_name:'Reyes',suffix:'',student_number:'02000123456',email:'student@example.test',phone_number:'09171234567',program:'BSIT',section:'A103',year_level:2,guardian_name:'Maria Reyes',guardian_relationship:'Mother',guardian_phone_number:'09181234567',password:'UniquePass@1234',confirm_password:'UniquePass@1234'};
   const response={statusCode:0,payload:null,status(code){this.statusCode=code;return this},json(value){this.payload=value;return this}};
   await controller.register({body},response);
   assert.equal(response.statusCode,202);

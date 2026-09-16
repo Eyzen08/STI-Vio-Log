@@ -39,7 +39,7 @@ import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
-import { API_URL, login } from './lib/api.js'
+import { API_URL, apiRequest, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
@@ -95,9 +95,12 @@ function App() {
   const [activeView, setActiveView] = useState('Dashboard')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [mfaState,setMfaState]=useState(null)
 
   const [token, setToken] = useState(initialSession.token)
   const [user, setUser] = useState(initialSession.user)
+
+  useEffect(()=>{if(!initialSession.user)return;let active=true;apiRequest('/api/auth/session').then(data=>{if(active&&data.user){saveSession(data);setUser(data.user);setToken('cookie-session')}}).catch(()=>{if(active){clearSession();setUser(null);setToken('')}});return()=>{active=false}},[initialSession.user])
 
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
@@ -140,7 +143,7 @@ function App() {
       setRealtimeSocket(null)
       return undefined
     }
-    const socket = connectRealtime(token)
+    const socket = connectRealtime()
     setRealtimeSocket(socket)
     return () => { socket.disconnect() }
   }, [token, user?.password_change_required])
@@ -1676,6 +1679,8 @@ function App() {
        * Username/password are NOT stored.
        */
 
+      if(data.mfa_enrollment_required){const setup=await apiRequest('/api/auth/mfa/setup/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});setMfaState({mode:'enroll',...setup});return}
+      if(data.mfa_required){setMfaState({mode:'verify'});return}
       acceptSession(data)
     } catch (loginError) {
       setError(
@@ -1694,12 +1699,17 @@ function App() {
 
   const acceptSession = (data) => {
     saveSession(data)
-    setToken(data.token)
+    setToken('cookie-session')
     setUser(data.user)
+    setMfaState(null)
     setError('')
     setForm({ username: '', password: '' })
     navigateTo(data.user.password_change_required ? '/account/password-change' : getHomePath(data.user.role), { replace: true })
   }
+
+  const handleMfaSubmit=async({code,recovery})=>{setIsSubmitting(true);setError('');try{const path=mfaState.mode==='enroll'?'/api/auth/mfa/setup/confirm':recovery?'/api/auth/mfa/recovery':'/api/auth/mfa/verify';const body=mfaState.mode==='enroll'||!recovery?{code}:{recovery_code:code};const data=await apiRequest(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(data.recovery_codes){saveSession(data);setMfaState({mode:'complete',recoveryCodes:data.recovery_codes,pendingSession:data})}else acceptSession(data)}catch(e){setError(e.message)}finally{setIsSubmitting(false)}}
+  const cancelMfa=()=>{setMfaState(null);setError('');setForm({username:'',password:''})}
+  const continueMfa=()=>acceptSession(mfaState.pendingSession)
 
   /*
    * ============================================================
@@ -1707,7 +1717,8 @@ function App() {
    * ============================================================
    */
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try { await fetch(`${API_URL}/api/auth/logout`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}) } catch { /* local cleanup still completes */ }
     clearSession()
 
     try {
@@ -1906,6 +1917,10 @@ function App() {
           onSubmit={handleSubmit}
           routePath={routePath}
           onNavigate={navigateTo}
+          mfaState={mfaState}
+          onMfaSubmit={handleMfaSubmit}
+          onMfaCancel={cancelMfa}
+          onMfaContinue={continueMfa}
         />
       )
     }

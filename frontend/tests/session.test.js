@@ -19,54 +19,35 @@ class MemoryStorage {
   }
 }
 
-const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url')
-const tokenFor = (payload) => `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.signature`
 const user = { id: 7, username: 'student.test', role: 'STUDENT' }
 
 test.beforeEach(() => {
   globalThis.localStorage = new MemoryStorage()
+  globalThis.sessionStorage = new MemoryStorage()
 })
 
 test.after(() => {
   delete globalThis.localStorage
+  delete globalThis.sessionStorage
 })
 
-test('a valid persisted session is restored on reload', () => {
-  const token = tokenFor({ ...user, exp: Math.floor(Date.now() / 1000) + 3600 })
-  saveSession({ token, user })
-
-  assert.deepEqual(loadSession(), { token, user })
+test('only a non-secret user hint is restored while authentication remains in the HttpOnly cookie', () => {
+  saveSession({ user, csrf_token:'csrf-not-an-authenticator' })
+  assert.deepEqual(loadSession(), { token:'cookie-session', user })
+  assert.equal(localStorage.getItem('sti_vio_log_token'),null)
 })
 
-test('an expired session is rejected and removed', () => {
-  const token = tokenFor({ ...user, exp: Math.floor(Date.now() / 1000) - 1 })
-  saveSession({ token, user })
-
+test('an invalid persisted user hint is rejected and removed', () => {
+  localStorage.setItem('sti_vio_log_user',JSON.stringify({username:'missing-id'}))
   assert.deepEqual(loadSession(), { token: '', user: null })
-  assert.equal(localStorage.getItem('sti_vio_log_token'), null)
-  assert.equal(localStorage.getItem('sti_vio_log_user'), null)
-})
-
-test('a session with a tampered persisted identity is rejected and removed', () => {
-  const token = tokenFor({ ...user, exp: Math.floor(Date.now() / 1000) + 3600 })
-  saveSession({ token, user: { ...user, role: 'ADMIN' } })
-
-  assert.deepEqual(loadSession(), { token: '', user: null })
-  assert.equal(localStorage.getItem('sti_vio_log_token'), null)
   assert.equal(localStorage.getItem('sti_vio_log_user'), null)
 })
 
 test('logout clears all persisted authentication data', () => {
-  const token = tokenFor({ ...user, exp: Math.floor(Date.now() / 1000) + 3600 })
-  saveSession({ token, user })
+  saveSession({ user,csrf_token:'csrf' })
   clearSession()
 
   assert.equal(localStorage.getItem('sti_vio_log_token'), null)
   assert.equal(localStorage.getItem('sti_vio_log_user'), null)
-})
-
-test('forced-password-change state must match the signed token', () => {
-  const token = tokenFor({ ...user, password_change_required:true, exp:Math.floor(Date.now()/1000)+3600 })
-  saveSession({token,user:{...user,password_change_required:false}})
-  assert.deepEqual(loadSession(),{token:'',user:null})
+  assert.equal(sessionStorage.getItem('sti_vio_log_csrf'),null)
 })

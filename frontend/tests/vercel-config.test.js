@@ -12,4 +12,8 @@ test('Vercel sends browser security and HTTPS headers', () => {
   assert.equal(headers['X-Frame-Options'], 'DENY')
   assert.equal(headers['Referrer-Policy'], 'strict-origin-when-cross-origin')
   assert.match(headers['Permissions-Policy'], /camera=\(self\)/)
+  assert.match(headers['Content-Security-Policy'], /frame-ancestors 'none'/)
+  assert.doesNotMatch(headers['Content-Security-Policy'], /unsafe-eval/)
 })
+
+test('production build adds an API-origin-specific CSP',()=>{const source=fs.readFileSync(new URL('../vite.config.js',import.meta.url),'utf8');assert.match(source,/loadEnv/);assert.match(source,/api\.origin/);assert.match(source,/connect-src 'self'/);assert.doesNotMatch(source,/script-src[^\n]*unsafe-inline/);assert.doesNotMatch(source,/unsafe-eval/)});

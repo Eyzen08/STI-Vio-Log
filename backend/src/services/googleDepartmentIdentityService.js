@@ -13,7 +13,7 @@ const publicUser = (row) => ({
   full_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || null
 });
 
-const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken }) => {
+const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken, authThrottle = null }) => {
   if (!pool?.connect || typeof verifyIdentity !== 'function') throw new TypeError('Google department identity dependencies are required');
 
   const register = async ({ credential, firstName, lastName, employeeNumber, departmentType, departmentName, note, ipAddress = null }) => {
@@ -86,6 +86,8 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
 
   const login = async ({ credential, ipAddress = null }) => {
     const identity = await verifyIdentity(credential);
+    const throttleInput = { kind:'google-department', identifier:identity.subject, ip:ipAddress };
+    if (authThrottle) await authThrottle.assertAllowed(throttleInput, pool);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -108,8 +110,9 @@ const createGoogleDepartmentIdentityService = ({ pool, verifyIdentity, issueToke
         [account.id, account.link_id, ipAddress]
       );
       await client.query('COMMIT');
+      if (authThrottle) await authThrottle.success(throttleInput, pool);
       return { token: issueToken(account), user: publicUser(account) };
-    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; }
+    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} if(authThrottle&&error.statusCode&&error.statusCode<500)await authThrottle.failure(throttleInput,pool); throw error; }
     finally { client.release(); }
   };
 

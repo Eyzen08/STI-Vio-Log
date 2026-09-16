@@ -177,7 +177,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   };
 
   const resetPassword = async ({ resetToken, newPassword, confirmPassword, ipAddress = null }) => {
-    if (!passwordIsStrong(newPassword)) throw new ApiError(400, 'WEAK_PASSWORD', 'Password must have at least 8 characters, one uppercase letter, one number, and one symbol');
+    if (!passwordIsStrong(newPassword)) throw new ApiError(400, 'WEAK_PASSWORD', 'Password must have at least 12 characters, one uppercase letter, one number, one symbol, and must not be commonly used');
     if (newPassword !== confirmPassword) throw new ApiError(400, 'PASSWORD_MISMATCH', 'Password confirmation does not match');
     const client = await pool.connect();
     try {

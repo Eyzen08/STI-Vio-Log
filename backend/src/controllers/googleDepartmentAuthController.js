@@ -3,8 +3,10 @@ const { assertAllowedFields } = require('../utils/validators');
 const { sendError } = require('../utils/api');
 const { createGoogleIdentityVerifier } = require('../services/googleIdentityVerifier');
 const { createGoogleDepartmentIdentityService } = require('../services/googleDepartmentIdentityService');
+const sessions=require('../services/browserSessionService');
+const authThrottle=require('../services/authThrottleService');
 
-const defaultFactory = () => createGoogleDepartmentIdentityService({ pool, verifyIdentity: createGoogleIdentityVerifier() });
+const defaultFactory = () => createGoogleDepartmentIdentityService({ pool, verifyIdentity: createGoogleIdentityVerifier(), issueToken:()=>null, authThrottle });
 const createGoogleDepartmentAuthController = ({ serviceFactory = defaultFactory } = {}) => {
   let service;
   const getService = () => service || (service = serviceFactory());
@@ -25,7 +27,9 @@ const createGoogleDepartmentAuthController = ({ serviceFactory = defaultFactory 
       assertAllowedFields(req.body, ['credential']);
       if (typeof req.body?.credential !== 'string' || !req.body.credential.trim()) return sendError(res,400,'VALIDATION_ERROR','credential is required');
       const result = await getService().login({ credential:req.body.credential, ipAddress:req.ip || null });
-      return res.json({ success:true, message:'Login successful', ...result });
+      if(result.token)return res.json({success:true,message:'Login successful',...result});
+      const created=await sessions.createSession({userId:result.user.id,ipAddress:req.ip,userAgent:req.get('user-agent')});sessions.setSessionCookies(res,created);
+      return res.json({ success:true, message:'Login successful', user:result.user,csrf_token:created.csrf });
     } catch (error) { return fail(res,error); }
   };
   return { register, login };

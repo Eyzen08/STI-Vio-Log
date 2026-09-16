@@ -15,6 +15,7 @@
     "backup": "node scripts/backup.js",
     "backup:verify": "node scripts/backup.js verify",
     "production:check": "node scripts/production-check.js",
+    "security:database": "node scripts/check-database-security.js",
     "smoke:production": "node scripts/smoke-production.js"
   },
   "keywords": [],
@@ -38,5 +39,8 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.14"
+  },
+  "overrides": {
+    "uuid": "^11.1.1"
   }
 }

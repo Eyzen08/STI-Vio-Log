@@ -1,4 +1,5 @@
 import { buildGoogleLinkPayload } from './googleIdentity.js'
+import { csrfToken, saveCsrf } from './session.js'
 
 export const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000'
 
@@ -41,15 +42,22 @@ export const installMutationRequestGuard = (target = globalThis) => {
     if (element.dataset.mutationWasDisabled !== 'true') element.disabled = false
     delete element.dataset.mutationWasDisabled
   }
-  const guardedFetch = (input, options = {}) => {
+  const guardedFetch = async (input, options = {}) => {
     const method = String(options.method || (typeof input !== 'string' && input?.method) || 'GET').toUpperCase()
-    if (!mutationMethods.has(method)) return originalFetch(input, options)
     const url = typeof input === 'string' ? input : input?.url || String(input)
+    const headers=new Headers(options.headers||(typeof input!=='string'&&input?.headers)||{})
+    headers.delete('Authorization')
+    const securedOptions={...options,headers,credentials:'include'}
+    const isMutation=mutationMethods.has(method)
+    const publicAuth=/\/api\/(login|auth\/(google|student|mfa))/.test(url)
+    const protectedApi=String(url).startsWith(API_URL)||String(url).startsWith('/api/')
+    if(isMutation&&protectedApi&&!publicAuth){let csrf=csrfToken();if(!csrf){const response=await originalFetch(`${API_URL}/api/auth/csrf`,{credentials:'include',headers:{Accept:'application/json'}});const data=await response.json().catch(()=>null);if(response.ok&&data?.csrf_token){saveCsrf(data.csrf_token);csrf=data.csrf_token}}if(csrf)headers.set('X-CSRF-Token',csrf)}
+    if (!isMutation) return originalFetch(input, securedOptions)
     const body = typeof options.body === 'string' ? options.body : ''
     const key = `${method}:${url}:${body}`
     const activityElement = beginActivity()
     if (!inFlight.has(key)) {
-      const request = originalFetch(input, options)
+      const request = originalFetch(input, securedOptions)
         .then((response) => response.clone())
         .finally(() => inFlight.delete(key))
       inFlight.set(key, request)
@@ -80,6 +88,7 @@ const readJson = async (response) => {
 export const apiRequest = async (path, options = {}) => {
   const response = await fetch(`${API_URL}${path}`, options)
   const data = await readJson(response)
+  if(data?.csrf_token)saveCsrf(data.csrf_token)
 
   if (!response.ok || data?.success === false) {
     throw new ApiError(

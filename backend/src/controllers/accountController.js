@@ -5,12 +5,15 @@ const { createPasswordChangeService } = require('../services/passwordChangeServi
 const { createAdminAccountService } = require('../services/adminAccountService');
 const { createOtpService } = require('../services/otpService');
 const { createEmailService } = require('../services/emailService');
-const createAccountController = ({ service=createPasswordChangeService({pool}) }={}) => ({
+const sessions=require('../services/browserSessionService');
+const createAccountController = ({ service=createPasswordChangeService({pool,issueToken:()=>null}) }={}) => ({
   passwordChange: async (req,res) => { try {
     assertAllowedFields(req.body,['current_password','new_password']);
     if (typeof req.body?.current_password !== 'string' || typeof req.body?.new_password !== 'string') return sendError(res,400,'VALIDATION_ERROR','current_password and new_password are required');
     const result=await service.change({userId:req.user.id,currentPassword:req.body.current_password,newPassword:req.body.new_password,ipAddress:req.ip||null});
-    return res.json({success:true,message:'Password changed successfully',...result});
+    await sessions.revokeUserSessions(req.user.id);
+    const created=await sessions.createSession({userId:req.user.id,ipAddress:req.ip,userAgent:req.get('user-agent')});sessions.setSessionCookies(res,created);
+    return res.json({success:true,message:'Password changed successfully',user:result.user,csrf_token:created.csrf});
   } catch(error) { return sendError(res,error.statusCode||500,error.code||'INTERNAL_ERROR',error.statusCode?error.message:'Password change failed'); } }
 });
 const createAdminProfileController=({service=createAdminAccountService({pool,otpService:createOtpService({pool,sendOtp:createEmailService().sendOtp})})}={})=>{const fail=(res,e)=>sendError(res,e.statusCode||500,e.code||'INTERNAL_ERROR',e.statusCode?e.message:'Account settings request failed');return{

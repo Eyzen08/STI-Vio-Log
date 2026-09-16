@@ -7,7 +7,7 @@ const requestFor=(username,password)=>({body:{username,password}});
 
 for(const role of ['SYSTEM_ADMIN','DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'])test(`valid ${role} password login derives its role from the database`,async()=>{
   const controller=createAuthController({database:{async query(sql,params){if(sql.startsWith('UPDATE users')){assert.equal(params[0],4);return{rows:[]}}assert.equal(params[0],'account');assert.equal(sql.includes('role=$'),false);return{rows:[{id:4,username:'account',role,password_hash:'hash',session_version:1,must_change_password:false,email_verified:true,first_name:'Pedro',last_name:'Makisig'}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:user=>`token-${user.role}`,auditSecurityEvent:async()=>true});
-  const res=response();await controller.loginUser(requestFor('account','Password@123'),res);
+  const res=response();await controller.loginUser(requestFor('account','UniquePass@1234'),res);
   assert.equal(res.statusCode,200);assert.equal(res.body.user.role,role);assert.equal(res.body.user.full_name,'Pedro Makisig');assert.equal(res.body.token,`token-${role}`);
 });
 
@@ -21,7 +21,7 @@ test('invalid username and invalid password use the same generic response',async
 test('student password login accepts the official student number when it differs from the username',async()=>{
   const queries=[];
   const controller=createAuthController({database:{async query(sql,params){queries.push({sql,params});if(sql.startsWith('UPDATE users'))return{rows:[]};return{rows:[{id:9,username:'student.portal',role:'STUDENT',password_hash:'hash',session_version:1,email_verified:true,first_name:'Ana',last_name:'Montana'}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:()=> 'student-token',auditSecurityEvent:async()=>true});
-  const res=response();await controller.loginUser(requestFor('02000123456','Password@123'),res);
+  const res=response();await controller.loginUser(requestFor('02000123456','UniquePass@1234'),res);
   assert.equal(res.statusCode,200);
   assert.equal(res.body.token,'student-token');
   assert.equal(queries[0].params[0],'02000123456');

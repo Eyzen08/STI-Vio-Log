@@ -20,7 +20,7 @@ const publicUser = (row) => ({
 });
 const sessionResult = (row, issueToken) => ({ token: issueToken(row), user: publicUser(row) });
 
-const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken }) => {
+const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueSessionToken, authThrottle = null }) => {
   if (!pool || typeof pool.connect !== 'function' || typeof verifyIdentity !== 'function') throw new TypeError('Google identity service dependencies are required');
 
   const recordRejectedDuplicate = async (executor, userId, ipAddress) => {
@@ -154,6 +154,8 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
 
   const loginStudent = async ({ credential, ipAddress = null }) => {
     const identity = await verifyIdentity(credential);
+    const throttleInput = { kind:'google', identifier:identity.subject, ip:ipAddress };
+    if (authThrottle) await authThrottle.assertAllowed(throttleInput, pool);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -175,9 +177,11 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         [account.id, account.link_id, ipAddress]
       );
       await client.query('COMMIT');
+      if (authThrottle) await authThrottle.success(throttleInput, pool);
       return sessionResult(account, issueToken);
     } catch (error) {
       try { await client.query('ROLLBACK'); } catch (_) {}
+      if (authThrottle && error.statusCode && error.statusCode < 500) await authThrottle.failure(throttleInput, pool);
       throw error;
     } finally {
       client.release();

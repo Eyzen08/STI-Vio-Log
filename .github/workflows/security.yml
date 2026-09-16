@@ -1,0 +1,62 @@
+name: Security verification
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 2 * * 1'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+      - name: Backend verification
+        working-directory: backend
+        run: npm ci --ignore-scripts && npm test && npm audit --omit=dev --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../backend-sbom.json
+      - name: Frontend verification
+        working-directory: frontend
+        run: npm ci --ignore-scripts && npm test && npm run lint && npm run build && npm audit --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../frontend-sbom.json
+      - name: Reject tracked secrets and backups
+        shell: bash
+        run: |
+          test -z "$(git ls-files '*.env' '*.pem' '*.key' '*.dump' '*.dump.enc' | grep -vE '(^|/)\.env\.example$')"
+          ! git grep -nEI '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|service_role["'"' ]*[:=]|BACKUP_ENCRYPTION_KEY["'"' ]*[:=]["'"' ][A-Za-z0-9+/=]{32,})' -- ':!package-lock.json'
+      - name: Scan full history for secrets
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload software bills of materials
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: security-sbom
+          path: '*-sbom.json'
+          retention-days: 30
+
+  codeql:
+    name: CodeQL static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938

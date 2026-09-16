@@ -1,7 +1,6 @@
 const { Server } = require('socket.io');
-const jwt = require('jsonwebtoken');
 const pool = require('./config/database');
-const { getJwtSecret } = require('./services/sessionTokenService');
+const sessions = require('./services/browserSessionService');
 
 let io = null;
 
@@ -13,23 +12,26 @@ const room = {
 
 const initializeRealtime = (httpServer, allowedOrigins) => {
   io = new Server(httpServer, {
-    cors: { origin: allowedOrigins, credentials: true, methods: ['GET', 'POST'] }
+    cors: { origin: allowedOrigins, credentials: true, methods: ['GET', 'POST'] },
+    allowRequest:(req,callback)=>callback(null,!req.headers.origin||allowedOrigins.includes(req.headers.origin)),
+    maxHttpBufferSize:100000,
+    pingTimeout:20000
   });
 
   io.use(async (socket, next) => {
     try {
-      const token = socket.handshake.auth?.token;
+      const token = sessions.parseCookies(socket.handshake.headers.cookie)[sessions.COOKIE_NAME];
       if (!token) return next(new Error('Authentication required'));
-      const decoded = jwt.verify(token, getJwtSecret());
       const account = (await pool.query(
-        `SELECT u.id,u.role,u.session_version,u.must_change_password,COALESCE(dh.department_id,sp.department_id) AS department_id
-         FROM users u
+        `SELECT u.id,u.role,u.must_change_password,COALESCE(dh.department_id,sp.department_id) AS department_id
+         FROM browser_sessions bs JOIN users u ON u.id=bs.user_id
          LEFT JOIN department_heads dh ON dh.user_id=u.id
          LEFT JOIN staff_profiles sp ON sp.user_id=u.id
-         WHERE u.id=$1 AND u.is_active=TRUE LIMIT 1`,
-        [decoded.id]
+         WHERE bs.token_hash=$1 AND bs.revoked_at IS NULL AND bs.idle_expires_at>CURRENT_TIMESTAMP
+           AND bs.absolute_expires_at>CURRENT_TIMESTAMP AND u.is_active=TRUE LIMIT 1`,
+        [sessions.hash(token)]
       )).rows[0];
-      if (!account || Number(decoded.session_version) !== Number(account.session_version)) {
+      if (!account) {
         return next(new Error('Invalid or expired session'));
       }
       if (account.must_change_password) return next(new Error('Password change required'));

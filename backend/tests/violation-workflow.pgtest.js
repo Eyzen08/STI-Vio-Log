@@ -2,7 +2,6 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const jwt = require('jsonwebtoken');
 const { Pool } = require('pg');
 const { listMigrationFiles } = require('../scripts/migrate');
 
@@ -37,21 +36,19 @@ async function request(route, { token, method = 'GET', body } = {}) {
   const response = await fetch(`${baseUrl}${route}`, {
     method,
     headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token ? { Cookie: token.cookie, 'X-CSRF-Token': token.csrf } : {}),
       ...(body ? { 'Content-Type': 'application/json' } : {})
     },
     ...(body ? { body: JSON.stringify(body) } : {})
   });
 
-  return { status: response.status, body: await response.json() };
+  return { status: response.status, body: await response.json(), headers: response.headers };
 }
 
-function tokenFor(user) {
-  return jwt.sign(
-    { id: user.id, username: user.username, role: user.role, session_version: Number(user.session_version || 1) },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
+async function tokenFor(user) {
+  const sessions = require('../src/services/browserSessionService');
+  const created = await sessions.createSession({ userId: user.id, database: pool });
+  return { cookie: `sti_session=${created.token}; sti_csrf=${created.csrf}`, csrf: created.csrf };
 }
 
 async function resetAndSeedTestData() {
@@ -76,8 +73,8 @@ async function resetAndSeedTestData() {
   const passwordHash = await bcrypt.hash('test-password', 4);
   await pool.query(
     `INSERT INTO users (username, password_hash, role) VALUES
-      ('admin_test', $1, 'ADMIN'),
-      ('discipline_test', $1, 'DISCIPLINE_OFFICE'),
+      ('admin_test', $1, 'DISCIPLINE_ADMIN'),
+      ('discipline_test', $1, 'DISCIPLINE_ADMIN'),
       ('head_test', $1, 'DEPARTMENT_HEAD'),
       ('student_test', $1, 'STUDENT')`,
     [passwordHash]
@@ -91,6 +88,14 @@ async function resetAndSeedTestData() {
      SELECT u.id, d.id, 'Department', 'Head'
      FROM users u CROSS JOIN departments d
      WHERE u.username = 'head_test' AND d.department_code = 'TEST'`
+  );
+  await pool.query("UPDATE department_heads SET qr_scanner_enabled=TRUE WHERE user_id=(SELECT id FROM users WHERE username='head_test')");
+  await pool.query(
+    `INSERT INTO officer_department_assignments
+       (officer_user_id,department_id,assignment_type,reason,status,created_by_admin_id)
+     SELECT head.id,d.id,'PERMANENT','Integration test responsibility','ACTIVE',admin.id
+     FROM users head CROSS JOIN departments d CROSS JOIN users admin
+     WHERE head.username='head_test' AND d.department_code='TEST' AND admin.username='admin_test'`
   );
   await pool.query(
     `INSERT INTO students (
@@ -138,12 +143,9 @@ async function assignService(token, violationId, studentId, requiredHours) {
 }
 
 async function login(username) {
-  const response = await request('/api/login', {
-    method: 'POST',
-    body: { username, password: 'test-password' }
-  });
-  assert.equal(response.status, 200);
-  return response.body.token;
+  const user = (await pool.query('SELECT id, username, role FROM users WHERE username=$1', [username])).rows[0];
+  assert.ok(user, `missing seeded user ${username}`);
+  return tokenFor(user);
 }
 
 async function createServiceViolation(token, studentId, requiredHours) {
@@ -201,8 +203,8 @@ test('violation lifecycle transitions preserve structured history and audit reco
     (await pool.query('SELECT id, username, role FROM users')).rows.map((user) => [user.username, user])
   );
   const studentId = (await pool.query("SELECT id FROM students WHERE student_number = '02000123456'")).rows[0].id;
-  const adminToken = tokenFor(users.admin_test);
-  const disciplineToken = tokenFor(users.discipline_test);
+  const adminToken = await tokenFor(users.admin_test);
+  const disciplineToken = await tokenFor(users.discipline_test);
 
   const completeViolation = await createViolation(adminToken, studentId);
   assert.equal((await act(adminToken, completeViolation.id, 'COMPLETE')).status, 200);
@@ -230,7 +232,7 @@ test('violation lifecycle transitions preserve structured history and audit reco
   assert.ok(history.body.actions.every((item) => item.performed_by_user_id));
   assert.ok(history.body.actions.every((item) => item.performed_by_role));
 
-  const studentToken = tokenFor(users.student_test);
+  const studentToken = await tokenFor(users.student_test);
   const selfRecords = await request('/api/students/me/violations', { token: studentToken });
   assert.equal(selfRecords.status, 200);
   const selfViolation = selfRecords.body.violations.find((item) => item.id === chainedViolation.id);
@@ -255,9 +257,9 @@ test('violation lifecycle validates reasons, actions, transitions, existence, an
     (await pool.query('SELECT id, username, role FROM users')).rows.map((user) => [user.username, user])
   );
   const studentId = (await pool.query("SELECT id FROM students WHERE student_number = '02000123456'")).rows[0].id;
-  const adminToken = tokenFor(users.admin_test);
-  const studentToken = tokenFor(users.student_test);
-  const headToken = tokenFor(users.head_test);
+  const adminToken = await tokenFor(users.admin_test);
+  const studentToken = await tokenFor(users.student_test);
+  const headToken = await tokenFor(users.head_test);
   const violation = await createViolation(adminToken, studentId);
 
   assert.equal((await act(adminToken, violation.id, 'CLEAR')).status, 400);
@@ -338,7 +340,7 @@ test('service attendance completes assignment, violation, clearance, history, an
   const timeIn = await request('/api/qr/time-in', {
     token: headToken,
     method: 'POST',
-    body: { qr_code: 'QR-TEST' }
+    body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' }
   });
   assert.equal(timeIn.status, 201);
   assert.equal(Number(timeIn.body.attendance.scanned_by), Number((await pool.query("SELECT id FROM users WHERE username = 'head_test'")).rows[0].id));
@@ -352,7 +354,7 @@ test('service attendance completes assignment, violation, clearance, history, an
   const timeOut = await request('/api/qr/time-out', {
     token: headToken,
     method: 'POST',
-    body: { qr_code: 'QR-TEST' }
+    body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' }
   });
   assert.equal(timeOut.status, 201);
   assert.equal(timeOut.body.assignment.status, 'COMPLETED');
@@ -396,7 +398,7 @@ test('CLEAR and INVALID_CANCEL preserve service history and REOPEN safely reacti
   const clearTimeIn = await request('/api/qr/time-in', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } });
   assert.equal(clearTimeIn.status, 201);
   await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '30 minutes' WHERE id = $1", [clearTimeIn.body.session.id]);
-  assert.equal((await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } })).status, 201);
+  assert.equal((await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' } })).status, 201);
 
   const cleared = await act(adminToken, clearViolation.id, 'CLEAR', 'Administrative closure');
   assert.equal(cleared.status, 200);
@@ -520,15 +522,15 @@ test('parallel TIME_IN and TIME_OUT requests preserve one session and one credit
 
   await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '1 hour' WHERE assignment_id = $1", [assignment.id]);
   const timeOuts = await Promise.all([
-    request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } }),
-    request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } })
+    request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' } }),
+    request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' } })
   ]);
   assert.equal(timeOuts.filter((item) => item.status === 201).length, 1);
   assert.equal(timeOuts.filter((item) => item.status !== 201).length, 1);
   assert.ok(timeOuts.find((item) => item.status !== 201).status === 409 || timeOuts.find((item) => item.status !== 201).status === 400);
   assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_progress_history WHERE assignment_id = $1', [assignment.id])).rows[0].count, 1);
   assert.equal(Number((await pool.query('SELECT completed_hours FROM community_service_assignments WHERE id = $1', [assignment.id])).rows[0].completed_hours), 1);
-  assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE table_name = 'community_service_sessions' AND action = 'TIME_OUT'", [])).rows[0].count, 1);
+  assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE table_name = 'community_service_sessions' AND action = 'TIME_OUT_CREDITED'", [])).rows[0].count, 1);
 });
 
 test('DTR reports return exact worked and capped credited minutes with secure filters', async () => {
@@ -550,7 +552,7 @@ test('DTR reports return exact worked and capped credited minutes with secure fi
     const timeIn = await request('/api/qr/time-in', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } });
     assert.equal(timeIn.status, 201);
     await pool.query('UPDATE community_service_sessions SET time_in = time_in - ($1 * INTERVAL \'1 minute\') WHERE id = $2', [minutes, timeIn.body.session.id]);
-    const timeOut = await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } });
+    const timeOut = await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' } });
     assert.equal(timeOut.status, 201);
   }
 
@@ -596,7 +598,7 @@ test('TIME_OUT rolls session, progress, assignment, and audit back together', as
   await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '30 minutes' WHERE id = $1", [timeIn.body.session.id]);
   await pool.query(`CREATE FUNCTION fail_test_progress() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced progress failure'; END $$`);
   await pool.query(`CREATE TRIGGER fail_test_progress_trigger BEFORE INSERT ON community_service_progress_history FOR EACH ROW EXECUTE FUNCTION fail_test_progress()`);
-  assert.equal((await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST' } })).status, 500);
+  assert.equal((await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', condition: 'SATISFACTORY' } })).status, 500);
   assert.equal((await pool.query('SELECT status FROM community_service_sessions WHERE id = $1', [timeIn.body.session.id])).rows[0].status, 'ACTIVE');
   assert.equal(Number((await pool.query('SELECT completed_hours FROM community_service_assignments WHERE id = $1', [assignment.id])).rows[0].completed_hours), 0);
   assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM community_service_attendance WHERE assignment_id = $1 AND attendance_type = 'TIME_OUT'", [assignment.id])).rows[0].count, 0);

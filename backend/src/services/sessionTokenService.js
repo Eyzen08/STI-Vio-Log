@@ -11,14 +11,19 @@ const getJwtSecret = (env = process.env) => {
   return secret;
 };
 
-const issueSessionToken = (user, { env = process.env, expiresIn = '8h' } = {}) => jwt.sign(
-  {
+const issueSessionToken = (user, { env = process.env, expiresIn = '8h' } = {}) => {
+  if (env.NODE_ENV === 'production') {
+    const error = new Error('Bearer session tokens are disabled in production.');
+    error.statusCode = 500;
+    throw error;
+  }
+  return jwt.sign({
     id: Number(user.id), username: user.username, role: user.role,
     session_version: Number(user.session_version || 1),
-    password_change_required: Boolean(user.must_change_password)
-  },
-  getJwtSecret(env),
-  { expiresIn }
-);
+    password_change_required: Boolean(user.must_change_password), purpose:'legacy-session'
+  }, getJwtSecret(env), {
+    expiresIn, algorithm:'HS256', issuer:'sti-vio-log-api', audience:'sti-vio-log-web'
+  });
+};
 
 module.exports = { getJwtSecret, issueSessionToken };

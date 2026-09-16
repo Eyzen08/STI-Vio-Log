@@ -52,7 +52,7 @@ const {
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
 
 const PORT = process.env.PORT || 5000;
 
@@ -111,8 +111,10 @@ app.use(enforceHttps(process.env));
 app.use(
   helmet({
     crossOriginResourcePolicy: {
-      policy: "cross-origin"
-    }
+      policy: "same-site"
+    },
+    contentSecurityPolicy:{directives:{defaultSrc:["'none'"],frameAncestors:["'none'"],baseUri:["'none'"]}},
+    referrerPolicy:{policy:'no-referrer'}
   })
 );
 
@@ -139,16 +141,24 @@ app.use(
 
     allowedHeaders: [
       "Content-Type",
-      "Authorization"
+      "X-CSRF-Token",
+      "X-Request-ID"
     ]
   })
 );
 
-app.use(
-  express.json({
-    limit: "2mb"
-  })
-);
+app.use((req,res,next)=>{
+  if(req.path.startsWith('/api/'))res.set('Cache-Control','no-store');
+  if(!['POST','PUT','PATCH','DELETE'].includes(req.method))return next();
+  const origin=req.get('origin');
+  if(origin&&!allowedOrigins.includes(origin))return res.status(403).json({success:false,message:'Untrusted request origin',error:{code:'ORIGIN_DENIED',message:'Untrusted request origin'}});
+  return next();
+});
+
+// Signature images are validated as PNG/JPEG <= 1 MB by the controller. Their
+// Base64 envelope needs a narrowly scoped parser larger than the API default.
+app.use(/^\/api\/clearance\/signatures(?:\/\d+)?$/, express.json({ limit: "1500kb" }));
+app.use(express.json({ limit: "128kb" }));
 
 app.use((req,res,next)=>{
   const supplied=req.get('x-request-id');
@@ -413,6 +423,9 @@ app.use(errorHandler);
 
 if (require.main === module) {
 const httpServer = http.createServer(app);
+httpServer.requestTimeout=30000;
+httpServer.headersTimeout=15000;
+httpServer.keepAliveTimeout=5000;
 initializeRealtime(httpServer, allowedOrigins);
 const refreshOverdueAttendance = async () => {
   try {
@@ -441,6 +454,9 @@ httpServer.listen(
     overdueAttendanceTimer.unref();
   }
 );
+const shutdown=(signal)=>{console.log(JSON.stringify({level:'info',event:'shutdown',signal}));httpServer.close(()=>pool.end().finally(()=>process.exit(0)));setTimeout(()=>process.exit(1),10000).unref();};
+process.once('SIGTERM',()=>shutdown('SIGTERM'));
+process.once('SIGINT',()=>shutdown('SIGINT'));
 }
 
 module.exports = app;

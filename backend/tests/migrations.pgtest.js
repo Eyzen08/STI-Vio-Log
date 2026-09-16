@@ -36,12 +36,13 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(first.applied.pop(), "033_high_risk_actions.sql");
         assert.equal(first.applied.pop(), "032_security_notifications.sql");
         assert.equal(first.applied.pop(), "031_administrative_audit_hardening.sql");
         assert.deepEqual(first.applied, ["001_initial_schema.sql", "002_violation_lifecycle.sql", "003_service_clearance_sync.sql", "004_community_service_sessions.sql", "005_google_identity_links.sql", "006_google_student_registrations.sql", "007_google_department_registrations.sql", "008_account_security.sql", "009_staff_profiles.sql", "010_handbook_violation_categories.sql", "011_student_registration_profile.sql", "012_parent_contact_logs.sql", "013_service_assignment_department.sql", "014_event_notifications.sql", "015_enrollment_verification.sql", "016_secure_messaging.sql", "017_discipline_student_record_review.sql", "018_service_result_review.sql", "019_student_password_auth.sql", "020_student_password_registration_profile.sql", "021_message_department_scope.sql", "022_unified_department_officers.sql", "023_admin_account_profiles.sql", "024_clearance_certificates.sql", "025_offense_escalation_incident_time.sql", "026_officer_responsibility.sql", "027_google_registration_identity_names.sql", "028_administrator_role_separation.sql", "029_convert_legacy_administrators.sql", "030_temporary_support_access.sql"]);
         const tables = (await pool.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = $1`, [freshSchema])).rows.map((row) => row.table_name);
-        for (const name of ["users", "students", "violations", "violation_actions", "student_offense_escalations", "community_service_assignments", "community_service_sessions", "community_service_session_officer_history", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "google_department_registrations", "staff_profiles", "parent_contact_logs", "discipline_officer_signatures", "clearance_certificates", "clearance_certificate_signatures", "officer_availability", "officer_department_assignments", "administrative_step_up_tokens", "high_risk_action_requests", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
+        for (const name of ["users", "students", "violations", "violation_actions", "student_offense_escalations", "community_service_assignments", "community_service_sessions", "community_service_session_officer_history", "community_service_progress_history", "student_clearance", "audit_logs", "google_identity_links", "google_student_registrations", "google_department_registrations", "staff_profiles", "parent_contact_logs", "discipline_officer_signatures", "clearance_certificates", "clearance_certificate_signatures", "officer_availability", "officer_department_assignments", "administrative_step_up_tokens", "high_risk_action_requests", "browser_sessions", "user_mfa", "mfa_recovery_codes", "mfa_challenges", "authentication_throttles", "schema_migrations"]) assert.ok(tables.includes(name), `missing ${name}`);
         const registrationColumns = (await pool.query(
             `SELECT column_name FROM information_schema.columns WHERE table_schema=$1 AND table_name='google_student_registrations'`,
             [freshSchema]
@@ -159,6 +160,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(legacyResult.applied.pop(), "033_high_risk_actions.sql");
         assert.equal(legacyResult.applied.pop(), "032_security_notifications.sql");
         assert.equal(legacyResult.applied.pop(), "031_administrative_audit_hardening.sql");

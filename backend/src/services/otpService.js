@@ -5,7 +5,7 @@ const OTP_TTL_MINUTES = 10;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_RESEND_SECONDS = 60;
 
-const hashSecret = (value, secret = process.env.JWT_SECRET) =>
+const hashSecret = (value, secret = process.env.OTP_HASH_KEY || (process.env.NODE_ENV==='production'?'':process.env.JWT_SECRET)) =>
   crypto.createHmac('sha256', secret).update(String(value)).digest('hex');
 
 const secureOtp = () => crypto.randomInt(0, 1_000_000).toString().padStart(6, '0');

@@ -17,7 +17,7 @@ const formatProgramName = (value, fallback = 'Program not recorded') => {
   return PROGRAM_NAMES[program.toUpperCase()] || program;
 };
 
-const secret = () => process.env.JWT_SECRET || '';
+const secret = () => process.env.CERTIFICATE_SIGNING_KEY || (process.env.NODE_ENV==='production'?'':process.env.JWT_SECRET) || '';
 const signatureFor = (id) => crypto.createHmac('sha256', secret()).update(`clearance:${id}`).digest('base64url');
 const certificateCode = (id) => `CLR-${id}-${signatureFor(id)}`;
 const clearanceIdFromCode = (code) => {

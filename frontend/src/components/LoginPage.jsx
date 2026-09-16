@@ -4,12 +4,13 @@ import PasswordField from './PasswordField.jsx'
 import StudentPasswordAccess from './StudentPasswordAccess.jsx'
 import buildingImage from '../assets/sti-global-city-building-web.jpg'
 import stiVioLogLogo from '../assets/sti-vio-log-logo-transparent.png'
+import MfaChallenge from './MfaChallenge.jsx'
 
 const STUDENT_AUTH_PATHS = new Set(['/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'])
 
 const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20h16M6 20V9m12 11V9M3 9l9-5 9 5M9 12v4m6-4v4"/></svg>
 
-function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate }) {
+function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, mfaState, onMfaSubmit, onMfaCancel, onMfaContinue }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const navigate = (event, path, disabled=false) => {
@@ -32,7 +33,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
     <div className="login-form-panel">
       <div className="login-card auth-card">
         <div className="card-header auth-card-header"><div><h3 id="login-title">{studentFlow?'Student Account Security':'Sign In'}</h3><p>{studentFlow?'Complete the secure student account process below.':'Access your STI Vio-Log account'}</p></div></div>
-        {studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate}/> : <>
+        {mfaState ? <MfaChallenge state={mfaState} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate}/> : <>
           <div className="auth-trust-note"><CampusIcon/><span><strong>Official</strong> STI Global City Discipline Office Portal</span></div>
           <form className="login-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
             <label htmlFor="username">Username or student number<input id="username" type="text" name="username" placeholder="Enter your username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>

@@ -1,59 +1,70 @@
-# Production deployment runbook
+# Vercel and Supabase production deployment
 
-## Architecture
+## Required architecture
 
-Deploy the Vite frontend to Vercel (or an equivalent HTTPS static host), the Express backend to a managed Node host, and PostgreSQL to a managed database service with automated backups. Use separate production resources and credentials; never copy development `.env` files into Git.
+Deploy the Vite frontend on Vercel and the Express API on a Node-capable host. Use Supabase only as PostgreSQL: browser code must never receive the database password, service-role key, or a direct STI Vio-Log table grant.
 
-## Frontend environment
+The frontend and API must be same-site HTTPS subdomains, such as `app.school.edu` and `api.school.edu`. Separate `*.vercel.app` deployment URLs are not an acceptable production pairing for the `SameSite=Lax` session cookie. Configure both custom domains before enabling production traffic.
 
-- `VITE_API_URL`: exact public HTTPS backend origin, without a trailing slash.
-- `VITE_GOOGLE_CLIENT_ID`: Google OAuth web client ID authorized for the exact production frontend origin.
+## Vercel frontend
 
-Build from `frontend` with `npm run build`. `frontend/vercel.json` rewrites non-asset client-side routes to `index.html`, allowing direct navigation and reloads while leaving built assets untouched.
+Set these encrypted environment variables for Production (and separately for Preview if previews are allowed):
 
-## Backend environment
+- `VITE_API_URL=https://api.school.edu` with no trailing slash.
+- `VITE_GOOGLE_CLIENT_ID` for a Google web client authorized only for the exact frontend origin.
+
+Build from `frontend` with `npm ci && npm run build`. The build injects an exact CSP for the configured API and WebSocket origins. `frontend/vercel.json` also supplies HSTS, anti-framing, nosniff, referrer, permissions, opener, and resource-policy headers. After changing an environment variable, create a new deployment; existing deployments do not inherit the change.
+
+Do not expose server secrets with a `VITE_` prefix. Disable public Vercel previews or give Preview a separate non-production API/database and explicit origin.
+
+## Supabase database
+
+Use two connection strings:
+
+- `DATABASE_URL`: Supabase transaction pooler URL (port 6543) for the serverless/runtime application. The application automatically limits a Vercel pool to one connection.
+- `MIGRATION_DATABASE_URL`: direct connection or session pooler URL (port 5432) for migrations, held only by the deployment/migration job.
+
+Require verified TLS and never set `DB_SSL=no-verify` in production. Enable Supabase SSL enforcement. Migration 034 revokes `anon` and `authenticated` access to application tables and enables RLS so the Supabase Data API cannot become an accidental bypass. If the Data API is not used by any other schema, disable it or expose a separate empty schema in Supabase API settings.
+
+Migration 034 creates the non-login `sti_vio_log_runtime` permission group, grants it application DML through a dedicated RLS policy, and permits only SELECT/INSERT on audit stores. In the Supabase SQL editor, create a unique password-manager-generated login and grant the group to it:
+
+```sql
+create role sti_vio_log_app with login password '<PASSWORD-MANAGER-GENERATED SECRET>';
+grant sti_vio_log_runtime to sti_vio_log_app;
+```
+
+Use that login in `DATABASE_URL` and test the provider-specific pooler username format. The production readiness check rejects an owner, superuser, database/role creator, RLS-bypass role, or login without this membership. Keep the owner/migration credential out of the runtime environment. Rotate any database credential that was ever copied into source, chat, logs, or a frontend setting.
+
+## Backend secrets
+
+Set all of these as encrypted production-only variables:
 
 - `NODE_ENV=production`
-- `JWT_SECRET`: unique random value of at least 32 characters
-- `FRONTEND_URL`: exact comma-separated HTTPS frontend origins; localhost is rejected in production
-- `GOOGLE_CLIENT_ID`: same approved Google web client ID
-- `DATABASE_URL`, or every `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`
-- `DB_SSL`: provider-appropriate TLS mode
+- `FRONTEND_URL=https://app.school.edu` (comma-separated only when every origin is intended)
+- `DATABASE_URL` and deployment-only `MIGRATION_DATABASE_URL`
+- `GOOGLE_CLIENT_ID`
+- `SESSION_HASH_KEY`, `CSRF_SIGNING_KEY`, `OTP_HASH_KEY`, `AUTH_THROTTLE_KEY`, `MFA_RECOVERY_KEY`, and `CERTIFICATE_SIGNING_KEY`: independent random values of at least 32 bytes
+- `MFA_ENCRYPTION_KEY`: exactly 32 random bytes encoded as Base64
+- `TRUST_PROXY_HOPS`: the validated proxy-hop count for the API host (normally `1`, but confirm with the host)
 
-The backend trusts one hosting proxy hop in production so rate limiting sees the client address. The hosting platform must terminate HTTPS and forward `X-Forwarded-Proto` and `X-Forwarded-For` correctly.
+Never reuse keys between purposes. Startup rejects missing, short, placeholder, or insecure settings. Keep the legacy `JWT_SECRET` independent while any short-lived reset/verification challenge still uses JWT; those tokens are algorithm-, issuer-, audience-, purpose-, and lifetime-bound.
 
 ## Release procedure
 
-From `backend`, with production environment variables provided by the hosting platform:
+Run migrations once with the owner credential before routing traffic, then start the API with only the runtime credential. If the host runs `npm start`, ensure `MIGRATION_DATABASE_URL` is deployment-scoped and removed from the running service after migration.
 
-```powershell
-npm ci
-npm start
-```
+After deployment verify:
 
-`npm start` applies pending migrations under a PostgreSQL advisory lock, validates configuration and database readiness, and only then starts the API. This makes automatic deployments safe when more than one instance starts concurrently. The readiness command reports only status and counts, never environment values.
+1. `GET /api/health` returns 200 without disclosing configuration.
+2. Login sets host-only `HttpOnly; Secure; SameSite=Lax` `sti_session`, and no token appears in local storage or JSON.
+3. Every authenticated mutation without a matching `X-CSRF-Token` fails.
+4. An unapproved Origin fails for HTTP and Socket.IO.
+5. SYSTEM_ADMIN and DISCIPLINE_ADMIN must enroll/verify TOTP before API access; recovery codes work once.
+6. Student, department, administrator, forced-password, ownership, and deactivated-account boundaries hold.
+7. CSP has no violations during Google login, MFA, QR camera, exports, certificates, and realtime use.
+8. Supabase Table Editor confirms RLS enabled and `anon`/`authenticated` have no table privileges.
+9. Run `npm run smoke:production` with `PRODUCTION_FRONTEND_URL` and `PRODUCTION_API_URL` set locally.
 
-After deployment:
+## Rollback and rotation
 
-1. Require `GET /api/health` to return HTTP 200 and database `connected`.
-2. Confirm an unapproved origin is rejected by CORS and the exact frontend origin is accepted.
-3. Test Student and Department Google login using production-authorized origins.
-4. Test Admin, Discipline Office, Department Head, and Student route boundaries.
-5. Test account `PATCH` actions through the browser to verify CORS preflight behavior.
-6. Verify logout, expired sessions, forced password changes, and session invalidation.
-7. Verify mobile QR scanning over HTTPS on a real device.
-8. Confirm provider backups and monitoring alerts are enabled.
-
-The read-only automated subset can be repeated from `backend` after each deployment:
-
-```powershell
-$env:PRODUCTION_FRONTEND_URL = "https://your-frontend.example"
-$env:PRODUCTION_API_URL = "https://your-api.example"
-npm run smoke:production
-```
-
-This checks API/database health, direct frontend routing, unauthenticated protection, and approved/denied CORS behavior. It performs only `GET` and `OPTIONS` requests. Google sign-in, authenticated role workflows, provider backups, and physical mobile-camera behavior remain manual release checks.
-
-## Rollback
-
-Keep the previous backend/frontend release available. If application code fails but the migration is backward compatible, redeploy the prior release. Never reverse or edit an applied migration manually. If data recovery is required, follow `DATABASE-BACKUP-RECOVERY.md` and restore into a separate database before switching connections.
+Keep the previous application release available. Do not edit or reverse an applied migration manually. Restore into an isolated database before switching connections. Key rotation must deploy new keys, revoke all browser sessions, invalidate outstanding challenges, and retire the old keys after the maximum eight-hour session lifetime. A suspected database or session-key leak requires immediate credential rotation and incident review.

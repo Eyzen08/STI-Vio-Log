@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const jwt = require('jsonwebtoken');
 const pool = require('../src/config/database');
+const sessions=require('../src/services/browserSessionService');
 
 const { authenticateToken, authorizeRoles } = require('../src/middleware/authMiddleware');
 
@@ -20,8 +20,8 @@ function createRes() {
   };
 }
 
-test('authenticateToken rejects missing bearer token', () => {
-  const req = { headers: {} };
+test('authenticateToken rejects a missing session cookie', () => {
+  const req = { headers: {},method:'GET' };
   const res = createRes();
   let called = false;
 
@@ -34,14 +34,13 @@ test('authenticateToken rejects missing bearer token', () => {
   assert.equal(res.body.success, false);
 });
 
-test('authenticateToken accepts valid JWT and attaches current database identity', async () => {
-  process.env.JWT_SECRET = 'this-is-a-secure-test-secret-123456';
-  const token = jwt.sign({ id: 1, username: 'admin', role: 'STUDENT', session_version: 1 }, process.env.JWT_SECRET, { expiresIn: '1h' });
-  const req = { headers: { authorization: `Bearer ${token}` } };
+test('authenticateToken accepts an opaque cookie and derives current database identity', async () => {
+  const token = 'opaque-browser-session';
+  const req = { headers: { cookie: `sti_session=${token}` },method:'GET' };
   const res = createRes();
   let called = false;
   const originalQuery = pool.query;
-  pool.query = async () => ({ rows: [{ id: 1, username: 'admin', role: 'ADMIN', session_version: 1, must_change_password: false, department_id: null }] });
+  pool.query = async (sql,params) => String(sql).startsWith('UPDATE browser_sessions')?{rows:[]}:{ rows: [{ id: 1, username: 'admin', role: 'DISCIPLINE_ADMIN', session_version: 1, must_change_password: false, department_id: null,browser_session_id:8,csrf_hash:sessions.hash('csrf',process.env.CSRF_SIGNING_KEY),absolute_expires_at:new Date(Date.now()+60000) }] };
 
   await authenticateToken(req, res, () => {
     called = true;
@@ -50,7 +49,7 @@ test('authenticateToken accepts valid JWT and attaches current database identity
   pool.query = originalQuery;
 
   assert.equal(called, true);
-  assert.equal(req.user.role, 'ADMIN');
+  assert.equal(req.user.role, 'DISCIPLINE_ADMIN');
   assert.equal(res.statusCode, 200);
 });
 
@@ -67,13 +66,11 @@ test('authorizeRoles denies users without required role', () => {
   assert.equal(called, false);
 });
 
-test('authenticateToken rejects a stale session version', async () => {
-  process.env.JWT_SECRET = 'this-is-a-secure-test-secret-123456';
-  const token = jwt.sign({ id:1, username:'admin', role:'ADMIN', session_version:1 }, process.env.JWT_SECRET, {expiresIn:'1h'});
-  const req={headers:{authorization:`Bearer ${token}`}},res=createRes();let called=false;const originalQuery=pool.query;
-  pool.query=async()=>({rows:[{id:1,username:'admin',role:'ADMIN',session_version:2,must_change_password:false,department_id:null}]});
+test('authenticateToken rejects an expired or revoked opaque session', async () => {
+  const req={headers:{cookie:'sti_session=revoked'},method:'GET'},res=createRes();let called=false;const originalQuery=pool.query;
+  pool.query=async()=>({rows:[]});
   await authenticateToken(req,res,()=>{called=true});pool.query=originalQuery;
-  assert.equal(called,false);assert.equal(res.statusCode,401);assert.equal(res.body.error.code,'SESSION_INVALIDATED');
+  assert.equal(called,false);assert.equal(res.statusCode,401);
 });
 
 test('forced-change sessions cannot pass role authorization', () => {
@@ -83,31 +80,22 @@ test('forced-change sessions cannot pass role authorization', () => {
 });
 
 test('unverified Student sessions are rejected from protected APIs', async () => {
-  process.env.JWT_SECRET='this-is-a-secure-test-secret-123456';
-  const token=jwt.sign({id:7,session_version:1},process.env.JWT_SECRET,{expiresIn:'1h'});
-  const req={headers:{authorization:`Bearer ${token}`}},res=createRes();let called=false;const originalQuery=pool.query;
+  const req={headers:{cookie:'sti_session=unverified'},method:'GET'},res=createRes();let called=false;const originalQuery=pool.query;
   pool.query=async()=>({rows:[{id:7,username:'02000123456',role:'STUDENT',email_verified:false,session_version:1,must_change_password:false,department_id:null}]});
   await authenticateToken(req,res,()=>{called=true});pool.query=originalQuery;
   assert.equal(called,false);assert.equal(res.statusCode,401);
 });
 
-test('authenticateToken fails when JWT secret is missing', async () => {
-  const originalSecret = process.env.JWT_SECRET;
-  delete process.env.JWT_SECRET;
-
-  const req = { headers: { authorization: 'Bearer bad-token' } };
+test('authenticateToken rejects a forged opaque session generically', async () => {
+  const req = { headers: { cookie:'sti_session=forged-token' },method:'GET' };
   const res = createRes();
   let called = false;
 
-  await authenticateToken(req, res, () => {
+  const originalQuery=pool.query;pool.query=async()=>({rows:[]});await authenticateToken(req, res, () => {
     called = true;
   });
+  pool.query=originalQuery;
 
   assert.equal(called, false);
-  assert.equal(res.statusCode, 500);
-  assert.match(res.body.message, /JWT_SECRET/i);
-
-  if (originalSecret) {
-    process.env.JWT_SECRET = originalSecret;
-  }
+  assert.equal(res.statusCode, 401);
 });

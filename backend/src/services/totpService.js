@@ -1,0 +1,11 @@
+const crypto=require('node:crypto');
+const ALPHABET='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+const base32=(buffer)=>{let bits='';for(const byte of buffer)bits+=byte.toString(2).padStart(8,'0');let out='';for(let i=0;i<bits.length;i+=5)out+=ALPHABET[parseInt(bits.slice(i,i+5).padEnd(5,'0'),2)];return out;};
+const decode32=(value)=>{let bits='';for(const c of String(value).replace(/=+$/,'').toUpperCase()){const n=ALPHABET.indexOf(c);if(n<0)throw new Error('Invalid base32');bits+=n.toString(2).padStart(5,'0');}const bytes=[];for(let i=0;i+8<=bits.length;i+=8)bytes.push(parseInt(bits.slice(i,i+8),2));return Buffer.from(bytes);};
+const generateSecret=()=>base32(crypto.randomBytes(20));
+const codeAt=(secret,time=Date.now())=>{const counter=Math.floor(time/30000);const b=Buffer.alloc(8);b.writeBigUInt64BE(BigInt(counter));const mac=crypto.createHmac('sha1',decode32(secret)).update(b).digest();const offset=mac[mac.length-1]&15;return String((mac.readUInt32BE(offset)&0x7fffffff)%1000000).padStart(6,'0');};
+const verifyCode=(secret,code,time=Date.now())=>/^\d{6}$/.test(String(code))&&[-1,0,1].some(w=>crypto.timingSafeEqual(Buffer.from(codeAt(secret,time+w*30000)),Buffer.from(String(code))));
+const encryptionKey=()=>{const configured=process.env.MFA_ENCRYPTION_KEY||'';if(!configured&&process.env.NODE_ENV!=='production')return crypto.createHash('sha256').update(process.env.JWT_SECRET||'development-only-mfa-key').digest();const raw=Buffer.from(configured,'base64');if(raw.length!==32)throw new Error('MFA_ENCRYPTION_KEY must be a base64-encoded 32-byte key');return raw;};
+const encrypt=(text)=>{const iv=crypto.randomBytes(12),cipher=crypto.createCipheriv('aes-256-gcm',encryptionKey(),iv);const data=Buffer.concat([cipher.update(text,'utf8'),cipher.final()]);return [iv,cipher.getAuthTag(),data].map(x=>x.toString('base64url')).join('.');};
+const decrypt=(value)=>{const [i,t,d]=String(value).split('.').map(x=>Buffer.from(x,'base64url'));const decipher=crypto.createDecipheriv('aes-256-gcm',encryptionKey(),i);decipher.setAuthTag(t);return Buffer.concat([decipher.update(d),decipher.final()]).toString('utf8');};
+module.exports={generateSecret,codeAt,verifyCode,encrypt,decrypt};

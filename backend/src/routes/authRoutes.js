@@ -4,6 +4,8 @@ const rateLimit = require("express-rate-limit");
 const { loginUser } = require("../controllers/authController");
 const { link, login } = require("../controllers/googleAuthController");
 const { createStudentPasswordAuthController } = require('../controllers/studentPasswordAuthController');
+const sessionController=require('../controllers/sessionController');
+const {authenticateToken}=require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -18,6 +20,13 @@ const sensitiveAuthLimiter = rateLimit({
 const studentAuth = createStudentPasswordAuthController();
 
 router.post("/login", sensitiveAuthLimiter, loginUser);
+router.get('/auth/session',authenticateToken,sessionController.me);
+router.get('/auth/csrf',authenticateToken,sessionController.csrf);
+router.post('/auth/logout',authenticateToken,sessionController.logout);
+router.post('/auth/mfa/setup/start',sensitiveAuthLimiter,sessionController.setupStart);
+router.post('/auth/mfa/setup/confirm',sensitiveAuthLimiter,sessionController.setupConfirm);
+router.post('/auth/mfa/verify',sensitiveAuthLimiter,sessionController.verify);
+router.post('/auth/mfa/recovery',sensitiveAuthLimiter,sessionController.recovery);
 router.post('/auth/student/register', sensitiveAuthLimiter, studentAuth.register);
 router.post('/auth/student/registration/resend', sensitiveAuthLimiter, studentAuth.resendRegistrationOtp);
 router.post('/auth/student/registration/verify', sensitiveAuthLimiter, studentAuth.verifyRegistration);

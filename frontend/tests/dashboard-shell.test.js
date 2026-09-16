@@ -169,7 +169,7 @@ test('mobile header keeps its controls visible and logout forces a clean sign-ou
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.topbar \{[\s\S]*?background: linear-gradient\([^}]*!important;/)
   assert.match(css, /\.mobile-menu-button \{[^}]*display: grid !important;[^}]*color: #fff !important;/s)
   assert.match(css, /\.notification-button \{[^}]*color: #fff !important;/s)
-  assert.match(app, /const handleLogout = \(\) => \{[\s\S]*?clearSession\(\)[\s\S]*?setIsMobileNavOpen\(false\)[\s\S]*?window\.location\.replace\(new URL\('\/login', window\.location\.href\)\.href\)/)
+    assert.match(app, /const handleLogout = async \(\) => \{[\s\S]*?\/api\/auth\/logout[\s\S]*?clearSession\(\)[\s\S]*?setIsMobileNavOpen\(false\)[\s\S]*?window\.location\.replace\(new URL\('\/login', window\.location\.href\)\.href\)/)
   assert.match(app, /new URLSearchParams\(window\.location\.search\)[\s\S]*?get\('logout'\) === '1'[\s\S]*?clearSession\(\)/)
 })
 

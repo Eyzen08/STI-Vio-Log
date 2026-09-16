@@ -16,17 +16,17 @@ test('bootstrap creates one forced-change administrator without auditing its cre
     {}, {}, {}
   ]);
   const service = createAdministratorBootstrapService({ pool: { connect: async () => db }, hashPassword: async () => 'safe-hash' });
-  const result = await service.bootstrap({ role: 'SYSTEM_ADMIN', username: 'technical.owner', password: 'Strong!8A', firstName: 'Tech', lastName: 'Owner' });
+  const result = await service.bootstrap({ role: 'SYSTEM_ADMIN', username: 'technical.owner', password: 'UniqueStrong!8A', firstName: 'Tech', lastName: 'Owner' });
   assert.equal(result.generatedPassword, null);
   assert.match(db.queries[3].sql, /must_change_password/);
-  assert.equal(db.queries.flatMap((query) => query.params || []).includes('Strong!8A'), false);
-  assert.equal(JSON.stringify(db.queries).includes('Strong!8A'), false);
+  assert.equal(db.queries.flatMap((query) => query.params || []).includes('UniqueStrong!8A'), false);
+  assert.equal(JSON.stringify(db.queries).includes('UniqueStrong!8A'), false);
 });
 
 test('bootstrap refuses an existing administrator role under a transaction lock', async () => {
   const db = client([{}, {}, { rows: [{ id: 1 }], rowCount: 1 }, {}]);
   const service = createAdministratorBootstrapService({ pool: { connect: async () => db }, hashPassword: async () => 'hash' });
-  await assert.rejects(() => service.bootstrap({ role: 'DISCIPLINE_ADMIN', username: 'discipline.owner', password: 'Strong!8A', firstName: 'Main', lastName: 'Officer' }), /already exists/);
+  await assert.rejects(() => service.bootstrap({ role: 'DISCIPLINE_ADMIN', username: 'discipline.owner', password: 'UniqueStrong!8A', firstName: 'Main', lastName: 'Officer' }), /already exists/);
   assert.match(db.queries[1].sql, /pg_advisory_xact_lock/);
   assert.equal(db.queries.at(-1).sql, 'ROLLBACK');
 });
