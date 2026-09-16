@@ -21,6 +21,7 @@
   --portal-blue: #0969c7;
   --portal-blue-hover: #0757aa;
   --portal-yellow: #ffd428;
+  --portal-message-border: #315b83;
   --portal-raised: 0 12px 32px rgba(14, 55, 101, .08);
   --portal-raised-hover: 0 16px 38px rgba(14, 55, 101, .12);
   font-family: "Segoe UI Variable", Aptos, "Segoe UI", system-ui, sans-serif;
@@ -247,7 +248,7 @@
 .main-panel .conversation-list > button:not(.conversation-load-more) {
   min-height: 96px;
   padding: 15px 16px;
-  border: 1px solid #c7dced;
+  border: 1px solid var(--portal-message-border);
   border-radius: 10px;
   background: #edf6ff;
   color: #173b63;
@@ -255,7 +256,7 @@
 }
 
 .main-panel .conversation-list > button:not(.conversation-load-more):hover {
-  border-color: #8dbce2;
+  border-color: #174f82;
   background: #e3f1ff;
   box-shadow: 0 5px 14px rgba(25,78,126,.11);
 }
@@ -263,17 +264,19 @@
 .main-panel .conversation-list > button:not(.conversation-load-more):focus-visible {
   position: relative;
   z-index: 1;
-  border-color: #397fba;
+  border-color: #075cad;
+  outline: 3px solid rgba(7, 92, 173, .22);
+  outline-offset: 2px;
 }
 
 .main-panel .conversation-list > button.active {
-  border-color: #4b91c9;
+  border-color: #075cad;
   background: #d9ecff;
   box-shadow: inset 4px 0 #075cad, 0 5px 14px rgba(25,78,126,.12);
 }
 
 .main-panel .conversation-list > button.unread:not(.active) {
-  border-color: #9fc8e9;
+  border-color: #266493;
   background: #e2f1ff;
 }
 
@@ -285,7 +288,7 @@
   color: #08244b !important;
 }
 
-/* Department directory tabs read as one cohesive segmented control. */
+/* Department directory tabs use role-based colors within one segmented control. */
 .main-panel .department-officer-tabs {
   display: inline-grid;
   grid-template-columns: auto auto;
@@ -300,23 +303,35 @@
   position: relative;
   min-height: 44px;
   padding: 9px 16px !important;
-  border: 1px solid #e3b800 !important;
   border-radius: 8px !important;
+  transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.main-panel .department-officer-tabs button:first-child {
+  border: 1px solid #0757aa !important;
+  background: var(--portal-blue) !important;
+  color: white !important;
+  box-shadow: 0 2px 7px rgba(8,76,143,.18) !important;
+}
+.main-panel .department-officer-tabs button:first-child:hover:not(:disabled) {
+  border-color: #064b94 !important;
+  background: var(--portal-blue-hover) !important;
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(8,76,143,.24) !important;
+}
+.main-panel .department-officer-tabs button:last-child {
+  border: 1px solid #e3b800 !important;
   background: var(--portal-yellow) !important;
   color: #08244b !important;
   box-shadow: 0 2px 5px rgba(122,91,0,.1) !important;
 }
-.main-panel .department-officer-tabs button:hover:not(:disabled) {
+.main-panel .department-officer-tabs button:last-child:hover:not(:disabled) {
   border-color: #d4a900 !important;
   background: #ffdd4d !important;
   color: #08244b !important;
   box-shadow: 0 3px 8px rgba(122,91,0,.14) !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
-  border-color: #e3b800 !important;
-  background: var(--portal-yellow) !important;
-  color: #08244b !important;
-  box-shadow: 0 2px 5px rgba(122,91,0,.1) !important;
+  transform: translateY(-1px);
 }
 .main-panel .department-officer-tabs button[aria-selected="true"]::after {
   content: '';
@@ -328,9 +343,27 @@
   border-radius: 3px;
   background: #08244b;
 }
+.main-panel .department-officer-tabs button:first-child[aria-selected="true"]::after {
+  background: white;
+}
+
+/* Keep neighboring actions visually separate without changing their hierarchy. */
+.main-panel .inline-actions,
+.main-panel .officer-directory .registration-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.main-panel .inline-actions > button,
+.main-panel .officer-directory .registration-review-actions > button {
+  margin: 0;
+}
 @media (max-width: 600px) {
   .main-panel .department-officer-tabs { width: 100%; grid-template-columns: 1fr; }
   .main-panel .department-officer-tabs button { width: 100%; }
+  .main-panel .inline-actions > button,
+  .main-panel .officer-directory .registration-review-actions > button { min-height: 44px; }
 }
 
 /* Search controls and their previews must shrink inside every portal surface. */
