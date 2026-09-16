@@ -36,6 +36,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "036_database_retention_maintenance.sql");
         assert.equal(first.applied.pop(), "035_function_search_path_hardening.sql");
         assert.equal(first.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(first.applied.pop(), "033_high_risk_actions.sql");
@@ -57,6 +58,57 @@ test("fresh migration chain is complete and idempotent", async () => {
              ('link_student_one', $1, 'STUDENT'), ('link_student_two', $1, 'STUDENT')
              RETURNING id`, [passwordHash]
         )).rows;
+
+        const registrationRows = (await pool.query(
+            `INSERT INTO student_account_registrations
+             (student_number,full_name,email,password_hash,status,created_at,updated_at,first_name,last_name)
+             VALUES
+             ('02000100001','Expired Student','expired@example.test',$1,'PENDING',CURRENT_TIMESTAMP-INTERVAL '25 hours',CURRENT_TIMESTAMP-INTERVAL '25 hours','Expired','Student'),
+             ('02000100002','Cancelled Student','cancelled@example.test',$1,'CANCELLED',CURRENT_TIMESTAMP-INTERVAL '40 days',CURRENT_TIMESTAMP-INTERVAL '31 days','Cancelled','Student'),
+             ('02000100003','Active Student','active@example.test',$1,'PENDING',CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,'Active','Student')
+             RETURNING id,status`, [passwordHash]
+        )).rows;
+        const expiredRegistrationId = registrationRows[0].id;
+        const redactedRegistrationId = registrationRows[1].id;
+        const activeRegistrationId = registrationRows[2].id;
+
+        await pool.query(`INSERT INTO auth_otps(user_id,purpose,otp_hash,expires_at,used_at) VALUES
+            ($1,'STUDENT_PASSWORD_RESET',repeat('a',64),CURRENT_TIMESTAMP-INTERVAL '25 hours',CURRENT_TIMESTAMP-INTERVAL '25 hours'),
+            ($2,'STUDENT_PASSWORD_RESET',repeat('b',64),CURRENT_TIMESTAMP+INTERVAL '10 minutes',NULL)`, [users[0].id,users[1].id]);
+        await pool.query(`INSERT INTO password_reset_authorizations(user_id,token_hash,expires_at) VALUES
+            ($1,repeat('c',64),CURRENT_TIMESTAMP-INTERVAL '25 hours'),($2,repeat('d',64),CURRENT_TIMESTAMP+INTERVAL '10 minutes')`, [users[0].id,users[1].id]);
+        await pool.query(`INSERT INTO browser_sessions(user_id,token_hash,csrf_hash,idle_expires_at,absolute_expires_at,revoked_at) VALUES
+            ($1,repeat('e',64),repeat('f',64),CURRENT_TIMESTAMP-INTERVAL '31 days',CURRENT_TIMESTAMP-INTERVAL '31 days',CURRENT_TIMESTAMP-INTERVAL '31 days'),
+            ($2,repeat('g',64),repeat('h',64),CURRENT_TIMESTAMP+INTERVAL '1 hour',CURRENT_TIMESTAMP+INTERVAL '8 hours',NULL)`, [users[0].id,users[1].id]);
+        await pool.query(`INSERT INTO mfa_challenges(user_id,token_hash,purpose,expires_at,consumed_at) VALUES
+            ($1,repeat('i',64),'VERIFY',CURRENT_TIMESTAMP-INTERVAL '25 hours',CURRENT_TIMESTAMP-INTERVAL '25 hours'),
+            ($2,repeat('j',64),'VERIFY',CURRENT_TIMESTAMP+INTERVAL '5 minutes',NULL)`, [users[0].id,users[1].id]);
+        await pool.query(`INSERT INTO administrative_step_up_tokens(user_id,token_hash,action_type,target_type,target_id,expires_at,consumed_at) VALUES
+            ($1,repeat('k',64),'LOCK_ACCOUNT','USER_ACCOUNT','1',CURRENT_TIMESTAMP-INTERVAL '25 hours',CURRENT_TIMESTAMP-INTERVAL '25 hours'),
+            ($2,repeat('l',64),'LOCK_ACCOUNT','USER_ACCOUNT','2',CURRENT_TIMESTAMP+INTERVAL '5 minutes',NULL)`, [users[0].id,users[1].id]);
+        await pool.query(`INSERT INTO authentication_throttles(throttle_key,failure_count,blocked_until,window_started_at,updated_at) VALUES
+            (repeat('m',64),1,NULL,CURRENT_TIMESTAMP-INTERVAL '31 days',CURRENT_TIMESTAMP-INTERVAL '31 days'),
+            (repeat('n',64),1,NULL,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)`);
+
+        const cleanup = (await pool.query('SELECT cleanup_ephemeral_data() AS result')).rows[0].result;
+        assert.deepEqual(cleanup, {
+            expired_registrations:1, redacted_registrations:1, deleted_auth_otps:1,
+            deleted_reset_authorizations:1, deleted_mfa_challenges:1, deleted_step_up_tokens:1,
+            deleted_browser_sessions:1, deleted_authentication_throttles:1
+        });
+        const retainedRegistrations = (await pool.query(
+            `SELECT id,status,password_hash,student_number,redacted_at FROM student_account_registrations
+             WHERE id=ANY($1::bigint[]) ORDER BY id`, [[expiredRegistrationId,redactedRegistrationId,activeRegistrationId]]
+        )).rows;
+        assert.equal(retainedRegistrations[0].status,'EXPIRED');
+        assert.equal(retainedRegistrations[0].password_hash,null);
+        assert.equal(retainedRegistrations[1].student_number,null);
+        assert.ok(retainedRegistrations[1].redacted_at);
+        assert.equal(retainedRegistrations[2].status,'PENDING');
+        assert.ok(retainedRegistrations[2].password_hash);
+        for(const table of ['auth_otps','password_reset_authorizations','browser_sessions','mfa_challenges','administrative_step_up_tokens','authentication_throttles']){
+            assert.equal((await pool.query(`SELECT COUNT(*)::int count FROM ${table}`)).rows[0].count,1,`${table} should retain only the active row`);
+        }
         const attempts = await Promise.allSettled(users.map((user) =>
             pool.query("INSERT INTO google_identity_links (user_id, google_subject, google_email) VALUES ($1, 'google-subject-one', 'student@example.test')", [user.id])
         ));
@@ -161,6 +213,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "036_database_retention_maintenance.sql");
         assert.equal(legacyResult.applied.pop(), "035_function_search_path_hardening.sql");
         assert.equal(legacyResult.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(legacyResult.applied.pop(), "033_high_risk_actions.sql");

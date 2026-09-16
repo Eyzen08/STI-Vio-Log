@@ -2,16 +2,27 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { passwordIsStrong, passwordRequirements } = require('../src/services/passwordPolicy');
 const { secureOtp, hashSecret, createOtpService } = require('../src/services/otpService');
-const { STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, normalizeName, splitName } = require('../src/services/studentPasswordAuthService');
+const { STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, REGISTRATION_TTL_HOURS, normalizeName, splitName, expirePendingRegistration } = require('../src/services/studentPasswordAuthService');
 const { createStudentPasswordAuthService } = require('../src/services/studentPasswordAuthService');
 const { createStudentPasswordAuthController } = require('../src/controllers/studentPasswordAuthController');
 
 test('student number and email validation follow the registration contract', () => {
+  assert.equal(REGISTRATION_TTL_HOURS,24);
   assert.equal(STUDENT_NUMBER_PATTERN.test('02000123456'), true);
   assert.equal(STUDENT_NUMBER_PATTERN.test('12000123456'), true);
   for (const invalid of ['0200012345','120001234567','02000ABCDEF',' 02000123456 ']) assert.equal(STUDENT_NUMBER_PATTERN.test(invalid), false);
   assert.equal(EMAIL_PATTERN.test('student@example.com'), true);
   assert.equal(EMAIL_PATTERN.test('student@'), false);
+});
+
+test('pending password registrations expire after 24 hours and clear their duplicate password hash',async()=>{
+  const calls=[];
+  const database={async query(sql,params){calls.push({sql:String(sql),params});return{rows:[],rowCount:1}}};
+  await expirePendingRegistration(database,7);
+  assert.match(calls[0].sql,/status='EXPIRED'/);
+  assert.match(calls[0].sql,/password_hash=NULL/);
+  assert.match(calls[0].sql,/INTERVAL '24 hours'/);
+  assert.deepEqual(calls[0].params,[7]);
 });
 
 test('shared password policy enforces every required class', () => {

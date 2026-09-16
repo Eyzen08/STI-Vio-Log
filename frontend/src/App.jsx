@@ -52,7 +52,6 @@ import { pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
-import { unreadMessageCount } from './lib/messageUnread.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
@@ -406,11 +405,11 @@ function App() {
     const controller = new AbortController()
     const refresh = async () => {
       try {
-        const response = await fetch(`${API_URL}/api/messages/conversations`, {
+        const response = await fetch(`${API_URL}/api/messages/unread-count`, {
           headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
         })
         const data = await response.json().catch(() => ({}))
-        if (response.ok) setUnreadMessages(Number(data.unread_total ?? unreadMessageCount(data.conversations)))
+        if (response.ok) setUnreadMessages(Number(data.unread_total || 0))
       } catch (loadError) {
         if (loadError.name !== 'AbortError') return
       }

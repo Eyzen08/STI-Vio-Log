@@ -30,6 +30,7 @@ const publicRegistration = (row) => ({
   status: row.status,
   review_reason: row.review_reason || null,
   reviewed_at: row.reviewed_at || null,
+  is_stale: Boolean(row.is_stale),
   created_at: row.created_at
 });
 
@@ -46,6 +47,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
       `SELECT g.id,g.student_number,g.first_name,g.middle_name,g.last_name,g.suffix,g.google_email,g.phone_number,
               g.program,g.section,g.year_level,g.guardian_name,g.guardian_relationship,g.guardian_phone_number,g.status,
               g.review_reason,g.reviewed_at,g.created_at,
+              (g.status='PENDING' AND g.created_at<CURRENT_TIMESTAMP-INTERVAL '30 days') AS is_stale,
               EXISTS(SELECT 1 FROM students s WHERE s.student_number=g.student_number) AS student_number_in_use,
               EXISTS(SELECT 1 FROM students s WHERE g.google_email IS NOT NULL AND LOWER(s.email)=LOWER(g.google_email)) AS email_in_use,
               EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.google_subject=g.google_subject AND gil.revoked_at IS NULL) AS google_linked

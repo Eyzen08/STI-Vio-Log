@@ -21,4 +21,6 @@ test('registration review uses labeled mobile record cards', async () => {
   for (const label of ['Student', 'Student number', 'Academic details', 'Email verification', 'Google link', 'Review flag', 'Submitted', 'Action']) {
     assert.match(source, new RegExp(`data-label="${label}"`))
   }
+  assert.match(source, /Stale over 30 days/)
+  assert.match(source, /item\.is_stale/)
 })

@@ -69,6 +69,7 @@
     "/reports/clearance": { "get": { "tags": ["Reports"], "summary": "Export clearance records" } },
     "/reports/good-standing": { "get": { "tags": ["Reports"], "summary": "Export students with no current disciplinary blockers" } },
     "/messages/conversations": { "get": { "tags": ["Messages"], "summary": "List paginated conversation summaries in authenticated scope" }, "post": { "tags": ["Messages"], "summary": "Start a scoped text conversation with a message of at most 1,000 characters" } },
+    "/messages/unread-count": { "get": { "tags": ["Messages"], "summary": "Return the unread message total in authenticated scope" } },
     "/messages/recipients": { "get": { "tags": ["Messages"], "summary": "List role-scoped recipients available to the authenticated user" } },
     "/messages/conversations/{id}": { "get": { "tags": ["Messages"], "summary": "Read a paginated authorized append-only conversation" } },
     "/messages/conversations/{id}/messages": { "post": { "tags": ["Messages"], "summary": "Append a text reply" } },

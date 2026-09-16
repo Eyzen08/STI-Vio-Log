@@ -96,6 +96,26 @@ const listConversations = async (req, res) => {
   } catch (error) { return fail(res, error); }
 };
 
+const getUnreadCount = async (req, res) => {
+  try {
+    assertAllowedFields(req.query || {}, []);
+    const params = [req.user.id];
+    const scoped = scope(req.user, params.length + 1);
+    if (scoped.value !== null) params.push(scoped.value);
+    const row = (await pool.query(
+      `SELECT COUNT(*)::int AS unread_total
+       FROM conversation_messages cm
+       JOIN message_conversations mc ON mc.id=cm.conversation_id
+       LEFT JOIN conversation_reads cr ON cr.conversation_id=mc.id AND cr.user_id=$1
+       WHERE ${scoped.sql}
+         AND cm.sender_user_id<>$1
+         AND cm.created_at>COALESCE(cr.last_read_at,'-infinity')`,
+      params
+    )).rows[0];
+    return res.json({ success:true, unread_total:Number(row?.unread_total || 0) });
+  } catch (error) { return fail(res, error); }
+};
+
 const listRecipients = async (req, res) => {
   try {
     const query = req.query || {};
@@ -222,4 +242,4 @@ const updateConversationStatus = async (req,res) => {
   }catch(error){return fail(res,error);}
 };
 
-module.exports={listConversations,listRecipients,createConversation,getConversation,sendMessage,markConversationRead,updateConversationStatus,assertConversation};
+module.exports={listConversations,getUnreadCount,listRecipients,createConversation,getConversation,sendMessage,markConversationRead,updateConversationStatus,assertConversation};

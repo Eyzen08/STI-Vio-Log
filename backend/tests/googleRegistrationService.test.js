@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createGoogleRegistrationService } = require('../src/services/googleRegistrationService');
 
-const pending = { id: 7, google_subject: 'private-google-subject', google_email: 'new@example.test', student_number: '02000654321', first_name: 'New', last_name: 'Student', phone_number: '09171234567', program: 'BSIT', section: 'A103', year_level: 3, guardian_name: 'Maria Student', guardian_relationship: 'Mother', guardian_phone_number: '09181234567', status: 'PENDING', created_at: new Date('2026-01-01T00:00:00Z') };
+const pending = { id: 7, google_subject: 'private-google-subject', google_email: 'new@example.test', student_number: '02000654321', first_name: 'New', last_name: 'Student', phone_number: '09171234567', program: 'BSIT', section: 'A103', year_level: 3, guardian_name: 'Maria Student', guardian_relationship: 'Mother', guardian_phone_number: '09181234567', status: 'PENDING', is_stale: true, created_at: new Date('2026-01-01T00:00:00Z') };
 
 const fakePool = (handler) => {
   const calls = [];
@@ -15,7 +15,9 @@ test('review queue omits the stable Google subject', async () => {
   const service = createGoogleRegistrationService({ pool: db.pool });
   const [result] = await service.list({ status: 'pending' });
   assert.equal(result.student_number, pending.student_number);
+  assert.equal(result.is_stale, true);
   assert.equal('google_subject' in result, false);
+  assert.ok(db.calls.some((call) => call.sql.includes("INTERVAL '30 days'")));
 });
 
 test('approval atomically creates an active student, opaque QR, link, and audit', async () => {

@@ -6,7 +6,9 @@ const classifyAdministrativeRequest=({method='',baseUrl='',path='',originalUrl='
   const route=`${baseUrl}${path || ''}`.split('?')[0] || String(originalUrl).split('?')[0];
   const mutation=!['GET','HEAD','OPTIONS'].includes(verb);
   if(route.startsWith('/api/parent-contact/'))return{action:mutation?'GUARDIAN_CONTACT_UPDATE':'GUARDIAN_CONTACT_VIEW',targetType:'STUDENT_GUARDIAN'};
-  if(route.startsWith('/api/messages/'))return{action:mutation?'PRIVATE_MESSAGE_ACTION':'PRIVATE_MESSAGES_VIEW',targetType:'CONVERSATION'};
+  if(route.startsWith('/api/messages/')&&mutation)return{action:'PRIVATE_MESSAGE_ACTION',targetType:'CONVERSATION'};
+  const messageThread=verb==='GET'&&route.match(/^\/api\/messages\/conversations\/(\d+)$/);
+  if(messageThread)return{action:'PRIVATE_MESSAGES_VIEW',targetType:'CONVERSATION',targetId:messageThread[1]};
   if(route.startsWith('/api/violations')&&mutation)return{action:'VIOLATION_ADMIN_ACTION',targetType:'VIOLATION'};
   if(route.startsWith('/api/community-service')&&mutation)return{action:'COMMUNITY_SERVICE_ADMIN_ACTION',targetType:'COMMUNITY_SERVICE'};
   if(route.startsWith('/api/qr')&&mutation)return{action:'ATTENDANCE_ADMIN_ACTION',targetType:'ATTENDANCE'};
@@ -18,14 +20,18 @@ const classifyAdministrativeRequest=({method='',baseUrl='',path='',originalUrl='
   return null;
 };
 
+const shouldRecordAdministrativeRequest=({classification,statusCode,authorizationDenied})=>
+  !authorizationDenied && !(classification?.action==='PRIVATE_MESSAGES_VIEW' && Number(statusCode)>=400);
+
 const auditAdministrativeRequest=(req,res,next)=>{
   const classification=classifyAdministrativeRequest(req);
   if(!classification||!AUDITED_ROLES.has(req.user?.role))return next();
   res.once('finish',()=>{
+    if(!shouldRecordAdministrativeRequest({classification,statusCode:res.statusCode,authorizationDenied:res.locals?.authorizationDenied}))return;
     const result=res.statusCode===401||res.statusCode===403?'DENIED':res.statusCode>=400?'FAILED':'SUCCESS';
-    void recordSecurityEvent({actor:req.user,action:classification.action,targetType:classification.targetType,targetId:req.params?.id||req.params?.studentId,targetLabel:`${req.method} ${(req.baseUrl||'')+(req.path||'')}`,details:{http_status:res.statusCode},result,ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,supportAccessRequestId:req.user.support_access_request_id});
+    void recordSecurityEvent({actor:req.user,action:classification.action,targetType:classification.targetType,targetId:classification.targetId||req.params?.id||req.params?.studentId,targetLabel:`${req.method} ${(req.baseUrl||'')+(req.path||'')}`,details:{http_status:res.statusCode},result,ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,supportAccessRequestId:req.user.support_access_request_id});
   });
   return next();
 };
 
-module.exports={AUDITED_ROLES,classifyAdministrativeRequest,auditAdministrativeRequest};
+module.exports={AUDITED_ROLES,classifyAdministrativeRequest,shouldRecordAdministrativeRequest,auditAdministrativeRequest};

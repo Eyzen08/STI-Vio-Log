@@ -1,10 +1,11 @@
 const express = require('express');
-const { listConversations, listRecipients, createConversation, getConversation, sendMessage, markConversationRead, updateConversationStatus } = require('../controllers/messageController');
+const { listConversations, getUnreadCount, listRecipients, createConversation, getConversation, sendMessage, markConversationRead, updateConversationStatus } = require('../controllers/messageController');
 const router = express.Router();
 const { authorizePermissions } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../security/permissions');
 const canMessage = authorizePermissions(PERMISSIONS.PRIVATE_MESSAGES_VIEW);
 router.get('/conversations', canMessage, listConversations);
+router.get('/unread-count', canMessage, getUnreadCount);
 router.get('/recipients', canMessage, listRecipients);
 router.post('/conversations', canMessage, createConversation);
 router.get('/conversations/:id', canMessage, getConversation);

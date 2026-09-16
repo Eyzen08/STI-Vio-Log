@@ -2,15 +2,37 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const router = require('../src/routes/messageRoutes');
 const pool = require('../src/config/database');
-const { assertConversation, getConversation, updateConversationStatus } = require('../src/controllers/messageController');
+const { assertConversation, getConversation, getUnreadCount, updateConversationStatus } = require('../src/controllers/messageController');
 
 test('messaging API is append-only and exposes no edit or delete route', () => {
   const routes = router.stack.filter((layer) => layer.route).map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);
   assert.deepEqual(routes, [
-    'get /conversations', 'get /recipients', 'post /conversations', 'get /conversations/:id',
+    'get /conversations', 'get /unread-count', 'get /recipients', 'post /conversations', 'get /conversations/:id',
     'post /conversations/:id/messages', 'patch /conversations/:id/read', 'patch /conversations/:id/status'
   ]);
   assert.equal(routes.some((route) => route.startsWith('put ') || route.startsWith('delete ')), false);
+});
+
+test('unread count uses ownership scope without loading message previews', async () => {
+  const originalQuery = pool.query;
+  const calls = [];
+  pool.query = async (sql, values) => { calls.push({ sql:String(sql), values }); return { rows:[{ unread_total:3 }] }; };
+  const response = { statusCode:200, status(code){this.statusCode=code;return this}, json(body){this.body=body;return this} };
+  try {
+    await getUnreadCount({ user:{ id:44, role:'STUDENT' }, query:{} }, response);
+    assert.deepEqual(response.body, { success:true, unread_total:3 });
+    assert.match(calls[0].sql, /own_student\.user_id=\$2/);
+    assert.doesNotMatch(calls[0].sql, /message_preview|subject/);
+    assert.deepEqual(calls[0].values, [44,44]);
+
+    await getUnreadCount({ user:{ id:55, role:'DEPARTMENT_HEAD', department_id:9 }, query:{} }, response);
+    assert.match(calls[1].sql, /assigned_department_id=\$2/);
+    assert.deepEqual(calls[1].values, [55,9]);
+
+    await getUnreadCount({ user:{ id:7, role:'DISCIPLINE_ADMIN' }, query:{} }, response);
+    assert.match(calls[2].sql, /WHERE TRUE/);
+    assert.deepEqual(calls[2].values, [7]);
+  } finally { pool.query = originalQuery; }
 });
 
 test('student and department-head conversation lookups enforce authenticated ownership', async () => {

@@ -5,6 +5,8 @@ const { recordSecurityEvent } = require('../services/securityEventService');
 const { notifyDisciplineSupportUse } = require('../services/notificationService');
 
 const denyAuthorization = (req, res, { code = 'FORBIDDEN', message = 'Permission denied', required = [] } = {}) => {
+    res.locals = res.locals || {};
+    res.locals.authorizationDenied = true;
     const send = () => res.status(403).json({ success:false, message, error:{code,message} });
     if (!req.user?.id) return send();
     return recordSecurityEvent({
@@ -260,6 +262,7 @@ const requireAuthorizedDepartment = async (req, res, next) => {
 
 
 module.exports = {
+    denyAuthorization,
     authenticateToken,
     authorizeRoles,
     authorizePermissions,

@@ -6,7 +6,7 @@ const pending = {
   id: 9, google_subject: 'private-subject', google_email: 'officer@example.test',
   officer_first_name: 'Alex', officer_last_name: 'Reyes', employee_number: 'EMP-9',
   requested_department_type: 'LIBRARY', requested_department_name: 'Library Department',
-  status: 'PENDING', created_at: new Date('2026-01-01T00:00:00Z')
+  status: 'PENDING', is_stale: true, created_at: new Date('2026-01-01T00:00:00Z')
 };
 
 const fakePool = (handler) => {
@@ -48,5 +48,6 @@ test('department review queue never exposes the stable Google subject', async ()
   const db = fakePool((sql) => sql.includes('FROM departments') ? { rows: [] } : { rows: [pending] });
   const result = await createGoogleDepartmentRegistrationService({ pool: db.pool }).list();
   assert.equal(result.registrations[0].google_email, pending.google_email);
+  assert.equal(result.registrations[0].is_stale, true);
   assert.equal('google_subject' in result.registrations[0], false);
 });

@@ -6,6 +6,7 @@ const { hashSecret } = require('./otpService');
 const { isValidPhone } = require('../utils/validators');
 
 const STUDENT_NUMBER_PATTERN = /^\d{11}$/;
+const REGISTRATION_TTL_HOURS = 24;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const clean = (value, max) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').slice(0, max)
@@ -15,6 +16,14 @@ const splitName = (fullName) => {
   const parts = clean(fullName, 250).split(' ').filter(Boolean);
   return { firstName: parts.slice(0, -1).join(' ') || parts[0], lastName: parts.length > 1 ? parts.at(-1) : '.' };
 };
+
+const expirePendingRegistration = (database, registrationId) => database.query(
+  `UPDATE student_account_registrations
+   SET status='EXPIRED',password_hash=NULL,updated_at=CURRENT_TIMESTAMP
+   WHERE id=$1 AND status='PENDING'
+     AND created_at<CURRENT_TIMESTAMP-INTERVAL '${REGISTRATION_TTL_HOURS} hours'`,
+  [Number(registrationId)]
+);
 
 const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (value) => bcrypt.hash(value, 12), comparePassword = bcrypt.compare, now = () => new Date(), randomBytes = crypto.randomBytes } = {}) => {
   if (!pool?.connect || !otpService) throw new TypeError('Student authentication dependencies are required');
@@ -58,7 +67,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
         const officialName = normalizeName([existing.first_name, existing.middle_name, existing.last_name].filter(Boolean).join(' '));
         if (officialName !== normalizeName(values.fullName)) throw new ApiError(409, 'STUDENT_RECORD_MISMATCH', 'Student details do not match the school record');
       }
-      await client.query("UPDATE student_account_registrations SET status='CANCELLED',updated_at=CURRENT_TIMESTAMP WHERE (student_number=$1 OR LOWER(email)=LOWER($2)) AND status='PENDING'", [values.studentNumber, values.email]);
+      await client.query("UPDATE student_account_registrations SET status='CANCELLED',password_hash=NULL,updated_at=CURRENT_TIMESTAMP WHERE (student_number=$1 OR LOWER(email)=LOWER($2)) AND status='PENDING'", [values.studentNumber, values.email]);
       registration = (await client.query(
         `INSERT INTO student_account_registrations(student_number,full_name,email,password_hash,first_name,middle_name,last_name,suffix,phone_number,program,section,year_level,guardian_name,guardian_relationship,guardian_phone_number)
          VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id,email`,
@@ -80,6 +89,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   };
 
   const resendRegistrationOtp = async ({ registrationId }) => {
+    await expirePendingRegistration(pool, registrationId);
     const result = await pool.query("SELECT id,email FROM student_account_registrations WHERE id=$1 AND status='PENDING'", [Number(registrationId)]);
     const registration = result.rows[0];
     if (!registration) throw new ApiError(400, 'REGISTRATION_UNAVAILABLE', 'Registration is no longer available');
@@ -87,6 +97,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   };
 
   const verifyRegistration = async ({ registrationId, code, ipAddress = null }) => {
+    await expirePendingRegistration(pool, registrationId);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -113,7 +124,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
          VALUES($1,$2,$3,$4,TRUE)`,
         [student.id, registration.guardian_name, registration.guardian_relationship || null, registration.guardian_phone_number]
       );
-      await client.query("UPDATE student_account_registrations SET status='VERIFIED',verified_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1", [registration.id]);
+      await client.query("UPDATE student_account_registrations SET status='VERIFIED',password_hash=NULL,verified_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1", [registration.id]);
       await client.query(
         `INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
          VALUES($1,'STUDENT_EMAIL_VERIFIED','students',$2,'Student email verified and password account activated',$3)`,
@@ -208,4 +219,4 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   return { register, resendRegistrationOtp, verifyRegistration, requestPasswordReset, verifyPasswordReset, resetPassword };
 };
 
-module.exports = { createStudentPasswordAuthService, STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, normalizeName, splitName };
+module.exports = { createStudentPasswordAuthService, STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, REGISTRATION_TTL_HOURS, normalizeName, splitName, expirePendingRegistration };

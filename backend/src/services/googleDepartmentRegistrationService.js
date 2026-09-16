@@ -10,7 +10,8 @@ const publicRegistration = (row) => ({
   officer_last_name: row.officer_last_name, employee_number: row.employee_number || null,
   requested_department_type: row.requested_department_type, requested_department_name: row.requested_department_name,
   applicant_note: row.applicant_note || null, status: row.status, assigned_department_id: row.assigned_department_id ? Number(row.assigned_department_id) : null,
-  review_reason: row.review_reason || null, reviewed_at: row.reviewed_at || null, created_at: row.created_at
+  review_reason: row.review_reason || null, reviewed_at: row.reviewed_at || null,
+  is_stale: Boolean(row.is_stale), created_at: row.created_at
 });
 
 const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value) => bcrypt.hash(value, 12), randomBytes = crypto.randomBytes } = {}) => {
@@ -25,7 +26,8 @@ const createGoogleDepartmentRegistrationService = ({ pool, hashPassword = (value
     const registrations = await pool.query(
       `SELECT id, google_email, officer_first_name, officer_last_name, employee_number,
               requested_department_type, requested_department_name, applicant_note, status,
-              assigned_department_id, review_reason, reviewed_at, created_at
+              assigned_department_id, review_reason, reviewed_at, created_at,
+              (status='PENDING' AND created_at<CURRENT_TIMESTAMP-INTERVAL '30 days') AS is_stale
        FROM google_department_registrations WHERE status = $1 ORDER BY created_at, id LIMIT $2`,
       [normalizedStatus, parsedLimit]
     );
