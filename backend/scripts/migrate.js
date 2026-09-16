@@ -15,8 +15,8 @@ const ensureTrackingTable = (executor) => executor.query(`
     )
 `);
 
-const migrationStatus = async (executor, directory = migrationsDirectory) => {
-    await ensureTrackingTable(executor);
+const migrationStatus = async (executor, directory = migrationsDirectory, { ensure = true } = {}) => {
+    if (ensure) await ensureTrackingTable(executor);
     const applied = new Set((await executor.query("SELECT migration_name FROM schema_migrations ORDER BY migration_name")).rows.map((row) => row.migration_name));
     return listMigrationFiles(directory).map((name) => ({ name, applied: applied.has(name) }));
 };

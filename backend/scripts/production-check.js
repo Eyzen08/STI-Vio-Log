@@ -14,7 +14,7 @@ const runProductionCheck = async ({ environment = process.env, database = pool }
   if (!runtimeRole || !runtimeRole.runtime_member || runtimeRole.rolsuper || runtimeRole.rolcreatedb || runtimeRole.rolcreaterole || runtimeRole.rolbypassrls || runtimeRole.owns_app_tables) {
     throw new Error('DATABASE_URL must use a non-owner login that inherits sti_vio_log_runtime without elevated privileges');
   }
-  const migrations = await migrationStatus(database);
+  const migrations = await migrationStatus(database, undefined, { ensure: false });
   const pending = migrations.filter((migration) => !migration.applied).map((migration) => migration.name);
   if (pending.length) throw new Error(`Pending database migrations: ${pending.join(', ')}`);
   return { database: 'connected', migrations: 'current', migration_count: migrations.length };
