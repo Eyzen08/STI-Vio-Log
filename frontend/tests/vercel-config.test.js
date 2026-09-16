@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 
-test('Vercel serves client-side routes through the application shell',()=>{const config=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(config.rewrites,[{source:'/(.*)',destination:'/index.html'}])})
+test('Vercel proxies API and realtime traffic before serving client routes',()=>{const config=JSON.parse(fs.readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));assert.deepEqual(config.rewrites,[{source:'/api/:path*',destination:'https://sti-vio-log.onrender.com/api/:path*'},{source:'/socket.io/:path*',destination:'https://sti-vio-log.onrender.com/socket.io/:path*'},{source:'/(.*)',destination:'/index.html'}])})
 
 test('Vercel sends browser security and HTTPS headers', () => {
   const config = JSON.parse(fs.readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'))

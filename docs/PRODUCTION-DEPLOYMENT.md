@@ -2,15 +2,15 @@
 
 ## Required architecture
 
-Deploy the Vite frontend on Vercel and the Express API on a Node-capable host. Use Supabase only as PostgreSQL: browser code must never receive the database password, service-role key, or a direct STI Vio-Log table grant.
+Deploy the Vite frontend on Vercel and the Express API on Render. Vercel proxies `/api/*` and `/socket.io/*` to Render, so the browser sees a single origin and host-only `SameSite=Lax` cookies remain first-party. Use Supabase only as PostgreSQL: browser code must never receive the database password, service-role key, or a direct STI Vio-Log table grant.
 
-The frontend and API must be same-site HTTPS subdomains, such as `app.school.edu` and `api.school.edu`. Separate `*.vercel.app` deployment URLs are not an acceptable production pairing for the `SameSite=Lax` session cookie. Configure both custom domains before enabling production traffic.
+The production browser must use the Vercel origin for API requests. `frontend/vercel.json` supplies the same-origin proxy to `sti-vio-log.onrender.com`; do not configure browser requests to bypass that proxy. Custom same-site domains remain recommended if they are added later.
 
 ## Vercel frontend
 
 Set these encrypted environment variables for Production (and separately for Preview if previews are allowed):
 
-- `VITE_API_URL=https://api.school.edu` with no trailing slash.
+- `VITE_API_URL` is used only during local development. Production builds use the same-origin Vercel proxy.
 - `VITE_GOOGLE_CLIENT_ID` for a Google web client authorized only for the exact frontend origin.
 
 Build from `frontend` with `npm ci && npm run build`. The build injects an exact CSP for the configured API and WebSocket origins. `frontend/vercel.json` also supplies HSTS, anti-framing, nosniff, referrer, permissions, opener, and resource-policy headers. After changing an environment variable, create a new deployment; existing deployments do not inherit the change.
@@ -51,7 +51,7 @@ Never reuse keys between purposes. Startup rejects missing, short, placeholder, 
 
 ## Release procedure
 
-Run migrations once with the owner credential before routing traffic, then start the API with only the runtime credential. If the host runs `npm start`, ensure `MIGRATION_DATABASE_URL` is deployment-scoped and removed from the running service after migration.
+Run migrations once with the owner credential before routing traffic, then start the API with only the runtime credential. `npm start` deliberately does not apply migrations; it fails closed when a migration is pending. Run `npm run migrate` as a separate controlled release step with `MIGRATION_DATABASE_URL`, then remove that owner credential from the running service.
 
 After deployment verify:
 

@@ -1,7 +1,9 @@
 import { buildGoogleLinkPayload } from './googleIdentity.js'
 import { csrfToken, saveCsrf } from './session.js'
 
-export const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000'
+// Production requests stay on the Vercel origin and are securely proxied to the
+// Render API. This keeps host-only SameSite=Lax cookies first-party.
+export const API_URL = import.meta.env?.PROD ? '' : (import.meta.env?.VITE_API_URL || 'http://localhost:5000')
 
 const mutationMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 

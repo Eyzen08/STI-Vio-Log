@@ -36,6 +36,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "035_function_search_path_hardening.sql");
         assert.equal(first.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(first.applied.pop(), "033_high_risk_actions.sql");
         assert.equal(first.applied.pop(), "032_security_notifications.sql");
@@ -160,6 +161,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "035_function_search_path_hardening.sql");
         assert.equal(legacyResult.applied.pop(), "034_session_mfa_hardening.sql");
         assert.equal(legacyResult.applied.pop(), "033_high_risk_actions.sql");
         assert.equal(legacyResult.applied.pop(), "032_security_notifications.sql");
