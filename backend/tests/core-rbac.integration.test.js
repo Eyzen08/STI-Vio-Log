@@ -1,14 +1,22 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const sessionService=require('../src/services/browserSessionService');
 
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'this-is-a-secure-test-secret-123456';
+process.env.NODE_ENV = 'test';
+process.env.JWT_SECRET = 'j'.repeat(48);
+process.env.SESSION_HASH_KEY = 's'.repeat(48);
+process.env.CSRF_SIGNING_KEY = 'c'.repeat(48);
+process.env.OTP_HASH_KEY = 'o'.repeat(48);
+process.env.AUTH_THROTTLE_KEY = 't'.repeat(48);
+process.env.MFA_RECOVERY_KEY = 'r'.repeat(48);
+process.env.MFA_ENCRYPTION_KEY = Buffer.alloc(32, 7).toString('base64');
+process.env.CERTIFICATE_SIGNING_KEY = 'g'.repeat(48);
 process.env.DB_HOST = process.env.DB_HOST || 'localhost';
 process.env.DB_PORT = process.env.DB_PORT || '5432';
 process.env.DB_NAME = process.env.DB_NAME || 'test';
 process.env.DB_USER = process.env.DB_USER || 'test';
 process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'test';
 
+const sessionService=require('../src/services/browserSessionService');
 const pool = require('../src/config/database');
 const app = require('../src/server');
 
