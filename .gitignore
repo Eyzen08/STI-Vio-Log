@@ -8,6 +8,8 @@ coverage/
 .vercel/
 .DS_Store
 *.log
+*.crt
+*.pem
 
 # Local database backups
 *.dump

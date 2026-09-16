@@ -3,6 +3,7 @@ require("dotenv").config();
 
 const dbSchema = process.env.DB_SCHEMA;
 const sslMode = (process.env.DB_SSL || "disable").toLowerCase();
+const sslCa = process.env.DB_SSL_CA ? process.env.DB_SSL_CA.replace(/\\n/g, "\n") : undefined;
 if(process.env.NODE_ENV==='production'&&sslMode==='no-verify')throw new Error('DB_SSL=no-verify is forbidden in production');
 
 if (dbSchema && !/^sti_vio_log_test_[a-z0-9_]+$/.test(dbSchema)) {
@@ -26,7 +27,8 @@ const pool = new Pool({
     application_name:'sti-vio-log-api',
     allowExitOnIdle:Boolean(process.env.VERCEL),
     ssl: sslMode === "disable" ? false : {
-        rejectUnauthorized: sslMode !== "no-verify"
+        rejectUnauthorized: sslMode !== "no-verify",
+        ...(sslCa ? { ca: sslCa } : {})
     }
 });
 
