@@ -15,8 +15,9 @@ npm run dev
 
 Open the local URL printed by Vite. Sign in with an active account created in the
 backend database. Credentials are sent only to the login API and are never stored
-by the frontend. The JWT and public user identity persist in local storage until
-logout or token expiry.
+by the frontend. Authentication uses an opaque `HttpOnly` cookie plus a CSRF
+token for mutations. Local storage contains only a non-secret user hint; startup
+must restore and validate the cookie session before any protected screen renders.
 
 ## Verification
 
@@ -24,6 +25,7 @@ logout or token expiry.
 npm run lint
 npm test
 npm run build
+npm run audit:performance
 ```
 
 Manually verify successful login, invalid credentials, logout, page refresh with

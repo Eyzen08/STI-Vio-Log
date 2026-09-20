@@ -44,7 +44,7 @@ test('mobile shell exposes real branding, scoped directory search, and the syste
 test('primary management tables expose labeled mobile record cards', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.equal((app.match(/className="management-record-table"/g) || []).length, 3)
+  assert.equal((app.match(/className="management-record-table"/g) || []).length, 2)
   for (const label of ['Student', 'Status', 'Actions', 'Service progress']) assert.match(app, new RegExp(`data-label="${label}"`))
   assert.match(css, /\.management-record-table td::before/)
   assert.match(css, /content: attr\(data-label\)/)
@@ -103,7 +103,7 @@ test('desktop sidebar scrolls vertically without hover-created horizontal overfl
 test('sidebar brand presents the official logo as an integrated lockup', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.match(app, /alt="STI Vio-Log Discipline Office Portal"\s+width="620"\s+height="349"/)
+  assert.match(app, /alt="STI Vio-Log Discipline Office Portal"\s+width="420"\s+height="236"/)
   assert.match(app, /className="brand-favicon" src="\/favicon-32\.png" alt="STI Vio-Log"/)
   assert.match(css, /\.sidebar \.brand\s*\{[^}]*background:\s*linear-gradient\(145deg, #e9f4ff, #d9eaff\);/s)
   assert.match(css, /\.sidebar \.brand::after\s*\{[^}]*background:\s*var\(--portal-yellow\);/s)

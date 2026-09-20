@@ -5,6 +5,10 @@ import App from './App.jsx'
 import { installMutationRequestGuard } from './lib/api.js'
 import { installSearchInputGuard } from './lib/searchControls.js'
 
+// Load the shared presentation layer as its own cached asset before rendering.
+// This avoids a flash of legacy base styles while keeping each CSS bundle small.
+await import('./styles/portal-system.css')
+
 installMutationRequestGuard(window)
 installSearchInputGuard(document)
 

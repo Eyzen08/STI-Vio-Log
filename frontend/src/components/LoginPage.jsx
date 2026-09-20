@@ -3,7 +3,7 @@ import GoogleStudentAccess from './GoogleStudentAccess.jsx'
 import PasswordField from './PasswordField.jsx'
 import StudentPasswordAccess from './StudentPasswordAccess.jsx'
 import buildingImage from '../assets/sti-global-city-building-web.jpg'
-import stiVioLogLogo from '../assets/sti-vio-log-logo-transparent.png'
+import stiVioLogLogo from '../assets/sti-logo-web.png'
 import MfaChallenge from './MfaChallenge.jsx'
 
 const STUDENT_AUTH_PATHS = new Set(['/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'])
@@ -22,7 +22,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
   return <section className={`login-page${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title">
     <aside className="login-intro" aria-label="STI Global City portal">
       <img className="login-campus-image" src={buildingImage} alt="STI Global City campus building" width="1200" height="825" fetchPriority="high"/>
-      <div className="login-brand-mark"><img src={stiVioLogLogo} alt="STI Vio-Log" width="620" height="349" fetchPriority="high"/></div>
+      <div className="login-brand-mark"><img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" fetchPriority="high"/></div>
       <div className="login-intro-content">
         <span className="login-kicker">STI Global City</span>
         <h2>Student accountability, made clearer.</h2>

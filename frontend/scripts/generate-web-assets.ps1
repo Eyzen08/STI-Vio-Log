@@ -28,20 +28,11 @@ function Save-Jpeg([System.Drawing.Bitmap]$Bitmap, [string]$Destination, [long]$
   try { $Bitmap.Save($Destination, $encoder, $parameters) } finally { $parameters.Dispose() }
 }
 
-Save-ResizedPng (Join-Path $assetRoot 'sti-logo.png') (Join-Path $assetRoot 'sti-logo-web.png') 420
-Save-ResizedPng (Join-Path $assetRoot 'sti-vio-log-logo.png') (Join-Path $assetRoot 'sti-vio-log-logo-web.png') 620
 Save-ResizedPng (Join-Path $publicRoot 'sti-vio-log-favicon.png') (Join-Path $publicRoot 'favicon-32.png') 32
 Save-ResizedPng (Join-Path $publicRoot 'sti-vio-log-favicon.png') (Join-Path $publicRoot 'apple-touch-icon.png') 180
 
-$building = [System.Drawing.Image]::FromFile((Join-Path $assetRoot 'sti-global-city-building.jpg'))
+$building = [System.Drawing.Image]::FromFile((Join-Path $assetRoot 'sti-global-city-building-web.jpg'))
 try {
-  $buildingWeb = New-Object System.Drawing.Bitmap($building.Width, $building.Height)
-  try {
-    $buildingGraphics = [System.Drawing.Graphics]::FromImage($buildingWeb)
-    try { $buildingGraphics.DrawImage($building, 0, 0, $building.Width, $building.Height) } finally { $buildingGraphics.Dispose() }
-    Save-Jpeg $buildingWeb (Join-Path $assetRoot 'sti-global-city-building-web.jpg') 76
-  } finally { $buildingWeb.Dispose() }
-
   $social = New-Object System.Drawing.Bitmap(1200, 630)
   try {
     $graphics = [System.Drawing.Graphics]::FromImage($social)
@@ -76,4 +67,4 @@ try {
   } finally { $social.Dispose() }
 } finally { $building.Dispose() }
 
-Get-Item (Join-Path $assetRoot 'sti-logo-web.png'), (Join-Path $assetRoot 'sti-vio-log-logo-web.png'), (Join-Path $assetRoot 'sti-global-city-building-web.jpg'), (Join-Path $publicRoot 'favicon-32.png'), (Join-Path $publicRoot 'apple-touch-icon.png'), (Join-Path $publicRoot 'social-preview.jpg') | Select-Object Name, Length
+Get-Item (Join-Path $assetRoot 'sti-logo-web.png'), (Join-Path $assetRoot 'sti-global-city-building-web.jpg'), (Join-Path $publicRoot 'favicon-32.png'), (Join-Path $publicRoot 'apple-touch-icon.png'), (Join-Path $publicRoot 'social-preview.jpg') | Select-Object Name, Length

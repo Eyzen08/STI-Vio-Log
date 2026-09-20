@@ -34,6 +34,7 @@ test('department heads can view only department-scoped reports', () => {
     assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.DEPARTMENT_REPORT_VIEW), true);
     assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.REPORT_VIEW), false);
     assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.DATA_EXPORT), false);
+    assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.PRIVATE_MESSAGES_VIEW), false);
 });
 
 test('unknown and legacy administrator roles default to no permissions', () => {
@@ -54,4 +55,14 @@ test('permission middleware returns 401, 403, and allows an exact grant', () => 
     let advanced = false;
     middleware({ user: { role: 'SYSTEM_ADMIN' } }, response, () => { advanced = true; });
     assert.equal(advanced, true);
+});
+
+test('Department Accounts are denied by every messaging permission guard', () => {
+    const middleware = authorizePermissions(PERMISSIONS.PRIVATE_MESSAGES_VIEW);
+    let status;
+    middleware({ user: { role: 'DEPARTMENT_HEAD' } }, { status(value) { status = value; return this; }, json() { return this; } },
+        () => assert.fail('Department Account advanced into messaging'));
+    assert.equal(status, 403);
+    assert.equal(roleHasPermission('STUDENT', PERMISSIONS.PRIVATE_MESSAGES_VIEW), true);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.PRIVATE_MESSAGES_VIEW), true);
 });

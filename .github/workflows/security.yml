@@ -28,7 +28,7 @@ jobs:
         run: npm ci --ignore-scripts && npm test && npm audit --omit=dev --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../backend-sbom.json
       - name: Frontend verification
         working-directory: frontend
-        run: npm ci --ignore-scripts && npm test && npm run lint && npm run build && npm audit --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../frontend-sbom.json
+        run: npm ci --ignore-scripts && npm test && npm run lint && npm run build && npm run audit:performance && npm audit --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../frontend-sbom.json
       - name: Reject tracked secrets and backups
         shell: bash
         run: |

@@ -10,6 +10,14 @@ test("OpenAPI contract parses and documents critical endpoint groups", () => {
     assert.match(spec.openapi, /^3\./);
     for (const route of ["/login", "/auth/google/link", "/auth/google/login", "/google-registrations", "/google-registrations/{id}/approve", "/google-registrations/{id}/reject", "/messages/unread-count", "/students/me", "/students/me/violations", "/students/me/community-service/dtr", "/student/clearance/certificate", "/certificates/clearance/{code}", "/parent-contact/{studentId}", "/violations/{id}/actions", "/community-service/attendance/time-in", "/community-service/attendance/time-out", "/community-service/{assignmentId}/sessions", "/clearance/student/{studentId}/eligibility", "/reports/dtr", "/audit-logs", "/health"]) assert.ok(spec.paths[route], `OpenAPI missing ${route}`);
     for (const schema of ["StudentSummary", "Violation", "ViolationAction", "CommunityServiceAssignment", "DtrSession", "ServiceProgress", "Clearance", "AuditEntry", "ErrorResponse", "PaginationMetadata"]) assert.ok(spec.components.schemas[schema], `OpenAPI missing ${schema}`);
+    assert.equal(spec.components.securitySchemes.sessionCookie.name, 'sti_session');
+    assert.equal(spec.components.securitySchemes.csrfHeader.name, 'X-CSRF-Token');
+    assert.deepEqual(spec.security, [{ sessionCookie: [] }]);
+    const studentMessage = spec.paths['/messages/conversations'].post.requestBody.content['application/json'].schema.oneOf[0];
+    assert.deepEqual(studentMessage.required, ['subject', 'message']);
+    assert.equal(studentMessage.additionalProperties, false);
+    assert.equal('recipient_department_id' in studentMessage.properties, false);
+    assert.match(spec.paths['/messages/conversations'].post.description, /Department Accounts receive 403/);
 });
 
 test("validation and error envelopes expose stable machine-readable contracts", () => {

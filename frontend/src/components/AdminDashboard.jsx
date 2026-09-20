@@ -5,12 +5,12 @@ import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 
-function AdminDashboard({ students = [], violations = [], assignments = [], activeSessions = [], pendingRegistrations = 0, unreadMessages = 0, loading, role, onNavigate }) {
+function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], pendingRegistrations = 0, unreadMessages = 0, loading, role, onNavigate }) {
   const openViolations = violations.filter((item) => active(item.status)).length
   const nonCompliant = new Set(violations.filter((item) => active(item.status)).map((item) => item.student_id)).size
   const activeAssignments = assignments.filter((item) => active(item.status || 'OPEN')).length
   const timedIn = activeSessions.length
-  const clearanceReady = assignments.filter((item) => Number(item.remaining_hours) <= 0 && !active(item.status)).length
+  const clearanceReady = clearanceRecords.filter((item) => item.status === 'PENDING').length
   const required = assignments.reduce((sum,item)=>sum+(Number(item.required_hours)||0),0)
   const remaining = assignments.reduce((sum,item)=>sum+(Number(item.remaining_hours)||0),0)
   const completed = Math.max(0, required-remaining)

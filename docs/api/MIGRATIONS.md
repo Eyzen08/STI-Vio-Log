@@ -11,13 +11,14 @@ npm run migrate:status
 npm run migrate
 npm test
 npm run test:migrations
+npm run test:violation-integration
 ```
 
 `migrate:status` shows applied/pending files. A second `migrate` is idempotent.
 
 ## Environment
 
-Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD`. Configure `DB_SSL=disable`, `require`, or `no-verify` according to the provider. `JWT_SECRET` must be at least 32 characters. Never commit real secrets.
+Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` for normal runtime and migration operations. PostgreSQL integration suites additionally require an explicit `TEST_DATABASE_URL` pointing to a separate test database; the suites refuse a URL matching `DATABASE_URL`, `MIGRATION_DATABASE_URL`, or the legacy runtime database settings. Configure `DB_SSL=disable`, `require`, or `no-verify` according to the provider. Never commit real secrets.
 
 ## Deployment procedure
 
@@ -29,7 +30,7 @@ Use either `DATABASE_URL` or `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB
 6. Call `GET /api/health` and require HTTP 200 with database `connected`.
 7. Smoke-test login, a protected read, and the critical DTR flow.
 
-This procedure does not claim zero-downtime migration support. Disposable integration tests use guarded `sti_vio_log_test_*` schemas and never wipe the configured development schema.
+This procedure does not claim zero-downtime migration support. Disposable integration tests use guarded `sti_vio_log_test_*` schemas inside the dedicated `TEST_DATABASE_URL` database and remove them afterward.
 
 Migration `005_google_identity_links.sql` adds only the identity-link storage foundation. Its independent unique constraints prevent one local user from linking multiple Google subjects and prevent one Google subject from linking multiple users, including under concurrent inserts. Applying it does not enable Google login or require Google credentials.
 

@@ -13,7 +13,7 @@ test('each supported role receives its own dashboard and navigation', () => {
   assert.deepEqual(getNavItems('STUDENT').map(({ label }) => label), [
     'Dashboard', 'My Profile', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
   ])
-  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Messages', 'Notifications'])
+  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Notifications'])
   const adminReviewItems = getNavItems('DISCIPLINE_ADMIN').filter(({ view }) => view === 'Registrations')
   assert.deepEqual(adminReviewItems.map(({ label }) => label), ['Registration & Duplicate Review'])
 })
@@ -51,7 +51,7 @@ test('protected routes permit only their declared roles', () => {
   assert.equal(resolveRoute('/student/notifications', 'DEPARTMENT_HEAD').status, 'unauthorized')
   assert.equal(resolveRoute('/student/messages', 'STUDENT').status, 'allowed')
   assert.equal(resolveRoute('/admin/messages', 'DISCIPLINE_OFFICE').status, 'allowed')
-  assert.equal(resolveRoute('/department/messages', 'DEPARTMENT_HEAD').status, 'allowed')
+  assert.equal(resolveRoute('/department/messages', 'DEPARTMENT_HEAD').status, 'not_found')
   assert.equal(resolveRoute('/department/dtr', 'STUDENT').status, 'unauthorized')
   assert.equal(resolveRoute('/department/qr-scan', 'DISCIPLINE_ADMIN').status, 'unauthorized')
 })
@@ -70,9 +70,6 @@ test('public, unauthorized, and unknown locations resolve explicitly', () => {
   assert.equal(resolveRoute('/not-a-real-page', 'DISCIPLINE_ADMIN').status, 'not_found')
 })
 
-test('deprecated department authentication links do not point to missing pages', async () => {
-  const source = await readFile(new URL('../src/components/GoogleDepartmentAccess.jsx', import.meta.url), 'utf8')
-  assert.doesNotMatch(source, /\/department\/login/)
-  assert.doesNotMatch(source, /\/department\/register/)
-  assert.match(source, /onNavigate\('\/login'\)/)
+test('retired department Google authentication UI is absent', async () => {
+  await assert.rejects(readFile(new URL('../src/components/GoogleDepartmentAccess.jsx', import.meta.url), 'utf8'), { code: 'ENOENT' })
 })

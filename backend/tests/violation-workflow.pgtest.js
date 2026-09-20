@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Pool } = require('pg');
 const { listMigrationFiles } = require('../scripts/migrate');
+const { testDatabaseConfig } = require('./testDatabase');
 
 require('dotenv').config({ quiet: true });
 
@@ -16,13 +17,9 @@ if (!/^sti_vio_log_test_[a-z0-9_]+$/.test(schemaName)) {
 process.env.DB_SCHEMA = schemaName;
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'this-is-a-secure-test-secret-123456';
 
-const adminPool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD
-});
+const dedicatedDatabase = testDatabaseConfig();
+process.env.DATABASE_URL = dedicatedDatabase.connectionString;
+const adminPool = new Pool(dedicatedDatabase);
 
 let app;
 let pool;

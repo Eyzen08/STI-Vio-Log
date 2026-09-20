@@ -9,7 +9,7 @@ Run this checklist on a dedicated test student and test violation. Do not use a 
 - [ ] Prepare one unlinked Google test account and one issued Student Number/password account.
 - [ ] Confirm every test account can log out and that a revoked or deactivated account cannot reuse an old session.
 
-Never place passwords, Google credentials, or JWTs in screenshots or test notes.
+Never place passwords, Google credentials, session cookies, or CSRF tokens in screenshots or test notes.
 
 ## 2. Student registration and authentication
 
@@ -82,13 +82,13 @@ Release only when every applicable item passes, failures are documented and corr
 # Unified authentication acceptance
 
 - [ ] All roles sign in through `/login` without selecting a role.
-- [ ] ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
+- [ ] SYSTEM_ADMIN, DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
 - [ ] A Student registration remains inactive until the email OTP is verified.
 - [ ] Registration OTP expires, cannot be reused, and resend invalidates the previous code.
 - [ ] Forgot-password responses do not reveal whether a Student account exists.
 - [ ] Password reset requires OTP verification and a single-use reset authorization.
 - [ ] Existing sessions stop working after a successful password reset.
-- [ ] Only ADMIN can create or manage staff and Department Accounts.
+- [ ] Only DISCIPLINE_ADMIN can create or manage staff and Department Accounts.
 - [ ] Temporary-password accounts cannot call business APIs until changing password.
 - [ ] Password fields have keyboard-accessible show/hide controls.
 - [ ] SMTP variables are configured in Render before production testing.

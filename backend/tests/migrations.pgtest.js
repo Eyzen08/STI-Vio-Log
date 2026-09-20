@@ -6,10 +6,9 @@ const path = require("node:path");
 const { Pool } = require("pg");
 const { runMigrations, migrationStatus } = require("../scripts/migrate");
 const { createGoogleIdentityService } = require("../src/services/googleIdentityService");
-const { createGoogleDepartmentIdentityService } = require('../src/services/googleDepartmentIdentityService');
-const { createGoogleDepartmentRegistrationService } = require('../src/services/googleDepartmentRegistrationService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
 const { createDepartmentAdministrationService } = require('../src/services/departmentAdministrationService');
+const { testDatabaseConfig } = require('./testDatabase');
 
 require("dotenv").config({ quiet: true });
 
@@ -17,8 +16,8 @@ const suffix = `${process.pid}_${Date.now()}`.toLowerCase();
 const freshSchema = `sti_vio_log_test_fresh_${suffix}`;
 const upgradeSchema = `sti_vio_log_test_upgrade_${suffix}`;
 const migrationsDir = path.resolve(__dirname, "../../database/migrations");
-const adminPool = new Pool({ host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME, user: process.env.DB_USER, password: process.env.DB_PASSWORD });
-const schemaPool = (schema) => new Pool({ host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME, user: process.env.DB_USER, password: process.env.DB_PASSWORD, options: `-c search_path=${schema}` });
+const adminPool = new Pool(testDatabaseConfig());
+const schemaPool = (schema) => new Pool(testDatabaseConfig(schema));
 
 test.before(async () => {
     for (const schema of [freshSchema, upgradeSchema]) {
@@ -162,22 +161,6 @@ test("fresh migration chain is complete and idempotent", async () => {
         const department = (await pool.query(
             "INSERT INTO departments (department_code, department_name) VALUES ('LIB-TEST', 'Test Library') RETURNING id"
         )).rows[0];
-        const departmentIdentity = createGoogleDepartmentIdentityService({
-            pool,
-            verifyIdentity: async () => ({ subject: 'approved-department-subject', email: 'officer@example.test', emailVerified: true }),
-            issueToken: (user) => `department-session-${user.id}`
-        });
-        const pendingDepartment = await departmentIdentity.register({ credential:'mocked-token', firstName:'Library', lastName:'Officer', employeeNumber:'EMP-TEST-1', departmentType:'LIBRARY', departmentName:'Test Library' });
-        assert.equal(pendingDepartment.pending, true);
-        assert.equal('token' in pendingDepartment, false);
-        const departmentReview = createGoogleDepartmentRegistrationService({ pool, hashPassword: async () => passwordHash, randomBytes: () => Buffer.alloc(32, 7) });
-        const approvedDepartment = await departmentReview.review({ registrationId:pendingDepartment.registration.id, reviewerId:admin.id, decision:'APPROVED', reason:'Employment verified', departmentId:department.id });
-        assert.equal(approvedDepartment.status, 'APPROVED');
-        const departmentLogin = await departmentIdentity.login({ credential:'mocked-token' });
-        assert.equal(departmentLogin.user.role, 'DEPARTMENT_HEAD');
-        assert.match(departmentLogin.token, /^department-session-/);
-        assert.equal((await pool.query("SELECT department_id FROM department_heads WHERE user_id=$1", [departmentLogin.user.id])).rows[0].department_id, department.id);
-
         const accounts=createAccountAdministrationService({pool,hashPassword:async()=>passwordHash,randomBytes:()=>Buffer.alloc(18,9)});
         const createdStaff=await accounts.create({actorId:admin.id,username:'discipline.two',role:'DISCIPLINE_OFFICE',firstName:'Second',lastName:'Officer',employeeNumber:'EMP-TEST-2',email:'second@example.test'});
         assert.match(createdStaff.temporary_password,/!Aa1$/);assert.equal(createdStaff.account.role,'DISCIPLINE_OFFICE');

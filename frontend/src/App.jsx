@@ -39,12 +39,12 @@ import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
-import { API_URL, apiRequest, login } from './lib/api.js'
+import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
-import stiVioLogLogo from './assets/sti-vio-log-logo-web.png'
+import stiVioLogLogo from './assets/sti-logo-web.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
@@ -58,7 +58,6 @@ import { iconNameForView } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import './App.css'
-import './styles/portal-system.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
@@ -91,15 +90,38 @@ function App() {
   const [routePath, setRoutePath] = useState(() => window.location.pathname)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [activeView, setActiveView] = useState('Dashboard')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [mfaState,setMfaState]=useState(null)
 
-  const [token, setToken] = useState(initialSession.token)
-  const [user, setUser] = useState(initialSession.user)
+  const [token, setToken] = useState('')
+  const [user, setUser] = useState(null)
+  const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
 
-  useEffect(()=>{if(!initialSession.user)return;let active=true;apiRequest('/api/auth/session').then(data=>{if(active&&data.user){saveSession(data);setUser(data.user);setToken('cookie-session')}}).catch(()=>{if(active){clearSession();setUser(null);setToken('')}});return()=>{active=false}},[initialSession.user])
+  useEffect(() => {
+    if (!initialSession.user) {
+      setSessionRestoring(false)
+      return undefined
+    }
+    let active = true
+    apiRequest('/api/auth/session')
+      .then((data) => {
+        if (active && data.user) {
+          saveSession(data)
+          setUser(data.user)
+          setToken('cookie-session')
+        }
+      })
+      .catch(() => {
+        if (active) {
+          clearSession()
+          setUser(null)
+          setToken('')
+        }
+      })
+      .finally(() => { if (active) setSessionRestoring(false) })
+    return () => { active = false }
+  }, [initialSession.user])
 
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
@@ -121,6 +143,7 @@ function App() {
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
   const [studentNotifications, setStudentNotifications] = useState([])
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activeServiceSessions, setActiveServiceSessions] = useState([])
   const [notificationActionError, setNotificationActionError] = useState('')
   const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
@@ -148,6 +171,19 @@ function App() {
   }, [token, user?.password_change_required])
 
   useEffect(() => {
+    const expireSession = () => {
+      realtimeSocket?.disconnect()
+      setRealtimeSocket(null)
+      setToken('')
+      setUser(null)
+      setUnreadMessages(0)
+      setUnreadNotificationCount(0)
+    }
+    window.addEventListener('sti:session-expired', expireSession)
+    return () => window.removeEventListener('sti:session-expired', expireSession)
+  }, [realtimeSocket])
+
+  useEffect(() => {
     if (!realtimeSocket) return undefined
     const refreshServiceData = () => { setDashboardRefreshKey((current) => current + 1); refreshPendingActions() }
     realtimeSocket.on('community-service:changed', refreshServiceData)
@@ -168,9 +204,11 @@ function App() {
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.message || 'Unable to mark this notification as read.')
+      const wasUnread = studentNotifications.some((item) => Number(item.id) === Number(notificationId) && !item.is_read)
       setStudentNotifications((items) => items.map((item) => Number(item.id) === Number(notificationId)
         ? { ...item, is_read: true, read_at: data.notification?.read_at || new Date().toISOString() }
         : item))
+      if (wasUnread) setUnreadNotificationCount((count) => Math.max(0, count - 1))
     } catch (error) {
       setNotificationActionError(error.message)
     }
@@ -186,9 +224,11 @@ function App() {
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.message || 'Unable to acknowledge this security notification.')
+      const wasUnread = studentNotifications.some((item) => Number(item.id) === Number(notificationId) && !item.is_read)
       setStudentNotifications((items) => items.map((item) => Number(item.id) === Number(notificationId)
         ? { ...item, is_read: true, read_at: data.notification?.read_at, acknowledged_at: data.notification?.acknowledged_at }
         : item))
+      if (wasUnread) setUnreadNotificationCount((count) => Math.max(0, count - 1))
     } catch (error) {
       setNotificationActionError(error.message)
     }
@@ -336,6 +376,7 @@ function App() {
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.message || 'Unable to mark notifications as read.')
       setStudentNotifications((items) => items.map((item) => category === 'ALL' || item.category === category ? { ...item, is_read: true, read_at: new Date().toISOString() } : item))
+      setUnreadNotificationCount((count) => category === 'ALL' ? 0 : Math.max(0, count - Number(data.updated || 0)))
     } catch (error) { setNotificationActionError(error.message) }
   })
 
@@ -367,6 +408,7 @@ function App() {
     userRole === 'STUDENT'
 
   const routeResolution = resolveRoute(routePath, userRole)
+  const activeView = routeResolution.status === 'allowed' ? routeResolution.route.view : ''
 
   useEffect(() => {
     applyPageMetadata(metadataForRoute(routePath, routeResolution.route?.label))
@@ -500,7 +542,7 @@ function App() {
 
   const badgeForNavigationItem = (item) => {
     if (item.view === 'Messages') return { count: unreadMessages, label: 'unread messages' }
-    if (item.view === 'Notifications') return { count: studentNotifications.filter((notification) => !notification.is_read).length, label: 'unread notifications' }
+    if (item.view === 'Notifications') return { count: unreadNotificationCount, label: 'unread notifications' }
     if (item.view === 'Registrations') return { count: pendingAccountCounts.students, label: 'pending registrations' }
     if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'pending service reviews' }
     if (item.path === '/admin/support-access') return { count: pendingActionCounts.supportAccess, label: 'pending support approvals' }
@@ -521,6 +563,7 @@ function App() {
   }, [])
 
   useEffect(() => {
+    if (sessionRestoring) return
     if (!isLoggedIn) {
       if (routePath === '/' || routeResolution.status === 'unauthorized') navigateTo('/login', { replace: true })
       return
@@ -536,74 +579,10 @@ function App() {
       return
     }
 
-    if (routeResolution.status === 'allowed') {
-      if (routeResolution.redirectTo) {
-        navigateTo(routeResolution.redirectTo, { replace: true })
-        return
-      }
-      setActiveView(routeResolution.route.view)
+    if (routeResolution.status === 'allowed' && routeResolution.redirectTo) {
+      navigateTo(routeResolution.redirectTo, { replace: true })
     }
-  }, [isLoggedIn, routePath, routeResolution.redirectTo, routeResolution.route, routeResolution.status, user, userRole])
-
-  const openViolationsCount = violations.filter(
-    (violation) =>
-      ['OPEN', 'IN_PROGRESS'].includes(violation.status)
-  ).length
-
-  const totalStudents = students.length
-
-  const pendingViolations = violations.filter(
-    (violation) =>
-      ['OPEN', 'IN_PROGRESS'].includes(violation.status)
-  ).length
-
-  const studentsOnService = communityServiceAssignments.filter(
-    (assignment) =>
-      ['OPEN', 'IN_PROGRESS'].includes(
-        assignment.status || 'OPEN'
-      )
-  ).length
-
-  const clearedViolations = violations.filter(
-    (violation) =>
-      violation.status === 'CLEARED'
-  ).length
-
-  const goodStandingStudents = Math.max(
-    0,
-    totalStudents - pendingViolations
-  )
-
-  const dashboardStats = [
-    {
-      label: 'Total Students',
-      value: totalStudents
-    },
-    {
-      label: 'Open Violations',
-      value: openViolationsCount
-    },
-    {
-      label: 'Pending Violations',
-      value: pendingViolations
-    },
-    {
-      label: 'Students on Community Service',
-      value: studentsOnService
-    },
-    {
-      label: 'Non-Compliant Students',
-      value: Math.max(0, pendingViolations)
-    },
-    {
-      label: 'Cleared Students',
-      value: clearedViolations
-    },
-    {
-      label: 'Good Standing Students',
-      value: goodStandingStudents
-    }
-  ]
+  }, [isLoggedIn, routePath, routeResolution.redirectTo, routeResolution.route, routeResolution.status, sessionRestoring, user, userRole])
 
   /*
    * ============================================================
@@ -626,6 +605,7 @@ function App() {
       setStudentDtr(null)
       setStudentDtrError('')
       setStudentNotifications([])
+      setUnreadNotificationCount(0)
       setActiveServiceSessions([])
       return
     }
@@ -644,6 +624,7 @@ function App() {
           const notificationsData = await notificationsResponse.json().catch(() => ({}))
           if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load system notifications')
           setStudentNotifications(notificationsData.notifications || [])
+          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
           return
         }
 
@@ -655,30 +636,24 @@ function App() {
 
         if (isAdmin) {
           const [
-            studentsResponse,
-            violationsResponse,
+            allStudents,
+            allViolations,
             violationTypesResponse,
-            assignmentsResponse,
+            allAssignments,
             clearanceResponse,
             destinationsResponse,
             notificationsResponse,
             activeSessionsResponse
           ] = await Promise.all([
-            fetch(`${API_URL}/api/students`, {
-              headers: authHeaders
-            }),
+            loadAllPages('/api/students', 'students', { headers: authHeaders }),
 
-            fetch(`${API_URL}/api/violations?limit=100`, {
-              headers: authHeaders
-            }),
+            loadAllPages('/api/violations', 'violations', { headers: authHeaders }),
 
             fetch(`${API_URL}/api/violations/types`, {
               headers: authHeaders
             }),
 
-            fetch(`${API_URL}/api/community-service`, {
-              headers: authHeaders
-            }),
+            loadAllPages('/api/community-service', 'assignments', { headers: authHeaders }),
 
             fetch(`${API_URL}/api/clearance`, {
               headers: authHeaders
@@ -692,10 +667,7 @@ function App() {
           ])
 
           if (
-            !studentsResponse.ok ||
-            !violationsResponse.ok ||
             !violationTypesResponse.ok ||
-            !assignmentsResponse.ok ||
             !clearanceResponse.ok ||
             !destinationsResponse.ok ||
             !notificationsResponse.ok ||
@@ -706,17 +678,8 @@ function App() {
             )
           }
 
-          const studentsData =
-            await studentsResponse.json()
-
-          const violationsData =
-            await violationsResponse.json()
-
           const violationTypesData =
             await violationTypesResponse.json()
-
-          const assignmentsData =
-            await assignmentsResponse.json()
 
           const clearanceData =
             await clearanceResponse.json()
@@ -725,13 +688,9 @@ function App() {
           const notificationsData = await notificationsResponse.json()
           const activeSessionsData = await activeSessionsResponse.json()
 
-          setStudents(
-            studentsData.students || []
-          )
+          setStudents(allStudents)
 
-          setViolations(
-            violationsData.violations || []
-          )
+          setViolations(allViolations)
 
           setViolationTypes(
             (violationTypesData.violationTypes || []).filter((type) =>
@@ -739,11 +698,10 @@ function App() {
             )
           )
 
-          setCommunityServiceAssignments(
-            assignmentsData.assignments || []
-          )
+          setCommunityServiceAssignments(allAssignments)
           setCommunityServiceDestinations(destinationsData.destinations || [])
           setStudentNotifications(notificationsData.notifications || [])
+          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
           setActiveServiceSessions(activeSessionsData.sessions || [])
 
           setClearanceRecords(
@@ -760,22 +718,22 @@ function App() {
          */
 
         if (isDepartmentHead) {
-          const [assignmentsResponse, notificationsResponse] = await Promise.all([
-            fetch(`${API_URL}/api/community-service?limit=100`, { headers: authHeaders }),
+          const [allAssignments, notificationsResponse] = await Promise.all([
+            loadAllPages('/api/community-service', 'assignments', { headers: authHeaders }),
             fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
           ])
-          const assignmentsData = await assignmentsResponse.json().catch(() => ({}))
           const notificationsData = await notificationsResponse.json().catch(() => ({}))
 
-          if (!assignmentsResponse.ok || !notificationsResponse.ok) throw new Error(assignmentsData.message || notificationsData.message || 'Unable to load assigned community service')
+          if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load assigned community service')
 
           setStudents([])
           setViolations([])
-          setCommunityServiceAssignments(assignmentsData.assignments || [])
+          setCommunityServiceAssignments(allAssignments)
           setClearanceRecords([])
           setDepartmentDtr(null)
           setDepartmentNonCompliance(null)
           setStudentNotifications(notificationsData.notifications || [])
+          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
 
           return
         }
@@ -812,6 +770,7 @@ function App() {
           setCommunityServiceAssignments(assignmentsData.assignments || [])
           setStudentDtr(dtrData)
           setStudentNotifications(notificationsData.notifications || [])
+          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
           setClearanceRecords(clearanceData.clearanceRecords || [])
           setClearanceEligibility(eligibilityData)
 
@@ -835,6 +794,7 @@ function App() {
         setDepartmentDtr(null)
         setStudentDtr(null)
         setStudentNotifications([])
+        setUnreadNotificationCount(0)
         setActiveServiceSessions([])
       } finally {
         setDashboardLoading(false)
@@ -1162,24 +1122,9 @@ function App() {
         profile_image: ''
       })
 
-      const refreshedStudents =
-        await fetch(
-          `${API_URL}/api/students`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        )
-
-      if (refreshedStudents.ok) {
-        const refreshedData =
-          await refreshedStudents.json()
-
-        setStudents(
-          refreshedData.students || []
-        )
-      }
+      setStudents(await loadAllPages('/api/students', 'students', {
+        headers: { Authorization: `Bearer ${token}` }
+      }))
       setIsStudentFormOpen(false)
     } catch (studentError) {
       setStudentFormError(
@@ -1220,7 +1165,7 @@ function App() {
 
       const response =
         await fetch(
-          `${API_URL}/api/violations?limit=100`,
+          `${API_URL}/api/violations`,
           {
             method: 'POST',
 
@@ -1257,24 +1202,9 @@ function App() {
         incident_details: ''
       })
 
-      const refreshedViolations =
-        await fetch(
-          `${API_URL}/api/violations`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        )
-
-      if (refreshedViolations.ok) {
-        const refreshedData =
-          await refreshedViolations.json()
-
-        setViolations(
-          refreshedData.violations || []
-        )
-      }
+      setViolations(await loadAllPages('/api/violations', 'violations', {
+        headers: { Authorization: `Bearer ${token}` }
+      }))
       setIsViolationFormOpen(false)
     } catch (violationError) {
       setViolationFormError(
@@ -1352,24 +1282,9 @@ function App() {
           department_head_id: ''
         })
 
-        const refreshedAssignments =
-          await fetch(
-            `${API_URL}/api/community-service`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            }
-          )
-
-        if (refreshedAssignments.ok) {
-          const refreshedData =
-            await refreshedAssignments.json()
-
-          setCommunityServiceAssignments(
-            refreshedData.assignments || []
-          )
-        }
+        setCommunityServiceAssignments(await loadAllPages('/api/community-service', 'assignments', {
+          headers: { Authorization: `Bearer ${token}` }
+        }))
         setIsCommunityServiceFormOpen(false)
       } catch (assignmentError) {
         setCommunityServiceFormError(
@@ -1746,8 +1661,6 @@ function App() {
     setCommunityServiceAssignments([])
     setClearanceRecords([])
 
-    setActiveView('Dashboard')
-
     // Force a clean document load after sign-out so Safari cannot retain a
     // protected route or an authenticated in-memory component tree.
     window.location.replace(new URL('/login', window.location.href).href)
@@ -1896,6 +1809,10 @@ function App() {
      * ==========================================================
      */
 
+    if (sessionRestoring) {
+      return <div className="route-loading" role="status">Restoring your secure sessionâ€¦</div>
+    }
+
     if (routePath === '/privacy' || routePath === '/terms') {
       return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} />
     }
@@ -1924,6 +1841,10 @@ function App() {
       )
     }
 
+    if (user?.password_change_required) {
+      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={handleLogout} />
+    }
+
     if (userRole === 'SYSTEM_ADMIN' && activeView === 'System Dashboard') {
       return <SystemDashboard token={token} user={user} />
     }
@@ -1947,16 +1868,17 @@ function App() {
       return <StaffProfile user={user} onNavigate={navigateTo} />
     }
 
-    if (user?.password_change_required) {
-      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={handleLogout} />
-    }
-
     if (routeResolution.status === 'unauthorized') {
       return <RouteStatePage type="unauthorized" onGoHome={() => navigateTo(getHomePath(userRole))} />
     }
 
     if (routeResolution.status === 'not_found') {
       return <RouteStatePage type="not_found" onGoHome={() => navigateTo(getHomePath(userRole))} />
+    }
+
+    if (activeView === 'Account Settings') {
+      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings token={token} onSession={acceptSession} />
+      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
     }
 
     /*
@@ -2046,140 +1968,6 @@ function App() {
 
       if (activeView === 'Notifications') {
         return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} actionBusy={mutationBusy} audience="STUDENT" />
-      }
-
-      if (activeView === 'Legacy Clearance') {
-        return (
-          <section className="table-card">
-            <div className="table-header">
-              <h3>
-                My Clearance
-              </h3>
-
-              <span>
-                {clearanceRecords.length}{' '}
-                records
-              </span>
-            </div>
-
-            {clearanceRecords.length === 0 ? (
-              <p className="empty-state">
-                No clearance records found.
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table className="management-record-table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Academic Year
-                      </th>
-
-                      <th>
-                        Semester
-                      </th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>
-                        Active Violation
-                      </th>
-
-                      <th>
-                        Pending Service
-                      </th>
-
-                      <th>
-                        Cleared By
-                      </th>
-
-                      <th>
-                        Cleared At
-                      </th>
-
-                      <th>
-                        Remarks
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {clearanceRecords.map(
-                      (record) => (
-                        <tr
-                          key={
-                            record.id
-                          }
-                        >
-                          <td data-label="Student">
-                            {
-                              record.academic_year
-                            }
-                          </td>
-
-                          <td data-label="Program">
-                            {
-                              record.semester
-                            }
-                          </td>
-
-                          <td data-label="Section">
-                            <span className="status-badge">
-                              {
-                                record.status
-                              }
-                            </span>
-                          </td>
-
-                          <td data-label="Year">
-                            {
-                              record.has_active_violation
-                                ? 'Yes'
-                                : 'No'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.has_pending_service
-                                ? 'Yes'
-                                : 'No'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.cleared_by
-                                ? `User #${record.cleared_by}`
-                                : '—'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.cleared_at
-                                ? formatManilaDateTime(record.cleared_at)
-                                : '—'
-                            }
-                          </td>
-
-                          <td>
-                            {
-                              record.remarks ||
-                              '—'
-                            }
-                          </td>
-                        </tr>
-                      )
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        )
       }
 
       /*
@@ -2273,7 +2061,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
     }
 
     /*
@@ -2304,14 +2092,6 @@ function App() {
 
     if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Departments & Officer Accounts') {
       return <AdminDepartmentOfficers token={token} />
-    }
-
-    if (activeView === 'Account Settings' && userRole !== 'DISCIPLINE_ADMIN') {
-      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
-    }
-
-    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Account Settings') {
-      return <AdminAccountSettings token={token} onSession={acceptSession} />
     }
 
     if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Audit Log') {
@@ -3599,280 +3379,6 @@ function App() {
       )
     }
 
-    /*
-     * ==========================================================
-     * ADMIN DASHBOARD
-     * ==========================================================
-     */
-
-    return (
-      <>
-        <section className="stats-grid">
-          {dashboardStats.map(
-            (stat) => (
-              <article
-                className="stat-card"
-                key={stat.label}
-              >
-                <span>
-                  {stat.label}
-                </span>
-
-                <strong>
-                  {stat.value}
-                </strong>
-              </article>
-            )
-          )}
-        </section>
-
-        <section className="table-card dashboard-summary">
-          <div className="table-header">
-            <h3>
-              Violation dashboard
-            </h3>
-
-            <span>
-              {dashboardLoading
-                ? 'Loading...'
-                : `${violations.length} entries`}
-            </span>
-          </div>
-
-          <div className="dashboard-summary-grid">
-            <div>
-              <h4>
-                At-a-glance
-              </h4>
-
-              <ul>
-                <li>
-                  Open cases:{' '}
-                  {openViolationsCount}
-                </li>
-
-                <li>
-                  Pending service:{' '}
-                  {studentsOnService}
-                </li>
-
-                <li>
-                  Cleared cases:{' '}
-                  {clearedViolations}
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4>
-                Most recent records
-              </h4>
-
-              <ul>
-                {violations
-                  .slice(0, 4)
-                  .map(
-                    (violation) => (
-                      <li
-                        key={
-                          violation.id
-                        }
-                      >
-                        #{violation.id} ·
-                        Student{' '}
-                        {
-                          violation.student_id
-                        } ·{' '}
-                        {
-                          violation.status
-                        }
-                      </li>
-                    )
-                  )}
-
-                {violations.length ===
-                  0 && (
-                  <li>
-                    No violations
-                    available.
-                  </li>
-                )}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        <section className="table-card">
-          <div className="table-header">
-            <h3>
-              Student roster
-            </h3>
-
-            <span>
-              {dashboardLoading
-                ? 'Loading...'
-                : `${students.length} records`}
-            </span>
-          </div>
-
-          {students.length === 0 &&
-          !dashboardLoading ? (
-            <p className="empty-state">
-              No student records returned
-              for the current account.
-            </p>
-          ) : (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      Student
-                    </th>
-
-                    <th>
-                      Program
-                    </th>
-
-                    <th>
-                      Section
-                    </th>
-
-                    <th>
-                      Year
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {students.map(
-                    (student) => (
-                      <tr
-                        key={
-                          student.id
-                        }
-                      >
-                        <td>
-                          <div className="student-cell">
-                            <OffenseIndicator level={student.offense_indicator_level} compact />
-                            <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
-                          </div>
-                        </td>
-
-                        <td>
-                          {
-                            student.program ||
-                            '—'
-                          }
-                        </td>
-
-                        <td>
-                          {
-                            student.section ||
-                            '—'
-                          }
-                        </td>
-
-                        <td>
-                          {
-                            student.year_level ||
-                            '—'
-                          }
-                        </td>
-                      </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section className="table-card">
-          <div className="table-header">
-            <h3>
-              Recent violations
-            </h3>
-
-            <span>
-              {dashboardLoading
-                ? 'Loading...'
-                : `${violations.length} entries`}
-            </span>
-          </div>
-
-          {violations.length === 0 &&
-          !dashboardLoading ? (
-            <p className="empty-state">
-              No violations available.
-            </p>
-          ) : (
-            <div className="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>
-                      ID
-                    </th>
-
-                    <th>
-                      Student
-                    </th>
-
-                    <th>Incident</th>
-
-                    <th>
-                      Status
-                    </th>
-
-                    <th>Required service</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {violations
-                    .slice(0, 8)
-                    .map(
-                      (violation) => (
-                        <tr
-                          key={
-                            violation.id
-                          }
-                        >
-                          <td>
-                            #{violation.id}
-                          </td>
-
-                          <td>
-                            <div className="student-cell">
-                              <OffenseIndicator level={violation.offense_indicator_level} compact />
-                              <span><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></span>
-                            </div>
-                          </td>
-
-                          <td>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
-
-                          <td>
-                            <span className="status-badge">
-                              {
-                                violation.status
-                              }
-                            </span>
-                          </td>
-
-                          <td>
-                            {formatDuration(violation.required_service_hours)}
-                          </td>
-                        </tr>
-                      )
-                    )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </>
-    )
   }
 
   /*
@@ -3899,8 +3405,8 @@ function App() {
             className="brand-logo"
             src={stiVioLogLogo}
             alt="STI Vio-Log Discipline Office Portal"
-            width="620"
-            height="349"
+            width="420"
+            height="236"
           />
           <img className="brand-favicon" src="/favicon-32.png" alt="STI Vio-Log" width="32" height="32" />
 
@@ -3971,7 +3477,7 @@ function App() {
             </button>
 
             <button className="mobile-brand" type="button" onClick={() => navigateTo(getHomePath(userRole))} aria-label="STI Vio-Log home">
-              <img src={stiVioLogLogo} alt="" width="620" height="349" />
+              <img src={stiVioLogLogo} alt="" width="420" height="236" />
               <span>STI Vio-Log</span>
             </button>
 
@@ -3982,7 +3488,7 @@ function App() {
 
           {isLoggedIn && (
             <div className="account-actions">
-              <button className="notification-button" type="button" aria-label={`${studentNotifications.filter((item)=>!item.is_read).length} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{studentNotifications.some((item)=>!item.is_read)&&<b>{studentNotifications.filter((item)=>!item.is_read).length}</b>}</button>
+              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <b>{formatActionCount(unreadNotificationCount)}</b>}</button>
               <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
             </div>
           )}

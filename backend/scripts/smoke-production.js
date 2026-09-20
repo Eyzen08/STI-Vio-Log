@@ -20,18 +20,29 @@ const runProductionSmoke = async ({ apiOrigin, frontendOrigin, fetchImpl = fetch
   const healthBody = await health.json();
   if (healthBody?.success !== true || healthBody?.database !== 'connected') throw new Error('API health did not confirm database connectivity');
 
-  await requireStatus(await fetchImpl(`${frontend}/student/login`, { redirect: 'manual' }), 200, 'Frontend direct route');
+  await requireStatus(await fetchImpl(`${frontend}/login`, { redirect: 'manual' }), 200, 'Frontend direct route');
+  const proxyHealth = await requireStatus(await fetchImpl(`${frontend}/api/health`), 200, 'Frontend API proxy');
+  const proxyHealthBody = await proxyHealth.json();
+  if (proxyHealthBody?.success !== true || proxyHealthBody?.database !== 'connected') throw new Error('Frontend API proxy did not confirm database connectivity');
   await requireStatus(await fetchImpl(`${api}/api/students/me`), 401, 'Protected endpoint');
 
-  const preflight = await requireStatus(await fetchImpl(`${api}/api/auth/google/login`, {
+  const preflight = await requireStatus(await fetchImpl(`${api}/api/notifications/read-all`, {
     method: 'OPTIONS',
     headers: {
       Origin: frontend,
-      'Access-Control-Request-Method': 'POST',
-      'Access-Control-Request-Headers': 'authorization,content-type'
+      'Access-Control-Request-Method': 'PATCH',
+      'Access-Control-Request-Headers': 'content-type,x-csrf-token,x-request-id'
     }
   }), 204, 'Approved-origin preflight');
   if (preflight.headers.get('access-control-allow-origin') !== frontend) throw new Error('Approved frontend origin was not returned by CORS');
+  const allowedHeaders = String(preflight.headers.get('access-control-allow-headers') || '').toLowerCase();
+  for (const header of ['content-type', 'x-csrf-token', 'x-request-id']) {
+    if (!allowedHeaders.split(/\s*,\s*/).includes(header)) throw new Error(`CORS does not allow ${header}`);
+  }
+  const allowedMethods = String(preflight.headers.get('access-control-allow-methods') || '').toUpperCase();
+  for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+    if (!allowedMethods.split(/\s*,\s*/).includes(method)) throw new Error(`CORS does not allow ${method}`);
+  }
 
   const denied = await requireStatus(await fetchImpl(`${api}/api/auth/google/login`, {
     method: 'OPTIONS',
@@ -39,7 +50,7 @@ const runProductionSmoke = async ({ apiOrigin, frontendOrigin, fetchImpl = fetch
   }), 403, 'Unapproved-origin preflight');
   if (denied.headers.get('access-control-allow-origin')) throw new Error('Unapproved origin received a CORS allow-origin header');
 
-  return { api_health: 'passed', frontend_route: 'passed', authentication_boundary: 'passed', cors: 'passed' };
+  return { api_health: 'passed', api_proxy: 'passed', frontend_route: 'passed', authentication_boundary: 'passed', cors: 'passed' };
 };
 
 if (require.main === module) {

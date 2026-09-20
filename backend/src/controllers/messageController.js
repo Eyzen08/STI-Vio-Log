@@ -1,6 +1,6 @@
 const pool = require('../config/database');
 const { assertAllowedFields, isPositiveId, parsePagination } = require('../utils/validators');
-const { emitToDepartment, emitToRole, emitToUser } = require('../realtime');
+const { emitToRole, emitToUser } = require('../realtime');
 
 const MESSAGE_LIMIT = 1000;
 const fail = (res, error) => res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : 'Messaging request failed' });
@@ -15,7 +15,6 @@ const cleanText = (value, label, maxLength) => {
 
 const scope = (user, parameterIndex, alias = 'mc') => {
   if (user.role === 'STUDENT') return { sql: `EXISTS (SELECT 1 FROM students own_student WHERE own_student.id=${alias}.student_id AND own_student.user_id=$${parameterIndex})`, value: user.id };
-  if (user.role === 'DEPARTMENT_HEAD') return { sql: `${alias}.assigned_department_id=$${parameterIndex}`, value: user.department_id };
   return { sql: 'TRUE', value: null };
 };
 
@@ -44,7 +43,6 @@ const emitMessageChange = async (conversation, actorUserId = null) => {
     if (actorUserId) emitToUser(actorUserId, 'messages:changed', payload);
     emitToRole('DISCIPLINE_ADMIN', 'messages:changed', payload);
     emitToRole('DISCIPLINE_OFFICE', 'messages:changed', payload);
-    if (conversation.assigned_department_id) emitToDepartment(conversation.assigned_department_id, 'messages:changed', payload);
   } catch (error) {
     console.error('Realtime message notification failed:', error.message);
   }
@@ -124,23 +122,12 @@ const listRecipients = async (req, res) => {
     if (search.length > 100) bad('search must not exceed 100 characters');
     const pattern = `%${search}%`;
     if (req.user.role === 'STUDENT') {
-      const departments = (await pool.query(
-        `SELECT DISTINCT d.id,d.department_name FROM departments d
-         JOIN department_heads dh ON dh.department_id=d.id JOIN users u ON u.id=dh.user_id
-         WHERE d.is_active=TRUE AND u.is_active=TRUE AND ($1='' OR d.department_name ILIKE $2)
-         ORDER BY d.department_name`, [search, pattern]
-      )).rows;
       const recipients = [];
       if (!search || 'discipline office'.includes(search.toLowerCase())) recipients.push({ type:'DISCIPLINE_OFFICE', id:null, name:'Discipline Office', role:'DISCIPLINE_OFFICE' });
-      recipients.push(...departments.map((row) => ({ type:'DEPARTMENT', id:Number(row.id), name:row.department_name, role:'DEPARTMENT_HEAD' })));
       return res.json({ success:true, recipients });
     }
     const params = [];
     const filters = [];
-    if (req.user.role === 'DEPARTMENT_HEAD') {
-      params.push(req.user.department_id);
-      filters.push(`EXISTS (SELECT 1 FROM community_service_assignments a WHERE a.student_id=s.id AND (a.department_id=$${params.length} OR EXISTS (SELECT 1 FROM community_service_sessions css WHERE css.assignment_id=a.id AND css.department_id=$${params.length})))`);
-    }
     if (search) { params.push(pattern); filters.push(`(s.student_number ILIKE $${params.length} OR CONCAT_WS(' ',s.first_name,s.last_name) ILIKE $${params.length})`); }
     const rows = (await pool.query(`SELECT s.id,s.student_number,s.first_name,s.last_name FROM students s ${filters.length?`WHERE ${filters.join(' AND ')}`:''} ORDER BY s.last_name,s.first_name LIMIT 100`, params)).rows;
     return res.json({ success:true, recipients:rows.map((row) => ({ type:'STUDENT',id:Number(row.id),name:`${row.first_name} ${row.last_name}`.trim(),student_number:row.student_number,role:'STUDENT' })) });
@@ -151,7 +138,7 @@ const createConversation = async (req, res) => {
   const client = await pool.connect();
   try {
     const studentRole = req.user.role === 'STUDENT';
-    assertAllowedFields(req.body, studentRole ? ['recipient_department_id','subject','message'] : ['student_id','subject','message']);
+    assertAllowedFields(req.body, studentRole ? ['subject','message'] : ['student_id','subject','message']);
     const subject = cleanText(req.body.subject, 'Subject', 200);
     const message = cleanText(req.body.message, 'Message', MESSAGE_LIMIT);
     await client.query('BEGIN');
@@ -159,20 +146,10 @@ const createConversation = async (req, res) => {
     let assignedDepartmentId = null;
     if (studentRole) {
       studentId = (await client.query('SELECT id FROM students WHERE user_id=$1', [req.user.id])).rows[0]?.id;
-      if (req.body.recipient_department_id !== undefined && req.body.recipient_department_id !== null && req.body.recipient_department_id !== '') {
-        if (!isPositiveId(req.body.recipient_department_id)) bad('A valid recipient department is required');
-        assignedDepartmentId = Number(req.body.recipient_department_id);
-        const department = (await client.query(`SELECT 1 FROM departments d JOIN department_heads dh ON dh.department_id=d.id JOIN users u ON u.id=dh.user_id WHERE d.id=$1 AND d.is_active=TRUE AND u.is_active=TRUE LIMIT 1`, [assignedDepartmentId])).rows[0];
-        if (!department) throw httpError(404, 'Recipient not found');
-      }
     } else {
       if (!isPositiveId(req.body.student_id)) bad('A valid student is required');
       studentId = Number(req.body.student_id);
-      if (req.user.role === 'DEPARTMENT_HEAD') {
-        assignedDepartmentId = req.user.department_id;
-        const visible = (await client.query(`SELECT 1 FROM community_service_assignments a WHERE a.student_id=$1 AND (a.department_id=$2 OR EXISTS (SELECT 1 FROM community_service_sessions css WHERE css.assignment_id=a.id AND css.department_id=$2)) LIMIT 1`, [studentId, assignedDepartmentId])).rows[0];
-        if (!visible) throw httpError(404, 'Student not found');
-      } else if (!(await client.query('SELECT 1 FROM students WHERE id=$1', [studentId])).rows[0]) throw httpError(404, 'Student not found');
+      if (!(await client.query('SELECT 1 FROM students WHERE id=$1', [studentId])).rows[0]) throw httpError(404, 'Student not found');
     }
     if (!studentId) throw httpError(404, 'Student record not found');
     const conversation = (await client.query(`INSERT INTO message_conversations(student_id,subject,created_by_user_id,assigned_department_id) VALUES($1,$2,$3,$4) RETURNING *`, [studentId,subject,req.user.id,assignedDepartmentId])).rows[0];

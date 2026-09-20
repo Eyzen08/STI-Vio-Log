@@ -1,5 +1,5 @@
 import { buildGoogleLinkPayload } from './googleIdentity.js'
-import { csrfToken, saveCsrf } from './session.js'
+import { clearSession, csrfToken, saveCsrf } from './session.js'
 
 // Production requests stay on the Vercel origin and are securely proxied to the
 // Render API. This keeps host-only SameSite=Lax cookies first-party.
@@ -7,11 +7,22 @@ export const API_URL = import.meta.env?.PROD ? '' : (import.meta.env?.VITE_API_U
 
 const mutationMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
+const apiPath = (url, target = globalThis) => {
+  try {
+    return new URL(String(url), target.location?.origin || 'http://localhost').pathname
+  } catch {
+    return ''
+  }
+}
+
+const isPublicAuthPath = (pathname) => /^\/api\/(?:login\/?$|auth\/(?:google|student|mfa)(?:\/|$))/.test(pathname)
+
 export const installMutationRequestGuard = (target = globalThis) => {
   if (!target?.fetch || target.fetch.__stiMutationGuard) return
   const originalFetch = target.fetch.bind(target)
   const inFlight = new Map()
   const activityCounts = new WeakMap()
+  let sessionExpiryHandled = false
   let recentTrigger = null
   let triggerTime = 0
   const rememberTrigger = (element) => {
@@ -51,15 +62,26 @@ export const installMutationRequestGuard = (target = globalThis) => {
     headers.delete('Authorization')
     const securedOptions={...options,headers,credentials:'include'}
     const isMutation=mutationMethods.has(method)
-    const publicAuth=/\/api\/(login|auth\/(google|student|mfa))/.test(url)
-    const protectedApi=String(url).startsWith(API_URL)||String(url).startsWith('/api/')
+    const pathname = apiPath(url, target)
+    const publicAuth = isPublicAuthPath(pathname)
+    const protectedApi = pathname.startsWith('/api/')
+    const handleProtectedResponse = (response) => {
+      if (response.status !== 401 || !protectedApi || publicAuth || sessionExpiryHandled) return response
+      sessionExpiryHandled = true
+      clearSession()
+      const EventConstructor = target.CustomEvent || globalThis.CustomEvent
+      if (target.dispatchEvent && EventConstructor) target.dispatchEvent(new EventConstructor('sti:session-expired'))
+      if (target.location?.pathname !== '/login') target.location?.replace?.('/login')
+      return response
+    }
     if(isMutation&&protectedApi&&!publicAuth){let csrf=csrfToken();if(!csrf){const response=await originalFetch(`${API_URL}/api/auth/csrf`,{credentials:'include',headers:{Accept:'application/json'}});const data=await response.json().catch(()=>null);if(response.ok&&data?.csrf_token){saveCsrf(data.csrf_token);csrf=data.csrf_token}}if(csrf)headers.set('X-CSRF-Token',csrf)}
-    if (!isMutation) return originalFetch(input, securedOptions)
+    if (!isMutation) return originalFetch(input, securedOptions).then(handleProtectedResponse)
     const body = typeof options.body === 'string' ? options.body : ''
     const key = `${method}:${url}:${body}`
     const activityElement = beginActivity()
     if (!inFlight.has(key)) {
       const request = originalFetch(input, securedOptions)
+        .then(handleProtectedResponse)
         .then((response) => response.clone())
         .finally(() => inFlight.delete(key))
       inFlight.set(key, request)
@@ -105,6 +127,25 @@ export const apiRequest = async (path, options = {}) => {
   return data
 }
 
+export const loadAllPages = async (path, collectionKey, options = {}) => {
+  const { limit = 100, ...requestOptions } = options
+  const url = new URL(path, 'http://local.invalid')
+  const records = []
+  let page = 1
+
+  while (true) {
+    url.searchParams.set('page', String(page))
+    url.searchParams.set('limit', String(limit))
+    const requestPath = `${url.pathname}${url.search}`
+    const data = await apiRequest(requestPath, requestOptions)
+    const batch = data?.[collectionKey]
+    if (!Array.isArray(batch)) throw new ApiError(`Invalid ${collectionKey} response.`, { code: 'INVALID_RESPONSE' })
+    records.push(...batch)
+    if (batch.length < limit) return records
+    page += 1
+  }
+}
+
 export const login = (credentials) =>
   apiRequest('/api/login', {
     method: 'POST',
@@ -124,19 +165,6 @@ export const googleLink = (registration) =>
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(buildGoogleLinkPayload(registration))
-  })
-
-export const googleDepartmentLogin = (credential) =>
-  apiRequest('/api/auth/google/department/login', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential })
-  })
-
-export const googleDepartmentRegister = ({ credential, firstName, lastName, employeeNumber, departmentType, departmentName, note }) =>
-  apiRequest('/api/auth/google/department/register', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential, first_name: firstName, last_name: lastName, employee_number: employeeNumber || undefined,
-      department_type: departmentType, department_name: departmentName, note: note || undefined })
   })
 
 export const changePassword = ({ token, currentPassword, newPassword }) =>
