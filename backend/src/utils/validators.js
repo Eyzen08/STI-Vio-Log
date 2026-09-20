@@ -1,6 +1,14 @@
 const isValidEmail = (value) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
-const isValidPhone = (value) => typeof value === "string" && value.trim().length >= 7 && value.trim().length <= 30;
+const normalizePhone = (value) => {
+    if (typeof value !== "string") return null;
+    const compact = value.trim().replace(/[\s()-]/g, "");
+    if (/^09\d{9}$/.test(compact)) return `+63${compact.slice(1)}`;
+    if (/^\+639\d{9}$/.test(compact)) return compact;
+    return null;
+};
+
+const isValidPhone = (value) => normalizePhone(value) !== null;
 
 const sanitizeString = (value) => typeof value === "string" ? value.trim() : value;
 
@@ -37,6 +45,7 @@ const assertAllowedFields = (body, allowedFields) => {
 module.exports = {
     isValidEmail,
     isValidPhone,
+    normalizePhone,
     sanitizeString,
     isPositiveId,
     isValidStudentNumber,

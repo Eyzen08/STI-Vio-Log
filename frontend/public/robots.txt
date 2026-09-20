@@ -7,8 +7,6 @@ Disallow: /department/
 Disallow: /student/
 Disallow: /system/
 Disallow: /account/
-Disallow: /register
-Disallow: /verify-email
 Disallow: /forgot-password
 Disallow: /reset-password/
 

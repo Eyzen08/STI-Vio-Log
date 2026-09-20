@@ -139,7 +139,7 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
   assert.match(source, /\[routePath\]/)
   assert.match(source, /event\.stopPropagation\(\)/)
   assert.match(source, /onLogout\?\.\(\)/)
-  assert.match(source, /href="\/login\?logout=1"/)
+  assert.match(source, /className="profile-logout" onClick=\{logout\}/)
   assert.match(source, /href=\{profilePath\(user\?\.role\)\}/)
   assert.match(source, /href=\{settingsPath\(user\?\.role\)\}/)
   assert.match(source, /onTouchEnd=\{\(event\) => navigateOnTouch\(event, profilePath\(user\?\.role\)\)\}/)

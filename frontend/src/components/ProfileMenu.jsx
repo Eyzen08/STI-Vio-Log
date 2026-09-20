@@ -67,7 +67,7 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
       <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, profilePath(user?.role))}><PortalIcon name="user"/><span>View Profile</span></a>
       <a role="menuitem" href={settingsPath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, settingsPath(user?.role))}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>
-      <a role="menuitem" className="profile-logout" href="/login?logout=1" onClick={logout} onTouchEnd={(event) => navigateOnTouch(event, '/login?logout=1', onLogout)}><PortalIcon name="logout"/><span>Logout</span></a>
+      <button role="menuitem" type="button" className="profile-logout" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></button>
     </div>}
   </div>
 }

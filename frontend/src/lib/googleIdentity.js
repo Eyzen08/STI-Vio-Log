@@ -43,46 +43,26 @@ export const googleButtonConfiguration = ({ width, onClick }) => ({
   click_listener: onClick
 })
 
-export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber }) => ({
+export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName }) => ({
   credential,
   student_number: studentNumber.trim(),
   first_name: firstName.trim(),
-  last_name: lastName.trim(),
-  phone_number: phoneNumber.trim(),
-  program: program.trim(),
-  section: section.trim(),
-  year_level: Number(yearLevel),
-  guardian_name: guardianName.trim(),
-  guardian_relationship: guardianRelationship.trim(),
-  guardian_phone_number: guardianPhoneNumber.trim()
+  last_name: lastName.trim()
 })
 
-export const validateGoogleStudentRegistration = ({ studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber }) => {
-  const required = [firstName, lastName, phoneNumber, program, section, guardianName, guardianRelationship, guardianPhoneNumber]
-  if (required.some((value) => typeof value !== 'string' || !value.trim()) || !String(yearLevel || '').trim()) {
-    return 'Complete every student and parent/guardian field.'
+export const validateGoogleStudentLink = ({ studentNumber, firstName, lastName }) => {
+  if ([firstName, lastName].some((value) => typeof value !== 'string' || !value.trim())) {
+    return 'Enter the student number, first name, and last name on the existing school record.'
   }
   if (!/^\S{1,50}$/u.test(String(studentNumber || '').trim())) {
     return 'Enter the school-issued Student Number without spaces.'
-  }
-  if (!Number.isInteger(Number(yearLevel)) || Number(yearLevel) < 1 || Number(yearLevel) > 6) {
-    return 'Select a valid year level.'
-  }
-  if ([phoneNumber, guardianPhoneNumber].some((value) => value.trim().length < 7 || value.trim().length > 30)) {
-    return 'Enter valid student and parent/guardian phone numbers.'
   }
   return ''
 }
 
 export const googleStudentLinkErrorMessage = (error) => error?.code === 'STUDENT_LINK_UNAVAILABLE'
-  ? 'We could not submit this registration. Check that the Student Number and name exactly match the school record. If this Student Number or Google account was used before, ask the Discipline Office to review the pending request or clear the old Google link.'
-  : error?.message || 'The student registration could not be completed.'
-
-export const isPendingGoogleRegistration = (result) =>
-  result?.pending === true &&
-  result?.registration?.status === 'PENDING' &&
-  Number.isInteger(Number(result?.registration?.id)) &&
-  Number(result.registration.id) > 0
+  ? 'No matching active student account was found. Ask the Discipline Office to create or correct the account before linking Google.'
+  : error?.message || 'The Google account could not be linked.'
 
 export const loadGoogleIdentityServices = ({
   windowObject = window,

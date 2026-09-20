@@ -19,13 +19,12 @@ const createGoogleAuthController = ({ serviceFactory = defaultServiceFactory } =
 
   const link = async (req, res) => {
     try {
-      assertAllowedFields(req.body, ['credential', 'student_number', 'first_name', 'last_name', 'phone_number', 'program', 'section', 'year_level', 'guardian_name', 'guardian_relationship', 'guardian_phone_number']);
-      const { credential, student_number, first_name, last_name, phone_number, program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number } = req.body || {};
-      if (![credential, student_number, first_name, last_name, phone_number, program, section, guardian_name, guardian_relationship, guardian_phone_number].every((value) => typeof value === 'string' && value.trim())) {
-        return sendError(res, 400, 'VALIDATION_ERROR', 'All student registration fields are required');
+      assertAllowedFields(req.body, ['credential', 'student_number', 'first_name', 'last_name']);
+      const { credential, student_number, first_name, last_name } = req.body || {};
+      if (![credential, student_number, first_name, last_name].every((value) => typeof value === 'string' && value.trim())) {
+        return sendError(res, 400, 'VALIDATION_ERROR', 'Google credential, student number, and student name are required');
       }
-      const result = await getService().linkStudent({ credential, studentNumber: student_number, firstName: first_name, lastName: last_name, phoneNumber: phone_number, program, section, yearLevel: year_level, guardianName: guardian_name, guardianRelationship: guardian_relationship, guardianPhoneNumber: guardian_phone_number, ipAddress: req.ip || null });
-      if (result.pending) return res.status(202).json({ success: true, ...result });
+      const result = await getService().linkStudent({ credential, studentNumber: student_number, firstName: first_name, lastName: last_name, ipAddress: req.ip || null });
       if(result.token)return res.json({success:true,message:'Google account linked successfully',...result});
       const created=await sessions.createSession({userId:result.user.id,ipAddress:req.ip,userAgent:req.get('user-agent')});sessions.setSessionCookies(res,created);
       return res.json({ success: true, message: 'Google account linked successfully', user:result.user,csrf_token:created.csrf });

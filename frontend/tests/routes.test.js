@@ -58,8 +58,8 @@ test('protected routes permit only their declared roles', () => {
 
 test('public, unauthorized, and unknown locations resolve explicitly', () => {
   assert.equal(resolveRoute('/login', null).status, 'public')
-  assert.equal(resolveRoute('/register', null).status, 'public')
-  assert.equal(resolveRoute('/verify-email', null).status, 'public')
+  assert.equal(resolveRoute('/register', null).status, 'not_found')
+  assert.equal(resolveRoute('/verify-email', null).status, 'not_found')
   assert.equal(resolveRoute('/forgot-password', null).status, 'public')
   assert.equal(resolveRoute('/reset-password/verify', null).status, 'public')
   assert.equal(resolveRoute('/reset-password/new', null).status, 'public')

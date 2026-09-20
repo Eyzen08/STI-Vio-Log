@@ -27,9 +27,6 @@ router.post('/auth/mfa/setup/start',sensitiveAuthLimiter,sessionController.setup
 router.post('/auth/mfa/setup/confirm',sensitiveAuthLimiter,sessionController.setupConfirm);
 router.post('/auth/mfa/verify',sensitiveAuthLimiter,sessionController.verify);
 router.post('/auth/mfa/recovery',sensitiveAuthLimiter,sessionController.recovery);
-router.post('/auth/student/register', sensitiveAuthLimiter, studentAuth.register);
-router.post('/auth/student/registration/resend', sensitiveAuthLimiter, studentAuth.resendRegistrationOtp);
-router.post('/auth/student/registration/verify', sensitiveAuthLimiter, studentAuth.verifyRegistration);
 router.post('/auth/student/password/forgot', sensitiveAuthLimiter, studentAuth.requestPasswordReset);
 router.post('/auth/student/password/verify', sensitiveAuthLimiter, studentAuth.verifyPasswordReset);
 router.post('/auth/student/password/reset', sensitiveAuthLimiter, studentAuth.resetPassword);

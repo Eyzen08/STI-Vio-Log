@@ -1,10 +1,9 @@
 const { ApiError } = require('../utils/api');
-const { isValidPhone, isValidStudentNumber } = require('../utils/validators');
+const { isValidStudentNumber } = require('../utils/validators');
 const { issueSessionToken } = require('./sessionTokenService');
 
 const LINK_FAILURE = 'Unable to link this student account';
 const LOGIN_FAILURE = 'Google account is not linked to an active student account';
-const REGISTRATION_PENDING = 'Student registration submitted for Discipline Office review';
 
 const normalizeName = (value) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US')
@@ -34,13 +33,9 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     } catch (_) {}
   };
 
-  const linkStudent = async ({ credential, studentNumber, firstName, lastName, phoneNumber, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
+  const linkStudent = async ({ credential, studentNumber, firstName, lastName, ipAddress = null }) => {
     const identity = await verifyIdentity(credential);
-    const parsedYearLevel = Number(yearLevel);
-    if (!isValidStudentNumber(studentNumber) || !normalizeName(firstName) || !normalizeName(lastName)
-      || !isValidPhone(phoneNumber) || !normalizeName(program) || !normalizeName(section)
-      || !Number.isInteger(parsedYearLevel) || parsedYearLevel < 1 || parsedYearLevel > 6
-      || !normalizeName(guardianName) || !normalizeName(guardianRelationship) || !isValidPhone(guardianPhoneNumber)) {
+    if (!isValidStudentNumber(studentNumber) || !normalizeName(firstName) || !normalizeName(lastName)) {
       throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
     }
     const client = await pool.connect();
@@ -61,72 +56,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
         throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
       }
       if (!account) {
-        const occupied = (await client.query(
-          `SELECT 1 FROM students WHERE student_number = $1
-          UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2 AND revoked_at IS NULL
-          UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
-           LIMIT 1`,
-          [studentNumber.trim(), identity.subject]
-        )).rows[0];
-        if (occupied) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
-
-        const existing = (await client.query(
-          `SELECT id, google_subject, student_number, first_name, last_name, phone_number, program,
-                  section, year_level, guardian_name, guardian_relationship, guardian_phone_number
-           FROM google_student_registrations
-           WHERE status = 'PENDING' AND (google_subject = $1 OR student_number = $2)
-           FOR UPDATE`,
-          [identity.subject, studentNumber.trim()]
-        )).rows;
-        const sameRequest = existing.find((row) =>
-          row.google_subject === identity.subject
-          && row.student_number === studentNumber.trim()
-          && normalizeName(row.first_name) === normalizeName(firstName)
-          && normalizeName(row.last_name) === normalizeName(lastName)
-        );
-        if (sameRequest && existing.length === 1) {
-          await client.query(
-            `UPDATE google_student_registrations
-             SET phone_number = $2, program = $3, section = $4, year_level = $5,
-                 guardian_name = $6, guardian_relationship = $7, guardian_phone_number = $8,
-                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = $1`,
-            [sameRequest.id, phoneNumber.trim(), program.trim(), section.trim(), parsedYearLevel,
-              guardianName.trim(), guardianRelationship.trim(), guardianPhoneNumber.trim()]
-          );
-          await client.query('COMMIT');
-          return { pending: true, message: REGISTRATION_PENDING, registration: { id: Number(sameRequest.id), status: 'PENDING' } };
-        }
-        if (existing.length) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
-
-        // The pending-row lock above may have waited for an approval to
-        // commit. Recheck cross-table ownership in the now-current snapshot
-        // before creating a new pending request.
-        const newlyOccupied = (await client.query(
-          `SELECT 1 FROM students WHERE student_number = $1
-           UNION ALL SELECT 1 FROM google_identity_links WHERE google_subject = $2 AND revoked_at IS NULL
-           UNION ALL SELECT 1 FROM google_department_registrations WHERE google_subject = $2 AND status = 'PENDING'
-           LIMIT 1`,
-          [studentNumber.trim(), identity.subject]
-        )).rows[0];
-        if (newlyOccupied) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
-
-        const registration = (await client.query(
-          `INSERT INTO google_student_registrations
-             (google_subject, google_email, student_number, first_name, last_name, phone_number,
-              program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-          [identity.subject, identity.emailVerified ? identity.email : null, studentNumber.trim(), firstName.trim(), lastName.trim(),
-            phoneNumber.trim(), program.trim(), section.trim(), parsedYearLevel, guardianName.trim(), guardianRelationship.trim(), guardianPhoneNumber.trim()]
-        )).rows[0];
-        await client.query(
-          `INSERT INTO audit_logs (user_id, action, table_name, record_id, description, ip_address)
-           VALUES (NULL, 'GOOGLE_REGISTRATION_SUBMITTED', 'google_student_registrations', $1,
-                   'Google student registration submitted for Discipline Office review', $2)`,
-          [registration.id, ipAddress]
-        );
-        await client.query('COMMIT');
-        return { pending: true, message: REGISTRATION_PENDING, registration: { id: Number(registration.id), status: 'PENDING' } };
+        throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
       }
       const link = await client.query(
         `INSERT INTO google_identity_links (user_id, google_subject, google_email)
@@ -191,4 +121,4 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
   return { linkStudent, loginStudent };
 };
 
-module.exports = { createGoogleIdentityService, normalizeName, namesMatch, LINK_FAILURE, LOGIN_FAILURE, REGISTRATION_PENDING };
+module.exports = { createGoogleIdentityService, normalizeName, namesMatch, LINK_FAILURE, LOGIN_FAILURE };

@@ -41,7 +41,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       if(['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(user.role)){
         const enabled=(await database.query('SELECT 1 FROM user_mfa WHERE user_id=$1 AND enabled_at IS NOT NULL',[user.id])).rows[0];
         await challenges.createChallenge({userId:user.id,purpose:enabled?'VERIFY':'ENROLL',res});
-        return res.status(202).json({success:true,mfa_required:Boolean(enabled),mfa_enrollment_required:!enabled,user:{username:user.username,role:user.role}});
+        return res.status(202).json({success:true,mfa_required:Boolean(enabled),mfa_enrollment_required:!enabled,user:{username:user.username,role:user.role},server_time_ms:Date.now(),totp_period_seconds:30});
       }
       const created=await sessions.createSession({userId:user.id,ipAddress:req.ip,userAgent:req.get?.('user-agent'),database});
       sessions.setSessionCookies(res,created);

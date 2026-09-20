@@ -10,7 +10,7 @@ import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
-const Modal = lazy(() => import('./components/Modal.jsx'))
+import Modal from './components/Modal.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
 import RouteErrorBoundary from './components/RouteErrorBoundary.jsx'
 const StudentDashboard = lazy(() => import('./components/StudentDashboard.jsx'))
@@ -38,6 +38,7 @@ const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
+import PhoneInput from './components/PhoneInput.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
@@ -57,9 +58,12 @@ import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './
 import { iconNameForView } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
+import { displayPhilippinePhone, normalizePhilippinePhone } from './lib/phone.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
+const EMPTY_MFA_DRAFT = { code:'', recovery:false }
 
 function App() {
   const [initialSession] = useState(() => {
@@ -93,6 +97,11 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [mfaState,setMfaState]=useState(null)
+  const [mfaDraft,setMfaDraft]=useState(EMPTY_MFA_DRAFT)
+  const [authDraft,setAuthDraft]=useState(EMPTY_AUTH_DRAFT)
+  const [authReturnPath,setAuthReturnPath]=useState('/login')
+  const [logoutConfirmation,setLogoutConfirmation]=useState(false)
+  const [logoutBusy,setLogoutBusy]=useState(false)
 
   const [token, setToken] = useState('')
   const [user, setUser] = useState(null)
@@ -265,6 +274,7 @@ function App() {
   const [studentFormError, setStudentFormError] = useState('')
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
   const [isStudentFormOpen, setIsStudentFormOpen] = useState(false)
+  const [createdStudentCredentials,setCreatedStudentCredentials]=useState(null)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
   const [reportPage, setReportPage] = useState(1)
@@ -556,6 +566,11 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
 
+  const openPolicy = (path, originPath) => {
+    setAuthReturnPath(originPath || '/login')
+    navigateTo(path)
+  }
+
   useEffect(() => {
     const handlePopState = () => setRoutePath(window.location.pathname)
     window.addEventListener('popstate', handlePopState)
@@ -565,6 +580,11 @@ function App() {
   useEffect(() => {
     if (sessionRestoring) return
     if (!isLoggedIn) {
+      if (routePath === '/register' || routePath === '/verify-email') {
+        setError('Student accounts are created by the Discipline Office. Please sign in or contact an authorized officer.')
+        navigateTo('/login', { replace: true })
+        return
+      }
       if (routePath === '/' || routeResolution.status === 'unauthorized') navigateTo('/login', { replace: true })
       return
     }
@@ -1055,7 +1075,7 @@ function App() {
           studentForm.email.trim(),
 
         phone_number:
-          studentForm.phone_number.trim(),
+          studentForm.phone_number ? normalizePhilippinePhone(studentForm.phone_number) : null,
 
         program:
           studentForm.program.trim(),
@@ -1076,6 +1096,9 @@ function App() {
         throw new Error(
           'Student number, first name, and last name are required.'
         )
+      }
+      if (studentForm.phone_number && !payload.phone_number) {
+        throw new Error('Enter a valid Philippine mobile number in the format +63 9XX XXX XXXX.')
       }
 
       const response =
@@ -1106,6 +1129,7 @@ function App() {
       setStudentFormSuccess(
         `Student ${payload.first_name} ${payload.last_name} was added.`
       )
+      setCreatedStudentCredentials({username:data.account.username,password:data.temporary_password})
 
       setStudentForm({
         student_number: '',
@@ -1593,8 +1617,8 @@ function App() {
        * Username/password are NOT stored.
        */
 
-      if(data.mfa_enrollment_required){const setup=await apiRequest('/api/auth/mfa/setup/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});setMfaState({mode:'enroll',...setup});return}
-      if(data.mfa_required){setMfaState({mode:'verify'});return}
+      if(data.mfa_enrollment_required){const setup=await apiRequest('/api/auth/mfa/setup/start',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});setMfaDraft(EMPTY_MFA_DRAFT);setMfaState({mode:'enroll',...setup,client_time_ms:Date.now()});return}
+      if(data.mfa_required){setMfaDraft(EMPTY_MFA_DRAFT);setMfaState({mode:'verify',server_time_ms:data.server_time_ms,totp_period_seconds:data.totp_period_seconds,client_time_ms:Date.now()});return}
       acceptSession(data)
     } catch (loginError) {
       setError(
@@ -1616,13 +1640,15 @@ function App() {
     setToken('cookie-session')
     setUser(data.user)
     setMfaState(null)
+    setMfaDraft(EMPTY_MFA_DRAFT)
+    setAuthDraft(EMPTY_AUTH_DRAFT)
     setError('')
     setForm({ username: '', password: '' })
     navigateTo(data.user.password_change_required ? '/account/password-change' : getHomePath(data.user.role), { replace: true })
   }
 
   const handleMfaSubmit=async({code,recovery})=>{setIsSubmitting(true);setError('');try{const path=mfaState.mode==='enroll'?'/api/auth/mfa/setup/confirm':recovery?'/api/auth/mfa/recovery':'/api/auth/mfa/verify';const body=mfaState.mode==='enroll'||!recovery?{code}:{recovery_code:code};const data=await apiRequest(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(data.recovery_codes){saveSession(data);setMfaState({mode:'complete',recoveryCodes:data.recovery_codes,pendingSession:data})}else acceptSession(data)}catch(e){setError(e.message)}finally{setIsSubmitting(false)}}
-  const cancelMfa=()=>{setMfaState(null);setError('');setForm({username:'',password:''})}
+  const cancelMfa=()=>{setMfaState(null);setMfaDraft(EMPTY_MFA_DRAFT);setError('');setForm({username:'',password:''})}
   const continueMfa=()=>acceptSession(mfaState.pendingSession)
 
   /*
@@ -1631,7 +1657,11 @@ function App() {
    * ============================================================
    */
 
+  const requestLogout = () => setLogoutConfirmation(true)
+
   const handleLogout = async () => {
+    if (logoutBusy) return
+    setLogoutBusy(true)
     try { await fetch(`${API_URL}/api/auth/logout`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'}) } catch { /* local cleanup still completes */ }
     clearSession()
 
@@ -1646,6 +1676,10 @@ function App() {
     setToken('')
     setUser(null)
     setError('')
+    setMfaState(null)
+    setMfaDraft(EMPTY_MFA_DRAFT)
+    setAuthDraft(EMPTY_AUTH_DRAFT)
+    setLogoutConfirmation(false)
 
     /*
      * Clear login fields after logout.
@@ -1814,7 +1848,7 @@ function App() {
     }
 
     if (routePath === '/privacy' || routePath === '/terms') {
-      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} />
+      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} returnPath={authReturnPath} />
     }
 
     if (!isLoggedIn && routeResolution.status === 'not_found') {
@@ -1833,7 +1867,13 @@ function App() {
           onSubmit={handleSubmit}
           routePath={routePath}
           onNavigate={navigateTo}
+          onOpenPolicy={openPolicy}
+          authDraft={authDraft}
+          onAuthDraftChange={setAuthDraft}
+          onClearAuthDraft={()=>setAuthDraft(EMPTY_AUTH_DRAFT)}
           mfaState={mfaState}
+          mfaDraft={mfaDraft}
+          onMfaDraftChange={setMfaDraft}
           onMfaSubmit={handleMfaSubmit}
           onMfaCancel={cancelMfa}
           onMfaContinue={continueMfa}
@@ -1842,7 +1882,7 @@ function App() {
     }
 
     if (user?.password_change_required) {
-      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={handleLogout} />
+      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={requestLogout} />
     }
 
     if (userRole === 'SYSTEM_ADMIN' && activeView === 'System Dashboard') {
@@ -2240,21 +2280,7 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Phone
-
-                  <input
-                    type="tel"
-                    name="phone_number"
-                    value={
-                      studentForm.phone_number
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    placeholder="09XXXXXXXXX"
-                  />
-                </label>
+                <PhoneInput id="student-phone-number" name="phone_number" label="Phone" value={studentForm.phone_number} onChange={handleStudentFieldChange}/>
 
                 <label>
                   Program
@@ -2344,6 +2370,7 @@ function App() {
               </AsyncActionButton>
             </form>
           </section></Modal>}
+          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password after first sign-in. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
 
           <section className="table-card">
             <div className="table-header management-table-header">
@@ -2456,7 +2483,7 @@ function App() {
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card student-record-drawer">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
-              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Program', reviewedStudent.program], ['Section', reviewedStudent.section], ['Year level', reviewedStudent.year_level], ['Email', reviewedStudent.email], ['Phone', reviewedStudent.phone_number]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
+              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Program', reviewedStudent.program], ['Section', reviewedStudent.section], ['Year level', reviewedStudent.year_level], ['Email', reviewedStudent.email], ['Phone', displayPhilippinePhone(reviewedStudent.phone_number)]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
@@ -3446,7 +3473,7 @@ function App() {
             )})}
           </div>)}
           <div className="nav-account-actions">
-            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={handleLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
+            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
           </div>
         </nav>
       </aside>}
@@ -3489,7 +3516,7 @@ function App() {
           {isLoggedIn && (
             <div className="account-actions">
               <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <b>{formatActionCount(unreadNotificationCount)}</b>}</button>
-              <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={handleLogout}/>
+              <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={requestLogout}/>
             </div>
           )}
         </header>}
@@ -3498,6 +3525,7 @@ function App() {
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
+      {logoutConfirmation&&<Modal title="Confirm logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging out…':'Logout'}</button></footer></div></Modal>}
     </div>
   )
 }

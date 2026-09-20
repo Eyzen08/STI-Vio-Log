@@ -6,11 +6,11 @@ import buildingImage from '../assets/sti-global-city-building-web.jpg'
 import stiVioLogLogo from '../assets/sti-logo-web.png'
 import MfaChallenge from './MfaChallenge.jsx'
 
-const STUDENT_AUTH_PATHS = new Set(['/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new'])
+const STUDENT_AUTH_PATHS = new Set(['/forgot-password','/reset-password/verify','/reset-password/new'])
 
 const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20h16M6 20V9m12 11V9M3 9l9-5 9 5M9 12v4m6-4v4"/></svg>
 
-function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, mfaState, onMfaSubmit, onMfaCancel, onMfaContinue }) {
+function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   const [capsLockOn, setCapsLockOn] = useState(false)
   const navigate = (event, path, disabled=false) => {
@@ -33,7 +33,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
     <div className="login-form-panel">
       <div className="login-card auth-card">
         <div className="card-header auth-card-header"><div><h3 id="login-title">{studentFlow?'Student Account Security':'Sign In'}</h3><p>{studentFlow?'Complete the secure student account process below.':'Access your STI Vio-Log account'}</p></div></div>
-        {mfaState ? <MfaChallenge state={mfaState} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate}/> : <>
+        {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
           <div className="auth-trust-note"><CampusIcon/><span><strong>Official</strong> STI Global City Discipline Office Portal</span></div>
           <form className="login-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
             <label htmlFor="username">Username or student number<input id="username" type="text" name="username" placeholder="Enter your username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
@@ -46,15 +46,14 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
           </form>
           <nav className="auth-entry-actions" aria-label="Account help">
             <a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot Password?</a>
-            <a href="/register" onClick={(event)=>navigate(event, '/register')}>Create Student Account</a>
           </nav>
           <details className="google-access-details"><summary>Continue with Google</summary><GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/><small>For eligible linked student accounts only</small></details>
         </>}
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
         <nav className="auth-legal-links" aria-label="Legal information">
-          <a href="/privacy" onClick={(event)=>navigate(event, '/privacy')}>Privacy Policy</a>
+          <a href="/privacy" onClick={(event)=>{event.preventDefault();onOpenPolicy('/privacy',routePath)}}>Privacy Policy</a>
           <span aria-hidden="true">&bull;</span>
-          <a href="/terms" onClick={(event)=>navigate(event, '/terms')}>Terms of Use</a>
+          <a href="/terms" onClick={(event)=>{event.preventDefault();onOpenPolicy('/terms',routePath)}}>Terms of Use</a>
         </nav>
       </div>
     </div>

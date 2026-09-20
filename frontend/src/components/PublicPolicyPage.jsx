@@ -28,17 +28,17 @@ const POLICY_CONTENT = {
   },
 }
 
-function PublicPolicyPage({ type, onNavigate }) {
+function PublicPolicyPage({ type, onNavigate, returnPath = '/login' }) {
   const policy = POLICY_CONTENT[type] || POLICY_CONTENT.privacy
 
   return (
     <section className="public-policy-page">
       <header className="public-policy-header">
-        <button type="button" className="public-policy-brand" onClick={() => onNavigate('/login')}>
+        <button type="button" className="public-policy-brand" onClick={() => onNavigate(returnPath)}>
           <span aria-hidden="true">STI</span>
           <strong>STI Vio-Log</strong>
         </button>
-        <button type="button" className="public-policy-signin" onClick={() => onNavigate('/login')}>Sign in</button>
+        <button type="button" className="public-policy-signin" onClick={() => onNavigate(returnPath)}>Return</button>
       </header>
 
       <article className="public-policy-card" aria-labelledby="public-policy-title">
@@ -63,7 +63,7 @@ function PublicPolicyPage({ type, onNavigate }) {
             <button type="button" onClick={() => onNavigate('/privacy')}>Privacy Policy</button>
             <button type="button" onClick={() => onNavigate('/terms')}>Terms of Use</button>
           </nav>
-          <button type="button" className="public-policy-primary" onClick={() => onNavigate('/login')}>Return to sign in</button>
+          <button type="button" className="public-policy-primary" onClick={() => onNavigate(returnPath)}>Return to previous form</button>
         </footer>
       </article>
     </section>

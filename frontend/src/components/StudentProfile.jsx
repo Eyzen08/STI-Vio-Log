@@ -1,5 +1,6 @@
 import { displayProfileValue, formatStudentName, formatYearLevel } from '../lib/studentProfile.js'
 import { avatarInitials } from '../lib/avatarInitials.js'
+import { displayPhilippinePhone } from '../lib/phone.js'
 
 function ProfileField({ label, value }) {
   const isMissing = value === 'Not provided'
@@ -69,8 +70,8 @@ function StudentProfile({ profile, username, loading, error }) {
         </div>
         <dl className="profile-details-grid">
           <ProfileField label="Email address" value={displayProfileValue(profile.email)} />
-          <ProfileField label="Phone number" value={displayProfileValue(profile.phone_number)} />
-          <ProfileField label="Guardian Contact phone number" value={displayProfileValue(profile.guardian_phone_number)} />
+          <ProfileField label="Phone number" value={displayProfileValue(displayPhilippinePhone(profile.phone_number))} />
+          <ProfileField label="Guardian Contact phone number" value={displayProfileValue(displayPhilippinePhone(profile.guardian_phone_number))} />
           <ProfileField label="Portal username" value={displayProfileValue(username)} />
         </dl>
       </div>

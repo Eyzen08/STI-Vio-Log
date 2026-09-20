@@ -7,10 +7,6 @@ const registrationSource = await readFile(
   new URL('../src/components/StudentPasswordAccess.jsx', import.meta.url),
   'utf8',
 )
-const registrationValidationSource = await readFile(
-  new URL('../src/lib/studentRegistration.js', import.meta.url),
-  'utf8',
-)
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const portalCssSource = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
@@ -19,7 +15,7 @@ const appCssSource = await readFile(new URL('../src/App.css', import.meta.url), 
 test('redesigned login keeps every existing authentication entry point', () => {
   assert.match(source, /onSubmit=\{onSubmit\}/)
   assert.match(source, /href="\/forgot-password"/)
-  assert.match(source, /href="\/register"/)
+  assert.doesNotMatch(source, /href="\/register"/)
   assert.match(source, /<GoogleStudentAccess clientId=\{googleClientId\} onSession=\{onGoogleSession\}/)
   assert.match(source, /<PasswordField/)
   assert.match(source, /href="\/privacy"/)
@@ -43,7 +39,7 @@ test('login uses accessible form status and semantic navigation', () => {
   assert.doesNotMatch(source, /auth-text-link/)
 })
 
-test('manual Student registration collects the complete school profile', () => {
+test('public Student registration has been retired', () => {
   for (const field of [
     'first_name',
     'middle_name',
@@ -59,14 +55,13 @@ test('manual Student registration collects the complete school profile', () => {
     'guardian_relationship',
     'guardian_phone_number',
   ]) {
-    assert.match(registrationSource, new RegExp(`${field}:`))
+    assert.doesNotMatch(registrationSource, new RegExp(`${field}:`))
   }
 
-  assert.match(registrationSource, /Student Identity/)
-  assert.match(registrationSource, /Guardian Contact Information/)
-  assert.match(registrationSource, /Account Security/)
-  assert.match(registrationValidationSource, /Review and Submit/)
-  assert.match(registrationSource, /Creating Account…/)
+  assert.doesNotMatch(registrationSource, /Student Identity/)
+  assert.doesNotMatch(registrationSource, /Guardian Contact Information/)
+  assert.doesNotMatch(registrationSource, /Account Security/)
+  assert.doesNotMatch(registrationSource, /Creating Account…/)
 })
 
 test('portal branding uses the supplied local dashboard logo and favicon', () => {

@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
-const { isValidEmail, isValidPhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
+const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
     try {
@@ -83,15 +83,16 @@ const createStudent = async (req, res) => {
         if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
         if (email && !isValidEmail(email)) return res.status(400).json({ success: false, message: "Invalid email format" });
         if (phone_number && !isValidPhone(phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
-        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:sanitizeString(phone_number), program:sanitizeString(program), section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
+        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:phone_number ? normalizePhone(phone_number) : null, program:sanitizeString(program), section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
         client = await pool.connect();
         await client.query('BEGIN');
-        const passwordHash = await bcrypt.hash(crypto.randomBytes(32).toString('base64url'), 12);
-        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active) VALUES ($1,$2,'STUDENT',TRUE) RETURNING id", [payload.student_number,passwordHash])).rows[0];
+        const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
+        const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE) RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
         const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code,profile_image) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.email||null,payload.phone_number||null,payload.program||null,payload.section||null,payload.year_level||null,payload.qr_code,payload.profile_image||null]);
         await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
         await client.query('COMMIT');
-        return res.status(201).json({ success:true, student:result.rows[0] });
+        return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
         console.error("Create student error:", error);
@@ -124,7 +125,11 @@ const updateStudent = async (req, res) => {
 
         for (const field of allowedFields.filter((field) => field !== "reason")) {
             if (req.body[field] !== undefined) {
-                const value = field === "year_level" ? (req.body[field] === null || req.body[field] === '' ? null : Number(req.body[field])) : sanitizeString(req.body[field]);
+                const value = field === "year_level"
+                    ? (req.body[field] === null || req.body[field] === '' ? null : Number(req.body[field]))
+                    : field === "phone_number" && req.body[field]
+                        ? normalizePhone(req.body[field])
+                        : sanitizeString(req.body[field]);
                 values.push(value === "" ? null : value);
                 fields.push(`${field} = $${values.length}`);
             }

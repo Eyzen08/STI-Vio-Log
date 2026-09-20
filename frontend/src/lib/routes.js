@@ -4,7 +4,7 @@ export const ROLE_GROUPS = {
   student: ['STUDENT']
 }
 
-export const PUBLIC_ROUTES = ['/login','/register','/verify-email','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
+export const PUBLIC_ROUTES = ['/login','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
 
 export const APP_ROUTES = [
   { path: '/system/dashboard', label: 'System Status', view: 'System Dashboard', roles: ['SYSTEM_ADMIN'] },

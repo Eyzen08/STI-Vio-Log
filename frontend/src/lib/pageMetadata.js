@@ -1,7 +1,5 @@
 const PUBLIC_METADATA = {
   '/login': ['Sign In', 'Access the secure STI Vio-Log portal for STI Global City.'],
-  '/register': ['Create Student Account', 'Create and verify an STI Vio-Log student account.'],
-  '/verify-email': ['Verify Email', 'Verify your STI Vio-Log student registration.'],
   '/forgot-password': ['Forgot Password', 'Request secure recovery for your STI Vio-Log account.'],
   '/reset-password/verify': ['Verify Recovery Code', 'Verify your STI Vio-Log password recovery request.'],
   '/reset-password/new': ['Set New Password', 'Choose a new password for your STI Vio-Log account.'],

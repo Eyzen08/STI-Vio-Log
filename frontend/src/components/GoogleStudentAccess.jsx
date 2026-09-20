@@ -2,19 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { googleLink, googleLogin } from '../lib/api.js'
 import {
   isGoogleClientConfigured,
-  isPendingGoogleRegistration,
   googleButtonConfiguration,
   googleStudentLinkErrorMessage,
   googleIdentityConfiguration,
   loadGoogleIdentityServices,
   readGoogleCredential,
-  validateGoogleStudentRegistration
+  validateGoogleStudentLink
 } from '../lib/googleIdentity.js'
 
-const emptyLinkForm = {
-  studentNumber: '', firstName: '', lastName: '', phoneNumber: '', program: '',
-  section: '', yearLevel: '', guardianName: '', guardianRelationship: '', guardianPhoneNumber: ''
-}
+const emptyLinkForm = { studentNumber: '', firstName: '', lastName: '' }
 
 function GoogleStudentAccess({ clientId, onSession }) {
   const buttonRef = useRef(null)
@@ -25,7 +21,6 @@ function GoogleStudentAccess({ clientId, onSession }) {
   const [isLinking, setIsLinking] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState('')
-  const [pendingRegistration, setPendingRegistration] = useState(false)
 
   const clearAttemptTimer = () => {
     if (attemptTimerRef.current) window.clearTimeout(attemptTimerRef.current)
@@ -122,18 +117,13 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
     try {
       if (!credential) throw new Error('Your Google sign-in expired. Please start again.')
-      const validationError = validateGoogleStudentRegistration(linkForm)
+      const validationError = validateGoogleStudentLink(linkForm)
       if (validationError) throw new Error(validationError)
 
       const session = await googleLink({ credential, ...linkForm })
       setCredential('')
       setLinkForm(emptyLinkForm)
-      if (isPendingGoogleRegistration(session)) {
-        setIsLinking(false)
-        setPendingRegistration(true)
-      } else {
-        onSession(session)
-      }
+      onSession(session)
     } catch (linkError) {
       setError(googleStudentLinkErrorMessage(linkError))
     } finally {
@@ -145,13 +135,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
     <section className="google-access" aria-labelledby="google-access-title">
       <div className="auth-divider"><span>Student access</span></div>
 
-      {pendingRegistration ? (
-        <div className="registration-pending" role="status">
-          <h4 id="google-access-title">Student record review pending</h4>
-          <p>Your request was submitted to the Discipline Office. You can sign in with Google after the student profile is approved.</p>
-          <button type="button" className="secondary-button" onClick={() => setPendingRegistration(false)}>Back to sign in</button>
-        </div>
-      ) : !isLinking ? (
+      {!isLinking ? (
         <>
           <h4 id="google-access-title">Continue with your school Google account</h4>
           <div ref={buttonRef} className="google-button" aria-busy={isBusy} />
@@ -162,7 +146,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
         <form className="google-link-form" onSubmit={submitLink}>
           <div>
             <h4 id="google-access-title">Link your student record</h4>
-            <p>First time here? Confirm the details held by your school.</p>
+            <p>Confirm the details on the student account already created by the Discipline Office.</p>
           </div>
 
           <label htmlFor="google-student-number">
@@ -184,51 +168,6 @@ function GoogleStudentAccess({ clientId, onSession }) {
               onChange={(event) => setLinkForm({ ...linkForm, lastName: event.target.value })}
               placeholder="Example: Reyes" autoComplete="family-name" disabled={isBusy} required />
           </label>
-          <label htmlFor="google-phone-number">
-            Phone number
-            <input id="google-phone-number" name="phoneNumber" value={linkForm.phoneNumber}
-              onChange={(event) => setLinkForm({ ...linkForm, phoneNumber: event.target.value })}
-              placeholder="Example: 09171234567" autoComplete="tel" inputMode="tel" disabled={isBusy} required />
-          </label>
-          <label htmlFor="google-program">
-            Program
-            <input id="google-program" name="program" value={linkForm.program}
-              onChange={(event) => setLinkForm({ ...linkForm, program: event.target.value })}
-              placeholder="Example: BSIT" autoComplete="off" disabled={isBusy} required />
-          </label>
-          <label htmlFor="google-year-level">
-            Year level
-            <select id="google-year-level" name="yearLevel" value={linkForm.yearLevel}
-              onChange={(event) => setLinkForm({ ...linkForm, yearLevel: event.target.value })} disabled={isBusy} required>
-              <option value="">Select year level</option>
-              {[1, 2, 3, 4, 5, 6].map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
-          </label>
-          <label htmlFor="google-section">
-            Section
-            <input id="google-section" name="section" value={linkForm.section}
-              onChange={(event) => setLinkForm({ ...linkForm, section: event.target.value })}
-              placeholder="Example: A103" autoComplete="off" disabled={isBusy} required />
-          </label>
-          <label htmlFor="google-guardian-name">
-            Guardian Contact name
-            <input id="google-guardian-name" name="guardianName" value={linkForm.guardianName}
-              onChange={(event) => setLinkForm({ ...linkForm, guardianName: event.target.value })}
-              placeholder="Example: Maria Reyes" autoComplete="name" disabled={isBusy} required />
-          </label>
-          <label htmlFor="google-guardian-relationship">
-            Relationship
-            <input id="google-guardian-relationship" name="guardianRelationship" value={linkForm.guardianRelationship}
-              onChange={(event) => setLinkForm({ ...linkForm, guardianRelationship: event.target.value })}
-              placeholder="Example: Mother" autoComplete="off" disabled={isBusy} required />
-          </label>
-          <label htmlFor="google-guardian-phone-number">
-            Guardian Contact phone number
-            <input id="google-guardian-phone-number" name="guardianPhoneNumber" value={linkForm.guardianPhoneNumber}
-              onChange={(event) => setLinkForm({ ...linkForm, guardianPhoneNumber: event.target.value })}
-              placeholder="Example: 09181234567" autoComplete="tel" inputMode="tel" disabled={isBusy} required />
-          </label>
-
           <div className="google-link-actions">
             <button type="submit" disabled={isBusy}>{isBusy ? 'Linking…' : 'Link and sign in'}</button>
             <button type="button" className="secondary-button" onClick={cancelLinking} disabled={isBusy}>Cancel</button>
