@@ -4,7 +4,7 @@ const {createSystemAccountSecurityService}=require('../src/services/systemAccoun
 
 const fakePool=(target,{activeCount=2}={})=>{
   const queries=[];
-  const client={async query(sql,params=[]){queries.push({sql:String(sql),params});if(String(sql).startsWith('SELECT id,username,role,is_active'))return{rows:[target]};if(String(sql).startsWith("SELECT id,username,role FROM"))return{rows:[target]};if(String(sql).includes('COUNT(*)'))return{rows:[{count:activeCount}]};if(String(sql).startsWith('UPDATE users')&&String(sql).includes('RETURNING'))return{rows:[{...target,is_active:false,session_version:4}]};return{rows:[]}},release(){}};
+  const client={async query(sql,params=[]){queries.push({sql:String(sql),params});if(String(sql).startsWith('SELECT id,username,role,is_active'))return{rows:[target]};if(String(sql).startsWith("SELECT id,username,role,session_version FROM"))return{rows:[target]};if(String(sql).includes('COUNT(*)'))return{rows:[{count:activeCount}]};if(String(sql).startsWith('UPDATE users')&&String(sql).includes('RETURNING'))return{rows:[{...target,is_active:false,session_version:4}]};return{rows:[]}},release(){}};
   return{queries,pool:{connect:async()=>client}};
 };
 
@@ -17,7 +17,7 @@ test('system account lock is concurrency guarded, audited, and invalidates sessi
 });
 
 test('system account lock rejects self-lock and the final active administrator',async()=>{
-  const service=createSystemAccountSecurityService({pool:fakePool({id:8,username:'admin',role:'SYSTEM_ADMIN',is_active:true},{activeCount:1}).pool});
+  const service=createSystemAccountSecurityService({pool:fakePool({id:8,username:'admin',role:'DISCIPLINE_ADMIN',is_active:true},{activeCount:1}).pool});
   await assert.rejects(()=>service.lock({actorId:8,targetId:8,reason:'Attempt to lock own account'}),(error)=>error.code==='SELF_ACCOUNT_CHANGE');
   await assert.rejects(()=>service.lock({actorId:2,targetId:8,reason:'Attempt to lock final admin'}),(error)=>error.code==='LAST_ADMIN');
 });

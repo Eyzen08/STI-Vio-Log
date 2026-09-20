@@ -2,16 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import PortalIcon from './PortalIcon.jsx'
 import { avatarInitials } from '../lib/avatarInitials.js'
 
-const roleLabel = (role) => ({ SYSTEM_ADMIN: 'System Administrator', DISCIPLINE_ADMIN: 'Discipline Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
+const roleLabel = (role) => ({ DISCIPLINE_ADMIN: 'Discipline Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
 const settingsPath = (role) => ({
-  SYSTEM_ADMIN: '/system/account-settings',
   DISCIPLINE_ADMIN: '/admin/account-settings',
   DISCIPLINE_OFFICE: '/admin/account-settings',
   DEPARTMENT_HEAD: '/department/account-settings',
   STUDENT: '/student/account-settings'
 }[role] || '/unauthorized')
 const profilePath = (role) => ({
-  SYSTEM_ADMIN: '/system/profile',
   DISCIPLINE_ADMIN: '/admin/profile',
   DISCIPLINE_OFFICE: '/admin/profile',
   DEPARTMENT_HEAD: '/department/profile',

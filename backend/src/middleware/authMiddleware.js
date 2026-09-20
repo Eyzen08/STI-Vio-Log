@@ -2,7 +2,6 @@ const pool = require("../config/database");
 const sessionService = require('../services/browserSessionService');
 const { permissionsForRole } = require('../security/permissions');
 const { recordSecurityEvent } = require('../services/securityEventService');
-const { notifyDisciplineSupportUse } = require('../services/notificationService');
 
 const denyAuthorization = (req, res, { code = 'FORBIDDEN', message = 'Permission denied', required = [] } = {}) => {
     res.locals = res.locals || {};
@@ -18,8 +17,7 @@ const denyAuthorization = (req, res, { code = 'FORBIDDEN', message = 'Permission
         result:'DENIED',
         ipAddress:req.ip,
         userAgent:req.get?.('user-agent'),
-        requestId:req.requestId,
-        supportAccessRequestId:req.user.support_access_request_id
+        requestId:req.requestId
     }).then(send);
 };
 
@@ -54,18 +52,6 @@ const authenticateToken = async (req, res, next) => {
                 bs.csrf_hash,
                 bs.absolute_expires_at,
                 COALESCE(dh.department_id, sp.department_id) AS department_id
-                ,CASE WHEN u.role='SYSTEM_ADMIN' THEN COALESCE((
-                    SELECT jsonb_agg(DISTINCT scope)
-                    FROM support_access_requests sar, unnest(sar.approved_scopes) scope
-                    WHERE sar.requester_user_id=u.id AND sar.status='APPROVED'
-                      AND sar.read_only=TRUE AND sar.revoked_at IS NULL AND sar.expires_at>CURRENT_TIMESTAMP
-                ), '[]'::jsonb) ELSE '[]'::jsonb END AS support_scopes
-                ,CASE WHEN u.role='SYSTEM_ADMIN' THEN (
-                    SELECT sar.id FROM support_access_requests sar
-                    WHERE sar.requester_user_id=u.id AND sar.status='APPROVED'
-                      AND sar.read_only=TRUE AND sar.revoked_at IS NULL AND sar.expires_at>CURRENT_TIMESTAMP
-                    ORDER BY sar.expires_at ASC LIMIT 1
-                ) ELSE NULL END AS support_access_request_id
             FROM browser_sessions bs
             JOIN users u ON u.id=bs.user_id
             LEFT JOIN department_heads dh
@@ -107,12 +93,10 @@ const authenticateToken = async (req, res, next) => {
             first_name:account.first_name||null,
             last_name:account.last_name||null
         };
-        req.user.support_scopes = Array.isArray(account.support_scopes) ? account.support_scopes : [];
-        req.user.support_access_request_id = account.support_access_request_id ? Number(account.support_access_request_id) : null;
         req.user.base_permissions = [...permissionsForRole(account.role)];
-        req.user.permissions = [...new Set([...req.user.base_permissions, ...req.user.support_scopes])];
+        req.user.permissions = req.user.base_permissions;
 
-        const idleMinutes=['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(account.role)?30:120;
+        const idleMinutes=account.role==='DISCIPLINE_ADMIN'?30:120;
         await pool.query(`UPDATE browser_sessions SET last_seen_at=CURRENT_TIMESTAMP,
           idle_expires_at=LEAST(absolute_expires_at,CURRENT_TIMESTAMP+($2||' minutes')::interval) WHERE id=$1`,[account.browser_session_id,idleMinutes]);
         req.session={id:Number(account.browser_session_id),csrfHash:account.csrf_hash,absoluteExpiresAt:account.absolute_expires_at};
@@ -174,29 +158,6 @@ const authorizePermissions = (...requiredPermissions) => (req, res, next) => {
     const effectivePermissions = new Set(req.user.permissions || permissionsForRole(req.user.role));
     if (!requiredPermissions.length || !requiredPermissions.every((permission) => effectivePermissions.has(permission))) {
         return denyAuthorization(req,res,{required:requiredPermissions});
-    }
-    const basePermissions = new Set(req.user.base_permissions || permissionsForRole(req.user.role));
-    const reliesOnSupportGrant = requiredPermissions.some((permission) => !basePermissions.has(permission));
-    if (reliesOnSupportGrant && req.method !== 'GET' && req.method !== 'HEAD') {
-        return denyAuthorization(req,res,{code:'SUPPORT_ACCESS_READ_ONLY',message:'Temporary support access is read-only',required:requiredPermissions});
-    }
-    if (reliesOnSupportGrant) {
-        return Promise.all([recordSecurityEvent({
-            actor:req.user,
-            action:'SUPPORT_ACCESS_USED',
-            targetType:'API_ROUTE',
-            targetLabel:`${req.method} ${req.originalUrl || req.path || 'unknown'}`,
-            details:{effective_support_scopes:requiredPermissions},
-            reason:'Approved temporary support access',
-            result:'SUCCESS',
-            ipAddress:req.ip,
-            userAgent:req.get?.('user-agent'),
-            requestId:req.requestId,
-            supportAccessRequestId:req.user.support_access_request_id
-        }),notifyDisciplineSupportUse(pool,{requestId:req.user.support_access_request_id,module:req.originalUrl || req.path}).catch((error)=>{
-          console.error('Support access notification failed:',error.message)
-          return []
-        })]).then(()=>next());
     }
     return next();
 };

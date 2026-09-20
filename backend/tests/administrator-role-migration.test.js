@@ -16,3 +16,13 @@ test('administrator enum additions commit before legacy account conversion', () 
     assert.match(convert, /session_version = session_version \+ 1/);
     assert.doesNotMatch(convert, /DELETE|TRUNCATE|DROP TABLE/i);
 });
+
+test('role merge converts System Administrators without deleting historical data', () => {
+    const merge = migration('037_merge_system_administrator.sql');
+    assert.match(merge, /WHERE role = 'SYSTEM_ADMIN'/);
+    assert.match(merge, /role = 'DISCIPLINE_ADMIN'/);
+    assert.match(merge, /session_version = session_version \+ 1/);
+    assert.match(merge, /ADD COLUMN IF NOT EXISTS target_version/);
+    assert.match(merge, /support_access_requests[\s\S]*status = 'REVOKED'/);
+    assert.doesNotMatch(merge, /DELETE|TRUNCATE|DROP TABLE/i);
+});

@@ -5,7 +5,7 @@ import { getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
 import { readFile } from 'node:fs/promises'
 
 test('each supported role receives its own dashboard and navigation', () => {
-  assert.equal(getHomePath('SYSTEM_ADMIN'), '/system/dashboard')
+  assert.equal(getHomePath('SYSTEM_ADMIN'), '/unauthorized')
   assert.equal(getHomePath('DISCIPLINE_ADMIN'), '/admin/dashboard')
   assert.equal(getHomePath('DISCIPLINE_OFFICE'), '/admin/dashboard')
   assert.equal(getHomePath('DEPARTMENT_HEAD'), '/department/dashboard')
@@ -16,10 +16,13 @@ test('each supported role receives its own dashboard and navigation', () => {
   assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Notifications'])
   const adminReviewItems = getNavItems('DISCIPLINE_ADMIN').filter(({ view }) => view === 'Registrations')
   assert.deepEqual(adminReviewItems.map(({ label }) => label), ['Registration & Duplicate Review'])
+  assert.equal(getNavItems('DISCIPLINE_ADMIN').some(({ path }) => path === '/admin/system-monitoring'), true)
 })
 
 test('protected routes permit only their declared roles', () => {
-  assert.equal(resolveRoute('/system/profile', 'SYSTEM_ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/system/profile', 'SYSTEM_ADMIN').status, 'not_found')
+  assert.equal(resolveRoute('/admin/system-monitoring', 'DISCIPLINE_ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/system-monitoring', 'DISCIPLINE_OFFICE').status, 'unauthorized')
   assert.equal(resolveRoute('/admin/profile', 'DISCIPLINE_ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/profile', 'DISCIPLINE_OFFICE').status, 'allowed')
   assert.equal(resolveRoute('/department/profile', 'DEPARTMENT_HEAD').status, 'allowed')

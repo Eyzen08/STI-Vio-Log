@@ -43,12 +43,11 @@
 
 ## System Administration
 
-1. System Admin can inspect sanitized component health, authentication activity, and append-only security events.
-2. System Admin can search for an account and request a lock or controlled recovery after password re-authentication.
-3. A different active Discipline Administrator must approve high-risk requests; approval is short-lived and execution requires a fresh password confirmation.
-4. System Admin can request exact-scope, time-limited, read-only access to sensitive institutional information.
-5. Broader account, department, role, and institutional modules remain disabled until their actions have registered approval-aware executors and pass acceptance testing.
-6. System Admin cannot view secrets, impersonate users, run arbitrary SQL, delete audit evidence, or bypass domain business rules.
+1. Discipline Admin can inspect sanitized component health, authentication activity, and append-only security events from a separate System Monitoring dashboard.
+2. Discipline Admin can search for an account and perform a lock or controlled recovery after one fresh password confirmation.
+3. Each confirmation is single-use, expires after five minutes, and is bound to the selected action, target, and target version.
+4. Dashboard navigation and read-only monitoring do not require repeated verification after MFA login.
+5. Discipline Admin cannot view secrets, impersonate users, run arbitrary SQL, delete audit evidence, or bypass domain business rules.
 
 ## Reports and exports
 

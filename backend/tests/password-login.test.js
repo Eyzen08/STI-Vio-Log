@@ -5,7 +5,7 @@ const {createAuthController}=require('../src/controllers/authController');
 const response=()=>({statusCode:200,body:null,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
 const requestFor=(username,password)=>({body:{username,password}});
 
-for(const role of ['SYSTEM_ADMIN','DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'])test(`valid ${role} password login derives its role from the database`,async()=>{
+for(const role of ['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'])test(`valid ${role} password login derives its role from the database`,async()=>{
   const controller=createAuthController({database:{async query(sql,params){if(sql.startsWith('UPDATE users')){assert.equal(params[0],4);return{rows:[]}}assert.equal(params[0],'account');assert.equal(sql.includes('role=$'),false);return{rows:[{id:4,username:'account',role,password_hash:'hash',session_version:1,must_change_password:false,email_verified:true,first_name:'Pedro',last_name:'Makisig'}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:user=>`token-${user.role}`,auditSecurityEvent:async()=>true});
   const res=response();await controller.loginUser(requestFor('account','UniquePass@1234'),res);
   assert.equal(res.statusCode,200);assert.equal(res.body.user.role,role);assert.equal(res.body.user.full_name,'Pedro Makisig');assert.equal(res.body.token,`token-${role}`);
@@ -31,9 +31,9 @@ test('student password login accepts the official student number when it differs
 
 test('administrator login auditing records outcomes without credentials',async()=>{
   const events=[];
-  const controller=createAuthController({database:{async query(sql){return sql.startsWith('UPDATE users')?{rows:[]}:{rows:[{id:4,username:'sys.admin',role:'SYSTEM_ADMIN',password_hash:'private-hash',session_version:1}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:()=> 'private-token',auditSecurityEvent:async(event)=>events.push(event)});
-  const res=response();await controller.loginUser(requestFor('sys.admin','Private@123'),res);
+  const controller=createAuthController({database:{async query(sql){return sql.startsWith('UPDATE users')?{rows:[]}:{rows:[{id:4,username:'discipline.admin',role:'DISCIPLINE_ADMIN',password_hash:'private-hash',session_version:1}]}}},comparePassword:async()=>true,jwtSecret:()=> 's'.repeat(48),issueToken:()=> 'private-token',auditSecurityEvent:async(event)=>events.push(event)});
+  const res=response();await controller.loginUser(requestFor('discipline.admin','Private@123'),res);
   assert.equal(events[0].result,'SUCCESS');
-  assert.equal(events[0].actor.role,'SYSTEM_ADMIN');
+  assert.equal(events[0].actor.role,'DISCIPLINE_ADMIN');
   assert.doesNotMatch(JSON.stringify(events),/Private@123|private-hash|private-token/);
 });

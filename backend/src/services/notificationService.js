@@ -15,17 +15,6 @@ const insertNotification = async (client, { userId, title, message, type, eventK
   )).rows[0] || null
 }
 
-const notifyDisciplineSupportUse = async (client, { requestId, module }) => {
-  if(!requestId)return []
-  const recipients=(await client.query("SELECT id FROM users WHERE role='DISCIPLINE_ADMIN' AND is_active=TRUE")).rows
-  const created=[]
-  for(const recipient of recipients){
-    const row=await insertNotification(client,{userId:recipient.id,title:'Temporary support access used',message:`Approved technical support access was used for ${String(module||'a protected module').slice(0,100)}.`,type:'SUPPORT_ACCESS_USED',eventKey:`support-access:${requestId}:used:${recipient.id}`,category:'SECURITY',severity:'WARNING',resourceType:'support_access_requests',resourceId:requestId,linkPath:'/admin/support-access'})
-    if(row)created.push(row)
-  }
-  return created
-}
-
 const notifyStudent = async (client, studentId, notification) => {
   const student = (await client.query('SELECT user_id FROM students WHERE id = $1', [studentId])).rows[0]
   return student ? insertNotification(client, { ...notification, userId: student.user_id }) : null
@@ -96,4 +85,4 @@ const createOverdueAttendanceNotifications = async (client, thresholdHours = 8) 
   return sessions.length
 }
 
-module.exports = { insertNotification, notifyDisciplineSupportUse, notifyStudent, notifyAttendanceStaff, notifyAttendanceFailure, createOverdueAttendanceNotifications, localDateTime }
+module.exports = { insertNotification, notifyStudent, notifyAttendanceStaff, notifyAttendanceFailure, createOverdueAttendanceNotifications, localDateTime }

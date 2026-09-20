@@ -59,7 +59,7 @@ After deployment verify:
 2. Login sets host-only `HttpOnly; Secure; SameSite=Lax` `sti_session`, and no token appears in local storage or JSON.
 3. Every authenticated mutation without a matching `X-CSRF-Token` fails.
 4. An unapproved Origin fails for HTTP and Socket.IO.
-5. SYSTEM_ADMIN and DISCIPLINE_ADMIN must enroll/verify TOTP before API access; recovery codes work once.
+5. DISCIPLINE_ADMIN must enroll/verify TOTP before API access; recovery codes work once.
 6. Student, department, administrator, forced-password, ownership, and deactivated-account boundaries hold.
 7. CSP has no violations during Google login, MFA, QR camera, exports, certificates, and realtime use.
 8. Supabase Table Editor confirms RLS enabled and `anon`/`authenticated` have no table privileges.

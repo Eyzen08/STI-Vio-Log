@@ -1,8 +1,4 @@
 const pool = require('../config/database');
-const { createSystemAccountSecurityService } = require('../services/systemAccountSecurityService');
-const { recordSecurityEvent } = require('../services/securityEventService');
-const { assertAllowedFields } = require('../utils/validators');
-const accountSecurity=createSystemAccountSecurityService({pool});
 
 const boundedLimit = (value) => Math.min(Math.max(Number.parseInt(value, 10) || 25, 1), 100);
 
@@ -99,30 +95,4 @@ const authenticationActivity = async (req, res) => {
     }
 };
 
-const accountLock = async (req,res) => {
-    try {
-        if(process.env.ALLOW_LEGACY_SYSTEM_ACCOUNT_ACTIONS!=='true') return res.status(409).json({success:false,error:{code:'APPROVAL_REQUIRED',message:'Use the high-risk action approval workflow'}});
-        assertAllowedFields(req.body || {},['reason']);
-        const account=await accountSecurity.lock({actorId:req.user.id,targetId:req.params.id,reason:req.body?.reason});
-        await recordSecurityEvent({actor:req.user,action:'ACCOUNT_LOCK',targetType:'USER_ACCOUNT',targetId:account.id,targetLabel:account.username,reason:req.body.reason,result:'SUCCESS',ipAddress:req.ip,userAgent:req.get('user-agent'),requestId:req.requestId});
-        return res.json({success:true,message:'Account locked and active sessions invalidated.',account});
-    } catch(error){
-        await recordSecurityEvent({actor:req.user,action:'ACCOUNT_LOCK',targetType:'USER_ACCOUNT',targetId:req.params.id,reason:req.body?.reason,result:'FAILED',details:{error_code:error.code||'INTERNAL_ERROR'},ipAddress:req.ip,userAgent:req.get('user-agent'),requestId:req.requestId});
-        return res.status(error.statusCode||500).json({success:false,error:{code:error.code||'ACCOUNT_LOCK_FAILED',message:error.statusCode?error.message:'Account lock failed'}});
-    }
-};
-
-const accountRecovery = async (req,res) => {
-    try {
-        if(process.env.ALLOW_LEGACY_SYSTEM_ACCOUNT_ACTIONS!=='true') return res.status(409).json({success:false,error:{code:'APPROVAL_REQUIRED',message:'Use the high-risk action approval workflow'}});
-        assertAllowedFields(req.body || {},['reason']);
-        const recovery=await accountSecurity.initiateRecovery({actorId:req.user.id,targetId:req.params.id,reason:req.body?.reason});
-        await recordSecurityEvent({actor:req.user,action:'ACCOUNT_RECOVERY_INITIATED',targetType:'USER_ACCOUNT',targetId:recovery.account.id,targetLabel:recovery.account.username,reason:req.body.reason,result:'SUCCESS',ipAddress:req.ip,userAgent:req.get('user-agent'),requestId:req.requestId});
-        return res.json({success:true,message:'Temporary credential created. It will be displayed only in this response.',recovery});
-    } catch(error){
-        await recordSecurityEvent({actor:req.user,action:'ACCOUNT_RECOVERY_INITIATED',targetType:'USER_ACCOUNT',targetId:req.params.id,reason:req.body?.reason,result:'FAILED',details:{error_code:error.code||'INTERNAL_ERROR'},ipAddress:req.ip,userAgent:req.get('user-agent'),requestId:req.requestId});
-        return res.status(error.statusCode||500).json({success:false,error:{code:error.code||'ACCOUNT_RECOVERY_FAILED',message:error.statusCode?error.message:'Account recovery failed'}});
-    }
-};
-
-module.exports = { status, securityEvents, authenticationActivity, accountDirectory, accountLock, accountRecovery };
+module.exports = { status, securityEvents, authenticationActivity, accountDirectory };

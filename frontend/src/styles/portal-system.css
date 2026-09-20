@@ -1041,9 +1041,6 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 .main-panel--messages > .topbar,
-.main-panel--messages > .support-access-banner {
-  flex: 0 0 auto;
-}
 
 .main-panel--messages > .page-content {
   min-height: 0;

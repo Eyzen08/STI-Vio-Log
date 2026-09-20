@@ -1,59 +1,32 @@
 # Administrator security model
 
-STI Vio-Log separates technical maintenance from institutional operations. `SYSTEM_ADMIN` and `DISCIPLINE_ADMIN` are individual, non-inheriting roles; neither is a superuser role.
+STI Vio-Log uses `DISCIPLINE_ADMIN` as its single administrator role. It owns institutional operations and the protected technical-monitoring tools formerly assigned to `SYSTEM_ADMIN`. `DISCIPLINE_OFFICE`, `DEPARTMENT_HEAD`, and `STUDENT` retain their scoped operational or self-service access.
 
-## Responsibility boundaries
+The backend permission matrix in `backend/src/security/permissions.js` is authoritative. Frontend route and control visibility is only a usability layer. Protected requests re-read current account state, session version, and permissions from the database.
 
-- `SYSTEM_ADMIN` can inspect sanitized system status, authentication activity, and append-only security events; lock accounts; initiate controlled recovery; and request narrowly scoped temporary support access. It has no standing access to student discipline, guardian, private-message, attendance, service, clearance, certificate, or e-signature operations.
-- `DISCIPLINE_ADMIN` owns student and institutional workflows, operational staff accounts, reports, exports, and approval of temporary support access. It cannot read secrets, raw environment configuration, or use developer maintenance controls.
-- `DISCIPLINE_OFFICE`, `DEPARTMENT_HEAD`, and `STUDENT` retain their scoped operational or self-service access.
+## Administrator access
 
-The backend permission matrix in `backend/src/security/permissions.js` is authoritative. Frontend route and control visibility is only a usability layer. Protected requests re-read current account state, session version, permissions, and any temporary grant from the database.
+Discipline Administrators can use the normal operational dashboard and the separate `/admin/system-monitoring` page in the same authenticated session. System Monitoring exposes sanitized health, authentication activity, security events, account targeting, locking, and controlled recovery. It never exposes secrets, raw environment configuration, arbitrary SQL, or impersonation.
 
-## Administrator lifecycle
+Every Discipline Administrator uses an individual account and must enroll in TOTP MFA. Switching dashboards and reading monitoring data do not require another challenge after login. The privileged session uses the shorter administrator idle timeout.
 
-Use the disabled-by-default bootstrap described in `administrator-bootstrap.md` for the first account of each administrator role. Every administrator must have an individual account. Production credentials must never be committed or placed in seed data.
+## Protected account actions
 
-Locking, recovery, password changes, and role conversion increment the account session version. Existing tokens consequently stop working. Self-locking, self-role changes, and removal of the last active administrator of either protected role are rejected using transactional locks.
+Account lock and recovery require the signed-in Discipline Administrator to confirm the current password. Successful confirmation creates a five-minute, single-use token bound to the registered action, target account, and target session version. Execution rejects an expired or replayed token, a changed target, self-locking, self-recovery, and removal of the last active Discipline Administrator.
 
-## Temporary support access
+Each execution records sanitized before/after summaries and the underlying account change creates its normal audit entry. Passwords, password hashes, MFA values, tokens, and generated recovery credentials are never written to audit storage.
 
-Technical support access is read-only, exact-scope, approved by a different active `DISCIPLINE_ADMIN`, and bounded by database timestamps. Grant state is checked on every protected request. Approval, use, revocation, and automatic expiry are audited and generate deduplicated security notifications. Access never impersonates another user.
+## Retired workflows and migration
 
-Temporary write elevation and emergency break-glass access are intentionally **not implemented**. They must not be represented by a frontend-only control. Before either feature is introduced, it requires recent re-authentication, exact operation scopes, short expiry, explicit approval, durable alerts, post-event review, and complete automated tests. Break-glass must also require MFA once a fully tested MFA lifecycle exists.
+Migration 037 converts every `SYSTEM_ADMIN` account to `DISCIPLINE_ADMIN`, increments its session version, and preserves its ID, profile, MFA enrollment, references, and audit ownership. PostgreSQL retains `SYSTEM_ADMIN` and `ADMIN` only as historical enum labels; the application no longer authorizes or creates either role.
 
-## Controlled super-administration rollout
-
-The operations console adds searchable account targeting, sanitized component latency and remediation guidance, filterable security events, and two-person high-risk action requests. Account lock and recovery are the first registered executors. A System Administrator confirms the current password to receive a single-use, action-bound token, obtains approval from a distinct active Discipline Administrator, and confirms the password again before execution. Approval expires after 15 minutes; any intervening target change invalidates the request.
-
-`SYSTEM_SUPER_ADMIN_PHASE3_ENABLED` remains disabled until every institutional action has an explicit registry entry, approval guard, stale-target rule, and acceptance test. The flag alone grants no authority. Direct legacy account actions remain disabled unless `ALLOW_LEGACY_SYSTEM_ACCOUNT_ACTIONS=true` is deliberately enabled for rollback compatibility.
-
-## Auditing and notifications
-
-Administrative security events are append-only and use database-generated IDs and timestamps. Application roles are denied update/delete access by migration. Logged details are recursively redacted and must never contain passwords, hashes, OTPs, tokens, credentials, secrets, message bodies, or unnecessary personal data.
-
-Security notifications have severity, event-key deduplication, and explicit acknowledgement. A notification delivery failure does not grant access or undo an authorization decision. Normal API rate limiting and the dedicated authentication/recovery limits remain mandatory in production.
-
-## Migration and recovery
-
-Apply migrations in numeric order. Migrations 028–032 add the roles, convert legacy operational `ADMIN` accounts to `DISCIPLINE_ADMIN`, create temporary support access, harden the audit stores, and add security notifications. IDs, password hashes, ownership references, and history remain unchanged.
-
-Post-migration checks:
-
-1. Confirm no active user retains the legacy `ADMIN` role.
-2. Confirm at least one active `SYSTEM_ADMIN` and one active `DISCIPLINE_ADMIN` exist before retiring bootstrap access.
-3. Confirm converted accounts have a newer session version and must authenticate again.
-4. Confirm the normal application database role cannot update or delete either audit table.
-5. Run the backend and frontend test suites plus the production configuration check.
-
-Do not reverse the conversion by deleting accounts or historical rows. If deployment must be rolled back, keep the expanded enum and new tables/columns, deploy the preceding compatible application version, and restore service from a verified pre-deployment backup only if data integrity is affected. PostgreSQL enum values should not be removed in place.
+Temporary support access and two-person action approval are retired because the unified administrator already has the required standing permissions. Existing support-access and high-risk request tables remain for history. Migration 037 revokes open support grants and cancels pending or approved legacy high-risk requests without deleting records.
 
 ## Production checklist
 
-- Configure strong JWT and certificate signing secrets through the deployment secret manager.
-- Use HTTPS-only explicit origins and a least-privilege PostgreSQL application account.
-- Run migrations before accepting traffic and verify the migration ledger.
-- Bootstrap each initial administrator once, rotate the temporary password, then disable bootstrap.
-- Test login, role routing, account lock/recovery, support approval/expiry/revocation, notifications, and audit visibility.
-- Monitor denied/failed authentication events and unacknowledged critical security notifications.
-- Maintain tested encrypted backups and document the institutional incident-response contact.
+1. Apply migrations in numeric order and confirm migration 037 is recorded.
+2. Confirm no active user retains `SYSTEM_ADMIN` or legacy `ADMIN`.
+3. Confirm at least one active `DISCIPLINE_ADMIN` exists before disabling bootstrap.
+4. Confirm converted administrators must authenticate again and complete MFA.
+5. Test both dashboards, direct password-confirmed lock/recovery, stale-target rejection, notifications, and audit visibility.
+6. Maintain HTTPS, least-privilege database credentials, protected secrets, monitoring, and tested encrypted backups.

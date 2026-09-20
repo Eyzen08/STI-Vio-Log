@@ -33,12 +33,12 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       }
       await database.query('UPDATE users SET last_login_at=CURRENT_TIMESTAMP WHERE id=$1',[user.id]);
       if(issueToken===issueSessionToken)await throttles.success(throttleInput,database);
-      if(['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(user.role))await auditSecurityEvent({actor:{id:user.id,username:user.username,role:user.role},action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetId:user.id,targetLabel:user.username,details:{authentication_method:'PASSWORD'},result:'SUCCESS',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
+      if(user.role==='DISCIPLINE_ADMIN')await auditSecurityEvent({actor:{id:user.id,username:user.username,role:user.role},action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetId:user.id,targetLabel:user.username,details:{authentication_method:'PASSWORD'},result:'SUCCESS',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
       const fullName=[user.first_name,user.last_name].filter(Boolean).join(' ')||null;
       const publicUser={id:user.id,username:user.username,role:user.role,first_name:user.first_name||null,last_name:user.last_name||null,full_name:fullName,password_change_required:Boolean(user.must_change_password)};
       // Dependency-injected token issuers are retained only for isolated legacy unit tests.
       if(issueToken!==issueSessionToken)return res.json({success:true,message:'Login successful',token:issueToken(user,{env:{JWT_SECRET:jwtSecret()}}),user:publicUser});
-      if(['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(user.role)){
+      if(user.role==='DISCIPLINE_ADMIN'){
         const enabled=(await database.query('SELECT 1 FROM user_mfa WHERE user_id=$1 AND enabled_at IS NOT NULL',[user.id])).rows[0];
         await challenges.createChallenge({userId:user.id,purpose:enabled?'VERIFY':'ENROLL',res});
         return res.status(202).json({success:true,mfa_required:Boolean(enabled),mfa_enrollment_required:!enabled,user:{username:user.username,role:user.role},server_time_ms:Date.now(),totp_period_seconds:30});

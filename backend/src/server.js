@@ -30,7 +30,6 @@ const officerResponsibilityRoutes = require('./routes/officerResponsibilityRoute
 const notificationRoutes = require('./routes/notificationRoutes');
 const { auditAdministrativeRequest } = require('./middleware/administrativeAuditMiddleware');
 const systemAdministrationRoutes = require('./routes/systemAdministrationRoutes');
-const supportAccessRoutes = require('./routes/supportAccessRoutes');
 const highRiskActionRoutes = require('./routes/highRiskActionRoutes');
 const officerResponsibilityController = require('./controllers/officerResponsibilityController');
 const pool = require("./config/database");
@@ -178,11 +177,10 @@ app.use(
 
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/messages', authenticateToken, auditAdministrativeRequest, messageRoutes);
-app.use('/api/notifications', authenticateToken, authorizeRoles('SYSTEM_ADMIN', 'DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), notificationRoutes);
+app.use('/api/notifications', authenticateToken, authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), notificationRoutes);
 
 app.use('/api/account', authenticateToken, accountRoutes);
 app.use('/api/system', authenticateToken, systemAdministrationRoutes);
-app.use('/api/support-access', authenticateToken, supportAccessRoutes);
 app.use('/api/high-risk-actions', authenticateToken, auditAdministrativeRequest, highRiskActionRoutes);
 
 app.use('/api/admin/accounts', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.STAFF_ACCOUNT_MANAGE), accountAdministrationRoutes);

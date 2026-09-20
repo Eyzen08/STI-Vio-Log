@@ -128,7 +128,7 @@ Can:
 - Review parent contact logs
 - Generate reports
 
-## SYSTEM_ADMIN
+## DISCIPLINE_ADMIN — SYSTEM MONITORING
 
 Can:
 
@@ -563,8 +563,8 @@ Roles:
 ```text
 STUDENT
 DEPARTMENT_HEAD
-DO_ADMIN
-SYSTEM_ADMIN
+DISCIPLINE_OFFICE
+DISCIPLINE_ADMIN
 ```
 
 ---
@@ -728,7 +728,7 @@ GET /api/reports/clearance
 /do/reports
 ```
 
-## System Admin
+## Discipline Admin — System Monitoring
 
 ```text
 /admin/dashboard
@@ -1073,7 +1073,7 @@ Department Head scanned student QR
 DO Admin created violation
 DO Admin issued clearance
 Staff contacted parent
-System Admin created account
+Discipline Admin created account
 ```
 
 ---
@@ -1139,7 +1139,7 @@ Never rely only on frontend permission checks.
 - [x] Review parent contact logs
 - [ ] Generate reports
 
-## System Admin
+## Discipline Admin — System Monitoring
 
 - [ ] Create users
 - [ ] Manage departments

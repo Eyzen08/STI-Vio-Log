@@ -1,6 +1,6 @@
 {
   "openapi": "3.1.0",
-  "info": { "title": "STI Vio-Log API", "version": "1.1.0", "description": "Stable opaque-cookie and CSRF contract. Roles: SYSTEM_ADMIN, DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, STUDENT. All roles use the unified /login UI." },
+  "info": { "title": "STI Vio-Log API", "version": "1.2.0", "description": "Stable opaque-cookie and CSRF contract. Roles: DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, STUDENT. All roles use the unified /login UI." },
   "servers": [{ "url": "/api" }],
   "components": {
     "securitySchemes": {
@@ -82,6 +82,13 @@
     "/reports/community-service": { "get": { "tags": ["Reports"], "summary": "Assignment report" } },
     "/reports/dtr": { "get": { "tags": ["Reports"], "summary": "Authoritative DTR report", "parameters": [{ "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } }, { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } }, { "name": "department_id", "in": "query", "schema": { "type": "integer" } }, { "name": "student_id", "in": "query", "schema": { "type": "integer" } }, { "name": "assignment_id", "in": "query", "schema": { "type": "integer" } }] } },
     "/reports/non-compliance": { "get": { "tags": ["Reports"], "summary": "Non-compliance report" } },
+    "/system/status": { "get": { "tags": ["System"], "summary": "Read sanitized system status as Discipline Admin" } },
+    "/system/accounts": { "get": { "tags": ["System"], "summary": "Search non-sensitive account targeting fields as Discipline Admin" } },
+    "/system/security-events": { "get": { "tags": ["System"], "summary": "Read sanitized append-only security events as Discipline Admin" } },
+    "/system/authentication-activity": { "get": { "tags": ["System"], "summary": "Read recent authentication activity as Discipline Admin" } },
+    "/high-risk-actions": { "get": { "tags": ["System"], "summary": "Read retained high-risk action history as Discipline Admin" } },
+    "/high-risk-actions/step-up": { "post": { "security": [{ "sessionCookie": [], "csrfHeader": [] }], "tags": ["System"], "summary": "Confirm the Discipline Admin password and issue a five-minute action-bound token" } },
+    "/high-risk-actions/execute": { "post": { "security": [{ "sessionCookie": [], "csrfHeader": [] }], "tags": ["System"], "summary": "Execute a registered account action with a single-use target-version-bound token" } },
     "/audit-logs": { "get": { "tags": ["Audit"], "summary": "Read audit entries (DISCIPLINE_ADMIN only)" } },
     "/audit-logs/stats": { "get": { "tags": ["Audit"], "summary": "Audit action statistics" } }
   }

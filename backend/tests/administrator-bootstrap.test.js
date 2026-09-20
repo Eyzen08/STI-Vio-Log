@@ -12,11 +12,11 @@ const client = (responses) => ({
 test('bootstrap creates one forced-change administrator without auditing its credential', async () => {
   const db = client([
     {}, {}, { rows: [], rowCount: 0 },
-    { rows: [{ id: '9', username: 'technical.owner', role: 'SYSTEM_ADMIN' }], rowCount: 1 },
+    { rows: [{ id: '9', username: 'discipline.owner', role: 'DISCIPLINE_ADMIN' }], rowCount: 1 },
     {}, {}, {}
   ]);
   const service = createAdministratorBootstrapService({ pool: { connect: async () => db }, hashPassword: async () => 'safe-hash' });
-  const result = await service.bootstrap({ role: 'SYSTEM_ADMIN', username: 'technical.owner', password: 'UniqueStrong!8A', firstName: 'Tech', lastName: 'Owner' });
+  const result = await service.bootstrap({ role: 'DISCIPLINE_ADMIN', username: 'discipline.owner', password: 'UniqueStrong!8A', firstName: 'Main', lastName: 'Owner' });
   assert.equal(result.generatedPassword, null);
   assert.match(db.queries[3].sql, /must_change_password/);
   assert.equal(db.queries.flatMap((query) => query.params || []).includes('UniqueStrong!8A'), false);

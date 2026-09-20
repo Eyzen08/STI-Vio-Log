@@ -23,7 +23,7 @@ const publicUser=(row)=>({id:Number(row.id),username:row.username,role:row.role,
 const createSession = async ({userId,ipAddress,userAgent,database=pool}) => {
   const token=randomToken(),csrf=randomToken();
   const privileged=(await database.query('SELECT role FROM users WHERE id=$1',[Number(userId)])).rows[0]?.role;
-  const idleMinutes=['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(privileged)?30:120;
+  const idleMinutes=privileged==='DISCIPLINE_ADMIN'?30:120;
   const result=await database.query(`INSERT INTO browser_sessions(user_id,token_hash,csrf_hash,idle_expires_at,absolute_expires_at,ip_address,user_agent)
     VALUES($1,$2,$3,CURRENT_TIMESTAMP+($4||' minutes')::interval,CURRENT_TIMESTAMP+INTERVAL '8 hours',$5,$6) RETURNING absolute_expires_at`,
     [Number(userId),hash(token),hash(csrf,process.env.CSRF_SIGNING_KEY),idleMinutes,ipAddress||null,String(userAgent||'').slice(0,500)||null]);

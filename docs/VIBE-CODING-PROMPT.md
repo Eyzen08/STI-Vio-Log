@@ -42,8 +42,8 @@ Backend:
 
 - STUDENT
 - DEPARTMENT_HEAD
-- DO_ADMIN
-- SYSTEM_ADMIN
+- DISCIPLINE_OFFICE
+- DISCIPLINE_ADMIN
 
 ## Important Development Rules
 

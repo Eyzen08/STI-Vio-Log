@@ -2,7 +2,6 @@ import PortalIcon from './PortalIcon.jsx'
 import { avatarInitials } from '../lib/avatarInitials.js'
 
 const roleLabels = {
-  SYSTEM_ADMIN: 'System Administrator',
   DISCIPLINE_ADMIN: 'Discipline Administrator',
   DISCIPLINE_OFFICE: 'Discipline Officer',
   DEPARTMENT_HEAD: 'Department Head'
@@ -23,7 +22,7 @@ function StaffProfile({ user, onNavigate }) {
   const initials = avatarInitials(user)
   const role = roleLabels[user?.role] || valueOrFallback(String(user?.role || '').replaceAll('_', ' '), 'Portal User')
   const department = valueOrFallback(user?.department_name || user?.department_code, 'Not assigned')
-  const settingsPath = user?.role === 'SYSTEM_ADMIN' ? '/system/account-settings' : user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
+  const settingsPath = user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
 
   return <section className="profile-card staff-profile-card" aria-labelledby="staff-profile-title">
     <header className="profile-hero">

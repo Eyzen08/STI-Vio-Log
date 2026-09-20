@@ -82,7 +82,9 @@ Release only when every applicable item passes, failures are documented and corr
 # Unified authentication acceptance
 
 - [ ] All roles sign in through `/login` without selecting a role.
-- [ ] SYSTEM_ADMIN, DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
+- [ ] DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
+- [ ] DISCIPLINE_ADMIN can open both the operational dashboard and `/admin/system-monitoring` without another verification prompt.
+- [ ] Account lock and recovery require a single-use password confirmation bound to the selected account and action.
 - [ ] A Student registration remains inactive until the email OTP is verified.
 - [ ] Registration OTP expires, cannot be reused, and resend invalidates the previous code.
 - [ ] Forgot-password responses do not reveal whether a Student account exists.

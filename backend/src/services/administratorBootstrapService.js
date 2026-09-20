@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
 const { passwordIsStrong } = require('./passwordPolicy');
 
-const BOOTSTRAP_ROLES = new Set(['SYSTEM_ADMIN', 'DISCIPLINE_ADMIN']);
+const BOOTSTRAP_ROLES = new Set(['DISCIPLINE_ADMIN']);
 const clean = (value, max) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 
 const createAdministratorBootstrapService = ({

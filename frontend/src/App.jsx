@@ -32,8 +32,6 @@ import OffenseIndicator from './components/OffenseIndicator.jsx'
 const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
-const SupportAccessPanel = lazy(() => import('./components/SupportAccessPanel.jsx'))
-const HighRiskActionPanel = lazy(() => import('./components/HighRiskActionPanel.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
@@ -54,7 +52,7 @@ import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, c
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from './lib/displayFormat.js'
+import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
@@ -350,7 +348,6 @@ function App() {
   const [reportData, setReportData] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState('')
-  const [activeSupportGrant, setActiveSupportGrant] = useState(null)
 
   const [reportFilters, setReportFilters] = useState({
     search: '',
@@ -369,7 +366,7 @@ function App() {
     if (item.view === 'Dashboard') return 'Overview'
     if (['Students','Registrations','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
     if (['Violations','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
-    if (['Departments & Officer Accounts','Support Access'].includes(item.view)) return 'Management'
+    if (item.view === 'Departments & Officer Accounts') return 'Management'
     if (item.view === 'Messages') return 'Communication'
     if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
     return 'Account'
@@ -423,18 +420,6 @@ function App() {
   useEffect(() => {
     applyPageMetadata(metadataForRoute(routePath, routeResolution.route?.label))
   }, [routePath, routeResolution.route?.label])
-
-  useEffect(() => {
-    if (!token || userRole !== 'SYSTEM_ADMIN') { setActiveSupportGrant(null); return undefined }
-    const controller = new AbortController()
-    const refresh = () => fetch(`${API_URL}/api/support-access`, { headers:{Authorization:`Bearer ${token}`}, signal:controller.signal })
-      .then((response)=>response.ok?response.json():null)
-      .then((data)=>setActiveSupportGrant((data?.requests||[]).find((item)=>item.status==='APPROVED' && new Date(item.expires_at)>new Date())||null))
-      .catch((loadError)=>{if(loadError.name!=='AbortError')setActiveSupportGrant(null)})
-    refresh()
-    const timer=window.setInterval(refresh,30000)
-    return ()=>{window.clearInterval(timer);controller.abort()}
-  },[token,userRole])
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined
@@ -513,16 +498,6 @@ function App() {
         keys.push('serviceResults')
         requests.push(fetch(`${API_URL}/api/community-service/results/pending`, { headers, signal: controller.signal }))
       }
-      if (userRole === 'DISCIPLINE_ADMIN') {
-        keys.push('supportAccess', 'actionRequests')
-        requests.push(
-          fetch(`${API_URL}/api/support-access`, { headers, signal: controller.signal }),
-          fetch(`${API_URL}/api/high-risk-actions`, { headers, signal: controller.signal })
-        )
-      } else if (userRole === 'SYSTEM_ADMIN') {
-        keys.push('actionRequests')
-        requests.push(fetch(`${API_URL}/api/high-risk-actions`, { headers, signal: controller.signal }))
-      }
       if (!requests.length) {
         setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
         return
@@ -534,11 +509,6 @@ function App() {
         keys.forEach((key, index) => {
           const data = payloads[index]
           if (key === 'serviceResults') next[key] = Array.isArray(data?.results) ? data.results.length : 0
-          if (key === 'supportAccess') next[key] = (data?.requests || []).filter((item) => item.status === 'PENDING').length
-          if (key === 'actionRequests') {
-            const actionableStatus = userRole === 'SYSTEM_ADMIN' ? 'APPROVED' : 'PENDING'
-            next[key] = (data?.requests || []).filter((item) => item.status === actionableStatus).length
-          }
         })
         setPendingActionCounts(next)
       } catch (loadError) {
@@ -555,8 +525,6 @@ function App() {
     if (item.view === 'Notifications') return { count: unreadNotificationCount, label: 'unread notifications' }
     if (item.view === 'Registrations') return { count: pendingAccountCounts.students, label: 'pending registrations' }
     if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'pending service reviews' }
-    if (item.path === '/admin/support-access') return { count: pendingActionCounts.supportAccess, label: 'pending support approvals' }
-    if (item.path.endsWith('/action-requests')) return { count: pendingActionCounts.actionRequests, label: userRole === 'SYSTEM_ADMIN' ? 'approved actions awaiting execution' : 'pending action approvals' }
     return { count: 0, label: '' }
   }
 
@@ -637,15 +605,6 @@ function App() {
       try {
         const authHeaders = {
           Authorization: `Bearer ${token}`
-        }
-
-        if (userRole === 'SYSTEM_ADMIN') {
-          const notificationsResponse = await fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
-          const notificationsData = await notificationsResponse.json().catch(() => ({}))
-          if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load system notifications')
-          setStudentNotifications(notificationsData.notifications || [])
-          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
-          return
         }
 
         /*
@@ -1885,19 +1844,8 @@ function App() {
       return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={requestLogout} />
     }
 
-    if (userRole === 'SYSTEM_ADMIN' && activeView === 'System Dashboard') {
+    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'System Dashboard') {
       return <SystemDashboard token={token} user={user} />
-    }
-
-    if (userRole === 'SYSTEM_ADMIN' && activeView === 'Account Settings') {
-      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
-    }
-
-    if (activeView === 'Support Access' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
-      return <SupportAccessPanel token={token} role={userRole} onChanged={refreshPendingActions} />
-    }
-    if (activeView === 'Action Requests' && ['SYSTEM_ADMIN','DISCIPLINE_ADMIN'].includes(userRole)) {
-      return <HighRiskActionPanel token={token} role={userRole} user={user} onChanged={refreshPendingActions} />
     }
 
     if (activeView === 'Messages') {
@@ -3515,13 +3463,12 @@ function App() {
 
           {isLoggedIn && (
             <div className="account-actions">
-              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':userRole==='SYSTEM_ADMIN'?'/system/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <b>{formatActionCount(unreadNotificationCount)}</b>}</button>
+              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <b>{formatActionCount(unreadNotificationCount)}</b>}</button>
               <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={requestLogout}/>
             </div>
           )}
         </header>}
 
-        {activeSupportGrant&&<div className="support-access-banner" role="status"><strong>Temporary support access active</strong><span>Read-only · {activeSupportGrant.affected_module} · expires {formatManilaDateTime(activeSupportGrant.expires_at)}</span></div>}
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>

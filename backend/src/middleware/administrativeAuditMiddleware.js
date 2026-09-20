@@ -1,6 +1,6 @@
 const { recordSecurityEvent } = require('../services/securityEventService');
 
-const AUDITED_ROLES=new Set(['SYSTEM_ADMIN','DISCIPLINE_ADMIN','DISCIPLINE_OFFICE']);
+const AUDITED_ROLES=new Set(['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE']);
 const classifyAdministrativeRequest=({method='',baseUrl='',path='',originalUrl=''})=>{
   const verb=String(method).toUpperCase();
   const route=`${baseUrl}${path || ''}`.split('?')[0] || String(originalUrl).split('?')[0];
@@ -29,7 +29,7 @@ const auditAdministrativeRequest=(req,res,next)=>{
   res.once('finish',()=>{
     if(!shouldRecordAdministrativeRequest({classification,statusCode:res.statusCode,authorizationDenied:res.locals?.authorizationDenied}))return;
     const result=res.statusCode===401||res.statusCode===403?'DENIED':res.statusCode>=400?'FAILED':'SUCCESS';
-    void recordSecurityEvent({actor:req.user,action:classification.action,targetType:classification.targetType,targetId:classification.targetId||req.params?.id||req.params?.studentId,targetLabel:`${req.method} ${(req.baseUrl||'')+(req.path||'')}`,details:{http_status:res.statusCode},result,ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,supportAccessRequestId:req.user.support_access_request_id});
+    void recordSecurityEvent({actor:req.user,action:classification.action,targetType:classification.targetType,targetId:classification.targetId||req.params?.id||req.params?.studentId,targetLabel:`${req.method} ${(req.baseUrl||'')+(req.path||'')}`,details:{http_status:res.statusCode},result,ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId});
   });
   return next();
 };
