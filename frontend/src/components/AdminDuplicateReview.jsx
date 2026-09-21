@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { duplicateSummaryTotal, duplicateTypeLabel } from '../lib/duplicateReview.js'
+import ManagementMetric from './ManagementMetric.jsx'
 
 const SUMMARY_ITEMS = [
   ['student_number', 'Student number'],
@@ -56,7 +57,7 @@ function AdminDuplicateReview({ token, embedded = false }) {
     </header>}
 
     <section className="management-metrics" aria-label="Duplicate review summary">
-      {SUMMARY_ITEMS.map(([key, label], index) => <article className={`management-metric ${index === 1 ? 'metric-red' : index === 3 ? 'metric-orange' : index === 2 ? 'metric-green' : 'metric-blue'}`} key={key}><i>{index === 0 ? '◎' : index === 1 ? '!' : index === 2 ? '✓' : '◷'}</i><div><strong>{Number(summary[key]) || 0}</strong><span>{label} conflicts</span></div></article>)}
+      {SUMMARY_ITEMS.map(([key, label], index) => <ManagementMetric key={key} tone={index === 1 ? 'red' : index === 3 ? 'orange' : index === 2 ? 'green' : 'blue'} icon={index === 0 ? 'students' : index === 1 ? 'user' : index === 2 ? 'registrations' : 'search'} value={Number(summary[key]) || 0} label={`${label} conflicts`}/>)}
     </section>
 
     {error && <p className="error-message" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>}

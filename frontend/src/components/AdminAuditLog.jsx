@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { auditActorLabel, buildAuditQuery, formatAuditAction } from '../lib/auditLog.js'
 import { formatManilaDateTime } from '../lib/displayFormat.js'
+import ManagementMetric from './ManagementMetric.jsx'
 
 const initialFilters = { action: '', table_name: '', from_date: '', to_date: '' }
 
@@ -28,7 +29,7 @@ function AdminAuditLog({ token }) {
   const activeFilterCount = Object.values(applied).filter(Boolean).length
   return <section className="audit-workspace">
     <header className="management-page-header"><div><span className="page-breadcrumb">Home / Audit Log</span><h2>Audit Log</h2><p>Review security and account activity without exposing sensitive authentication values.</p></div><span className="readonly-badge">Immutable history</span></header>
-    <section className="management-metrics" aria-label="Audit activity summary"><article className="management-metric metric-blue"><i>□</i><div><strong>{pagination.total}</strong><span>Total Events</span></div></article><article className="management-metric metric-green"><i>✓</i><div><strong>{entries.length}</strong><span>Events on Page</span></div></article><article className="management-metric metric-orange"><i>◷</i><div><strong>{pagination.page}</strong><span>Current Page</span></div></article><article className="management-metric metric-purple"><i>≡</i><div><strong>{activeFilterCount}</strong><span>Active Filters</span></div></article></section>
+    <section className="management-metrics" aria-label="Audit activity summary"><ManagementMetric icon="monitoring" value={pagination.total} label="Total Events"/><ManagementMetric tone="green" icon="check" value={entries.length} label="Events on Page"/><ManagementMetric tone="orange" icon="reports" value={pagination.page} label="Current Page"/><ManagementMetric tone="purple" icon="search" value={activeFilterCount} label="Active Filters"/></section>
     <section className="table-card form-card audit-filter-card"><div className="table-header management-table-header"><div><h3>Filter Activity</h3><p>Narrow results by action, record type, or date range.</p></div></div><form className="student-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setApplied(filters) }}><div className="student-form-grid">
       <label>Action<input value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })} placeholder="ACCOUNT_CREATE" /></label>
       <label>Record type<input value={filters.table_name} onChange={(event) => setFilters({ ...filters, table_name: event.target.value })} placeholder="users" /></label>

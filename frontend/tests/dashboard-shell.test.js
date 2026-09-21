@@ -29,6 +29,17 @@ test('dashboard hierarchy leads with live metrics and derives the offense chart 
   assert.doesNotMatch(admin, /124|Juan Dela Cruz|Maria Lopez/)
 })
 
+test('management summaries use the shared SVG metric component instead of font glyphs', () => {
+  const metric = fs.readFileSync(new URL('../src/components/ManagementMetric.jsx', import.meta.url), 'utf8')
+  assert.match(metric, /<PortalIcon name=\{icon\}/)
+  assert.match(metric, /metric-\$\{tone\}/)
+  for (const component of ['App.jsx', 'AdminAuditLog.jsx', 'AdminDuplicateReview.jsx', 'AdminClearanceCertificates.jsx', 'GoogleRegistrationReview.jsx']) {
+    const prefix = component === 'App.jsx' ? '../src/' : '../src/components/'
+    const source = fs.readFileSync(new URL(`${prefix}${component}`, import.meta.url), 'utf8')
+    assert.doesNotMatch(source, /management-metric[^\n]*<i>/)
+  }
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)

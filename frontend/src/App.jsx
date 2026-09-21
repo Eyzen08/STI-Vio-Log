@@ -34,6 +34,7 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
+import ManagementMetric from './components/ManagementMetric.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 import PhoneInput from './components/PhoneInput.jsx'
@@ -2120,10 +2121,10 @@ function App() {
             <button type="button" className="primary-action" onClick={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }}>＋ Add Student</button>
           </header>
           <section className="management-metrics" aria-label="Student summary">
-            <article className="management-metric metric-blue"><i>◎</i><div><strong>{students.length}</strong><span>Total Students</span></div></article>
-            <article className="management-metric metric-red"><i>△</i><div><strong>{studentsWithViolations}</strong><span>With Violations</span></div></article>
-            <article className="management-metric metric-orange"><i>◷</i><div><strong>{studentsInService}</strong><span>Ongoing Community Service</span></div></article>
-            <article className="management-metric metric-green"><i>✓</i><div><strong>{clearedStudents}</strong><span>No Open Violations</span></div></article>
+            <ManagementMetric icon="students" value={students.length} label="Total Students"/>
+            <ManagementMetric tone="red" icon="violations" value={studentsWithViolations} label="With Violations"/>
+            <ManagementMetric tone="orange" icon="service" value={studentsInService} label="Ongoing Community Service"/>
+            <ManagementMetric tone="green" icon="clearance" value={clearedStudents} label="No Open Violations"/>
           </section>
           {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create a student record</strong><span>Use the student's official school information.</span></div>
           <section className="drawer-form-card">
@@ -2485,14 +2486,14 @@ function App() {
             <button type="button" className="primary-action" onClick={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }}>＋ Record Violation</button>
           </header>
           <section className="management-metrics management-metrics--wide" aria-label="Violation summary">
-            <article className="management-metric metric-red"><i>△</i><div><strong>{violations.length}</strong><span>Total Violations</span></div></article>
-            <article className="management-metric metric-orange"><i>!</i><div><strong>{violationSeverityCount('MINOR')}</strong><span>Minor</span></div></article>
-            <article className="management-metric metric-red"><i>!</i><div><strong>{violationSeverityCount('MAJOR')}</strong><span>Major</span></div></article>
-            <article className="management-metric metric-purple"><i>!</i><div><strong>{violationSeverityCount('GRAVE')}</strong><span>Grave</span></div></article>
-            <article className="management-metric metric-blue"><i>□</i><div><strong>{violationStatusCount('OPEN')}</strong><span>Open</span></div></article>
-            <article className="management-metric metric-orange"><i>◷</i><div><strong>{violationStatusCount('PENDING')}</strong><span>Pending</span></div></article>
-            <article className="management-metric metric-green"><i>✓</i><div><strong>{violationStatusCount('COMPLETED')}</strong><span>Completed</span></div></article>
-            <article className="management-metric metric-green"><i>◇</i><div><strong>{violationStatusCount('CLEARED')}</strong><span>Cleared</span></div></article>
+            <ManagementMetric tone="red" icon="violations" value={violations.length} label="Total Violations"/>
+            <ManagementMetric tone="orange" icon="violations" value={violationSeverityCount('MINOR')} label="Minor"/>
+            <ManagementMetric tone="red" icon="violations" value={violationSeverityCount('MAJOR')} label="Major"/>
+            <ManagementMetric tone="purple" icon="violations" value={violationSeverityCount('GRAVE')} label="Grave"/>
+            <ManagementMetric icon="reports" value={violationStatusCount('OPEN')} label="Open"/>
+            <ManagementMetric tone="orange" icon="hourglass" value={violationStatusCount('PENDING')} label="Pending"/>
+            <ManagementMetric tone="green" icon="check" value={violationStatusCount('COMPLETED')} label="Completed"/>
+            <ManagementMetric tone="green" icon="clearance" value={violationStatusCount('CLEARED')} label="Cleared"/>
           </section>
           {isViolationFormOpen && <Modal title="Record Violation" drawer onClose={() => setIsViolationFormOpen(false)}><div className="drawer-intro"><strong>Create an incident record</strong><span>Choose the exact handbook classification and document only verified facts.</span></div>
           <section className="drawer-form-card">
@@ -2797,11 +2798,11 @@ function App() {
             <button type="button" className="primary-action" onClick={() => { setCommunityServiceFormError(''); setCommunityServiceFormSuccess(''); setIsCommunityServiceFormOpen(true) }}>＋ Assign Service</button>
           </header>
           <section className="management-metrics management-metrics--five" aria-label="Community service summary">
-            <article className="management-metric metric-blue"><i>◎</i><div><strong>{activeAssignments.length}</strong><span>Active Assignments</span></div></article>
-            <article className="management-metric metric-green"><i>◷</i><div><strong>{timedInAssignments}</strong><span>Students Timed In</span></div></article>
-            <article className="management-metric metric-orange"><i>⚑</i><div><strong>{nearCompletionAssignments}</strong><span>Near Completion</span></div></article>
-            <article className="management-metric metric-red"><i>!</i><div><strong>{activeAssignments.filter((item) => Number(item.remaining_hours) >= Number(item.required_hours || 0)).length}</strong><span>Not Started</span></div></article>
-            <article className="management-metric metric-green"><i>✓</i><div><strong>{completedAssignments}</strong><span>Completed</span></div></article>
+            <ManagementMetric icon="service" value={activeAssignments.length} label="Active Assignments"/>
+            <ManagementMetric tone="green" icon="clock" value={timedInAssignments} label="Students Timed In"/>
+            <ManagementMetric tone="orange" icon="hourglass" value={nearCompletionAssignments} label="Near Completion"/>
+            <ManagementMetric tone="red" icon="violations" value={activeAssignments.filter((item) => Number(item.remaining_hours) >= Number(item.required_hours || 0)).length} label="Not Started"/>
+            <ManagementMetric tone="green" icon="check" value={completedAssignments} label="Completed"/>
           </section>
           {isAdmin && <ServiceResultReview token={token} onChanged={() => { refreshPendingActions(); setDashboardRefreshKey((current) => current + 1) }} />}
           {isCommunityServiceFormOpen && <Modal title="Assign Community Service" drawer onClose={() => setIsCommunityServiceFormOpen(false)}><div className="drawer-intro"><strong>Create a service assignment</strong><span>Connect an open violation to an accountable department head.</span></div>

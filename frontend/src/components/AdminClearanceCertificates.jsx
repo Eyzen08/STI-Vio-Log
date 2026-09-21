@@ -4,6 +4,7 @@ import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
 import { readableOfficerName, readSignatureFile } from '../lib/signatureImage.js'
 import Modal from './Modal.jsx'
+import ManagementMetric from './ManagementMetric.jsx'
 
 const jsonRequest = async (path, token, options = {}) => {
   const response = await fetch(`${API_URL}${path}`, { ...options, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', ...(options.headers || {}) } })
@@ -128,10 +129,10 @@ function AdminClearanceCertificates({ token }) {
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
     <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
     <section className="management-metrics" aria-label="Clearance certificate summary">
-      <article className="management-metric metric-green"><i>◎</i><div><strong>{qualifiedStudents.length}</strong><span>Qualified Students</span></div></article>
-      <article className="management-metric metric-blue"><i>◇</i><div><strong>{certificates.filter((entry) => entry.status === 'ISSUED').length}</strong><span>Issued Certificates</span></div></article>
-      <article className="management-metric metric-red"><i>!</i><div><strong>{certificates.filter((entry) => entry.status === 'REVOKED').length}</strong><span>Revoked Certificates</span></div></article>
-      <article className="management-metric metric-orange"><i>✓</i><div><strong>{signatures.filter((entry) => entry.is_active).length}</strong><span>Active Signatures</span></div></article>
+      <ManagementMetric tone="green" icon="students" value={qualifiedStudents.length} label="Qualified Students"/>
+      <ManagementMetric icon="clearance" value={certificates.filter((entry) => entry.status === 'ISSUED').length} label="Issued Certificates"/>
+      <ManagementMetric tone="red" icon="violations" value={certificates.filter((entry) => entry.status === 'REVOKED').length} label="Revoked Certificates"/>
+      <ManagementMetric tone="orange" icon="check" value={signatures.filter((entry) => entry.is_active).length} label="Active Signatures"/>
     </section>
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
     <div className="certificate-grid">
