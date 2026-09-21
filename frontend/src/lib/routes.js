@@ -8,7 +8,6 @@ export const PUBLIC_ROUTES = ['/login','/forgot-password','/reset-password/verif
 
 export const APP_ROUTES = [
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
-  { path: '/admin/system-monitoring', label: 'System Monitoring', view: 'System Dashboard', roles: ['DISCIPLINE_ADMIN'] },
   { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/profile', label: 'Profile', view: 'Profile', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },
@@ -21,8 +20,9 @@ export const APP_ROUTES = [
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
   { path: '/admin/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.administration },
   { path: '/admin/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.administration },
-  { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/admin/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.administration },
+  { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
+  { path: '/admin/system-monitoring', label: 'System Monitoring', view: 'System Dashboard', roles: ['DISCIPLINE_ADMIN'] },
   { path: '/department/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department },
   { path: '/department/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.department, navigation: false },
   { path: '/department/profile', label: 'Profile', view: 'Profile', roles: ROLE_GROUPS.department, navigation: false },

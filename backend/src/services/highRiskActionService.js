@@ -12,18 +12,18 @@ const createHighRiskActionService = ({ pool, comparePassword = bcrypt.compare, r
   const registry = Object.freeze({
     ACCOUNT_LOCK: {
       targetType: 'USER_ACCOUNT',
-      describe: (row) => ({ id:Number(row.id), username:row.username, role:row.role, is_active:Boolean(row.is_active), session_version:Number(row.session_version) }),
+      describe: (row) => ({ id:Number(row.id), username:row.username, role:row.role, is_active:Boolean(row.is_active), must_change_password:Boolean(row.must_change_password), session_version:Number(row.session_version) }),
       execute: ({ actorId, targetId, reason, expectedVersion }) => accountSecurity.lock({ actorId, targetId, reason, expectedVersion })
     },
     ACCOUNT_RECOVERY: {
       targetType: 'USER_ACCOUNT',
-      describe: (row) => ({ id:Number(row.id), username:row.username, role:row.role, is_active:Boolean(row.is_active), session_version:Number(row.session_version) }),
+      describe: (row) => ({ id:Number(row.id), username:row.username, role:row.role, is_active:Boolean(row.is_active), must_change_password:Boolean(row.must_change_password), session_version:Number(row.session_version) }),
       execute: ({ actorId, targetId, reason, expectedVersion }) => accountSecurity.initiateRecovery({ actorId, targetId, reason, expectedVersion })
     }
   });
 
   const target = async (targetId, database = pool) => {
-    const row = (await database.query('SELECT id,username,role,is_active,session_version FROM users WHERE id=$1', [Number(targetId)])).rows[0];
+    const row = (await database.query('SELECT id,username,role,is_active,must_change_password,session_version FROM users WHERE id=$1', [Number(targetId)])).rows[0];
     if (!row) throw apiError(404, 'ACCOUNT_NOT_FOUND', 'Account not found');
     return row;
   };

@@ -368,6 +368,7 @@ function App() {
     if (['Violations','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
     if (item.view === 'Departments & Officer Accounts') return 'Management'
     if (item.view === 'Messages') return 'Communication'
+    if (item.view === 'System Dashboard') return 'System'
     if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
     return 'Account'
   }

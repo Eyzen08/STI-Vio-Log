@@ -2,6 +2,20 @@ const pool = require('../config/database');
 
 const boundedLimit = (value) => Math.min(Math.max(Number.parseInt(value, 10) || 25, 1), 100);
 
+const platformMetadata = (environment = process.env) => {
+    const databaseLocation = `${environment.DATABASE_URL || ''} ${environment.DB_HOST || ''}`.toLowerCase();
+    const onRender = Boolean(environment.RENDER || environment.RENDER_SERVICE_ID || environment.RENDER_GIT_COMMIT);
+    return {
+        api: { provider: onRender ? 'Render' : 'Local runtime', technology: 'Node.js / Express', icon: 'render' },
+        database: { provider: databaseLocation.includes('supabase') ? 'Supabase' : 'PostgreSQL', technology: 'PostgreSQL', icon: 'supabase' },
+        google_identity: { provider: 'Google', technology: 'Google Identity Services', icon: 'google' },
+        email_delivery: environment.BREVO_API_KEY
+            ? { provider: 'Brevo', technology: 'HTTPS Email API', icon: 'brevo' }
+            : { provider: environment.SMTP_HOST ? 'SMTP provider' : 'Not configured', technology: environment.SMTP_HOST ? 'SMTP' : 'Email delivery', icon: 'email' },
+        realtime: { provider: 'Socket.IO', technology: 'WebSocket / polling', icon: 'socketio' }
+    };
+};
+
 const status = async (_req, res) => {
     const checkedAt = new Date().toISOString();
     const started=process.hrtime.bigint();
@@ -9,12 +23,13 @@ const status = async (_req, res) => {
         await pool.query('SELECT 1 AS healthy');
         const databaseLatencyMs=Number(process.hrtime.bigint()-started)/1e6;
         const failures=await pool.query(`SELECT action,result,occurred_at FROM administrative_security_events WHERE result IN ('FAILED','DENIED') ORDER BY occurred_at DESC LIMIT 5`);
+        const platforms=platformMetadata();
         const components={
-          api:{status:'OPERATIONAL',remediation:null},
-          database:{status:databaseLatencyMs>750?'DEGRADED':'OPERATIONAL',latency_ms:Math.round(databaseLatencyMs),remediation:databaseLatencyMs>750?'Check database load and regional connectivity.':null},
-          google_identity:{status:process.env.GOOGLE_CLIENT_ID?'CONFIGURED':'NOT_CONFIGURED',remediation:process.env.GOOGLE_CLIENT_ID?null:'Configure the Google OAuth client ID before enabling Google sign-in.'},
-          email_delivery:{status:(process.env.BREVO_API_KEY||process.env.SMTP_HOST)?'CONFIGURED':'NOT_CONFIGURED',remediation:(process.env.BREVO_API_KEY||process.env.SMTP_HOST)?null:'Configure an email provider before relying on verification or recovery email.'},
-          realtime:{status:'AVAILABLE',remediation:null}
+          api:{...platforms.api,status:'OPERATIONAL',remediation:null},
+          database:{...platforms.database,status:databaseLatencyMs>750?'DEGRADED':'OPERATIONAL',latency_ms:Math.round(databaseLatencyMs),remediation:databaseLatencyMs>750?'Check database load and regional connectivity.':null},
+          google_identity:{...platforms.google_identity,status:process.env.GOOGLE_CLIENT_ID?'CONFIGURED':'NOT_CONFIGURED',remediation:process.env.GOOGLE_CLIENT_ID?null:'Configure the Google OAuth client ID before enabling Google sign-in.'},
+          email_delivery:{...platforms.email_delivery,status:(process.env.BREVO_API_KEY||process.env.SMTP_HOST)?'CONFIGURED':'NOT_CONFIGURED',remediation:(process.env.BREVO_API_KEY||process.env.SMTP_HOST)?null:'Configure an email provider before relying on verification or recovery email.'},
+          realtime:{...platforms.realtime,status:'AVAILABLE',remediation:null}
         };
         const degraded=Object.values(components).some((item)=>['DEGRADED','UNAVAILABLE'].includes(item.status));
         return res.json({
@@ -22,7 +37,7 @@ const status = async (_req, res) => {
             system: {
                 status: degraded?'DEGRADED':'OPERATIONAL',
                 application: 'STI Vio-Log',
-                version: process.env.APP_VERSION || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || 'Not published',
+                version: process.env.APP_VERSION || process.env.RENDER_GIT_COMMIT?.slice(0, 12) || process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || 'Not published',
                 environment: process.env.NODE_ENV === 'production' ? 'Production' : 'Development',
                 database: 'CONNECTED',
                 integrations: {
@@ -71,11 +86,22 @@ const securityEvents = async (req, res) => {
 const accountDirectory=async(req,res)=>{
   try{const search=String(req.query.search||'').trim().slice(0,100);const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);const value=`%${search}%`;
     const result=await pool.query(`SELECT u.id,u.username,u.role,u.is_active,COALESCE(sp.first_name,dh.first_name,s.first_name) first_name,
-      COALESCE(sp.last_name,dh.last_name,s.last_name) last_name,COALESCE(d.department_name,'No department') department_name
+      COALESCE(sp.last_name,dh.last_name,s.last_name) last_name,COALESCE(d.department_name,'No department') department_name,
+      (SELECT COUNT(*)::int FROM users active_admin WHERE active_admin.role='DISCIPLINE_ADMIN' AND active_admin.is_active=TRUE) active_admin_count
       FROM users u LEFT JOIN staff_profiles sp ON sp.user_id=u.id LEFT JOIN department_heads dh ON dh.user_id=u.id
       LEFT JOIN students s ON s.user_id=u.id LEFT JOIN departments d ON d.id=COALESCE(sp.department_id,dh.department_id)
       WHERE ($1='' OR u.username ILIKE $2 OR COALESCE(sp.first_name,dh.first_name,s.first_name,'') ILIKE $2 OR COALESCE(sp.last_name,dh.last_name,s.last_name,'') ILIKE $2)
-      ORDER BY u.is_active DESC,u.username LIMIT $3`,[search,value,limit]);return res.json({success:true,accounts:result.rows});
+      ORDER BY u.is_active DESC,u.username LIMIT $3`,[search,value,limit]);
+    const actorId=Number(req.user?.id);
+    const accounts=result.rows.map(({active_admin_count,...account})=>{
+      const isSelf=Number(account.id)===actorId;
+      let lockRestriction=null;
+      if(isSelf)lockRestriction='SELF_ACCOUNT_CHANGE';
+      else if(!account.is_active)lockRestriction='ACCOUNT_ALREADY_LOCKED';
+      else if(account.role==='DISCIPLINE_ADMIN'&&Number(active_admin_count)<=1)lockRestriction='LAST_ADMIN';
+      return {...account,is_self:isSelf,can_lock:lockRestriction===null,can_recover:!isSelf,lock_restriction_code:lockRestriction,recovery_restriction_code:isSelf?'SELF_RECOVERY_NOT_ALLOWED':null};
+    });
+    return res.json({success:true,accounts});
   }catch(_error){return res.status(500).json({success:false,error:{code:'ACCOUNT_DIRECTORY_UNAVAILABLE',message:'Account directory is temporarily unavailable'}})}
 };
 
@@ -95,4 +121,4 @@ const authenticationActivity = async (req, res) => {
     }
 };
 
-module.exports = { status, securityEvents, authenticationActivity, accountDirectory };
+module.exports = { status, securityEvents, authenticationActivity, accountDirectory, platformMetadata };
