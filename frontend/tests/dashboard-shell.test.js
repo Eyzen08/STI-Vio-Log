@@ -40,6 +40,14 @@ test('management summaries use the shared SVG metric component instead of font g
   }
 })
 
+test('discipline workflows keep filters, long tables, and motion accessible', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /table-card:has\(\.management-table-header\) thead th \{[^}]*position: sticky;[^}]*top: 0;/s)
+  assert.match(css, /table-card:has\(\.management-table-header\) tbody tr:focus-within/)
+  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?thead th \{[\s\S]*?position: static;/)
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none;/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)

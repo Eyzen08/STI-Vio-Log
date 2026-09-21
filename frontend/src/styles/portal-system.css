@@ -1176,6 +1176,94 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .portal-dashboard .stat-card,.management-metric { min-width: 0; }
 }
 
+/* Discipline workflow pass: compact controls and long-record orientation. */
+.main-panel :is(.management-page-header, .qr-attendance-header, .clearance-hero) h2 {
+  max-width: 24ch;
+  font-size: clamp(1.4rem, 2vw, 1.9rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.table-card :is(.management-filter-bar, .noncompliance-toolbar, .clearance-directory-filters),
+.qr-stage-card .record-fields {
+  border-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+
+.table-card :is(.management-filter-bar, .noncompliance-toolbar, .clearance-directory-filters) :is(input, select),
+.qr-stage-card :is(input, select) {
+  min-height: 2.625rem;
+  border-color: color-mix(in srgb, var(--color-border) 86%, var(--color-primary));
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.table-card :is(.management-filter-bar, .noncompliance-toolbar, .clearance-directory-filters) :is(input, select):focus,
+.qr-stage-card :is(input, select):focus {
+  border-color: var(--color-primary);
+  outline: 0;
+  box-shadow: var(--focus-ring);
+}
+
+.table-card:has(.management-table-header) .table-wrap {
+  border-top: 1px solid var(--color-border);
+}
+
+.table-card:has(.management-table-header) thead th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  box-shadow: 0 1px 0 var(--color-border);
+}
+
+.table-card:has(.management-table-header) tbody tr:focus-within {
+  background: color-mix(in srgb, var(--color-primary) 7%, var(--color-surface));
+  box-shadow: inset 3px 0 var(--color-primary);
+}
+
+.main-panel :is(.qr-stage-card, .clearance-hero, .clearance-requirements, .clearance-certificate-actions) {
+  border-color: var(--color-border);
+  border-radius: 0.75rem;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.qr-stage-card,
+.table-card:has(.management-table-header),
+.clearance-hero {
+  animation: workflow-surface-in 220ms ease-out both;
+}
+
+@keyframes workflow-surface-in {
+  from { opacity: 0; transform: translateY(0.35rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 767px) {
+  .table-card:has(.management-table-header) .table-wrap {
+    border-top: 0;
+  }
+
+  .table-card:has(.management-table-header) thead th {
+    position: static;
+  }
+
+  .main-panel :is(.management-page-header, .qr-attendance-header, .clearance-hero) h2 {
+    max-width: none;
+    font-size: 1.3rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qr-stage-card,
+  .table-card:has(.management-table-header),
+  .clearance-hero {
+    animation: none;
+  }
+}
+
 /* Mobile management workspaces: contain intrinsic controls and replace dense
    audit columns with records that can be scanned comfortably on a phone. */
 @media (max-width: 767px) {
