@@ -39,6 +39,11 @@ test('login uses accessible form status and semantic navigation', () => {
   assert.doesNotMatch(source, /auth-text-link/)
 })
 
+test('login portal information uses a semantic footer landmark', () => {
+  assert.match(source, /<footer className="login-assurance" aria-label="Portal information">/)
+  assert.doesNotMatch(source, /<div className="login-assurance" aria-label=/)
+})
+
 test('public Student registration has been retired', () => {
   for (const field of [
     'first_name',
