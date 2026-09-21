@@ -941,6 +941,229 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .action-spinner, button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::before { animation: none; border-right-color: currentColor; opacity: .7; }
 }
 
+/* Communication: reference-led split pane with a stable composer. */
+.messages-workspace {
+  grid-template-columns: minmax(17rem, 0.7fr) minmax(0, 1.3fr);
+  min-height: min(43rem, calc(100dvh - 10.5rem));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.conversation-pane {
+  border-right: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-primary) 3%, var(--color-surface));
+}
+
+.conversation-list button,
+.conversation-summary {
+  border-radius: 0.5rem;
+  transition: background-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.conversation-list button:hover,
+.conversation-list button:focus-visible {
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.conversation-list button[aria-current='true'],
+.conversation-list button.active {
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+  box-shadow: inset 0.2rem 0 var(--color-primary);
+}
+
+.message-composer {
+  border-top-color: var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 94%, var(--color-primary));
+  box-shadow: 0 -0.5rem 1.25rem color-mix(in srgb, var(--color-page) 75%, transparent);
+}
+
+.notification-list > article,
+.notification-item {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.notification-list > article:hover,
+.notification-item:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 38%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+  transform: translateY(-0.0625rem);
+}
+
+/* Reporting: compact control deck and readable analytical results. */
+.report-filter-card,
+.report-results-card,
+.audit-filter-card,
+.audit-results-card {
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-filter-card .student-form-grid,
+.audit-filter-card .student-form,
+.operations-filter {
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+
+.report-results-card .table-wrap,
+.audit-results-card .table-wrap {
+  max-height: min(42rem, 68dvh);
+  overflow: auto;
+}
+
+.report-pagination {
+  position: sticky;
+  z-index: 3;
+  bottom: 0;
+  background: color-mix(in srgb, var(--color-surface) 96%, var(--color-primary));
+  backdrop-filter: blur(0.75rem);
+}
+
+/* Dedicated dark-mode route audit for operational surfaces. */
+[data-theme='dark'] :is(.messages-workspace, .conversation-pane, .chat-pane, .message-composer, .report-filter-card, .report-results-card, .audit-filter-card, .audit-results-card, .duplicate-list-pane, .duplicate-compare-pane, .registration-directory, .signature-management) {
+  border-color: var(--color-border);
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+[data-theme='dark'] :is(.conversation-list button, .duplicate-list > button, .notification-list > article, .notification-item) {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+[data-theme='dark'] :is(.report-filter-card .student-form-grid, .audit-filter-card .student-form, .operations-filter, .message-composer) {
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+}
+
+[data-theme='dark'] :is(.management-record-table, .responsive-record-table, .report-results-card table, .audit-results-card table) tbody tr:hover {
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+}
+
+[data-theme='dark'] :is(input, select, textarea):disabled {
+  border-color: color-mix(in srgb, var(--color-border) 75%, transparent) !important;
+  background: color-mix(in srgb, var(--color-surface) 75%, var(--color-page)) !important;
+  color: color-mix(in srgb, var(--color-text-secondary) 75%, transparent) !important;
+  opacity: 1;
+}
+
+/* Responsive audit: tablet and phone layouts preserve every action. */
+@media (max-width: 1024px) {
+  .messages-workspace {
+    grid-template-columns: minmax(15rem, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .report-filter-card .student-form-grid,
+  .audit-filter-card .student-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .messages-workspace {
+    min-height: calc(100dvh - 9.5rem);
+    grid-template-columns: 1fr;
+    border-radius: 0.625rem;
+  }
+
+  .conversation-pane {
+    border-right: 0;
+  }
+
+  .report-results-card .table-wrap,
+  .audit-results-card .table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .report-pagination {
+    position: static;
+  }
+}
+
+@media (max-width: 430px) {
+  .report-filter-card .student-form-grid,
+  .audit-filter-card .student-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .main-panel :is(button, [role='button'], input, select) {
+    scroll-margin-bottom: 5.5rem;
+  }
+}
+
+/* Accessibility and final taste pass. */
+.main-panel :is(button, a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 46%, transparent);
+  outline-offset: 2px;
+}
+
+.main-panel :is(button, a, input, select, textarea):disabled {
+  cursor: not-allowed;
+}
+
+.management-page-header h2,
+.messages-page-heading h2,
+.portal-welcome h2 {
+  text-wrap: balance;
+}
+
+.management-page-header p,
+.messages-page-heading p,
+.dashboard-section-heading p {
+  text-wrap: pretty;
+}
+
+.status-badge,
+.offense-indicator,
+.management-metric strong,
+.report-pagination {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (hover: none) {
+  .officer-directory > article:hover,
+  .signature-directory > article:hover,
+  .duplicate-source-grid > article:hover,
+  .notification-list > article:hover,
+  .notification-item:hover {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .sidebar,
+  .topbar,
+  .dashboard-card,
+  .table-card,
+  .messages-workspace,
+  .app-modal {
+    border: 1px solid CanvasText;
+  }
+
+  .status-badge,
+  .offense-indicator,
+  .nav-item.active,
+  .mobile-bottom-nav button.active {
+    border: 1px solid currentColor !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
 /* Administration pass: unified directories, review panes, and signatures. */
 .department-officer-page,
 .registration-review-workspace,

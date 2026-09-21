@@ -56,6 +56,17 @@ test('administration workspaces share compact tabs, dense directories, and respo
   assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.duplicate-review-grid \{[\s\S]*?grid-template-columns: 1fr;/)
 })
 
+test('communication, reporting, dark mode, and accessibility share the final responsive system', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.messages-workspace \{[^}]*grid-template-columns: minmax\(17rem, 0\.7fr\) minmax\(0, 1\.3fr\);/s)
+  assert.match(css, /\.message-composer \{[^}]*border-top-color: var\(--color-border\);/s)
+  assert.match(css, /\.report-pagination \{[^}]*position: sticky;[^}]*bottom: 0;/s)
+  assert.match(css, /\[data-theme='dark'\] :is\(\.messages-workspace,[^}]*background-color: var\(--color-surface\);/s)
+  assert.match(css, /@media \(max-width: 430px\)[\s\S]*?grid-template-columns: 1fr;/)
+  assert.match(css, /@media \(forced-colors: active\)/)
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0\.01ms !important;/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)
