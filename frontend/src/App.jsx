@@ -96,7 +96,7 @@ function App() {
   const [theme, setTheme] = useState(() => {
     const savedTheme = window.localStorage.getItem('sti-vio-log-theme')
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
-    return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    return 'light'
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')

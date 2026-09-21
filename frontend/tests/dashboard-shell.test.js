@@ -8,7 +8,12 @@ test('quick actions are role scoped and navigate only within the role portal', (
   const source = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
   for (const label of ['Add Student', 'Issue Violation', 'Record Attendance', 'Review Registrations', 'Generate Report']) assert.match(source, new RegExp(label))
   assert.match(source, /STUDENT:[\s\S]*?\/student\/clearance/)
+  assert.match(source, /STUDENT:[\s\S]*?\/student\/messages/)
   assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/reports/)
+  assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/notifications/)
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+    assert.equal((source.match(new RegExp(`${role}: \\[([\\s\\S]*?)\\n  \\]`))?.[1].match(/\['/g) || []).length, 5)
+  }
 })
 
 test('admin dashboard prioritizes four operational metrics and keeps additional totals accessible', () => {

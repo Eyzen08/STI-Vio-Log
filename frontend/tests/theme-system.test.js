@@ -7,9 +7,9 @@ const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.m
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
 
-test('appearance preference initializes safely, persists, and updates browser color scheme', () => {
+test('appearance preference defaults to the light reference, persists, and updates browser color scheme', () => {
   assert.match(app, /localStorage\.getItem\('sti-vio-log-theme'\)/)
-  assert.match(app, /prefers-color-scheme: dark/)
+  assert.match(app, /if \(savedTheme === 'light' \|\| savedTheme === 'dark'\) return savedTheme\s+return 'light'/)
   assert.match(app, /document\.documentElement\.dataset\.theme = theme/)
   assert.match(app, /document\.documentElement\.style\.colorScheme = theme/)
   assert.match(app, /localStorage\.setItem\('sti-vio-log-theme', theme\)/)

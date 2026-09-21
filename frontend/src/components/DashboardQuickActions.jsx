@@ -13,11 +13,13 @@ const ACTIONS = {
   ],
   DEPARTMENT_HEAD: [
     ['qr', 'Scan QR Code', '/department/qr-scan'], ['students', 'Assigned Students', '/department/students'],
-    ['clock', 'Service Monitoring', '/department/community-service'], ['reports', 'Generate Report', '/department/reports']
+    ['clock', 'Service Monitoring', '/department/community-service'], ['reports', 'Generate Report', '/department/reports'],
+    ['notifications', 'Notifications', '/department/notifications']
   ],
   STUDENT: [
     ['qr', 'My QR Code', '/student/qr'], ['violations', 'My Violations', '/student/violations'],
-    ['clock', 'My Service', '/student/community-service'], ['clearance', 'My Clearance', '/student/clearance']
+    ['clock', 'My Service', '/student/community-service'], ['clearance', 'My Clearance', '/student/clearance'],
+    ['messages', 'Message Office', '/student/messages']
   ]
 }
 
