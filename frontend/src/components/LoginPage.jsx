@@ -28,7 +28,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         <h2>Student accountability, made clearer.</h2>
         <p>Manage violations, community service, attendance, and clearance through one secure campus portal.</p>
       </div>
-      <footer className="login-assurance" aria-label="Portal information"><small>© {new Date().getFullYear()} STI Global City</small></footer>
+      <footer className="login-assurance"><small>© {new Date().getFullYear()} STI Global City</small></footer>
     </aside>
     <div className="login-form-panel">
       <div className="login-card auth-card">

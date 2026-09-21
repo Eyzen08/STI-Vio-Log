@@ -40,7 +40,7 @@ test('login uses accessible form status and semantic navigation', () => {
 })
 
 test('login portal information uses a semantic footer landmark', () => {
-  assert.match(source, /<footer className="login-assurance" aria-label="Portal information">/)
+  assert.match(source, /<footer className="login-assurance">/)
   assert.doesNotMatch(source, /<div className="login-assurance" aria-label=/)
 })
 
