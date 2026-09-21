@@ -48,6 +48,14 @@ test('discipline workflows keep filters, long tables, and motion accessible', ()
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation: none;/)
 })
 
+test('administration workspaces share compact tabs, dense directories, and responsive comparisons', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.department-officer-page,[\s\S]*?\.admin-settings-page \{[^}]*width: min\(100%, 94rem\);/)
+  assert.match(css, /\.main-panel :is\(\.department-officer-tabs, \.review-workspace-tabs\) \{[^}]*border: 1px solid var\(--color-border\);/s)
+  assert.match(css, /\.officer-directory,[\s\S]*?\.signature-directory \{[^}]*grid-auto-flow: dense;/)
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.duplicate-review-grid \{[\s\S]*?grid-template-columns: 1fr;/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)
