@@ -22,7 +22,6 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
 
   return <div className="department-dashboard portal-dashboard">
     <section className="portal-welcome"><div><h2>{departmentName} Dashboard</h2><p>Monitor student community service and attendance for your department.</p></div><time>{new Intl.DateTimeFormat('en-PH',{dateStyle:'long'}).format(new Date())}</time></section>
-    <DashboardQuickActions role="DEPARTMENT_HEAD" onNavigate={(path) => path === '/department/qr-scan' ? onOpenScanner?.() : onNavigate?.(path)}/>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="stats-grid department-stats" aria-label="Department attendance summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="students"/></i><div><span>Assigned students</span><strong>{summary.studentsServed}</strong><small>Your department only</small></div></article>
@@ -31,6 +30,7 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
       <article className="stat-card metric-purple"><i><PortalIcon name="hourglass"/></i><div><span>Near completion</span><strong>{nearCompletion}</strong><small>2 hours or less</small></div></article>
       <article className="stat-card metric-red"><i><PortalIcon name="clock"/></i><div><span>Missing time out</span><strong>{missingTimeout}</strong><small>Needs attention</small></div></article>
     </section>
+    <DashboardQuickActions role="DEPARTMENT_HEAD" onNavigate={(path) => path === '/department/qr-scan' ? onOpenScanner?.() : onNavigate?.(path)}/>
 
     <section className="department-overview-grid">
       <article className="dashboard-card attendance-card"><header className="dashboard-section-heading"><div><h3>Today's attendance</h3><p>Latest department activity</p></div><button className="text-button" type="button" onClick={()=>onNavigate?.('/department/dtr')}>View all</button></header>{rows.length ? <div className="table-wrap"><table className="responsive-record-table"><thead><tr><th>Time</th><th>Student</th><th>Activity</th><th>Status</th></tr></thead><tbody>{rows.slice(0,5).map((row,index)=><tr key={`${row.assignment_id}-${index}`}><td data-label="Time">{displayTime(row.latest_attendance_at || row.time_in_at)}</td><td data-label="Student"><strong>{row.first_name} {row.last_name}</strong></td><td data-label="Activity">{row.time_out_at ? 'Time out' : 'Time in'}</td><td data-label="Status"><span className="status-badge">{row.time_out_at ? 'Completed' : 'On-going'}</span></td></tr>)}</tbody></table></div> : <p className="empty-state">No attendance recorded today.</p>}</article>

@@ -18,6 +18,17 @@ test('admin dashboard prioritizes four operational metrics and keeps additional 
   assert.match(source, /dashboard-additional-metrics/)
 })
 
+test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {
+  for (const component of ['AdminDashboard.jsx', 'StudentDashboard.jsx', 'DepartmentDashboard.jsx']) {
+    const source = fs.readFileSync(new URL(`../src/components/${component}`, import.meta.url), 'utf8')
+    assert.ok(source.indexOf('className="stats-grid') < source.indexOf('<DashboardQuickActions'))
+  }
+  const admin = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
+  assert.match(admin, /violations\.filter\(\(violation\) => violation\.offense_indicator_level === item\.level\)/)
+  assert.match(admin, /aria-label=\{`\$\{classifiedTotal\} classified violation records`\}/)
+  assert.doesNotMatch(admin, /124|Juan Dela Cruz|Maria Lopez/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)

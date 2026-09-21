@@ -27,14 +27,13 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     </section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     {summary.activeViolations > 0 && <section className="student-standing-alert"><OffenseIndicator level={offenseLevel}/><div><strong>{offenseLevel === 'MAJOR_LEVEL' ? 'Major-level status' : 'Requirements need attention'}</strong><span>Review your record and complete any remaining requirements.</span></div></section>}
-    <DashboardQuickActions role="STUDENT" onNavigate={onNavigate}/>
-
     <section className="stats-grid student-stats" aria-label="Student status summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="reports"/></i><div><span>Total violations</span><strong>{violations.length}</strong><small>{summary.activeViolations} currently open</small></div></article>
       <article className="stat-card metric-red"><i><PortalIcon name="clock"/></i><div><span>Required service time</span><strong>{formatDuration(requiredHours)}</strong><small>Across all assignments</small></div></article>
       <article className="stat-card metric-green"><i><PortalIcon name="check"/></i><div><span>Completed service time</span><strong>{formatDuration(completedHours)}</strong><small>{progress}% complete</small></div></article>
       <article className="stat-card metric-orange"><i><PortalIcon name="hourglass"/></i><div><span>Remaining time</span><strong>{formatDuration(remainingHours)}</strong><small>{summary.activeAssignments} active assignment{summary.activeAssignments === 1 ? '' : 's'}</small></div></article>
     </section>
+    <DashboardQuickActions role="STUDENT" onNavigate={onNavigate}/>
 
     <section className="student-overview-grid">
       <article className="dashboard-card standing-card"><header><h3>My standing</h3></header><div className="standing-detail"><OffenseIndicator level={offenseLevel}/><strong>{summary.standing}</strong><p>{summary.activeViolations ? 'Complete your pending requirements to become eligible for clearance.' : 'Keep up the good work and maintain your standing.'}</p></div></article>
