@@ -169,6 +169,7 @@ test("fresh migration chain is complete and idempotent", async () => {
         const assignedStaff=await accounts.assign({actorId:admin.id,targetId:createdStaff.account.id,role:'DEPARTMENT_HEAD',departmentId:department.id,reason:'Assigned to library'});assert.equal(assignedStaff.department_id,Number(department.id));
         const resetStaff=await accounts.resetPassword({actorId:admin.id,targetId:createdStaff.account.id,reason:'Credential recovery'});assert.match(resetStaff.temporary_password,/!Aa1$/);
         const inactiveStaff=await accounts.setStatus({actorId:admin.id,targetId:createdStaff.account.id,isActive:false,reason:'Officer left assignment'});assert.equal(inactiveStaff.is_active,false);
+        const reactivatedStaff=await accounts.setStatus({actorId:admin.id,targetId:createdStaff.account.id,isActive:true,reason:'Officer returned to assignment'});assert.equal(reactivatedStaff.is_active,true);
         const departmentAdmin=createDepartmentAdministrationService({pool});
         const newDepartment=await departmentAdmin.create({actorId:admin.id,code:'GUIDE-TEST',name:'Guidance Test',description:'Test department'});assert.equal(newDepartment.is_active,true);
         const disabledDepartment=await departmentAdmin.update({actorId:admin.id,departmentId:newDepartment.id,isActive:false,reason:'Not yet operational'});assert.equal(disabledDepartment.is_active,false);

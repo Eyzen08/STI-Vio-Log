@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 coverage/
+frontend/artifacts/
 .vercel/
 .DS_Store
 *.log
