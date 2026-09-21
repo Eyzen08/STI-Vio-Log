@@ -15,3 +15,9 @@ coverage/
 *.dump
 *.sql
 !database/migrations/*.sql
+
+# Local AI agent and skill configuration
+.adal/
+.agents/
+.claude/
+skills-lock.json
