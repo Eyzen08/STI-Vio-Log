@@ -67,6 +67,15 @@ test('communication, reporting, dark mode, and accessibility share the final res
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0\.01ms !important;/)
 })
 
+test('desktop shell follows the compact attached-reference proportions', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /@media \(min-width: 1200px\)[\s\S]*?grid-template-columns: 12\.5rem minmax\(0, 1fr\);/)
+  assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 4\.75rem;/s)
+  assert.match(css, /\.dashboard-quick-actions button \{[^}]*min-height: 2\.35rem;/s)
+  assert.match(css, /\.admin-dashboard-grid \{[^}]*minmax\(0, 1\.7fr\) minmax\(16rem, 0\.72fr\);/s)
+  assert.match(css, /\[data-theme='dark'\] \.app-shell:not\(\.auth-shell\) \.sidebar/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)
