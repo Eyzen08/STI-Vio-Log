@@ -37,20 +37,22 @@ test('slide workspace preserves compact summary card styling after nesting',()=>
   assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card strong \{/)
 })
 
-test('slide content remains fully reachable inside its viewport',()=>{
-  assert.match(portalStyles,/\.monitoring-slide-scroll \{[^}]*height:100%[^}]*overflow-y:scroll[^}]*box-sizing:border-box/s)
-  assert.match(portalStyles,/\.monitoring-slide-scroll::-webkit-scrollbar-thumb/)
+test('active slide grows naturally instead of clipping inside a fixed viewport',()=>{
+  assert.match(portalStyles,/\.system-dashboard \{[^}]*overflow:visible/s)
+  assert.match(portalStyles,/\.monitoring-slide-workspace \{[^}]*overflow:visible/s)
+  assert.match(portalStyles,/\.monitoring-slide-scroll \{[^}]*overflow:visible[^}]*box-sizing:border-box/s)
+  assert.doesNotMatch(portalStyles,/\.system-dashboard \{[^}]*100dvh/s)
 })
 
-test('desktop overview fits all dependency cards in one compact row',()=>{
-  assert.match(portalStyles,/@media \(min-width:1001px\)/)
-  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-grid \{ grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/)
+test('overview dependency cards use an adaptive wrapping grid',()=>{
+  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-grid \{ grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,13rem\),1fr\)\)/)
   assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-card:is/)
 })
 
-test('desktop account controls fit the complete action workspace in one slide',()=>{
+test('account controls grow naturally while the directory remains bounded',()=>{
   assert.match(portalStyles,/\[data-panel='accounts'\] \.monitoring-slide-title \{ display:none; \}/)
-  assert.match(portalStyles,/\[data-panel='accounts'\] \.account-directory-panel,[\s\S]*height:15\.75rem/)
+  assert.doesNotMatch(portalStyles,/height:15\.75rem/)
+  assert.match(portalStyles,/\[data-panel='accounts'\] \.account-directory-panel \{[^}]*max-height:24rem/s)
   assert.match(portalStyles,/\[data-panel='accounts'\] \.account-action-form textarea \{ min-height:4\.25rem/)
 })
 
