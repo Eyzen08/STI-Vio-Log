@@ -2162,6 +2162,41 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .health-checked { margin:.9rem 0 0; font-size:.68rem; font-variant-numeric:tabular-nums; }
 @keyframes monitoring-pulse { 50% { opacity:.55; } }
 
+@media (min-width:1001px) {
+  .monitoring-slide[data-panel='overview'] .monitoring-slide-scroll { gap:.75rem; padding:.75rem 1rem 1rem; }
+  .monitoring-slide[data-panel='overview'] .monitoring-slide-scroll > .stats-grid { gap:.65rem; }
+  .monitoring-slide[data-panel='overview'] .monitoring-slide-scroll > .stats-grid .stat-card { min-height:6rem; padding:.85rem 1rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-section { padding:1rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:.65rem; margin-top:.75rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-card,
+  .monitoring-slide[data-panel='overview'] .component-health-card:is(.component-health-card--api,.component-health-card--database) { min-height:6.25rem; grid-column:span 1; gap:.45rem; padding:.75rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-heading { grid-template-columns:2.35rem minmax(0,1fr); gap:.55rem !important; }
+  .monitoring-slide[data-panel='overview'] .component-platform-logo { width:2.35rem; height:2.35rem; border-radius:.6rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-heading > .status-badge { grid-column:2; justify-self:start; }
+  .monitoring-slide[data-panel='overview'] .health-checked { margin:.65rem 0 0; }
+  .monitoring-slide[data-panel='accounts'] .monitoring-slide-scroll { gap:0; padding:.75rem 1rem 1rem; }
+  .monitoring-slide[data-panel='accounts'] .monitoring-slide-title { display:none; }
+  .monitoring-slide[data-panel='accounts'] .account-security-workspace { gap:.65rem; padding:.9rem 1rem; }
+  .monitoring-slide[data-panel='accounts'] .account-security-workspace > .table-header p { margin-top:.15rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-tabs { gap:.65rem; }
+  .main-panel .monitoring-slide[data-panel='accounts'] .account-action-tabs > button { min-height:3.65rem; gap:.6rem; padding:.55rem .8rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-layout { gap:.75rem; align-items:stretch; }
+  .monitoring-slide[data-panel='accounts'] .account-directory-panel,
+  .monitoring-slide[data-panel='accounts'] .account-action-form { height:15.75rem; box-sizing:border-box; }
+  .monitoring-slide[data-panel='accounts'] .account-directory-panel { display:grid; grid-template-rows:auto minmax(0,1fr); }
+  .monitoring-slide[data-panel='accounts'] .account-directory-search { gap:.3rem; padding:.6rem .75rem; }
+  .monitoring-slide[data-panel='accounts'] .account-directory-search input { min-height:2.35rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-results { max-height:none; min-height:0; gap:.25rem; padding:.4rem; }
+  .main-panel .monitoring-slide[data-panel='accounts'] .account-action-results > button { gap:.55rem; padding:.45rem .55rem; }
+  .monitoring-slide[data-panel='accounts'] .account-result-avatar { width:2rem; height:2rem; border-radius:.55rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-form { align-content:start; gap:.5rem; padding:.7rem .8rem; overflow-y:auto; }
+  .monitoring-slide[data-panel='accounts'] .selected-account-summary { gap:.6rem; padding:.55rem .65rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-form > label { gap:.25rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-form :is(input,textarea) { min-height:2.35rem; padding:.5rem .65rem; }
+  .monitoring-slide[data-panel='accounts'] .account-action-form textarea { min-height:4.25rem; }
+  .main-panel .monitoring-slide[data-panel='accounts'] .account-action-form > button { min-height:2.35rem; padding:.5rem .9rem; }
+}
+
 .account-security-workspace { display:grid; gap:1rem; }
 .account-action-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; }
 .main-panel .account-action-tabs > button { min-width:0; min-height:4.65rem; display:grid; grid-template-columns:2rem minmax(0,1fr); align-items:center; gap:.75rem; padding:.85rem 1rem; border:1px solid #cfdeed; border-radius:.75rem; background:#f8fbfe; color:#526a83; text-align:left; box-shadow:none; }

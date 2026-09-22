@@ -42,6 +42,18 @@ test('slide content remains fully reachable inside its viewport',()=>{
   assert.match(portalStyles,/\.monitoring-slide-scroll::-webkit-scrollbar-thumb/)
 })
 
+test('desktop overview fits all dependency cards in one compact row',()=>{
+  assert.match(portalStyles,/@media \(min-width:1001px\)/)
+  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-grid \{ grid-template-columns:repeat\(5,minmax\(0,1fr\)\)/)
+  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-card:is/)
+})
+
+test('desktop account controls fit the complete action workspace in one slide',()=>{
+  assert.match(portalStyles,/\[data-panel='accounts'\] \.monitoring-slide-title \{ display:none; \}/)
+  assert.match(portalStyles,/\[data-panel='accounts'\] \.account-directory-panel,[\s\S]*height:15\.75rem/)
+  assert.match(portalStyles,/\[data-panel='accounts'\] \.account-action-form textarea \{ min-height:4\.25rem/)
+})
+
 test('step-up failures identify the signed-in account and clear mismatched autofill',()=>{
   assert.match(dashboard,/user\?\.username/);assert.match(dashboard,/name="administrator_step_up_password" autoComplete="off"/);assert.match(dashboard,/password:''/)
 })
