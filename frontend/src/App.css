@@ -3605,7 +3605,9 @@ a {
 .messages-page-heading h2 { color: #082e68; font-size: 1.65rem; }
 .messages-new-button { background: var(--portal-yellow) !important; color: #08254d !important; }
 .messages-workspace { border-radius: 9px; }
-.certificate-admin { max-width: 1500px; margin-inline: auto; }
+.certificate-admin { width: 100%; max-width: 1500px; margin-inline: auto; box-sizing: border-box; }
+.certificate-admin > .management-page-header,
+.certificate-admin > .management-metrics { width: 100%; margin-inline: 0; box-sizing: border-box; }
 .certificate-grid { gap: 12px; }
 .certificate-grid > .table-card,.signature-management { border-radius: 9px; }
 
