@@ -2002,6 +2002,7 @@ function App() {
           assignments={communityServiceAssignments}
           clearanceRecords={clearanceRecords}
           eligibility={clearanceEligibility}
+          dtr={studentDtr}
           loading={dashboardLoading}
           error={dashboardError}
           onNavigate={navigateTo}

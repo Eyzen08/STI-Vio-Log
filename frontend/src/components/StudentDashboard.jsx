@@ -1,12 +1,26 @@
+import { useEffect, useState } from 'react'
 import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
-import { formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
+import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatLiveServiceTime, liveServiceSeconds } from '../lib/departmentService.js'
+import { formatMinutes, summarizeStudentService } from '../lib/studentService.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const hours = (value) => Math.max(0, Number(value) || 0)
 
-function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, loading, error, onNavigate }) {
+function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate }) {
+  const activeSessions = Array.isArray(dtr?.sessions) ? dtr.sessions.filter((session) => session.status === 'ACTIVE') : []
+  const activeSession = activeSessions[0]
+  const serviceSummary = summarizeStudentService(dtr)
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    if (!activeSessions.length) return undefined
+    setNow(Date.now())
+    const clock = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(clock)
+  }, [activeSessions.length])
+
   const summary = summarizeStudentDashboard({ violations, assignments, clearanceRecords, eligibility })
   const displayName = profile ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ') : 'Student'
   const firstName = profile?.first_name || 'Student'
@@ -34,6 +48,15 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
       <article className="stat-card metric-orange"><i><PortalIcon name="hourglass"/></i><div><span>Remaining time</span><strong>{formatDuration(remainingHours)}</strong><small>{summary.activeAssignments} active assignment{summary.activeAssignments === 1 ? '' : 's'}</small></div></article>
     </section>
     <DashboardQuickActions role="STUDENT" onNavigate={onNavigate}/>
+
+    {activeSession && <section className="dashboard-card student-live-session" aria-labelledby="student-live-session-title">
+      <header className="dashboard-section-heading"><div><h3 id="student-live-session-title">Service session in progress</h3><p>Your active attendance updates automatically.</p></div><span className="status-badge status-active">Live</span></header>
+      <div className="student-live-session-body">
+        <div className="student-live-clock"><span>Elapsed time</span><time dateTime={`PT${liveServiceSeconds(activeSession.time_in, now)}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(liveServiceSeconds(activeSession.time_in, now))}</time><small>Started {formatManilaDateTime(activeSession.time_in)}</small></div>
+        <dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not recorded'}</dd></div><div><dt>Required</dt><dd>{formatMinutes(serviceSummary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(serviceSummary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatMinutes(serviceSummary.remainingMinutes)}</dd></div></dl>
+      </div>
+      <footer><span>Current session time is credited after time-out and review.</span><button className="text-button" type="button" onClick={()=>onNavigate('/student/community-service')}>View My Service</button></footer>
+    </section>}
 
     <section className="student-overview-grid">
       <article className="dashboard-card standing-card"><header><h3>My standing</h3></header><div className="standing-detail"><OffenseIndicator level={offenseLevel}/><strong>{summary.standing}</strong><p>{summary.activeViolations ? 'Complete your pending requirements to become eligible for clearance.' : 'Keep up the good work and maintain your standing.'}</p></div></article>
