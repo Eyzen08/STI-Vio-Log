@@ -30,6 +30,8 @@ test('active attendance sessions fill the dashboard primary column with responsi
   assert.ok(primary.indexOf('Recent violations') < primary.indexOf('Active attendance sessions'))
   assert.match(primary, /activeSessions\.map/)
   assert.match(primary, /Loading active attendance sessions/)
+  assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
+  assert.match(primary, /formatLiveServiceTime\(liveServiceSeconds\(session\.time_in, now\)\)/)
   assert.match(primary, /data-label="Student"/)
   assert.match(primary, /data-label="Supervising officer"/)
   assert.match(css, /\.active-session-card \.table-wrap \{[^}]*max-height: 20rem;[^}]*overflow: auto;/s)
