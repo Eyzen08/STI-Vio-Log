@@ -81,6 +81,17 @@ test('desktop shell follows the compact attached-reference proportions', () => {
   assert.match(css, /\[data-theme='dark'\] \.app-shell:not\(\.auth-shell\) \.sidebar/)
 })
 
+test('final portal authority prevents legacy premium rules from overriding the reference shell', () => {
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const authority = css.slice(css.lastIndexOf('Authenticated portal final authority'))
+  assert.match(authority, /grid-template-columns: 11\.75rem minmax\(0, 1fr\)/)
+  assert.match(authority, /\.sidebar \.brand \{[\s\S]*?min-height: 3\.6rem;[\s\S]*?box-shadow: none;/)
+  assert.match(authority, /\.sidebar \.nav-item\.active,[\s\S]*?background: #0878df;[\s\S]*?color: #fff;/)
+  assert.match(authority, /\.page-content \{[\s\S]*?padding: 0\.75rem 0\.9rem 1rem;/)
+  assert.match(authority, /\.dashboard-quick-actions > div \{[\s\S]*?repeat\(5, minmax\(0, 1fr\)\)/)
+  assert.match(authority, /\.dashboard-card:hover \{[\s\S]*?transform: none;/)
+})
+
 test('profile menu resolves readable roles and preserved account routes', () => {
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
   assert.match(source, /DISCIPLINE_OFFICE: 'Discipline Office'/)

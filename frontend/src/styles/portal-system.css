@@ -1758,6 +1758,190 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
 }
 
+/* Authenticated portal final authority: reference-accurate compact shell. */
+.app-shell:not(.auth-shell) {
+  font-family: Aptos, "Segoe UI", Arial, sans-serif;
+  background: #f2f7fc;
+}
+
+.app-shell:not(.auth-shell) .sidebar {
+  background: linear-gradient(180deg, #073a70 0%, #064681 58%, #052f60 100%);
+  box-shadow: 0.25rem 0 1.15rem rgba(4, 36, 76, 0.14);
+}
+
+.sidebar .brand {
+  min-height: 3.6rem;
+  margin: 0 0 0.35rem;
+  padding: 0.3rem 0.45rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: none;
+}
+
+.sidebar .brand::after { display: none; }
+
+.sidebar .brand-logo {
+  width: auto;
+  max-width: 8.5rem;
+  max-height: 2.9rem;
+  margin: auto;
+  object-fit: contain;
+  mix-blend-mode: normal;
+  transform: none;
+}
+
+.sidebar .nav-item,
+.sidebar .nav-item.messages-nav-item {
+  min-height: 2.1rem;
+  padding: 0.36rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  color: #e8f4ff;
+  font-size: 0.68rem;
+  box-shadow: none;
+}
+
+.sidebar .nav-item:hover:not(.active) { background: rgba(255, 255, 255, 0.1); }
+
+.sidebar .nav-item.active,
+.sidebar .nav-item.messages-nav-item.active,
+.sidebar .nav-item.active:hover {
+  border-color: #1688ee;
+  background: #0878df;
+  color: #fff;
+  box-shadow: 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18);
+}
+
+.mobile-bottom-nav button.active,
+.mobile-bottom-nav button.messages-nav-item.active {
+  background: #0878df !important;
+  color: #fff !important;
+}
+
+.topbar {
+  min-height: 3.35rem;
+  padding: 0.38rem 0.85rem;
+  border-bottom-color: #dce7f1;
+  background: #fff;
+}
+
+.topbar-search {
+  width: min(27rem, 42vw);
+  min-height: 2.2rem;
+  border-radius: 0.45rem;
+  background: #f6f9fc;
+}
+
+.main-panel .profile-menu-trigger {
+  min-height: 2.5rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 0.55rem;
+  box-shadow: none;
+}
+
+.page-content {
+  max-width: none;
+  padding: 0.75rem 0.9rem 1rem;
+}
+
+.portal-dashboard { gap: 0.55rem; }
+.portal-welcome { min-height: 2.55rem; }
+.portal-welcome h2 { font-size: 1.35rem; letter-spacing: -0.025em; }
+.portal-welcome p,
+.portal-welcome time { font-size: 0.7rem; line-height: 1.4; }
+
+.portal-dashboard .stats-grid { gap: 0.5rem; }
+.portal-dashboard .stat-card {
+  min-height: 4.6rem;
+  gap: 0.55rem;
+  padding: 0.58rem 0.7rem;
+  border-radius: 0.5rem;
+}
+.portal-dashboard .stat-card i {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 0.5rem;
+}
+.portal-dashboard .stat-card span { font-size: 0.66rem; line-height: 1.2; }
+.portal-dashboard .stat-card strong { font-size: 1.2rem; line-height: 1; }
+.portal-dashboard .stat-card small { font-size: 0.6rem; line-height: 1.25; }
+
+.dashboard-card {
+  padding: 0.68rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.18rem 0.65rem rgba(20, 59, 101, 0.045);
+}
+.dashboard-card:hover {
+  border-color: #d3e0ec;
+  box-shadow: 0 0.18rem 0.65rem rgba(20, 59, 101, 0.045);
+  transform: none;
+}
+.dashboard-card header h3,
+.dashboard-section-heading h3 { font-size: 0.82rem; }
+.dashboard-card header p,
+.dashboard-section-heading p { font-size: 0.64rem; }
+
+.dashboard-quick-actions header { margin-bottom: 0.4rem; }
+.dashboard-quick-actions > div {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+.dashboard-quick-actions button {
+  min-height: 2.25rem;
+  padding: 0.35rem 0.5rem !important;
+  border-radius: 0.4rem !important;
+  font-size: 0.66rem;
+}
+
+.dashboard-additional-metrics { min-height: 1.8rem; }
+.dashboard-additional-metrics > summary {
+  min-height: 1.8rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.15rem;
+  font-size: 0.68rem;
+}
+
+.admin-dashboard-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(15rem, 0.9fr);
+  gap: 0.55rem;
+}
+.recent-violations-card { grid-row: span 3; }
+.portal-dashboard :is(th, td) {
+  padding: 0.58rem 0.65rem;
+  font-size: 0.67rem;
+  line-height: 1.35;
+}
+.portal-dashboard td small { font-size: 0.59rem; }
+.offense-breakdown-content { gap: 0.7rem; min-height: 6.4rem; }
+.offense-donut { width: 5.65rem; }
+.offense-donut strong { font-size: 1.2rem; }
+.offense-breakdown-content dl { gap: 0.38rem; }
+.offense-breakdown-content dt { font-size: 0.66rem; }
+.recent-activity-card li { padding-block: 0.42rem; }
+
+@media (min-width: 1200px) {
+  .app-shell:not(.auth-shell) { grid-template-columns: 11.75rem minmax(0, 1fr); }
+  .app-shell:not(.auth-shell) .sidebar { width: 11.75rem; padding: 0.6rem 0.55rem; }
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+  .page-content { padding: 0.75rem; }
+  .dashboard-quick-actions > div { grid-template-columns: repeat(5, minmax(7rem, 1fr)); overflow-x: auto; }
+}
+
+@media (max-width: 767px) {
+  .sidebar .brand { min-height: 3.75rem; }
+  .page-content { padding: 0.7rem 0.65rem calc(4.8rem + env(safe-area-inset-bottom)); }
+  .dashboard-quick-actions > div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-quick-actions button { min-height: 2.75rem; }
+}
+
+[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
+  background: linear-gradient(180deg, #031c37 0%, #062b53 58%, #03162c 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .qr-stage-card,
   .table-card:has(.management-table-header),
