@@ -4,6 +4,7 @@ import fs from 'node:fs'
 
 const dashboard=fs.readFileSync(new URL('../src/components/SystemDashboard.jsx',import.meta.url),'utf8')
 const routes=fs.readFileSync(new URL('../src/lib/routes.js',import.meta.url),'utf8')
+const portalStyles=fs.readFileSync(new URL('../src/styles/portal-system.css',import.meta.url),'utf8')
 
 test('unified System Monitoring uses account search and one direct password-confirmed action',()=>{
   assert.match(dashboard,/api\/system\/accounts\?search=/)
@@ -28,6 +29,12 @@ test('System Monitoring presents four URL-backed accessible panels',()=>{
   assert.match(dashboard,/Step \{activePanelIndex\+1\} of/)
   assert.match(dashboard,/>Previous</);assert.match(dashboard,/>Next</)
   assert.match(dashboard,/ArrowRight/);assert.match(dashboard,/ArrowLeft/)
+})
+
+test('slide workspace preserves compact summary card styling after nesting',()=>{
+  assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card \{/)
+  assert.match(portalStyles,/grid-template-columns:2\.875rem minmax\(0,1fr\)/)
+  assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card strong \{/)
 })
 
 test('step-up failures identify the signed-in account and clear mismatched autofill',()=>{
