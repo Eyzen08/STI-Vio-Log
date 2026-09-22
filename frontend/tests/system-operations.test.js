@@ -20,6 +20,16 @@ test('System Monitoring exposes refreshable health and event filters',()=>{
   assert.match(dashboard,/PlatformMark/);assert.match(dashboard,/Supabase/);assert.match(dashboard,/Socket\.IO/)
 })
 
+test('System Monitoring presents four URL-backed accessible panels',()=>{
+  assert.match(dashboard,/overview.*security.*authentication.*accounts/s)
+  assert.match(dashboard,/role="tablist"/);assert.match(dashboard,/role="tabpanel"/)
+  assert.match(dashboard,/URLSearchParams\(window\.location\.search\)/)
+  assert.match(dashboard,/window\.history\.pushState/);assert.match(dashboard,/popstate/)
+  assert.match(dashboard,/Step \{activePanelIndex\+1\} of/)
+  assert.match(dashboard,/>Previous</);assert.match(dashboard,/>Next</)
+  assert.match(dashboard,/ArrowRight/);assert.match(dashboard,/ArrowLeft/)
+})
+
 test('step-up failures identify the signed-in account and clear mismatched autofill',()=>{
   assert.match(dashboard,/user\?\.username/);assert.match(dashboard,/name="administrator_step_up_password" autoComplete="off"/);assert.match(dashboard,/password:''/)
 })
