@@ -6,6 +6,23 @@ const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
+const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
+
+function hexToRgb(hex) {
+  const value = hex.replace('#', '')
+  return [0, 2, 4].map((offset) => Number.parseInt(value.slice(offset, offset + 2), 16) / 255)
+}
+
+function luminance(hex) {
+  const channels = hexToRgb(hex).map((channel) => channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4)
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722
+}
+
+function contrast(foreground, background) {
+  const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a)
+  return (values[0] + 0.05) / (values[1] + 0.05)
+}
 
 test('appearance preference defaults to the light reference, persists, and updates browser color scheme', () => {
   assert.match(app, /localStorage\.getItem\('sti-vio-log-theme'\)/)
@@ -13,6 +30,9 @@ test('appearance preference defaults to the light reference, persists, and updat
   assert.match(app, /document\.documentElement\.dataset\.theme = theme/)
   assert.match(app, /document\.documentElement\.style\.colorScheme = theme/)
   assert.match(app, /localStorage\.setItem\('sti-vio-log-theme', theme\)/)
+  assert.match(app, /meta\[name="theme-color"\]/)
+  assert.match(html, /<script src="\/theme-bootstrap\.js"><\/script>/)
+  assert.match(bootstrap, /localStorage\.getItem\('sti-vio-log-theme'\)[\s\S]*document\.documentElement\.dataset\.theme = theme/)
 })
 
 test('theme controls remain named and available in both public and portal shells', () => {
@@ -25,8 +45,37 @@ test('theme controls remain named and available in both public and portal shells
 
 test('dark mode is token driven and covers core portal, form, table, modal, and mobile surfaces', () => {
   assert.match(foundation, /:root\[data-theme='dark'\]/)
+  for (const token of ['--surface-canvas', '--surface-raised', '--surface-nested', '--surface-interactive', '--text-primary', '--text-secondary', '--text-muted', '--border-subtle', '--link-color', '--control-background']) {
+    assert.match(foundation, new RegExp(token))
+  }
   for (const selector of ['.topbar', 'input,select,textarea', 'table,thead,tbody,tr,th,td', '.modal-content', '.mobile-bottom-nav', '.auth-shell']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   }
   assert.match(portal, /@media \(prefers-reduced-motion: reduce\)/)
+})
+
+test('dark semantic text and state colors meet WCAG AA contrast', () => {
+  const pairs = [
+    ['#f2f7fb', '#071421', 4.5, 'primary text on canvas'],
+    ['#f2f7fb', '#10263a', 4.5, 'primary text on raised surface'],
+    ['#b9cad9', '#10263a', 4.5, 'secondary text on raised surface'],
+    ['#93a9bc', '#071421', 4.5, 'muted text on canvas'],
+    ['#79c2ff', '#10263a', 4.5, 'links on raised surface'],
+    ['#91a8bc', '#091b2c', 4.5, 'placeholder text in controls'],
+    ['#7de2af', '#123d31', 4.5, 'success state'],
+    ['#ffd870', '#443817', 4.5, 'warning state'],
+    ['#ff9ba7', '#48252d', 4.5, 'danger state'],
+    ['#9bd0ff', '#163b5c', 4.5, 'information state'],
+  ]
+  for (const [foreground, background, minimum, label] of pairs) {
+    assert.ok(contrast(foreground, background) >= minimum, `${label} must be at least ${minimum}:1`)
+  }
+})
+
+test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
+  for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.conversation-list', '.progress-ring', '.status-complete', '.error-message']) {
+    assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(portal, /\.management-metric[^}]*background:var\(--surface-raised\)/s)
+  assert.match(portal, /\.dashboard-quick-actions[^}]*background: var\(--surface-interactive\)/s)
 })

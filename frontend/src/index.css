@@ -14,6 +14,35 @@
   --color-danger: #dc3545;
   --color-info: #0d6efd;
 
+  /* Semantic theme roles. Components should consume these instead of
+     assuming that a surface is white or that text is dark. */
+  --surface-canvas: #f5f7fb;
+  --surface-sidebar: #073463;
+  --surface-raised: #ffffff;
+  --surface-nested: #f7f9fc;
+  --surface-interactive: #eef5fc;
+  --surface-interactive-hover: #e3eef9;
+  --surface-selected: #dcebfa;
+  --surface-overlay: rgba(255, 255, 255, .96);
+  --text-primary: #172033;
+  --text-secondary: #526174;
+  --text-muted: #6b7b90;
+  --text-on-accent: #ffffff;
+  --border-subtle: #dee5ef;
+  --border-strong: #b8c9da;
+  --link-color: #075fb8;
+  --link-hover: #064989;
+  --control-background: #ffffff;
+  --control-placeholder: #687a90;
+  --status-success-surface: #e7f7ef;
+  --status-success-text: #11663f;
+  --status-warning-surface: #fff4d6;
+  --status-warning-text: #765300;
+  --status-danger-surface: #ffeaed;
+  --status-danger-text: #a52336;
+  --status-info-surface: #e7f2ff;
+  --status-info-text: #0758a8;
+
   --font-sans: "Segoe UI Variable", Aptos, "Segoe UI", system-ui, -apple-system, sans-serif;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
@@ -71,15 +100,16 @@ html {
 }
 
 :root[data-theme='dark'] {
-  --color-primary: #3194ed;
-  --color-primary-dark: #72baff;
-  --color-secondary: #55a9f3;
+  color-scheme: dark;
+  --color-primary: #45a3f3;
+  --color-primary-dark: #80c4ff;
+  --color-secondary: #69b8fb;
   --color-accent: #f4ca38;
-  --color-page: #071525;
-  --color-surface: #0e2238;
-  --color-text: #edf5fc;
-  --color-text-secondary: #b6c8da;
-  --color-border: #29435d;
+  --color-page: #071421;
+  --color-surface: #10263a;
+  --color-text: #f2f7fb;
+  --color-text-secondary: #b9cad9;
+  --color-border: #34516b;
   --color-success: #41c988;
   --color-warning: #f1bd47;
   --color-danger: #ff7180;
@@ -88,6 +118,32 @@ html {
   --shadow-md: 0 10px 28px rgba(0, 8, 18, .3);
   --shadow-lg: 0 20px 48px rgba(0, 8, 18, .38);
   --focus-ring: 0 0 0 3px rgba(94, 178, 255, .34);
+  --surface-canvas: #071421;
+  --surface-sidebar: #082b4d;
+  --surface-raised: #10263a;
+  --surface-nested: #0b1e30;
+  --surface-interactive: #17334d;
+  --surface-interactive-hover: #20415f;
+  --surface-selected: #174c76;
+  --surface-overlay: rgba(12, 31, 49, .97);
+  --text-primary: #f2f7fb;
+  --text-secondary: #b9cad9;
+  --text-muted: #93a9bc;
+  --text-on-accent: #ffffff;
+  --border-subtle: #34516b;
+  --border-strong: #537693;
+  --link-color: #79c2ff;
+  --link-hover: #b6ddff;
+  --control-background: #091b2c;
+  --control-placeholder: #91a8bc;
+  --status-success-surface: #123d31;
+  --status-success-text: #7de2af;
+  --status-warning-surface: #443817;
+  --status-warning-text: #ffd870;
+  --status-danger-surface: #48252d;
+  --status-danger-text: #ff9ba7;
+  --status-info-surface: #163b5c;
+  --status-info-text: #9bd0ff;
 }
 
 html, body, #root {

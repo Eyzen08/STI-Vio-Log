@@ -1757,6 +1757,297 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
 }
 
+/* Semantic dark-theme authority.
+   This stays after the legacy route rules so a component's surface and its
+   foreground change as one unit instead of producing inverted combinations. */
+:root[data-theme='dark'] .app-shell {
+  background-color: var(--surface-canvas);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
+  background: var(--surface-sidebar);
+  border-color: var(--border-subtle);
+}
+
+:root[data-theme='dark'] .app-shell :is(
+  .topbar,
+  .management-page-header,
+  .dashboard-card,
+  .table-card,
+  .form-card,
+  .stat-card,
+  .management-metric,
+  .management-panel,
+  .management-section,
+  .student-summary-card,
+  .student-card,
+  .profile-card,
+  .settings-card,
+  .clearance-card,
+  .qr-card,
+  .qr-stage-card,
+  .qr-display-card,
+  .qr-guidance,
+  .notification-list,
+  .notification-item,
+  .noncompliance-toolbar,
+  .student-roster-tools,
+  .department-dtr-filters,
+  .messages-workspace,
+  .conversation-pane,
+  .chat-pane,
+  .report-card,
+  .audit-card,
+  .monitoring-slide,
+  .component-health-card,
+  .app-modal,
+  .modal-card,
+  .modal-content,
+  .profile-menu-popover
+) {
+  border-color: var(--border-subtle);
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme='dark'] .app-shell :is(
+  .student-record-overview,
+  .offense-summary,
+  .email-verification-box,
+  .support-decision-summary > div,
+  .support-decision-context,
+  .support-request-form fieldset,
+  .assignment-summary,
+  .qr-security-note,
+  .scope-note,
+  .conversation-pane-header,
+  .chat-header,
+  .chat-composer,
+  .duplicate-source-grid > article,
+  .duplicate-match-banner,
+  .duplicate-safety-note
+) {
+  border-color: var(--border-subtle);
+  background: var(--surface-nested);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell :is(
+  .management-metric,
+  .dashboard-card,
+  .table-card,
+  .stat-card,
+  .qr-stage-card,
+  .notification-item
+) :is(h1,h2,h3,h4,h5,h6,strong,dt,dd,legend) {
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell :is(
+  .management-metric,
+  .dashboard-card,
+  .table-card,
+  .stat-card,
+  .qr-stage-card,
+  .notification-item,
+  .management-page-header,
+  .student-record-overview
+) :is(p,small,time,.muted,.table-subtext,.report-description,span:not(.status-badge):not(.action-badge)) {
+  color: var(--text-secondary);
+}
+
+:root[data-theme='dark'] .app-shell a,
+:root[data-theme='dark'] .app-shell .text-button {
+  color: var(--link-color);
+}
+
+:root[data-theme='dark'] .app-shell :is(a,.text-button):hover {
+  color: var(--link-hover);
+}
+
+:root[data-theme='dark'] .app-shell :is(input,select,textarea) {
+  border-color: var(--border-strong) !important;
+  background-color: var(--control-background) !important;
+  color: var(--text-primary) !important;
+  color-scheme: dark !important;
+}
+
+:root[data-theme='dark'] .app-shell :is(input,textarea)::placeholder {
+  color: var(--control-placeholder) !important;
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .app-shell :is(input,select,textarea):disabled {
+  border-color: var(--border-subtle) !important;
+  background: color-mix(in srgb, var(--surface-nested) 82%, black) !important;
+  color: var(--text-muted) !important;
+  opacity: .82;
+}
+
+:root[data-theme='dark'] .app-shell :is(.dashboard-quick-actions,.quick-actions) button,
+:root[data-theme='dark'] .app-shell :is(.secondary-button,.tertiary-button,.ghost-button,.app-modal-close,.chat-mobile-back) {
+  border-color: var(--border-strong) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--link-color) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='dark'] .app-shell :is(.dashboard-quick-actions,.quick-actions) button:hover:not(:disabled),
+:root[data-theme='dark'] .app-shell :is(.secondary-button,.tertiary-button,.ghost-button,.app-modal-close,.chat-mobile-back):hover:not(:disabled) {
+  border-color: var(--link-color) !important;
+  background: var(--surface-interactive-hover) !important;
+  color: var(--link-hover) !important;
+}
+
+:root[data-theme='dark'] .app-shell :is(.management-metric,.stat-card) > i,
+:root[data-theme='dark'] .app-shell .qr-empty-state > span {
+  background: var(--status-info-surface);
+  color: var(--status-info-text);
+}
+
+:root[data-theme='dark'] .app-shell .management-metric.metric-red > i { background:var(--status-danger-surface); color:var(--status-danger-text); }
+:root[data-theme='dark'] .app-shell .management-metric.metric-orange > i { background:var(--status-warning-surface); color:var(--status-warning-text); }
+:root[data-theme='dark'] .app-shell .management-metric.metric-green > i { background:var(--status-success-surface); color:var(--status-success-text); }
+:root[data-theme='dark'] .app-shell .management-metric.metric-purple > i { background:#342b53; color:#cbb7ff; }
+
+:root[data-theme='dark'] .app-shell :is(table,.management-record-table,.responsive-record-table) {
+  border-color: var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell :is(th,thead td) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] .app-shell td {
+  border-color: var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell tbody tr:hover td {
+  background: var(--surface-interactive);
+}
+
+:root[data-theme='dark'] .app-shell :is(.empty-state,.department-empty,.route-loading,.loading-state,.error-state) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] .app-shell .error-message {
+  border-color: var(--status-danger-text);
+  background: var(--status-danger-surface);
+  color: var(--status-danger-text);
+}
+
+:root[data-theme='dark'] .app-shell .success-message {
+  border-color: var(--status-success-text);
+  background: var(--status-success-surface);
+  color: var(--status-success-text);
+}
+
+:root[data-theme='dark'] .app-shell :is(.status-complete,.status-completed,.status-clear,.status-cleared) {
+  background: var(--status-success-surface);
+  color: var(--status-success-text);
+}
+
+:root[data-theme='dark'] .app-shell :is(.status-active,.status-open,.status-in-progress,.status-pending,.attendance-state) {
+  border-color: var(--status-warning-text);
+  background: var(--status-warning-surface);
+  color: var(--status-warning-text);
+}
+
+:root[data-theme='dark'] .app-shell :is(.status-invalid-cancel,.status-not-eligible,.status-badge--muted) {
+  background: var(--surface-interactive);
+  color: var(--text-secondary);
+}
+
+:root[data-theme='dark'] .app-shell :is(.segmented-control,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+}
+
+:root[data-theme='dark'] .app-shell :is(.segmented-control,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs) button {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] .app-shell :is(.segmented-control,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs) button:is(.active,[aria-selected='true'],[aria-current='page']) {
+  border-color: var(--link-color) !important;
+  background: var(--surface-selected) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .app-shell .progress-ring {
+  background: radial-gradient(circle at center,var(--surface-raised) 57%,transparent 59%),conic-gradient(var(--color-success) var(--progress),var(--surface-interactive) 0);
+}
+
+:root[data-theme='dark'] .app-shell .offense-donut {
+  background: radial-gradient(circle at center,var(--surface-raised) 0 54%,transparent 56%),var(--offense-gradient);
+}
+
+:root[data-theme='dark'] .app-shell :is(.progress-track,.service-progress-track,.mini-progress) {
+  background: var(--surface-interactive) !important;
+}
+
+:root[data-theme='dark'] .app-shell .app-modal-header {
+  border-color: var(--border-subtle);
+  background: var(--surface-nested);
+}
+
+:root[data-theme='dark'] .app-shell .mobile-bottom-nav {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-overlay) !important;
+  box-shadow: 0 -8px 24px rgba(0,8,18,.3) !important;
+}
+
+:root[data-theme='dark'] .app-shell .mobile-bottom-nav button { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-shell .mobile-bottom-nav button.active { color:var(--text-on-accent) !important; }
+
+:root[data-theme='dark'] .app-shell .notification-item.unread,
+:root[data-theme='dark'] .app-shell .conversation-list > button.unread:not(.active) {
+  background: var(--surface-interactive);
+}
+
+:root[data-theme='dark'] .app-shell .conversation-list > button.active,
+:root[data-theme='dark'] .app-shell .duplicate-list > button.selected {
+  border-color: var(--link-color);
+  background: var(--surface-selected);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell .qr-mini,
+:root[data-theme='dark'] .app-shell .qr-display-card canvas,
+:root[data-theme='dark'] .app-shell .qr-display-card img {
+  border-color: var(--border-strong);
+  background: #ffffff;
+}
+
+:root[data-theme='dark'] .auth-shell .login-page,
+:root[data-theme='dark'] .auth-shell .login-form-panel {
+  background-color: var(--surface-canvas);
+}
+
+:root[data-theme='dark'] .auth-shell .auth-card.login-card {
+  border-color: var(--border-subtle);
+  background: var(--surface-overlay);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label) { color:var(--text-primary); }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links) { color:var(--text-secondary); }
+
+@media (forced-colors: active) {
+  .app-shell :is(button,a,input,select,textarea,[tabindex]):focus-visible {
+    outline: 2px solid Highlight;
+  }
+}
+
 /* Authenticated portal final authority: reference-accurate compact shell. */
 .app-shell:not(.auth-shell) {
   font-family: Aptos, "Segoe UI", Arial, sans-serif;
@@ -2370,11 +2661,11 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 [data-theme='dark'] .profile-menu-trigger { color:#edf5fc !important; }
 [data-theme='dark'] .profile-menu-trigger small { color:#a9bfd3 !important; }
 
-[data-theme='dark'] :is(.card,.table-card,.stat-card,.metric-card,.dashboard-panel,.dashboard-card,.management-page-header,.management-section,.management-panel,.student-summary-card,.student-card,.profile-card,.settings-card,.clearance-card,.qr-card,.notification-list,.noncompliance-toolbar,.student-roster-tools,.department-dtr-filters,.messages-workspace,.conversation-pane,.chat-pane,.report-card,.audit-card,.modal-card,.modal-content,.profile-menu-popover) {
-  border-color:#29435d !important;
-  background:#0e2238 !important;
-  color:#edf5fc !important;
-  box-shadow:0 8px 24px rgba(0,8,18,.18) !important;
+[data-theme='dark'] :is(.card,.table-card,.stat-card,.metric-card,.management-metric,.dashboard-panel,.dashboard-card,.management-page-header,.management-section,.management-panel,.student-summary-card,.student-card,.profile-card,.settings-card,.clearance-card,.qr-card,.notification-list,.noncompliance-toolbar,.student-roster-tools,.department-dtr-filters,.messages-workspace,.conversation-pane,.chat-pane,.report-card,.audit-card,.modal-card,.modal-content,.profile-menu-popover) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-md) !important;
 }
 [data-theme='dark'] .monitoring-panel-tabs { border-color:#29435d; background:#091d31; }
 [data-theme='dark'] .main-panel .monitoring-panel-tabs > button { color:#b8cce0; }
@@ -2382,9 +2673,9 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 [data-theme='dark'] .main-panel .monitoring-panel-tabs > button[aria-selected='true'] { border-color:#3f82bb; background:#17466f; color:#fff; }
 [data-theme='dark'] .monitoring-panel-tabs button[aria-selected='true'] > span { background:#50a8f4; color:#071a2c; }
 [data-theme='dark'] .monitoring-slide { border-color:#29435d; background:#0e2238; box-shadow:0 8px 24px rgba(0,8,18,.18); }
-[data-theme='dark'] :is(h1,h2,h3,h4,h5,h6,strong,dt,dd,legend,.table-header h3,.management-page-header h2,.management-page-header h3,.student-roster-heading h4,.service-assignment-heading h4,.notification-heading h4) { color:#edf5fc; }
-[data-theme='dark'] :is(p,small,.muted,.table-subtext,.report-description,.management-page-header p,.student-roster-heading>div>span,.service-assignment-heading div span,.service-assignment-list article>p,.notification-list time) { color:#a9bfd3; }
-[data-theme='dark'] :is(table,thead,tbody,tr,th,td) { border-color:#29435d; }
+[data-theme='dark'] .app-shell :is(.page-content,.dashboard-card,.table-card,.management-metric,.management-page-header,.modal-content,.profile-menu-popover) :is(h1,h2,h3,h4,h5,h6,strong,dt,dd,legend) { color:var(--text-primary); }
+[data-theme='dark'] .app-shell :is(.page-content,.dashboard-card,.table-card,.management-metric,.management-page-header,.modal-content,.profile-menu-popover) :is(p,small,.muted,.table-subtext,.report-description,time) { color:var(--text-secondary); }
+[data-theme='dark'] .app-shell :is(table,thead,tbody,tr,th,td) { border-color:var(--border-subtle); }
 [data-theme='dark'] th { background:#132c45 !important; color:#bcd0e2 !important; }
 [data-theme='dark'] td { background:#0e2238; color:#e6f0f8; }
 [data-theme='dark'] tbody tr:hover td { background:#132b43; }
