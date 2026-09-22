@@ -31,6 +31,8 @@ const AdminClearanceCertificates = lazy(() => import('./components/AdminClearanc
 import OffenseIndicator from './components/OffenseIndicator.jsx'
 const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
+const AdminActiveAttendance = lazy(() => import('./components/AdminActiveAttendance.jsx'))
+const StudentServiceTimeDrawer = lazy(() => import('./components/StudentServiceTimeDrawer.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
@@ -318,6 +320,7 @@ function App() {
   const [reviewedStudentLoading, setReviewedStudentLoading] = useState(false)
   const [reviewedStudentError, setReviewedStudentError] = useState('')
   const [guardianContactStudent, setGuardianContactStudent] = useState(null)
+  const [serviceTimeStudent, setServiceTimeStudent] = useState(null)
 
   const [violationForm, setViolationForm] = useState({
     student_id: '',
@@ -399,7 +402,7 @@ function App() {
   const navGroupName = (item) => {
     if (item.view === 'Dashboard') return 'Overview'
     if (['Students','Registrations','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
-    if (['Violations','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
+    if (['Violations','Active Attendance','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
     if (item.view === 'Departments & Officer Accounts') return 'Management'
     if (item.view === 'Messages') return 'Communication'
     if (item.view === 'System Dashboard') return 'System'
@@ -2126,6 +2129,10 @@ function App() {
       return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onRefreshAttendance={refreshAdminAttendance} />
     }
 
+    if (isAdmin && activeView === 'Active Attendance') {
+      return <AdminActiveAttendance sessions={activeServiceSessions} loading={dashboardLoading} onRefresh={refreshAdminAttendance} onNavigate={navigateTo} />
+    }
+
     /*
      * ==========================================================
      * ACCESS CHECK
@@ -2488,7 +2495,7 @@ function App() {
                           <td data-label="Violations">{condition.total} total / {condition.open} open</td>
                           <td data-label="Service progress">{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
                           <td data-label="Clearance"><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
-                          <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button guardian-contact-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/><span>Guardian Contact</span></button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
+                          <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button service-time-button" onClick={()=>setServiceTimeStudent(student)} aria-label={`Show service time for ${student.first_name} ${student.last_name}`}><PortalIcon name="clock"/><span>Show Service Time</span></button><button type="button" className="secondary-button guardian-contact-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/><span>Guardian Contact</span></button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
                         </tr>
                         )
                       }
@@ -2500,6 +2507,7 @@ function App() {
           </section>
 
           {guardianContactStudent && <Modal title="Guardian Contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
+          {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} onRefreshAttendance={refreshAdminAttendance} onClose={() => setServiceTimeStudent(null)} />}
 
           {reviewedStudent && reviewedCondition && (
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>

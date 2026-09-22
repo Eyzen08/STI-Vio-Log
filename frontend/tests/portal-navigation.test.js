@@ -10,6 +10,7 @@ test('role navigation uses meaningful visual categories and icons', () => {
   assert.equal(iconNameForView('Dashboard'), 'dashboard')
   assert.equal(iconNameForView('My Violations'), 'violations')
   assert.equal(iconNameForView('QR Scan'), 'qr')
+  assert.equal(iconNameForView('Active Attendance'), 'clock')
   assert.match(appSource, /className="nav-group"/)
   assert.match(appSource, /className="nav-group-label"/)
 })

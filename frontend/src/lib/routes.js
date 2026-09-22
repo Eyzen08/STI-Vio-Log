@@ -16,6 +16,7 @@ export const APP_ROUTES = [
   { path: '/admin/audit-log', label: 'Audit Log', view: 'Audit Log', roles: ['DISCIPLINE_ADMIN'] },
   { path: '/admin/duplicate-review', label: 'Duplicate Review', view: 'Registrations', roles: ['DISCIPLINE_ADMIN'], navigation: false, redirectTo: '/admin/registrations' },
   { path: '/admin/violations', label: 'Violations', view: 'Violations', roles: ROLE_GROUPS.administration },
+  { path: '/admin/active-attendance', label: 'Active Attendance', view: 'Active Attendance', roles: ROLE_GROUPS.administration },
   { path: '/admin/community-service', label: 'Community Service', view: 'Community Service', roles: ROLE_GROUPS.administration },
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
   { path: '/admin/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.administration },

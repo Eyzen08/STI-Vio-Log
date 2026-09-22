@@ -3156,13 +3156,78 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .student-live-session dl { grid-template-columns: 1fr; }
 }
 
+/* Dedicated attendance monitor and per-student service drawer. */
+.active-attendance-page { display:grid; gap:1rem; min-width:0; }
+.live-status-badge { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem .75rem; border:1px solid var(--color-border); border-radius:999px; color:var(--color-text); font-size:.72rem; font-weight:750; }
+.live-status-badge i { width:.5rem; height:.5rem; border-radius:50%; background:var(--color-success); box-shadow:0 0 0 .2rem color-mix(in srgb,var(--color-success) 18%,transparent); }
+.active-attendance-card { min-width:0; }
+.active-attendance-toolbar { display:grid; grid-template-columns:minmax(16rem,32rem); margin:.85rem 0; }
+.active-attendance-toolbar label { display:grid; gap:.35rem; color:var(--color-text-secondary); font-size:.7rem; font-weight:700; }
+.active-attendance-toolbar input { width:100%; box-sizing:border-box; }
+.active-attendance-table-wrap { max-height:min(38rem,65vh); overflow:auto; }
+.active-attendance-table { min-width:78rem; }
+.active-attendance-table thead th { position:sticky; top:0; z-index:1; background:var(--color-surface-muted); }
+.active-attendance-table td { vertical-align:middle; }
+.active-attendance-table td > :is(small,span) { display:block; }
+.active-attendance-clock { color:var(--color-primary-dark); font-size:1rem; font-weight:850; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.active-attendance-table .secondary-button { min-width:8.5rem; }
+.service-time-drawer { display:grid; gap:1rem; }
+.service-time-drawer > header h3 { margin:.2rem 0; }
+.service-time-drawer > header p { margin:0; }
+.service-time-live { display:grid; gap:.75rem; padding:1rem; border:1px solid var(--color-primary); border-radius:.75rem; background:color-mix(in srgb,var(--color-primary) 7%,var(--color-surface)); }
+.service-time-live > div { display:flex; align-items:end; justify-content:space-between; gap:1rem; }
+.service-time-live > div span { color:var(--color-text-secondary); font-size:.72rem; font-weight:700; text-transform:uppercase; }
+.service-time-live time { color:var(--color-primary-dark); font-size:clamp(1.6rem,5vw,2.4rem); font-weight:850; font-variant-numeric:tabular-nums; }
+.service-time-live dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; margin:0; }
+.service-time-live dl div { padding:.65rem; border:1px solid var(--color-border); border-radius:.5rem; background:var(--color-surface); }
+.service-time-live :is(dt,dd) { margin:0; }
+.service-time-live dt { color:var(--color-text-secondary); font-size:.68rem; }
+.service-time-live dd { margin-top:.2rem; color:var(--color-text); font-size:.76rem; font-weight:750; overflow-wrap:anywhere; }
+.service-time-live p { margin:0; color:var(--color-text-secondary); font-size:.7rem; }
+.service-time-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem; }
+.service-time-summary > div { display:grid; gap:.25rem; padding:.8rem; border:1px solid var(--color-border); border-radius:.6rem; background:var(--color-surface-muted); }
+.service-time-summary span { color:var(--color-text-secondary); font-size:.68rem; }
+.service-time-summary strong { color:var(--color-text); font-size:.88rem; }
+.service-time-overall { display:grid; gap:.4rem; }
+.service-time-overall > div { height:.55rem; overflow:hidden; border-radius:999px; background:var(--color-border); }
+.service-time-overall > div span { display:block; height:100%; border-radius:inherit; background:var(--color-primary); }
+.service-time-overall p { margin:0; color:var(--color-text-secondary); font-size:.72rem; }
+.service-time-assignment-list { display:grid; gap:.65rem; }
+.service-time-assignment-list > article { display:grid; gap:.65rem; padding:.85rem; border:1px solid var(--color-border); border-radius:.65rem; background:var(--color-surface); }
+.service-time-assignment-list article > header { display:flex; align-items:start; justify-content:space-between; gap:.75rem; }
+.service-time-assignment-list :is(h4,p) { margin:0; }
+.service-time-assignment-list p { margin-top:.2rem; color:var(--color-text-secondary); font-size:.7rem; }
+.service-time-button { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; }
+
+@media (max-width:767px) {
+  .active-attendance-toolbar { grid-template-columns:1fr; }
+  .active-attendance-table-wrap { max-height:none; overflow:visible; }
+  .active-attendance-table { min-width:0; }
+  .active-attendance-table thead th { position:static; }
+  .active-attendance-table td[data-label="Action"] { grid-column:1 / -1; }
+  .active-attendance-table .secondary-button { width:100%; }
+  .student-directory-table .table-actions { grid-template-columns:repeat(2,minmax(0,1fr)) 44px; }
+  .student-directory-table .service-time-button { grid-column:1 / 3; grid-row:2; }
+  .student-directory-table .guardian-contact-button { grid-column:1 / 3; grid-row:3; }
+  .student-directory-table .student-access-removal { grid-column:3; grid-row:1; }
+}
+
+@media (max-width:390px) {
+  .service-time-summary,.service-time-live dl { grid-template-columns:1fr; }
+  .service-time-live > div { align-items:start; flex-direction:column; }
+  .student-directory-table .table-actions { grid-template-columns:minmax(0,1fr) 44px; }
+  .student-directory-table .service-time-button { grid-column:1 / -1; grid-row:2; }
+  .student-directory-table .guardian-contact-button { grid-column:1 / -1; grid-row:3; }
+  .student-directory-table .student-access-removal { grid-column:2; grid-row:1; }
+}
+
 /* FINAL THEME CASCADE GUARD — this must remain the last color-bearing block. */
 :root[data-theme='dark'] :is(
   .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,
   .department-summary-grid > article,.officer-directory > article,.certificate-student-card,
   .monitoring-slide,.component-health-card,.registration-directory,.duplicate-list-pane,
   .duplicate-compare-pane,.signature-management,.notification-list,.profile-menu-popover,
-  .messages-workspace,.conversation-pane,.chat-pane,.app-modal
+  .messages-workspace,.conversation-pane,.chat-pane,.app-modal,.service-time-assignment-list > article
 ) {
   border-color: var(--border-subtle) !important;
   background-color: var(--surface-raised) !important;
@@ -3174,7 +3239,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .report-filter-card .student-form-grid,.report-filter-actions,.audit-filter-card .student-form,
   .student-record-overview,.record-detail-drawer > section,.drawer-intro,.email-verification-box,
   .duplicate-source-grid > article,.duplicate-match-banner,.duplicate-safety-note,
-  .conversation-pane-header,.conversation-list,.message-record-note,.chat-composer
+  .conversation-pane-header,.conversation-list,.message-record-note,.chat-composer,.service-time-summary > div,.service-time-live dl div
 ) {
   border-color: var(--border-subtle) !important;
   background: var(--surface-nested) !important;
@@ -3227,6 +3292,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .student-live-clock :is(span,small) { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .student-live-session dl div { border-color:var(--border-subtle) !important; background:var(--surface-nested) !important; }
 :root[data-theme='dark'] .student-active-session time { color:var(--link-color) !important; }
+:root[data-theme='dark'] :is(.active-attendance-clock,.service-time-live time) { color:var(--link-color) !important; }
+:root[data-theme='dark'] .service-time-live { border-color:var(--link-color) !important; background:var(--surface-selected) !important; }
 
 /* Deliberately light for printing/scanning; all surrounding UI remains themed. */
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
