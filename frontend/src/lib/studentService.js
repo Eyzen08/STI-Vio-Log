@@ -9,8 +9,9 @@ export const formatMinutes = (value) => {
 }
 
 export const summarizeStudentService = (dtr = {}) => {
-  const assignments = Array.isArray(dtr.assignments) ? dtr.assignments : []
-  const sessions = Array.isArray(dtr.sessions) ? dtr.sessions : []
+  const safeDtr = dtr && typeof dtr === 'object' ? dtr : {}
+  const assignments = Array.isArray(safeDtr.assignments) ? safeDtr.assignments : []
+  const sessions = Array.isArray(safeDtr.sessions) ? safeDtr.sessions : []
   return {
     requiredMinutes: assignments.reduce((sum, item) => sum + number(item.required_minutes), 0),
     creditedMinutes: assignments.reduce((sum, item) => sum + number(item.credited_minutes), 0),

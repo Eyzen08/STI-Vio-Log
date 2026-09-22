@@ -12,6 +12,13 @@ test('student DTR totals derive from authoritative minute fields', () => {
   assert.equal(formatMinutes(135), '2h 15m')
 })
 
+test('student DTR summary remains safe while data is loading or malformed', () => {
+  const empty = { requiredMinutes: 0, creditedMinutes: 0, remainingMinutes: 0, completedSessions: 0, activeSessions: 0 }
+  assert.deepEqual(summarizeStudentService(null), empty)
+  assert.deepEqual(summarizeStudentService(undefined), empty)
+  assert.deepEqual(summarizeStudentService({ assignments: null, sessions: 'invalid' }), empty)
+})
+
 test('student DTR date ranges reject inverted or malformed values', () => {
   assert.equal(validateDateRange({ from: '2026-08-28', to: '2026-08-27' }), 'From date must be on or before To date.')
   assert.equal(validateDateRange({ from: 'not-a-date', to: '' }), 'From date must use YYYY-MM-DD.')
