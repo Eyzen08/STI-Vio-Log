@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
+import ProgramSelect from './ProgramSelect.jsx'
 import { readableOfficerName, readSignatureFile } from '../lib/signatureImage.js'
 import Modal from './Modal.jsx'
 import ManagementMetric from './ManagementMetric.jsx'
@@ -147,7 +148,7 @@ function AdminClearanceCertificates({ token }) {
       </section>
       {selected && <Modal title={`Review Clearance — ${selected.student_number}`} drawer onClose={() => setSelected(null)}><section className="certificate-review"><div className="table-header"><h3>Review and Issue</h3><span>Draft preview</span></div>
         <>
-          <div className="student-form-grid"><label>Certificate name<input value={draft.student_name} onChange={(e) => setDraft({ ...draft, student_name: e.target.value })} /></label><label>Program or course<input value={draft.program} onChange={(e) => setDraft({ ...draft, program: e.target.value })} /></label></div>
+          <div className="student-form-grid"><label>Certificate name<input value={draft.student_name} onChange={(e) => setDraft({ ...draft, student_name: e.target.value })} /></label><label>Program or course<ProgramSelect value={draft.program} onChange={(e) => setDraft({ ...draft, program: e.target.value })} required /></label></div>
           <div className="certificate-preview"><p>STI COLLEGE - GLOBAL CITY</p><h3>CERTIFICATE OF COMPLIANCE</h3><p>This is to certify that</p><strong>{draft.student_name}</strong><p>is enrolled under the <b>{formatProgramName(draft.program)}</b> and has successfully completed community service for <b>{formatDuration(selected.completed_hours)}</b>.</p><small>Issued on {formatManilaDate(new Date())}</small></div>
           <fieldset className="signature-picker"><legend>Authorized signatures</legend>{signatures.filter((entry) => entry.is_active).map((entry) => <label key={entry.id}><input type="checkbox" checked={selectedSignatures.includes(Number(entry.id))} onChange={(e) => setSelectedSignatures((value) => e.target.checked ? [...value, Number(entry.id)].slice(0, 3) : value.filter((id) => id !== Number(entry.id)))} /><img src={entry.image_data_url} alt="" /><span>{entry.full_name}<small>{entry.position}</small></span></label>)}</fieldset>
           <button className="submit-btn" type="button" disabled={busy || !draft.student_name.trim() || !draft.program.trim() || !selectedSignatures.length} onClick={issue}>{busy ? 'Issuing Certificate…' : 'Issue, Email & Prepare PDF'}</button>

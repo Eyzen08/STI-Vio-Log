@@ -4,7 +4,6 @@ const text = (value) => String(value || '').trim().replace(/\s+/g, ' ')
 
 export const buildDepartmentOfficerPayload = (form = {}) => ({
   department_name: text(form.departmentName),
-  department_type: text(form.departmentType).toUpperCase(),
   description: text(form.description) || undefined,
   department_status: form.departmentStatus === 'inactive' ? 'inactive' : 'active',
   username: text(form.username).toLowerCase(),
@@ -15,7 +14,7 @@ export const buildDepartmentOfficerPayload = (form = {}) => ({
   email: text(form.email).toLowerCase() || undefined
 })
 
-export const departmentStepValid = (form) => Boolean(text(form.departmentName) && text(form.departmentType))
+export const departmentStepValid = (form) => Boolean(text(form.departmentName))
 export const officerStepValid = (form) => Boolean(text(form.firstName) && text(form.lastName) && text(form.username) && OFFICER_ROLES.includes(String(form.role || '').toUpperCase()))
 
 export const filterDepartmentOfficers = (accounts, departments, { search = '', role = 'ALL', status = 'ALL' } = {}) => {

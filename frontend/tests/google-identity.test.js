@@ -46,8 +46,8 @@ test('Google link payload contains only an existing school identity', () => {
 test('student Google linking validates the existing school identity', () => {
   const link={studentNumber:'02000123456',firstName:'Jose Pedro',lastName:'Reyes'}
   assert.equal(validateGoogleStudentLink(link),'')
-  assert.equal(validateGoogleStudentLink({...link,studentNumber:'2024-001'}),'')
-  assert.match(validateGoogleStudentLink({...link,studentNumber:'student number'}),/without spaces/)
+  assert.match(validateGoogleStudentLink({...link,studentNumber:'2024-001'}),/exactly 11 digits/)
+  assert.match(validateGoogleStudentLink({...link,studentNumber:'student number'}),/exactly 11 digits/)
   assert.match(validateGoogleStudentLink({...link,lastName:''}),/student number/)
 })
 

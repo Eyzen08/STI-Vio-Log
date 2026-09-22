@@ -40,6 +40,7 @@ import ManagementMetric from './components/ManagementMetric.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 import PhoneInput from './components/PhoneInput.jsx'
+import ProgramSelect from './components/ProgramSelect.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
@@ -60,6 +61,7 @@ import { iconNameForView } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { displayPhilippinePhone, normalizePhilippinePhone } from './lib/phone.js'
+import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from './lib/inputNormalization.js'
 import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
@@ -1002,10 +1004,13 @@ function App() {
 
     setStudentForm((current) => ({
       ...current,
-      [name]:
-        name === 'year_level'
-          ? Number(value) || ''
-          : value
+      [name]: name === 'year_level'
+        ? Number(value) || ''
+        : name === 'student_number'
+          ? digitsOnly(value)
+          : ['first_name','middle_name','last_name','suffix'].includes(name)
+            ? capitalizeWords(value)
+            : value
     }))
   }
 
@@ -2226,6 +2231,10 @@ function App() {
                       handleStudentFieldChange
                     }
                     placeholder="School-issued Student Number"
+                    inputMode="numeric"
+                    pattern={STUDENT_NUMBER_PATTERN}
+                    maxLength={11}
+                    required
                   />
                 </label>
 
@@ -2314,17 +2323,7 @@ function App() {
                 <label>
                   Program
 
-                  <input
-                    type="text"
-                    name="program"
-                    value={
-                      studentForm.program
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    placeholder="BSIT"
-                  />
+                  <ProgramSelect value={studentForm.program} onChange={handleStudentFieldChange} required />
                 </label>
 
                 <label>

@@ -3,7 +3,7 @@ const crypto = require('node:crypto');
 const { ApiError } = require('../utils/api');
 const { passwordIsStrong } = require('./passwordPolicy');
 const { hashSecret } = require('./otpService');
-const { isValidPhone } = require('../utils/validators');
+const { isValidPhone, isValidProgram } = require('../utils/validators');
 
 const STUDENT_NUMBER_PATTERN = /^\d{11}$/;
 const REGISTRATION_TTL_HOURS = 24;
@@ -37,6 +37,8 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
     };
     values.fullName = [values.firstName, values.middleName, values.lastName, values.suffix].filter(Boolean).join(' ');
     if (![values.firstName, values.lastName, values.studentNumber, values.email, values.phoneNumber, values.program, values.section, values.guardianName, values.guardianRelationship, values.guardianPhoneNumber, password, confirmPassword].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all required student and guardian information');
+    if (!isValidProgram(values.program)) throw new ApiError(400, 'VALIDATION_ERROR', 'Select a valid program');
+    values.program = values.program.toUpperCase();
     if (!STUDENT_NUMBER_PATTERN.test(values.studentNumber)) throw new ApiError(400, 'INVALID_STUDENT_NUMBER', 'Student Number must contain exactly 11 digits');
     if (!EMAIL_PATTERN.test(values.email)) throw new ApiError(400, 'INVALID_EMAIL', 'Enter a valid email address');
     if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid student and guardian phone numbers');

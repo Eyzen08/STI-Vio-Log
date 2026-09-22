@@ -24,7 +24,7 @@ test("validation and error envelopes expose stable machine-readable contracts", 
     assert.deepEqual(errorBody("ACTIVE_SESSION_EXISTS", "Already active"), { success: false, message: "Already active", error: { code: "ACTIVE_SESSION_EXISTS", message: "Already active" } });
     assert.equal(isValidStudentNumber("02000123456"), true);
     assert.equal(isValidStudentNumber("02064513751"), true);
-    assert.equal(isValidStudentNumber("2026-001"), true);
+    assert.equal(isValidStudentNumber("2026-001"), false);
     assert.equal(isValidStudentNumber("student number"), false);
     assert.equal(isValidStudentNumber("x".repeat(51)), false);
     assert.deepEqual(parsePagination({}), { page: 1, limit: 25, offset: 0 });

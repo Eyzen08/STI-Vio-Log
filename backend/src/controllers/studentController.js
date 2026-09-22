@@ -1,7 +1,7 @@
 const pool = require("../config/database");
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
-const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
+const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, isValidProgram, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
     try {
@@ -80,10 +80,11 @@ const createStudent = async (req, res) => {
         assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
         const { student_number, first_name, middle_name, last_name, suffix, email, phone_number, program, section, year_level, qr_code, profile_image } = req.body;
         if (!student_number || !first_name || !last_name || !qr_code) return res.status(400).json({ success: false, message: "student_number, first_name, last_name, and qr_code are required" });
-        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
+        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
+        if (program && !isValidProgram(program)) return res.status(400).json({ success: false, message: "Select a valid program" });
         if (email && !isValidEmail(email)) return res.status(400).json({ success: false, message: "Invalid email format" });
         if (phone_number && !isValidPhone(phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
-        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:phone_number ? normalizePhone(phone_number) : null, program:sanitizeString(program), section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
+        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:phone_number ? normalizePhone(phone_number) : null, program:program ? sanitizeString(program).toUpperCase() : null, section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
         client = await pool.connect();
         await client.query('BEGIN');
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
@@ -113,8 +114,9 @@ const updateStudent = async (req, res) => {
         const reason = sanitizeString(req.body.reason);
         if (!reason || reason.length > 1000) return res.status(400).json({ success: false, message: "A reason of at most 1000 characters is required" });
         if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
-            return res.status(400).json({ success: false, message: "student_number must be a valid school-issued identifier of at most 50 characters without spaces" });
+            return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
         }
+        if (req.body.program !== undefined && req.body.program && !isValidProgram(req.body.program)) return res.status(400).json({ success:false, message:'Select a valid program' });
         if (req.body.first_name !== undefined && !sanitizeString(req.body.first_name)) return res.status(400).json({ success:false, message:'First name is required' });
         if (req.body.last_name !== undefined && !sanitizeString(req.body.last_name)) return res.status(400).json({ success:false, message:'Last name is required' });
         if (req.body.email && !isValidEmail(req.body.email)) return res.status(400).json({ success: false, message: "Invalid email format" });
@@ -129,7 +131,9 @@ const updateStudent = async (req, res) => {
                     ? (req.body[field] === null || req.body[field] === '' ? null : Number(req.body[field]))
                     : field === "phone_number" && req.body[field]
                         ? normalizePhone(req.body[field])
-                        : sanitizeString(req.body[field]);
+                        : field === "program" && req.body[field]
+                            ? sanitizeString(req.body[field]).toUpperCase()
+                            : sanitizeString(req.body[field]);
                 values.push(value === "" ? null : value);
                 fields.push(`${field} = $${values.length}`);
             }

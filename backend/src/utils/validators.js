@@ -13,12 +13,11 @@ const isValidPhone = (value) => normalizePhone(value) !== null;
 const sanitizeString = (value) => typeof value === "string" ? value.trim() : value;
 
 const isPositiveId = (value) => /^\d+$/.test(String(value)) && Number(value) > 0;
-// Student-number formats can change between enrollment systems and academic
-// years. Treat the school-issued value as an opaque identifier: trim it,
-// bound its database length, and reject whitespace/control characters rather
-// than encoding a particular prefix or digit count in application logic.
 const isValidStudentNumber = (value) => typeof value === "string"
-    && /^\S{1,50}$/u.test(value.trim());
+    && /^\d{11}$/.test(value.trim());
+
+const PROGRAM_CODES = new Set(["BSCS", "BSIT", "BSA", "BSBA", "BSHM", "BSTM", "BSOA"]);
+const isValidProgram = (value) => typeof value === "string" && PROGRAM_CODES.has(value.trim().toUpperCase());
 
 const parsePagination = (query, { defaultLimit = 25, maxLimit = 100 } = {}) => {
     const page = query.page === undefined ? 1 : Number(query.page);
@@ -49,6 +48,7 @@ module.exports = {
     sanitizeString,
     isPositiveId,
     isValidStudentNumber,
+    isValidProgram,
     parsePagination,
     assertAllowedFields
 };

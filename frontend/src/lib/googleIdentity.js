@@ -54,8 +54,8 @@ export const validateGoogleStudentLink = ({ studentNumber, firstName, lastName }
   if ([firstName, lastName].some((value) => typeof value !== 'string' || !value.trim())) {
     return 'Enter the student number, first name, and last name on the existing school record.'
   }
-  if (!/^\S{1,50}$/u.test(String(studentNumber || '').trim())) {
-    return 'Enter the school-issued Student Number without spaces.'
+  if (!/^\d{11}$/.test(String(studentNumber || '').trim())) {
+    return 'Student Number must contain exactly 11 digits.'
   }
   return ''
 }

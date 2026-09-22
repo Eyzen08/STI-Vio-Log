@@ -9,6 +9,7 @@ import {
   readGoogleCredential,
   validateGoogleStudentLink
 } from '../lib/googleIdentity.js'
+import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from '../lib/inputNormalization.js'
 
 const emptyLinkForm = { studentNumber: '', firstName: '', lastName: '' }
 
@@ -152,20 +153,20 @@ function GoogleStudentAccess({ clientId, onSession }) {
           <label htmlFor="google-student-number">
             Student number
             <input id="google-student-number" name="studentNumber" value={linkForm.studentNumber}
-              onChange={(event) => setLinkForm({ ...linkForm, studentNumber: event.target.value })}
+              onChange={(event) => setLinkForm({ ...linkForm, studentNumber: digitsOnly(event.target.value) })}
               placeholder="Enter your school-issued Student Number" autoComplete="off"
-              maxLength={50} disabled={isBusy} required autoFocus />
+              inputMode="numeric" pattern={STUDENT_NUMBER_PATTERN} maxLength={11} disabled={isBusy} required autoFocus />
           </label>
           <label htmlFor="google-first-name">
             First name
             <input id="google-first-name" name="firstName" value={linkForm.firstName}
-              onChange={(event) => setLinkForm({ ...linkForm, firstName: event.target.value })}
+              onChange={(event) => setLinkForm({ ...linkForm, firstName: capitalizeWords(event.target.value) })}
               placeholder="Example: Jose Pedro" autoComplete="given-name" disabled={isBusy} required />
           </label>
           <label htmlFor="google-last-name">
             Last name
             <input id="google-last-name" name="lastName" value={linkForm.lastName}
-              onChange={(event) => setLinkForm({ ...linkForm, lastName: event.target.value })}
+              onChange={(event) => setLinkForm({ ...linkForm, lastName: capitalizeWords(event.target.value) })}
               placeholder="Example: Reyes" autoComplete="family-name" disabled={isBusy} required />
           </label>
           <div className="google-link-actions">
