@@ -2097,7 +2097,11 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .monitoring-slide-workspace { min-width:0; min-height:0; overflow:hidden; }
 .monitoring-slide { width:100%; height:100%; min-height:0; overflow:hidden; border:1px solid #d8e4f0; border-radius:.8rem; background:#fff; box-shadow:0 .35rem 1.15rem rgba(18,53,92,.04); animation:monitoring-slide-forward .2s ease-out; }
 .monitoring-slide[data-direction='backward'] { animation-name:monitoring-slide-backward; }
-.monitoring-slide-scroll { height:100%; min-height:0; display:grid; align-content:start; gap:1rem; padding:1rem; overflow-y:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.monitoring-slide-scroll { width:100%; height:100%; min-height:0; display:grid; align-content:start; gap:1rem; padding:1rem 1rem 1.5rem; overflow-x:hidden; overflow-y:scroll; box-sizing:border-box; overscroll-behavior:contain; scrollbar-gutter:stable; scrollbar-color:#7d96ad #edf3f8; scrollbar-width:auto; }
+.monitoring-slide-scroll::-webkit-scrollbar { width:.75rem; }
+.monitoring-slide-scroll::-webkit-scrollbar-track { border-radius:99rem; background:#edf3f8; }
+.monitoring-slide-scroll::-webkit-scrollbar-thumb { border:.2rem solid #edf3f8; border-radius:99rem; background:#7d96ad; }
+.monitoring-slide-scroll::-webkit-scrollbar-thumb:hover { background:#526f89; }
 .monitoring-slide-title { margin:0; color:#102f58; font-size:1rem; }
 .monitoring-slide-title:focus { outline:none; }
 .monitoring-slide-scroll > .stats-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; margin:0; }
@@ -2348,6 +2352,9 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 [data-theme='dark'] .main-panel .monitoring-panel-tabs > button[aria-selected='true'] { border-color:#3f82bb; background:#17466f; color:#fff; }
 [data-theme='dark'] .monitoring-panel-tabs button[aria-selected='true'] > span { background:#50a8f4; color:#071a2c; }
 [data-theme='dark'] .monitoring-slide { border-color:#29435d; background:#0e2238; box-shadow:0 8px 24px rgba(0,8,18,.18); }
+[data-theme='dark'] .monitoring-slide-scroll { scrollbar-color:#64829e #132c45; }
+[data-theme='dark'] .monitoring-slide-scroll::-webkit-scrollbar-track { background:#132c45; }
+[data-theme='dark'] .monitoring-slide-scroll::-webkit-scrollbar-thumb { border-color:#132c45; background:#64829e; }
 [data-theme='dark'] :is(h1,h2,h3,h4,h5,h6,strong,dt,dd,legend,.table-header h3,.management-page-header h2,.management-page-header h3,.student-roster-heading h4,.service-assignment-heading h4,.notification-heading h4) { color:#edf5fc; }
 [data-theme='dark'] :is(p,small,.muted,.table-subtext,.report-description,.management-page-header p,.student-roster-heading>div>span,.service-assignment-heading div span,.service-assignment-list article>p,.notification-list time) { color:#a9bfd3; }
 [data-theme='dark'] :is(table,thead,tbody,tr,th,td) { border-color:#29435d; }

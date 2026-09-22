@@ -37,6 +37,11 @@ test('slide workspace preserves compact summary card styling after nesting',()=>
   assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card strong \{/)
 })
 
+test('slide content remains fully reachable inside its viewport',()=>{
+  assert.match(portalStyles,/\.monitoring-slide-scroll \{[^}]*height:100%[^}]*overflow-y:scroll[^}]*box-sizing:border-box/s)
+  assert.match(portalStyles,/\.monitoring-slide-scroll::-webkit-scrollbar-thumb/)
+})
+
 test('step-up failures identify the signed-in account and clear mismatched autofill',()=>{
   assert.match(dashboard,/user\?\.username/);assert.match(dashboard,/name="administrator_step_up_password" autoComplete="off"/);assert.match(dashboard,/password:''/)
 })
