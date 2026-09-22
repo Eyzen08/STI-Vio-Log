@@ -287,7 +287,7 @@
   color: #08244b !important;
 }
 
-/* Department directory tabs use role-based colors within one segmented control. */
+/* Department directory tabs use one calm blue segmented control. */
 .main-panel .department-officer-tabs {
   display: inline-grid;
   grid-template-columns: auto auto;
@@ -306,30 +306,32 @@
   transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease;
 }
 .main-panel .department-officer-tabs button:first-child {
-  border: 1px solid #0757aa !important;
-  background: var(--portal-blue) !important;
-  color: white !important;
-  box-shadow: 0 2px 7px rgba(8,76,143,.18) !important;
+  border: 1px solid #8dbbe4 !important;
+  background: #dceeff !important;
+  color: #063b75 !important;
+  box-shadow: none !important;
 }
 .main-panel .department-officer-tabs button:first-child:hover:not(:disabled) {
-  border-color: #064b94 !important;
-  background: var(--portal-blue-hover) !important;
-  color: white !important;
-  box-shadow: 0 4px 10px rgba(8,76,143,.24) !important;
+  border-color: #67a4d8 !important;
+  background: #cfe5fb !important;
+  color: #063b75 !important;
+  box-shadow: none !important;
 }
 .main-panel .department-officer-tabs button:last-child {
-  border: 1px solid #e3b800 !important;
-  background: var(--portal-yellow) !important;
-  color: #08244b !important;
-  box-shadow: 0 2px 5px rgba(122,91,0,.1) !important;
+  border: 1px solid #8dbbe4 !important;
+  background: #dceeff !important;
+  color: #063b75 !important;
+  box-shadow: none !important;
 }
 .main-panel .department-officer-tabs button:last-child:hover:not(:disabled) {
-  border-color: #d4a900 !important;
-  background: #ffdd4d !important;
-  color: #08244b !important;
-  box-shadow: 0 3px 8px rgba(122,91,0,.14) !important;
+  border-color: #67a4d8 !important;
+  background: #cfe5fb !important;
+  color: #063b75 !important;
+  box-shadow: none !important;
 }
 .main-panel .department-officer-tabs button[aria-selected="true"] {
+  border-color: #4b8bc4 !important;
+  background: #c7e2fb !important;
   transform: translateY(-1px);
 }
 .main-panel .department-officer-tabs button[aria-selected="true"]::after {
@@ -340,10 +342,7 @@
   left: 14px;
   height: 3px;
   border-radius: 3px;
-  background: #08244b;
-}
-.main-panel .department-officer-tabs button:first-child[aria-selected="true"]::after {
-  background: white;
+  background: #0b5ea8;
 }
 
 /* Keep neighboring actions visually separate without changing their hierarchy. */
@@ -1907,7 +1906,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   grid-template-columns: minmax(0, 2fr) minmax(15rem, 0.9fr);
   gap: 0.55rem;
 }
-.recent-violations-card { grid-row: span 3; }
+.recent-violations-card { grid-row: auto; }
 .portal-dashboard :is(th, td) {
   padding: 0.58rem 0.65rem;
   font-size: 0.67rem;
@@ -2441,12 +2440,26 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 /* Reference-led dashboard composition: dense live-data bento cards. */
 .admin-dashboard-grid {
   grid-template-columns: minmax(0, 1.65fr) minmax(17rem, 0.75fr);
-  grid-auto-flow: dense;
   align-items: start;
 }
 
-.recent-violations-card {
-  grid-row: span 3;
+.admin-dashboard-primary,
+.admin-dashboard-secondary {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.active-session-card .table-wrap {
+  max-height: 20rem;
+  overflow: auto;
+}
+
+.active-session-card thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .offense-breakdown-content {
@@ -2520,8 +2533,13 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
     grid-template-columns: 1fr;
   }
 
-  .recent-violations-card {
-    grid-row: auto;
+  .active-session-card .table-wrap {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .active-session-card thead th {
+    position: static;
   }
 }
 

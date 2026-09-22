@@ -23,6 +23,21 @@ test('admin dashboard prioritizes four operational metrics and keeps additional 
   assert.match(source, /dashboard-additional-metrics/)
 })
 
+test('active attendance sessions fill the dashboard primary column with responsive scrolling', () => {
+  const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
+  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const primary = source.match(/className="admin-dashboard-primary"([\s\S]*?)className="admin-dashboard-secondary"/)?.[1] || ''
+  assert.ok(primary.indexOf('Recent violations') < primary.indexOf('Active attendance sessions'))
+  assert.match(primary, /activeSessions\.map/)
+  assert.match(primary, /Loading active attendance sessions/)
+  assert.match(primary, /data-label="Student"/)
+  assert.match(primary, /data-label="Supervising officer"/)
+  assert.match(css, /\.active-session-card \.table-wrap \{[^}]*max-height: 20rem;[^}]*overflow: auto;/s)
+  assert.match(css, /\.active-session-card thead th \{[^}]*position: sticky;[^}]*top: 0;/s)
+  assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.admin-dashboard-grid \{[^}]*grid-template-columns: 1fr;/s)
+  assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.active-session-card \.table-wrap \{[^}]*max-height: none;[^}]*overflow: visible;/s)
+})
+
 test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {
   for (const component of ['AdminDashboard.jsx', 'StudentDashboard.jsx', 'DepartmentDashboard.jsx']) {
     const source = fs.readFileSync(new URL(`../src/components/${component}`, import.meta.url), 'utf8')
