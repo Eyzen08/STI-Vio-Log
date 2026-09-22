@@ -38,6 +38,8 @@ test('appearance preference defaults to the light reference, persists, and updat
 test('theme controls remain named and available in both public and portal shells', () => {
   assert.equal((app.match(/aria-label=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 2)
   assert.match(app, /aria-pressed=\{theme === 'dark'\}/)
+  assert.match(app, /title=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/)
+  assert.match(app, /theme-toggle-label">\{theme === 'dark' \? 'Light' : 'Dark'\}/)
   assert.match(app, /className="theme-toggle auth-theme-toggle"/)
   assert.match(icon, /sun:/)
   assert.match(icon, /moon:/)
@@ -45,7 +47,7 @@ test('theme controls remain named and available in both public and portal shells
 
 test('dark mode is token driven and covers core portal, form, table, modal, and mobile surfaces', () => {
   assert.match(foundation, /:root\[data-theme='dark'\]/)
-  for (const token of ['--surface-canvas', '--surface-raised', '--surface-nested', '--surface-interactive', '--text-primary', '--text-secondary', '--text-muted', '--border-subtle', '--link-color', '--control-background']) {
+  for (const token of ['--surface-canvas', '--surface-raised', '--surface-nested', '--surface-interactive', '--text-primary', '--text-secondary', '--text-muted', '--border-subtle', '--link-color', '--control-background', '--modal-surface', '--chat-canvas', '--message-incoming-surface', '--message-outgoing-surface']) {
     assert.match(foundation, new RegExp(token))
   }
   for (const selector of ['.topbar', 'input,select,textarea', 'table,thead,tbody,tr,th,td', '.modal-content', '.mobile-bottom-nav', '.auth-shell']) {
@@ -66,6 +68,9 @@ test('dark semantic text and state colors meet WCAG AA contrast', () => {
     ['#ffd870', '#443817', 4.5, 'warning state'],
     ['#ff9ba7', '#48252d', 4.5, 'danger state'],
     ['#9bd0ff', '#163b5c', 4.5, 'information state'],
+    ['#f2f7fb', '#18354f', 4.5, 'incoming message text'],
+    ['#ffffff', '#1769aa', 4.5, 'outgoing message text'],
+    ['#a9bdcf', '#18354f', 4.5, 'message metadata'],
   ]
   for (const [foreground, background, minimum, label] of pairs) {
     assert.ok(contrast(foreground, background) >= minimum, `${label} must be at least ${minimum}:1`)
@@ -73,9 +78,29 @@ test('dark semantic text and state colors meet WCAG AA contrast', () => {
 })
 
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
-  for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.conversation-list', '.progress-ring', '.status-complete', '.error-message']) {
+  for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
   }
   assert.match(portal, /\.management-metric[^}]*background:var\(--surface-raised\)/s)
   assert.match(portal, /\.dashboard-quick-actions[^}]*background: var\(--surface-interactive\)/s)
+})
+
+test('the dark cascade guard follows every legacy route rule and contains no accidental light surface', () => {
+  const guardMarker = portal.lastIndexOf('FINAL THEME CASCADE GUARD')
+  assert.ok(guardMarker > portal.lastIndexOf('Reference-led dashboard composition'))
+  const guard = portal.slice(guardMarker)
+  assert.match(guard, /\.app-modal--drawer \.app-modal-header[\s\S]*var\(--modal-header-surface\)/)
+  assert.match(guard, /\.message-bubble-row\.mine \.message-bubble[\s\S]*var\(--message-outgoing-surface\)/)
+  assert.match(guard, /\.auth-shell \.auth-card\.login-card[\s\S]*var\(--surface-overlay\)/)
+  const themeableGuard = guard.split('Deliberately light for printing/scanning')[0]
+  assert.doesNotMatch(themeableGuard, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
+})
+
+test('certificate and QR light canvases are the only explicit dark-theme exceptions', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  const exception = guard.slice(guard.indexOf('Deliberately light for printing/scanning'))
+  for (const selector of ['.certificate-preview', '.clearance-certificate', '.qr-mini', '.qr-display-card canvas', '.qr-display-card img']) {
+    assert.match(exception, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(exception, /color-scheme:\s*light/)
 })

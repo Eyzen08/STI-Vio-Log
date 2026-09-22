@@ -1757,6 +1757,291 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
 }
 
+/* Semantic dark-theme definitions. The compact cascade guard at the actual
+   end of this file protects these roles from later legacy layout sections. */
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] .app-shell,
+:root[data-theme='dark'] .main-panel,
+:root[data-theme='dark'] .page-content {
+  background-color: var(--surface-canvas);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
+  border-color: var(--border-subtle);
+  background: var(--surface-sidebar);
+}
+
+:root[data-theme='dark'] :is(
+  .management-page-header,.dashboard-card,.table-card,.form-card,.stat-card,.management-metric,
+  .management-panel,.management-section,.student-summary-card,.student-card,.profile-card,.staff-profile-card,
+  .settings-card,.clearance-card,.qr-card,.qr-stage-card,.qr-display-card,.qr-guidance,
+  .notification-list,.notification-item,.noncompliance-toolbar,.student-roster-tools,.department-dtr-filters,
+  .report-card,.audit-card,.monitoring-slide,.component-health-card,.registration-directory,
+  .duplicate-list-pane,.duplicate-compare-pane,.signature-management,.officer-directory > article,
+  .department-summary-grid > article,.certificate-student-card,.messages-workspace,.conversation-pane,.chat-pane,
+  .app-modal,.modal-card,.modal-content,.profile-menu-popover,.row-action-menu > div
+) {
+  border-color: var(--border-subtle) !important;
+  background-color: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+:root[data-theme='dark'] :is(
+  .directory-toolbar,.management-filter-bar,.clearance-directory-filters,.duplicate-filters,
+  .report-filter-card .student-form-grid,.report-filter-actions,.audit-filter-card .student-form,
+  .student-record-overview,.offense-summary,.email-verification-box,.record-detail-drawer > section,
+  .drawer-intro,.support-decision-summary > div,.support-decision-context,.support-request-form fieldset,
+  .assignment-summary,.qr-security-note,.scope-note,.duplicate-source-grid > article,
+  .duplicate-match-banner,.duplicate-safety-note,.one-time-secret code,.account-action-restriction,
+  .temporary-credential code,.discard-edits,.signature-preview-grid figure
+) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(
+  .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,.management-panel,
+  .officer-directory > article,.certificate-student-card,.clearance-card,.app-modal,.messages-workspace,
+  .monitoring-slide,.component-health-card,.profile-menu-popover,.student-record-overview
+) :is(h1,h2,h3,h4,h5,h6,strong,dt,dd,legend,label) {
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(
+  .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,.management-panel,
+  .officer-directory > article,.certificate-student-card,.clearance-card,.app-modal,.messages-workspace,
+  .monitoring-slide,.component-health-card,.profile-menu-popover,.student-record-overview
+) :is(p,small,time,.muted,.table-subtext,.report-description) {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] :is(.page-breadcrumb,.eyebrow,.scope-note,.clearance-status-legend,.modal-help) {
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] :is(a,.text-button,.conversation-load-more,.message-load-earlier) { color:var(--link-color); }
+:root[data-theme='dark'] :is(a,.text-button,.conversation-load-more,.message-load-earlier):hover { color:var(--link-hover); }
+
+:root[data-theme='dark'] :is(input,select,textarea) {
+  border-color: var(--border-strong) !important;
+  background-color: var(--control-background) !important;
+  color: var(--text-primary) !important;
+  color-scheme: dark !important;
+}
+
+:root[data-theme='dark'] :is(input,textarea)::placeholder {
+  color: var(--control-placeholder) !important;
+  opacity: 1;
+}
+
+:root[data-theme='dark'] :is(input,select,textarea,button):disabled {
+  cursor: not-allowed;
+  opacity: .68;
+}
+
+:root[data-theme='dark'] :is(input,select,textarea):disabled {
+  border-color: var(--border-subtle) !important;
+  background: var(--control-disabled-background) !important;
+  color: var(--text-muted) !important;
+}
+
+:root[data-theme='dark'] :is(
+  .secondary-button,.tertiary-button,.ghost-button,.app-modal-close,.chat-mobile-back,
+  .chat-status-action,.icon-row-action,.row-action-trigger,.inline-actions button,
+  .officer-directory .registration-review-actions button,.modal-actions button:not(.submit-btn):not(.danger-button)
+) {
+  border-color: var(--border-strong) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--link-color) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='dark'] :is(
+  .secondary-button,.tertiary-button,.ghost-button,.app-modal-close,.chat-mobile-back,
+  .chat-status-action,.icon-row-action,.row-action-trigger,.inline-actions button,
+  .officer-directory .registration-review-actions button,.modal-actions button:not(.submit-btn):not(.danger-button)
+):hover:not(:disabled) {
+  border-color: var(--link-color) !important;
+  background: var(--surface-interactive-hover) !important;
+  color: var(--link-hover) !important;
+}
+
+:root[data-theme='dark'] :is(.primary-action,.primary-row-action,.submit-btn,.login-submit,.clearance-approve-button,.clearance-issue-button),
+:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):last-child {
+  border-color: var(--color-primary) !important;
+  background: var(--color-primary) !important;
+  color: var(--text-on-accent) !important;
+}
+
+:root[data-theme='dark'] .danger-button {
+  border-color: var(--status-danger-text) !important;
+  background: var(--status-danger-surface) !important;
+  color: var(--status-danger-text) !important;
+}
+
+:root[data-theme='dark'] :is(.management-metric,.stat-card) > i,
+:root[data-theme='dark'] .qr-empty-state > span {
+  background: var(--status-info-surface) !important;
+  color: var(--status-info-text) !important;
+}
+
+:root[data-theme='dark'] .management-metric.metric-red > i { background:var(--status-danger-surface) !important; color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] .management-metric.metric-orange > i { background:var(--status-warning-surface) !important; color:var(--status-warning-text) !important; }
+:root[data-theme='dark'] .management-metric.metric-green > i { background:var(--status-success-surface) !important; color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .management-metric.metric-purple > i { background:#342b53 !important; color:#cbb7ff !important; }
+
+:root[data-theme='dark'] :is(table,.management-record-table,.responsive-record-table) {
+  border-color: var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+:root[data-theme='dark'] :is(th,thead td) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] td,
+:root[data-theme='dark'] :is(.audit-record-table,.responsive-record-table) tr {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] tbody tr:hover td { background:var(--surface-interactive) !important; }
+
+:root[data-theme='dark'] :is(.empty-state,.department-empty,.route-loading,.loading-state,.error-state,.message-state) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] .error-message { border-color:var(--status-danger-text); background:var(--status-danger-surface); color:var(--status-danger-text); }
+:root[data-theme='dark'] .success-message { border-color:var(--status-success-text); background:var(--status-success-surface); color:var(--status-success-text); }
+:root[data-theme='dark'] :is(.status-complete,.status-completed,.status-clear,.status-cleared,.status-qualified,.availability-available) { background:var(--status-success-surface) !important; color:var(--status-success-text) !important; }
+:root[data-theme='dark'] :is(.status-active,.status-open,.status-in-progress,.status-pending,.status-needs-service,.attendance-state,.availability-unavailable) { border-color:var(--status-warning-text); background:var(--status-warning-surface) !important; color:var(--status-warning-text) !important; }
+:root[data-theme='dark'] :is(.status-blocked,.status-revoked) { background:var(--status-danger-surface) !important; color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] :is(.status-invalid-cancel,.status-not-eligible,.status-no-service-required,.status-badge--muted,.readonly-badge) { border-color:var(--border-strong); background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+
+:root[data-theme='dark'] :is(.segmented-control,.department-officer-tabs,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs,.account-action-tabs) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+}
+
+:root[data-theme='dark'] :is(.segmented-control,.department-officer-tabs,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs,.account-action-tabs) button {
+  border-color: transparent !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+}
+
+:root[data-theme='dark'] :is(.segmented-control,.department-officer-tabs,.review-workspace-tabs,.conversation-tabs,.report-selector,.monitoring-panel-tabs,.account-action-tabs) button:is(.active,[aria-selected='true'],[aria-current='page']) {
+  border-color: var(--link-color) !important;
+  background: var(--surface-selected) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Dialogs render through a body portal, so these selectors intentionally do
+   not depend on an .app-shell ancestor. */
+:root[data-theme='dark'] .app-modal-backdrop { background:var(--backdrop-color); }
+:root[data-theme='dark'] .app-modal { border-color:var(--border-subtle) !important; background:var(--modal-surface) !important; color:var(--text-primary) !important; box-shadow:var(--shadow-lg); }
+:root[data-theme='dark'] .app-modal-header,
+:root[data-theme='dark'] .app-modal--drawer .app-modal-header { border-color:var(--border-subtle); background:var(--modal-header-surface) !important; }
+:root[data-theme='dark'] .app-modal-header h2 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal-body { background:var(--modal-surface); color:var(--text-primary); }
+:root[data-theme='dark'] .app-modal-body :is(label,h3,h4,strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal-body :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .modal-actions { border-color:var(--border-subtle); background:var(--modal-surface) !important; }
+
+/* Messaging */
+:root[data-theme='dark'] .main-panel--messages .messages-workspace,
+:root[data-theme='dark'] .main-panel--messages .conversation-pane,
+:root[data-theme='dark'] .main-panel--messages .chat-pane,
+:root[data-theme='dark'] .main-panel--messages .chat-header,
+:root[data-theme='dark'] .main-panel--messages .chat-composer {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .main-panel--messages .conversation-pane-header,
+:root[data-theme='dark'] .main-panel--messages .conversation-list {
+  border-color: var(--border-subtle);
+  background: var(--surface-nested) !important;
+}
+
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more):hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:is(.active,[aria-current='true']) { border-color:var(--link-color) !important; background:var(--surface-selected) !important; box-shadow:inset 4px 0 var(--link-color); }
+:root[data-theme='dark'] .main-panel .conversation-list > button.unread:not(.active) { background:color-mix(in srgb,var(--surface-interactive) 78%,var(--surface-selected)) !important; }
+:root[data-theme='dark'] .conversation-primary strong { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.conversation-preview,.conversation-subject-detail,.conversation-primary time) { color:var(--text-secondary) !important; }
+
+:root[data-theme='dark'] .main-panel--messages .chat-history {
+  background: radial-gradient(circle at 1px 1px,rgba(121,194,255,.07) 1px,transparent 0) 0 0/22px 22px,var(--chat-canvas) !important;
+}
+
+:root[data-theme='dark'] .message-date-divider { color:var(--message-metadata); }
+:root[data-theme='dark'] .message-date-divider::before,
+:root[data-theme='dark'] .message-date-divider::after { background:var(--border-subtle); }
+:root[data-theme='dark'] .message-date-divider > span { border-color:var(--border-subtle); background:var(--surface-nested); color:var(--text-secondary); }
+:root[data-theme='dark'] .message-sender-avatar { border-color:var(--border-strong); background:var(--surface-interactive); color:var(--link-color); }
+:root[data-theme='dark'] .message-bubble { border-color:var(--border-subtle); background:var(--message-incoming-surface); color:var(--message-incoming-text); box-shadow:none; }
+:root[data-theme='dark'] .message-bubble-row.mine .message-bubble { border-color:color-mix(in srgb,var(--message-outgoing-surface) 65%,white); background:var(--message-outgoing-surface); color:var(--message-outgoing-text); }
+:root[data-theme='dark'] .message-bubble footer { color:var(--message-metadata) !important; }
+:root[data-theme='dark'] .message-bubble-row.mine footer { color:rgba(255,255,255,.82) !important; }
+:root[data-theme='dark'] .message-record-note { border-color:var(--border-subtle); background:var(--surface-nested); color:var(--text-secondary); }
+
+/* Progress and charts */
+:root[data-theme='dark'] .progress-ring { background:radial-gradient(circle at center,var(--surface-raised) 57%,transparent 59%),conic-gradient(var(--color-success) var(--progress),var(--surface-interactive) 0); }
+:root[data-theme='dark'] .offense-donut { background:radial-gradient(circle at center,var(--surface-raised) 0 54%,transparent 56%),var(--offense-gradient); }
+:root[data-theme='dark'] :is(.progress-track,.service-progress-track,.mini-progress) { background:var(--surface-interactive) !important; }
+
+/* Shell overlays and responsive navigation */
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button) { border-color:var(--border-strong) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button):hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
+:root[data-theme='dark'] .profile-menu-trigger { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .profile-menu-trigger small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .profile-menu-popover :is(a,button) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .profile-menu-popover :is(a,button):hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .mobile-bottom-nav { border-color:var(--border-subtle) !important; background:var(--surface-overlay) !important; box-shadow:0 -8px 24px rgba(0,8,18,.3) !important; }
+:root[data-theme='dark'] .mobile-bottom-nav button { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .mobile-bottom-nav button.active { color:var(--text-on-accent) !important; }
+
+/* Authentication */
+:root[data-theme='dark'] .auth-shell { --auth-canvas:var(--surface-canvas); --auth-surface:var(--surface-raised); --auth-ink:var(--text-primary); --auth-muted:var(--text-secondary); --auth-border:var(--border-subtle); }
+:root[data-theme='dark'] .auth-shell .login-page,
+:root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas); }
+:root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle); background:var(--surface-overlay); color:var(--text-primary); }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label,.auth-trust-note strong) { color:var(--text-primary); }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary); }
+:root[data-theme='dark'] .auth-shell .password-visibility { color:var(--link-color); }
+:root[data-theme='dark'] .auth-shell .password-visibility:hover:not(:disabled) { background:var(--surface-interactive-hover); }
+:root[data-theme='dark'] .auth-shell .google-access-details summary { border-color:var(--border-strong); color:var(--link-color); }
+:root[data-theme='dark'] .auth-shell .google-access-details summary:hover { border-color:var(--link-color); background:var(--surface-interactive-hover); }
+
+/* Intentional light canvases: printed certificates and machine-readable QR. */
+:root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
+  color-scheme: light;
+  background:#fff !important;
+  color:#172033 !important;
+}
+
+:root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate) :is(h1,h2,h3,h4,p,span,strong,dt,dd) { color:inherit; }
+:root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini) { outline:1px solid var(--border-strong); outline-offset:3px; }
+
+@media (forced-colors: active) {
+  :is(button,a,input,select,textarea,[tabindex]):focus-visible { outline:2px solid Highlight; }
+}
+
 /* Semantic dark-theme authority.
    This stays after the legacy route rules so a component's surface and its
    foreground change as one unit instead of producing inverted combinations. */
@@ -2614,8 +2899,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .main-panel--messages .chat-composer > button span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
 }
 
-/* Persistent appearance control and dark portal palette. Kept last so legacy
-   route styles inherit one consistent, accessible visual system. */
+/* Persistent appearance control and legacy dark portal compatibility. */
 .theme-toggle {
   min-width: 44px;
   min-height: 44px;
@@ -2843,4 +3127,78 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .offense-breakdown-content dl {
     width: 100%;
   }
+}
+
+/* FINAL THEME CASCADE GUARD — this must remain the last color-bearing block. */
+:root[data-theme='dark'] :is(
+  .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,
+  .department-summary-grid > article,.officer-directory > article,.certificate-student-card,
+  .monitoring-slide,.component-health-card,.registration-directory,.duplicate-list-pane,
+  .duplicate-compare-pane,.signature-management,.notification-list,.profile-menu-popover,
+  .messages-workspace,.conversation-pane,.chat-pane,.app-modal
+) {
+  border-color: var(--border-subtle) !important;
+  background-color: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(
+  .directory-toolbar,.management-filter-bar,.clearance-directory-filters,.duplicate-filters,
+  .report-filter-card .student-form-grid,.report-filter-actions,.audit-filter-card .student-form,
+  .student-record-overview,.record-detail-drawer > section,.drawer-intro,.email-verification-box,
+  .duplicate-source-grid > article,.duplicate-match-banner,.duplicate-safety-note,
+  .conversation-pane-header,.conversation-list,.message-record-note,.chat-composer
+) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(.app-modal-header,.app-modal--drawer .app-modal-header) {
+  border-color: var(--border-subtle) !important;
+  background: var(--modal-header-surface) !important;
+}
+
+:root[data-theme='dark'] .app-modal-body,
+:root[data-theme='dark'] .modal-actions {
+  border-color: var(--border-subtle) !important;
+  background: var(--modal-surface) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .app-modal :is(h1,h2,h3,h4,strong,label) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-modal :is(input,select,textarea) { border-color:var(--border-strong) !important; background:var(--control-background) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):last-child { border-color:var(--color-primary) !important; background:var(--color-primary) !important; color:var(--text-on-accent) !important; }
+
+:root[data-theme='dark'] .main-panel--messages :is(.messages-workspace,.conversation-pane,.chat-pane,.chat-header,.chat-composer) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .main-panel--messages :is(.conversation-pane-header,.conversation-list) { background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more) { border-color:var(--border-subtle) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more):hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:is(.active,[aria-current='true']) { border-color:var(--link-color) !important; background:var(--surface-selected) !important; }
+:root[data-theme='dark'] .main-panel--messages .chat-history { background:radial-gradient(circle at 1px 1px,rgba(121,194,255,.07) 1px,transparent 0) 0 0/22px 22px,var(--chat-canvas) !important; }
+:root[data-theme='dark'] .message-bubble { border-color:var(--border-subtle) !important; background:var(--message-incoming-surface) !important; color:var(--message-incoming-text) !important; }
+:root[data-theme='dark'] .message-bubble-row.mine .message-bubble { border-color:color-mix(in srgb,var(--message-outgoing-surface) 65%,white) !important; background:var(--message-outgoing-surface) !important; color:var(--message-outgoing-text) !important; }
+:root[data-theme='dark'] .message-bubble footer { color:var(--message-metadata) !important; }
+:root[data-theme='dark'] .message-bubble-row.mine footer { color:rgba(255,255,255,.82) !important; }
+
+:root[data-theme='dark'] .auth-shell .login-page,
+:root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas) !important; }
+:root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle) !important; background:var(--surface-overlay) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label,.auth-trust-note strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary) !important; }
+
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button) { border-color:var(--border-strong) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button):hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
+
+/* Deliberately light for printing/scanning; all surrounding UI remains themed. */
+:root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
+  color-scheme: light;
+  background: #fff !important;
+  color: #172033 !important;
 }
