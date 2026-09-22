@@ -64,6 +64,23 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
 const EMPTY_MFA_DRAFT = { code:'', recovery:false }
 
+function SessionRestoringScreen() {
+  return (
+    <section className="session-restoring-screen" role="status" aria-live="polite" aria-label="Restoring your secure session">
+      <div className="session-restoring-card">
+        <img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" />
+        <div className="session-restoring-copy">
+          <p className="session-restoring-eyebrow">Secure student discipline portal</p>
+          <h1>Welcome back</h1>
+          <p>Restoring your secure session. This should only take a moment.</p>
+        </div>
+        <div className="session-restoring-progress" aria-hidden="true"><span /></div>
+        <p className="session-restoring-note"><span aria-hidden="true" /> Verifying account access</p>
+      </div>
+    </section>
+  )
+}
+
 function App() {
   const [initialSession] = useState(() => {
     const logoutRequested = new URLSearchParams(window.location.search).get('logout') === '1'
@@ -1816,7 +1833,7 @@ function App() {
      */
 
     if (sessionRestoring) {
-      return <div className="route-loading" role="status">Restoring your secure sessionâ€¦</div>
+      return <SessionRestoringScreen />
     }
 
     if (routePath === '/privacy' || routePath === '/terms') {
