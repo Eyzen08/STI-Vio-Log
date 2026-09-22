@@ -28,3 +28,10 @@ test('both direct and QR attendance paths publish scoped refresh events', () => 
   assert.match(direct, /emitAttendanceChange\(result, req\.staffDepartmentId\)/);
   assert.match(qr, /emitAttendanceChange\(result, req\.staffDepartmentId\)/);
 });
+
+test('service result reviews publish scoped refresh events for progress updates', () => {
+  const source = fs.readFileSync(path.join(__dirname, '../src/controllers/communityServiceAttendanceController.js'), 'utf8');
+  assert.match(source, /emitCommunityServiceChange\(\{assignmentId:result\.session\.assignment_id,departmentId:result\.session\.department_id,action:/);
+  assert.match(source, /REVIEW_APPROVED/);
+  assert.match(source, /REVIEW_REJECTED/);
+});

@@ -28,6 +28,10 @@ export const liveServiceSeconds = (timeIn, now = Date.now()) => {
   return Math.max(0, Math.floor((current - startedAt) / 1000))
 }
 
+export const isActiveServiceSession = (session) => Boolean(
+  session && session.status === 'ACTIVE' && !session.time_out
+)
+
 export const formatLiveServiceTime = (seconds) => {
   const safe = Math.max(0, Math.floor(Number(seconds) || 0))
   const hours = Math.floor(safe / 3600)

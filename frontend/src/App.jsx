@@ -177,8 +177,12 @@ function App() {
   const [departmentNonComplianceError, setDepartmentNonComplianceError] = useState('')
   const [departmentNonComplianceSort, setDepartmentNonComplianceSort] = useState('date')
   const [studentDtr, setStudentDtr] = useState(null)
+  const [studentLiveDtr, setStudentLiveDtr] = useState(null)
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
+  const studentDtrFiltersRef = useRef({ from: '', to: '' })
+  const studentLiveRefreshRef = useRef(false)
+  const adminAttendanceRefreshRef = useRef(false)
   const [studentNotifications, setStudentNotifications] = useState([])
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activeServiceSessions, setActiveServiceSessions] = useState([])
@@ -622,6 +626,7 @@ function App() {
       setDashboardError('')
       setDepartmentDtr(null)
       setStudentDtr(null)
+      setStudentLiveDtr(null)
       setStudentDtrError('')
       setStudentNotifications([])
       setUnreadNotificationCount(0)
@@ -778,7 +783,11 @@ function App() {
           setStudentProfile(profileData.student || null)
           setViolations(violationsData.violations || [])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
-          setStudentDtr(dtrData)
+          setStudentLiveDtr(dtrData)
+          setStudentDtr((current) => {
+            const { from, to } = studentDtrFiltersRef.current
+            return (from || to) && current ? { ...current, assignments: dtrData.assignments } : dtrData
+          })
           setStudentNotifications(notificationsData.notifications || [])
           setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
           setClearanceRecords(clearanceData.clearanceRecords || [])
@@ -803,6 +812,7 @@ function App() {
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
         setDepartmentDtr(null)
         setStudentDtr(null)
+        setStudentLiveDtr(null)
         setStudentNotifications([])
         setUnreadNotificationCount(0)
         setActiveServiceSessions([])
@@ -823,7 +833,8 @@ function App() {
     dashboardRefreshKey
   ])
 
-  const loadStudentDtr = async ({ from = '', to = '' } = {}) => {
+  const loadStudentDtr = useCallback(async ({ from = '', to = '' } = {}) => {
+    studentDtrFiltersRef.current = { from, to }
     setStudentDtrLoading(true)
     setStudentDtrError('')
     try {
@@ -842,7 +853,35 @@ function App() {
     } finally {
       setStudentDtrLoading(false)
     }
-  }
+  }, [token])
+
+  const refreshStudentLiveDtr = useCallback(async () => {
+    if (!token || !isStudent || studentLiveRefreshRef.current) return
+    studentLiveRefreshRef.current = true
+    try {
+      const response = await fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: { Authorization: `Bearer ${token}` } })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok && data.success !== false) setStudentLiveDtr(data)
+    } catch {
+      // Quiet fallback polling must not replace existing live data with an error state.
+    } finally {
+      studentLiveRefreshRef.current = false
+    }
+  }, [isStudent, token])
+
+  const refreshAdminAttendance = useCallback(async () => {
+    if (!token || !isAdmin || adminAttendanceRefreshRef.current) return
+    adminAttendanceRefreshRef.current = true
+    try {
+      const response = await fetch(`${API_URL}/api/community-service/active-sessions`, { headers: { Authorization: `Bearer ${token}` } })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok && data.success !== false) setActiveServiceSessions(Array.isArray(data.sessions) ? data.sessions : [])
+    } catch {
+      // Socket updates remain primary when a background poll is temporarily unavailable.
+    } finally {
+      adminAttendanceRefreshRef.current = false
+    }
+  }, [isAdmin, token])
 
   const loadDepartmentDtr = async (filters = {}) => {
     setDepartmentDtrLoading(true)
@@ -1911,9 +1950,11 @@ function App() {
         return (
           <StudentCommunityService
             dtr={studentDtr}
+            liveDtr={studentLiveDtr}
             loading={dashboardLoading || studentDtrLoading}
             error={studentDtrError || dashboardError}
             onFilter={loadStudentDtr}
+            onRefreshService={refreshStudentLiveDtr}
           />
         )
       }
@@ -2002,10 +2043,11 @@ function App() {
           assignments={communityServiceAssignments}
           clearanceRecords={clearanceRecords}
           eligibility={clearanceEligibility}
-          dtr={studentDtr}
+          dtr={studentLiveDtr || studentDtr}
           loading={dashboardLoading}
           error={dashboardError}
           onNavigate={navigateTo}
+          onRefreshService={refreshStudentLiveDtr}
         />
       )
     }
@@ -2081,7 +2123,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onRefreshAttendance={refreshAdminAttendance} />
     }
 
     /*

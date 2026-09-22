@@ -1,25 +1,32 @@
 import { useEffect, useState } from 'react'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, liveServiceSeconds } from '../lib/departmentService.js'
+import { formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds } from '../lib/departmentService.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 
-function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], pendingRegistrations = 0, unreadMessages = 0, loading, role, onNavigate }) {
+function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], pendingRegistrations = 0, unreadMessages = 0, loading, role, onNavigate, onRefreshAttendance }) {
+  const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
-    if (!activeSessions.length) return undefined
+    if (!visibleActiveSessions.length) return undefined
     setNow(Date.now())
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
-  }, [activeSessions.length])
+  }, [visibleActiveSessions.length])
+  useEffect(() => {
+    if (!onRefreshAttendance) return undefined
+    const refresh = () => { if (document.visibilityState === 'visible') onRefreshAttendance() }
+    const polling = window.setInterval(refresh, 15000)
+    return () => window.clearInterval(polling)
+  }, [onRefreshAttendance])
 
   const openViolations = violations.filter((item) => active(item.status)).length
   const nonCompliant = new Set(violations.filter((item) => active(item.status)).map((item) => item.student_id)).size
   const activeAssignments = assignments.filter((item) => active(item.status || 'OPEN')).length
-  const timedIn = activeSessions.length
+  const timedIn = visibleActiveSessions.length
   const clearanceReady = clearanceRecords.filter((item) => item.status === 'PENDING').length
   const required = assignments.reduce((sum,item)=>sum+(Number(item.required_hours)||0),0)
   const remaining = assignments.reduce((sum,item)=>sum+(Number(item.remaining_hours)||0),0)
@@ -61,7 +68,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
     <section className="admin-dashboard-grid">
       <div className="admin-dashboard-primary">
         <article className="dashboard-card recent-violations-card"><header className="dashboard-section-heading"><div><h3>Recent violations</h3><p>Latest recorded student cases</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/violations')}>View all</button></header>{violations.length ? <div className="table-wrap"><table className="responsive-record-table"><thead><tr><th>Student</th><th>Offense</th><th>Date</th><th>Status</th></tr></thead><tbody>{violations.slice(0,5).map((item)=><tr key={item.id}><td data-label="Student"><strong>{item.student_name || `Student #${item.student_id}`}</strong><small>{item.student_number}</small></td><td data-label="Offense"><span className="offense-table-type"><OffenseIndicator level={item.offense_indicator_level} compact/>{item.exact_offense || item.violation_type_name || 'Recorded offense'}</span></td><td data-label="Date">{formatIncidentDateTime(item.incident_date,item.incident_time)}</td><td data-label="Status"><span className={`status-badge status-${String(item.status).toLowerCase()}`}>{item.status}</span></td></tr>)}</tbody></table></div> : <p className="empty-state">No violations available.</p>}</article>
-        <section className="dashboard-card active-session-card"><header className="dashboard-section-heading"><div><h3>Active attendance sessions</h3><p>Students currently timed in, with their accountable supervising officer</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/community-service')}>Manage attendance</button></header>{loading ? <p className="empty-state">Loading active attendance sessions…</p> : activeSessions.length ? <div className="table-wrap"><table className="responsive-record-table"><thead><tr><th>Student</th><th>Department</th><th>Supervising officer</th><th>Time in</th><th>Elapsed</th></tr></thead><tbody>{activeSessions.map((session)=><tr key={session.session_id}><td data-label="Student"><strong>{session.first_name} {session.last_name}</strong><small>{session.student_number}</small></td><td data-label="Department">{session.department_name}</td><td data-label="Supervising officer">{session.supervising_officer_first_name} {session.supervising_officer_last_name}<small>{String(session.supervising_officer_role || '').replaceAll('_',' ')}</small></td><td data-label="Time in">{formatManilaDateTime(session.time_in)}</td><td data-label="Elapsed"><time dateTime={`PT${liveServiceSeconds(session.time_in, now)}S`}>{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</time></td></tr>)}</tbody></table></div> : <p className="empty-state">No students are currently timed in.</p>}</section>
+        <section className="dashboard-card active-session-card"><header className="dashboard-section-heading"><div><h3>Active attendance sessions</h3><p>Students currently timed in, with their accountable supervising officer</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/community-service')}>Manage attendance</button></header>{loading ? <p className="empty-state">Loading active attendance sessions…</p> : visibleActiveSessions.length ? <div className="table-wrap"><table className="responsive-record-table"><thead><tr><th>Student</th><th>Department</th><th>Supervising officer</th><th>Time in</th><th>Elapsed</th></tr></thead><tbody>{visibleActiveSessions.map((session)=><tr key={session.session_id}><td data-label="Student"><strong>{session.first_name} {session.last_name}</strong><small>{session.student_number}</small></td><td data-label="Department">{session.department_name}</td><td data-label="Supervising officer">{session.supervising_officer_first_name} {session.supervising_officer_last_name}<small>{String(session.supervising_officer_role || '').replaceAll('_',' ')}</small></td><td data-label="Time in">{formatManilaDateTime(session.time_in)}</td><td data-label="Elapsed"><time dateTime={`PT${liveServiceSeconds(session.time_in, now)}S`}>{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</time></td></tr>)}</tbody></table></div> : <p className="empty-state">No students are currently timed in.</p>}</section>
       </div>
       <div className="admin-dashboard-secondary">
         <article className="dashboard-card offense-breakdown-card"><header className="dashboard-section-heading"><div><h3>Offense breakdown</h3><p>Classification across recorded cases</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/reports')}>Reports</button></header><div className="offense-breakdown-content"><div className="offense-donut" style={{'--offense-gradient':offenseGradient}} role="img" aria-label={`${classifiedTotal} classified violation records`}><strong>{classifiedTotal}</strong><span>Classified</span></div><dl>{offenseBreakdown.map((item)=><div key={item.level}><dt><i style={{'--legend-color':item.color}}/>{item.label}</dt><dd>{item.count}</dd></div>)}</dl></div></article>

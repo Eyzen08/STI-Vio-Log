@@ -28,9 +28,11 @@ test('active attendance sessions fill the dashboard primary column with responsi
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   const primary = source.match(/className="admin-dashboard-primary"([\s\S]*?)className="admin-dashboard-secondary"/)?.[1] || ''
   assert.ok(primary.indexOf('Recent violations') < primary.indexOf('Active attendance sessions'))
-  assert.match(primary, /activeSessions\.map/)
+  assert.match(primary, /visibleActiveSessions\.map/)
   assert.match(primary, /Loading active attendance sessions/)
   assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
+  assert.match(source, /setInterval\(refresh, 15000\)/)
+  assert.match(source, /activeSessions\.filter\(isActiveServiceSession\)/)
   assert.match(primary, /formatLiveServiceTime\(liveServiceSeconds\(session\.time_in, now\)\)/)
   assert.match(primary, /data-label="Student"/)
   assert.match(primary, /data-label="Supervising officer"/)

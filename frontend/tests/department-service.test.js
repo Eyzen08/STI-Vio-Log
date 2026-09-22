@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { filterDepartmentService, formatLiveServiceTime, liveServiceSeconds, serviceProgress, summarizeDepartmentService } from '../src/lib/departmentService.js'
+import { filterDepartmentService, formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds, serviceProgress, summarizeDepartmentService } from '../src/lib/departmentService.js'
 
 const assignments = [{ id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000111111', required_hours: '4', completed_hours: '1.5', remaining_hours: '2.5', status: 'IN_PROGRESS' }, { id: 2, first_name: 'Ben', last_name: 'Cruz', student_number: '02000222222', required_hours: 2, completed_hours: 2, remaining_hours: 0, status: 'COMPLETED' }]
 
@@ -18,4 +18,11 @@ test('live service timer uses the recorded server time-in safely', () => {
   assert.equal(liveServiceSeconds('2026-08-31T08:00:00.000Z', Date.parse('2026-08-31T09:02:03.000Z')), 3723)
   assert.equal(formatLiveServiceTime(3723), '01:02:03')
   assert.equal(liveServiceSeconds('invalid', Date.now()), 0)
+})
+
+test('live timer requires authoritative active status without a time-out', () => {
+  assert.equal(isActiveServiceSession({ status: 'ACTIVE', time_out: null }), true)
+  assert.equal(isActiveServiceSession({ status: 'COMPLETED', time_out: null }), false)
+  assert.equal(isActiveServiceSession({ status: 'ACTIVE', time_out: '2026-09-22T05:00:00Z' }), false)
+  assert.equal(isActiveServiceSession(null), false)
 })

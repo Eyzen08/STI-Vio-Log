@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
-import { filterDepartmentService, formatLiveServiceTime, liveServiceSeconds, serviceProgress, summarizeDepartmentService } from '../lib/departmentService.js'
+import { filterDepartmentService, formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds, serviceProgress, summarizeDepartmentService } from '../lib/departmentService.js'
 import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 
 const emptyTimeOut = { condition: '', notes: '' }
@@ -14,10 +14,13 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
   const [timeOutForms, setTimeOutForms] = useState({})
   const [busySession, setBusySession] = useState(null)
   const [now, setNow] = useState(Date.now())
+  const activeRequestRef = useRef(false)
   const summary = summarizeDepartmentService(assignments)
   const visible = useMemo(() => filterDepartmentService(assignments, query, status), [assignments, query, status])
 
   const loadActiveSessions = useCallback(async ({ quiet = false } = {}) => {
+    if (activeRequestRef.current) return
+    activeRequestRef.current = true
     if (!quiet) setActiveLoading(true)
     try {
       const response = await fetch(`${API_URL}/api/community-service/active-sessions`, { headers: { Authorization: `Bearer ${token}` } })
@@ -28,6 +31,7 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
     } catch (loadError) {
       setActiveError(loadError.message || 'Unable to load active service sessions.')
     } finally {
+      activeRequestRef.current = false
       if (!quiet) setActiveLoading(false)
     }
   }, [token])
@@ -36,7 +40,11 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
     loadActiveSessions()
     const handleChange = () => { loadActiveSessions({ quiet: true }); onAttendanceUpdated?.() }
     realtimeSocket?.on('community-service:changed', handleChange)
-    const refresh = window.setInterval(() => loadActiveSessions({ quiet: true }), 15000)
+    const refresh = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      loadActiveSessions({ quiet: true })
+      onAttendanceUpdated?.()
+    }, 15000)
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => { window.clearInterval(refresh); window.clearInterval(clock); realtimeSocket?.off('community-service:changed', handleChange) }
   }, [loadActiveSessions, onAttendanceUpdated, realtimeSocket])
@@ -69,13 +77,15 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
     }
   }
 
+  const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
+
   return <div className="department-service-page">
     <section className="department-welcome"><div><p className="eyebrow">Service oversight</p><h2>Community service</h2><p>Monitor active service time and assignments in your authenticated department.</p></div><button type="button" onClick={onOpenScanner}>Record time-in</button></section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="table-card" aria-busy={activeLoading}>
-      <div className="table-header"><div><p className="eyebrow">Live attendance</p><h3>Students currently serving</h3><p>Elapsed time updates every second. Time-Out immediately credits eligible minutes.</p></div><span>{activeSessions.length} active</span></div>
+      <div className="table-header"><div><p className="eyebrow">Live attendance</p><h3>Students currently serving</h3><p>Elapsed time updates every second. Time-Out immediately credits eligible minutes.</p></div><span>{visibleActiveSessions.length} active</span></div>
       {activeError && <p className="error-message" role="alert">{activeError}</p>}
-      {activeLoading ? <div className="department-empty"><p>Loading active sessions…</p></div> : activeSessions.length === 0 ? <div className="department-empty"><h4>No students currently timed in</h4><p>Use QR Scan to record a student’s Time-In.</p></div> : <div className="service-assignment-list">{activeSessions.map((session) => { const form = timeOutForms[session.session_id] || emptyTimeOut; return <article key={session.session_id}><div className="service-assignment-heading"><div><h4>{session.first_name} {session.last_name}</h4><span>{session.student_number} · Assignment #{session.assignment_id}</span></div><strong aria-label="Live elapsed time">{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</strong></div><p>Timed in: {formatManilaDateTime(session.time_in)}</p><label>Status<select value={form.condition} onChange={(event) => updateTimeOut(session.session_id, 'condition', event.target.value)} disabled={busySession===session.session_id}><option value="">Select Status</option><option value="SATISFACTORY">Completed</option><option value="NEEDS_FOLLOW_UP">Needs Action</option><option value="INCIDENT_REPORTED">Reported</option></select></label><label>Service note (optional)<textarea rows="2" maxLength="500" value={form.notes} onChange={(event) => updateTimeOut(session.session_id, 'notes', event.target.value)} disabled={busySession===session.session_id}/></label><button type="button" onClick={() => timeOut(session)} disabled={busySession===session.session_id || !form.condition}>{busySession===session.session_id?'Recording…':'Time out and credit hours'}</button></article> })}</div>}
+      {activeLoading ? <div className="department-empty"><p>Loading active sessions…</p></div> : visibleActiveSessions.length === 0 ? <div className="department-empty"><h4>No students currently timed in</h4><p>Use QR Scan to record a student’s Time-In.</p></div> : <div className="service-assignment-list">{visibleActiveSessions.map((session) => { const form = timeOutForms[session.session_id] || emptyTimeOut; return <article key={session.session_id}><div className="service-assignment-heading"><div><h4>{session.first_name} {session.last_name}</h4><span>{session.student_number} · Assignment #{session.assignment_id}</span></div><strong aria-label="Live elapsed time">{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</strong></div><p>Timed in: {formatManilaDateTime(session.time_in)}</p><label>Status<select value={form.condition} onChange={(event) => updateTimeOut(session.session_id, 'condition', event.target.value)} disabled={busySession===session.session_id}><option value="">Select Status</option><option value="SATISFACTORY">Completed</option><option value="NEEDS_FOLLOW_UP">Needs Action</option><option value="INCIDENT_REPORTED">Reported</option></select></label><label>Service note (optional)<textarea rows="2" maxLength="500" value={form.notes} onChange={(event) => updateTimeOut(session.session_id, 'notes', event.target.value)} disabled={busySession===session.session_id}/></label><button type="button" onClick={() => timeOut(session)} disabled={busySession===session.session_id || !form.condition}>{busySession===session.session_id?'Recording…':'Time out and credit hours'}</button></article> })}</div>}
     </section>
     <section className="stats-grid department-stats" aria-label="Community service summary"><article className="stat-card"><span>Assignments</span><strong>{summary.total}</strong></article><article className="stat-card"><span>Active</span><strong>{summary.active}</strong></article><article className="stat-card"><span>Completed</span><strong>{summary.completed}</strong></article><article className="stat-card"><span>Time remaining</span><strong>{formatDuration(summary.remainingHours)}</strong></article></section>
     <section className="student-roster-tools" aria-label="Filter service assignments"><label><span>Search students</span><input type="search" name="department-service-student-filter" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name or student number" /></label><label><span>Assignment status</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="ALL">All assignments</option><option value="ACTIVE">Active</option><option value="COMPLETED">Completed</option><option value="ADMIN_CLOSED">Administratively closed</option><option value="INVALID_CANCELLED">Invalid / cancelled</option></select></label></section>

@@ -2,7 +2,7 @@ const pool = require("../config/database");
 const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
-const { emitAttendanceChange } = require('../services/realtimeEventService');
+const { emitAttendanceChange, emitCommunityServiceChange } = require('../services/realtimeEventService');
 const { emitNotificationChange } = require('../services/realtimeEventService');
 const { notifyAttendanceFailure } = require('../services/notificationService');
 
@@ -53,6 +53,7 @@ const reviewCommunityServiceResult = async (req,res) => {
     try {
         assertAllowedFields(req.body,['decision','review_notes']);
         const result=await reviewServiceResult({sessionId:req.params.sessionId,decision:req.body?.decision,reviewNotes:req.body?.review_notes,actor:req.user,ipAddress:req.ip});
+        await emitCommunityServiceChange({assignmentId:result.session.assignment_id,departmentId:result.session.department_id,action:req.body.decision==='APPROVE'?'REVIEW_APPROVED':'REVIEW_REJECTED'});
         return res.json({success:true,message:req.body.decision==='APPROVE'?'Service result approved and credited':'Service result rejected without credit',...result});
     } catch(error){return sendError(res,error,'review community service result')}
 };
@@ -77,7 +78,7 @@ const getActiveDepartmentSessions = async (req, res) => {
         if (!isOperationalStaff && !scopedDepartment) return res.status(403).json({ success: false, message: 'No authorized department is assigned to this account' });
         const departmentWhere = scopedDepartment ? 'css.department_id=$1 AND a.department_id=$1' : '$1::bigint IS NULL';
         const result = await pool.query(
-            `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.notes,
+            `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.time_out, css.status, css.notes,
                     FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int AS elapsed_seconds,
                     CURRENT_TIMESTAMP AS server_time,
                     a.student_id, a.required_hours, a.completed_hours, a.remaining_hours,

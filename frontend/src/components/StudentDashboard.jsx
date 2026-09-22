@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, liveServiceSeconds } from '../lib/departmentService.js'
+import { formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds } from '../lib/departmentService.js'
 import { formatMinutes, summarizeStudentService } from '../lib/studentService.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
@@ -9,8 +9,8 @@ import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const hours = (value) => Math.max(0, Number(value) || 0)
 
-function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate }) {
-  const activeSessions = Array.isArray(dtr?.sessions) ? dtr.sessions.filter((session) => session.status === 'ACTIVE') : []
+function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate, onRefreshService }) {
+  const activeSessions = Array.isArray(dtr?.sessions) ? dtr.sessions.filter(isActiveServiceSession) : []
   const activeSession = activeSessions[0]
   const serviceSummary = summarizeStudentService(dtr)
   const [now, setNow] = useState(Date.now())
@@ -20,6 +20,12 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [activeSessions.length])
+  useEffect(() => {
+    if (!onRefreshService) return undefined
+    const refresh = () => { if (document.visibilityState === 'visible') onRefreshService() }
+    const polling = window.setInterval(refresh, 15000)
+    return () => window.clearInterval(polling)
+  }, [onRefreshService])
 
   const summary = summarizeStudentDashboard({ violations, assignments, clearanceRecords, eligibility })
   const displayName = profile ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ') : 'Student'

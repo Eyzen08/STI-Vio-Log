@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react'
 import { formatMinutes, summarizeStudentService, validateDateRange } from '../lib/studentService.js'
 import { formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, liveServiceSeconds } from '../lib/departmentService.js'
+import { formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds } from '../lib/departmentService.js'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
 
-function StudentCommunityService({ dtr, loading, error, onFilter }) {
+function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRefreshService }) {
   const [filters, setFilters] = useState({ from: '', to: '' })
   const [filterError, setFilterError] = useState('')
-  const summary = summarizeStudentService(dtr)
+  const summary = summarizeStudentService(liveDtr || dtr)
   const assignments = Array.isArray(dtr?.assignments) ? dtr.assignments : []
   const sessions = Array.isArray(dtr?.sessions) ? dtr.sessions : []
-  const activeSessionCount = sessions.filter((session) => session.status === 'ACTIVE').length
+  const latestSessions = Array.isArray(liveDtr?.sessions) ? liveDtr.sessions : sessions
+  const latestById = new Map(latestSessions.map((session) => [session.id, session]))
+  const filteredSessions = sessions.map((session) => latestById.get(session.id) || session)
+  const filteredIds = new Set(filteredSessions.map((session) => session.id))
+  const currentSessions = latestSessions.filter(isActiveServiceSession).filter((session) => !filteredIds.has(session.id))
+  const displaySessions = [...currentSessions, ...filteredSessions]
+  const activeSessionCount = displaySessions.filter(isActiveServiceSession).length
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -20,6 +26,12 @@ function StudentCommunityService({ dtr, loading, error, onFilter }) {
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [activeSessionCount])
+  useEffect(() => {
+    if (!onRefreshService) return undefined
+    const refresh = () => { if (document.visibilityState === 'visible') onRefreshService() }
+    const polling = window.setInterval(refresh, 15000)
+    return () => window.clearInterval(polling)
+  }, [onRefreshService])
 
   const submitFilters = (event) => {
     event.preventDefault()
@@ -73,10 +85,10 @@ function StudentCommunityService({ dtr, loading, error, onFilter }) {
             <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply'}</button>
           </form>
         </div>
-        {sessions.length === 0 ? <p className="empty-state">No attendance sessions match this period.</p> : (
-          <div className="session-list">{sessions.map((session) => <article className={session.status === 'ACTIVE' ? 'student-active-session' : undefined} key={session.id}>
+        {displaySessions.length === 0 ? <p className="empty-state">No attendance sessions match this period.</p> : (
+          <div className="session-list">{displaySessions.map((session) => <article className={isActiveServiceSession(session) ? 'student-active-session' : undefined} key={session.id}>
             <div><strong>{session.department_name}</strong><span>Assignment #{session.assignment_id}</span></div>
-            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{session.status === 'ACTIVE' ? 'Live elapsed' : 'Worked'}</dt><dd>{session.status === 'ACTIVE' ? <time dateTime={`PT${liveServiceSeconds(session.time_in, now)}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</time> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div></dl>
+            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Live elapsed' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <time dateTime={`PT${liveServiceSeconds(session.time_in, now)}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(liveServiceSeconds(session.time_in, now))}</time> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div></dl>
             <span className={`status-badge status-${String(session.status).toLowerCase()}`}>{session.status}</span>
           </article>)}</div>
         )}

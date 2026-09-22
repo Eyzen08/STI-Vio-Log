@@ -37,7 +37,10 @@ test('student dashboard and DTR render active sessions with live credited-safe t
     assert.match(source, /clearInterval\(clock\)/)
   }
   assert.match(dashboard, /Current session time is credited after time-out and review\./)
-  assert.match(service, /session\.status === 'ACTIVE' \? 'Live elapsed' : 'Worked'/)
+  assert.match(service, /isActiveServiceSession\(session\) \? 'Live elapsed' : 'Worked'/)
+  assert.match(service, /setInterval\(refresh, 15000\)/)
+  assert.match(dashboard, /setInterval\(refresh, 15000\)/)
+  assert.match(service, /document\.visibilityState === 'visible'/)
   assert.match(app, /dtr=\{studentDtr\}/)
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.student-live-session-body \{ grid-template-columns: 1fr; \}/s)
 })
