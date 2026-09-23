@@ -3266,6 +3266,54 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .student-directory-table .student-access-removal { grid-column:2; grid-row:1; }
 }
 
+/* Shared six-digit verification control. */
+.otp-field { display:grid; gap:.5rem; min-width:0; }
+.otp-label { color:var(--text-primary); font-size:.82rem; font-weight:700; }
+.otp-input {
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:clamp(.35rem,1.5vw,.65rem);
+  width:min(100%,24rem);
+}
+.otp-input input,
+.auth-shell .login-form .otp-input input {
+  width:100%;
+  min-width:0;
+  min-height:clamp(2.75rem,9vw,3.5rem);
+  padding:0;
+  border:1px solid var(--border-strong);
+  border-radius:.65rem;
+  background:var(--control-background);
+  color:var(--text-primary);
+  font-size:clamp(1.15rem,4vw,1.45rem);
+  font-weight:750;
+  line-height:1;
+  text-align:center;
+  caret-color:var(--color-primary);
+  font-variant-numeric:tabular-nums;
+  transition:border-color var(--transition-fast),background-color var(--transition-fast),box-shadow var(--transition-fast),transform var(--transition-fast);
+}
+.otp-input input:hover:not(:disabled) { border-color:var(--color-primary); }
+.otp-input input:focus-visible { z-index:1; border-color:var(--color-primary); outline:none; box-shadow:var(--focus-ring); transform:translateY(-1px); }
+.otp-input[aria-invalid='true'] input { border-color:var(--status-danger-text); background:var(--status-danger-surface); }
+.otp-input input:disabled { border-color:var(--border-subtle); background:var(--control-disabled-background); color:var(--text-muted); cursor:not-allowed; opacity:.82; }
+
+.mfa-form .totp-countdown { display:grid; gap:.55rem; padding:.75rem .85rem; border:1px solid var(--border-subtle); border-radius:.7rem; background:var(--surface-nested); }
+.mfa-form .totp-countdown > div { color:var(--text-secondary); }
+.mfa-form .totp-countdown strong { color:var(--link-color); }
+.mfa-form .totp-countdown progress { accent-color:var(--color-primary); }
+.mfa-form > button:not(.secondary-button) { border-color:var(--color-primary); background:var(--color-primary); color:var(--text-on-accent); }
+.mfa-form > button:not(.secondary-button):hover:not(:disabled) { background:var(--color-primary-dark); }
+.mfa-form > .secondary-button { border-color:var(--border-subtle); background:var(--surface-interactive); color:var(--link-color); }
+.mfa-form > .secondary-button:hover:not(:disabled) { background:var(--surface-interactive-hover); }
+.mfa-form > button:disabled { border-color:var(--border-subtle); background:var(--control-disabled-background); color:var(--text-muted); cursor:not-allowed; opacity:.82; }
+
+@media (max-width:390px) {
+  .otp-input { gap:.3rem; }
+  .otp-input input,
+  .auth-shell .login-form .otp-input input { min-height:2.65rem; border-radius:.55rem; font-size:1.05rem; }
+}
+
 /* FINAL THEME CASCADE GUARD — this must remain the last color-bearing block. */
 :root[data-theme='dark'] :is(
   .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,

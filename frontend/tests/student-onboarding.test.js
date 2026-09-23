@@ -20,7 +20,7 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.match(api,/student-onboarding\/google-email\/request/)
   assert.match(api,/student-onboarding\/google-email\/verify/)
   assert.match(onboarding,/Email.*Verification code.*Google sign-in/s)
-  assert.match(onboarding,/autoComplete="one-time-code"/)
+  assert.match(onboarding,/<OtpInput id="google-email-code"/)
   assert.match(api,/student-onboarding\/profile/)
   assert.match(onboarding,/program:.*section:.*year_level:.*phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
   assert.doesNotMatch(onboarding,/student_number:/)
