@@ -38,8 +38,9 @@ test('appearance preference defaults to the light reference, persists, and updat
 test('theme controls remain named and available in both public and portal shells', () => {
   assert.equal((app.match(/aria-label=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 2)
   assert.match(app, /aria-pressed=\{theme === 'dark'\}/)
-  assert.match(app, /title=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/)
-  assert.match(app, /theme-toggle-label">\{theme === 'dark' \? 'Light' : 'Dark'\}/)
+  assert.equal((app.match(/title=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 2)
+  assert.doesNotMatch(app, /theme-toggle-label/)
+  assert.doesNotMatch(app, /\{theme === 'dark' \? 'Light(?: mode)?' : 'Dark(?: mode)?'\}/)
   assert.match(app, /className="theme-toggle auth-theme-toggle"/)
   assert.match(icon, /sun:/)
   assert.match(icon, /moon:/)

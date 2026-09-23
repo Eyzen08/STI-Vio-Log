@@ -3657,6 +3657,17 @@ a {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  transition: opacity 220ms ease-out;
+}
+
+.login-campus-image--day { opacity: 1; }
+.login-campus-image--night { opacity: 0; }
+
+:root[data-theme='dark'] .login-campus-image--day { opacity: 0; }
+:root[data-theme='dark'] .login-campus-image--night { opacity: 1; }
+
+.theme-transition .login-campus-image {
+  transition-property: opacity !important;
 }
 
 .login-intro::before {
@@ -3950,6 +3961,7 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .login-campus-image { transition: none; }
   .session-restoring-progress span { width: 58%; animation: none; }
 }
 

@@ -2940,13 +2940,13 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 
 /* Persistent appearance control and legacy dark portal compatibility. */
 .theme-toggle {
+  width: 44px;
   min-width: 44px;
   min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 11px !important;
+  padding: 0 !important;
   border: 1px solid #cfdeeb !important;
   border-radius: 9px !important;
   background: #f5f9fd !important;
@@ -3046,9 +3046,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 [data-theme='dark'].auth-shell .auth-theme-toggle { border-color:#42627e !important; background:rgba(12,31,50,.94) !important; color:#e4f2fd !important; box-shadow:0 .5rem 1.4rem rgba(0,6,14,.3) !important; }
 
 @media (max-width:767px) {
-  .theme-toggle-label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
   .account-actions .theme-toggle { width:44px; padding:0 !important; }
-  .auth-theme-toggle { top:max(.75rem,env(safe-area-inset-top)); right:.75rem; min-height:40px; padding-inline:10px !important; }
+  .auth-theme-toggle { top:max(.75rem,env(safe-area-inset-top)); right:.75rem; min-height:40px; }
   [data-theme='dark'] .topbar { background:linear-gradient(110deg,#062f5f,#0757a5) !important; }
 }
 /* Reference-led dashboard composition: dense live-data bento cards. */

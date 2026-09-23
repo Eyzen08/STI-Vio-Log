@@ -24,10 +24,14 @@ test('redesigned login keeps every existing authentication entry point', () => {
 
 test('login branding uses local imported building and logo assets', () => {
   assert.match(source, /import buildingImage from '\.\.\/assets\/sti-global-city-building-web\.jpg'/)
+  assert.match(source, /import buildingNightImage from '\.\.\/assets\/sti-global-city-building-night\.jpg'/)
   assert.match(source, /import stiVioLogLogo from '\.\.\/assets\/sti-logo-web\.png'/)
   assert.match(source, /alt="STI Vio-Log"/)
   assert.match(source, /alt="STI Global City campus building"/)
   assert.match(source, /width="1200" height="825" fetchPriority="high"/)
+  assert.match(source, /login-campus-image--night[^>]*src=\{buildingNightImage\}[^>]*aria-hidden="true"/)
+  assert.match(appCssSource, /:root\[data-theme='dark'\] \.login-campus-image--day \{ opacity: 0; \}/)
+  assert.match(appCssSource, /:root\[data-theme='dark'\] \.login-campus-image--night \{ opacity: 1; \}/)
 })
 
 test('login uses accessible form status and semantic navigation', () => {
