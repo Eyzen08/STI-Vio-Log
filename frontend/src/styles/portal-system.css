@@ -3338,6 +3338,106 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] :is(.active-attendance-clock,.service-time-live time) { color:var(--link-color) !important; }
 :root[data-theme='dark'] .service-time-live { border-color:var(--link-color) !important; background:var(--surface-selected) !important; }
 
+/* Notifications: prevent legacy hero, row, badge, and unread colors leaking through. */
+:root[data-theme='dark'] .notifications-hero {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-md) !important;
+}
+:root[data-theme='dark'] .notifications-hero :is(h2,strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .notifications-hero :is(.eyebrow,p,span) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .notifications-hero > div:last-child {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .notification-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .notification-list > article:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .notification-list > article.unread { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .notification-heading h4 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .notification-list :is(p,time) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .notification-heading > span {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .notification-indicator { background:var(--text-muted) !important; }
+:root[data-theme='dark'] .notification-list .unread .notification-indicator {
+  background:var(--status-info-text) !important;
+  box-shadow:0 0 0 4px var(--status-info-surface) !important;
+}
+
+/* System Monitoring: theme every nested account-control and navigation surface. */
+:root[data-theme='dark'] .monitoring-slide-title { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .monitoring-slide .table-wrap thead th {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:0 1px var(--border-subtle) !important;
+}
+:root[data-theme='dark'] .monitoring-slide-controls > span { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .monitoring-slide-controls small { color:var(--text-muted) !important; }
+:root[data-theme='dark'] :is(.monitoring-panel-tabs,.account-action-results,.monitoring-slide .table-wrap) {
+  scrollbar-color:var(--border-strong) var(--surface-nested);
+}
+:root[data-theme='dark'] :is(.account-directory-panel,.account-action-form) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .account-directory-search {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .account-directory-search svg { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .main-panel .account-action-results > button {
+  border-color:transparent !important;
+  background:transparent !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .main-panel .account-action-results > button:hover {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] .main-panel .account-action-results > button.selected {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  box-shadow:inset .18rem 0 var(--link-color) !important;
+}
+:root[data-theme='dark'] .account-action-results small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .account-result-avatar {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .account-action-results .is-active {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .account-action-results .is-locked {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .selected-account-summary {
+  border:1px solid var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .selected-account-summary div > span { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .selected-account-summary strong { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .selected-account-summary small,
+:root[data-theme='dark'] .account-action-form > label small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .account-action-form > label { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .account-action-restriction {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
 /* Deliberately light for printing/scanning; all surrounding UI remains themed. */
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
   color-scheme: light;

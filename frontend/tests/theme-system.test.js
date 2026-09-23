@@ -87,6 +87,19 @@ test('dark validation and destructive controls share danger tokens', () => {
   assert.doesNotMatch(portal, /button:not\(\[type='button'\]\):last-child\s*\{[^}]*background:var\(--color-primary\)/)
 })
 
+test('dark notifications and account controls cannot fall back to light surfaces', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.notifications-hero', '.notification-list > article', '.notification-heading > span', '.account-directory-panel', '.account-directory-search', '.account-action-results > button', '.account-action-form', '.selected-account-summary', '.account-result-avatar', '.monitoring-slide .table-wrap thead th']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.notifications-hero\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /\.account-directory-panel,\.account-action-form\)\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /\.selected-account-summary\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.account-action-results > button\.selected\s*\{[^}]*background:var\(--surface-selected\)/s)
+  const themedControls = guard.slice(0, guard.indexOf('Deliberately light for printing/scanning'))
+  assert.doesNotMatch(themedControls, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe|#f9fbfd|#edf5fd|#eaf4ff)\b/i)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
