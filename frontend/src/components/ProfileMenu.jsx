@@ -21,6 +21,7 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
   const rootRef = useRef(null)
   const triggerRef = useRef(null)
   const firstItemRef = useRef(null)
+  const lastLogoutTouchRef = useRef(0)
   const close = (restoreFocus = false) => { setOpen(false); if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus()) }
 
   useEffect(() => { close(false) }, [routePath])
@@ -51,9 +52,25 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
     action?.()
     window.location.assign(new URL(path, window.location.href).href)
   }
-  const logout = (event) => {
+  const activateLogout = (event) => {
+    event.preventDefault()
     event.stopPropagation()
+    close(false)
     onLogout?.()
+  }
+  const logoutOnTouch = (event) => {
+    lastLogoutTouchRef.current = Date.now()
+    activateLogout(event)
+  }
+  const logoutOnClick = (event) => {
+    // Mobile Safari emits a synthetic click after touchend. The touch handler
+    // already opened the confirmation, so ignore only that follow-up click.
+    if (Date.now() - lastLogoutTouchRef.current < 750) {
+      event.preventDefault()
+      event.stopPropagation()
+      return
+    }
+    activateLogout(event)
   }
 
   return <div className="profile-menu" ref={rootRef}>
@@ -65,7 +82,7 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
       <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, profilePath(user?.role))}><PortalIcon name="user"/><span>View Profile</span></a>
       <a role="menuitem" href={settingsPath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, settingsPath(user?.role))}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>
-      <button role="menuitem" type="button" className="profile-logout" onClick={logout}><PortalIcon name="logout"/><span>Logout</span></button>
+      <button role="menuitem" type="button" className="profile-logout" onTouchEnd={logoutOnTouch} onClick={logoutOnClick}><PortalIcon name="logout"/><span>Logout</span></button>
     </div>}
   </div>
 }
