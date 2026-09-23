@@ -4015,17 +4015,37 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }
 
 /* Administrative mobile cards and drawers must override late legacy light surfaces. */
-:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) tr {
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr {
   border-color:var(--border-subtle) !important;
   background:var(--surface-raised) !important;
   color:var(--text-primary) !important;
 }
-:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) td::before { color:var(--text-secondary) !important; }
-:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) td { color:var(--text-primary) !important; }
-:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) tr:hover { background:var(--surface-interactive-hover) !important; }
-:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) .mini-progress,
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:nth-child(even) {
+  background:var(--surface-raised) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) td::before { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) td { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:is(:hover,:focus-within),
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:nth-child(even):is(:hover,:focus-within) {
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:is(.selected,[aria-selected='true']) {
+  background:var(--surface-selected) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) .mini-progress,
 :root[data-theme='dark'] .student-directory-table .table-progress > div { background:var(--surface-interactive) !important; }
 :root[data-theme='dark'] .student-directory-table .table-actions { background:transparent !important; }
+:root[data-theme='dark'] .management-record-table .row-action-trigger {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .management-record-table .row-action-trigger:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .management-record-table .row-action-menu > div {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-overlay) !important;
+  color:var(--text-primary) !important;
+}
 
 /* Duplicate Review loading, list, comparison, and safety states. */
 :root[data-theme='dark'] .duplicate-skeleton span {

@@ -224,9 +224,14 @@ test('dark clearance covers pending, ready, blocked, history, and empty states',
 
 test('dark administrative mobile cards override late light table backgrounds', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
-  assert.match(guard, /:is\(\.responsive-record-table,\.audit-record-table\) tr\s*\{[^}]*background:var\(--surface-raised\)/s)
-  assert.match(guard, /:is\(\.responsive-record-table,\.audit-record-table\) td::before[^}]*color:var\(--text-secondary\)/s)
+  assert.match(guard, /:is\(\.management-record-table,\.responsive-record-table,\.audit-record-table\) tr\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /:is\(\.management-record-table,\.responsive-record-table,\.audit-record-table\) tr:nth-child\(even\)\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /tr:nth-child\(even\):is\(:hover,:focus-within\)[^}]*background:var\(--surface-interactive-hover\)/s)
+  assert.match(guard, /tr:is\(\.selected,\[aria-selected='true'\]\)[^}]*background:var\(--surface-selected\)/s)
+  assert.match(guard, /:is\(\.management-record-table,\.responsive-record-table,\.audit-record-table\) td::before[^}]*color:var\(--text-secondary\)/s)
   assert.match(guard, /\.student-directory-table \.table-progress > div[^}]*background:var\(--surface-interactive\)/s)
+  assert.match(guard, /\.management-record-table \.row-action-trigger\s*\{[^}]*background:var\(--surface-interactive\)/s)
+  assert.match(guard, /\.management-record-table \.row-action-menu > div\s*\{[^}]*background:var\(--surface-overlay\)/s)
   const mobileCards = guard.slice(guard.indexOf('Administrative mobile cards'), guard.indexOf('Duplicate Review loading'))
   assert.doesNotMatch(mobileCards, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
 })
