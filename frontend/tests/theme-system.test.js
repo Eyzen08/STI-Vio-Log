@@ -144,6 +144,33 @@ test('dark QR attendance qualifiers use semantic dark pills', () => {
   assert.match(guard, /label:has\(\[name='condition'\]\) \.record-field-label small\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
 })
 
+test('dark student routes cannot retain legacy light cards or low-contrast text', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.page-intro', '.violation-card', '.violation-summary', ".violation-summary[aria-expanded='true']", '.violation-details', '.service-progress', '.violations-empty', '.qr-display-card', '.qr-guidance > div', '.student-qr-frame', '.assignment-list', '.session-list', '.dtr-filters input', '.skeleton']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.page-intro,[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /\.violations-page \.violation-summary\[aria-expanded='true'\]\s*\{[^}]*background:var\(--surface-interactive\)/s)
+  assert.match(guard, /\.violation-details\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.student-qr-frame\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.mobile-bottom-nav button\.active,[^}]*background:#076dcc !important;[^}]*color:#ffffff !important;/s)
+})
+
+test('dark student status colors meet WCAG AA contrast', () => {
+  const pairs = [
+    ['#f2f7fb', '#10263a', 4.5, 'student card primary text'],
+    ['#b9cad9', '#10263a', 4.5, 'student card secondary text'],
+    ['#9bd0ff', '#163b5c', 4.5, 'student information badge'],
+    ['#ffd870', '#443817', 4.5, 'student warning badge'],
+    ['#ff9ba7', '#48252d', 4.5, 'student grave badge'],
+    ['#7de2af', '#123d31', 4.5, 'student success badge'],
+    ['#ffffff', '#076dcc', 4.5, 'active mobile navigation'],
+  ]
+  for (const [foreground, background, minimum, label] of pairs) {
+    assert.ok(contrast(foreground, background) >= minimum, `${label} must be at least ${minimum}:1`)
+  }
+})
+
 test('dark public policy pages keep their surfaces and text on one semantic palette', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   for (const selector of ['.public-policy-page', '.public-policy-brand', '.public-policy-card', '.public-policy-intro', '.public-policy-sections', '.public-policy-footer']) {

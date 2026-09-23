@@ -3724,6 +3724,113 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   box-shadow:none !important;
 }
 
+/* Student routes: close legacy light-card leaks on every responsive layout. */
+:root[data-theme='dark'] :is(
+  .page-intro,.violation-card,.service-progress,.violations-empty,.qr-display-card,
+  .qr-guidance > div,.service-assignments,.dtr-card
+) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-md) !important;
+}
+:root[data-theme='dark'] :is(.page-intro,.violation-card,.violation-details,.service-progress,.qr-display-card,.qr-guidance > div) :is(h1,h2,h3,h4,strong,dd) {
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.page-intro,.violation-card,.violation-details,.service-progress,.qr-display-card,.qr-guidance > div) :is(p,dt,small) {
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] :is(.service-progress-heading,.timeline li,.qr-guidance > div) > span {
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .record-count {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary,
+:root[data-theme='dark'] .violations-page .violation-summary:active {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary:hover {
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary[aria-expanded='true'] {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary-main h3 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .violations-page .violation-summary-main > p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .violations-page .violation-toggle {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .violation-details {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .progress-track { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .timeline li:not(:last-child)::before { background:var(--border-strong) !important; }
+:root[data-theme='dark'] .timeline-marker {
+  border-color:var(--surface-selected) !important;
+  background:var(--color-primary) !important;
+}
+:root[data-theme='dark'] .severity-minor {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .severity-major {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .severity-grave {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .violations-empty > span,
+:root[data-theme='dark'] .profile-readonly-badge {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article {
+  border-color:var(--border-subtle) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article :is(strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article :is(span,small,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .dtr-filters label { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .dtr-filters input {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .student-qr-frame {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .qr-student-summary { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .qr-student-summary span,
+:root[data-theme='dark'] .qr-security-note { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .skeleton {
+  background:linear-gradient(90deg,var(--surface-nested) 25%,var(--surface-interactive) 50%,var(--surface-nested) 75%) !important;
+  background-size:200% 100% !important;
+}
+:root[data-theme='dark'] .mobile-bottom-nav {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-overlay) !important;
+}
+:root[data-theme='dark'] .mobile-bottom-nav button:not(.active) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .mobile-bottom-nav button.active,
+:root[data-theme='dark'] .mobile-bottom-nav button.messages-nav-item.active {
+  background:#076dcc !important;
+  color:#ffffff !important;
+}
+
 /* QR attendance field qualifiers must not inherit their pale light-mode pills. */
 :root[data-theme='dark'] .record-fields .record-field-label small {
   border:1px solid var(--border-strong) !important;
