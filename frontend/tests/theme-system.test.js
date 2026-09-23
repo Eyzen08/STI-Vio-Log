@@ -164,6 +164,14 @@ test('dark student dashboard standing notices use semantic status surfaces', () 
   assert.doesNotMatch(themedStanding, /#fff(?:1f3|2f3)|#ffd6db|#9e2434|#80515a/i)
 })
 
+test('dark student profile themes its hero, fields, dividers, and help footer', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.profile-card \.profile-hero\s*\{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-primary\)/s)
+  assert.match(guard, /\.profile-card \.profile-hero :is\(\.eyebrow,h2\)[^}]*color:var\(--text-primary\)/s)
+  assert.match(guard, /\.profile-card \.profile-field \.profile-value-missing[^}]*color:var\(--text-muted\)/s)
+  assert.match(guard, /\.profile-card \.profile-help\s*\{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-secondary\)/s)
+})
+
 test('dark student status colors meet WCAG AA contrast', () => {
   const pairs = [
     ['#f2f7fb', '#10263a', 4.5, 'student card primary text'],
