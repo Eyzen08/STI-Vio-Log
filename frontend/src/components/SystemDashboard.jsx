@@ -10,10 +10,10 @@ const componentFallbacks={api:{provider:'Render',technology:'Node.js / Express',
 const restrictionMessages={SELF_ACCOUNT_CHANGE:'You cannot lock the account you are currently using.',SELF_RECOVERY_NOT_ALLOWED:'Use Account Settings or the verified self-service flow to recover your own account.',ACCOUNT_ALREADY_LOCKED:'This account is already locked. Use recovery to restore access.',LAST_ADMIN:'The last active Discipline Administrator must remain available.',TARGET_CHANGED:'This account changed after password confirmation. Review it and try again.',STEP_UP_INVALID:'Password confirmation expired or was already used. Enter your password again.',STEP_UP_REQUIRED:'Enter your current administrator password to continue.',INVALID_CREDENTIALS:'The current password for the signed-in administrator is incorrect.',ACCOUNT_NOT_FOUND:'This account is no longer available. Refresh the search results.'}
 const accountName=(account)=>[account?.first_name,account?.last_name].filter(Boolean).join(' ')||account?.username||'Unknown account'
 const monitoringPanels=[
- {id:'overview',label:'Overview & Health',shortLabel:'Overview'},
- {id:'security',label:'Security Events',shortLabel:'Security'},
- {id:'authentication',label:'Authentication Activity',shortLabel:'Authentication'},
- {id:'accounts',label:'Account Controls',shortLabel:'Accounts'},
+ {id:'overview',label:'Overview & Health'},
+ {id:'security',label:'Security Events'},
+ {id:'authentication',label:'Authentication Activity'},
+ {id:'accounts',label:'Account Controls'},
 ]
 const panelIds=new Set(monitoringPanels.map(({id})=>id))
 const panelFromLocation=()=>{const requested=new URLSearchParams(window.location.search).get('panel');return panelIds.has(requested)?requested:'overview'}
@@ -45,7 +45,6 @@ export default function SystemDashboard({token,user}){
  const components=Object.entries(system?.components||{})
  const activePanelIndex=monitoringPanels.findIndex(({id})=>id===activePanel)
  const selectPanel=(nextPanel,{focusHeading=false}={})=>{if(!panelIds.has(nextPanel)||nextPanel===activePanel)return;const nextIndex=monitoringPanels.findIndex(({id})=>id===nextPanel);setSlideDirection(nextIndex>activePanelIndex?'forward':'backward');setActivePanel(nextPanel);const url=new URL(window.location.href);url.searchParams.set('panel',nextPanel);window.history.pushState({},'',`${url.pathname}${url.search}${url.hash}`);if(focusHeading)window.requestAnimationFrame(()=>panelHeadingRef.current?.focus())}
- const movePanel=(offset)=>{const next=monitoringPanels[activePanelIndex+offset];if(next)selectPanel(next.id,{focusHeading:true})}
  const handleTabKeyDown=(event,index)=>{let nextIndex;if(event.key==='ArrowRight')nextIndex=(index+1)%monitoringPanels.length;else if(event.key==='ArrowLeft')nextIndex=(index-1+monitoringPanels.length)%monitoringPanels.length;else if(event.key==='Home')nextIndex=0;else if(event.key==='End')nextIndex=monitoringPanels.length-1;else return;event.preventDefault();tabRefs.current[nextIndex]?.focus();selectPanel(monitoringPanels[nextIndex].id)}
 
  return <section className="system-dashboard" aria-labelledby="system-dashboard-title">
@@ -71,6 +70,5 @@ export default function SystemDashboard({token,user}){
   </section>
   </div></section>
   </div>
-  <footer className="monitoring-slide-controls"><button type="button" className="secondary-button" onClick={()=>movePanel(-1)} disabled={activePanelIndex===0}>Previous</button><span aria-live="polite"><b>Step {activePanelIndex+1} of {monitoringPanels.length}</b><small>{monitoringPanels[activePanelIndex].shortLabel}</small></span><button type="button" onClick={()=>movePanel(1)} disabled={activePanelIndex===monitoringPanels.length-1}>Next</button></footer>
  </section>
 }

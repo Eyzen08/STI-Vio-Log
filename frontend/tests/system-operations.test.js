@@ -23,12 +23,18 @@ test('System Monitoring exposes refreshable health and event filters',()=>{
 
 test('System Monitoring presents four URL-backed accessible panels',()=>{
   assert.match(dashboard,/overview.*security.*authentication.*accounts/s)
+  for(const label of ['Overview & Health','Security Events','Authentication Activity','Account Controls'])assert.match(dashboard,new RegExp(label.replace('&','&')))
   assert.match(dashboard,/role="tablist"/);assert.match(dashboard,/role="tabpanel"/)
   assert.match(dashboard,/URLSearchParams\(window\.location\.search\)/)
   assert.match(dashboard,/window\.history\.pushState/);assert.match(dashboard,/popstate/)
-  assert.match(dashboard,/Step \{activePanelIndex\+1\} of/)
-  assert.match(dashboard,/>Previous</);assert.match(dashboard,/>Next</)
+  assert.doesNotMatch(dashboard,/monitoring-slide-controls|>Previous<|>Next<|Step \{activePanelIndex\+1\} of/)
   assert.match(dashboard,/ArrowRight/);assert.match(dashboard,/ArrowLeft/)
+})
+
+test('all four monitoring tabs stay visible without horizontal scrolling',()=>{
+  assert.match(portalStyles,/\.monitoring-panel-tabs \{[^}]*grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/s)
+  assert.doesNotMatch(portalStyles,/\.monitoring-panel-tabs \{[^}]*overflow-x:auto/s)
+  assert.match(portalStyles,/@media \(max-width:700px\) \{[\s\S]*?\.monitoring-panel-tabs \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/)
 })
 
 test('slide workspace preserves compact summary card styling after nesting',()=>{
