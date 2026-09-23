@@ -2684,6 +2684,23 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .operations-filter input,.operations-filter select { min-height:2.75rem; }
 @media (max-width:700px) { .operations-filter { grid-template-columns:1fr; } }
 
+/* Clearance management: compact URL-backed operational panels. */
+.clearance-panel-tabs { min-width:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.55rem; padding:.4rem; border:1px solid #d7e4f0; border-radius:.8rem; background:#f5f9fd; }
+.main-panel .clearance-panel-tabs > button { min-width:0; min-height:3rem; display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border:1px solid #cbdceb; border-radius:.6rem; background:#fff; color:#60758d; box-shadow:0 .15rem .45rem rgba(16,67,115,.045); }
+.clearance-panel-tabs button > span { width:1.7rem; height:1.7rem; display:grid; flex:0 0 auto; place-items:center; border-radius:50%; background:#e2ebf4; color:#4d6780; font-size:.68rem; font-weight:800; }
+.clearance-panel-tabs button > b { font-size:.72rem; line-height:1.25; text-align:left; }
+.main-panel .clearance-panel-tabs > button[aria-selected='true'] { border-color:#87b9e5; background:#fff; color:#0b5da8; box-shadow:0 .25rem .75rem rgba(16,67,115,.08); }
+.clearance-panel-tabs button[aria-selected='true'] > span { background:#0b6fc7; color:#fff; }
+.main-panel .clearance-panel-tabs > button:hover:not([aria-selected='true']) { border-color:#9ebfdd; background:#fafdff; color:#294f75; }
+.main-panel .clearance-panel-tabs > button:focus-visible { outline:.18rem solid rgba(9,105,199,.3); outline-offset:.1rem; }
+.clearance-panel-workspace,.clearance-panel { min-width:0; }
+.clearance-panel { animation:monitoring-slide-forward .2s ease-out; }
+.clearance-panel > .table-card,.clearance-panel .certificate-grid > .table-card { margin:0; }
+.clearance-panel[data-panel='students'] .certificate-student-list { max-height:min(30rem,52vh); overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; }
+.clearance-panel[data-panel='signatures'] .signature-directory { max-height:min(27rem,48vh); overflow:auto; overscroll-behavior:contain; scrollbar-gutter:stable; padding-right:.25rem; }
+.clearance-panel[data-panel='history'] .table-wrap { max-height:min(32rem,55vh); overflow:auto; overscroll-behavior:contain; }
+.clearance-panel[data-panel='history'] .table-wrap thead th { position:sticky; top:0; z-index:1; background:#f4f8fc; box-shadow:0 1px #dbe6f0; }
+
 /* System monitoring: provider-aware health and controlled account access. */
 .system-dashboard { min-height:0; grid-template-rows:auto; overflow:visible; }
 .monitoring-panel-tabs { min-width:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; padding:.4rem; border:1px solid #d7e4f0; border-radius:.8rem; background:#f5f9fd; }
@@ -2882,6 +2899,10 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .main-panel .chat-mobile-back { display:inline-grid; min-width:2.4rem; min-height:2.4rem; place-items:center; border:1px solid #d4e0ec; background:#fff; color:#0a5eae; box-shadow:none; }
 }
 @media (max-width:700px) {
+  .clearance-panel-tabs { gap:.35rem; padding:.3rem; }
+  .main-panel .clearance-panel-tabs > button { min-width:0; min-height:3.5rem; align-items:flex-start; padding:.5rem; }
+  .clearance-panel-tabs button > span { width:1.45rem; height:1.45rem; }
+  .clearance-panel-tabs button > b { font-size:.66rem; }
   .monitoring-panel-tabs { grid-template-columns:repeat(2,minmax(0,1fr)); padding:.3rem; }
   .main-panel .monitoring-panel-tabs > button { min-width:0; min-height:2.75rem; }
   .monitoring-slide-scroll { padding:.75rem; }
@@ -2893,7 +2914,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .account-action-form > button { width:100%; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .monitoring-slide { animation:none; }
+  .monitoring-slide,.clearance-panel { animation:none; }
 }
 @media (max-width:767px) {
   .app-shell:not(.auth-shell) .main-panel--messages { padding-bottom:calc(68px + env(safe-area-inset-bottom)); }
@@ -3383,6 +3404,39 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .notification-list .unread .notification-indicator {
   background:var(--status-info-text) !important;
   box-shadow:0 0 0 4px var(--status-info-surface) !important;
+}
+
+/* Clearance Management: keep tab cards and bounded records distinct in dark mode. */
+:root[data-theme='dark'] .clearance-panel-tabs {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button:not([aria-selected='true']) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:var(--shadow-sm) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button:not([aria-selected='true']):hover {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button[aria-selected='true'] {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .clearance-panel-tabs button > span { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .clearance-panel-tabs button[aria-selected='true'] > span { background:var(--link-color) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .clearance-panel[data-panel='history'] .table-wrap thead th {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:0 1px var(--border-subtle) !important;
+}
+:root[data-theme='dark'] :is(.clearance-panel-tabs,.certificate-student-list,.signature-directory,.clearance-panel[data-panel='history'] .table-wrap) {
+  scrollbar-color:var(--border-strong) var(--surface-nested);
 }
 
 /* System Monitoring: theme every nested account-control and navigation surface. */

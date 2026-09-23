@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
@@ -19,6 +19,17 @@ const downloadPdf = async (path, token, filename) => {
   if (!response.ok) throw new Error('Certificate download failed')
   const url = URL.createObjectURL(await response.blob())
   const anchor = document.createElement('a'); anchor.href = url; anchor.download = filename; anchor.click(); URL.revokeObjectURL(url)
+}
+
+const clearancePanels = [
+  { id: 'students', label: 'Student Clearance Status' },
+  { id: 'signatures', label: 'E-Signature Management' },
+  { id: 'history', label: 'Certificate History' }
+]
+const clearancePanelIds = new Set(clearancePanels.map(({ id }) => id))
+const clearancePanelFromLocation = () => {
+  const requested = new URLSearchParams(window.location.search).get('panel')
+  return clearancePanelIds.has(requested) ? requested : 'students'
 }
 
 function AdminClearanceCertificates({ token }) {
@@ -44,6 +55,8 @@ function AdminClearanceCertificates({ token }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [activePanel, setActivePanel] = useState(clearancePanelFromLocation)
+  const tabRefs = useRef([])
 
   const load = useCallback(async () => {
     try {
@@ -55,6 +68,18 @@ function AdminClearanceCertificates({ token }) {
     } catch (requestError) { setError(requestError.message) }
   }, [token])
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('panel') !== activePanel) {
+      url.searchParams.set('panel', activePanel)
+      window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`)
+    }
+  }, [activePanel])
+  useEffect(() => {
+    const handlePopState = () => setActivePanel(clearancePanelFromLocation())
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
 
   const qualifiedStudents = useMemo(() => students.filter((student) => student.certificate_eligible), [students])
   const visibleStudents = useMemo(() => {
@@ -126,6 +151,24 @@ function AdminClearanceCertificates({ token }) {
       setApproving(null); setMessage(`${approving.student_name} is now qualified for certificate issuance.`); await load()
     } catch (requestError) { setApproveError(requestError.message) } finally { setBusy(false) }
   }
+  const selectPanel = (nextPanel) => {
+    if (!clearancePanelIds.has(nextPanel) || nextPanel === activePanel) return
+    setActivePanel(nextPanel)
+    const url = new URL(window.location.href)
+    url.searchParams.set('panel', nextPanel)
+    window.history.pushState({}, '', `${url.pathname}${url.search}${url.hash}`)
+  }
+  const handleTabKeyDown = (event, index) => {
+    let nextIndex
+    if (event.key === 'ArrowRight') nextIndex = (index + 1) % clearancePanels.length
+    else if (event.key === 'ArrowLeft') nextIndex = (index - 1 + clearancePanels.length) % clearancePanels.length
+    else if (event.key === 'Home') nextIndex = 0
+    else if (event.key === 'End') nextIndex = clearancePanels.length - 1
+    else return
+    event.preventDefault()
+    tabRefs.current[nextIndex]?.focus()
+    selectPanel(clearancePanels[nextIndex].id)
+  }
 
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
     <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
@@ -136,6 +179,9 @@ function AdminClearanceCertificates({ token }) {
       <ManagementMetric tone="orange" icon="check" value={signatures.filter((entry) => entry.is_active).length} label="Active Signatures"/>
     </section>
     {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
+    <nav className="clearance-panel-tabs" role="tablist" aria-label="Clearance management sections">{clearancePanels.map((panel, index) => <button type="button" role="tab" id={`clearance-tab-${panel.id}`} aria-controls={`clearance-panel-${panel.id}`} aria-selected={activePanel === panel.id} tabIndex={activePanel === panel.id ? 0 : -1} ref={(node) => { tabRefs.current[index] = node }} onClick={() => selectPanel(panel.id)} onKeyDown={(event) => handleTabKeyDown(event, index)} key={panel.id}><span>{index + 1}</span><b>{panel.label}</b></button>)}</nav>
+    <div className="clearance-panel-workspace">
+    {activePanel === 'students' && <section className="clearance-panel" role="tabpanel" id="clearance-panel-students" aria-labelledby="clearance-tab-students" data-panel="students">
     <div className="certificate-grid">
       <section className="table-card"><div className="table-header"><h3>Student clearance status</h3><span>{visibleStudents.length} of {students.length} students</span></div>
         <div className="clearance-directory-filters"><label><span className="sr-only">Search students</span><input type="search" name="clearance-student-filter" autoComplete="off" placeholder="Search by name, student number, or program…" value={studentSearch} onChange={(event) => setStudentSearch(event.target.value)} /></label><label><span className="sr-only">Filter by clearance status</span><select value={studentStatus} onChange={(event) => setStudentStatus(event.target.value)}><option value="ALL">All statuses</option><option value="QUALIFIED">Qualified</option><option value="AWAITING_CLEARANCE">Awaiting clearance</option><option value="NEEDS_SERVICE">Needs service hours</option><option value="BLOCKED">Blocked</option><option value="NO_SERVICE_REQUIRED">No service assignment</option></select></label></div>
@@ -155,11 +201,17 @@ function AdminClearanceCertificates({ token }) {
         </>
       </section></Modal>}
     </div>
+    </section>}
+    {activePanel === 'signatures' && <section className="clearance-panel" role="tabpanel" id="clearance-panel-signatures" aria-labelledby="clearance-tab-signatures" data-panel="signatures">
     <section className="table-card signature-management"><div className="table-header"><h3>E-Signature Management</h3><span>PNG/JPEG • max 1 MB</span></div>
       <form onSubmit={saveSignature} className="signature-form"><label>Officer full name<input required value={signatureForm.full_name} onChange={(e) => setSignatureForm({ ...signatureForm, full_name: e.target.value })} /></label><label>Position<input required value={signatureForm.position} onChange={(e) => setSignatureForm({ ...signatureForm, position: e.target.value })} /></label><label>Signature image<input required={!signatureForm.image_data_url} type="file" accept="image/png,image/jpeg" onChange={readSignature} /></label>{signatureForm.image_data_url && <img src={signatureForm.image_data_url} alt="Signature preview" />}<button disabled={busy} className="submit-btn">Save Signature</button></form>
       <div className="signature-directory">{signatures.map((entry) => <article key={entry.id}><div className="signature-card-heading"><span className={`status-badge ${entry.is_active ? 'status-completed' : 'status-inactive'}`}>{entry.is_active ? 'Active' : 'Inactive'}</span><small>Updated {formatManilaDate(entry.updated_at)}</small></div><img src={entry.image_data_url} alt={`Signature of ${readableOfficerName(entry.full_name)}`} /><strong>{readableOfficerName(entry.full_name)}</strong><span>{entry.position}</span><div className="inline-actions"><button type="button" disabled={busy} onClick={() => editSignature(entry)}>Edit</button><button className={entry.is_active ? 'danger-button' : ''} type="button" disabled={busy} onClick={() => entry.is_active ? setDeactivating(entry) : toggleSignature(entry)}>{entry.is_active ? 'Deactivate' : 'Activate'}</button></div></article>)}</div>
     </section>
+    </section>}
+    {activePanel === 'history' && <section className="clearance-panel" role="tabpanel" id="clearance-panel-history" aria-labelledby="clearance-tab-history" data-panel="history">
     <section className="table-card"><div className="table-header"><h3>Issued Certificate History</h3><span>{certificates.length} records</span></div>{certificates.length ? <div className="table-wrap"><table className="management-record-table"><thead><tr><th>Certificate</th><th>Student</th><th>Completed service</th><th>Status</th><th>Email</th><th>Actions</th></tr></thead><tbody>{certificates.map((entry) => <tr key={entry.id}><td data-label="Certificate">{entry.certificate_number}<br/><small>Version {entry.version}</small></td><td data-label="Student">{entry.student_name}<br/><small>{entry.student_number}</small></td><td data-label="Completed service">{formatDuration(entry.completed_hours)}</td><td data-label="Status"><span className="status-badge">{entry.status}</span></td><td data-label="Email">{entry.email_status}</td><td data-label="Actions"><div className="inline-actions"><button type="button" onClick={() => downloadPdf(`/api/clearance/certificates/${entry.id}/pdf`, token, `${entry.certificate_number}.pdf`)}>Download</button>{entry.status === 'ISSUED' && <><button type="button" onClick={() => jsonRequest(`/api/clearance/certificates/${entry.id}/email`, token, { method: 'POST', body: '{}' }).then(load).catch((e) => setError(e.message))}>Email</button><button className="danger-button" type="button" onClick={() => { setRevoking(entry); setRevokeReason(''); setRevokeError('') }}>Revoke</button></>}</div></td></tr>)}</tbody></table></div> : <p className="empty-state">No clearance certificates have been issued.</p>}</section>
+    </section>}
+    </div>
     {editing && <Modal title="Edit E-Signature" dirty={editForm.full_name !== editing.full_name || editForm.position !== editing.position || Boolean(editForm.image_data_url)} onClose={() => !busy && setEditing(null)}><form className="signature-edit-form" onSubmit={saveSignatureEdit} noValidate><p className="modal-help">Update the officer details and optionally replace the current signature image.</p>{editErrors.form && <p className="error-message" role="alert">{editErrors.form}</p>}<label>Officer Full Name<input value={editForm.full_name} aria-invalid={Boolean(editErrors.full_name)} onChange={(event) => setEditForm({ ...editForm, full_name: event.target.value })} />{editErrors.full_name && <small className="field-error">{editErrors.full_name}</small>}</label><label>Position/Role<input value={editForm.position} aria-invalid={Boolean(editErrors.position)} onChange={(event) => setEditForm({ ...editForm, position: event.target.value })} />{editErrors.position && <small className="field-error">{editErrors.position}</small>}</label><div className="signature-preview-grid"><figure><figcaption>Current signature</figcaption><img src={editing.image_data_url} alt={`Current signature of ${readableOfficerName(editing.full_name)}`} /></figure><figure><figcaption>Replacement preview</figcaption>{editForm.image_data_url ? <img src={editForm.image_data_url} alt="Replacement signature preview" /> : <span>Current image will be kept</span>}</figure></div><label>Signature Image <small>Optional · PNG/JPEG · max 1 MB</small><input type="file" accept="image/png,image/jpeg" onChange={readEditSignature} />{editErrors.image && <small className="field-error">{editErrors.image}</small>}</label><footer className="modal-actions"><button type="button" disabled={busy} data-modal-dismiss>Cancel</button><button className="submit-btn" disabled={busy}>{busy ? 'Saving changes…' : 'Save Changes'}</button></footer></form></Modal>}
     {deactivating && <Modal title="Deactivate E-Signature" onClose={() => !busy && setDeactivating(null)}><div className="confirmation-dialog"><p>Deactivate the signature for <strong>{readableOfficerName(deactivating.full_name)}</strong>?</p><p>It will remain on certificates that have already been issued.</p><footer className="modal-actions"><button type="button" disabled={busy} onClick={() => setDeactivating(null)}>Cancel</button><button className="danger-button" type="button" disabled={busy} onClick={() => toggleSignature(deactivating)}>{busy ? 'Deactivating…' : 'Deactivate'}</button></footer></div></Modal>}
     {approving && <Modal title="Approve student clearance" onClose={() => !busy && setApproving(null)}><form className="confirmation-dialog" onSubmit={(event) => { event.preventDefault(); approveClearance() }}><p>Approve clearance for <strong>{approving.student_name}</strong> ({approving.student_number})?</p><p><strong>{formatDuration(approving.completed_hours)}</strong> of <strong>{formatDuration(approving.required_hours)}</strong> completed. The system will verify the requirements again before approval.</p>{approving.clearance_id ? <p>Clearance term: <strong>{approving.academic_year}</strong> · <strong>{approving.semester}</strong></p> : <div className="approval-term-fields"><label>Academic year<input required pattern="\d{4}-\d{4}" placeholder="2026-2027" value={approvalTerm.academic_year} onChange={(event) => setApprovalTerm({ ...approvalTerm, academic_year: event.target.value })} /></label><label>Semester<select value={approvalTerm.semester} onChange={(event) => setApprovalTerm({ ...approvalTerm, semester: event.target.value })}><option>1st Semester</option><option>2nd Semester</option><option>Summer</option></select></label></div>}{approveError && <p className="error-message" role="alert">{approveError}</p>}<footer className="modal-actions"><button type="button" disabled={busy} onClick={() => setApproving(null)}>Cancel</button><button className="submit-btn" type="submit" disabled={busy || (!approving.clearance_id && !/^\d{4}-\d{4}$/.test(approvalTerm.academic_year))}>{busy ? 'Approving…' : 'Approve Clearance'}</button></footer></form></Modal>}
