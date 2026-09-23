@@ -156,6 +156,14 @@ test('dark student routes cannot retain legacy light cards or low-contrast text'
   assert.match(guard, /\.mobile-bottom-nav button\.active,[^}]*background:#076dcc !important;[^}]*color:#ffffff !important;/s)
 })
 
+test('dark student dashboard standing notices use semantic status surfaces', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /:is\(\.student-standing-alert,\.standing-detail\)\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
+  assert.match(guard, /:is\(\.student-standing-alert,\.standing-detail\):has\(:is\(\.offense-red,\.offense-critical\)\)\s*\{[^}]*background:var\(--status-danger-surface\)[^}]*color:var\(--status-danger-text\)/s)
+  const themedStanding = guard.slice(guard.indexOf('Dashboard standing states'), guard.indexOf('QR attendance field qualifiers'))
+  assert.doesNotMatch(themedStanding, /#fff(?:1f3|2f3)|#ffd6db|#9e2434|#80515a/i)
+})
+
 test('dark student status colors meet WCAG AA contrast', () => {
   const pairs = [
     ['#f2f7fb', '#10263a', 4.5, 'student card primary text'],

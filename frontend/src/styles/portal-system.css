@@ -3831,6 +3831,27 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:#ffffff !important;
 }
 
+/* Dashboard standing states must use dark semantic status surfaces on mobile and desktop. */
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) :is(strong,p,span,.offense-indicator) {
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail):has(:is(.offense-red,.offense-critical)) {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail):has(:is(.offense-red,.offense-critical)) :is(strong,p,span,.offense-indicator) {
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) .offense-dot {
+  border-color:var(--surface-canvas) !important;
+}
+
 /* QR attendance field qualifiers must not inherit their pale light-mode pills. */
 :root[data-theme='dark'] .record-fields .record-field-label small {
   border:1px solid var(--border-strong) !important;
