@@ -3889,6 +3889,136 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:var(--status-success-text) !important;
 }
 
+/* Required password change is authenticated, so it cannot depend on .auth-shell. */
+.password-change-page .password-change-intro {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  color:#fff;
+  background:#061b31;
+}
+.password-change-page .password-change-intro::before {
+  content:'';
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:linear-gradient(180deg,rgba(4,26,57,.2),rgba(3,22,47,.92));
+}
+.password-change-page .login-campus-image {
+  position:absolute;
+  z-index:-2;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 43%;
+  transition:opacity 160ms ease;
+}
+.password-change-page .password-change-intro-content { position:relative; z-index:1; }
+.password-change-page .password-change-intro :is(h2,p,.login-kicker) { color:#fff !important; }
+:root[data-theme='dark'] .password-change-card {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card :is(.auth-card-header h3,.login-form label,.password-requirements strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .password-change-card .auth-card-header p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .password-change-card :is(input,.password-visibility) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card .password-visibility { color:var(--link-color) !important; }
+:root[data-theme='dark'] .password-change-card .password-requirements {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card .password-requirements .valid { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .password-change-card .password-requirements .invalid { color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress li { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress .active { color:var(--link-color) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress .complete { color:var(--status-success-text) !important; }
+
+/* Registration and review flows use semantic surfaces, including portaled UI. */
+:root[data-theme='dark'] .student-onboarding :is(input,select,textarea),
+:root[data-theme='dark'] .registration-review-drawer :is(textarea,input,select) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .student-onboarding .password-requirements {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .student-onboarding .password-requirements .valid { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .student-onboarding .password-requirements .invalid { color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] .app-modal .registration-pending {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending :is(strong,p) { color:var(--status-warning-text) !important; }
+:root[data-theme='dark'] .app-modal .registration-pending button:not(:disabled) {
+  border-color:var(--color-primary) !important;
+  background:var(--color-primary) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+}
+:root[data-theme='dark'] .registration-review-list > article,
+:root[data-theme='dark'] .registration-review-drawer dl,
+:root[data-theme='dark'] .registration-review-drawer dl div {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .registration-review-list > article:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .registration-review-drawer > header { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .registration-review-drawer :is(h3,dd,label) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .registration-review-drawer :is(p,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .registration-review-drawer mark {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+/* Clearance variants and nested status panels must stay on dark tokens. */
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-requirements,.clearance-certificate-actions,.clearance-history-card) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-requirements,.clearance-certificate-actions,.clearance-history-card) :is(h2,h3,h4,strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-certificate-actions,.clearance-history-card) :is(p,span,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .clearance-pending .clearance-status-mark {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .clearance-cleared .clearance-status-mark,
+:root[data-theme='dark'] .clearance-ready {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .clearance-not-eligible .clearance-status-mark,
+:root[data-theme='dark'] .clearance-requirements ul {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-requirements ul { margin:0; padding:12px 14px 12px 2rem; border-radius:10px; }
+:root[data-theme='dark'] .clearance-record-list > article { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .clearance-empty h4 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }
+
+@media (max-width:767px) {
+  .password-change-page .password-change-intro { min-height:15.5rem; }
+  .password-change-page .password-change-intro-content { margin:auto 0 0; }
+}
+
 /* QR attendance field qualifiers must not inherit their pale light-mode pills. */
 :root[data-theme='dark'] .record-fields .record-field-label small {
   border:1px solid var(--border-strong) !important;

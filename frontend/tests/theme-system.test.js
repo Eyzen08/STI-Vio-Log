@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises'
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const studentDashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
+const passwordChange = await readFile(new URL('../src/components/PasswordChangeRequired.jsx', import.meta.url), 'utf8')
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
@@ -179,6 +180,47 @@ test('dark dashboard clearance status uses semantic pending and ready states', (
   assert.match(studentDashboard, /clearance-state clearance-state--pending/)
   assert.match(guard, /\.clearance-summary-card \.clearance-state\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
   assert.match(guard, /\.clearance-summary-card \.clearance-state--ready\s*\{[^}]*background:var\(--status-success-surface\)[^}]*color:var\(--status-success-text\)/s)
+})
+
+test('required password change uses responsive theme-specific campus imagery', () => {
+  assert.match(passwordChange, /sti-global-city-building-web\.jpg/)
+  assert.match(passwordChange, /sti-global-city-building-night\.jpg/)
+  assert.match(passwordChange, /password-change-page/)
+  assert.match(passwordChange, /login-campus-image--day/)
+  assert.match(passwordChange, /login-campus-image--night/)
+  assert.match(portal, /\.password-change-page \.login-campus-image\s*\{[^}]*object-fit:cover/s)
+  assert.match(portal, /@media \(max-width:767px\)[\s\S]*\.password-change-page \.password-change-intro/)
+})
+
+test('dark registration credentials and review surfaces use semantic tokens', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.password-change-card .password-requirements', '.student-onboarding .password-requirements', '.app-modal .registration-pending', '.registration-review-list > article', '.registration-review-drawer dl', '.registration-review-drawer mark']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.app-modal \.registration-pending\s*\{[^}]*background:var\(--status-warning-surface\)/s)
+  assert.match(guard, /\.registration-pending button:disabled\s*\{[^}]*background:var\(--control-disabled-background\)[^}]*color:var\(--text-muted\)/s)
+  assert.match(guard, /\.registration-review-drawer mark\s*\{[^}]*background:var\(--status-warning-surface\)/s)
+})
+
+test('dark clearance covers pending, ready, blocked, history, and empty states', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.clearance-pending \.clearance-status-mark\s*\{[^}]*background:var\(--status-info-surface\)[^}]*color:var\(--status-info-text\)/s)
+  assert.match(guard, /\.clearance-cleared \.clearance-status-mark,[\s\S]*\.clearance-ready\s*\{[^}]*background:var\(--status-success-surface\)/s)
+  assert.match(guard, /\.clearance-not-eligible \.clearance-status-mark,[\s\S]*\.clearance-requirements ul\s*\{[^}]*background:var\(--status-warning-surface\)/s)
+  assert.match(guard, /\.clearance-empty p[^}]*color:var\(--text-secondary\)/s)
+})
+
+test('dark onboarding and approval state pairs meet WCAG AA contrast', () => {
+  const pairs = [
+    ['#9bd0ff', '#163b5c', 4.5, 'pending approval'],
+    ['#7de2af', '#123d31', 4.5, 'ready and valid'],
+    ['#ff9ba7', '#48252d', 4.5, 'invalid password'],
+    ['#ffd870', '#443817', 4.5, 'temporary credential warning'],
+    ['#93a9bc', '#0b1825', 4.5, 'disabled control'],
+  ]
+  for (const [foreground, background, minimum, label] of pairs) {
+    assert.ok(contrast(foreground, background) >= minimum, `${label} must be at least ${minimum}:1`)
+  }
 })
 
 test('dark student status colors meet WCAG AA contrast', () => {
