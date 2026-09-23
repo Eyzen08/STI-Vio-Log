@@ -78,6 +78,19 @@ test('participant names are the primary conversation title and subject is second
   assert.match(component, /Conversation between \$\{parties\.student\} and \$\{parties\.school\}, subject: \$\{conversation\.subject\}/)
 })
 
+test('new message recipient picker supports explicit student search', async () => {
+  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
+  assert.match(component, /query\.set\('search',normalizedSearch\)/)
+  assert.match(component, /placeholder="Search name or student number"/)
+  assert.match(component, /onKeyDown=\{onRecipientSearchKeyDown\}/)
+  assert.match(component, /No students found\. Try a different name or student number\./)
+  assert.match(component, /!isStudent\?<section className="recipient-picker"/)
+  assert.match(css, /\.recipient-search-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\) auto;/s)
+  assert.match(css, /\.recipient-search-row > button\s*\{[^}]*min-height:\s*44px;/s)
+  assert.match(css, /@media \(max-width: 600px\)[\s\S]*\.recipient-search-row\s*\{[^}]*grid-template-columns:\s*1fr;/)
+})
+
 test('message history is grouped into accessible date sections', () => {
   const messages = [
     { id: 1, created_at: '2025-01-01T09:00:00Z' },

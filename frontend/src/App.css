@@ -4291,6 +4291,16 @@ a {
 .message-new-form :is(input,select,textarea) { width: 100%; padding: 11px 13px; border: 1px solid var(--color-border); border-radius: 9px; box-sizing: border-box; font: inherit; }
 .message-new-form textarea { min-height: 130px; resize: vertical; }
 .message-new-form label small { color: #718096; font-size: .7rem; text-align: right; }
+.recipient-picker { display: grid; gap: 7px; }
+.recipient-picker-label { font-weight: 700; }
+.recipient-search-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; }
+.recipient-search-row label { position: relative; display: block; }
+.recipient-search-row svg { position: absolute; top: 50%; left: 13px; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+.message-new-form .recipient-search-row input { min-height: 44px; padding-left: 42px; }
+.recipient-search-row > button { min-width: 94px; min-height: 44px; border-color: var(--color-primary) !important; background: var(--color-primary) !important; color: white !important; font-weight: 700; }
+.recipient-search-status { margin: 1px 0 2px; color: var(--color-text-muted); font-size: .78rem; line-height: 1.45; }
+.recipient-search-error { color: var(--color-danger,#b42334) !important; }
+.recipient-select-label { margin-top: 2px; }
 
 @media (max-width: 900px) {
   .messages-inbox { height: auto; min-height: calc(100vh - 120px); }
@@ -4304,6 +4314,8 @@ a {
 @media (max-width: 600px) {
   .messages-page-heading { align-items: stretch; flex-direction: column; }
   .messages-new-button { width: 100%; }
+  .recipient-search-row { grid-template-columns: 1fr; }
+  .recipient-search-row > button { width: 100%; }
   .messages-workspace { min-height: calc(100vh - 260px); border-radius: 13px; }
   .conversation-pane-header { padding: 14px; }
   .chat-header { gap: 9px; padding: 11px; }

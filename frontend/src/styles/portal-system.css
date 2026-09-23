@@ -1962,6 +1962,10 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .app-modal-body :is(label,h3,h4,strong) { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .app-modal-body :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .modal-actions { border-color:var(--border-subtle); background:var(--modal-surface) !important; }
+:root[data-theme='dark'] .recipient-search-row svg { color:var(--text-secondary); }
+:root[data-theme='dark'] .recipient-search-row > button { border-color:var(--link-color) !important; background:var(--link-color) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .recipient-search-status { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .recipient-search-error { color:var(--color-danger-text,#ff9aa7) !important; }
 
 /* Messaging */
 :root[data-theme='dark'] .main-panel--messages .messages-workspace,
