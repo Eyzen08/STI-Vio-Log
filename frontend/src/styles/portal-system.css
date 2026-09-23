@@ -2375,8 +2375,6 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   mix-blend-mode: normal;
   transform: none;
 }
-.brand-logo-dark,.mobile-brand-logo-dark { display:none; }
-
 .sidebar .nav-item,
 .sidebar .nav-item.messages-nav-item {
   min-height: 2.1rem;
@@ -3632,9 +3630,6 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   background:var(--surface-sidebar) !important;
   box-shadow:none !important;
 }
-:root[data-theme='dark'] :is(.brand-logo-light,.mobile-brand-logo-light) { display:none !important; }
-:root[data-theme='dark'] :is(.brand-logo-dark,.mobile-brand-logo-dark) { display:block; }
-:root[data-theme='dark'] .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo-dark { display:none; }
 :root[data-theme='dark'] .profile-menu-trigger .account-summary strong,
 :root[data-theme='dark'] .profile-menu-popover header strong,
 :root[data-theme='dark'] :is(.student-directory-table,.officer-directory,.account-action-results,.selected-account-summary,.record-detail-drawer) :is(.student-name,.officer-name,.account-name,h3) {
@@ -3735,4 +3730,60 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color-scheme: light;
   background: #fff !important;
   color: #172033 !important;
+}
+
+/* Authenticated navigation is deliberately theme-invariant. */
+.app-shell:not(.auth-shell) .sidebar,
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
+  border-color: transparent;
+  background: #07345f;
+  box-shadow: 0.25rem 0 1.15rem rgba(4, 36, 76, 0.14);
+}
+
+.sidebar .brand,
+:root[data-theme='dark'] .sidebar .brand {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.sidebar .brand-logo {
+  display: block;
+  width: auto;
+  max-width: 8.5rem;
+  max-height: 2.9rem;
+  margin: auto;
+  object-fit: contain;
+  mix-blend-mode: normal;
+  transform: none;
+}
+
+.sidebar .nav-group-label,
+:root[data-theme='dark'] .sidebar .nav-group-label {
+  color: #d0e6ff;
+}
+
+.sidebar .nav-item,
+.sidebar .nav-item.messages-nav-item,
+:root[data-theme='dark'] .sidebar .nav-item,
+:root[data-theme='dark'] .sidebar .nav-item.messages-nav-item {
+  color: #e8f4ff;
+}
+
+.sidebar .nav-item:hover:not(.active),
+:root[data-theme='dark'] .sidebar .nav-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.sidebar .nav-item.active,
+.sidebar .nav-item.messages-nav-item.active,
+.sidebar .nav-item.active:hover,
+:root[data-theme='dark'] .sidebar .nav-item.active,
+:root[data-theme='dark'] .sidebar .nav-item.messages-nav-item.active,
+:root[data-theme='dark'] .sidebar .nav-item.active:hover {
+  border-color: #1688ee;
+  background: #0878df;
+  color: #ffffff;
+  box-shadow: 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18);
 }

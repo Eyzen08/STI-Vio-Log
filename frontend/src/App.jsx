@@ -3485,14 +3485,7 @@ function App() {
       {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
         <div className="brand">
           <img
-            className="brand-logo brand-logo-light"
-            src={stiVioLogLogo}
-            alt="STI Vio-Log Discipline Office Portal"
-            width="420"
-            height="236"
-          />
-          <img
-            className="brand-logo brand-logo-dark"
+            className="brand-logo"
             src={stiVioLogLogoTransparent}
             alt="STI Vio-Log Discipline Office Portal"
             width="420"
@@ -3567,8 +3560,7 @@ function App() {
             </button>
 
             <button className="mobile-brand" type="button" onClick={() => navigateTo(getHomePath(userRole))} aria-label="STI Vio-Log home">
-              <img className="mobile-brand-logo-light" src={stiVioLogLogo} alt="" width="420" height="236" />
-              <img className="mobile-brand-logo-dark" src={stiVioLogLogoTransparent} alt="" width="420" height="236" />
+              <img className="mobile-brand-logo" src={stiVioLogLogoTransparent} alt="" width="420" height="236" />
               <span>STI Vio-Log</span>
             </button>
 

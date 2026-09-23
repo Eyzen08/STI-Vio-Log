@@ -123,14 +123,16 @@ test('dark portaled dialogs, badges, profile controls, and disabled actions use 
   assert.match(guard, /\.record-detail-drawer > section\s*\{[^}]*background:var\(--surface-nested\)/s)
 })
 
-test('dark navigation switches to transparent branding and keeps account names readable', () => {
+test('portal navigation keeps transparent branding and a fixed navy palette in both themes', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   assert.match(app, /import stiVioLogLogoTransparent from '\.\/assets\/sti-logo-web-transparent\.png'/)
-  assert.match(app, /className="brand-logo brand-logo-light"/)
-  assert.match(app, /className="brand-logo brand-logo-dark"/)
-  assert.match(app, /className="mobile-brand-logo-dark"/)
-  assert.match(guard, /\.sidebar \.brand\s*\{[^}]*background:var\(--surface-sidebar\)/s)
-  assert.match(guard, /:is\(\.brand-logo-light,\.mobile-brand-logo-light\)\s*\{[^}]*display:none/s)
+  assert.match(app, /className="brand-logo"\s+src=\{stiVioLogLogoTransparent\}/s)
+  assert.match(app, /className="mobile-brand-logo" src=\{stiVioLogLogoTransparent\}/)
+  assert.doesNotMatch(app, /brand-logo-(?:light|dark)|mobile-brand-logo-(?:light|dark)/)
+  assert.match(guard, /Authenticated navigation is deliberately theme-invariant/)
+  assert.match(guard, /\.app-shell:not\(\.auth-shell\) \.sidebar,[^}]*background: #07345f/s)
+  assert.match(guard, /:root\[data-theme='dark'\] \.sidebar \.brand\s*\{[^}]*background: transparent !important/s)
+  assert.match(guard, /:root\[data-theme='dark'\] \.sidebar \.nav-item\.active,[^}]*background: #0878df/s)
   assert.match(guard, /\.profile-menu-trigger \.account-summary strong,[\s\S]*color:var\(--text-primary\)/)
   assert.match(guard, /\.profile-menu-trigger \.account-summary small,[\s\S]*color:var\(--text-secondary\)/)
   assert.match(guard, /\.officer-name/)
