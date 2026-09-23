@@ -3871,6 +3871,24 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:var(--text-secondary) !important;
 }
 
+/* Dashboard clearance state must not retain the legacy pale warning panel. */
+:root[data-theme='dark'] .clearance-summary-card .clearance-state {
+  border:1px solid var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state :is(i,strong,span) {
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state--ready {
+  border-color:var(--status-success-text) !important;
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state--ready :is(i,strong,span) {
+  color:var(--status-success-text) !important;
+}
+
 /* QR attendance field qualifiers must not inherit their pale light-mode pills. */
 :root[data-theme='dark'] .record-fields .record-field-label small {
   border:1px solid var(--border-strong) !important;

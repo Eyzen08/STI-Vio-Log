@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+const studentDashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
@@ -170,6 +171,14 @@ test('dark student profile themes its hero, fields, dividers, and help footer', 
   assert.match(guard, /\.profile-card \.profile-hero :is\(\.eyebrow,h2\)[^}]*color:var\(--text-primary\)/s)
   assert.match(guard, /\.profile-card \.profile-field \.profile-value-missing[^}]*color:var\(--text-muted\)/s)
   assert.match(guard, /\.profile-card \.profile-help\s*\{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-secondary\)/s)
+})
+
+test('dark dashboard clearance status uses semantic pending and ready states', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(studentDashboard, /clearance-state clearance-state--ready/)
+  assert.match(studentDashboard, /clearance-state clearance-state--pending/)
+  assert.match(guard, /\.clearance-summary-card \.clearance-state\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
+  assert.match(guard, /\.clearance-summary-card \.clearance-state--ready\s*\{[^}]*background:var\(--status-success-surface\)[^}]*color:var\(--status-success-text\)/s)
 })
 
 test('dark student status colors meet WCAG AA contrast', () => {
