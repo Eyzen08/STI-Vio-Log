@@ -126,6 +126,12 @@ test('dark navigation switches to transparent branding and keeps account names r
   assert.match(guard, /\.officer-name/)
 })
 
+test('dark QR attendance qualifiers use semantic dark pills', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.record-fields \.record-field-label small\s*\{[^}]*background:var\(--surface-interactive\)[^}]*color:var\(--text-secondary\)/s)
+  assert.match(guard, /label:has\(\[name='condition'\]\) \.record-field-label small\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
