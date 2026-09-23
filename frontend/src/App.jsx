@@ -25,6 +25,7 @@ const StudentQr = lazy(() => import('./components/StudentQr.jsx'))
 const StudentViolations = lazy(() => import('./components/StudentViolations.jsx'))
 const AdminRegistrationReviewWorkspace = lazy(() => import('./components/AdminRegistrationReviewWorkspace.jsx'))
 const PasswordChangeRequired = lazy(() => import('./components/PasswordChangeRequired.jsx'))
+const StudentOnboarding = lazy(() => import('./components/StudentOnboarding.jsx'))
 const AdminAuditLog = lazy(() => import('./components/AdminAuditLog.jsx'))
 const AdminDepartmentOfficers = lazy(() => import('./components/AdminDepartmentOfficers.jsx'))
 const AdminAccountSettings = lazy(() => import('./components/AdminAccountSettings.jsx'))
@@ -233,14 +234,14 @@ function App() {
   const refreshPendingActions = useCallback(() => setPendingRefreshKey((value) => value + 1), [])
 
   useEffect(() => {
-    if (!token || user?.password_change_required) {
+    if (!token || user?.password_change_required || user?.onboarding_required) {
       setRealtimeSocket(null)
       return undefined
     }
     const socket = connectRealtime()
     setRealtimeSocket(socket)
     return () => { socket.disconnect() }
-  }, [token, user?.password_change_required])
+  }, [token, user?.password_change_required, user?.onboarding_required])
 
   useEffect(() => {
     const expireSession = () => {
@@ -1708,7 +1709,7 @@ function App() {
     setAuthDraft(EMPTY_AUTH_DRAFT)
     setError('')
     setForm({ username: '', password: '' })
-    navigateTo(data.user.password_change_required ? '/account/password-change' : getHomePath(data.user.role), { replace: true })
+    navigateTo(data.user.password_change_required ? '/account/password-change' : data.user.onboarding_required ? '/student/onboarding' : getHomePath(data.user.role), { replace: true })
   }
 
   const handleMfaSubmit=async({code,recovery})=>{setIsSubmitting(true);setError('');try{const path=mfaState.mode==='enroll'?'/api/auth/mfa/setup/confirm':recovery?'/api/auth/mfa/recovery':'/api/auth/mfa/verify';const body=mfaState.mode==='enroll'||!recovery?{code}:{recovery_code:code};const data=await apiRequest(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(data.recovery_codes){saveSession(data);setMfaState({mode:'complete',recoveryCodes:data.recovery_codes,pendingSession:data})}else acceptSession(data)}catch(e){setError(e.message)}finally{setIsSubmitting(false)}}
@@ -1946,7 +1947,11 @@ function App() {
     }
 
     if (user?.password_change_required) {
-      return <PasswordChangeRequired token={token} onSession={acceptSession} onLogout={requestLogout} />
+      return <PasswordChangeRequired token={token} user={user} onSession={acceptSession} onLogout={requestLogout} />
+    }
+
+    if (user?.role==='STUDENT' && user?.onboarding_required) {
+      return <StudentOnboarding user={user} clientId={GOOGLE_CLIENT_ID} onSession={acceptSession} onLogout={requestLogout}/>
     }
 
     if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'System Dashboard') {
@@ -2425,7 +2430,7 @@ function App() {
               </AsyncActionButton>
             </form>
           </section></Modal>}
-          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password after first sign-in. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
+          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, bind a verified Google account, and complete contact information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
 
           <section className="table-card">
             <div className="table-header management-table-header">

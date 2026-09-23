@@ -9,7 +9,7 @@ test('password policy requires length and mixed character classes',()=>{assert.e
 test('password change verifies current credential, rotates session version, and audits without plaintext',async()=>{
   const queries=[];const client=clientFor(queries);const service=createPasswordChangeService({pool:{connect:async()=>client},comparePassword:async(value,hash)=>value==='current-password'&&hash==='old-hash',hashPassword:async()=> 'new-hash',issueToken:(user)=>`session-${user.session_version}`});
   const result=await service.change({userId:3,currentPassword:'current-password',newPassword:'NewSecure1!pass',ipAddress:'127.0.0.1'});
-  assert.equal(result.token,'session-5');assert.deepEqual(result.user,{id:3,username:'officer',role:'DISCIPLINE_OFFICE',first_name:'Pedro',last_name:'Makisig',full_name:'Pedro Makisig',password_change_required:false});
+  assert.equal(result.token,'session-5');assert.deepEqual(result.user,{id:3,username:'officer',role:'DISCIPLINE_OFFICE',first_name:'Pedro',last_name:'Makisig',full_name:'Pedro Makisig',password_change_required:false,onboarding_required:false,onboarding_step:'COMPLETE'});
   assert(queries.some(({sql})=>sql.includes('session_version=session_version+1')));
   assert.equal(JSON.stringify(queries).includes('NewSecure1!pass'),false);
 });

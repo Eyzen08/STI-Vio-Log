@@ -79,6 +79,12 @@ test('forced-change sessions cannot pass role authorization', () => {
   assert.equal(called,false);assert.equal(res.statusCode,403);assert.equal(res.body.error.code,'PASSWORD_CHANGE_REQUIRED');
 });
 
+test('incomplete Student onboarding cannot pass normal role authorization', () => {
+  const req={user:{id:7,role:'STUDENT',must_change_password:false,onboarding_required:true}},res=createRes();let called=false;
+  authorizeRoles('STUDENT')(req,res,()=>{called=true});
+  assert.equal(called,false);assert.equal(res.statusCode,403);assert.equal(res.body.error.code,'STUDENT_ONBOARDING_REQUIRED');
+});
+
 test('unverified Student sessions are rejected from protected APIs', async () => {
   const req={headers:{cookie:'sti_session=unverified'},method:'GET'},res=createRes();let called=false;const originalQuery=pool.query;
   pool.query=async()=>({rows:[{id:7,username:'02000123456',role:'STUDENT',email_verified:false,session_version:1,must_change_password:false,department_id:null}]});

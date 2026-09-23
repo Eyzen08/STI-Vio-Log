@@ -90,10 +90,10 @@ const createStudent = async (req, res) => {
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
         const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE) RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
-        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code,profile_image) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.email||null,payload.phone_number||null,payload.program||null,payload.section||null,payload.year_level||null,payload.qr_code,payload.profile_image||null]);
+        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code,profile_image,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.email||null,payload.phone_number||null,payload.program||null,payload.section||null,payload.year_level||null,payload.qr_code,payload.profile_image||null]);
         await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
         await client.query('COMMIT');
-        return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true });
+        return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true, onboarding_required:true, onboarding_step:'PASSWORD' });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
         console.error("Create student error:", error);

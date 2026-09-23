@@ -172,3 +172,13 @@ export const changePassword = ({ token, currentPassword, newPassword }) =>
     method:'POST', headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},
     body:JSON.stringify({current_password:currentPassword,new_password:newPassword})
   })
+
+export const linkStudentGoogle = (credential) =>
+  apiRequest('/api/account/student-onboarding/google-link', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({credential})
+  })
+
+export const completeStudentOnboarding = (profile) =>
+  apiRequest('/api/account/student-onboarding/profile', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(profile)
+  })

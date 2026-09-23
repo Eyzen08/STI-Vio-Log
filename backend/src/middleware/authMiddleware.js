@@ -46,6 +46,9 @@ const authenticateToken = async (req, res, next) => {
                 u.email_verified,
                 u.session_version,
                 u.must_change_password,
+                s.onboarding_required,
+                s.onboarding_completed_at,
+                EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) AS google_linked,
                 COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
                 COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name,
                 bs.id AS browser_session_id,
@@ -87,6 +90,9 @@ const authenticateToken = async (req, res, next) => {
             role: account.role,
             session_version: Number(account.session_version),
             must_change_password: Boolean(account.must_change_password),
+            onboarding_required: Boolean(account.onboarding_required) && !account.onboarding_completed_at,
+            onboarding_completed_at: account.onboarding_completed_at || null,
+            google_linked: Boolean(account.google_linked),
             department_id: account.department_id
                 ? Number(account.department_id)
                 : null,
@@ -141,6 +147,10 @@ const authorizeRoles = (...allowedRoles) => (req, res, next) => {
         return res.status(403).json({ success: false, message: "Password change required", error: { code: "PASSWORD_CHANGE_REQUIRED", message: "Password change required" } });
     }
 
+    if (req.user.role === 'STUDENT' && req.user.onboarding_required) {
+        return res.status(403).json({ success:false, message:'Complete student account onboarding', error:{code:'STUDENT_ONBOARDING_REQUIRED',message:'Complete student account onboarding'} });
+    }
+
     if (!allowedRoles.includes(req.user.role)) {
         return denyAuthorization(req,res,{required:allowedRoles.map((role)=>`ROLE:${role}`)});
     }
@@ -155,6 +165,7 @@ const authorizePermissions = (...requiredPermissions) => (req, res, next) => {
     if (req.user.must_change_password) {
         return res.status(403).json({ success: false, message: 'Password change required', error: { code: 'PASSWORD_CHANGE_REQUIRED', message: 'Password change required' } });
     }
+    if (req.user.role === 'STUDENT' && req.user.onboarding_required) return res.status(403).json({success:false,message:'Complete student account onboarding',error:{code:'STUDENT_ONBOARDING_REQUIRED',message:'Complete student account onboarding'}});
     const effectivePermissions = new Set(req.user.permissions || permissionsForRole(req.user.role));
     if (!requiredPermissions.length || !requiredPermissions.every((permission) => effectivePermissions.has(permission))) {
         return denyAuthorization(req,res,{required:requiredPermissions});
@@ -165,6 +176,7 @@ const authorizePermissions = (...requiredPermissions) => (req, res, next) => {
 const authorizeAnyPermission = (...allowedPermissions) => (req, res, next) => {
     if (!req.user) return res.status(401).json({ success:false, message:'Authentication required' });
     if (req.user.must_change_password) return res.status(403).json({ success:false, message:'Password change required', error:{code:'PASSWORD_CHANGE_REQUIRED',message:'Password change required'} });
+    if (req.user.role === 'STUDENT' && req.user.onboarding_required) return res.status(403).json({success:false,message:'Complete student account onboarding',error:{code:'STUDENT_ONBOARDING_REQUIRED',message:'Complete student account onboarding'}});
     const effectivePermissions = new Set(req.user.permissions || permissionsForRole(req.user.role));
     if (!allowedPermissions.length || !allowedPermissions.some((permission) => effectivePermissions.has(permission))) {
         return denyAuthorization(req,res,{required:allowedPermissions});

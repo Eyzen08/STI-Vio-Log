@@ -5,6 +5,7 @@ const { recordSecurityEvent } = require('../services/securityEventService');
 const browserSessions=require('../services/browserSessionService');
 const authThrottle=require('../services/authThrottleService');
 const sessionController=require('./sessionController');
+const { onboardingState }=require('../services/studentOnboardingService');
 
 const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, issueToken=issueSessionToken, jwtSecret=getJwtSecret, auditSecurityEvent=recordSecurityEvent, sessions=browserSessions, throttles=authThrottle, challenges=sessionController }={}) => ({
   loginUser: async (req,res) => {
@@ -15,7 +16,9 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       const throttleInput={kind:'password',identifier:username,ip:req.ip};
       if(issueToken===issueSessionToken)await throttles.assertAllowed(throttleInput,database);
       const result=await database.query(
-        `SELECT u.*,COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
+        `SELECT u.*,s.onboarding_required,s.onboarding_completed_at,
+                EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked,
+                COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
                 COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name
          FROM users u
          LEFT JOIN students s ON s.user_id=u.id
@@ -35,7 +38,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       if(issueToken===issueSessionToken)await throttles.success(throttleInput,database);
       if(user.role==='DISCIPLINE_ADMIN')await auditSecurityEvent({actor:{id:user.id,username:user.username,role:user.role},action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetId:user.id,targetLabel:user.username,details:{authentication_method:'PASSWORD'},result:'SUCCESS',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
       const fullName=[user.first_name,user.last_name].filter(Boolean).join(' ')||null;
-      const publicUser={id:user.id,username:user.username,role:user.role,first_name:user.first_name||null,last_name:user.last_name||null,full_name:fullName,password_change_required:Boolean(user.must_change_password)};
+      const publicUser={id:user.id,username:user.username,role:user.role,first_name:user.first_name||null,last_name:user.last_name||null,full_name:fullName,password_change_required:Boolean(user.must_change_password),...onboardingState(user)};
       // Dependency-injected token issuers are retained only for isolated legacy unit tests.
       if(issueToken!==issueSessionToken)return res.json({success:true,message:'Login successful',token:issueToken(user,{env:{JWT_SECRET:jwtSecret()}}),user:publicUser});
       if(user.role==='DISCIPLINE_ADMIN'){
