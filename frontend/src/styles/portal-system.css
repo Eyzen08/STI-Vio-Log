@@ -670,7 +670,6 @@
 }
 
 .auth-shell .auth-trust-note svg { width: 1.15rem; height: 1.15rem; }
-.auth-shell .auth-trust-note strong { font-weight: 850; }
 .auth-shell .login-form { gap: .95rem; }
 
 .auth-shell .login-form label {
@@ -2030,7 +2029,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas); }
 :root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle); background:var(--surface-overlay); color:var(--text-primary); }
 :root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label) { color:var(--text-primary); }
-:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span,.auth-trust-note strong) { color:var(--text-secondary); }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary); }
 :root[data-theme='dark'] .auth-shell .password-visibility { color:var(--link-color); }
 :root[data-theme='dark'] .auth-shell .password-visibility:hover:not(:disabled) { background:var(--surface-interactive-hover); }
 :root[data-theme='dark'] .auth-shell .google-access-details summary { border-color:var(--border-strong); color:var(--link-color); }
@@ -3369,7 +3368,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas) !important; }
 :root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle) !important; background:var(--surface-overlay) !important; color:var(--text-primary) !important; }
 :root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label) { color:var(--text-primary) !important; }
-:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span,.auth-trust-note strong) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary) !important; }
 
 :root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button) { border-color:var(--border-strong) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
 :root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button):hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }

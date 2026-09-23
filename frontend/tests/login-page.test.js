@@ -43,6 +43,8 @@ test('login uses accessible form status and semantic navigation', () => {
   assert.match(source, /<nav className="auth-entry-actions"/)
   assert.match(source, /<nav className="auth-legal-links"/)
   assert.doesNotMatch(source, /auth-text-link/)
+  assert.match(source, /<span>Official STI Global City Discipline Office Portal<\/span>/)
+  assert.doesNotMatch(source, /<strong>Official<\/strong>/)
 })
 
 test('login portal information uses a semantic footer landmark', () => {

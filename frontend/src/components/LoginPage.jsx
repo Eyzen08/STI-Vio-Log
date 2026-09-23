@@ -36,7 +36,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
       <div className="login-card auth-card">
         <div className="card-header auth-card-header"><div><h3 id="login-title">{studentFlow?'Student Account Security':'Sign In'}</h3><p>{studentFlow?'Complete the secure student account process below.':'Access your STI Vio-Log account'}</p></div></div>
         {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
-          <div className="auth-trust-note"><CampusIcon/><span><strong>Official</strong> STI Global City Discipline Office Portal</span></div>
+          <div className="auth-trust-note"><CampusIcon/><span>Official STI Global City Discipline Office Portal</span></div>
           <form className="login-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
             <label htmlFor="username">Username or student number<input id="username" type="text" name="username" placeholder="Enter your username or student number" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
             <div onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
