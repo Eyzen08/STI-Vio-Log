@@ -4014,6 +4014,107 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .clearance-empty h4 { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }
 
+/* Administrative mobile cards and drawers must override late legacy light surfaces. */
+:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) tr {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) td::before { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) td { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) tr:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] :is(.responsive-record-table,.audit-record-table) .mini-progress,
+:root[data-theme='dark'] .student-directory-table .table-progress > div { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .student-directory-table .table-actions { background:transparent !important; }
+
+/* Duplicate Review loading, list, comparison, and safety states. */
+:root[data-theme='dark'] .duplicate-skeleton span {
+  background:linear-gradient(90deg,var(--surface-interactive),var(--surface-interactive-hover),var(--surface-interactive)) !important;
+  background-size:200% 100% !important;
+}
+:root[data-theme='dark'] .duplicate-skeleton p,
+:root[data-theme='dark'] .duplicate-filters label { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-filters :is(input,select) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .duplicate-list > button {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .duplicate-list > button:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .duplicate-list > button.selected { background:var(--surface-selected) !important; }
+:root[data-theme='dark'] .duplicate-list > button small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-list > button b {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .duplicate-match-banner {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .duplicate-source-grid article { background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header strong,
+:root[data-theme='dark'] .duplicate-source-grid dd { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header span,
+:root[data-theme='dark'] .duplicate-source-grid dt { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-source-grid dl div { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .duplicate-source-grid .match-label { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .duplicate-safety-note {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+/* Guardian Contact is portaled outside route-specific containers. */
+:root[data-theme='dark'] .guardian-contact-panel { background:var(--surface-raised) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .guardian-contact-grid > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .guardian-contact-grid :is(h4,strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .guardian-contact-grid p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .guardian-contact-actions a {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .guardian-contact-actions a:hover { background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
+:root[data-theme='dark'] .guardian-contact-form { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .guardian-contact-panel .registration-review-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .guardian-contact-panel :is(.empty-state,.scope-note) { color:var(--text-secondary) !important; }
+
+/* Department Responsibility drawer cards and history. */
+:root[data-theme='dark'] .responsibility-panel :is(h3,h4,strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .responsibility-panel :is(p,dt,.responsibility-list > article > div:first-child span) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .responsibility-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .responsibility-list dl div { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .assignment-history {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .assignment-history summary { color:var(--link-color) !important; }
+:root[data-theme='dark'] .responsibility-panel button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+}
+
 @media (max-width:767px) {
   .password-change-page .password-change-intro { min-height:15.5rem; }
   .password-change-page .password-change-intro-content { margin:auto 0 0; }

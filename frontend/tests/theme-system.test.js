@@ -222,6 +222,37 @@ test('dark clearance covers pending, ready, blocked, history, and empty states',
   assert.match(guard, /\.clearance-empty p[^}]*color:var\(--text-secondary\)/s)
 })
 
+test('dark administrative mobile cards override late light table backgrounds', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /:is\(\.responsive-record-table,\.audit-record-table\) tr\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(guard, /:is\(\.responsive-record-table,\.audit-record-table\) td::before[^}]*color:var\(--text-secondary\)/s)
+  assert.match(guard, /\.student-directory-table \.table-progress > div[^}]*background:var\(--surface-interactive\)/s)
+  const mobileCards = guard.slice(guard.indexOf('Administrative mobile cards'), guard.indexOf('Duplicate Review loading'))
+  assert.doesNotMatch(mobileCards, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
+})
+
+test('dark duplicate review covers loading, filters, rows, comparison, and notices', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.duplicate-skeleton span', '.duplicate-filters :is(input,select)', '.duplicate-list > button', '.duplicate-list > button.selected', '.duplicate-match-banner', '.duplicate-source-grid article header', '.duplicate-safety-note']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.duplicate-skeleton span\s*\{[^}]*var\(--surface-interactive\)[^}]*var\(--surface-interactive-hover\)/s)
+  assert.match(guard, /\.duplicate-list > button b\s*\{[^}]*background:var\(--status-danger-surface\)[^}]*color:var\(--status-danger-text\)/s)
+  assert.match(guard, /\.duplicate-safety-note\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
+})
+
+test('dark guardian contact and department responsibility drawers use semantic surfaces', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.guardian-contact-grid > article', '.guardian-contact-actions a', '.guardian-contact-form', '.guardian-contact-panel .registration-review-list > article', '.responsibility-list > article', '.assignment-history', '.responsibility-panel button:disabled']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.guardian-contact-grid > article\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.guardian-contact-actions a:hover[^}]*background:var\(--surface-interactive-hover\)/s)
+  assert.match(guard, /\.responsibility-list > article\s*\{[^}]*background:var\(--surface-nested\)/s)
+  const drawers = guard.slice(guard.indexOf('Guardian Contact is portaled'), guard.indexOf('@media (max-width:767px)'))
+  assert.doesNotMatch(drawers, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
+})
+
 test('dark onboarding and approval state pairs meet WCAG AA contrast', () => {
   const pairs = [
     ['#9bd0ff', '#163b5c', 4.5, 'pending approval'],
