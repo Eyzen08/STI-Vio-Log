@@ -37,6 +37,11 @@ test('all four monitoring tabs stay visible without horizontal scrolling',()=>{
   assert.match(portalStyles,/@media \(max-width:700px\) \{[\s\S]*?\.monitoring-panel-tabs \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/)
 })
 
+test('every monitoring tab has a visible card boundary',()=>{
+  assert.match(portalStyles,/\.main-panel \.monitoring-panel-tabs > button \{[^}]*border:1px solid #cbdceb[^}]*background:#fff/s)
+  assert.match(portalStyles,/\.monitoring-panel-tabs > button:not\(\[aria-selected='true'\]\) \{[^}]*border-color:var\(--border-strong\) !important[^}]*background:var\(--surface-raised\) !important/s)
+})
+
 test('slide workspace preserves compact summary card styling after nesting',()=>{
   assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card \{/)
   assert.match(portalStyles,/grid-template-columns:2\.875rem minmax\(0,1fr\)/)

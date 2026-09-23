@@ -2687,10 +2687,11 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 /* System monitoring: provider-aware health and controlled account access. */
 .system-dashboard { min-height:0; grid-template-rows:auto; overflow:visible; }
 .monitoring-panel-tabs { min-width:0; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.55rem; padding:.4rem; border:1px solid #d7e4f0; border-radius:.8rem; background:#f5f9fd; }
-.main-panel .monitoring-panel-tabs > button { min-width:0; min-height:3rem; display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border:1px solid transparent; border-radius:.6rem; background:transparent; color:#60758d; box-shadow:none; }
+.main-panel .monitoring-panel-tabs > button { min-width:0; min-height:3rem; display:flex; align-items:center; gap:.6rem; padding:.55rem .75rem; border:1px solid #cbdceb; border-radius:.6rem; background:#fff; color:#60758d; box-shadow:0 .15rem .45rem rgba(16,67,115,.045); }
 .monitoring-panel-tabs button > span { width:1.7rem; height:1.7rem; display:grid; flex:0 0 auto; place-items:center; border-radius:50%; background:#e2ebf4; color:#4d6780; font-size:.68rem; font-weight:800; }
 .monitoring-panel-tabs button > b { font-size:.72rem; line-height:1.25; text-align:left; }
 .main-panel .monitoring-panel-tabs > button[aria-selected='true'] { border-color:#87b9e5; background:#fff; color:#0b5da8; box-shadow:0 .25rem .75rem rgba(16,67,115,.08); }
+.main-panel .monitoring-panel-tabs > button:hover:not([aria-selected='true']) { border-color:#9ebfdd; background:#fafdff; color:#294f75; }
 .monitoring-panel-tabs button[aria-selected='true'] > span { background:#0b6fc7; color:#fff; }
 .main-panel .monitoring-panel-tabs > button:focus-visible { outline:.18rem solid rgba(9,105,199,.3); outline-offset:.1rem; }
 .monitoring-slide-workspace { min-width:0; min-height:0; overflow:visible; }
@@ -3386,6 +3387,17 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 
 /* System Monitoring: theme every nested account-control and navigation surface. */
 :root[data-theme='dark'] .monitoring-slide-title { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .main-panel .monitoring-panel-tabs > button:not([aria-selected='true']) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:var(--shadow-sm) !important;
+}
+:root[data-theme='dark'] .main-panel .monitoring-panel-tabs > button:not([aria-selected='true']):hover {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
 :root[data-theme='dark'] .monitoring-slide .table-wrap thead th {
   border-color:var(--border-subtle) !important;
   background:var(--surface-interactive) !important;
