@@ -4300,7 +4300,15 @@ a {
 .recipient-search-row > button { min-width: 94px; min-height: 44px; border-color: var(--color-primary) !important; background: var(--color-primary) !important; color: white !important; font-weight: 700; }
 .recipient-search-status { margin: 1px 0 2px; color: var(--color-text-muted); font-size: .78rem; line-height: 1.45; }
 .recipient-search-error { color: var(--color-danger,#b42334) !important; }
-.recipient-select-label { margin-top: 2px; }
+.recipient-preview-list { display: grid; gap: 6px; max-height: 220px; padding: 4px; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--color-border); border-radius: 10px; }
+.app-modal-body .recipient-preview-list > button { display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 10px; min-height: 54px; padding: 7px 10px; border-color: transparent; background: transparent; text-align: left; }
+.app-modal-body .recipient-preview-list > button:hover { background: color-mix(in srgb,var(--color-primary) 8%,transparent); }
+.app-modal-body .recipient-preview-list > button.selected { border-color: var(--color-primary); background: color-mix(in srgb,var(--color-primary) 12%,transparent); }
+.recipient-preview-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--color-primary); color: white; font-weight: 800; }
+.recipient-preview-list > button > span:nth-child(2) { min-width: 0; display: grid; gap: 2px; }
+.recipient-preview-list strong,.recipient-preview-list small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recipient-preview-list small { color: var(--color-text-muted); font-size: .72rem; }
+.recipient-preview-list b { color: var(--color-primary); font-size: .72rem; }
 
 @media (max-width: 900px) {
   .messages-inbox { height: auto; min-height: calc(100vh - 120px); }

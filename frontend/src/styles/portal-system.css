@@ -1966,6 +1966,12 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .recipient-search-row > button { border-color:var(--link-color) !important; background:var(--link-color) !important; color:var(--text-on-accent) !important; }
 :root[data-theme='dark'] .recipient-search-status { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .recipient-search-error { color:var(--color-danger-text,#ff9aa7) !important; }
+:root[data-theme='dark'] .recipient-preview-list { border-color:var(--border-subtle); background:var(--surface-nested); }
+:root[data-theme='dark'] .app-modal-body .recipient-preview-list > button { color:var(--text-primary); }
+:root[data-theme='dark'] .app-modal-body .recipient-preview-list > button:hover { background:var(--surface-interactive-hover); }
+:root[data-theme='dark'] .app-modal-body .recipient-preview-list > button.selected { border-color:var(--link-color); background:var(--surface-selected); }
+:root[data-theme='dark'] .recipient-preview-list small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .recipient-preview-list b { color:var(--link-color); }
 
 /* Messaging */
 :root[data-theme='dark'] .main-panel--messages .messages-workspace,
