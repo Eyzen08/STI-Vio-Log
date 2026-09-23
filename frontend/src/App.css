@@ -4580,7 +4580,15 @@ a {
 .auth-shell .main-panel { padding: 0; }
 .login-page { grid-template-columns: minmax(420px,1.1fr) minmax(380px,.9fr); min-height: 100vh; }
 .login-intro { min-height: 100vh; padding: clamp(28px,4vw,56px); background-position: center; }
-.login-brand-mark { width: clamp(220px, 23vw, 320px); border: 0; box-shadow: none; }
+.login-brand-mark {
+  width: clamp(210px, 17vw, 270px);
+  align-self: flex-start;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 24, 65, .32));
+}
 .login-intro-content { margin: auto 0 22px; max-width: 510px; }
 .login-intro .login-kicker { margin-bottom: 12px; }
 .login-intro h2 { margin: 0 0 5px; font-size: clamp(2.3rem,4.8vw,4.5rem); }
