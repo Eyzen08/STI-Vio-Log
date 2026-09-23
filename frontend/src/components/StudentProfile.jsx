@@ -38,7 +38,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
   return (
     <section className="profile-card">
-      <header className="profile-hero">
+      <header className="profile-hero portal-page-header">
         <div className="profile-avatar" aria-hidden="true">{initials}</div>
         <div>
           <p className="eyebrow">Student profile</p>

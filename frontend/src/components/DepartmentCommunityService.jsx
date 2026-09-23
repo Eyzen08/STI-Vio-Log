@@ -80,7 +80,7 @@ function DepartmentCommunityService({ assignments, loading, error, onOpenScanner
   const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
 
   return <div className="department-service-page">
-    <section className="department-welcome"><div><p className="eyebrow">Service oversight</p><h2>Community service</h2><p>Monitor active service time and assignments in your authenticated department.</p></div><button type="button" onClick={onOpenScanner}>Record time-in</button></section>
+    <section className="department-welcome portal-page-header"><div><p className="eyebrow">Service oversight</p><h2>Community service</h2><p>Monitor active service time and assignments in your authenticated department.</p></div><button type="button" onClick={onOpenScanner}>Record time-in</button></section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="table-card" aria-busy={activeLoading}>
       <div className="table-header"><div><p className="eyebrow">Live attendance</p><h3>Students currently serving</h3><p>Elapsed time updates every second. Time-Out immediately credits eligible minutes.</p></div><span>{visibleActiveSessions.length} active</span></div>

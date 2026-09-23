@@ -41,7 +41,7 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
   })
 
   return <div className="active-attendance-page">
-    <header className="management-page-header">
+    <header className="management-page-header portal-page-header">
       <div><span className="page-breadcrumb">Home / Active Attendance</span><h2>Active Attendance</h2><p>Monitor every student currently timed in and their credited service progress.</p></div>
       <span className="live-status-badge"><i aria-hidden="true" /> Live monitoring</span>
     </header>

@@ -25,7 +25,7 @@ function StaffProfile({ user, onNavigate }) {
   const settingsPath = user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
 
   return <section className="profile-card staff-profile-card" aria-labelledby="staff-profile-title">
-    <header className="profile-hero">
+    <header className="profile-hero portal-page-header">
       <div className="profile-avatar" aria-hidden="true">{initials}</div>
       <div className="staff-profile-identity">
         <p className="eyebrow">Account Profile</p>

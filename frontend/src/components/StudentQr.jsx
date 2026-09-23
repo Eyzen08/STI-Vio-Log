@@ -40,7 +40,7 @@ function StudentQr({ profile, loading, error }) {
 
   return (
     <section className="student-qr-page" aria-labelledby="student-qr-title">
-      <header className="page-intro qr-page-intro">
+      <header className="page-intro portal-page-header qr-page-intro">
         <div>
           <p className="eyebrow">Student identification</p>
           <h2 id="student-qr-title">My QR code</h2>

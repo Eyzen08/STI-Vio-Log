@@ -46,7 +46,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
 
   return (
     <section className="service-page" aria-labelledby="service-title">
-      <header className="page-intro">
+      <header className="page-intro portal-page-header">
         <div><p className="eyebrow">Community service</p><h2 id="service-title">My service and DTR</h2><p>Track assigned hours and authoritative attendance sessions.</p></div>
         <span className="record-count">UTC records</span>
       </header>

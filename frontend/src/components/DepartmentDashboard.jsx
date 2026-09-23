@@ -21,7 +21,7 @@ function DepartmentDashboard({ report, loading, error, onOpenScanner, onNavigate
   if (loading) return <section className="dashboard-loading" aria-live="polite"><div className="skeleton skeleton-heading"/><div className="stats-grid">{[1,2,3,4].map((item)=><div className="stat-card skeleton-card" key={item}/>)}</div></section>
 
   return <div className="department-dashboard portal-dashboard">
-    <section className="portal-welcome"><div><h2>{departmentName} Dashboard</h2><p>Monitor student community service and attendance for your department.</p></div><time>{new Intl.DateTimeFormat('en-PH',{dateStyle:'long'}).format(new Date())}</time></section>
+    <section className="portal-welcome portal-page-header"><div><h2>{departmentName} Dashboard</h2><p>Monitor student community service and attendance for your department.</p></div><time>{new Intl.DateTimeFormat('en-PH',{dateStyle:'long'}).format(new Date())}</time></section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="stats-grid department-stats" aria-label="Department attendance summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="students"/></i><div><span>Assigned students</span><strong>{summary.studentsServed}</strong><small>Your department only</small></div></article>

@@ -60,7 +60,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
   const metricCard = ([icon,label,value,note,tone]) => <article className={`stat-card metric-${tone}`} key={label}><i><PortalIcon name={icon}/></i><div><span>{label}</span><strong>{loading ? '—' : value}</strong><small>{note}</small></div></article>
 
   return <div className="admin-dashboard portal-dashboard">
-    <section className="portal-welcome"><div><h2>Welcome back, {firstLabel}!</h2><p>Here’s what’s happening at STI Global City today.</p></div><time>{new Intl.DateTimeFormat('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())}</time></section>
+    <section className="portal-welcome portal-page-header"><div><h2>Welcome back, {firstLabel}!</h2><p>Here’s what’s happening at STI Global City today.</p></div><time>{new Intl.DateTimeFormat('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())}</time></section>
     <section className="stats-grid admin-stats" aria-label="Priority administrative summary">{primaryMetrics.map(metricCard)}</section>
     <DashboardQuickActions role={role} onNavigate={onNavigate}/>
     <details className="dashboard-additional-metrics"><summary>View additional totals</summary><section className="stats-grid admin-stats" aria-label="Additional administrative totals">{additionalMetrics.map(metricCard)}</section></details>

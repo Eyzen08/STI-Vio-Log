@@ -22,7 +22,7 @@ export default function AccountSecuritySettings({ token, user, onSession }) {
     } catch (changeError) { setError(changeError.message) } finally { setBusy(false) }
   }
   return <div className="account-settings-page">
-    <section className="table-card account-summary-card"><div><p className="eyebrow">Account identity</p><h2>{user.username}</h2><p>Your identifier is managed by the school. Contact the Discipline Office if it is incorrect.</p></div><dl><div><dt>Role</dt><dd>{String(user.role || '').replaceAll('_', ' ')}</dd></div><div><dt>Session security</dt><dd>Changing your password signs out other sessions.</dd></div></dl></section>
+    <section className="table-card account-summary-card portal-page-header"><div><p className="eyebrow">Account identity</p><h2>{user.username}</h2><p>Your identifier is managed by the school. Contact the Discipline Office if it is incorrect.</p></div><dl><div><dt>Role</dt><dd>{String(user.role || '').replaceAll('_', ' ')}</dd></div><div><dt>Session security</dt><dd>Changing your password signs out other sessions.</dd></div></dl></section>
     <section className="table-card form-card"><div className="table-header"><div><h3>Change password</h3><span>Use a unique password you do not use elsewhere.</span></div></div><form className="login-form account-password-form" onSubmit={submit}>
       <PasswordField id="settings-current-password" label="Current password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} disabled={busy} autoComplete="current-password" />
       <PasswordField id="settings-new-password" label="New password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} disabled={busy} />

@@ -171,7 +171,7 @@ function AdminClearanceCertificates({ token }) {
   }
 
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
-    <header className="management-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
+    <header className="management-page-header portal-page-header"><div><span className="page-breadcrumb">Home / Clearance</span><h2 id="certificate-management-title">Clearance Management</h2><p>Review validated eligibility, issue verifiable certificates, and manage authorized e-signatures.</p></div><span className="readonly-badge">Authorized staff only</span></header>
     <section className="management-metrics" aria-label="Clearance certificate summary">
       <ManagementMetric tone="green" icon="students" value={qualifiedStudents.length} label="Qualified Students"/>
       <ManagementMetric icon="clearance" value={certificates.filter((entry) => entry.status === 'ISSUED').length} label="Issued Certificates"/>

@@ -12,7 +12,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
 
   return (
     <div className="department-students-page">
-      <section className="department-welcome">
+      <section className="department-welcome portal-page-header">
         <div><p className="eyebrow">Department roster</p><h2>Students served</h2><p>Students with community-service attendance recorded by your department.</p></div>
         <button type="button" onClick={onOpenDtr}>View full DTR</button>
       </section>

@@ -51,7 +51,7 @@ function AdminDuplicateReview({ token, embedded = false }) {
   const selected = visible.find((conflict) => conflict.id === selectedId) || visible[0] || null
 
   return <section className="duplicate-workspace" aria-label={embedded ? 'Duplicate review' : undefined} aria-labelledby={embedded ? undefined : 'duplicate-review-title'}>
-    {!embedded && <header className="management-page-header">
+    {!embedded && <header className="management-page-header portal-page-header">
       <div><span className="page-breadcrumb">Home / Students / Duplicate Review</span><h2 id="duplicate-review-title">Duplicate Review</h2><p>Identify possible account conflicts while preserving every source record for audited review.</p></div>
       <span className="readonly-badge">Read-only review</span>
     </header>}

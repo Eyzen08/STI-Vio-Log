@@ -16,7 +16,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
 
   return (
     <div className="department-dtr">
-      <section className="dtr-intro">
+      <section className="dtr-intro portal-page-header">
         <div>
           <p className="eyebrow">Department records</p>
           <h2>Daily time record</h2>

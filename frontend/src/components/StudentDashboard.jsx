@@ -41,7 +41,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
   if (loading) return <section className="dashboard-loading" aria-live="polite"><div className="skeleton skeleton-heading"/><div className="stats-grid">{[1,2,3,4].map((item)=><div className="stat-card skeleton-card" key={item}/>)}</div></section>
 
   return <div className="student-dashboard portal-dashboard">
-    <section className="portal-welcome">
+    <section className="portal-welcome portal-page-header">
       <div><h2>Good day, {firstName}!</h2><p>Stay informed. Stay accountable. Keep moving forward.</p></div>
       <blockquote>“Better Choices<br/>A Brighter Tomorrow.”</blockquote>
     </section>

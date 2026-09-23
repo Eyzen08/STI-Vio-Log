@@ -31,7 +31,7 @@ function StudentClearance({ eligibility, records, loading, error, certificate, o
 
   return (
     <section className="clearance-page" aria-labelledby="clearance-title">
-      <header className={`clearance-hero clearance-${summary.status.toLowerCase().replaceAll('_', '-')}`}>
+      <header className={`clearance-hero portal-page-header clearance-${summary.status.toLowerCase().replaceAll('_', '-')}`}>
         <div>
           <p className="eyebrow">Disciplinary clearance</p>
           <h2 id="clearance-title">{clearanceLabel(summary.status)}</h2>

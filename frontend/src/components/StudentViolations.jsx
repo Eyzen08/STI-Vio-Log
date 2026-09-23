@@ -45,7 +45,7 @@ function StudentViolations({ violations, loading, error }) {
 
   return (
     <section className="violations-page" aria-labelledby="violations-title">
-      <header className="page-intro">
+      <header className="page-intro portal-page-header">
         <div>
           <p className="eyebrow">Disciplinary record</p>
           <h2 id="violations-title">My violations</h2>

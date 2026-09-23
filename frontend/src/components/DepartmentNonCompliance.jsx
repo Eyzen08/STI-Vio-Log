@@ -5,7 +5,7 @@ function DepartmentNonCompliance({ report, loading, error, sortBy, onSort }) {
   const rows = Array.isArray(report?.data) ? report.data : []
   const summary = nonComplianceSummary(report)
   return <div className="department-noncompliance">
-    <section className="department-welcome"><div><p className="eyebrow">Follow-up queue</p><h2>Non-compliance</h2><p>Students served by your department who still have open disciplinary requirements.</p></div></section>
+    <section className="department-welcome portal-page-header"><div><p className="eyebrow">Follow-up queue</p><h2>Non-compliance</h2><p>Students served by your department who still have open disciplinary requirements.</p></div></section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="stats-grid department-stats" aria-label="Non-compliance summary"><article className="stat-card"><span>Students requiring follow-up</span><strong>{summary.students}</strong></article><article className="stat-card"><span>Open violations</span><strong>{summary.openViolations}</strong></article><article className="stat-card"><span>Pending time</span><strong>{formatDuration(summary.pendingHours)}</strong></article></section>
     <section className="noncompliance-toolbar"><label><span>Prioritize by</span><select value={sortBy} onChange={(event) => onSort(event.target.value)} disabled={loading}><option value="date">Most recent violation</option><option value="hours">Most pending hours</option><option value="violations">Most violations</option></select></label></section>

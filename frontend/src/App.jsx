@@ -2152,7 +2152,7 @@ function App() {
       const clearedStudents = students.filter((student) => summarizeStudentCondition(student.id, violations).open === 0).length
       return (
         <>
-          <header className="management-page-header">
+          <header className="management-page-header portal-page-header">
             <div><span className="page-breadcrumb">Home / Students</span><h2>Students Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
             <button type="button" className="primary-action" onClick={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }}>＋ Add Student</button>
           </header>
@@ -2440,7 +2440,7 @@ function App() {
       })
       return (
         <>
-          <header className="management-page-header">
+          <header className="management-page-header portal-page-header">
             <div><span className="page-breadcrumb">Home / Violations</span><h2>Violations Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
             <button type="button" className="primary-action" onClick={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }}>＋ Record Violation</button>
           </header>
@@ -2752,7 +2752,7 @@ function App() {
       })
       return (
         <>
-          <header className="management-page-header">
+          <header className="management-page-header portal-page-header">
             <div><span className="page-breadcrumb">Home / Community Service</span><h2>Community Service</h2><p>Track assignments, time logs, accountable departments, and student progress.</p></div>
             <button type="button" className="primary-action" onClick={() => { setCommunityServiceFormError(''); setCommunityServiceFormSuccess(''); setIsCommunityServiceFormOpen(true) }}>＋ Assign Service</button>
           </header>
@@ -3077,7 +3077,7 @@ function App() {
     ) {
       return (
         <div className="reports-workspace">
-          <header className="management-page-header">
+          <header className="management-page-header portal-page-header">
             <div><span className="page-breadcrumb">Home / Reports</span><h2>Reports</h2><p>Generate operational reports using current records and supported filters.</p></div>
           </header>
           <section className="table-card report-filter-card">
