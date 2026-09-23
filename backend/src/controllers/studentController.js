@@ -77,20 +77,17 @@ const getStudentById = async (req, res) => {
 const createStudent = async (req, res) => {
     let client;
     try {
-        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email", "phone_number", "program", "section", "year_level", "qr_code", "profile_image"]);
-        const { student_number, first_name, middle_name, last_name, suffix, email, phone_number, program, section, year_level, qr_code, profile_image } = req.body;
-        if (!student_number || !first_name || !last_name || !qr_code) return res.status(400).json({ success: false, message: "student_number, first_name, last_name, and qr_code are required" });
+        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix"]);
+        const { student_number, first_name, middle_name, last_name, suffix } = req.body;
+        if (!student_number || !first_name || !last_name) return res.status(400).json({ success: false, message: "student_number, first_name, and last_name are required" });
         if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
-        if (program && !isValidProgram(program)) return res.status(400).json({ success: false, message: "Select a valid program" });
-        if (email && !isValidEmail(email)) return res.status(400).json({ success: false, message: "Invalid email format" });
-        if (phone_number && !isValidPhone(phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
-        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), email:sanitizeString(email), phone_number:phone_number ? normalizePhone(phone_number) : null, program:program ? sanitizeString(program).toUpperCase() : null, section:sanitizeString(section), year_level:year_level !== undefined ? Number(year_level) : null, qr_code:sanitizeString(qr_code), profile_image:sanitizeString(profile_image) };
+        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), qr_code:`STI-${crypto.randomUUID()}` };
         client = await pool.connect();
         await client.query('BEGIN');
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
         const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE) RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
-        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,email,phone_number,program,section,year_level,qr_code,profile_image,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.email||null,payload.phone_number||null,payload.program||null,payload.section||null,payload.year_level||null,payload.qr_code,payload.profile_image||null]);
+        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,qr_code,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.qr_code]);
         await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
         await client.query('COMMIT');
         return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true, onboarding_required:true, onboarding_step:'PASSWORD' });

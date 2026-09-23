@@ -14,12 +14,21 @@ test('mandatory Student onboarding renders before portal content and resumes by 
   assert.match(progress,/Password.*Google account.*Contact information.*Portal/s)
 });
 
-test('onboarding binds Google first and submits only student-controlled contact fields',()=>{
+test('onboarding binds Google first and submits only student-controlled academic and contact fields',()=>{
   assert.match(onboarding,/step==='GOOGLE'/)
   assert.match(api,/student-onboarding\/google-link/)
   assert.match(api,/student-onboarding\/profile/)
-  assert.match(onboarding,/phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
+  assert.match(onboarding,/program:.*section:.*year_level:.*phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
   assert.doesNotMatch(onboarding,/student_number:/)
+});
+
+test('Discipline Office creation collects identity only and leaves QR generation to the server',()=>{
+  const start=app.indexOf('const [studentForm')
+  const end=app.indexOf('const [studentFormError',start)
+  const formState=app.slice(start,end)
+  for(const field of ['student_number','first_name','middle_name','last_name','suffix'])assert.match(formState,new RegExp(field))
+  for(const field of ['email','phone_number','program','section','year_level','qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
+  assert.match(app,/Enter only the Student Number and official legal name/)
 });
 
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{

@@ -36,16 +36,26 @@ test('authenticated Google binding rejects an unverified email before database a
   assert.equal(db.calls.length,0);
 });
 
-test('contact completion requires Google and atomically unlocks the portal',async()=>{
+test('academic and contact completion requires Google and atomically unlocks the portal',async()=>{
   const db=fakePool((sql)=>{
     if(sql.includes('FROM students s JOIN users'))return{rows:[{id:9,onboarding_required:true,onboarding_completed_at:null,must_change_password:false,google_linked:true}]};
     if(sql.startsWith('SELECT id FROM student_guardians'))return{rows:[]};
     return{rows:[]};
   });
   const service=createStudentOnboardingService({pool:db.pool});
-  const result=await service.completeProfile({userId:8,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
+  const result=await service.completeProfile({userId:8,program:'bsit',section:'A103',yearLevel:2,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
   assert.deepEqual(result,{onboarding_required:false,onboarding_step:'COMPLETE'});
   assert(db.calls.some(({sql})=>sql.includes('onboarding_completed_at=CURRENT_TIMESTAMP')));
+  assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET program=')&&params.includes('BSIT')&&params.includes('A103')&&params.includes(2)));
   assert(db.calls.some(({sql})=>sql.includes("'STUDENT_ONBOARDING_COMPLETE'")));
   assert(db.calls.some(({sql})=>sql==='COMMIT'));
+});
+
+test('onboarding rejects incomplete or invalid academic information before database access',async()=>{
+  const db=fakePool(()=>({rows:[]}));const service=createStudentOnboardingService({pool:db.pool});
+  const contact={phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'};
+  await assert.rejects(service.completeProfile({userId:8,...contact,program:'',section:'A103',yearLevel:1}),(error)=>error.code==='VALIDATION_ERROR');
+  await assert.rejects(service.completeProfile({userId:8,...contact,program:'INVALID',section:'A103',yearLevel:1}),(error)=>error.code==='INVALID_PROGRAM');
+  await assert.rejects(service.completeProfile({userId:8,...contact,program:'BSIT',section:'A103',yearLevel:9}),(error)=>error.code==='INVALID_YEAR_LEVEL');
+  assert.equal(db.calls.length,0);
 });

@@ -41,8 +41,6 @@ import PortalIcon from './components/PortalIcon.jsx'
 import ManagementMetric from './components/ManagementMetric.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
-import PhoneInput from './components/PhoneInput.jsx'
-import ProgramSelect from './components/ProgramSelect.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
@@ -63,7 +61,7 @@ import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
 import { iconNameForView } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
-import { displayPhilippinePhone, normalizePhilippinePhone } from './lib/phone.js'
+import { displayPhilippinePhone } from './lib/phone.js'
 import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from './lib/inputNormalization.js'
 import './App.css'
 
@@ -325,14 +323,7 @@ function App() {
     first_name: '',
     last_name: '',
     middle_name: '',
-    suffix: '',
-    email: '',
-    phone_number: '',
-    program: '',
-    section: '',
-    year_level: 1,
-    qr_code: '',
-    profile_image: ''
+    suffix: ''
   })
 
   const [studentFormError, setStudentFormError] = useState('')
@@ -1136,21 +1127,8 @@ function App() {
         last_name:
           studentForm.last_name.trim(),
 
-        email:
-          studentForm.email.trim(),
-
-        phone_number:
-          studentForm.phone_number ? normalizePhilippinePhone(studentForm.phone_number) : null,
-
-        program:
-          studentForm.program.trim(),
-
-        section:
-          studentForm.section.trim(),
-
-        qr_code:
-          studentForm.qr_code.trim() ||
-          `STI-${Date.now()}`
+        suffix:
+          studentForm.suffix.trim()
       }
 
       if (
@@ -1162,10 +1140,6 @@ function App() {
           'Student number, first name, and last name are required.'
         )
       }
-      if (studentForm.phone_number && !payload.phone_number) {
-        throw new Error('Enter a valid Philippine mobile number in the format +63 9XX XXX XXXX.')
-      }
-
       const response =
         await fetch(
           `${API_URL}/api/students`,
@@ -1201,14 +1175,7 @@ function App() {
         first_name: '',
         last_name: '',
         middle_name: '',
-        suffix: '',
-        email: '',
-        phone_number: '',
-        program: '',
-        section: '',
-        year_level: 1,
-        qr_code: '',
-        profile_image: ''
+        suffix: ''
       })
 
       setStudents(await loadAllPages('/api/students', 'students', {
@@ -2231,7 +2198,7 @@ function App() {
             <ManagementMetric tone="orange" icon="service" value={studentsInService} label="Ongoing Community Service"/>
             <ManagementMetric tone="green" icon="clearance" value={clearedStudents} label="No Open Violations"/>
           </section>
-          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create a student record</strong><span>Use the student's official school information.</span></div>
+          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create the student account</strong><span>Enter only the Student Number and official legal name. The student completes the remaining information during first sign-in.</span></div>
           <section className="drawer-form-card">
             <div className="table-header">
               <h3>
@@ -2334,78 +2301,6 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Email
-
-                  <input
-                    type="email"
-                    name="email"
-                    value={
-                      studentForm.email
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    placeholder="student@email.com"
-                  />
-                </label>
-
-                <PhoneInput id="student-phone-number" name="phone_number" label="Phone" value={studentForm.phone_number} onChange={handleStudentFieldChange}/>
-
-                <label>
-                  Program
-
-                  <ProgramSelect value={studentForm.program} onChange={handleStudentFieldChange} required />
-                </label>
-
-                <label>
-                  Section
-
-                  <input
-                    type="text"
-                    name="section"
-                    value={
-                      studentForm.section
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    placeholder="A103"
-                  />
-                </label>
-
-                <label>
-                  Year Level
-
-                  <input
-                    type="number"
-                    name="year_level"
-                    value={
-                      studentForm.year_level
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    min="1"
-                    max="8"
-                  />
-                </label>
-
-                <label>
-                  QR Code
-
-                  <input
-                    type="text"
-                    name="qr_code"
-                    value={
-                      studentForm.qr_code
-                    }
-                    onChange={
-                      handleStudentFieldChange
-                    }
-                    placeholder="Optional auto-generated"
-                  />
-                </label>
               </div>
 
               {studentFormError && (
@@ -2430,7 +2325,7 @@ function App() {
               </AsyncActionButton>
             </form>
           </section></Modal>}
-          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, bind a verified Google account, and complete contact information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
+          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, bind a verified Google account, and complete academic, contact, and guardian information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
 
           <section className="table-card">
             <div className="table-header management-table-header">

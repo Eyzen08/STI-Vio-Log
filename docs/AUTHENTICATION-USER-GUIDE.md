@@ -8,15 +8,15 @@ Open `/login`. Do not select a role. Enter either a staff username or a Student 
 
 ### Discipline Office-issued account
 
-When the Discipline Admin or Discipline Officer creates a Student account, the temporary credentials are displayed once. The student must then complete this locked sequence:
+When the Discipline Admin or Discipline Officer creates a Student account, staff enter only the school-issued Student Number and the student's legal name. The backend generates the private QR value and the temporary credentials are displayed once. The student must then complete this locked sequence:
 
 1. Sign in with the Student Number and temporary password.
 2. Replace the temporary password.
 3. Bind a Google account with a Google-verified email address. Personal Gmail and school-managed Google accounts are accepted.
-4. Enter the student's phone number and the primary guardian's name, relationship, and phone number.
+4. Enter program, section, year level, the student's phone number, and the primary guardian's name, relationship, and phone number.
 5. Continue to the portal.
 
-The verified Google email becomes the account's password-recovery address. Student Number, legal name, program, section, and year level remain controlled by the Discipline Office. Signing out or refreshing during setup resumes the unfinished step. Accounts created before mandatory onboarding was introduced retain their existing access.
+The verified Google email becomes the account's password-recovery address. Student Number and legal name remain controlled by the Discipline Office and are read-only during onboarding. Academic, contact, and guardian details are saved together when the student completes onboarding; later corrections use the audited staff edit workflow. Signing out or refreshing during setup resumes the unfinished step. Accounts created before mandatory onboarding was introduced retain their existing access.
 
 ### Email-verified registration
 

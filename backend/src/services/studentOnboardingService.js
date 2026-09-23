@@ -1,5 +1,5 @@
 const { ApiError } = require('../utils/api');
-const { isValidPhone, normalizePhone } = require('../utils/validators');
+const { isValidPhone, normalizePhone, isValidProgram } = require('../utils/validators');
 
 const clean = (value, max) => typeof value === 'string'
   ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').slice(0, max)
@@ -20,12 +20,15 @@ const onboardingState = (row) => {
 const createStudentOnboardingService = ({ pool } = {}) => {
   if (!pool?.connect) throw new TypeError('Student onboarding dependencies are required');
 
-  const completeProfile = async ({ userId, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
+  const completeProfile = async ({ userId, program, section, yearLevel, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
     const values = {
+      program: clean(program, 150).toUpperCase(), section: clean(section, 100), yearLevel: Number(yearLevel),
       phoneNumber: clean(phoneNumber, 30), guardianName: clean(guardianName, 200),
       guardianRelationship: clean(guardianRelationship, 100), guardianPhoneNumber: clean(guardianPhoneNumber, 30)
     };
-    if (!Object.values(values).every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all student and guardian contact information');
+    if (![values.program,values.section,values.phoneNumber,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all academic, student, and guardian information');
+    if (!isValidProgram(values.program)) throw new ApiError(400, 'INVALID_PROGRAM', 'Select a valid program');
+    if (!Number.isInteger(values.yearLevel) || values.yearLevel < 1 || values.yearLevel > 8) throw new ApiError(400, 'INVALID_YEAR_LEVEL', 'Year level must be between 1 and 8');
     if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid Philippine phone numbers');
     values.phoneNumber = normalizePhone(values.phoneNumber);
     values.guardianPhoneNumber = normalizePhone(values.guardianPhoneNumber);
@@ -46,7 +49,7 @@ const createStudentOnboardingService = ({ pool } = {}) => {
       }
       if (student.must_change_password) throw new ApiError(409, 'PASSWORD_CHANGE_REQUIRED', 'Change the temporary password before continuing');
       if (!student.google_linked) throw new ApiError(409, 'STUDENT_ONBOARDING_REQUIRED', 'Bind a Google account before completing contact information');
-      await client.query('UPDATE students SET phone_number=$2,onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id,values.phoneNumber]);
+      await client.query('UPDATE students SET program=$2,section=$3,year_level=$4,phone_number=$5,onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id,values.program,values.section,values.yearLevel,values.phoneNumber]);
       const guardian = (await client.query('SELECT id FROM student_guardians WHERE student_id=$1 ORDER BY is_primary DESC,id ASC LIMIT 1 FOR UPDATE', [student.id])).rows[0];
       await client.query('UPDATE student_guardians SET is_primary=FALSE WHERE student_id=$1 AND ($2::bigint IS NULL OR id<>$2)', [student.id,guardian?.id||null]);
       if (guardian) await client.query('UPDATE student_guardians SET guardian_name=$2,relationship=$3,phone_number=$4,is_primary=TRUE WHERE id=$1', [guardian.id,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber]);
