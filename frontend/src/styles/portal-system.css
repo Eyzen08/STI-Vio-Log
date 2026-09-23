@@ -2410,6 +2410,26 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   min-height: 2.2rem;
   border-radius: 0.45rem;
   background: #f6f9fc;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.topbar-search:focus-within {
+  border-color: var(--link-color) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--link-color) 22%, transparent);
+}
+
+.main-panel .topbar-search input:focus-visible {
+  outline: 0;
+  box-shadow: none;
+}
+
+@media (forced-colors: active) {
+  .topbar-search:focus-within {
+    border-color: Highlight !important;
+    box-shadow: none;
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 
 .main-panel .profile-menu-trigger {
