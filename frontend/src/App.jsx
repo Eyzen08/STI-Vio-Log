@@ -1,4 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
@@ -139,6 +140,22 @@ function App() {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#071421' : '#075aab')
     window.localStorage.setItem('sti-vio-log-theme', theme)
   }, [theme])
+
+  const toggleTheme = useCallback(() => {
+    const applyTheme = () => {
+      flushSync(() => {
+        setTheme((current) => current === 'dark' ? 'light' : 'dark')
+      })
+    }
+
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (!document.startViewTransition || prefersReducedMotion) {
+      applyTheme()
+      return
+    }
+
+    document.startViewTransition(applyTheme)
+  }, [])
 
   useEffect(() => {
     if (!initialSession.user) {
@@ -3559,7 +3576,7 @@ function App() {
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
                 aria-pressed={theme === 'dark'}
                 title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+                onClick={toggleTheme}
               >
                 <PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} />
                 <span className="theme-toggle-label">{theme === 'dark' ? 'Light' : 'Dark'}</span>
@@ -3575,7 +3592,7 @@ function App() {
           type="button"
           aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
           aria-pressed={theme === 'dark'}
-          onClick={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+          onClick={toggleTheme}
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /><span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span></button>}
 
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>

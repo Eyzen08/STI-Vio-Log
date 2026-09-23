@@ -109,6 +109,28 @@ html {
   scroll-behavior: smooth;
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 200ms;
+  animation-timing-function: ease-in-out;
+}
+
+::view-transition-old(root) {
+  animation-name: theme-fade-out;
+}
+
+::view-transition-new(root) {
+  animation-name: theme-fade-in;
+}
+
+@keyframes theme-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes theme-fade-in {
+  from { opacity: 0; }
+}
+
 :root[data-theme='dark'] {
   color-scheme: dark;
   --color-primary: #45a3f3;
@@ -215,6 +237,14 @@ button:active:not(:disabled) {
   transform: translateY(1px);
 }
 
+.theme-toggle svg {
+  transition: transform 200ms ease-in-out;
+}
+
+.theme-toggle[aria-pressed='true'] svg {
+  transform: rotate(180deg) scale(.92);
+}
+
 :where(button, a, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-secondary);
   outline-offset: 2px;
@@ -235,6 +265,15 @@ h1, h2, h3, p {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  .theme-toggle svg {
+    transition: none;
+  }
+
   *,
   *::before,
   *::after {
