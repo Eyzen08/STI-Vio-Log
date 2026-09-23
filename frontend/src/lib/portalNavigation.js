@@ -1,6 +1,6 @@
 export const iconNameForView = (view = '') => ({
   Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', 'My Profile': 'students', 'Assigned Students': 'students',
-  Registrations: 'registrations', 'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
+  'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',
   'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'My Clearance': 'clearance', Reports: 'reports',
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings',

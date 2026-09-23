@@ -7,7 +7,7 @@ import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 
-function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], pendingRegistrations = 0, unreadMessages = 0, loading, role, onNavigate, onRefreshAttendance }) {
+function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], unreadMessages = 0, loading, role, onNavigate, onRefreshAttendance }) {
   const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -49,8 +49,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
   const primaryMetrics = [
     ['students','Total students',students.length,'Registered records','blue'],
     ['violations','Open violations',openViolations,'Requires review','red'],
-    ['clock','Students timed in',timedIn,'Currently on site','blue'],
-    ['registrations','Pending reviews',pendingRegistrations,'Needs review','purple']
+    ['clock','Students timed in',timedIn,'Currently on site','blue']
   ]
   const additionalMetrics = [
     ['students','Non-compliant students',nonCompliant,'Needs follow-up','orange'],
@@ -63,7 +62,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
   return <div className="admin-dashboard portal-dashboard">
     <section className="portal-welcome"><div><h2>Welcome back, {firstLabel}!</h2><p>Here’s what’s happening at STI Global City today.</p></div><time>{new Intl.DateTimeFormat('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())}</time></section>
     <section className="stats-grid admin-stats" aria-label="Priority administrative summary">{primaryMetrics.map(metricCard)}</section>
-    <DashboardQuickActions role={role} onNavigate={onNavigate} pendingRegistrations={pendingRegistrations}/>
+    <DashboardQuickActions role={role} onNavigate={onNavigate}/>
     <details className="dashboard-additional-metrics"><summary>View additional totals</summary><section className="stats-grid admin-stats" aria-label="Additional administrative totals">{additionalMetrics.map(metricCard)}</section></details>
     <section className="admin-dashboard-grid">
       <div className="admin-dashboard-primary">
@@ -73,7 +72,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
       <div className="admin-dashboard-secondary">
         <article className="dashboard-card offense-breakdown-card"><header className="dashboard-section-heading"><div><h3>Offense breakdown</h3><p>Classification across recorded cases</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/reports')}>Reports</button></header><div className="offense-breakdown-content"><div className="offense-donut" style={{'--offense-gradient':offenseGradient}} role="img" aria-label={`${classifiedTotal} classified violation records`}><strong>{classifiedTotal}</strong><span>Classified</span></div><dl>{offenseBreakdown.map((item)=><div key={item.level}><dt><i style={{'--legend-color':item.color}}/>{item.label}</dt><dd>{item.count}</dd></div>)}</dl></div></article>
         <article className="dashboard-card progress-ring-card admin-service-overview"><header className="dashboard-section-heading"><div><h3>Community service overview</h3><p>Overall completion</p></div><button className="text-button" type="button" onClick={()=>onNavigate('/admin/community-service')}>View all</button></header><div className="progress-ring" style={{'--progress':`${progress*3.6}deg`}}><strong>{progress}%</strong><span>{formatDuration(completed)} complete</span></div><dl><div><dt>Completed</dt><dd>{formatDuration(completed)}</dd></div><div><dt>Remaining</dt><dd>{formatDuration(remaining)}</dd></div><div><dt>Assignments</dt><dd>{activeAssignments}</dd></div></dl></article>
-        <article className="dashboard-card recent-activity-card"><header className="dashboard-section-heading"><div><h3>Recent activity</h3><p>Updates requiring awareness</p></div></header><ul>{violations.slice(0,3).map((item)=><li key={item.id}><i><PortalIcon name="violations"/></i><div><strong>Violation {item.status?.toLowerCase()}</strong><span>{item.student_name || `Student #${item.student_id}`}</span></div></li>)}{pendingRegistrations>0&&<li><i><PortalIcon name="registrations"/></i><div><strong>Student registrations</strong><span>{pendingRegistrations} awaiting review</span></div></li>}</ul></article>
+        <article className="dashboard-card recent-activity-card"><header className="dashboard-section-heading"><div><h3>Recent activity</h3><p>Updates requiring awareness</p></div></header><ul>{violations.slice(0,3).map((item)=><li key={item.id}><i><PortalIcon name="violations"/></i><div><strong>Violation {item.status?.toLowerCase()}</strong><span>{item.student_name || `Student #${item.student_id}`}</span></div></li>)}</ul></article>
       </div>
     </section>
   </div>

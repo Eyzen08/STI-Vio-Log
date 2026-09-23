@@ -1,6 +1,6 @@
 const SOURCE_LABELS = {
   USER: 'Active account', STUDENT: 'Student record', STAFF: 'Staff profile', DEPARTMENT_HEAD: 'Department officer',
-  STUDENT_REGISTRATION: 'Pending student registration', DEPARTMENT_REGISTRATION: 'Pending department registration', GOOGLE_LINK: 'Active Google link'
+  GOOGLE_LINK: 'Active Google link'
 };
 
 const groupCandidates = (rows, type, { hidden = false } = {}) => {
@@ -20,17 +20,15 @@ const createDuplicateAccountReviewService = ({ pool } = {}) => {
   if (!pool?.query) throw new TypeError('Duplicate review dependencies are required');
   const list = async () => {
     const [studentNumbers, employeeNumbers, usernames, googleIdentities] = await Promise.all([
-      pool.query(`SELECT student_number AS match_key,'STUDENT' source,id record_id,student_number display FROM students
-        UNION ALL SELECT student_number,'STUDENT_REGISTRATION',id,student_number FROM google_student_registrations WHERE status='PENDING'`),
-      pool.query(`SELECT employee_number AS match_key,'STAFF' source,id record_id,CONCAT(first_name,' ',last_name) display FROM staff_profiles WHERE employee_number IS NOT NULL
-        UNION ALL SELECT employee_number,'DEPARTMENT_HEAD',id,CONCAT(first_name,' ',last_name) FROM department_heads WHERE employee_number IS NOT NULL
-        UNION ALL SELECT employee_number,'DEPARTMENT_REGISTRATION',id,CONCAT(officer_first_name,' ',officer_last_name) FROM google_department_registrations WHERE status='PENDING' AND employee_number IS NOT NULL`),
-      pool.query(`SELECT username AS match_key,'USER' source,id record_id,username display FROM users
-        UNION ALL SELECT student_number,'STUDENT_REGISTRATION',id,student_number FROM google_student_registrations WHERE status='PENDING'
-        UNION ALL SELECT COALESCE(employee_number,CONCAT('department-',id)),'DEPARTMENT_REGISTRATION',id,CONCAT(officer_first_name,' ',officer_last_name) FROM google_department_registrations WHERE status='PENDING'`),
-      pool.query(`SELECT google_subject AS match_key,'GOOGLE_LINK' source,id record_id,'Linked account' display FROM google_identity_links WHERE revoked_at IS NULL
-        UNION ALL SELECT google_subject,'STUDENT_REGISTRATION',id,'Pending student request' FROM google_student_registrations WHERE status='PENDING'
-        UNION ALL SELECT google_subject,'DEPARTMENT_REGISTRATION',id,'Pending department request' FROM google_department_registrations WHERE status='PENDING'`)
+      pool.query(`SELECT s.student_number AS match_key,'STUDENT' source,s.id record_id,s.student_number display FROM students s
+        JOIN users u ON u.id=s.user_id AND u.is_active=TRUE`),
+      pool.query(`SELECT sp.employee_number AS match_key,'STAFF' source,sp.id record_id,CONCAT(sp.first_name,' ',sp.last_name) display FROM staff_profiles sp
+        JOIN users u ON u.id=sp.user_id AND u.is_active=TRUE WHERE sp.employee_number IS NOT NULL
+        UNION ALL SELECT dh.employee_number,'DEPARTMENT_HEAD',dh.id,CONCAT(dh.first_name,' ',dh.last_name) FROM department_heads dh
+        JOIN users u ON u.id=dh.user_id AND u.is_active=TRUE WHERE dh.employee_number IS NOT NULL`),
+      pool.query(`SELECT username AS match_key,'USER' source,id record_id,username display FROM users WHERE is_active=TRUE`),
+      pool.query(`SELECT gil.google_subject AS match_key,'GOOGLE_LINK' source,gil.id record_id,'Linked account' display FROM google_identity_links gil
+        JOIN users u ON u.id=gil.user_id AND u.is_active=TRUE WHERE gil.revoked_at IS NULL`)
     ]);
     const conflicts = [
       ...groupCandidates(studentNumbers.rows, 'STUDENT_NUMBER'),

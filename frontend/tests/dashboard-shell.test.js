@@ -6,21 +6,24 @@ import { validateSignatureFile } from '../src/lib/signatureImage.js'
 
 test('quick actions are role scoped and navigate only within the role portal', () => {
   const source = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
-  for (const label of ['Add Student', 'Issue Violation', 'Record Attendance', 'Review Registrations', 'Generate Report']) assert.match(source, new RegExp(label))
+  for (const label of ['Add Student', 'Issue Violation', 'Record Attendance', 'Generate Report']) assert.match(source, new RegExp(label))
+  assert.doesNotMatch(source, /Review Registrations|pendingRegistrations|\/admin\/registrations/)
   assert.match(source, /STUDENT:[\s\S]*?\/student\/clearance/)
   assert.match(source, /STUDENT:[\s\S]*?\/student\/messages/)
   assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/reports/)
   assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/notifications/)
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
-    assert.equal((source.match(new RegExp(`${role}: \\[([\\s\\S]*?)\\n  \\]`))?.[1].match(/\['/g) || []).length, 5)
+    const expected = ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role) ? 4 : 5
+    assert.equal((source.match(new RegExp(`${role}: \\[([\\s\\S]*?)\\n  \\]`))?.[1].match(/\['/g) || []).length, expected)
   }
 })
 
-test('admin dashboard prioritizes four operational metrics and keeps additional totals accessible', () => {
+test('admin dashboard omits registration metrics and keeps additional totals accessible', () => {
   const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
   assert.match(source, /const primaryMetrics = \[/)
   assert.match(source, /View additional totals/)
   assert.match(source, /dashboard-additional-metrics/)
+  assert.doesNotMatch(source, /pendingRegistrations|Pending reviews|Student registrations/)
 })
 
 test('active attendance sessions fill the dashboard primary column with responsive scrolling', () => {
@@ -57,7 +60,7 @@ test('management summaries use the shared SVG metric component instead of font g
   const metric = fs.readFileSync(new URL('../src/components/ManagementMetric.jsx', import.meta.url), 'utf8')
   assert.match(metric, /<PortalIcon name=\{icon\}/)
   assert.match(metric, /metric-\$\{tone\}/)
-  for (const component of ['App.jsx', 'AdminAuditLog.jsx', 'AdminDuplicateReview.jsx', 'AdminClearanceCertificates.jsx', 'GoogleRegistrationReview.jsx']) {
+  for (const component of ['App.jsx', 'AdminAuditLog.jsx', 'AdminDuplicateReview.jsx', 'AdminClearanceCertificates.jsx']) {
     const prefix = component === 'App.jsx' ? '../src/' : '../src/components/'
     const source = fs.readFileSync(new URL(`${prefix}${component}`, import.meta.url), 'utf8')
     assert.doesNotMatch(source, /management-metric[^\n]*<i>/)

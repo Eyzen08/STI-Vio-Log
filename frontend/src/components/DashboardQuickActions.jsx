@@ -3,12 +3,12 @@ import PortalIcon from './PortalIcon.jsx'
 const ACTIONS = {
   DISCIPLINE_ADMIN: [
     ['students', 'Add Student', '/admin/students'], ['violations', 'Issue Violation', '/admin/violations'],
-    ['qr', 'Record Attendance', '/admin/qr-scan'], ['registrations', 'Review Registrations', '/admin/registrations'],
+    ['qr', 'Record Attendance', '/admin/qr-scan'],
     ['reports', 'Generate Report', '/admin/reports']
   ],
   DISCIPLINE_OFFICE: [
     ['students', 'Add Student', '/admin/students'], ['violations', 'Issue Violation', '/admin/violations'],
-    ['qr', 'Record Attendance', '/admin/qr-scan'], ['registrations', 'Review Registrations', '/admin/registrations'],
+    ['qr', 'Record Attendance', '/admin/qr-scan'],
     ['reports', 'Generate Report', '/admin/reports']
   ],
   DEPARTMENT_HEAD: [
@@ -23,12 +23,12 @@ const ACTIONS = {
   ]
 }
 
-function DashboardQuickActions({ role, onNavigate, pendingRegistrations = 0 }) {
+function DashboardQuickActions({ role, onNavigate }) {
   const actions = ACTIONS[role] || []
   if (!actions.length) return null
   return <section className="dashboard-card dashboard-quick-actions" aria-labelledby={`${role}-quick-actions`}>
     <header><h3 id={`${role}-quick-actions`}>Quick actions</h3></header>
-    <div>{actions.map(([icon, label, path]) => <button type="button" key={path} onClick={() => onNavigate?.(path)}><PortalIcon name={icon}/><span>{label}</span>{path === '/admin/registrations' && pendingRegistrations > 0 && <b aria-label={`${pendingRegistrations} pending registrations`}>{pendingRegistrations}</b>}</button>)}</div>
+    <div>{actions.map(([icon, label, path]) => <button type="button" key={path} onClick={() => onNavigate?.(path)}><PortalIcon name={icon}/><span>{label}</span></button>)}</div>
   </section>
 }
 

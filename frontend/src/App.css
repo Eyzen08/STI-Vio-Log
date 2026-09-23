@@ -4986,12 +4986,6 @@ a {
 /* Duplicate comparison workspace */
 .duplicate-workspace { max-width: 1500px; margin: 0 auto; }
 .readonly-badge { padding: 7px 11px; border: 1px solid #c8d8e8; border-radius: 999px; background: white; color: #526b89; font-size: .66rem; font-weight: 800; }
-.review-workspace-tabs { display: inline-flex; gap: 4px; margin: 0 0 16px; padding: 4px; border: 1px solid #d8e3ed; border-radius: 12px; background: #fff; box-shadow: 0 8px 24px rgba(9,47,96,.06); }
-.review-workspace-tabs button { min-height: 42px; padding: 0 20px; border: 0; border-radius: 9px; background: transparent; color: #12355e; font-weight: 800; }
-.review-workspace-tabs button.active { background: #0868b9; color: #fff; }
-.registration-review-workspace > .registration-management,
-.registration-review-workspace > .duplicate-workspace { display: grid; gap: 16px; }
-.registration-review-workspace > .duplicate-workspace .management-metrics { margin-bottom: 0; }
 .duplicate-review-grid { width: 100%; display: grid; grid-template-columns: minmax(320px,.85fr) minmax(0,1.15fr); gap: 12px; align-items: start; }
 .duplicate-review-grid > .table-card { width: 100%; margin: 0; box-sizing: border-box; }
 .duplicate-list-pane,.duplicate-compare-pane { min-width: 0; padding: 0; overflow: hidden; border-radius: 9px; }
@@ -5033,15 +5027,12 @@ a {
 .duplicate-safety-note strong { font-size: .68rem; }
 .duplicate-safety-note span { font-size: .61rem; line-height: 1.4; }
 @media (max-width: 900px) {
-  .review-workspace-tabs { display: flex; width: 100%; box-sizing: border-box; }
-  .review-workspace-tabs button { flex: 1; padding-inline: 10px; }
   .duplicate-review-grid { grid-template-columns: 1fr; }
   .duplicate-review-grid > .table-card { max-width: none; }
   .duplicate-list { max-height: 330px; }
   .duplicate-filters { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 560px) {
-  .registration-review-workspace > .duplicate-workspace { gap: 12px; }
   .duplicate-review-grid { gap: 10px; }
   .duplicate-list-pane .management-table-header,.duplicate-compare-pane .management-table-header { padding: 13px 12px 9px; }
   .readonly-badge { display: none; }
@@ -5084,50 +5075,16 @@ a {
   .certificate-admin .certificate-student-list { grid-template-columns: 1fr; }
 }
 
-/* Registration queue and audit history */
-.registration-management,.audit-workspace { max-width: 1500px; margin: 0 auto; }
-.registration-directory,.audit-filter-card,.audit-results-card { padding: 0; overflow: hidden; border-radius: 9px; }
-.registration-directory .management-table-header,.audit-filter-card .management-table-header,.audit-results-card .management-table-header { padding: 15px 16px 10px; }
-.registration-toolbar { align-items: end; grid-template-columns: auto minmax(240px,1fr) minmax(180px,.45fr); margin: 0 15px 12px; }
-.registration-toolbar .segmented-control { display: flex; gap: 4px; padding: 3px; border: 1px solid #d8e2ed; border-radius: 8px; background: #f5f8fc; }
-.registration-toolbar .segmented-control button { min-height: 36px; padding: 7px 11px; border: 0; background: transparent; color: #385675; }
-.registration-toolbar .segmented-control button.active { background: #0867bd; color: #fff; box-shadow: 0 2px 6px rgba(8,64,115,.16); }
-.registration-directory table { min-width: 940px; }
-.registration-directory td small { display: block; margin-top: 2px; color: #73859a; font-size: .59rem; }
-.registration-review-drawer { display: grid; gap: 16px; }
-.registration-review-drawer > header { display: flex; align-items: center; gap: 12px; padding-bottom: 14px; border-bottom: 1px solid #dfe7f0; }
-.profile-initials { width: 52px; height: 52px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #e7eef7; color: #173e70; font-size: 1rem; font-weight: 850; }
-.registration-review-drawer header div { display: grid; gap: 2px; }
-.registration-review-drawer h3,.registration-review-drawer p { margin: 0; }
-.registration-review-drawer h3 { color: #0e3568; font-size: .88rem; }
-.registration-review-drawer p { color: #6b7e95; font-size: .65rem; }
-.registration-review-drawer mark { width: max-content; margin-top: 3px; padding: 4px 8px; border-radius: 999px; background: #fff0ce; color: #976100; font-size: .59rem; font-weight: 800; }
-.registration-review-drawer dl { display: grid; gap: 0; margin: 0; border: 1px solid #dfe7ef; border-radius: 8px; overflow: hidden; }
-.registration-review-drawer dl div { display: grid; grid-template-columns: 125px minmax(0,1fr); gap: 10px; padding: 10px 12px; border-bottom: 1px solid #e5ebf2; }
-.registration-review-drawer dl div:last-child { border: 0; }
-.registration-review-drawer dt { color: #6d7f95; font-size: .62rem; }
-.registration-review-drawer dd { margin: 0; color: #193b64; font-size: .67rem; overflow-wrap: anywhere; }
-.registration-review-drawer > label { display: grid; gap: 6px; color: #183b66; font-size: .68rem; font-weight: 750; }
-.registration-review-drawer textarea { min-height: 110px; }
-.drawer-action-row { display: grid; grid-template-columns: 1fr 1.35fr; gap: 8px; }
-.drawer-action-row button { min-height: 41px; }
+/* Audit history */
+.audit-workspace { max-width: 1500px; margin: 0 auto; }
+.audit-filter-card,.audit-results-card { padding: 0; overflow: hidden; border-radius: 9px; }
+.audit-filter-card .management-table-header,.audit-results-card .management-table-header { padding: 15px 16px 10px; }
 .audit-filter-card .student-form { padding: 10px 16px 16px; background: #fbfdff; }
 .audit-filter-card .student-form-grid { margin-bottom: 10px; }
 .audit-filter-card .registration-review-actions { justify-content: flex-end; }
 .audit-results-card { margin-top: 12px; }
 .audit-results-card table { min-width: 900px; }
 .audit-results-card > .registration-review-actions { justify-content: flex-end; padding: 12px 15px; border-top: 1px solid #e2e9f1; }
-@media (max-width: 900px) {
-  .registration-toolbar { grid-template-columns: 1fr 1fr; }
-  .registration-toolbar .segmented-control { grid-column: 1 / -1; }
-}
-@media (max-width: 560px) {
-  .registration-toolbar { grid-template-columns: 1fr; }
-  .registration-toolbar .segmented-control { grid-column: 1; overflow-x: auto; }
-  .registration-toolbar .segmented-control button { flex: 1 0 auto; }
-  .registration-review-drawer dl div { grid-template-columns: 1fr; gap: 3px; }
-  .drawer-action-row { grid-template-columns: 1fr; }
-}
 
 @media (max-width: 760px) {
   .notification-toolbar { align-items: stretch; flex-direction: column; }

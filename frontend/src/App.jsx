@@ -23,7 +23,7 @@ const StudentProfile = lazy(() => import('./components/StudentProfile.jsx'))
 const StaffProfile = lazy(() => import('./components/StaffProfile.jsx'))
 const StudentQr = lazy(() => import('./components/StudentQr.jsx'))
 const StudentViolations = lazy(() => import('./components/StudentViolations.jsx'))
-const AdminRegistrationReviewWorkspace = lazy(() => import('./components/AdminRegistrationReviewWorkspace.jsx'))
+const AdminDuplicateReview = lazy(() => import('./components/AdminDuplicateReview.jsx'))
 const PasswordChangeRequired = lazy(() => import('./components/PasswordChangeRequired.jsx'))
 const StudentOnboarding = lazy(() => import('./components/StudentOnboarding.jsx'))
 const AdminAuditLog = lazy(() => import('./components/AdminAuditLog.jsx'))
@@ -53,7 +53,6 @@ import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
-import { pendingRegistrationCount } from './lib/pendingRegistrations.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
@@ -212,7 +211,6 @@ function App() {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activeServiceSessions, setActiveServiceSessions] = useState([])
   const [notificationActionError, setNotificationActionError] = useState('')
-  const [pendingAccountCounts, setPendingAccountCounts] = useState({ students: 0, departments: 0 })
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [pendingActionCounts, setPendingActionCounts] = useState({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
   const [pendingRefreshKey, setPendingRefreshKey] = useState(0)
@@ -417,7 +415,7 @@ function App() {
 
   const navGroupName = (item) => {
     if (item.view === 'Dashboard') return 'Overview'
-    if (['Students','Registrations','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
+    if (['Students','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
     if (['Violations','Active Attendance','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
     if (item.view === 'Departments & Officer Accounts') return 'Management'
     if (item.view === 'Messages') return 'Communication'
@@ -483,9 +481,6 @@ function App() {
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [isMobileNavOpen])
-  const updatePendingStudentCount = useCallback((students) => {
-    setPendingAccountCounts((current) => ({ ...current, students }))
-  }, [])
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
   useEffect(() => {
@@ -511,31 +506,6 @@ function App() {
     const interval = window.setInterval(refresh, 30000)
     return () => { controller.abort(); window.clearInterval(interval); realtimeSocket?.off('messages:changed', handleMessageChange) }
   }, [isLoggedIn, token, realtimeSocket])
-
-  useEffect(() => {
-    if (!token || !isAdmin) {
-      setPendingAccountCounts({ students: 0, departments: 0 })
-      return undefined
-    }
-
-    const controller = new AbortController()
-    const headers = { Authorization: `Bearer ${token}` }
-    const requests = [fetch(`${API_URL}/api/google-registrations?status=PENDING&limit=100`, { headers, signal: controller.signal })]
-
-    Promise.all(requests)
-      .then((responses) => Promise.all(responses.map(async (response) => response.ok ? response.json() : null)))
-      .then(([studentsData]) => {
-        setPendingAccountCounts({
-          students: pendingRegistrationCount(studentsData),
-          departments: 0
-        })
-      })
-      .catch((loadError) => {
-        if (loadError.name !== 'AbortError') setPendingAccountCounts({ students: 0, departments: 0 })
-      })
-
-    return () => controller.abort()
-  }, [token, isAdmin, userRole])
 
   useEffect(() => {
     if (!token || !userRole) {
@@ -577,7 +547,6 @@ function App() {
   const badgeForNavigationItem = (item) => {
     if (item.view === 'Messages') return { count: unreadMessages, label: 'unread messages' }
     if (item.view === 'Notifications') return { count: unreadNotificationCount, label: 'unread notifications' }
-    if (item.view === 'Registrations') return { count: pendingAccountCounts.students, label: 'pending registrations' }
     if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'pending service reviews' }
     return { count: 0, label: '' }
   }
@@ -2125,7 +2094,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} pendingRegistrations={pendingAccountCounts.students} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onRefreshAttendance={refreshAdminAttendance} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onRefreshAttendance={refreshAdminAttendance} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
@@ -2154,8 +2123,8 @@ function App() {
       )
     }
 
-    if (isAdmin && activeView === 'Registrations') {
-      return <AdminRegistrationReviewWorkspace token={token} role={userRole} onPendingCountChange={updatePendingStudentCount} />
+    if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Duplicate Review') {
+      return <AdminDuplicateReview token={token} />
     }
 
     if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'Departments & Officer Accounts') {

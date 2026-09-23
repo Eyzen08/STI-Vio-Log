@@ -116,7 +116,7 @@ All administration endpoints require `authenticateToken` and `authorizeRoles('AD
 
 ### Duplicate review
 
-- `GET /api/admin/duplicate-review` reports current cross-source conflicts for student numbers, employee numbers, prospective usernames, and Google identities.
+- `GET /api/admin/duplicate-review` reports conflicts among active accounts for student numbers, employee numbers, usernames, and non-revoked Google identities. Pending registration requests are excluded.
 - The workflow is read-only: it cannot merge, delete, activate, reject, or reassign records.
 - Google subjects and email snapshots are never returned. Google conflicts use local source references and the fixed label `Hidden Google identity`.
 
