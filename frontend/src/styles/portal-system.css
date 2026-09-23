@@ -3438,6 +3438,147 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:var(--status-warning-text) !important;
 }
 
+/* Portaled forms and drawers must not depend on an .app-shell ancestor. */
+:root[data-theme='dark'] .app-modal :is(.student-form-grid,.account-action-form,.department-officer-create,.registration-pending) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal .account-action-form .student-form-grid {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .app-modal :is(.student-form-grid,.account-action-form,.account-reason-field) label,
+:root[data-theme='dark'] .app-modal .account-reason-field > span { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal :is(.account-reason-field,.student-form-grid) small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-modal .account-action-notice {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending code {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal :is(input,select,textarea) {
+  border-color:var(--border-strong) !important;
+  background-color:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .app-modal select option { background:var(--control-background) !important; color:var(--text-primary) !important; }
+
+/* Wizard steps, modal actions, and disabled controls use intentional dark states. */
+:root[data-theme='dark'] .app-modal .compact-stepper { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .app-modal .compact-stepper button {
+  border:1px solid var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button b {
+  background:var(--surface-nested) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button.active {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button.active b { background:var(--color-primary) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .app-modal .compact-stepper button:disabled,
+:root[data-theme='dark'] .app-modal :is(button,.primary-action,.primary-row-action,.submit-btn):disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .app-modal :is(.registration-review-actions,.wizard-actions) button:not(.danger-button):not(:disabled),
+:root[data-theme='dark'] .record-detail-drawer > button:not(:disabled) {
+  border-color:var(--color-primary) !important;
+  background:var(--color-primary) !important;
+  color:var(--text-on-accent) !important;
+}
+:root[data-theme='dark'] .app-modal :is(.registration-review-actions,.wizard-actions) .secondary-button:not(:disabled) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+
+/* Detail drawers inherit modal semantics for every nested record surface. */
+:root[data-theme='dark'] .record-detail-drawer > header { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .record-detail-drawer :is(h3,h4,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .record-detail-drawer :is(p,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .record-detail-drawer dl { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .record-detail-drawer dl div { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .record-detail-drawer > section { border-color:var(--border-subtle) !important; background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .record-progress { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .record-progress-heading strong { color:var(--link-color) !important; }
+
+/* Shared badges must not retain the pale light-theme pill. */
+:root[data-theme='dark'] .status-badge {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] :is(.status-complete,.status-completed,.status-clear,.status-cleared,.status-qualified,.status-issued,.availability-available) {
+  border-color:var(--status-success-text) !important;
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] :is(.status-active,.status-open,.status-in-progress,.status-pending,.status-needs-service,.attendance-state,.availability-unavailable) {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.status-blocked,.status-revoked) {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.status-invalid-cancel,.status-not-eligible,.status-no-service-required,.status-badge--muted,.readonly-badge) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+}
+
+/* Header account controls and menu states use the same interactive hierarchy. */
+:root[data-theme='dark'] .main-panel .profile-menu-trigger,
+:root[data-theme='dark'] .main-panel .profile-menu-trigger[aria-expanded='true'] {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .main-panel .profile-menu-trigger:hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .profile-menu-trigger .profile-menu-chevron,
+:root[data-theme='dark'] .profile-menu-trigger[aria-expanded='true'] .profile-menu-chevron {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .profile-menu-popover header { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .profile-menu-popover hr { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .profile-menu-popover .profile-logout { color:var(--status-danger-text) !important; }
+
+/* Table and workflow controls retain dark surfaces in every state. */
+:root[data-theme='dark'] :is(.icon-row-action,.row-action-trigger,.inline-actions button,.table-actions button):not(.primary-row-action):not(.danger-button) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] :is(.icon-row-action,.row-action-trigger,.inline-actions button,.table-actions button):not(.primary-row-action):not(.danger-button):hover:not(:disabled) {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive-hover) !important;
+  color:var(--link-hover) !important;
+}
+:root[data-theme='dark'] .main-panel button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  box-shadow:none !important;
+}
+
 /* Deliberately light for printing/scanning; all surrounding UI remains themed. */
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
   color-scheme: light;

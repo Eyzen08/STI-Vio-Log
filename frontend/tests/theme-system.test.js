@@ -100,6 +100,19 @@ test('dark notifications and account controls cannot fall back to light surfaces
   assert.doesNotMatch(themedControls, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe|#f9fbfd|#edf5fd|#eaf4ff)\b/i)
 })
 
+test('dark portaled dialogs, badges, profile controls, and disabled actions use semantic surfaces', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.student-form-grid', '.account-action-notice', '.registration-pending', '.compact-stepper button', '.registration-review-actions', '.record-detail-drawer dl', '.record-detail-drawer > section', '.status-badge', '.profile-menu-trigger', '.profile-menu-chevron', '.profile-menu-popover header', '.main-panel button:disabled']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.app-modal :is\(\.student-form-grid,[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.app-modal \.account-action-notice\s*\{[^}]*background:var\(--status-info-surface\)/s)
+  assert.match(guard, /\.app-modal :is\(button,[^}]*:disabled\s*\{[^}]*background:var\(--control-disabled-background\)/s)
+  assert.match(guard, /\.status-badge\s*\{[^}]*background:var\(--status-info-surface\)/s)
+  assert.match(guard, /\.profile-menu-trigger[^}]*background:var\(--surface-interactive\)/s)
+  assert.match(guard, /\.record-detail-drawer > section\s*\{[^}]*background:var\(--surface-nested\)/s)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
