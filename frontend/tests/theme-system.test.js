@@ -155,6 +155,12 @@ test('dark public policy pages keep their surfaces and text on one semantic pale
   assert.match(guard, /\.public-policy-footer nav button\s*\{[^}]*color:var\(--link-color\)/s)
 })
 
+test('dark authentication trust note uses one consistent text color', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.auth-trust-note span,\.auth-trust-note strong\)\s*\{\s*color:var\(--text-secondary\) !important;/)
+  assert.doesNotMatch(guard, /\.auth-trust-note strong\)\s*\{\s*color:var\(--text-primary\)/)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
