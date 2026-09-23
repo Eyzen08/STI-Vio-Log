@@ -4075,6 +4075,15 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .clearance-panel[data-panel='students'] .certificate-student-list,
   .clearance-panel[data-panel='signatures'] .signature-directory,
   .clearance-panel[data-panel='history'] .table-wrap { max-height:none; overflow:visible; scrollbar-gutter:auto; }
+  .clearance-panel[data-panel='history'] .table-wrap { width:100%; border:0; border-radius:0; }
+  .clearance-panel[data-panel='history'] .management-record-table { width:100%; min-width:0 !important; display:block; table-layout:auto; background:transparent; }
+  .clearance-panel[data-panel='history'] .management-record-table tbody { width:100%; display:grid; gap:.65rem; padding:0 .8rem .8rem; box-sizing:border-box; }
+  .clearance-panel[data-panel='history'] .management-record-table tr { width:100%; min-width:0; margin:0; box-sizing:border-box; }
+  .clearance-panel[data-panel='history'] .management-record-table td { min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:normal; }
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Certificate'],
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Student'],
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Actions'] { grid-column:1 / -1; }
+  .clearance-panel[data-panel='history'] .management-record-table .status-badge { width:fit-content; white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
   .certificate-admin .certificate-grid > .table-card > .table-header { padding:.85rem .8rem .65rem; }
   .certificate-admin .clearance-directory-filters { gap:.6rem; padding:0 .8rem .7rem; }
   .certificate-admin .clearance-directory-filters :is(input,select) { min-height:2.75rem; font-size:1rem; }

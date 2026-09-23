@@ -41,3 +41,10 @@ test('Clearance Management compacts cleanly into a mobile workspace', () => {
   assert.match(portalStyles, /\[data-panel='students'\] \.certificate-student-list,[\s\S]*?max-height:none; overflow:visible/)
   assert.match(portalStyles, /@media \(max-width:340px\)[\s\S]*?\.certificate-admin > \.management-metrics \{ grid-template-columns:1fr/)
 })
+
+test('Certificate history cards discard desktop table width on phones', () => {
+  assert.match(portalStyles, /\[data-panel='history'\] \.management-record-table \{[^}]*width:100%[^}]*min-width:0 !important[^}]*display:block/s)
+  assert.match(portalStyles, /\[data-panel='history'\] \.management-record-table tbody \{[^}]*display:grid[^}]*box-sizing:border-box/s)
+  assert.match(portalStyles, /td\[data-label='Certificate'\],[\s\S]*?td\[data-label='Actions'\] \{ grid-column:1 \/ -1/)
+  assert.match(portalStyles, /\[data-panel='history'\] \.management-record-table \.status-badge \{[^}]*white-space:nowrap[^}]*word-break:keep-all/s)
+})
