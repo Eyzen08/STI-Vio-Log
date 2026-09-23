@@ -96,6 +96,11 @@ test('authentication background keeps a stable crop while forms change height', 
   assert.match(portalCssSource, /height: 14rem; min-height: 14rem; flex-basis: 14rem/)
 })
 
+test('login logo anchors to the desktop hero corner and returns to flow on mobile', () => {
+  assert.match(portalCssSource, /@media \(min-width: 768px\)\s*\{\s*\.auth-shell \.login-brand-mark\s*\{[^}]*position:\s*absolute;[^}]*top:\s*1\.5rem;[^}]*left:\s*1\.5rem;/s)
+  assert.match(portalCssSource, /@media \(max-width: 767px\)[\s\S]*?\.auth-shell \.login-brand-mark\s*\{[^}]*position:\s*relative;[^}]*top:\s*auto;[^}]*left:\s*auto;/s)
+})
+
 test('Safari mobile authentication uses a covered hero image and dynamic viewport units', () => {
   assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*position:\s*absolute;[^}]*object-fit:\s*cover;/s)
   assert.match(appCssSource, /min-height:\s*100dvh/)

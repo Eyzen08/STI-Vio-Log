@@ -522,6 +522,14 @@
   height: auto;
 }
 
+@media (min-width: 768px) {
+  .auth-shell .login-brand-mark {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+  }
+}
+
 .auth-shell .login-intro-content {
   position: relative;
   z-index: 1;
@@ -881,7 +889,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .auth-shell .login-campus-image { object-position: center 43%; }
   .auth-shell .login-intro::before { background: linear-gradient(180deg, rgba(4, 26, 57, .18), rgba(3, 22, 47, .91)); }
   .auth-shell .login-intro::after { right: 1rem; width: 6rem; height: .22rem; }
-  .auth-shell .login-brand-mark { width: min(9.5rem, 42vw); }
+  .auth-shell .login-brand-mark { position: relative; top: auto; left: auto; width: min(9.5rem, 42vw); }
   .auth-shell .login-intro-content { margin: auto 0 0; }
   .auth-shell .login-kicker { margin-bottom: .65rem; font-size: .65rem; }
   .auth-shell .login-kicker::before { width: 1.3rem; }
@@ -3685,6 +3693,43 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   background:var(--status-warning-surface) !important;
   color:var(--status-warning-text) !important;
 }
+
+/* Public legal pages must switch their surfaces together with dark-theme text. */
+:root[data-theme='dark'] .public-policy-page {
+  background:var(--surface-canvas) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .public-policy-brand { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-brand span {
+  background:var(--color-accent) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] :is(.public-policy-signin,.public-policy-primary) {
+  background:var(--message-outgoing-surface) !important;
+  color:var(--message-outgoing-text) !important;
+}
+:root[data-theme='dark'] .public-policy-card {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-lg) !important;
+}
+:root[data-theme='dark'] .public-policy-intro {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .public-policy-intro :is(.eyebrow,h1) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-intro > p:not(.eyebrow) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .public-policy-intro small { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .public-policy-sections { background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .public-policy-sections section { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .public-policy-sections h2 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-sections p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .public-policy-footer {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .public-policy-footer nav button { color:var(--link-color) !important; }
 
 /* Deliberately light for printing/scanning; all surrounding UI remains themed. */
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {

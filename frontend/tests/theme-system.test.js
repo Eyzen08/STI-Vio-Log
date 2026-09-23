@@ -142,6 +142,19 @@ test('dark QR attendance qualifiers use semantic dark pills', () => {
   assert.match(guard, /label:has\(\[name='condition'\]\) \.record-field-label small\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
 })
 
+test('dark public policy pages keep their surfaces and text on one semantic palette', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  for (const selector of ['.public-policy-page', '.public-policy-brand', '.public-policy-card', '.public-policy-intro', '.public-policy-sections', '.public-policy-footer']) {
+    assert.match(guard, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(guard, /\.public-policy-page\s*\{[^}]*background:var\(--surface-canvas\)[^}]*color:var\(--text-primary\)/s)
+  assert.match(guard, /\.public-policy-card\s*\{[^}]*background:var\(--surface-raised\)[^}]*color:var\(--text-primary\)/s)
+  assert.match(guard, /\.public-policy-intro\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.public-policy-sections p\s*\{[^}]*color:var\(--text-secondary\)/s)
+  assert.match(guard, /\.public-policy-footer\s*\{[^}]*background:var\(--surface-nested\)/s)
+  assert.match(guard, /\.public-policy-footer nav button\s*\{[^}]*color:var\(--link-color\)/s)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
