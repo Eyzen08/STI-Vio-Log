@@ -34,3 +34,10 @@ test('Clearance tabs stay visible and long panel collections scroll internally',
   assert.match(portalStyles, /\[data-panel='history'\] \.table-wrap \{[^}]*max-height:[^;]+;[^}]*overflow:auto/s)
   assert.match(portalStyles, /\[data-panel='history'\] \.table-wrap thead th \{[^}]*position:sticky/s)
 })
+
+test('Clearance Management compacts cleanly into a mobile workspace', () => {
+  assert.match(portalStyles, /@media \(max-width:767px\)[\s\S]*?\.certificate-admin > \.management-metrics \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/)
+  assert.match(portalStyles, /\.main-panel \.clearance-panel-tabs > button \{[^}]*min-height:4rem[^}]*flex-direction:column/s)
+  assert.match(portalStyles, /\[data-panel='students'\] \.certificate-student-list,[\s\S]*?max-height:none; overflow:visible/)
+  assert.match(portalStyles, /@media \(max-width:340px\)[\s\S]*?\.certificate-admin > \.management-metrics \{ grid-template-columns:1fr/)
+})

@@ -37,6 +37,14 @@ test('all four monitoring tabs stay visible without horizontal scrolling',()=>{
   assert.match(portalStyles,/@media \(max-width:700px\) \{[\s\S]*?\.monitoring-panel-tabs \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/)
 })
 
+test('security and authentication records expose complete mobile card labels',()=>{
+  assert.equal((dashboard.match(/className="responsive-record-table system-event-table"/g)||[]).length,2)
+  for(const label of ['Time','Actor','Account','Action','Target','Result'])assert.match(dashboard,new RegExp(`data-label="${label}"`))
+  assert.match(portalStyles,/\.responsive-record-table\.system-event-table tr \{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s)
+  assert.match(portalStyles,/\.responsive-record-table\.system-event-table \.status-badge \{[^}]*white-space:nowrap[^}]*word-break:keep-all/s)
+  assert.match(portalStyles,/\.monitoring-slide :is\([^}]+\) \.table-wrap \{[^}]*max-height:none[^}]*overflow:visible/s)
+})
+
 test('every monitoring tab has a visible card boundary',()=>{
   assert.match(portalStyles,/\.main-panel \.monitoring-panel-tabs > button \{[^}]*border:1px solid #cbdceb[^}]*background:#fff/s)
   assert.match(portalStyles,/\.monitoring-panel-tabs > button:not\(\[aria-selected='true'\]\) \{[^}]*border-color:var\(--border-strong\) !important[^}]*background:var\(--surface-raised\) !important/s)
