@@ -2368,6 +2368,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   mix-blend-mode: normal;
   transform: none;
 }
+.brand-logo-dark,.mobile-brand-logo-dark { display:none; }
 
 .sidebar .nav-item,
 .sidebar .nav-item.messages-nav-item {
@@ -3543,6 +3544,24 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 /* Header account controls and menu states use the same interactive hierarchy. */
+:root[data-theme='dark'] .sidebar .brand {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-sidebar) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] :is(.brand-logo-light,.mobile-brand-logo-light) { display:none !important; }
+:root[data-theme='dark'] :is(.brand-logo-dark,.mobile-brand-logo-dark) { display:block; }
+:root[data-theme='dark'] .app-shell:not(.auth-shell).sidebar-collapsed .brand-logo-dark { display:none; }
+:root[data-theme='dark'] .profile-menu-trigger .account-summary strong,
+:root[data-theme='dark'] .profile-menu-popover header strong,
+:root[data-theme='dark'] :is(.student-directory-table,.officer-directory,.account-action-results,.selected-account-summary,.record-detail-drawer) :is(.student-name,.officer-name,.account-name,h3) {
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .profile-menu-trigger .account-summary small,
+:root[data-theme='dark'] .profile-menu-popover header small,
+:root[data-theme='dark'] :is(.student-directory-table,.officer-directory,.account-action-results,.selected-account-summary,.record-detail-drawer) :is(.student-number,.username,.identifier,small) {
+  color:var(--text-secondary) !important;
+}
 :root[data-theme='dark'] .main-panel .profile-menu-trigger,
 :root[data-theme='dark'] .main-panel .profile-menu-trigger[aria-expanded='true'] {
   border-color:var(--border-strong) !important;

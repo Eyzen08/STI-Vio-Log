@@ -113,6 +113,19 @@ test('dark portaled dialogs, badges, profile controls, and disabled actions use 
   assert.match(guard, /\.record-detail-drawer > section\s*\{[^}]*background:var\(--surface-nested\)/s)
 })
 
+test('dark navigation switches to transparent branding and keeps account names readable', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(app, /import stiVioLogLogoTransparent from '\.\/assets\/sti-logo-web-transparent\.png'/)
+  assert.match(app, /className="brand-logo brand-logo-light"/)
+  assert.match(app, /className="brand-logo brand-logo-dark"/)
+  assert.match(app, /className="mobile-brand-logo-dark"/)
+  assert.match(guard, /\.sidebar \.brand\s*\{[^}]*background:var\(--surface-sidebar\)/s)
+  assert.match(guard, /:is\(\.brand-logo-light,\.mobile-brand-logo-light\)\s*\{[^}]*display:none/s)
+  assert.match(guard, /\.profile-menu-trigger \.account-summary strong,[\s\S]*color:var\(--text-primary\)/)
+  assert.match(guard, /\.profile-menu-trigger \.account-summary small,[\s\S]*color:var\(--text-secondary\)/)
+  assert.match(guard, /\.officer-name/)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))

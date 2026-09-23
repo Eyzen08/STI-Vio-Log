@@ -48,6 +48,7 @@ import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import stiVioLogLogo from './assets/sti-logo-web.png'
+import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
@@ -3458,8 +3459,15 @@ function App() {
       {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
         <div className="brand">
           <img
-            className="brand-logo"
+            className="brand-logo brand-logo-light"
             src={stiVioLogLogo}
+            alt="STI Vio-Log Discipline Office Portal"
+            width="420"
+            height="236"
+          />
+          <img
+            className="brand-logo brand-logo-dark"
+            src={stiVioLogLogoTransparent}
             alt="STI Vio-Log Discipline Office Portal"
             width="420"
             height="236"
@@ -3533,7 +3541,8 @@ function App() {
             </button>
 
             <button className="mobile-brand" type="button" onClick={() => navigateTo(getHomePath(userRole))} aria-label="STI Vio-Log home">
-              <img src={stiVioLogLogo} alt="" width="420" height="236" />
+              <img className="mobile-brand-logo-light" src={stiVioLogLogo} alt="" width="420" height="236" />
+              <img className="mobile-brand-logo-dark" src={stiVioLogLogoTransparent} alt="" width="420" height="236" />
               <span>STI Vio-Log</span>
             </button>
 
