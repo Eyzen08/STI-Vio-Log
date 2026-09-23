@@ -194,6 +194,14 @@ test('dark dashboard clearance status uses semantic pending and ready states', (
   assert.match(guard, /\.clearance-summary-card \.clearance-state--ready\s*\{[^}]*background:var\(--status-success-surface\)[^}]*color:var\(--status-success-text\)/s)
 })
 
+test('dark recent activity uses themed icons, dividers, and text', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.recent-activity-card li\s*\{[^}]*border-color:\s*var\(--border-subtle\) !important;/s)
+  assert.match(guard, /\.recent-activity-card li i\s*\{[^}]*background:\s*var\(--status-info-surface\) !important;[^}]*color:\s*var\(--status-info-text\) !important;/s)
+  assert.match(guard, /\.recent-activity-card li strong\s*\{[^}]*color:\s*var\(--text-primary\) !important;/s)
+  assert.match(guard, /\.recent-activity-card li span\s*\{[^}]*color:\s*var\(--text-secondary\) !important;/s)
+})
+
 test('required password change uses responsive theme-specific campus imagery', () => {
   assert.match(passwordChange, /sti-global-city-building-web\.jpg/)
   assert.match(passwordChange, /sti-global-city-building-night\.jpg/)

@@ -4360,6 +4360,21 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .portal-page-header .department-officer-tabs { width: 100%; }
   .profile-card > .portal-page-header { width: calc(100% - 1rem); margin: 0.5rem; }
   .profile-card > .portal-page-header .profile-readonly-badge { align-self: flex-start; margin-left: 0; white-space: normal; }
+
+  /* Messages has a higher-specificity legacy row rule. Keep the shared mobile
+     header stacked so the full-width action cannot squeeze the title. */
+  .main-panel--messages .messages-page-heading.portal-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
+  .main-panel--messages .messages-page-heading.portal-page-header h2 { overflow-wrap: normal; word-break: normal; }
+  .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.75rem;
+    flex: 0 0 auto;
+  }
 }
 
 @media (max-width: 390px) {
@@ -4367,6 +4382,29 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .portal-page-header .page-breadcrumb { display: none; }
   .portal-page-header :is(p, .profile-readonly-badge, .readonly-badge) { overflow-wrap: anywhere; }
 }
+
+/* Account settings uses the shared password component outside authentication
+   cards. Theme its full surface so light defaults cannot leak into dark mode. */
+:root[data-theme='dark'] .account-settings-page .password-requirements {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+:root[data-theme='dark'] .account-settings-page .password-requirements strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .account-settings-page .password-requirements .valid { color: var(--status-success-text) !important; }
+:root[data-theme='dark'] .account-settings-page .password-requirements .invalid { color: var(--status-danger-text) !important; }
+
+/* Recent activity inherits pale icon circles and dividers from the legacy
+   dashboard stylesheet unless each nested surface is explicitly themed. */
+:root[data-theme='dark'] .recent-activity-card li { border-color: var(--border-subtle) !important; }
+:root[data-theme='dark'] .recent-activity-card li i {
+  border: 1px solid var(--border-strong);
+  background: var(--status-info-surface) !important;
+  color: var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .recent-activity-card li strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .recent-activity-card li span { color: var(--text-secondary) !important; }
 
 .app-shell:not(.auth-shell) .sidebar,
 :root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {

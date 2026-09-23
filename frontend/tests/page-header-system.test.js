@@ -44,6 +44,14 @@ test('shared page headers are card surfaces across themes and viewports', () => 
   assert.match(portal, /@media \(max-width: 767px\)[\s\S]*?\.portal-page-header\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/s)
   assert.match(portal, /@media \(max-width: 390px\)[\s\S]*?\.portal-page-header \.page-breadcrumb\s*\{[^}]*display: none;/s)
   assert.match(portal, /\.portal-page-header > :is\(button, \.primary-action, \.messages-new-button\)\s*\{[^}]*width: 100%;/s)
+  assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/s)
+  assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header \.messages-new-button\s*\{[^}]*width: 100%;[^}]*min-height: 2\.75rem;[^}]*flex: 0 0 auto;/s)
+})
+
+test('dark account settings keeps password requirements on themed surfaces', () => {
+  assert.match(portal, /:root\[data-theme='dark'\] \.account-settings-page \.password-requirements\s*\{[^}]*background: var\(--surface-nested\) !important;[^}]*color: var\(--text-primary\) !important;/s)
+  assert.match(portal, /\.account-settings-page \.password-requirements \.valid\s*\{[^}]*color: var\(--status-success-text\) !important;/s)
+  assert.match(portal, /\.account-settings-page \.password-requirements \.invalid\s*\{[^}]*color: var\(--status-danger-text\) !important;/s)
 })
 
 test('public and authentication pages do not use portal page headers', () => {
