@@ -16,7 +16,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       const throttleInput={kind:'password',identifier:username,ip:req.ip};
       if(issueToken===issueSessionToken)await throttles.assertAllowed(throttleInput,database);
       const result=await database.query(
-        `SELECT u.*,s.onboarding_required,s.onboarding_completed_at,
+        `SELECT u.*,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
                 EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked,
                 COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
                 COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name

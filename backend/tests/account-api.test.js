@@ -6,7 +6,7 @@ const {issueSessionToken}=require('../src/services/sessionTokenService');
 
 test('account route exposes password and administrator self-service settings',()=>{
   const routes=router.stack.filter(layer=>layer.route).map(layer=>({path:layer.route.path,methods:Object.keys(layer.route.methods)}));
-  assert.deepEqual(routes,[{path:'/password-change',methods:['post']},{path:'/student-onboarding/google-link',methods:['post']},{path:'/student-onboarding/profile',methods:['post']},{path:'/admin-profile',methods:['get']},{path:'/admin-profile',methods:['patch']},{path:'/admin-profile/email/resend',methods:['post']},{path:'/admin-profile/email/verify',methods:['post']}]);
+  assert.deepEqual(routes,[{path:'/password-change',methods:['post']},{path:'/student-onboarding/google-email/request',methods:['post']},{path:'/student-onboarding/google-email/verify',methods:['post']},{path:'/student-onboarding/google-link',methods:['post']},{path:'/student-onboarding/profile',methods:['post']},{path:'/admin-profile',methods:['get']},{path:'/admin-profile',methods:['patch']},{path:'/admin-profile/email/resend',methods:['post']},{path:'/admin-profile/email/verify',methods:['post']}]);
 });
 
 test('legacy development tokens are constrained and disabled in production',()=>{

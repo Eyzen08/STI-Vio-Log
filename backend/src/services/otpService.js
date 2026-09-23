@@ -32,9 +32,9 @@ const createOtpService = ({ pool, sendOtp, now = () => new Date(), generateOtp =
       code = generateOtp();
       const expiresAt = new Date(now().getTime() + OTP_TTL_MINUTES * 60 * 1000);
       await client.query(
-        `INSERT INTO auth_otps(user_id,registration_id,purpose,otp_hash,expires_at)
-         VALUES($1,$2,$3,$4,$5)`,
-        [userId, registrationId, purpose, hash(code), expiresAt]
+        `INSERT INTO auth_otps(user_id,registration_id,purpose,otp_hash,expires_at,target_email)
+         VALUES($1,$2,$3,$4,$5,$6)`,
+        [userId, registrationId, purpose, hash(code), expiresAt, String(email || '').normalize('NFKC').trim().toLowerCase() || null]
       );
       await client.query('COMMIT');
     } catch (error) {
@@ -54,7 +54,7 @@ const createOtpService = ({ pool, sendOtp, now = () => new Date(), generateOtp =
     }
   };
 
-  const verify = async ({ purpose, userId = null, registrationId = null, code, client }) => {
+  const verify = async ({ purpose, userId = null, registrationId = null, code, email = null, client }) => {
     if (!/^\d{6}$/.test(String(code || ''))) throw new ApiError(400, 'INVALID_OTP', 'Enter the 6-digit verification code');
     const ownerColumn = registrationId ? 'registration_id' : 'user_id';
     const ownerId = Number(registrationId || userId);
@@ -63,6 +63,7 @@ const createOtpService = ({ pool, sendOtp, now = () => new Date(), generateOtp =
       [ownerId, purpose]
     )).rows[0];
     if (!row || new Date(row.expires_at) <= now()) throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
+    if (email && String(row.target_email || '').toLowerCase() !== String(email).normalize('NFKC').trim().toLowerCase()) throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
     if (Number(row.attempt_count) >= OTP_MAX_ATTEMPTS) throw new ApiError(429, 'OTP_ATTEMPTS_EXCEEDED', 'Too many verification attempts');
     const valid = crypto.timingSafeEqual(Buffer.from(row.otp_hash), Buffer.from(hash(code)));
     if (!valid) {

@@ -17,6 +17,10 @@ test('mandatory Student onboarding renders before portal content and resumes by 
 test('onboarding binds Google first and submits only student-controlled academic and contact fields',()=>{
   assert.match(onboarding,/step==='GOOGLE'/)
   assert.match(api,/student-onboarding\/google-link/)
+  assert.match(api,/student-onboarding\/google-email\/request/)
+  assert.match(api,/student-onboarding\/google-email\/verify/)
+  assert.match(onboarding,/Email.*Verification code.*Google sign-in/s)
+  assert.match(onboarding,/autoComplete="one-time-code"/)
   assert.match(api,/student-onboarding\/profile/)
   assert.match(onboarding,/program:.*section:.*year_level:.*phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
   assert.doesNotMatch(onboarding,/student_number:/)

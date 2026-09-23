@@ -1,7 +1,9 @@
 const express=require('express');
-const {passwordChange,profile,updateProfile,resendEmail,verifyEmail,googleLink,completeOnboarding}=require('../controllers/accountController');
+const {passwordChange,profile,updateProfile,resendEmail,verifyEmail,requestGoogleEmail,verifyGoogleEmail,googleLink,completeOnboarding}=require('../controllers/accountController');
 const router=express.Router();
 router.post('/password-change',passwordChange);
+router.post('/student-onboarding/google-email/request',requestGoogleEmail);
+router.post('/student-onboarding/google-email/verify',verifyGoogleEmail);
 router.post('/student-onboarding/google-link',googleLink);
 router.post('/student-onboarding/profile',completeOnboarding);
 router.get('/admin-profile',profile);

@@ -178,6 +178,16 @@ export const linkStudentGoogle = (credential) =>
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({credential})
   })
 
+export const requestStudentGoogleEmail = (email) =>
+  apiRequest('/api/account/student-onboarding/google-email/request', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email})
+  })
+
+export const verifyStudentGoogleEmail = (code) =>
+  apiRequest('/api/account/student-onboarding/google-email/verify', {
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({code})
+  })
+
 export const completeStudentOnboarding = (profile) =>
   apiRequest('/api/account/student-onboarding/profile', {
     method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(profile)

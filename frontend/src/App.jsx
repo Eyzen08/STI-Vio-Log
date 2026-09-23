@@ -2325,7 +2325,7 @@ function App() {
               </AsyncActionButton>
             </form>
           </section></Modal>}
-          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, bind a verified Google account, and complete academic, contact, and guardian information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
+          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, confirm their Google-account email by OTP, sign in with that same Google account, and complete academic, contact, and guardian information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
 
           <section className="table-card">
             <div className="table-header management-table-header">

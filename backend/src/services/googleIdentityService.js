@@ -134,7 +134,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const account = (await client.query(
         `SELECT u.id,u.username,u.role,u.session_version,u.must_change_password,s.id student_id,s.first_name,s.last_name,
-                s.onboarding_required,s.onboarding_completed_at,
+                s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
                 EXISTS(SELECT 1 FROM google_identity_links own WHERE own.user_id=u.id AND own.revoked_at IS NULL) google_linked
          FROM users u JOIN students s ON s.user_id=u.id
          WHERE u.id=$1 AND u.role='STUDENT' AND u.is_active=TRUE FOR UPDATE OF u,s`, [Number(userId)]
@@ -142,12 +142,14 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       if (!account) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Student account not found');
       if (account.must_change_password) throw new ApiError(409, 'PASSWORD_CHANGE_REQUIRED', 'Change the temporary password before binding Google');
       if (!account.onboarding_required || account.onboarding_completed_at) throw new ApiError(409, 'ONBOARDING_ALREADY_COMPLETE', 'Student onboarding is already complete');
+      if (!account.pending_google_email || !account.pending_google_email_verified_at) throw new ApiError(409, 'GOOGLE_EMAIL_CONFIRMATION_REQUIRED', 'Verify your Google account email before continuing');
+      if (String(identity.email).trim().toLowerCase() !== String(account.pending_google_email).trim().toLowerCase()) throw new ApiError(409, 'GOOGLE_EMAIL_MISMATCH', 'Sign in with the same Google account email you confirmed');
       const existing = (await client.query('SELECT id,user_id,google_subject FROM google_identity_links WHERE revoked_at IS NULL AND (user_id=$1 OR google_subject=$2) FOR UPDATE', [account.id,identity.subject])).rows;
       if (existing.some((row) => Number(row.user_id) !== Number(account.id) || row.google_subject !== identity.subject)) throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
       let linkId = existing[0]?.id;
       if (linkId) await client.query('UPDATE google_identity_links SET google_email=$2,last_login_at=CURRENT_TIMESTAMP WHERE id=$1', [linkId,identity.email]);
       else linkId = (await client.query('INSERT INTO google_identity_links(user_id,google_subject,google_email) VALUES($1,$2,$3) RETURNING id', [account.id,identity.subject,identity.email])).rows[0].id;
-      await client.query('UPDATE students SET email=$2,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [account.student_id,identity.email]);
+      await client.query('UPDATE students SET email=$2,pending_google_email=NULL,pending_google_email_verified_at=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [account.student_id,identity.email]);
       await client.query('UPDATE users SET email_verified=TRUE,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [account.id]);
       if (!existing.length) await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
         VALUES($1,'GOOGLE_LINK','google_identity_links',$2,'Google identity linked during mandatory student onboarding',$3)`, [account.id,linkId,ipAddress]);

@@ -2,7 +2,7 @@
 
 ## Mandatory Google binding for newly issued Student accounts
 
-Students whose credentials were issued by the Discipline Office first sign in with their Student Number and temporary password. Staff provision only the Student Number and legal name; the backend creates the private QR value. After changing the temporary password, the portal requires Google binding before the student supplies program, section, year level, phone number, and guardian details. The binding screen accepts any Google account with a verified email address; that address becomes the student's password-recovery email.
+Students whose credentials were issued by the Discipline Office first sign in with their Student Number and temporary password. Staff provision only the Student Number and legal name; the backend creates the private QR value. After changing the temporary password, the student enters a Google-account email, confirms the six-digit email code, and then signs in with Google using that exact address. Gmail and Google Workspace/custom-domain accounts are accepted. Only the successfully confirmed and Google-matched address becomes the password-recovery email.
 
 The student cannot open normal portal pages until the password, Google, and profile-information steps are complete. Student Number and legal name are read-only during onboarding. Returning Google sign-in resumes an incomplete setup at the correct step. Existing Student accounts are not retroactively placed into this workflow.
 

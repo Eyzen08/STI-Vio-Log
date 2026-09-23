@@ -12,9 +12,10 @@ When the Discipline Admin or Discipline Officer creates a Student account, staff
 
 1. Sign in with the Student Number and temporary password.
 2. Replace the temporary password.
-3. Bind a Google account with a Google-verified email address. Personal Gmail and school-managed Google accounts are accepted.
-4. Enter program, section, year level, the student's phone number, and the primary guardian's name, relationship, and phone number.
-5. Continue to the portal.
+3. Enter a Google-account email and confirm the six-digit code sent to that inbox.
+4. Sign in with Google using the exact confirmed address. Personal Gmail and school-managed Google accounts are accepted.
+5. Enter program, section, year level, the student's phone number, and the primary guardian's name, relationship, and phone number.
+6. Continue to the portal.
 
 The verified Google email becomes the account's password-recovery address. Student Number and legal name remain controlled by the Discipline Office and are read-only during onboarding. Academic, contact, and guardian details are saved together when the student completes onboarding; later corrections use the audited staff edit workflow. Signing out or refreshing during setup resumes the unfinished step. Accounts created before mandatory onboarding was introduced retain their existing access.
 

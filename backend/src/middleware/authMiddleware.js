@@ -48,6 +48,8 @@ const authenticateToken = async (req, res, next) => {
                 u.must_change_password,
                 s.onboarding_required,
                 s.onboarding_completed_at,
+                s.pending_google_email,
+                s.pending_google_email_verified_at,
                 EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) AS google_linked,
                 COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
                 COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name,
@@ -93,6 +95,8 @@ const authenticateToken = async (req, res, next) => {
             onboarding_required: Boolean(account.onboarding_required) && !account.onboarding_completed_at,
             onboarding_completed_at: account.onboarding_completed_at || null,
             google_linked: Boolean(account.google_linked),
+            pending_google_email: account.pending_google_email || null,
+            pending_google_email_verified_at: account.pending_google_email_verified_at || null,
             department_id: account.department_id
                 ? Number(account.department_id)
                 : null,
