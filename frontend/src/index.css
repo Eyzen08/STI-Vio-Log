@@ -113,18 +113,16 @@ html {
 ::view-transition-new(root) {
   animation-duration: 200ms;
   animation-timing-function: ease-in-out;
+  mix-blend-mode: normal;
 }
 
 ::view-transition-old(root) {
-  animation-name: theme-fade-out;
+  animation: none;
 }
 
 ::view-transition-new(root) {
   animation-name: theme-fade-in;
-}
-
-@keyframes theme-fade-out {
-  to { opacity: 0; }
+  animation-fill-mode: both;
 }
 
 @keyframes theme-fade-in {

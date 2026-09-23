@@ -45,6 +45,14 @@ test('theme controls remain named and available in both public and portal shells
   assert.match(icon, /moon:/)
 })
 
+test('theme transition keeps the outgoing frame opaque while the new theme fades in', () => {
+  assert.match(app, /document\.startViewTransition\(applyTheme\)/)
+  assert.match(foundation, /::view-transition-old\(root\)\s*\{\s*animation:\s*none;/)
+  assert.match(foundation, /::view-transition-new\(root\)\s*\{[^}]*animation-name:\s*theme-fade-in;/s)
+  assert.match(foundation, /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{[^}]*mix-blend-mode:\s*normal;/s)
+  assert.doesNotMatch(foundation, /theme-fade-out/)
+})
+
 test('dark mode is token driven and covers core portal, form, table, modal, and mobile surfaces', () => {
   assert.match(foundation, /:root\[data-theme='dark'\]/)
   for (const token of ['--surface-canvas', '--surface-raised', '--surface-nested', '--surface-interactive', '--text-primary', '--text-secondary', '--text-muted', '--border-subtle', '--link-color', '--control-background', '--modal-surface', '--chat-canvas', '--message-incoming-surface', '--message-outgoing-surface']) {
