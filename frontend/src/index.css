@@ -109,24 +109,17 @@ html {
   scroll-behavior: smooth;
 }
 
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation-duration: 200ms;
-  animation-timing-function: ease-in-out;
-  mix-blend-mode: normal;
+.theme-transition,
+.theme-transition *,
+.theme-transition *::before,
+.theme-transition *::after {
+  transition-duration: 160ms !important;
+  transition-timing-function: ease-out !important;
+  transition-property: background-color, border-color, color, fill, stroke !important;
 }
 
-::view-transition-old(root) {
-  animation: none;
-}
-
-::view-transition-new(root) {
-  animation-name: theme-fade-in;
-  animation-fill-mode: both;
-}
-
-@keyframes theme-fade-in {
-  from { opacity: 0; }
+.theme-transition .theme-toggle svg {
+  transition-property: transform !important;
 }
 
 :root[data-theme='dark'] {
@@ -263,11 +256,6 @@ h1, h2, h3, p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-  }
-
   .theme-toggle svg {
     transition: none;
   }

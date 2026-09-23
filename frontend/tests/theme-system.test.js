@@ -45,12 +45,13 @@ test('theme controls remain named and available in both public and portal shells
   assert.match(icon, /moon:/)
 })
 
-test('theme transition keeps the outgoing frame opaque while the new theme fades in', () => {
-  assert.match(app, /document\.startViewTransition\(applyTheme\)/)
-  assert.match(foundation, /::view-transition-old\(root\)\s*\{\s*animation:\s*none;/)
-  assert.match(foundation, /::view-transition-new\(root\)\s*\{[^}]*animation-name:\s*theme-fade-in;/s)
-  assert.match(foundation, /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{[^}]*mix-blend-mode:\s*normal;/s)
-  assert.doesNotMatch(foundation, /theme-fade-out/)
+test('theme transition animates colors directly without transparent page snapshots', () => {
+  assert.match(app, /classList\.add\('theme-transition'\)/)
+  assert.match(app, /classList\.remove\('theme-transition'\)/)
+  assert.match(foundation, /\.theme-transition \*::after\s*\{[^}]*transition-duration:\s*160ms !important;/s)
+  assert.match(foundation, /transition-property:\s*background-color, border-color, color, fill, stroke !important;/)
+  assert.doesNotMatch(app, /startViewTransition/)
+  assert.doesNotMatch(foundation, /::view-transition-(?:old|new)/)
 })
 
 test('dark mode is token driven and covers core portal, form, table, modal, and mobile surfaces', () => {

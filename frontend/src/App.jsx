@@ -121,6 +121,7 @@ function App() {
     if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
     return 'light'
   })
+  const themeTransitionTimerRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [mfaState,setMfaState]=useState(null)
@@ -142,19 +143,27 @@ function App() {
   }, [theme])
 
   const toggleTheme = useCallback(() => {
-    const applyTheme = () => {
-      flushSync(() => {
-        setTheme((current) => current === 'dark' ? 'light' : 'dark')
-      })
-    }
-
+    const root = document.documentElement
     const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-    if (!document.startViewTransition || prefersReducedMotion) {
-      applyTheme()
-      return
+    if (!prefersReducedMotion) {
+      window.clearTimeout(themeTransitionTimerRef.current)
+      root.classList.add('theme-transition')
     }
 
-    document.startViewTransition(applyTheme)
+    flushSync(() => {
+      setTheme((current) => current === 'dark' ? 'light' : 'dark')
+    })
+
+    if (!prefersReducedMotion) {
+      themeTransitionTimerRef.current = window.setTimeout(() => {
+        root.classList.remove('theme-transition')
+      }, 180)
+    }
+  }, [])
+
+  useEffect(() => () => {
+    window.clearTimeout(themeTransitionTimerRef.current)
+    document.documentElement.classList.remove('theme-transition')
   }, [])
 
   useEffect(() => {
