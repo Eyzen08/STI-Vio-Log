@@ -109,16 +109,16 @@ html {
   scroll-behavior: smooth;
 }
 
-.theme-transition,
-.theme-transition *,
-.theme-transition *::before,
-.theme-transition *::after {
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
   transition-duration: 160ms !important;
   transition-timing-function: ease-out !important;
-  transition-property: background-color, border-color, color, fill, stroke !important;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
 }
 
-.theme-transition .theme-toggle svg {
+.theme-transitioning .theme-toggle svg {
   transition-property: transform !important;
 }
 

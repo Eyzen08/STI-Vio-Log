@@ -43,6 +43,7 @@ import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
+import { applyTheme, readDocumentTheme } from './lib/theme.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
@@ -115,11 +116,7 @@ function App() {
   const [routePath, setRoutePath] = useState(() => window.location.pathname)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
-  const [theme, setTheme] = useState(() => {
-    const savedTheme = window.localStorage.getItem('sti-vio-log-theme')
-    if (savedTheme === 'light' || savedTheme === 'dark') return savedTheme
-    return 'light'
-  })
+  const [theme, setTheme] = useState(() => readDocumentTheme(document))
   const themeTransitionTimerRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -134,35 +131,33 @@ function App() {
   const [user, setUser] = useState(null)
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
 
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme
-    document.documentElement.style.colorScheme = theme
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#071421' : '#075aab')
-    window.localStorage.setItem('sti-vio-log-theme', theme)
-  }, [theme])
-
   const toggleTheme = useCallback(() => {
     const root = document.documentElement
     const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const nextTheme = readDocumentTheme(document) === 'dark' ? 'light' : 'dark'
+
+    window.clearTimeout(themeTransitionTimerRef.current)
     if (!prefersReducedMotion) {
-      window.clearTimeout(themeTransitionTimerRef.current)
-      root.classList.add('theme-transition')
+      root.classList.add('theme-transitioning')
+    } else {
+      root.classList.remove('theme-transitioning')
     }
 
+    applyTheme(nextTheme, document, window.localStorage)
     flushSync(() => {
-      setTheme((current) => current === 'dark' ? 'light' : 'dark')
+      setTheme(nextTheme)
     })
 
     if (!prefersReducedMotion) {
       themeTransitionTimerRef.current = window.setTimeout(() => {
-        root.classList.remove('theme-transition')
+        root.classList.remove('theme-transitioning')
       }, 180)
     }
   }, [])
 
   useEffect(() => () => {
     window.clearTimeout(themeTransitionTimerRef.current)
-    document.documentElement.classList.remove('theme-transition')
+    document.documentElement.classList.remove('theme-transitioning')
   }, [])
 
   useEffect(() => {
@@ -3371,7 +3366,7 @@ function App() {
    */
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`} data-theme={theme}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       {isLoggedIn && isMobileNavOpen && (
         <button

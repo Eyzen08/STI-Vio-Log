@@ -2964,7 +2964,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .theme-toggle svg { width:18px; height:18px; flex:0 0 auto; }
 .auth-theme-toggle { position:fixed; z-index:40; top:max(1.25rem,env(safe-area-inset-top)); right:1.25rem; background:rgba(255,255,255,.94) !important; box-shadow:0 .5rem 1.4rem rgba(4,27,57,.14) !important; backdrop-filter:blur(12px); }
 
-[data-theme='dark'].app-shell:not(.auth-shell) {
+:root[data-theme='dark'] .app-shell:not(.auth-shell) {
   --portal-blue:#1683e6;
   --portal-blue-hover:#2997f1;
   --portal-message-border:#294d70;

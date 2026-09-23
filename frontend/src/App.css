@@ -3656,6 +3656,7 @@ a {
   min-height: 100dvh;
   padding: clamp(32px, 4.2vw, 68px);
   overflow: hidden;
+  background-color: #0755a3;
   background-position: center;
   background-size: cover;
   color: white;
@@ -3669,7 +3670,7 @@ a {
   height: 100%;
   object-fit: cover;
   object-position: center;
-  transition: opacity 220ms ease-out;
+  transition: none;
 }
 
 .login-campus-image--day { opacity: 1; }
@@ -3678,8 +3679,8 @@ a {
 :root[data-theme='dark'] .login-campus-image--day { opacity: 0; }
 :root[data-theme='dark'] .login-campus-image--night { opacity: 1; }
 
-.theme-transition .login-campus-image {
-  transition-property: opacity !important;
+.theme-transitioning .login-campus-image {
+  transition: opacity 160ms ease-out !important;
 }
 
 .login-intro::before {

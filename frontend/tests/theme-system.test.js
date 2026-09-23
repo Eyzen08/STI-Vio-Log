@@ -7,6 +7,7 @@ const studentDashboard = await readFile(new URL('../src/components/StudentDashbo
 const passwordChange = await readFile(new URL('../src/components/PasswordChangeRequired.jsx', import.meta.url), 'utf8')
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
+const appCss = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
 const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
@@ -27,14 +28,13 @@ function contrast(foreground, background) {
 }
 
 test('appearance preference defaults to the light reference, persists, and updates browser color scheme', () => {
-  assert.match(app, /localStorage\.getItem\('sti-vio-log-theme'\)/)
-  assert.match(app, /if \(savedTheme === 'light' \|\| savedTheme === 'dark'\) return savedTheme\s+return 'light'/)
-  assert.match(app, /document\.documentElement\.dataset\.theme = theme/)
-  assert.match(app, /document\.documentElement\.style\.colorScheme = theme/)
-  assert.match(app, /localStorage\.setItem\('sti-vio-log-theme', theme\)/)
-  assert.match(app, /meta\[name="theme-color"\]/)
+  assert.match(app, /useState\(\(\) => readDocumentTheme\(document\)\)/)
+  assert.match(app, /applyTheme\(nextTheme, document, window\.localStorage\)/)
+  assert.doesNotMatch(app, /data-theme=\{theme\}/)
   assert.match(html, /<script src="\/theme-bootstrap\.js"><\/script>/)
-  assert.match(bootstrap, /localStorage\.getItem\('sti-vio-log-theme'\)[\s\S]*document\.documentElement\.dataset\.theme = theme/)
+  assert.match(bootstrap, /let theme = 'light'[\s\S]*localStorage\.getItem\('sti-vio-log-theme'\)[\s\S]*document\.documentElement\.dataset\.theme = theme/)
+  assert.match(bootstrap, /document\.documentElement\.style\.colorScheme = theme/)
+  assert.match(bootstrap, /meta\[name="theme-color"\]/)
 })
 
 test('theme controls remain named and available in both public and portal shells', () => {
@@ -49,12 +49,24 @@ test('theme controls remain named and available in both public and portal shells
 })
 
 test('theme transition animates colors directly without transparent page snapshots', () => {
-  assert.match(app, /classList\.add\('theme-transition'\)/)
-  assert.match(app, /classList\.remove\('theme-transition'\)/)
-  assert.match(foundation, /\.theme-transition \*::after\s*\{[^}]*transition-duration:\s*160ms !important;/s)
-  assert.match(foundation, /transition-property:\s*background-color, border-color, color, fill, stroke !important;/)
+  assert.match(app, /classList\.add\('theme-transitioning'\)/)
+  assert.match(app, /classList\.remove\('theme-transitioning'\)/)
+  assert.match(app, /clearTimeout\(themeTransitionTimerRef\.current\)[\s\S]*classList\.add\('theme-transitioning'\)/)
+  assert.match(app, /prefers-reduced-motion: reduce/)
+  assert.match(foundation, /\.theme-transitioning \*::after\s*\{[^}]*transition-duration:\s*160ms !important;/s)
+  assert.match(foundation, /transition-property:\s*background-color, border-color, color, fill, stroke, box-shadow !important;/)
+  const transitionStart = foundation.indexOf('.theme-transitioning')
+  const transitionRule = foundation.slice(transitionStart, foundation.indexOf('}', transitionStart) + 1)
+  assert.doesNotMatch(transitionRule, /\b(?:width|height|margin|padding|top|left|right|bottom|grid|transform)\b/)
   assert.doesNotMatch(app, /startViewTransition/)
   assert.doesNotMatch(foundation, /::view-transition-(?:old|new)/)
+  assert.doesNotMatch(`${foundation}\n${portal}`, /transition\s*:\s*all\b|transition-all/)
+})
+
+test('theme image layers preload and crossfade without a blank frame', () => {
+  assert.match(html, /rel="preload" as="image"[^>]+sti-global-city-building-web\.jpg/)
+  assert.match(html, /rel="preload" as="image"[^>]+sti-global-city-building-night\.jpg/)
+  assert.match(appCss, /\.theme-transitioning \.login-campus-image\s*\{[^}]*opacity 160ms ease-out/s)
 })
 
 test('dark mode is token driven and covers core portal, form, table, modal, and mobile surfaces', () => {
