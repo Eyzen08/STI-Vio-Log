@@ -1870,7 +1870,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 :root[data-theme='dark'] :is(.primary-action,.primary-row-action,.submit-btn,.login-submit,.clearance-approve-button,.clearance-issue-button),
-:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):last-child {
+:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):not(.danger-button):last-child {
   border-color: var(--color-primary) !important;
   background: var(--color-primary) !important;
   color: var(--text-on-accent) !important;
@@ -3266,7 +3266,45 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .app-modal :is(h1,h2,h3,h4,strong,label) { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .app-modal :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .app-modal :is(input,select,textarea) { border-color:var(--border-strong) !important; background:var(--control-background) !important; color:var(--text-primary) !important; }
-:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):last-child { border-color:var(--color-primary) !important; background:var(--color-primary) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):not(.danger-button):last-child { border-color:var(--color-primary) !important; background:var(--color-primary) !important; color:var(--text-on-accent) !important; }
+
+/* Keep every validation and destructive state on the shared danger palette. */
+:root[data-theme='dark'] .error-message {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.field-error,.registration-field-error,.password-requirements .invalid,.danger-text) {
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(input,select,textarea)[aria-invalid='true'] {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(input,select,textarea)[aria-invalid='true']:focus-visible {
+  outline-color:var(--color-danger) !important;
+}
+:root[data-theme='dark'] .account-action-notice--danger {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .danger-button {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .danger-button:hover:not(:disabled),
+:root[data-theme='dark'] .danger-button:active:not(:disabled) {
+  border-color:var(--color-danger) !important;
+  background:var(--color-danger) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] .danger-button:focus-visible {
+  outline-color:var(--color-danger) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--color-danger) 35%,transparent) !important;
+}
 
 :root[data-theme='dark'] .main-panel--messages :is(.messages-workspace,.conversation-pane,.chat-pane,.chat-header,.chat-composer) {
   border-color: var(--border-subtle) !important;

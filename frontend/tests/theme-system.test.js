@@ -77,6 +77,16 @@ test('dark semantic text and state colors meet WCAG AA contrast', () => {
   }
 })
 
+test('dark validation and destructive controls share danger tokens', () => {
+  for (const selector of ['.error-message', '.field-error', '.registration-field-error', ".password-requirements .invalid", '.danger-text', "[aria-invalid='true']", '.account-action-notice--danger', '.danger-button']) {
+    assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(portal, /\.error-message\s*\{[^}]*var\(--status-danger-surface\)[^}]*var\(--status-danger-text\)/s)
+  assert.match(portal, /\.danger-button:hover:not\(:disabled\)[\s\S]*background:var\(--color-danger\)/)
+  assert.equal((portal.match(/button:not\(\[type='button'\]\):not\(\.danger-button\):last-child/g) || []).length, 2)
+  assert.doesNotMatch(portal, /button:not\(\[type='button'\]\):last-child\s*\{[^}]*background:var\(--color-primary\)/)
+})
+
 test('dark surfaces cover metrics, quick actions, tables, dialogs, messaging, QR, and status states', () => {
   for (const selector of ['.management-metric', '.dashboard-quick-actions', '.qr-stage-card', '.app-modal-header', '.officer-directory', '.certificate-student-card', '.conversation-list', '.message-bubble', '.auth-card.login-card', '.progress-ring', '.status-complete', '.error-message']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
