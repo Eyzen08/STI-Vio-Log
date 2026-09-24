@@ -15,7 +15,7 @@ if (!/^sti_vio_log_test_[a-z0-9_]+$/.test(schemaName)) {
 }
 
 process.env.DB_SCHEMA = schemaName;
-process.env.JWT_SECRET = process.env.JWT_SECRET || 'this-is-a-secure-test-secret-123456';
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'q'.repeat(48);
 
 const dedicatedDatabase = testDatabaseConfig();
 process.env.DATABASE_URL = dedicatedDatabase.connectionString;
