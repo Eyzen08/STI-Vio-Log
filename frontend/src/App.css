@@ -5589,8 +5589,8 @@ a {
   border-radius: 9px;
 }
 
-.chat-composer > button b {
-  font-size: .9rem;
+.chat-composer > button svg {
+  flex: 0 0 auto;
 }
 
 @media (max-width: 900px) {

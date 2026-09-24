@@ -20,6 +20,14 @@ test('mobile messages keep a compact heading and keyboard-safe composer', async 
   assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
 })
 
+test('message composer uses the shared professional send icon', async () => {
+  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
+  const icons = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
+  assert.match(component, /<PortalIcon name="send" \/>/)
+  assert.doesNotMatch(component, /↗/)
+  assert.match(icons, /send:\s*<><path/)
+})
+
 test('message workspace keeps the composer visible and scrolls both content columns', async () => {
   const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(css, /\.main-panel--messages\s*\{[^}]*height:\s*100dvh;[^}]*display:\s*flex;[^}]*overflow:\s*hidden;/s)
