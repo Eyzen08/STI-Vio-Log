@@ -19,6 +19,10 @@ test('preview deployments cannot use the declared production backend', () => {
   assert.throws(() => buildConfig({ VERCEL_TARGET_ENV:'preview', API_PROXY_ORIGIN:'https://api.example.edu', PRODUCTION_API_ORIGIN:'https://api.example.edu' }), /must not proxy/)
 })
 
+test('preview deployments without a backend disable API and Socket.IO proxies', () => {
+  assert.deepEqual(buildConfig({ VERCEL_TARGET_ENV:'preview' }).rewrites, [{ source:'/(.*)', destination:'/index.html' }])
+})
+
 test('CSP permits only exact API and websocket origins', () => {
   const csp = buildConfig(process.env).headers[0].headers.find(({ key }) => key === 'Content-Security-Policy').value
   assert.match(csp, /connect-src 'self' https:\/\/staging-api\.example\.edu wss:\/\/staging-api\.example\.edu/)

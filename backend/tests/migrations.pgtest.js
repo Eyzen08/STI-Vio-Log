@@ -37,6 +37,7 @@ test("fresh migration chain is complete and idempotent", async () => {
         const first = await runMigrations(pool, { logger: { log() {} } });
         assert.equal(first.applied.pop(), "040_data_api_lockdown.sql");
         assert.equal(first.applied.pop(), "039_student_google_email_confirmation.sql");
+        assert.equal(first.applied.pop(), "038_student_mandatory_onboarding.sql");
         assert.equal(first.applied.pop(), "037_merge_system_administrator.sql");
         assert.equal(first.applied.pop(), "036_database_retention_maintenance.sql");
         assert.equal(first.applied.pop(), "035_function_search_path_hardening.sql");
@@ -202,6 +203,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
         assert.equal(legacyResult.applied.pop(), "040_data_api_lockdown.sql");
         assert.equal(legacyResult.applied.pop(), "039_student_google_email_confirmation.sql");
+        assert.equal(legacyResult.applied.pop(), "038_student_mandatory_onboarding.sql");
         assert.equal(legacyResult.applied.pop(), "037_merge_system_administrator.sql");
         assert.equal(legacyResult.applied.pop(), "036_database_retention_maintenance.sql");
         assert.equal(legacyResult.applied.pop(), "035_function_search_path_hardening.sql");
