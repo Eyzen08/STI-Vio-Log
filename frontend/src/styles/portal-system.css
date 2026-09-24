@@ -2052,8 +2052,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:#172033 !important;
 }
 
-/* Department type is now derived from the official department name. */
-.department-officer-create .student-form-grid > label:nth-child(2) { display:none; }
+/* Department type is derived from the official department name. */
+.department-officer-create .derived-department-type { display:none; }
 
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate) :is(h1,h2,h3,h4,p,span,strong,dt,dd) { color:inherit; }
 :root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini) { outline:1px solid var(--border-strong); outline-offset:3px; }
@@ -4582,3 +4582,18 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root:not([data-theme='dark']) .department-welcome.portal-page-header .eyebrow { color: var(--color-text-secondary) !important; }
 :root:not([data-theme='dark']) .department-welcome.portal-page-header p:not(.eyebrow) { color: var(--color-text-secondary) !important; }
 :root[data-theme='dark'] .department-welcome.portal-page-header :is(.eyebrow,p:not(.eyebrow)) { color: var(--text-secondary) !important; }
+
+/* Inline department wizard uses readable dark surfaces after leaving its former modal. */
+:root[data-theme='dark'] .department-officer-create.department-tab-panel :is(.section-heading h3,.student-form label) { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .section-heading p { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper { border-color: var(--border-subtle) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-secondary) !important;
+  box-shadow: none !important;
+  opacity: 1;
+}
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button b { background: var(--surface-interactive) !important; color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button.active { color: var(--link-hover) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button.active b { background: var(--color-primary) !important; color: var(--text-on-accent) !important; }
