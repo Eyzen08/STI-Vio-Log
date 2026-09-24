@@ -177,10 +177,7 @@ const calculateSessionWork = ({ requiredHours, completedHours, elapsedMinutes })
     return {
         actualElapsedMinutes,
         timerLimitMinutes,
-        // Preserve the actual attended duration for DTR/audit evidence. Credit is
-        // capped separately by calculateSessionCredit so excess time never
-        // changes the authoritative service requirement.
-        workedMinutes: actualElapsedMinutes,
+        workedMinutes: Math.min(actualElapsedMinutes, timerLimitMinutes),
         limitReached: actualElapsedMinutes >= timerLimitMinutes
     };
 };

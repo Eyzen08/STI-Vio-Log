@@ -34,11 +34,15 @@ END $$;
 DO $$
 DECLARE target_schema TEXT := current_schema(); audit_table TEXT;
 BEGIN
-  FOREACH audit_table IN ARRAY ARRAY['audit_logs','administrative_security_events'] LOOP
+  FOREACH audit_table IN ARRAY ARRAY['audit_logs','administrative_security_events','schema_migrations'] LOOP
     IF to_regclass(format('%I.%I',target_schema,audit_table)) IS NOT NULL
        AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname='sti_vio_log_runtime') THEN
-      EXECUTE format('REVOKE UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER ON TABLE %I.%I FROM sti_vio_log_runtime',target_schema,audit_table);
-      EXECUTE format('GRANT SELECT,INSERT ON TABLE %I.%I TO sti_vio_log_runtime',target_schema,audit_table);
+      EXECUTE format('REVOKE ALL ON TABLE %I.%I FROM sti_vio_log_runtime',target_schema,audit_table);
+      IF audit_table='schema_migrations' THEN
+        EXECUTE format('GRANT SELECT ON TABLE %I.%I TO sti_vio_log_runtime',target_schema,audit_table);
+      ELSE
+        EXECUTE format('GRANT SELECT,INSERT ON TABLE %I.%I TO sti_vio_log_runtime',target_schema,audit_table);
+      END IF;
     END IF;
   END LOOP;
 END $$;

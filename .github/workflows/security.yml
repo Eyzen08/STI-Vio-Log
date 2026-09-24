@@ -45,13 +45,18 @@ jobs:
         env:
           MIGRATION_DATABASE_URL: postgresql://postgres:disposable-ci-password@127.0.0.1:5432/sti_vio_log_security
           DB_SSL: disable
-        run: npm run migrate
+          DB_SCHEMA: sti_vio_log_test_security_gate
+          PGPASSWORD: disposable-ci-password
+        run: |
+          psql -h 127.0.0.1 -U postgres -d sti_vio_log_security -v ON_ERROR_STOP=1 -c "CREATE SCHEMA sti_vio_log_test_security_gate;"
+          npm run migrate
       - name: Verify least-privilege runtime role and database invariants
         working-directory: backend
         env:
           PGPASSWORD: disposable-runtime-password
           DATABASE_URL: postgresql://sti_vio_log_ci_runtime:disposable-runtime-password@127.0.0.1:5432/sti_vio_log_security
           DB_SSL: disable
+          DB_SCHEMA: sti_vio_log_test_security_gate
         run: |
           PGPASSWORD=disposable-ci-password psql -h 127.0.0.1 -U postgres -d sti_vio_log_security -v ON_ERROR_STOP=1 -c "CREATE ROLE sti_vio_log_ci_runtime LOGIN PASSWORD 'disposable-runtime-password' IN ROLE sti_vio_log_runtime NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;"
           npm run security:database

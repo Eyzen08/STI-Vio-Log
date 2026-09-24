@@ -530,7 +530,7 @@ test('parallel TIME_IN and TIME_OUT requests preserve one session and one credit
   assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE table_name = 'community_service_sessions' AND action = 'TIME_OUT_CREDITED'", [])).rows[0].count, 1);
 });
 
-test('DTR reports return exact worked and capped credited minutes with secure filters', async () => {
+test('DTR reports return requirement-capped worked and credited minutes with secure filters', async () => {
   const adminToken = await login('admin_test');
   const headToken = await login('head_test');
   const studentToken = await login('student_test');
@@ -556,7 +556,7 @@ test('DTR reports return exact worked and capped credited minutes with secure fi
   const report = await request(`/api/reports/dtr?assignment_id=${assignment.id}&department_id=${departmentId}`, { token: adminToken });
   assert.equal(report.status, 200);
   assert.equal(report.body.totals.completed_sessions, 3);
-  assert.equal(report.body.totals.worked_minutes, 135);
+  assert.equal(report.body.totals.worked_minutes, 120);
   assert.equal(report.body.totals.credited_minutes, 120);
   assert.equal(report.body.data[0].remaining_hours, '0.00');
 
