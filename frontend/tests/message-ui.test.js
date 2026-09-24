@@ -13,11 +13,22 @@ test('message UI helpers expose the required text limit and filters', () => {
 
 test('mobile messages keep a compact heading and keyboard-safe composer', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const baseCss = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
   const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.match(app, /activeView === 'Messages' \? ' main-panel--messages' : ''/)
   assert.match(css, /\.messages-page-heading \{ display: flex; flex-direction: row;/)
   assert.match(css, /\.chat-composer \{ position: sticky; bottom: 0;/)
   assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
+  assert.match(baseCss, /\.chat-composer > button \{[^}]*align-self:\s*center;/s)
+})
+
+test('open mobile threads use the full message workspace without the page heading', async () => {
+  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
+  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(component, /messages-page messages-inbox\$\{selected\?' has-open-thread':''\}/)
+  assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread\s*\{[^}]*gap:\s*0;/)
+  assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread > \.messages-page-heading\s*\{[^}]*display:\s*none;/)
+  assert.match(css, /\.messages-inbox:not\(\.has-open-thread\) \.chat-pane\s*\{\s*display:none;/)
 })
 
 test('message composer uses the shared professional send icon', async () => {

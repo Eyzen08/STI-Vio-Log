@@ -2920,6 +2920,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 @media (max-width:900px) {
   .main-panel--messages .messages-workspace { grid-template-columns:1fr; }
   .main-panel--messages .conversation-pane { border-right:0; }
+  .main-panel--messages .messages-inbox.has-open-thread { gap:0; }
+  .main-panel--messages .messages-inbox.has-open-thread > .messages-page-heading { display:none; }
   .messages-inbox.has-open-thread .conversation-pane { display:none; }
   .messages-inbox:not(.has-open-thread) .chat-pane { display:none; }
   .main-panel .chat-mobile-back { display:inline-grid; min-width:2.4rem; min-height:2.4rem; place-items:center; border:1px solid #d4e0ec; background:#fff; color:#0a5eae; box-shadow:none; }

@@ -4284,7 +4284,7 @@ a {
 .chat-composer label { position: relative; }
 .chat-composer textarea { width: 100%; min-height: 62px; max-height: 125px; resize: vertical; padding: 11px 14px 22px; border: 1px solid #cfd9e6; border-radius: 11px; font: inherit; box-sizing: border-box; }
 .chat-composer label small { position: absolute; right: 10px; bottom: 7px; color: #718096; font-size: .68rem; }
-.chat-composer > button { align-self: end; min-width: 92px; height: 44px; }
+.chat-composer > button { align-self: center; min-width: 92px; height: 44px; }
 .chat-composer > p { grid-column: 1/-1; margin: 0; color: #7b879a; font-size: .68rem; }
 .message-new-form { display: grid; gap: 15px; }
 .message-new-form label { display: grid; gap: 7px; font-weight: 700; }
