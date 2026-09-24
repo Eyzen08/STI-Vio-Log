@@ -4329,6 +4329,14 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 
 .portal-page-header > * { position: relative; min-width: 0; }
 .portal-page-header > :first-child { flex: 1 1 auto; }
+.profile-card > .portal-page-header > .profile-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 4.5rem;
+  align-self: center;
+  font-size: 1.2rem;
+  line-height: 1;
+}
 .portal-page-header :is(h1, h2) {
   margin-block: 0.3rem 0.35rem;
   color: var(--color-text);
@@ -4382,6 +4390,13 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .portal-page-header > :is(.readonly-badge, .status-badge, .scanner-state, time) { align-self: flex-start; }
   .portal-page-header .department-officer-tabs { width: 100%; }
   .profile-card > .portal-page-header { width: calc(100% - 1rem); margin: 0.5rem; }
+  .profile-card > .portal-page-header > .profile-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-basis: 3.5rem;
+    align-self: flex-start;
+    font-size: 1rem;
+  }
   .profile-card > .portal-page-header .profile-readonly-badge { align-self: flex-start; margin-left: 0; white-space: normal; }
 
   /* Messages has a higher-specificity legacy row rule. Keep the shared mobile
