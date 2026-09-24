@@ -91,7 +91,7 @@ Migration 034 creates a restricted runtime group, revokes Supabase `anon`/`authe
 
 ### NV-05 — Preview isolation is provider-dependent
 
-`frontend/vercel.json:3-5` hardcodes both `/api` and `/socket.io` to the production Render hostname. Whether preview deployments are public and whether they may access production depends on Vercel/Render settings not stored here. Before handover, preview builds must use a separate non-production backend or be access-controlled and prevented from carrying production secrets/cookies.
+Remediation implemented in source: `frontend/vercel.mjs` now requires an environment-scoped API origin and rejects a preview/staging target that equals the declared production origin. Provider-side variable scoping and preview protection still require owner validation before this item can be closed.
 
 ## Authentication Assessment
 

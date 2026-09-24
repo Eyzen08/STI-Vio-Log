@@ -31,8 +31,9 @@ const createSession = async ({userId,ipAddress,userAgent,database=pool}) => {
   return {token,csrf,expiresAt:result.rows[0].absolute_expires_at};
 };
 const setSessionCookies=(res,created)=>{appendCookie(res,COOKIE_NAME,created.token,cookieOptions(8*60*60*1000));appendCookie(res,CSRF_COOKIE,created.csrf,{...cookieOptions(8*60*60*1000),httpOnly:false});clearCookie(res,PREAUTH_COOKIE);};
-const revokeFromRequest=async(req,database=pool)=>{const token=parseCookies(req.headers.cookie)[COOKIE_NAME];if(token)await database.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE token_hash=$1 AND revoked_at IS NULL',[hash(token)]);};
-const revokeUserSessions=(userId,database=pool)=>database.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL',[Number(userId)]);
+const disconnectRealtimeUser=async(userId,reason)=>{if(!userId)return;try{await require('../realtime').disconnectUserSockets(userId,reason)}catch(_){/* Database revocation remains authoritative. */}};
+const revokeFromRequest=async(req,database=pool)=>{const token=parseCookies(req.headers.cookie)[COOKIE_NAME];if(!token)return;const result=await database.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE token_hash=$1 AND revoked_at IS NULL RETURNING user_id',[hash(token)]);await disconnectRealtimeUser(result.rows[0]?.user_id,'logout');};
+const revokeUserSessions=async(userId,database=pool)=>{const result=await database.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL',[Number(userId)]);await disconnectRealtimeUser(userId,'sessions_revoked');return result;};
 const clearSessionCookies=(res)=>{clearCookie(res,COOKIE_NAME);clearCookie(res,PREAUTH_COOKIE);clearCookie(res,CSRF_COOKIE);};
 
 module.exports={COOKIE_NAME,PREAUTH_COOKIE,CSRF_COOKIE,hash,randomToken,parseCookies,cookieOptions,appendCookie,clearCookie,publicUser,createSession,setSessionCookies,revokeFromRequest,revokeUserSessions,clearSessionCookies};

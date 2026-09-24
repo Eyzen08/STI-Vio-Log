@@ -75,10 +75,40 @@ const renderCertificatePdf = ({ certificateNumber, studentName, program, complet
 });
 
 const parseSignatureImage = (dataUrl) => {
-  const match = /^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/.exec(String(dataUrl || ''));
+  const match = /^data:(image\/(?:png|jpeg));base64,((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)$/.exec(String(dataUrl || ''));
   if (!match) throw new ApiError(400, 'INVALID_SIGNATURE_IMAGE', 'Upload a PNG or JPEG signature image');
   const buffer = Buffer.from(match[2], 'base64');
   if (!buffer.length || buffer.length > 1024 * 1024) throw new ApiError(400, 'INVALID_SIGNATURE_IMAGE', 'Signature image must be 1 MB or smaller');
+  const invalid = () => { throw new ApiError(400, 'INVALID_SIGNATURE_IMAGE', 'Upload a valid PNG or JPEG signature image'); };
+  if (match[1] === 'image/png') {
+    if (buffer.length < 45 || !buffer.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]))) invalid();
+    if (buffer.readUInt32BE(8) !== 13 || buffer.subarray(12, 16).toString('ascii') !== 'IHDR') invalid();
+    const width = buffer.readUInt32BE(16), height = buffer.readUInt32BE(20);
+    if (!width || !height || width > 4096 || height > 4096 || width * height > 8_000_000) invalid();
+    const iend = buffer.lastIndexOf(Buffer.from([0,0,0,0,73,69,78,68,174,66,96,130]));
+    if (iend < 33 || iend + 12 !== buffer.length) invalid();
+  } else {
+    if (buffer.length < 20 || buffer[0] !== 0xff || buffer[1] !== 0xd8 || buffer.at(-2) !== 0xff || buffer.at(-1) !== 0xd9) invalid();
+    let offset = 2, dimensions = null;
+    while (offset < buffer.length - 2) {
+      if (buffer[offset] !== 0xff) invalid();
+      while (buffer[offset] === 0xff) offset++;
+      const marker = buffer[offset++];
+      if (marker === 0xd9) break;
+      if (marker === 0xda) { if (!dimensions) invalid(); break; }
+      if (offset + 2 > buffer.length) invalid();
+      const length = buffer.readUInt16BE(offset);
+      if (length < 2 || offset + length > buffer.length) invalid();
+      if ([0xc0,0xc1,0xc2,0xc3,0xc5,0xc6,0xc7,0xc9,0xca,0xcb,0xcd,0xce,0xcf].includes(marker)) {
+        if (length < 7) invalid();
+        const height = buffer.readUInt16BE(offset + 3), width = buffer.readUInt16BE(offset + 5);
+        if (!width || !height || width > 4096 || height > 4096 || width * height > 8_000_000) invalid();
+        dimensions = { width, height };
+      }
+      offset += length;
+    }
+    if (!dimensions) invalid();
+  }
   return { mimeType: match[1], buffer };
 };
 

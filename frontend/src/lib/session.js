@@ -1,5 +1,7 @@
 const USER_KEY = 'sti_vio_log_user'
 const CSRF_KEY = 'sti_vio_log_csrf'
+const DISPLAY_FIELDS = ['id','username','role','first_name','last_name','full_name','department_id','department_name','department_code','password_change_required','onboarding_required','onboarding_completed_at','onboarding_step','google_onboarding_stage','onboarding_google_email']
+const displayUser = (user) => Object.fromEntries(DISPLAY_FIELDS.filter((field) => user?.[field] !== undefined).map((field) => [field, user[field]]))
 
 export const clearSession = () => {
   localStorage.removeItem('sti_vio_log_token')
@@ -27,7 +29,7 @@ export const loadSession = () => {
 
 export const saveSession = ({ user, csrf_token }) => {
   localStorage.removeItem('sti_vio_log_token')
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  localStorage.setItem(USER_KEY, JSON.stringify(displayUser(user)))
   if(csrf_token)globalThis.sessionStorage?.setItem(CSRF_KEY,csrf_token)
 }
 

@@ -2,6 +2,7 @@ require('dotenv').config({ quiet: true });
 const pool = require('../src/config/database');
 const { validateSecureConfig } = require('../src/config/security');
 const { migrationStatus } = require('./migrate');
+const { checkDatabaseSecurity } = require('./check-database-security');
 
 const runProductionCheck = async ({ environment = process.env, database = pool } = {}) => {
   const configuration = validateSecureConfig(environment);
@@ -17,7 +18,8 @@ const runProductionCheck = async ({ environment = process.env, database = pool }
   const migrations = await migrationStatus(database, undefined, { ensure: false });
   const pending = migrations.filter((migration) => !migration.applied).map((migration) => migration.name);
   if (pending.length) throw new Error(`Pending database migrations: ${pending.join(', ')}`);
-  return { database: 'connected', migrations: 'current', migration_count: migrations.length };
+  const security = await checkDatabaseSecurity(database);
+  return { database: 'connected', migrations: 'current', migration_count: migrations.length, database_security:'passed', security };
 };
 
 if (require.main === module) runProductionCheck()

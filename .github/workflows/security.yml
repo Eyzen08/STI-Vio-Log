@@ -8,6 +8,59 @@ on:
 permissions:
   contents: read
 jobs:
+  database-security:
+    name: Disposable PostgreSQL migration and security gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: sti_vio_log_security
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d sti_vio_log_security"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - working-directory: backend
+        run: npm ci --ignore-scripts
+      - name: Run migration and concurrency suites in disposable schemas
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:disposable-ci-password@127.0.0.1:5432/sti_vio_log_security
+          NODE_ENV: test
+        run: npm run test:migrations && npm run test:violation-integration
+      - name: Apply production migration chain
+        working-directory: backend
+        env:
+          MIGRATION_DATABASE_URL: postgresql://postgres:disposable-ci-password@127.0.0.1:5432/sti_vio_log_security
+          DB_SSL: disable
+          DB_SCHEMA: sti_vio_log_test_security_gate
+          PGPASSWORD: disposable-ci-password
+        run: |
+          psql -h 127.0.0.1 -U postgres -d sti_vio_log_security -v ON_ERROR_STOP=1 -c "CREATE SCHEMA sti_vio_log_test_security_gate;"
+          npm run migrate
+      - name: Verify least-privilege runtime role and database invariants
+        working-directory: backend
+        env:
+          PGPASSWORD: disposable-runtime-password
+          DATABASE_URL: postgresql://sti_vio_log_ci_runtime:disposable-runtime-password@127.0.0.1:5432/sti_vio_log_security
+          DB_SSL: disable
+          DB_SCHEMA: sti_vio_log_test_security_gate
+        run: |
+          PGPASSWORD=disposable-ci-password psql -h 127.0.0.1 -U postgres -d sti_vio_log_security -v ON_ERROR_STOP=1 -c "CREATE ROLE sti_vio_log_ci_runtime LOGIN PASSWORD 'disposable-runtime-password' IN ROLE sti_vio_log_runtime NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;"
+          npm run security:database
+
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
