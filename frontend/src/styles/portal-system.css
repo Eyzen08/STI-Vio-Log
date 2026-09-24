@@ -4597,3 +4597,25 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button b { background: var(--surface-interactive) !important; color: var(--text-primary) !important; }
 :root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button.active { color: var(--link-hover) !important; }
 :root[data-theme='dark'] .department-officer-create.department-tab-panel .compact-stepper button.active b { background: var(--color-primary) !important; color: var(--text-on-accent) !important; }
+
+/* Align department administration copy and filters with card content. */
+.department-officer-page {
+  --department-content-inset: 1.75rem;
+}
+
+.department-officer-page .department-welcome {
+  box-sizing: border-box;
+  padding-inline: var(--department-content-inset);
+}
+
+.department-officer-page .directory-toolbar {
+  margin-inline: var(--department-content-inset);
+}
+
+@media (max-width: 900px) {
+  .department-officer-page { --department-content-inset: 1rem; }
+}
+
+@media (max-width: 600px) {
+  .department-officer-page { --department-content-inset: 0; }
+}
