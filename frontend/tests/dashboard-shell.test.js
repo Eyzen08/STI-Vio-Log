@@ -219,8 +219,10 @@ test('desktop sidebar toggle lives in the top bar without clipped positioning', 
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.sidebar-collapse \{ display: none; \}/)
 })
 
-test('topbar search owns one theme-aware focus ring', () => {
+test('topbar search owns one aligned surface and theme-aware focus ring', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  assert.match(css, /\.topbar-search \{[^}]*border: 1px solid transparent;[^}]*border-radius: 0\.45rem;/s)
+  assert.match(css, /\.main-panel \.topbar-search input \{[^}]*min-height: 0 !important;[^}]*padding: 0 !important;[^}]*border: 0 !important;[^}]*border-radius: 0 !important;[^}]*background: transparent !important;[^}]*box-shadow: none !important;/s)
   assert.match(css, /\.topbar-search:focus-within \{[^}]*border-color: var\(--link-color\) !important;[^}]*box-shadow: 0 0 0 2px color-mix\(in srgb, var\(--link-color\) 22%, transparent\);/s)
   assert.match(css, /\.main-panel \.topbar-search input:focus-visible \{[^}]*outline: 0;[^}]*box-shadow: none;/s)
   assert.match(css, /@media \(forced-colors: active\) \{[\s\S]*?\.topbar-search:focus-within \{[^}]*outline: 2px solid Highlight;/s)

@@ -244,6 +244,13 @@ test('dark administrative mobile cards override late light table backgrounds', (
   assert.doesNotMatch(mobileCards, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
 })
 
+test('dark department service cards cannot leak the legacy light touch-hover surface', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.department-service-page \.service-assignment-list > article:hover,[\s\S]*?background: transparent !important;/s)
+  assert.match(guard, /\.department-service-page \.service-assignment-heading :is\(h4,strong\)[^}]*color: var\(--text-primary\) !important;/s)
+  assert.match(guard, /\.department-service-page \.service-assignment-list :is\([^}]*article > p\)[^}]*color: var\(--text-secondary\) !important;/s)
+})
+
 test('dark duplicate review covers loading, filters, rows, comparison, and notices', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   for (const selector of ['.duplicate-skeleton span', '.duplicate-filters :is(input,select)', '.duplicate-list > button', '.duplicate-list > button.selected', '.duplicate-match-banner', '.duplicate-source-grid article header', '.duplicate-safety-note']) {

@@ -2423,9 +2423,20 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .topbar-search {
   width: min(27rem, 42vw);
   min-height: 2.2rem;
+  border: 1px solid transparent;
   border-radius: 0.45rem;
   background: #f6f9fc;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+.main-panel .topbar-search input {
+  min-height: 0 !important;
+  height: auto;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .topbar-search:focus-within {
@@ -4460,3 +4471,114 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color: #ffffff;
   box-shadow: 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18);
 }
+
+/* Department account views use one connected, measured segmented switch. */
+.main-panel .department-officer-tabs {
+  --tab-indicator-x: 4px;
+  --tab-indicator-width: 0px;
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 0;
+  padding: 4px;
+  border: 1px solid #bed2e6;
+  border-radius: 12px;
+  background: #eaf2fa;
+  box-shadow: inset 0 1px 2px rgba(23, 52, 91, 0.05);
+}
+
+.main-panel .department-officer-tabs::before {
+  position: absolute;
+  z-index: 0;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: var(--tab-indicator-width);
+  border: 1px solid #2378c4;
+  border-radius: 8px;
+  background: #0871ce;
+  box-shadow: 0 2px 5px rgba(7, 69, 126, 0.16);
+  transform: translateX(var(--tab-indicator-x));
+  transition: transform 200ms ease, width 200ms ease;
+  content: '';
+  pointer-events: none;
+}
+
+.main-panel .department-officer-tabs button,
+.main-panel .department-officer-tabs button:first-child,
+.main-panel .department-officer-tabs button:last-child {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  min-height: 44px;
+  padding: 8px 16px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #456783 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.main-panel .department-officer-tabs button:hover:not(:disabled),
+.main-panel .department-officer-tabs button:first-child:hover:not(:disabled),
+.main-panel .department-officer-tabs button:last-child:hover:not(:disabled) {
+  border: 0 !important;
+  background: transparent !important;
+  color: #0a4f8e !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.main-panel .department-officer-tabs button[aria-selected='true'] {
+  border: 0 !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.main-panel .department-officer-tabs button[aria-selected='true']::after { content: none; }
+.main-panel .department-officer-tabs button:focus-visible { outline: 3px solid rgba(8, 100, 185, 0.3); outline-offset: 1px; }
+.department-tab-panel { min-width: 0; }
+.department-tab-panel:focus-visible { outline: 3px solid rgba(8, 100, 185, 0.24); outline-offset: 4px; }
+.department-officer-create.department-tab-panel { max-width: 64rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
+
+:root[data-theme='dark'] .main-panel .department-officer-tabs { border-color: var(--border-subtle) !important; background: var(--surface-nested) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs::before { border-color: var(--link-color); background: var(--color-primary); box-shadow: 0 2px 5px rgba(0, 8, 18, 0.28); }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button:hover:not(:disabled) { color: var(--link-hover) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button[aria-selected='true'] { color: var(--text-on-accent) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel { border-color: var(--border-subtle); background: var(--surface-raised); color: var(--text-primary); }
+
+@media (max-width: 600px) {
+  .main-panel .department-officer-tabs { width: 100%; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.2fr); }
+  .main-panel .department-officer-tabs button,
+  .main-panel .department-officer-tabs button:first-child,
+  .main-panel .department-officer-tabs button:last-child { width: 100%; min-width: 0; padding-inline: 8px !important; font-size: clamp(0.68rem, 3.2vw, 0.78rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-panel .department-officer-tabs::before,
+  .main-panel .department-officer-tabs button { transition: none; }
+}
+
+/* Department service cards must not inherit the legacy light hover surface on touch browsers. */
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:hover,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:active,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:focus-within {
+  border-color: var(--border-subtle) !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+:root[data-theme='dark'] .department-service-page .service-assignment-heading :is(h4,strong),
+:root[data-theme='dark'] .department-service-page .service-progress-meta strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-service-page .service-assignment-list :is(.service-assignment-heading div span,.service-progress-meta > span,article > p) { color: var(--text-secondary) !important; }
+
+/* Shared light page-header cards override the legacy navy department hero text palette. */
+:root:not([data-theme='dark']) .department-welcome.portal-page-header .eyebrow { color: var(--color-text-secondary) !important; }
+:root:not([data-theme='dark']) .department-welcome.portal-page-header p:not(.eyebrow) { color: var(--color-text-secondary) !important; }
+:root[data-theme='dark'] .department-welcome.portal-page-header :is(.eyebrow,p:not(.eyebrow)) { color: var(--text-secondary) !important; }

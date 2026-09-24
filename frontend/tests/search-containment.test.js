@@ -32,10 +32,11 @@ test('ordinary data-entry inputs are not modified', () => {
   assert.equal(field.name, '')
 })
 
-test('department tabs share one surface and use an underline for selection', () => {
+test('department tabs share one surface and use a sliding pill for selection', () => {
   const css = read('src/styles/portal-system.css')
-  assert.match(css, /department-officer-tabs button\[aria-selected="true"\][\s\S]*background: var\(--portal-yellow\)/)
-  assert.match(css, /department-officer-tabs button\[aria-selected="true"\]::after/)
+  assert.match(css, /department-officer-tabs::before[\s\S]*--tab-indicator-width/)
+  assert.match(css, /department-officer-tabs button\[aria-selected='true'\][\s\S]*color: #ffffff/)
+  assert.match(css, /department-officer-tabs button\[aria-selected='true'\]::after \{ content: none; \}/)
   assert.doesNotMatch(css, /inset 0 0 0 2px #075cad/)
 })
 
