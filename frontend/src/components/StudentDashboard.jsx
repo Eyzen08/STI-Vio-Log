@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds } from '../lib/departmentService.js'
+import { formatLiveServiceTime, isActiveServiceSession, serviceSessionTiming } from '../lib/departmentService.js'
 import { formatMinutes, summarizeStudentService } from '../lib/studentService.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
@@ -37,6 +37,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
   const currentAssignment = assignments.find(({ status }) => ['OPEN', 'IN_PROGRESS'].includes(status)) || assignments[0]
   const offenseLevel = violations.find((item) => item.offense_indicator_level)?.offense_indicator_level || (summary.activeViolations ? 'MINOR_1' : 'NEUTRAL')
   const clearanceLabel = summary.clearanceStatus.replaceAll('_', ' ')
+  const activeTiming = activeSession ? serviceSessionTiming(activeSession, now) : null
 
   if (loading) return <section className="dashboard-loading" aria-live="polite"><div className="skeleton skeleton-heading"/><div className="stats-grid">{[1,2,3,4].map((item)=><div className="stat-card skeleton-card" key={item}/>)}</div></section>
 
@@ -58,7 +59,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     {activeSession && <section className="dashboard-card student-live-session" aria-labelledby="student-live-session-title">
       <header className="dashboard-section-heading"><div><h3 id="student-live-session-title">Service session in progress</h3><p>Your active attendance updates automatically.</p></div><span className="status-badge status-active">Live</span></header>
       <div className="student-live-session-body">
-        <div className="student-live-clock"><span>Elapsed time</span><time dateTime={`PT${liveServiceSeconds(activeSession.time_in, now)}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(liveServiceSeconds(activeSession.time_in, now))}</time><small>Started {formatManilaDateTime(activeSession.time_in)}</small></div>
+        <div className="student-live-clock"><span>Elapsed time</span><time dateTime={`PT${activeTiming.elapsedSeconds}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(activeTiming.elapsedSeconds)}</time>{activeTiming.limitReached && <small className="timer-limit-notice">Service limit reached — Time Out required</small>}<small>Started {formatManilaDateTime(activeSession.time_in)}</small></div>
         <dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not recorded'}</dd></div><div><dt>Required</dt><dd>{formatMinutes(serviceSummary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(serviceSummary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatMinutes(serviceSummary.remainingMinutes)}</dd></div></dl>
       </div>
       <footer><span>Current session time is credited after time-out and review.</span><button className="text-button" type="button" onClick={()=>onNavigate('/student/community-service')}>View My Service</button></footer>

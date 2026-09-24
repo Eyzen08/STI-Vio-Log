@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Modal from './Modal.jsx'
 import { assignmentsForStudent, summarizeServiceAssignments } from '../lib/adminServiceTime.js'
 import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds, serviceProgress } from '../lib/departmentService.js'
+import { formatLiveServiceTime, isActiveServiceSession, serviceProgress, serviceSessionTiming } from '../lib/departmentService.js'
 
 export default function StudentServiceTimeDrawer({ student, assignments = [], activeSessions = [], onClose, onRefreshAttendance }) {
   const [now, setNow] = useState(Date.now())
@@ -29,11 +29,11 @@ export default function StudentServiceTimeDrawer({ student, assignments = [], ac
     }
   }, [onRefreshAttendance])
 
-  const elapsed = activeSession ? liveServiceSeconds(activeSession.time_in, now) : 0
+  const timing = activeSession ? serviceSessionTiming(activeSession, now) : null
   return <Modal title="Student Service Time" drawer onClose={onClose}>
     <section className="service-time-drawer">
       <header><span className="page-breadcrumb">Community service overview</span><h3>{student.first_name} {student.last_name}</h3><p>{student.student_number}</p></header>
-      {activeSession && <section className="service-time-live" aria-label="Active attendance session"><div><span>Currently timed in</span><time dateTime={`PT${elapsed}S`}>{formatLiveServiceTime(elapsed)}</time></div><dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not assigned'}</dd></div><div><dt>Time in</dt><dd>{formatManilaDateTime(activeSession.time_in)}</dd></div></dl><p>Active time remains uncredited until time-out and review.</p></section>}
+      {activeSession && <section className="service-time-live" aria-label="Active attendance session"><div><span>Currently timed in</span><time dateTime={`PT${timing.elapsedSeconds}S`}>{formatLiveServiceTime(timing.elapsedSeconds)}</time></div>{timing.limitReached && <p className="timer-limit-notice">Service limit reached — Time Out required</p>}<dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not assigned'}</dd></div><div><dt>Time in</dt><dd>{formatManilaDateTime(activeSession.time_in)}</dd></div></dl><p>Active time remains uncredited until time-out and review.</p></section>}
       {studentAssignments.length ? <>
         <section className="service-time-summary" aria-label="Overall service progress"><div><span>Required</span><strong>{formatDuration(summary.required)}</strong></div><div><span>Completed</span><strong>{formatDuration(summary.completed)}</strong></div><div><span>Remaining</span><strong>{formatDuration(summary.remaining)}</strong></div></section>
         <div className="service-time-overall"><div><span style={{ width: `${summary.progress}%` }} /></div><p><strong>{summary.progress}%</strong> overall credited progress</p></div>

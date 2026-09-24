@@ -3236,6 +3236,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .active-attendance-table td { vertical-align:middle; }
 .active-attendance-table td > :is(small,span) { display:block; }
 .active-attendance-clock { color:var(--color-primary-dark); font-size:1rem; font-weight:850; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.timer-limit-notice { display:block; margin-top:.25rem; color:var(--color-danger,#b42318); font-size:.7rem; font-weight:750; line-height:1.3; }
 .active-attendance-table .secondary-button { min-width:8.5rem; }
 .service-time-drawer { display:grid; gap:1rem; }
 .service-time-drawer > header h3 { margin:.2rem 0; }

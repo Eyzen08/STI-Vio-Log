@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const pool = require('../src/config/database');
-const { calculateSessionCredit, recordTimeIn } = require('../src/services/communityServiceSessionService');
+const { calculateSessionCredit, calculateSessionWork, recordTimeIn } = require('../src/services/communityServiceSessionService');
 const { communityServiceTimeIn, getActiveDepartmentSessions, getCommunityServiceAttendance } = require('../src/controllers/communityServiceAttendanceController');
 const { createDepartmentAccountService } = require('../src/services/departmentAccountService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
@@ -31,6 +31,12 @@ test('live sessions are restricted to the authenticated Department Account scope
   try{const res=response();await getActiveDepartmentSessions({staffDepartmentId:7},res);assert.equal(res.statusCode,200);assert.match(captured.sql,/css\.department_id=\$1 AND a\.department_id=\$1/);assert.deepEqual(captured.params,[7])}finally{pool.query=originalQuery}
 });
 
+test('active sessions expose an authoritative capped timer state',async()=>{
+  const originalQuery=pool.query;let captured;
+  pool.query=async(sql)=>{captured=String(sql);return{rows:[]}};
+  try{const res=response();await getActiveDepartmentSessions({staffDepartmentId:7},res);assert.equal(res.statusCode,200);assert.match(captured,/AS timer_limit_seconds/);assert.match(captured,/AS actual_elapsed_seconds/);assert.match(captured,/AS limit_reached/);assert.match(captured,/LEAST\(/)}finally{pool.query=originalQuery}
+});
+
 test('Discipline Officer can load active sessions without a department assignment',async()=>{
   const originalQuery=pool.query;let captured;
   pool.query=async(sql,params)=>{captured={sql:String(sql),params};return{rows:[]}};
@@ -40,6 +46,11 @@ test('Discipline Officer can load active sessions without a department assignmen
 test('department time-out credit is capped at the remaining requirement',()=>{
   assert.deepEqual(calculateSessionCredit({requiredHours:4,completedHours:3.5,workedMinutes:90}),{requiredMinutes:240,previousMinutes:210,creditedMinutes:30,newMinutes:240,remainingMinutes:0});
   assert.equal(calculateSessionCredit({requiredHours:4,completedHours:1,workedMinutes:45}).creditedMinutes,45);
+});
+
+test('late time-out caps worked minutes at the remaining requirement',()=>{
+  assert.deepEqual(calculateSessionWork({requiredHours:4,completedHours:3.5,elapsedMinutes:90}),{actualElapsedMinutes:90,timerLimitMinutes:30,workedMinutes:30,limitReached:true});
+  assert.deepEqual(calculateSessionWork({requiredHours:4,completedHours:1,elapsedMinutes:45}),{actualElapsedMinutes:45,timerLimitMinutes:180,workedMinutes:45,limitReached:false});
 });
 
 test('Department Account creation allows multiple accountable officers per department',async()=>{

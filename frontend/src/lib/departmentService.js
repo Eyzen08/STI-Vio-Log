@@ -21,11 +21,26 @@ export const serviceProgress = (assignment) => {
   return required > 0 ? Math.min(100, Math.max(0, Math.round((completed / required) * 100))) : 100
 }
 
-export const liveServiceSeconds = (timeIn, now = Date.now()) => {
+export const liveServiceSeconds = (timeIn, now = Date.now(), timerLimitSeconds = null) => {
   const startedAt = new Date(timeIn).getTime()
   const current = Number(now)
   if (!Number.isFinite(startedAt) || !Number.isFinite(current)) return 0
-  return Math.max(0, Math.floor((current - startedAt) / 1000))
+  const elapsed = Math.max(0, Math.floor((current - startedAt) / 1000))
+  const limit = Number(timerLimitSeconds)
+  return timerLimitSeconds === null || timerLimitSeconds === undefined || !Number.isFinite(limit)
+    ? elapsed
+    : Math.min(elapsed, Math.max(0, Math.floor(limit)))
+}
+
+export const serviceSessionTiming = (session, now = Date.now()) => {
+  const suppliedLimit = session?.timer_limit_seconds ?? (session?.remaining_hours == null ? null : Number(session.remaining_hours) * 3600)
+  const timerLimitSeconds = suppliedLimit == null ? null : Math.max(0, Math.floor(Number(suppliedLimit) || 0))
+  const elapsedSeconds = liveServiceSeconds(session?.time_in, now, timerLimitSeconds)
+  return {
+    elapsedSeconds,
+    timerLimitSeconds,
+    limitReached: Boolean(session?.limit_reached) || (timerLimitSeconds !== null && elapsedSeconds >= timerLimitSeconds)
+  }
 }
 
 export const isActiveServiceSession = (session) => Boolean(

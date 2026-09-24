@@ -33,7 +33,8 @@ test('student dashboard and DTR render active sessions with live credited-safe t
   const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   for (const source of [dashboard, service]) {
     assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
-    assert.match(source, /formatLiveServiceTime\(liveServiceSeconds\(/)
+    assert.match(source, /serviceSessionTiming\(/)
+    assert.match(source, /Service limit reached — Time Out required/)
     assert.match(source, /clearInterval\(clock\)/)
   }
   assert.match(dashboard, /Current session time is credited after time-out and review\./)

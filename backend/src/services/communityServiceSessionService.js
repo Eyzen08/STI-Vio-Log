@@ -169,6 +169,19 @@ const calculateSessionCredit = ({ requiredHours, completedHours, workedMinutes }
     return { requiredMinutes, previousMinutes, creditedMinutes, newMinutes, remainingMinutes: Math.max(requiredMinutes - newMinutes, 0) };
 };
 
+const calculateSessionWork = ({ requiredHours, completedHours, elapsedMinutes }) => {
+    const requiredMinutes = Math.max(0, Math.round(Number(requiredHours || 0) * 60));
+    const previousMinutes = Math.max(0, Math.round(Number(completedHours || 0) * 60));
+    const timerLimitMinutes = Math.max(requiredMinutes - previousMinutes, 0);
+    const actualElapsedMinutes = Math.max(0, Math.floor(Number(elapsedMinutes || 0)));
+    return {
+        actualElapsedMinutes,
+        timerLimitMinutes,
+        workedMinutes: Math.min(actualElapsedMinutes, timerLimitMinutes),
+        limitReached: actualElapsedMinutes >= timerLimitMinutes
+    };
+};
+
 const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, condition, ipAddress, writeQrLog = false }) => {
     const client = await pool.connect();
     try {
@@ -196,13 +209,19 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
         }
 
         const attendance = await insertAttendance({ client, assignment, departmentId, actorId: actor.id, type: "TIME_OUT", notes });
-        const duration = (await client.query(
+        const actualDuration = (await client.query(
             `SELECT GREATEST(FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - $1::timestamptz)) / 60), 0)::int AS minutes`,
             [session.time_in]
         )).rows[0].minutes;
         const normalizedCondition = String(condition || '').toUpperCase();
         if (!CONDITIONS.has(normalizedCondition)) throw new CommunityServiceSessionError('Select the student service condition before time-out', 400);
 
+        const sessionWork = calculateSessionWork({
+            requiredHours: assignment.required_hours,
+            completedHours: assignment.completed_hours,
+            elapsedMinutes: actualDuration
+        });
+        const duration = sessionWork.workedMinutes;
         const { requiredMinutes, previousMinutes, creditedMinutes, newMinutes, remainingMinutes } = calculateSessionCredit({
             requiredHours: assignment.required_hours,
             completedHours: assignment.completed_hours,
@@ -259,7 +278,7 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
             )).rows[0];
         }
         await client.query(`UPDATE community_service_session_officer_history SET ends_at=CURRENT_TIMESTAMP WHERE session_id=$1 AND ends_at IS NULL`, [session.id]);
-        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { worked_minutes: Number(duration), credited_minutes: creditedMinutes, service_condition: normalizedCondition, supervising_officer_user_id: Number(supervisor.officer_user_id), supervisor_changed: supervisorChanged }, ipAddress });
+        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { actual_elapsed_minutes: sessionWork.actualElapsedMinutes, timer_limit_minutes: sessionWork.timerLimitMinutes, worked_minutes: Number(duration), credited_minutes: creditedMinutes, limit_reached: sessionWork.limitReached, service_condition: normalizedCondition, supervising_officer_user_id: Number(supervisor.officer_user_id), supervisor_changed: supervisorChanged }, ipAddress });
         await notifyStudent(client, assignment.student_id, {
             title: assignmentStatus === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
             message: `${creditedMinutes} service minute${creditedMinutes === 1 ? '' : 's'} credited at department time-out.`,
@@ -303,4 +322,4 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
     }catch(error){try{await client.query('ROLLBACK')}catch(_){}throw error}finally{client.release()}
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, availableSupervisors, chooseSupervisor, CONDITIONS };
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, calculateSessionWork, availableSupervisors, chooseSupervisor, CONDITIONS };

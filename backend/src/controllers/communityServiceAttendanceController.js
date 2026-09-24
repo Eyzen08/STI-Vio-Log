@@ -79,7 +79,13 @@ const getActiveDepartmentSessions = async (req, res) => {
         const departmentWhere = scopedDepartment ? 'css.department_id=$1 AND a.department_id=$1' : '$1::bigint IS NULL';
         const result = await pool.query(
             `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.time_out, css.status, css.notes,
-                    FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int AS elapsed_seconds,
+                    LEAST(
+                        FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int,
+                        ROUND(a.remaining_hours * 60)::int * 60
+                    ) AS elapsed_seconds,
+                    FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int AS actual_elapsed_seconds,
+                    ROUND(a.remaining_hours * 60)::int * 60 AS timer_limit_seconds,
+                    FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in))) >= ROUND(a.remaining_hours * 60)::int * 60 AS limit_reached,
                     CURRENT_TIMESTAMP AS server_time,
                     a.student_id, a.required_hours, a.completed_hours, a.remaining_hours,
                     s.student_number, s.first_name, s.last_name,d.department_name,

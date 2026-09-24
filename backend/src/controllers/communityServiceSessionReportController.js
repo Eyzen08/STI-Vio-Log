@@ -74,7 +74,14 @@ const getMyDTR = async (req, res) => {
              WHERE s.user_id = $1 ORDER BY a.assigned_at DESC`, [req.user.id]);
         const sessions = await pool.query(
             `SELECT css.id, css.assignment_id, css.department_id, d.department_name,
-                    css.time_in, css.time_out, css.worked_minutes, css.credited_minutes, css.status
+                    css.time_in, css.time_out, css.worked_minutes, css.credited_minutes, css.status,
+                    ROUND(a.remaining_hours * 60)::int * 60 AS timer_limit_seconds,
+                    CASE WHEN css.status = 'ACTIVE' THEN
+                        LEAST(FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int, ROUND(a.remaining_hours * 60)::int * 60)
+                    END AS elapsed_seconds,
+                    CASE WHEN css.status = 'ACTIVE' THEN
+                        FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in))) >= ROUND(a.remaining_hours * 60)::int * 60
+                    ELSE FALSE END AS limit_reached
              FROM community_service_sessions css JOIN community_service_assignments a ON a.id = css.assignment_id
              JOIN students s ON s.id = a.student_id JOIN departments d ON d.id = css.department_id
              WHERE s.user_id = $1${filters} ORDER BY css.time_in DESC, css.id DESC`, params);
