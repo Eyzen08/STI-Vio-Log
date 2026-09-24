@@ -54,4 +54,17 @@ test('all authorized staff roles use the single three-stage attendance workspace
   assert.match(scannerSource, /<option value="SATISFACTORY">Completed<\/option>/)
   assert.match(scannerSource, /<option value="NEEDS_FOLLOW_UP">Needs Action<\/option>/)
   assert.match(scannerSource, /<option value="INCIDENT_REPORTED">Reported<\/option>/)
+  assert.match(appSource, /handleQrAction\('scan', decodedQr\)/)
+  assert.match(appSource, /const handleQrAction = async \(action, qrValue = qrForm\.qr_code\)/)
+  assert.match(scannerSource, /onClick=\{\(\)=>onAction\('time-in'\)\}/)
+  assert.match(scannerSource, /onClick=\{\(\)=>onAction\('time-out'\)\}/)
+  assert.doesNotMatch(scannerSource, /Confirm Time In|Confirm Time Out|pendingAction/)
+  assert.match(scannerSource, /onClick=\{\(\)=>onAction\('scan'\)\}/)
+})
+
+test('attendance realtime events refresh live student and admin state', async () => {
+  const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.match(appSource, /realtimeSocket\.on\('community-service:changed', refreshLiveAttendance\)/)
+  assert.match(appSource, /if \(isStudent\) refreshStudentLiveDtr\(\)/)
+  assert.match(appSource, /if \(isAdmin\) refreshAdminAttendance\(\)/)
 })

@@ -392,6 +392,8 @@ function App() {
   const [verifiedQr, setVerifiedQr] = useState('')
   const [qrSubmitting, setQrSubmitting] = useState(false)
   const [recentQrScans, setRecentQrScans] = useState([])
+  const qrFormRef = useRef(qrForm)
+  qrFormRef.current = qrForm
 
   const [clearanceRecords, setClearanceRecords] = useState([])
 
@@ -870,6 +872,16 @@ function App() {
       adminAttendanceRefreshRef.current = false
     }
   }, [isAdmin, token])
+
+  useEffect(() => {
+    if (!realtimeSocket) return undefined
+    const refreshLiveAttendance = () => {
+      if (isStudent) refreshStudentLiveDtr()
+      if (isAdmin) refreshAdminAttendance()
+    }
+    realtimeSocket.on('community-service:changed', refreshLiveAttendance)
+    return () => realtimeSocket.off('community-service:changed', refreshLiveAttendance)
+  }, [isAdmin, isStudent, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
 
   const loadDepartmentDtr = async (filters = {}) => {
     setDepartmentDtrLoading(true)
@@ -1357,16 +1369,19 @@ function App() {
         (decodedText) => {
           if (qrDecodeBusyRef.current) return
           qrDecodeBusyRef.current = true
+          const decodedQr = decodedText.trim()
           setQrForm((current) => ({
             ...current,
-            qr_code: decodedText.trim()
+            qr_code: decodedQr
           }))
 
           setVerifiedQr('')
           setQrResult(null)
-          setQrError('QR detected. Verify the student before recording attendance.')
+          setQrError('')
 
-          stopQrScanner(scanner).finally(() => { qrDecodeBusyRef.current = false })
+          stopQrScanner(scanner)
+            .then(() => handleQrAction('scan', decodedQr))
+            .finally(() => { qrDecodeBusyRef.current = false })
         },
 
         () => {
@@ -1483,29 +1498,31 @@ function App() {
     }
   }
 
-  const handleQrAction = async (action) => {
+  const handleQrAction = async (action, qrValue = qrForm.qr_code) => {
     if (qrActionBusyRef.current) return
     qrActionBusyRef.current = true
     setQrError('')
     setQrSubmitting(true)
+    const normalizedQr = typeof qrValue === 'string' ? qrValue.trim() : ''
+    const currentQrForm = qrFormRef.current
 
     try {
-      if (!qrForm.qr_code.trim()) {
+      if (!normalizedQr) {
         throw new Error('QR code is required.')
       }
 
-      if (action !== 'scan' && qrForm.qr_code.trim() !== verifiedQr) {
+      if (action !== 'scan' && normalizedQr !== verifiedQr) {
         throw new Error('Verify the student before recording attendance.')
       }
 
-      if (!isDepartmentHead && !qrForm.department_id) {
+      if (!isDepartmentHead && !currentQrForm.department_id) {
         throw new Error('Select the department responsible for this attendance record.')
       }
 
-      if (action === 'time-out' && !qrForm.condition) {
+      if (action === 'time-out' && !currentQrForm.condition) {
         throw new Error('Select the student service condition before Time Out.')
       }
-      if (action !== 'scan' && !qrForm.supervising_officer_id) {
+      if (action !== 'scan' && !currentQrForm.supervising_officer_id) {
         throw new Error('Select the authorized officer supervising this session.')
       }
 
@@ -1517,13 +1534,13 @@ function App() {
           Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({
-          qr_code: qrForm.qr_code.trim(),
+          qr_code: normalizedQr,
           ...(isDepartmentHead ? {} : {
-            department_id: Number(qrForm.department_id)
+            department_id: Number(currentQrForm.department_id)
           }),
-          notes: qrForm.notes.trim(),
-          ...(action === 'scan' ? {} : { supervising_officer_id: Number(qrForm.supervising_officer_id) }),
-          ...(action === 'time-out' ? { condition: qrForm.condition } : {})
+          notes: currentQrForm.notes.trim(),
+          ...(action === 'scan' ? {} : { supervising_officer_id: Number(currentQrForm.supervising_officer_id) }),
+          ...(action === 'time-out' ? { condition: currentQrForm.condition } : {})
         })
       })
 
@@ -1551,7 +1568,7 @@ function App() {
         const officers = data.available_officers || []
         setQrForm((current) => ({ ...current, supervising_officer_id: officers.length === 1 ? Number(officers[0].officer_user_id) : '' }))
       }
-      setVerifiedQr(qrForm.qr_code.trim())
+      setVerifiedQr(normalizedQr)
       if (action !== 'scan') {
         setRecentQrScans((current) => [{
           key: `${Date.now()}-${action}`,
@@ -1559,11 +1576,14 @@ function App() {
           studentNumber: data.student?.student_number||'',
           action: action === 'time-in' ? 'Time In' : 'Time Out',
           time: data.session?.time_out||data.session?.time_in||new Date().toISOString(),
-          department: data.assignment?.department_name||serviceDepartmentOptions(communityServiceDestinations).find((item)=>Number(item.id)===Number(qrForm.department_id))?.name||'Assigned department'
+          department: data.assignment?.department_name||serviceDepartmentOptions(communityServiceDestinations).find((item)=>Number(item.id)===Number(currentQrForm.department_id))?.name||'Assigned department'
         },...current].slice(0,5))
-        const refreshed=await fetch(`${API_URL}/api/qr/scan`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({qr_code:qrForm.qr_code.trim(),...(isDepartmentHead?{}:{department_id:Number(qrForm.department_id)}),notes:''})})
+        const refreshed=await fetch(`${API_URL}/api/qr/scan`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({qr_code:normalizedQr,...(isDepartmentHead?{}:{department_id:Number(currentQrForm.department_id)}),notes:''})})
         const refreshedData=await refreshed.json().catch(()=>({}))
         if(refreshed.ok&&refreshedData.success){setQrResult((current)=>({...current,student:refreshedData.student,assignment:refreshedData.assignment,available_officers:refreshedData.available_officers||[]}));const officers=refreshedData.available_officers||[];setQrForm((current)=>({...current,supervising_officer_id:officers.length===1?Number(officers[0].officer_user_id):current.supervising_officer_id}))}
+        setDashboardRefreshKey((current) => current + 1)
+        refreshPendingActions()
+        if (isAdmin) refreshAdminAttendance()
       }
     } catch (qrErrorObject) {
       setQrError(qrErrorObject.message)
