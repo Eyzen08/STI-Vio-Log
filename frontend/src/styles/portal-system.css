@@ -3227,7 +3227,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .live-status-badge { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem .75rem; border:1px solid var(--color-border); border-radius:999px; color:var(--color-text); font-size:.72rem; font-weight:750; }
 .live-status-badge i { width:.5rem; height:.5rem; border-radius:50%; background:var(--color-success); box-shadow:0 0 0 .2rem color-mix(in srgb,var(--color-success) 18%,transparent); }
 .active-attendance-card { min-width:0; }
-.active-attendance-toolbar { display:grid; grid-template-columns:minmax(16rem,32rem); margin:.85rem 0; }
+.active-attendance-toolbar { display:grid; grid-template-columns:minmax(16rem,32rem); margin:.85rem 1.25rem; }
 .active-attendance-toolbar label { display:grid; gap:.35rem; color:var(--color-text-secondary); font-size:.7rem; font-weight:700; }
 .active-attendance-toolbar input { width:100%; box-sizing:border-box; }
 .active-attendance-table-wrap { max-height:min(38rem,65vh); overflow:auto; }
@@ -3266,7 +3266,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .service-time-button { display:inline-flex; align-items:center; justify-content:center; gap:.35rem; }
 
 @media (max-width:767px) {
-  .active-attendance-toolbar { grid-template-columns:1fr; }
+  .active-attendance-toolbar { grid-template-columns:1fr; margin-inline:.75rem; }
   .active-attendance-table-wrap { max-height:none; overflow:visible; }
   .active-attendance-table { min-width:0; }
   .active-attendance-table thead th { position:static; }
