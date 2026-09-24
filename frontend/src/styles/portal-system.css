@@ -429,8 +429,12 @@
   --auth-ink: #10243e;
   --auth-muted: #627187;
   --auth-border: #d8e0e8;
+  display: block;
+  width: 100%;
+  max-width: none;
   min-height: 100vh;
   min-height: 100dvh;
+  grid-template-columns: none;
   padding: clamp(.75rem, 2.1vw, 1.5rem);
   overflow-x: hidden;
   background:
@@ -441,6 +445,10 @@
 
 .auth-shell .main-panel {
   display: block;
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   min-height: 100vh;
   min-height: 100dvh;
   padding: 0;
@@ -448,11 +456,12 @@
 
 .auth-shell .login-page {
   display: grid;
-  width: min(90rem, 100%);
+  width: 100%;
+  max-width: none;
   min-height: calc(100vh - clamp(1.5rem, 4.2vw, 3rem));
   min-height: calc(100dvh - clamp(1.5rem, 4.2vw, 3rem));
   margin-inline: auto;
-  grid-template-columns: minmax(31rem, 1.22fr) minmax(27rem, 1fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(27rem, .8fr);
   gap: 0;
   align-items: stretch;
   overflow: hidden;
@@ -855,8 +864,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .auth-shell .login-page--student-flow .login-card { width: min(48rem, 100%); margin-block: clamp(1.25rem, 4vh, 3rem); }
 
 @media (min-width: 1800px) {
-  .auth-shell .login-page { width: min(90rem, 100%); }
-  .auth-shell { display: grid; place-items: center; }
+  .auth-shell .login-page { grid-template-columns: minmax(0, 1.35fr) minmax(32rem, .85fr); }
+  .auth-shell .login-form-panel { padding-inline: clamp(3rem, 6vw, 9rem); }
 }
 
 @media (max-width: 1050px) {

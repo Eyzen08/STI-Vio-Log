@@ -110,3 +110,11 @@ test('Safari mobile authentication uses a covered hero image and dynamic viewpor
   assert.match(portalCssSource, /\.app-shell\.auth-shell\s*\{[^}]*width:\s*100vw;[^}]*max-width:\s*none;[^}]*padding:\s*0;/s)
   assert.match(portalCssSource, /\.app-shell\.auth-shell \.main-panel,[\s\S]*?\.app-shell\.auth-shell \.login-form-panel\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*none;/s)
 })
+
+test('desktop authentication resets the application sidebar grid and fills wide viewports', () => {
+  assert.match(portalCssSource, /\.auth-shell\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*max-width:\s*none;[^}]*grid-template-columns:\s*none;/s)
+  assert.match(portalCssSource, /\.auth-shell \.main-panel\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*width:\s*100%;[^}]*max-width:\s*none;/s)
+  assert.match(portalCssSource, /\.auth-shell \.login-page\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*none;[^}]*grid-template-columns:\s*minmax\(0, 1\.2fr\) minmax\(27rem, \.8fr\)/s)
+  assert.match(portalCssSource, /@media \(min-width: 1800px\)[\s\S]*?grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(32rem, \.85fr\)/s)
+  assert.doesNotMatch(appCssSource, /\/\* Reference-inspired authentication \*\//)
+})

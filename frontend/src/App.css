@@ -4609,44 +4609,6 @@ a {
 .mini-progress span { display: block; height: 100%; border-radius: inherit; background: #1380f5; }
 .portal-dashboard .scope-note { margin: 0; font-size: .63rem; }
 
-/* Reference-inspired authentication */
-.auth-shell .main-panel { padding: 0; }
-.login-page { grid-template-columns: minmax(420px,1.1fr) minmax(380px,.9fr); min-height: 100vh; }
-.login-intro { min-height: 100vh; padding: clamp(28px,4vw,56px); background-position: center; }
-.login-brand-mark {
-  width: clamp(210px, 17vw, 270px);
-  align-self: flex-start;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  filter: drop-shadow(0 8px 18px rgba(0, 24, 65, .32));
-}
-.login-intro-content { margin: auto 0 22px; max-width: 510px; }
-.login-intro .login-kicker { margin-bottom: 12px; }
-.login-intro h2 { margin: 0 0 5px; font-size: clamp(2.3rem,4.8vw,4.5rem); }
-.login-intro .login-assurance { display: flex; align-items: center; justify-content: space-between; margin: 0; padding: 0; }
-.login-intro .login-assurance span { padding: 0; border: 0; background: transparent; font-size: .68rem; }
-.login-intro .login-assurance small { color: rgba(255,255,255,.8); font-size: .62rem; }
-.login-form-panel { padding: clamp(24px,5vw,70px); background: linear-gradient(145deg,#f5f9fd,#e9f3fb); }
-.auth-card.login-card { width: min(410px,100%); padding: 26px; border-radius: 12px; box-shadow: 0 18px 55px rgba(10,49,93,.15); }
-.auth-card .auth-card-header { justify-content: flex-start; margin-bottom: 18px; text-align: left; }
-.auth-card .badge { padding: 5px 9px; font-size: .64rem; }
-.auth-card-header h3 { margin: 9px 0 2px; color: #0a3268; font-size: 1.45rem; }
-.auth-card-header p { font-size: .72rem; }
-.auth-card .login-form { gap: 11px; }
-.auth-card .login-form label { gap: 5px; font-size: .7rem; }
-.auth-card .login-form input { min-height: 40px; padding: 9px 11px; font-size: .75rem; }
-.auth-card .login-form .login-submit { min-height: 39px; margin-top: 3px; background: #00509b; font-size: .76rem; }
-.auth-card .password-visibility { min-width: 40px; }
-.auth-entry-actions { justify-content: space-between; margin-top: 7px; }
-.auth-entry-actions > span { display: none; }
-.auth-entry-actions .auth-text-link { padding: 4px 0; font-size: .67rem; }
-.auth-card .google-access-details { margin-top: 11px; padding-top: 11px; }
-.auth-card .google-access-details summary { display: block; padding: 9px; border: 1px solid #d2dde9; border-radius: 6px; color: #0953a0; font-size: .69rem; }
-.auth-card .google-access-details > small { display: block; margin-top: 6px; color: #748499; font-size: .6rem; }
-.auth-card .auth-help { margin-top: 11px; font-size: .63rem; }
-
 @media (max-width: 1100px) {
   .admin-stats { grid-template-columns: repeat(2,1fr); }
   .department-stats { grid-template-columns: repeat(3,1fr); }
@@ -4709,20 +4671,6 @@ a {
   .student-dashboard .student-stats .stat-card:nth-child(2) { display: none; }
   .student-dashboard .student-stats { grid-template-columns: repeat(3,1fr); }
 
-  .login-page { display: flex; min-height: 100vh; flex-direction: column; background: #edf5fb; }
-  .login-intro { min-height: 230px; padding: 18px 18px 34px; background-position: center 42%; }
-  .login-brand-mark { width: min(210px, 58vw); }
-  .login-intro-content { margin: auto 0 0; }
-  .login-intro .login-kicker { display: none; }
-  .login-intro h2 { margin-bottom: 1px; font-size: 1.45rem; }
-  .login-tagline { margin-bottom: 0 !important; font-size: .7rem !important; }
-  .login-intro-content > p:not(.login-tagline),.login-intro .login-assurance { display: none; }
-  .login-form-panel { min-height: 0; flex: 1; align-items: start; margin-top: -20px; padding: 0 13px 28px; overflow: visible; background: transparent; }
-  .auth-card.login-card { width: 100%; padding: 19px; border-radius: 15px; }
-  .auth-card .badge { display: none; }
-  .auth-card-header h3 { margin-top: 0; font-size: 1.18rem; }
-  .login-page--student-flow .login-form-panel { margin-top: -20px; padding: 0 10px 25px; }
-  .login-page--student-flow .login-card { margin: 0; }
 }
 
 @media (max-width: 390px) {
