@@ -47,7 +47,7 @@ const { PERMISSIONS } = require('./security/permissions');
 
 const app = express();
 
-if (process.env.NODE_ENV === 'production') app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS || 1));
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS));
 
 const PORT = process.env.PORT || 5000;
 

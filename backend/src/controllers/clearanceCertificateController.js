@@ -320,8 +320,7 @@ const verifyClearanceCertificate = async (req, res) => {
     const certificate = {
       certificate_number:row.certificate_number,status:row.status,issue_date:row.issue_date,
       student_name:row.student_name,
-      student_number:row.student_number?`${'*'.repeat(Math.max(row.student_number.length-4,0))}${row.student_number.slice(-4)}`:null,
-      program:row.program,completed_hours:Number(row.completed_hours)
+      student_number:row.student_number?`${'*'.repeat(Math.max(row.student_number.length-4,0))}${row.student_number.slice(-4)}`:null
     };
     return res.json({ success: true, certificate, valid: row.status === 'ISSUED' });
   } catch (error) { return handle(res, error, 'Failed to verify certificate'); }

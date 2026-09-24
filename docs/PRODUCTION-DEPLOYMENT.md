@@ -4,7 +4,7 @@
 
 Deploy the Vite frontend on Vercel and the Express API on Render. Vercel proxies `/api/*` and `/socket.io/*` to Render, so the browser sees a single origin and host-only `SameSite=Lax` cookies remain first-party. Use Supabase only as PostgreSQL: browser code must never receive the database password, service-role key, or a direct STI Vio-Log table grant.
 
-The production browser must use the Vercel origin for API requests. `frontend/vercel.json` supplies the same-origin proxy to `sti-vio-log.onrender.com`; do not configure browser requests to bypass that proxy. Custom same-site domains remain recommended if they are added later.
+The browser must use the Vercel origin for API requests. `frontend/vercel.mjs` builds the same-origin proxy from the environment-scoped `API_PROXY_ORIGIN`; it fails non-production builds that match `PRODUCTION_API_ORIGIN`. Do not configure browser requests to bypass that proxy. Custom same-site domains remain recommended if they are added later.
 
 ## Vercel frontend
 
@@ -13,7 +13,7 @@ Set these encrypted environment variables for Production (and separately for Pre
 - `VITE_API_URL` is used only during local development. Production builds use the same-origin Vercel proxy.
 - `VITE_GOOGLE_CLIENT_ID` for a Google web client authorized only for the exact frontend origin.
 
-Build from `frontend` with `npm ci && npm run build`. The build injects an exact CSP for the configured API and WebSocket origins. `frontend/vercel.json` also supplies HSTS, anti-framing, nosniff, referrer, permissions, opener, and resource-policy headers. After changing an environment variable, create a new deployment; existing deployments do not inherit the change.
+Build from `frontend` with `npm ci && npm run build`. The build injects an exact CSP for the configured API and WebSocket origins. `frontend/vercel.mjs` also supplies HSTS, anti-framing, nosniff, referrer, permissions, opener, and resource-policy headers. After changing an environment variable, create a new deployment; existing deployments do not inherit the change.
 
 Do not expose server secrets with a `VITE_` prefix. Disable public Vercel previews or give Preview a separate non-production API/database and explicit origin.
 

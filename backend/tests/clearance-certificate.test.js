@@ -25,10 +25,25 @@ test('certificate routes separate owned issuance from public verification', () =
 test('certificate hours are rendered in words and signature uploads are bounded images', () => {
   assert.equal(hoursInWords(48), 'forty-eight');
   assert.equal(hoursInWords(2.5), 'two hours and thirty minutes');
-  const parsed = parseSignatureImage(`data:image/png;base64,${Buffer.from('png').toString('base64')}`);
+  const onePixelPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9Zl9sAAAAASUVORK5CYII=', 'base64');
+  const parsed = parseSignatureImage(`data:image/png;base64,${onePixelPng.toString('base64')}`);
   assert.equal(parsed.mimeType, 'image/png');
-  assert.deepEqual(parsed.buffer, Buffer.from('png'));
+  assert.deepEqual(parsed.buffer, onePixelPng);
   assert.throws(() => parseSignatureImage('data:text/plain;base64,dGVzdA=='), /PNG or JPEG/);
+  assert.throws(() => parseSignatureImage(`data:image/png;base64,${Buffer.from('not an image').toString('base64')}`), /valid PNG or JPEG/);
+  assert.throws(() => parseSignatureImage(`data:image/jpeg;base64,${onePixelPng.toString('base64')}`), /valid PNG or JPEG/);
+  assert.throws(() => parseSignatureImage(`data:image/png;base64,${Buffer.concat([onePixelPng,Buffer.from('trailing')]).toString('base64')}`), /valid PNG or JPEG/);
+  assert.throws(() => parseSignatureImage('data:image/png;base64,abc==='), /PNG or JPEG/);
+});
+
+test('public certificate verification is rate limited and returns a privacy-minimized shape', () => {
+  const routeSource = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/routes/certificateRoutes.js'), 'utf8');
+  const controllerSource = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/controllers/clearanceCertificateController.js'), 'utf8');
+  assert.match(routeSource, /certificateVerificationLimiter/);
+  const publicShape = controllerSource.slice(controllerSource.indexOf('const verifyClearanceCertificate'), controllerSource.indexOf('module.exports'));
+  assert.doesNotMatch(publicShape, /program:row\.program/);
+  assert.doesNotMatch(publicShape, /completed_hours/);
+  assert.match(publicShape, /student_number/);
 });
 
 test('certificate course abbreviations are expanded to their official names', () => {

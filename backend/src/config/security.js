@@ -7,6 +7,12 @@ const looksPlaceholder = (value) => /replace|change[-_ ]?me|placeholder|example|
 const validateSecureConfig = (environment = process.env) => {
   const errors = [];
   const production = environment.NODE_ENV === 'production';
+  const deploymentEnvironment = String(environment.DEPLOYMENT_ENV || '').toLowerCase();
+  const databaseEnvironment = String(environment.DATABASE_ENVIRONMENT || '').toLowerCase();
+  if (production && !['production','staging'].includes(deploymentEnvironment)) errors.push('DEPLOYMENT_ENV must be production or staging');
+  if (production && databaseEnvironment !== deploymentEnvironment) errors.push('DATABASE_ENVIRONMENT must exactly match DEPLOYMENT_ENV');
+  const trustProxyHops = Number(environment.TRUST_PROXY_HOPS);
+  if (production && (!Number.isInteger(trustProxyHops) || trustProxyHops < 1 || trustProxyHops > 3)) errors.push('TRUST_PROXY_HOPS must explicitly match the 1-3 trusted reverse-proxy hops');
   const jwtSecret = environment.JWT_SECRET || '';
   if (jwtSecret.length < 32 || INSECURE_JWT_DEFAULTS.has(jwtSecret) || looksPlaceholder(jwtSecret)) errors.push('JWT_SECRET must contain at least 32 non-placeholder characters');
   const hasUrl = Boolean(environment.DATABASE_URL);
@@ -23,7 +29,7 @@ const validateSecureConfig = (environment = process.env) => {
   if(production&&['disable','no-verify',''].includes(String(environment.DB_SSL||'').toLowerCase()))errors.push('DB_SSL must enable verified TLS in production');
   if(production){const names=['JWT_SECRET',...requiredKeys,'CERTIFICATE_SIGNING_KEY'];const values=names.map((name)=>environment[name]).filter(Boolean);if(new Set(values).size!==values.length)errors.push('Security keys must be independent and may not be reused');}
   if (errors.length) throw new Error(`Secure configuration validation failed: ${errors.join('; ')}`);
-  return { production, origins };
+  return { production, deploymentEnvironment, origins };
 };
 
 const allowedOriginsFor = (environment = process.env) => {
