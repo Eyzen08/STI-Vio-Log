@@ -5661,3 +5661,49 @@ a {
     clip: rect(0 0 0 0);
   }
 }
+
+/* Desktop readability pass
+   This final authority follows the compact portal rules. Mobile sizing stays
+   unchanged; laptops and wide screens receive a fluid, readable type scale. */
+@media (min-width: 1200px) {
+  html { font-size: clamp(17px, calc(16px + 0.105vw), 18px); }
+  .nav-group-label { font-size: .68rem; }
+  .nav-item { min-height: 38px; font-size: .78rem; }
+  .topbar-search input { font-size: .82rem; }
+  .account-summary strong,
+  .profile-menu-popover header strong { font-size: .8rem; }
+  .account-summary small,
+  .profile-menu-popover header small { font-size: .68rem; }
+  .portal-welcome p,
+  .portal-welcome time,
+  .portal-welcome blockquote { font-size: .8rem; line-height: 1.5; }
+  .portal-dashboard .stat-card span { font-size: .73rem; }
+  .portal-dashboard .stat-card small { font-size: .68rem; }
+  .dashboard-quick-actions button,
+  .portal-dashboard .text-button,
+  .progress-ring-card dl div,
+  .department-quick-actions strong,
+  .portal-dashboard .scope-note { font-size: .72rem; }
+  .dashboard-card header h3,
+  .dashboard-section-heading h3 { font-size: .94rem; }
+  .dashboard-card header p,
+  .dashboard-section-heading p,
+  .recent-activity-card li strong,
+  .qr-summary-card p strong { font-size: .71rem; line-height: 1.45; }
+  .portal-dashboard th { font-size: .69rem; }
+  .portal-dashboard td { font-size: .73rem; line-height: 1.45; }
+  .portal-dashboard td small,
+  .portal-dashboard .status-badge,
+  .recent-activity-card li span,
+  .progress-ring span,
+  .standing-detail p,
+  .clearance-summary-card span,
+  .qr-summary-card p span,
+  .department-quick-actions small { font-size: .65rem; line-height: 1.4; }
+  .standing-detail > strong,
+  .service-progress-card header strong,
+  .clearance-summary-card strong { font-size: .76rem; }
+  .service-progress-card dl div,
+  .clearance-summary-card button,
+  .qr-summary-card button { font-size: .69rem; }
+}
