@@ -2,13 +2,13 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { API_URL } from '../lib/api.js'
 import Modal from './Modal.jsx'
 import { buildDepartmentOfficerPayload, departmentStepValid, filterDepartmentOfficers, OFFICER_ROLES, officerStepValid } from '../lib/departmentOfficerAdmin.js'
-import { formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
 import { capitalizeWords } from '../lib/inputNormalization.js'
 
 const empty = { departmentName:'', description:'', departmentStatus:'active', firstName:'', lastName:'', username:'', role:'DISCIPLINE_OFFICE', email:'', employeeNumber:'' }
 const blankAssignment = { kind:'permanent', officerId:'', originalOfficerId:'', replacementOfficerId:'', startsAt:'', endsAt:'', reason:'' }
 const auth = (token) => ({ Authorization:`Bearer ${token}`, 'Content-Type':'application/json' })
-const roleLabel = (role) => role?.replaceAll('_',' ') || 'Officer'
+const roleLabel = (role) => formatDisplayLabel(role, 'Officer')
 const fullName = (value) => `${value?.first_name || ''} ${value?.last_name || ''}`.trim() || value?.username || 'Officer'
 
 function Directory({ accounts, departments, responsibilities, counts, loading, filters, setFilters, onOpenDepartment, onEditOfficer, onAvailability, onReset, onStatus }) {

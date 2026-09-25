@@ -28,7 +28,7 @@ function StudentProfile({ profile, username, loading, error }) {
     return (
       <section className="profile-card profile-unavailable">
         <p className="eyebrow">Student profile</p>
-        <h2>Profile information is unavailable.</h2>
+        <h2>Profile Information Is Unavailable</h2>
         <p>{error || 'No student record is linked to this account.'}</p>
       </section>
     )
@@ -52,7 +52,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Academic information</h3>
+          <h3>Academic Information</h3>
           <p>Your current student record details.</p>
         </div>
         <dl className="profile-details-grid">
@@ -65,7 +65,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Contact and account</h3>
+          <h3>Contact and Account</h3>
           <p>Information used to identify and contact you.</p>
         </div>
         <dl className="profile-details-grid">

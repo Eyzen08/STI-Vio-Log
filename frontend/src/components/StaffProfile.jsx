@@ -1,5 +1,6 @@
 import PortalIcon from './PortalIcon.jsx'
 import { avatarInitials } from '../lib/avatarInitials.js'
+import { formatDisplayLabel } from '../lib/displayFormat.js'
 
 const roleLabels = {
   DISCIPLINE_ADMIN: 'Discipline Administrator',
@@ -20,7 +21,7 @@ function ProfileField({ label, value }) {
 function StaffProfile({ user, onNavigate }) {
   const displayName = valueOrFallback(user?.full_name, [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Portal User')
   const initials = avatarInitials(user)
-  const role = roleLabels[user?.role] || valueOrFallback(String(user?.role || '').replaceAll('_', ' '), 'Portal User')
+  const role = roleLabels[user?.role] || formatDisplayLabel(user?.role, 'Portal User')
   const department = valueOrFallback(user?.department_name || user?.department_code, 'Not assigned')
   const settingsPath = user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
 

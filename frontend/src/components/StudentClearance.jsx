@@ -56,7 +56,7 @@ function StudentClearance({ eligibility, records, loading, error, certificate, o
       </section>
 
       {summary.status === 'CLEARED' && summary.eligible && <section className="clearance-certificate-actions">
-        <div><p className="eyebrow">Good standing document</p><h3>Clearance certificate</h3><p>Generate a server-verified certificate for your currently approved clearance.</p></div>
+        <div><p className="eyebrow">Good Standing Document</p><h3>Clearance Certificate</h3><p>Generate a server-verified certificate for your currently approved clearance.</p></div>
         <button type="button" onClick={certificate ? () => download(certificate) : onLoadCertificate}>{certificate ? 'Download issued PDF' : 'Check issued certificate'}</button>
       </section>}
 
@@ -68,13 +68,13 @@ function StudentClearance({ eligibility, records, loading, error, certificate, o
         <small>Verify using GET /api/certificates/clearance/{certificate.certificate_code}</small>
       </section>}
 
-      <section className="table-card clearance-history-card"><div className="table-header"><div><p className="eyebrow">Permanent documents</p><h3>Issued certificates</h3></div><span>{issuedCertificates.length} records</span></div>
+      <section className="table-card clearance-history-card"><div className="table-header"><div><p className="eyebrow">Permanent Documents</p><h3>Issued Certificates</h3></div><span>{issuedCertificates.length} records</span></div>
         {certificateHistoryError && <p className="error-message" role="alert">{certificateHistoryError}</p>}
         {issuedCertificates.length === 0 ? <div className="clearance-empty"><h4>No certificate issued yet</h4><p>The Discipline Office will issue one after final approval.</p></div> : <div className="clearance-record-list">{issuedCertificates.map((entry) => <article key={entry.id}><div><strong>{entry.certificate_number}</strong><span>Version {entry.version}</span></div><span className={`status-badge status-${entry.status.toLowerCase()}`}>{entry.status}</span><dl><div><dt>Issued</dt><dd>{displayDate(entry.issue_date)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(entry.completed_hours)}</dd></div></dl><button type="button" onClick={() => download(entry)}>Download PDF</button></article>)}</div>}
       </section>
 
       <section className="table-card clearance-history-card">
-        <div className="table-header"><div><p className="eyebrow">Academic periods</p><h3>Clearance history</h3></div><span>{records.length} records</span></div>
+        <div className="table-header"><div><p className="eyebrow">Academic Periods</p><h3>Clearance History</h3></div><span>{records.length} records</span></div>
         {records.length === 0 ? (
           <div className="clearance-empty"><h4>No clearance records yet</h4><p>Your eligibility is still shown above based on current requirements.</p></div>
         ) : (

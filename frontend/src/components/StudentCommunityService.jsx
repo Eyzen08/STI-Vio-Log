@@ -53,7 +53,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
   return (
     <section className="service-page" aria-labelledby="service-title">
       <header className="page-intro portal-page-header">
-        <div><p className="eyebrow">Community service</p><h2 id="service-title">My service and DTR</h2><p>Track assigned hours and authoritative attendance sessions.</p></div>
+        <div><p className="eyebrow">Community Service</p><h2 id="service-title">My Service and DTR</h2><p>Track assigned hours and authoritative attendance sessions.</p></div>
         <span className="record-count">UTC records</span>
       </header>
 
@@ -84,7 +84,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
 
       <section className="table-card dtr-card">
         <div className="dtr-heading">
-          <div><p className="eyebrow">Digital time record</p><h3>Attendance sessions</h3></div>
+          <div><p className="eyebrow">Digital Time Record</p><h3>Attendance Sessions</h3></div>
           <form className="dtr-filters" onSubmit={submitFilters}>
             <label>From<input type="date" value={filters.from} onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))} /></label>
             <label>To<input type="date" value={filters.to} onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))} /></label>

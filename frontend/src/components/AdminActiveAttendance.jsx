@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import { formatLiveServiceTime, isActiveServiceSession, serviceSessionTiming } from '../lib/departmentService.js'
 
 const progressForSession = (session) => {
@@ -56,7 +56,7 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
           return <tr key={session.session_id}>
             <td data-label="Student"><strong>{session.first_name} {session.last_name}</strong><small>{session.student_number}</small></td>
             <td data-label="Department">{session.department_name || session.department_code || 'Not assigned'}</td>
-            <td data-label="Supervising officer"><strong>{session.supervising_officer_first_name} {session.supervising_officer_last_name}</strong><small>{String(session.supervising_officer_role || '').replaceAll('_', ' ')}</small></td>
+            <td data-label="Supervising Officer"><strong>{session.supervising_officer_first_name} {session.supervising_officer_last_name}</strong><small>{formatDisplayLabel(session.supervising_officer_role)}</small></td>
             <td data-label="Time in">{formatManilaDateTime(session.time_in)}</td>
             <td data-label="Live timer"><time className="active-attendance-clock" dateTime={`PT${timing.elapsedSeconds}S`} aria-label={`${formatLiveServiceTime(timing.elapsedSeconds)} elapsed`}>{formatLiveServiceTime(timing.elapsedSeconds)}</time>{timing.limitReached && <small className="timer-limit-notice">Service limit reached — Time Out required</small>}</td>
             <td data-label="Service hours"><span>{formatDuration(service.completed)} completed</span><small>{formatDuration(service.remaining)} remaining of {formatDuration(service.required)}</small></td>

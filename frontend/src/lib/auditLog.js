@@ -1,3 +1,5 @@
+import { formatDisplayLabel } from './displayFormat.js'
+
 export const AUDIT_PAGE_SIZE = 25
 
 export const buildAuditQuery = (filters = {}, page = 1) => {
@@ -9,8 +11,7 @@ export const buildAuditQuery = (filters = {}, page = 1) => {
   return query.toString()
 }
 
-export const formatAuditAction = (action = '') =>
-  String(action).replaceAll('_', ' ').toLowerCase().replace(/(^|\s)\S/g, (letter) => letter.toUpperCase())
+export const formatAuditAction = (action = '') => formatDisplayLabel(action)
 
 export const auditActorLabel = (entry = {}) =>
   entry.actor_username || (entry.user_id ? `User #${entry.user_id}` : 'System')

@@ -43,7 +43,7 @@ function StudentQr({ profile, loading, error }) {
       <header className="page-intro portal-page-header qr-page-intro">
         <div>
           <p className="eyebrow">Student identification</p>
-          <h2 id="student-qr-title">My QR code</h2>
+          <h2 id="student-qr-title">My QR Code</h2>
           <p>Present this code to authorized staff when recording community-service attendance.</p>
         </div>
         <span className="profile-readonly-badge">Personal code</span>
@@ -52,7 +52,7 @@ function StudentQr({ profile, loading, error }) {
       <div className="qr-display-card">
         {unavailableMessage ? (
           <div className="qr-unavailable" role="alert">
-            <h3>QR code unavailable</h3>
+            <h3>QR Code Unavailable</h3>
             <p>{unavailableMessage}</p>
           </div>
         ) : (

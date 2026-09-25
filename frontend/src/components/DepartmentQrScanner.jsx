@@ -1,7 +1,7 @@
 import { assignmentProgress, attendanceState, formatServiceMinutes, isVerifiedQr } from '../lib/departmentScanner.js'
-import { formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatManilaDateTime } from '../lib/displayFormat.js'
 
-const roleLabel=(role='')=>role.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
+const roleLabel=(role='')=>formatDisplayLabel(role)
 const displayDate=(value)=>formatManilaDateTime(value,'No activity recorded')
 const officerName=(officer)=>`${officer?.first_name||''} ${officer?.last_name||''}`.trim()||'Officer'
 

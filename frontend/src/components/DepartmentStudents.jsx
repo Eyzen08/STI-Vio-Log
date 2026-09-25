@@ -13,7 +13,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
   return (
     <div className="department-students-page">
       <section className="department-welcome portal-page-header">
-        <div><p className="eyebrow">Department roster</p><h2>Students served</h2><p>Students with community-service attendance recorded by your department.</p></div>
+        <div><p className="eyebrow">Department Roster</p><h2>Students Served</h2><p>Students with community-service attendance recorded by your department.</p></div>
         <button type="button" onClick={onOpenDtr}>View full DTR</button>
       </section>
 
@@ -25,7 +25,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
       </section>
 
       <section className="table-card" aria-busy={loading}>
-        <div className="table-header"><div><p className="eyebrow">Scoped directory</p><h3>Community-service students</h3></div><span>{visibleStudents.length} of {roster.length}</span></div>
+        <div className="table-header"><div><p className="eyebrow">Scoped Directory</p><h3>Community Service Students</h3></div><span>{visibleStudents.length} of {roster.length}</span></div>
         {loading ? (
           <div className="department-empty" aria-live="polite"><p>Loading department students…</p></div>
         ) : visibleStudents.length === 0 ? (

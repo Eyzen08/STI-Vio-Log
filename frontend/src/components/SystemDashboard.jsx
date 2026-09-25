@@ -1,10 +1,10 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react'
 import {API_URL} from '../lib/api.js'
-import {formatManilaDateTime} from '../lib/displayFormat.js'
+import {formatDisplayLabel,formatManilaDateTime} from '../lib/displayFormat.js'
 import PlatformMark from './PlatformMark.jsx'
 import PortalIcon from './PortalIcon.jsx'
 
-const readable=(value='')=>String(value).replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
+const readable=(value='')=>formatDisplayLabel(value)
 const json=async(response)=>{const data=await response.json().catch(()=>({}));if(!response.ok){const error=new Error(data.error?.message||data.message||'The request could not be completed.');error.code=data.error?.code||data.code;throw error}return data}
 const componentFallbacks={api:{provider:'Render',technology:'Node.js / Express',icon:'render'},database:{provider:'Supabase',technology:'PostgreSQL',icon:'supabase'},google_identity:{provider:'Google',technology:'Google Identity Services',icon:'google'},email_delivery:{provider:'Brevo',technology:'HTTPS Email API',icon:'brevo'},realtime:{provider:'Socket.IO',technology:'WebSocket / polling',icon:'socketio'}}
 const restrictionMessages={SELF_ACCOUNT_CHANGE:'You cannot lock the account you are currently using.',SELF_RECOVERY_NOT_ALLOWED:'Use Account Settings or the verified self-service flow to recover your own account.',ACCOUNT_ALREADY_LOCKED:'This account is already locked. Use recovery to restore access.',LAST_ADMIN:'The last active Discipline Administrator must remain available.',TARGET_CHANGED:'This account changed after password confirmation. Review it and try again.',STEP_UP_INVALID:'Password confirmation expired or was already used. Enter your password again.',STEP_UP_REQUIRED:'Enter your current administrator password to continue.',INVALID_CREDENTIALS:'The current password for the signed-in administrator is incorrect.',ACCOUNT_NOT_FOUND:'This account is no longer available. Refresh the search results.'}

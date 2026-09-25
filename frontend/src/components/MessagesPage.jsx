@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { conversationMatchesTab, conversationParties, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../lib/messageUi.js'
 import { unreadMessageCount } from '../lib/messageUnread.js'
-import { formatManilaDate, formatManilaTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatManilaDate, formatManilaTime } from '../lib/displayFormat.js'
 import Modal from './Modal.jsx'
 import PortalIcon from './PortalIcon.jsx'
 
-const roleLabel=(role='')=>role.replaceAll('_',' ').toLowerCase().replace(/\b\w/g,(letter)=>letter.toUpperCase())
+const roleLabel=(role='')=>formatDisplayLabel(role)
 const shortTime=(value)=>formatManilaTime(value)
 const shortDate=(value)=>formatManilaDate(value,'')===formatManilaDate(new Date(),'')?shortTime(value):formatManilaDate(value,'')
 

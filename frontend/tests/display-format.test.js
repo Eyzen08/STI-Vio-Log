@@ -1,6 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { formatDuration, formatIncidentDateTime, formatManilaDateTime, hoursToMinutes } from '../src/lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDateTime, hoursToMinutes } from '../src/lib/displayFormat.js'
+
+test('display labels format enums without changing source values or abbreviations', () => {
+  const status = 'IN_PROGRESS'
+  assert.equal(formatDisplayLabel(status), 'In Progress')
+  assert.equal(status, 'IN_PROGRESS')
+  assert.equal(formatDisplayLabel('DEPARTMENT_HEAD'), 'Department Head')
+  assert.equal(formatDisplayLabel('STUDENT_ID'), 'Student ID')
+  assert.equal(formatDisplayLabel('EXPORT_CSV'), 'Export CSV')
+  assert.equal(formatDisplayLabel('QR_ATTENDANCE'), 'QR Attendance')
+  assert.equal(formatDisplayLabel('BSCPE'), 'BSCpE')
+  assert.equal(formatDisplayLabel('E_SIGNATURE_MANAGEMENT'), 'E-Signature Management')
+  assert.equal(formatDisplayLabel('CUSTOM_REVIEW_STATE'), 'Custom Review State')
+  assert.equal(formatDisplayLabel('', 'Unknown'), 'Unknown')
+})
 
 test('service durations use normalized hours and minutes', () => {
   assert.equal(hoursToMinutes(5.25), 315)

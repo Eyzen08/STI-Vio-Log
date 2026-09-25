@@ -13,4 +13,3 @@ export const buildParentContactPayload = ({ guardianId, method, outcome, notes }
 })
 
 export const contactLabel = (value) => String(value || 'OTHER').replaceAll('_', ' ').toLocaleLowerCase().replace(/^./, (letter) => letter.toUpperCase())
-

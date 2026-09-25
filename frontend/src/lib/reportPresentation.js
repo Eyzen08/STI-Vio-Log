@@ -1,6 +1,6 @@
-import { formatDuration, formatManilaDate, formatManilaDateTime } from './displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatManilaDate, formatManilaDateTime } from './displayFormat.js'
 
-export const reportColumnLabel = (key) => key.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+export const reportColumnLabel = (key) => formatDisplayLabel(key)
 
 export function reportCell(key, value) {
   if (value === null || value === undefined || value === '') return 'Not recorded'
@@ -9,7 +9,7 @@ export function reportCell(key, value) {
   if (/(^|_)minutes$/.test(key) && Number.isFinite(Number(value))) return formatDuration(Number(value) / 60)
   if (/(^|_)date$/.test(key)) return formatManilaDate(value)
   if (/_at$/.test(key)) return formatManilaDateTime(value)
-  if (/(^|_)(status|role|severity|condition)$/.test(key)) return String(value).replaceAll('_', ' ').toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase())
+  if (/(^|_)(status|role|severity|condition)$/.test(key)) return formatDisplayLabel(value)
   return String(value)
 }
 

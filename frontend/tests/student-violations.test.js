@@ -34,7 +34,7 @@ test('missing arrays and invalid hour values receive safe defaults', () => {
 
 test('canonical lifecycle values receive student-readable labels', () => {
   assert.equal(statusLabel('COMPLETE'), 'Completed')
-  assert.equal(statusLabel('INVALID_CANCEL'), 'Invalid / cancelled')
+  assert.equal(statusLabel('INVALID_CANCEL'), 'Invalid / Cancelled')
   assert.equal(statusLabel('REOPEN'), 'Reopened')
 })
 

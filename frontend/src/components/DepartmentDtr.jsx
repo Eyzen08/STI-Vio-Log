@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { formatDuration } from '../lib/departmentDashboard.js'
 import { departmentDtrSummary, displayDepartmentDtrDate } from '../lib/departmentDtr.js'
 import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
+import { formatDisplayLabel } from '../lib/displayFormat.js'
 
 function DepartmentDtr({ report, loading, error, onFilter }) {
   const [filters, setFilters] = useState({ from: '', to: '', student_id: '', assignment_id: '' })
@@ -20,7 +21,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
       <section className="dtr-intro portal-page-header">
         <div>
           <p className="eyebrow">Department records</p>
-          <h2>Daily time record</h2>
+          <h2>Daily Time Record</h2>
           <p>Review community-service attendance recorded by your assigned department.</p>
         </div>
         <span>UTC reporting</span>
@@ -44,11 +45,11 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
       </section>
 
       <section className="table-card dtr-card" aria-busy={loading}>
-        <div className="table-header"><div><p className="eyebrow">Attendance ledger</p><h3>Service assignments</h3></div><span>{rows.length} records</span></div>
+        <div className="table-header"><div><p className="eyebrow">Attendance Ledger</p><h3>Service Assignments</h3></div><span>{rows.length} records</span></div>
         {loading ? (
           <div className="department-empty" aria-live="polite"><p>Loading attendance records…</p></div>
         ) : rows.length === 0 ? (
-          <div className="department-empty"><h4>No matching attendance</h4><p>Try a wider date range or remove an ID filter.</p></div>
+          <div className="department-empty"><h4>No Matching Attendance</h4><p>Try a wider date range or remove an ID filter.</p></div>
         ) : (
           <div className="table-wrap">
             <table>
@@ -56,7 +57,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
               <tbody>{rows.map((row) => (
                 <tr key={`${row.assignment_id}-${row.department_id}`}>
                   <td><strong>{row.first_name} {row.last_name}</strong><small className="table-subtext">{row.student_number}</small></td>
-                  <td>#{row.assignment_id}</td><td><span className="status-badge">{String(row.assignment_status || 'UNKNOWN').replaceAll('_', ' ')}</span></td><td>{attendanceOutcomeLabel(row.attendance_outcome)}</td>
+                  <td>#{row.assignment_id}</td><td><span className="status-badge">{formatDisplayLabel(row.assignment_status || 'UNKNOWN')}</span></td><td>{attendanceOutcomeLabel(row.attendance_outcome)}</td>
                   <td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_worked_minutes)}</td><td>{formatDuration(row.total_credited_minutes)}</td>
                   <td>{displayDepartmentDtrDate(row.latest_attendance_at)}</td>
                 </tr>

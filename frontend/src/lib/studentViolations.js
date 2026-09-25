@@ -1,4 +1,4 @@
-import { formatDuration } from './displayFormat.js'
+import { formatDisplayLabel, formatDuration } from './displayFormat.js'
 
 const asHours = (value) => {
   const hours = Number(value)
@@ -26,7 +26,7 @@ export const statusLabel = (status) => ({
   OPEN: 'Open',
   COMPLETE: 'Completed',
   CLEAR: 'Cleared',
-  INVALID_CANCEL: 'Invalid / cancelled',
+  INVALID_CANCEL: 'Invalid / Cancelled',
   CREATE: 'Recorded',
   REOPEN: 'Reopened'
-}[status] || String(status || 'Unknown').replaceAll('_', ' '))
+}[status] || formatDisplayLabel(status, 'Unknown'))

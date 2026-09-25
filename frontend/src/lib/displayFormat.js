@@ -1,6 +1,48 @@
 const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0
 const MANILA_TIME_ZONE = 'Asia/Manila'
 
+const DISPLAY_LABELS = {
+  DISCIPLINE_ADMIN: 'Discipline Administrator',
+  DISCIPLINE_OFFICE: 'Discipline Office',
+  DEPARTMENT_HEAD: 'Department Head',
+  IN_PROGRESS: 'In Progress',
+  NOT_ELIGIBLE: 'Not Eligible',
+  TIMED_IN: 'Timed In',
+  TIMED_OUT: 'Timed Out',
+  NEEDS_FOLLOW_UP: 'Needs Follow-Up',
+  LEFT_EARLY: 'Left Early',
+  TODAY_SERVICE_COMPLETED: "Today's Service Completed",
+  TODAYS_SERVICE_COMPLETED: "Today's Service Completed",
+  SERVICE_COMPLETED: 'Service Completed',
+  INVALID_CANCEL: 'Invalid / Cancelled',
+  AWAITING_CLEARANCE: 'Awaiting Clearance',
+  NEEDS_SERVICE: 'Needs Service Hours',
+  NO_SERVICE_REQUIRED: 'No Service Assignment',
+  ACCOUNT_RECOVERY: 'Account Recovery',
+  ACCOUNT_LOCK: 'Account Lock',
+  E_SIGNATURE_MANAGEMENT: 'E-Signature Management',
+  BSCPE: 'BSCpE',
+}
+
+const PRESERVED_TERMS = new Set([
+  'STI', 'QR', 'OTP', 'CSV', 'DTR', 'ID', 'API', 'URL', 'UTC', 'UI', 'UX', 'DO', 'IT', 'ICT',
+  'BSIT', 'BSCS', 'BSBA', 'BSAIS', 'BSHM', 'BSTM', 'ABM', 'HUMSS', 'STEM',
+])
+
+export const formatDisplayLabel = (value, fallback = '—') => {
+  if (value === null || value === undefined || String(value).trim() === '') return fallback
+  const raw = String(value).trim()
+  const key = raw.toUpperCase().replace(/[\s-]+/g, '_')
+  if (DISPLAY_LABELS[key]) return DISPLAY_LABELS[key]
+  return raw
+    .replaceAll('_', ' ')
+    .toLowerCase()
+    .replace(/(^|[\s/-])([a-z])/g, (_, separator, letter) => `${separator}${letter.toUpperCase()}`)
+    .split(' ')
+    .map((word) => PRESERVED_TERMS.has(word.toUpperCase()) ? word.toUpperCase() : word)
+    .join(' ')
+}
+
 const validDate = (value) => {
   if (value === null || value === undefined || value === '') return null
   const date = new Date(value)

@@ -15,7 +15,7 @@ function ServiceProgress({ violation }) {
   return (
     <section className="service-progress" aria-label="Community service progress">
       <div className="service-progress-heading">
-        <h4>Community service</h4>
+        <h4>Community Service</h4>
         <span>{percentage}% complete</span>
       </div>
       <div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percentage}>
@@ -48,7 +48,7 @@ function StudentViolations({ violations, loading, error }) {
       <header className="page-intro portal-page-header">
         <div>
           <p className="eyebrow">Disciplinary record</p>
-          <h2 id="violations-title">My violations</h2>
+          <h2 id="violations-title">My Violations</h2>
           <p>Review your records, required service, and status history.</p>
         </div>
         <span className="record-count">{records.length} {records.length === 1 ? 'record' : 'records'}</span>
@@ -59,7 +59,7 @@ function StudentViolations({ violations, loading, error }) {
       {!error && records.length === 0 ? (
         <div className="violations-empty">
           <span aria-hidden="true">✓</span>
-          <h3>No violations on record</h3>
+          <h3>No Violations on Record</h3>
           <p>Your student disciplinary record is currently clear.</p>
         </div>
       ) : (
@@ -97,7 +97,7 @@ function StudentViolations({ violations, loading, error }) {
                     <ServiceProgress violation={violation} />
 
                     <section className="lifecycle-section" aria-labelledby={`history-title-${violation.id}`}>
-                      <h4 id={`history-title-${violation.id}`}>Status history</h4>
+                      <h4 id={`history-title-${violation.id}`}>Status History</h4>
                       {violation.history.length === 0 ? (
                         <p className="empty-state">No lifecycle events are available.</p>
                       ) : (

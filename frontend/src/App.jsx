@@ -57,7 +57,7 @@ import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, c
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
@@ -76,7 +76,7 @@ function SessionRestoringScreen() {
         <img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" />
         <div className="session-restoring-copy">
           <p className="session-restoring-eyebrow">Secure student discipline portal</p>
-          <h1>Welcome back</h1>
+          <h1>Welcome Back</h1>
           <p>Restoring your secure session. This should only take a moment.</p>
         </div>
         <div className="session-restoring-progress" aria-hidden="true"><span /></div>
@@ -2169,7 +2169,7 @@ function App() {
       return (
         <>
           <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Students</span><h2>Students Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
+            <div><span className="page-breadcrumb">Home / Students</span><h2>Student Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
             <button type="button" className="primary-action" onClick={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }}>＋ Add Student</button>
           </header>
           <section className="management-metrics" aria-label="Student summary">
@@ -2309,7 +2309,7 @@ function App() {
 
           <section className="table-card">
             <div className="table-header management-table-header">
-              <div><h3>Student Directory</h3><p>Search and review the records available to your account.</p></div>
+              <div><h3>Student Directory</h3><p>Search and review records available to your account.</p></div>
               <span>
                 {dashboardLoading
                   ? 'Loading...'
@@ -2457,7 +2457,7 @@ function App() {
       return (
         <>
           <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Violations</span><h2>Violations Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
+            <div><span className="page-breadcrumb">Home / Violations</span><h2>Violation Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
             <button type="button" className="primary-action" onClick={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }}>＋ Record Violation</button>
           </header>
           <section className="management-metrics management-metrics--wide" aria-label="Violation summary">
@@ -3210,7 +3210,7 @@ function App() {
                     handleReportFilterChange
                   }
                 >
-                  {reportSortOptions(reportType).map((sort)=><option value={sort} key={sort}>{sort.replaceAll('_',' ')}</option>)}
+                  {reportSortOptions(reportType).map((sort)=><option value={sort} key={sort}>{formatDisplayLabel(sort)}</option>)}
                 </select>
               </label>
 
