@@ -53,6 +53,8 @@ Never reuse keys between purposes. Startup rejects missing, short, placeholder, 
 
 Run migrations once with the owner credential before routing traffic, then start the API with only the runtime credential. `npm start` deliberately does not apply migrations; it fails closed when a migration is pending. Run `npm run migrate` as a separate controlled release step with `MIGRATION_DATABASE_URL`, then remove that owner credential from the running service.
 
+If an automatic Render deployment fails because a migration is pending, apply the migration first and then explicitly redeploy the latest commit. A failed deployment does not automatically retry after the database becomes current, and an empty Git commit may not create a new Render deployment.
+
 After deployment verify:
 
 1. `GET /api/health` returns 200 without disclosing configuration.
