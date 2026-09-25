@@ -2,6 +2,8 @@
 
 > **Purpose.** This file is an evidence-based reference for preparing the STI Vio-Log capstone manuscript, presentation, and defense. It explains what the repository shows about the system, how the parts interact, and where the material may be used in a paper. It is not a finished manuscript and does not replace the school’s required research format.
 
+> **Repository baseline.** Updated on **September 25, 2026** against the current repository through migration `041_attendance_outcomes.sql`. The verified implementation includes 24 backend route modules, 29 backend controllers, 52 React components, 41 ordered database migrations, and 125 backend/frontend automated test files. These counts describe repository contents, not successful production deployment or completed user acceptance testing.
+
 ## 1. Evidence Labels and Writing Rules
 
 The following labels prevent the paper from presenting an assumption as a completed or evaluated result.
@@ -44,6 +46,8 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Socket.IO Client 4 | Real-time client library | Receives authenticated, audience-scoped refresh events and prompts the interface to retrieve authoritative data. | **Implemented** — `frontend/package.json`, `frontend/src/lib/realtime.js`. |
 | `html5-qrcode` | Browser QR-scanning library | Uses a permitted device camera to scan student QR codes in department workflows. | **Implemented** — `frontend/package.json`, `frontend/src/components/DepartmentQrScanner.jsx`. |
 | `qrcode` | QR-generation library | Generates a student-facing QR image from the opaque QR payload supplied by the system. | **Implemented** — `frontend/package.json`, `frontend/src/components/StudentQr.jsx`. |
+| Vercel Web Analytics | Adds frontend traffic-analytics integration for the deployed site. | **Implemented; Configured/Deployed** — `@vercel/analytics` in `frontend/package.json` and the frontend entry point. Live collection and the institution’s approved analytics/privacy configuration **Need verification**. |
+| Theme and responsive interface system | Provides light/dark themes, mobile navigation, reusable portal headers, accessible focus states, responsive record cards, and mobile QR/message/account workflows. | **Implemented** — `frontend/src/lib/theme.js`, `frontend/src/styles/portal-system.css`, components, and frontend tests. |
 
 ### 3.2 Backend and API technologies
 
@@ -60,11 +64,11 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Technology or practice | Function in STI Vio-Log | Evidence status |
 |---|---|---|
 | PostgreSQL | Stores accounts, students, departments, violations, assignments, attendance sessions, messages, notifications, clearances, certificates, security events, and audit history. | **Implemented** — `database/migrations/`. |
-| Versioned SQL migrations | Builds and evolves the schema through ordered, reviewable changes. | **Implemented** — `database/migrations/001_initial_schema.sql` through later migrations and `backend/scripts/migrate.js`. |
+| Versioned SQL migrations | Builds and evolves the schema through 41 ordered, reviewable changes. | **Implemented** — `database/migrations/001_initial_schema.sql` through `041_attendance_outcomes.sql` and `backend/scripts/migrate.js`. |
 | Transactions | Keep related multi-table operations atomic so partial disciplinary or attendance updates can be rolled back. | **Implemented** — service/controller transaction logic and `backend/tests/violation-workflow.pgtest.js`. |
 | Constraints and guarded state transitions | Protect uniqueness, relationships, valid states, and workflow integrity at application and database levels. | **Implemented** — migrations, validators, and integration tests. |
 | Connection pooling and TLS settings | Bound runtime connections, set timeouts, and support verified encrypted production database connections. | **Implemented; Configured/Deployed** — `backend/src/config/database.js`. |
-| Runtime/owner role separation and RLS hardening | Separates migration ownership from application access and prevents unintended Data API access. | **Implemented; Configured/Deployed** — migrations 034–036 and `docs/PRODUCTION-DEPLOYMENT.md`. |
+| Runtime/owner role separation, RLS, and Data API lockdown | Separates migration ownership from application access, hardens function search paths and retention operations, and prevents unintended anonymous/authenticated Data API access. | **Implemented; Configured/Deployed** — migrations 034–036 and 040, database security checks, and `docs/PRODUCTION-DEPLOYMENT.md`. |
 | Supabase-managed PostgreSQL | Intended production database platform; Supabase is used as PostgreSQL rather than as browser-side Auth or direct application Data API access. | **Configured/Deployed; Documented** — `backend/src/config/database.js`, `docs/PRODUCTION-DEPLOYMENT.md`. Live use **Needs verification**. |
 
 ### 3.4 Authentication and security technologies
@@ -79,12 +83,14 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Google Identity Services | Verifies Google ID tokens for the supported student identity and registration flows. It does not give the browser direct database access. | **Implemented; Configured/Deployed** — Google identity services/controllers, frontend Google access component, and environment examples. |
 | RBAC and permissions | Restricts routes and actions by authenticated role, fine-grained permission, ownership, and department. | **Implemented** — authentication middleware, `backend/src/security/permissions.js`, route definitions, and tests. |
 | Department isolation | Derives department access from the authenticated account and rejects cross-department reads or changes. | **Implemented** — department-aware queries and isolation/integration tests. |
-| Helmet and Content Security Policy | Adds security-related HTTP headers and limits browser content sources. | **Implemented; Configured/Deployed** — `backend/src/server.js`, `frontend/vite.config.js`, `frontend/vercel.json`. |
+| Helmet and Content Security Policy | Adds security-related HTTP headers and limits browser content sources. | **Implemented; Configured/Deployed** — `backend/src/server.js`, `frontend/vite.config.js`, `frontend/vercel.mjs`. |
 | CORS and trusted-origin checks | Restricts browser and Socket.IO origins and applies explicit cross-origin policy. | **Implemented** — server security configuration and real-time initialization. |
 | Rate limiting and authentication throttling | Reduces automated abuse against APIs and authentication paths. | **Implemented** — Express rate limiter and `authThrottleService.js`. |
 | HTTPS enforcement | Rejects insecure production transport behind the configured trusted proxy. | **Implemented; Configured/Deployed** — `backend/src/config/security.js`, HTTPS tests. |
 | Audit and security-event logging | Records sensitive administrative and workflow actions while excluding credentials and protected content. | **Implemented** — audit middleware/controllers, security services, migrations, and tests. |
 | Append-only audit hardening | Prevents ordinary update or deletion of protected audit records. | **Implemented** — `database/migrations/031_administrative_audit_hardening.sql`. |
+| Mandatory Student onboarding | Blocks normal Student portal/API use until required Google-email confirmation/linking and profile completion steps are satisfied. | **Implemented** — migrations 038–039, `studentOnboardingService.js`, onboarding middleware/routes, UI, and tests. |
+| Certificate and session signature hardening | Uses bounded signing secrets, validates certificate references, and protects session/certificate trust boundaries from weak or reused production configuration. | **Implemented; Configured/Deployed** — security configuration, certificate/session services, production checks, and security tests. |
 
 ### 3.5 Communication, document, and export technologies
 
@@ -101,7 +107,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 
 | Platform or tool | Role in the project | Evidence status |
 |---|---|---|
-| Vercel | Hosts the Vite frontend and proxies `/api/*` and `/socket.io/*` to the backend so browser requests remain same-origin. | **Configured/Deployed; Documented** — `frontend/vercel.json`, `docs/PRODUCTION-DEPLOYMENT.md`. Live status **Needs verification**. |
+| Vercel | Hosts the Vite frontend and generates proxy/security-header configuration for `/api/*` and `/socket.io/*` so browser requests remain same-origin. | **Configured/Deployed; Documented** — `frontend/vercel.mjs`, frontend configuration tests, and `docs/PRODUCTION-DEPLOYMENT.md`. Live status **Needs verification**. |
 | Render | Intended host for the Node.js/Express backend and Socket.IO server. | **Configured/Deployed; Documented** — Vercel rewrite destination and deployment guide. Live status **Needs verification**. |
 | Supabase | Intended managed PostgreSQL provider, with the application connecting through PostgreSQL credentials rather than exposing Supabase credentials to the browser. | **Configured/Deployed; Documented** — database configuration and deployment guide. Live status **Needs verification**. |
 | Git and GitHub | Provide version control and repository collaboration; GitHub hosts the configured automation workflows. | Git is **implemented in the workspace**; remote hosting/current collaboration practice **needs verification**. Evidence: `.git/`, `.github/`. |
@@ -113,6 +119,19 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Node test runner | Executes backend and frontend unit, contract, security, and integration-oriented tests. | **Implemented** — package scripts and `backend/tests/`, `frontend/tests/`. |
 | npm audit and CycloneDX SBOM | Check dependency vulnerabilities and create software bills of materials in CI. | **Configured/Deployed** — security workflow. Actual audit status **Needs verification** from a current run. |
 | Performance-budget script | Builds the frontend and checks defined bundle/performance limits. | **Implemented; Configured/Deployed** — frontend package scripts and `frontend/scripts/check-performance-budget.mjs`. |
+
+### 3.7 Database evolution summary
+
+| Migration range | Major capability added or hardened |
+|---|---|
+| `001`–`004` | Core users, students, violations, service assignments, clearance synchronization, and attendance sessions. |
+| `005`–`011` | Google identity/registration foundations, account security, staff profiles, handbook offenses, and fuller Student registration profiles. |
+| `012`–`018` | Guardian contact logs, department-scoped service, notifications, enrollment verification, secure messaging, Student review, and legacy service-result review. |
+| `019`–`027` | Student password registration/recovery, message scoping, Department Account foundations, Admin profiles, clearance certificates, offense escalation, officer responsibility, and identity-name completion. |
+| `028`–`037` | Administrator-role transition, administrative auditing, security notifications, step-up foundations, opaque sessions, MFA, database/search-path/retention hardening, and the final unified Discipline Administrator model. |
+| `038`–`041` | Mandatory Student onboarding, Google-email OTP confirmation, Supabase Data API lockdown, and validated attendance outcomes. |
+
+The migrations are cumulative. Earlier tables or workflows may remain for historical compatibility even when a newer migration retires their active use. The applied production migration status is **Needs verification** with `npm run migrate:status`; repository presence alone does not prove that every production migration has run.
 
 ## 4. System Architecture and Component Interaction
 
@@ -132,7 +151,7 @@ flowchart LR
     A -.->|Optional SMTP fallback| M[SMTP provider via Nodemailer]
 ```
 
-**Configured/Deployed; Documented.** The diagram represents the intended production arrangement found in `frontend/vercel.json` and `docs/PRODUCTION-DEPLOYMENT.md`. Researchers should confirm the active domains, deployment status, and provider dashboards before writing that this architecture is currently operational.
+**Configured/Deployed; Documented.** The diagram represents the intended production arrangement found in `frontend/vercel.mjs` and `docs/PRODUCTION-DEPLOYMENT.md`. Researchers should confirm the active domains, deployment status, proxy behavior, and provider dashboards before writing that this architecture is currently operational.
 
 ### 4.2 Component-interaction summary
 
@@ -160,7 +179,7 @@ flowchart LR
 
 ### 5.1 Student registration, identity, and access
 
-**Implemented.** The repository contains student password access and Google identity/registration flows. Google credentials are verified on the server. New or linking requests can enter an administrative review process, while approved records create or connect the local identity with an audit trail. Department Google access has been retired in favor of administrator-provisioned department accounts with forced password change. Evidence: Google and student authentication controllers/services, migrations 005–006 and 019–020, `docs/GOOGLE-AUTH-USER-GUIDE.md`.
+**Implemented.** The repository contains Student Number/password access and Google identity/registration flows. Google credentials are verified on the server. New or linking requests can enter an administrative review process, while approved records create or connect the local identity with an audit trail. Newly provisioned students must finish ordered onboarding steps before normal portal access: change a temporary password when applicable, confirm the intended Google email through a single-use OTP, bind the verified Google identity, and complete required profile information. Department Google access has been retired in favor of administrator-provisioned Department Accounts with forced password change. Evidence: Google/student authentication and onboarding services, migrations 005–006, 019–020, and 038–039, onboarding UI/tests, and `docs/GOOGLE-AUTH-USER-GUIDE.md`.
 
 **Paper use:** Discuss identity verification, controlled registration, account lifecycle, and the separation between an external identity provider and the application’s own authorization model.
 
@@ -172,13 +191,13 @@ flowchart LR
 
 ### 5.3 Community-service assignment and progress
 
-**Implemented.** The Discipline Office assigns required service separately from the violation record and associates work with a department. Progress is derived from credited attendance sessions and cannot exceed the remaining requirement. Result review and department responsibility are represented in later migrations and services. Evidence: community-service controllers/services, migrations 003–004, 013, 018, and 026.
+**Implemented.** The Discipline Office assigns required service separately from the violation record and associates work with a department. Progress is derived from credited attendance sessions and cannot exceed the remaining requirement. Officer availability, permanent/temporary responsibility, supervising-officer history, legacy result review, and current attendance outcomes are represented in later migrations and services. Evidence: community-service and officer-responsibility controllers/services, migrations 003–004, 013, 018, 026, and 041.
 
 **Paper use:** Explain how separating the offense record, corrective assignment, and attendance evidence improves data normalization and preserves historical meaning.
 
 ### 5.4 QR time-in, time-out, and digital DTR
 
-**Implemented.** A department user scans an opaque student QR value. The server derives the authenticated department and scanner identity, checks the relevant assignment, prevents conflicting active sessions, records server timestamps, and calculates worked and credited time at time-out. DTR views and reports use these sessions. Evidence: QR and community-service attendance controllers, `DepartmentQrScanner.jsx`, `StudentQr.jsx`, and workflow integration tests.
+**Implemented.** A Department Account scans an opaque student QR value. The server derives the authenticated department and scanner identity, checks the relevant assignment, prevents conflicting active sessions, records server timestamps, and calculates worked and credited time at time-out. Time-out requires one controlled outcome: `TODAYS_SERVICE_COMPLETED`, `LEFT_EARLY`, or `SERVICE_COMPLETED`; the server rejects an outcome inconsistent with the remaining required time. Eligible elapsed time is credited immediately, capped at the assignment’s remaining requirement, without a second Discipline Office approval. Active attendance, student service views, QR screens, and DTR screens receive scoped refresh signals and retain polling recovery; live timers are capped at remaining required time. Evidence: QR/community-service attendance controllers and service, migration 041, `AdminActiveAttendance.jsx`, `DepartmentQrScanner.jsx`, `StudentServiceTimeDrawer.jsx`, real-time modules, API contract, and workflow/isolation tests.
 
 **Paper use:** Describe QR as an identifier transport mechanism, not as the source of authorization. The server—not the scanned content—decides access, department scope, timestamps, and credit.
 
@@ -214,9 +233,15 @@ flowchart LR
 
 ### 5.10 Administration, audit, and monitoring
 
-**Implemented.** Protected administration includes account provisioning/recovery, department and officer responsibility management, security events, sanitized component health, and audited high-risk actions. Fresh confirmation and MFA protect selected operations; audit stores are hardened against ordinary alteration. Evidence: system/account administration modules, high-risk action service, security migrations, and administrative tests.
+**Implemented.** Protected administration includes account provisioning/recovery, department and officer responsibility management, active-attendance monitoring, duplicate-account review, Google-link recovery, security events, authentication activity, sanitized component health, and audited sensitive actions. Privileged users require TOTP MFA. Account lock/recovery uses a fresh, single-use, five-minute confirmation bound to the selected action, target, and target version. Earlier temporary-support and two-person approval designs are retired; migration 037 preserves their history while revoking/cancelling open legacy records. Audit stores are hardened against ordinary alteration. Evidence: system/account administration modules, high-risk action service, migrations 028–037, administrative security documentation, and tests.
 
-**Paper use:** Relate these controls to accountability, least privilege, separation of duties, and defense in depth. A live penetration test or formal security certification is **needs verification** and must not be implied by code presence.
+**Paper use:** Relate these controls to accountability, least privilege, separation of duties, and defense in depth. A live penetration test or formal security certification is **Needs verification** and must not be implied by code presence.
+
+### 5.11 Current interface and accessibility behavior
+
+**Implemented.** The frontend provides role-specific dashboards and navigation, unified portal page headers, responsive desktop/mobile layouts, light and dark themes, keyboard-visible focus treatment, password visibility controls, segmented OTP entry, normalized form input, searchable messaging recipients, mobile-friendly message and certificate layouts, and consistent user-facing capitalization. Department mobile navigation exposes the operational service pages required for QR scanning, DTR, service monitoring, students, non-compliance, and reports. Evidence: `frontend/src/App.jsx`, portal components/styles/libraries, and frontend UI contract tests.
+
+**Paper use:** Screenshots may demonstrate responsive and themed states, but accessibility conformance, usability, and user satisfaction remain **Needs verification** through the selected evaluation method and real-device testing.
 
 ## 6. Suggested Use in the Capstone Manuscript
 
@@ -317,7 +342,7 @@ The system uses database constraints, controlled state transitions, parameterize
 
 ### Can the proponents claim that the system is secure?
 
-The paper may describe the implemented security controls and report executed security test results. It should not claim absolute security. A formal audit, penetration test, and operational monitoring evidence must be identified explicitly if performed.
+The paper may describe the implemented security controls and report executed security test results. It should not claim absolute security or production readiness. The repository security audit reports zero independently confirmed vulnerabilities, but its mandatory validators could not execute fully in the available Windows environment and 14 planned coverage units were deferred. That result is not proof that no vulnerabilities exist. A completed formal audit, penetration test, current dependency/security workflow results, and operational monitoring evidence must be identified explicitly if performed.
 
 ### How was effectiveness evaluated?
 
@@ -364,9 +389,12 @@ The paper may describe the implemented security controls and report executed sec
 | Google identity | Google controllers/services, `frontend/src/components/GoogleStudentAccess.jsx`, Google identity documentation |
 | Real-time updates | `backend/src/realtime.js`, `backend/src/services/realtimeEventService.js`, `frontend/src/lib/realtime.js` |
 | Reports and certificates | report controllers/routes/tests, `backend/src/services/clearanceCertificateService.js` |
-| Production architecture | `frontend/vercel.json`, `backend/src/config/database.js`, `docs/PRODUCTION-DEPLOYMENT.md` |
+| Production architecture | `frontend/vercel.mjs`, `backend/src/config/database.js`, `docs/PRODUCTION-DEPLOYMENT.md` |
 | CI and software security | `.github/workflows/security.yml`, `.github/dependabot.yml` |
 | Backup and recovery | `backend/scripts/backup.js`, `docs/DATABASE-BACKUP-RECOVERY.md` |
+| Current API contract | `docs/api/CONTRACTS.md`, `docs/api/openapi.json`, `backend/src/routes/` |
+| Security posture and release gates | `docs/security/SECURITY-AUDIT.md`, `docs/security/SECURITY-REMEDIATION-PLAN.md`, `docs/security/STAGING-AND-PRODUCTION-GATE.md` |
+| Current acceptance status | `docs/FINAL-ACCEPTANCE-CHECKLIST.md`, `docs/ROADMAP.md`; unchecked items remain unverified rather than automatically unimplemented. |
 
 ---
 
