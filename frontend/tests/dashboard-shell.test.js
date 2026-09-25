@@ -130,9 +130,10 @@ test('profile menu resolves readable roles and preserved account routes', () => 
 
 test('mobile shell exposes real branding, scoped directory search, and the system dashboard', () => {
   const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const navigation = fs.readFileSync(new URL('../src/lib/portalNavigation.js', import.meta.url), 'utf8')
   assert.match(source, /className="mobile-brand"/)
   assert.match(source, /aria-label="STI Vio-Log home"/)
-  assert.match(source, /\['Dashboard', 'System Dashboard'\]\.includes\(view\)/)
+  assert.match(navigation, /\['Dashboard', 'System Dashboard'\]\.includes\(view\)/)
   assert.match(source, /\(isAdmin \|\| isDepartmentHead\).*className="topbar-search"/s)
   assert.doesNotMatch(source, /topbar-search::before/)
 })

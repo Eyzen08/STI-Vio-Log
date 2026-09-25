@@ -4360,6 +4360,19 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 .account-summary-card.portal-page-header { margin-bottom: 1rem; }
 
+/* Daily time record uses shared light header card, not legacy navy hero text. */
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(h2, strong) {
+  color: var(--color-text) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(.eyebrow, p) {
+  color: var(--color-text-secondary) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header > span {
+  border-color: var(--color-border);
+  background: var(--surface-interactive);
+  color: var(--color-text);
+}
+
 :root[data-theme='dark'] .portal-page-header {
   border-color: var(--border-subtle) !important;
   background: var(--surface-raised) !important;

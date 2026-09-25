@@ -6,3 +6,12 @@ export const iconNameForView = (view = '') => ({
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings',
   'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations'
 }[view] || 'dashboard')
+
+export const mobileNavItemsFor = (navItems = [], role = '') => [
+  navItems.find(({ view }) => ['Dashboard', 'System Dashboard'].includes(view)),
+  navItems.find(({ view }) => ['Students', 'Assigned Students', 'My Violations'].includes(view)),
+  navItems.find(({ view }) => ['Violations', 'QR Scan', 'My Service'].includes(view)),
+  navItems.find(({ view }) => role === 'DEPARTMENT_HEAD' ? view === 'Community Service' : view === 'Messages')
+].filter(Boolean)
+
+export const mobileNavLabel = (item = {}) => item.label === 'Service Results' ? 'Service' : String(item.label || '').replace('My ', '')

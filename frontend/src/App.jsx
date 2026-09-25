@@ -58,7 +58,7 @@ import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
-import { iconNameForView } from './lib/portalNavigation.js'
+import { iconNameForView, mobileNavItemsFor, mobileNavLabel } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { displayPhilippinePhone } from './lib/phone.js'
@@ -449,12 +449,7 @@ function App() {
     return groups
   }, [])
 
-  const mobileNavItems = [
-    navItems.find(({ view }) => ['Dashboard', 'System Dashboard'].includes(view)),
-    navItems.find(({ view }) => ['Students','Assigned Students','My Violations'].includes(view)),
-    navItems.find(({ view }) => ['Violations','QR Scan','My Service'].includes(view)),
-    navItems.find(({ view }) => view === 'Messages')
-  ].filter(Boolean)
+  const mobileNavItems = mobileNavItemsFor(navItems, user?.role)
 
   const userRole = user?.role || null
 
@@ -3482,7 +3477,7 @@ function App() {
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>}
 
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
-        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{item.label.replace('My ','')}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
+        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
       {logoutConfirmation&&<Modal title="Confirm logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging out…':'Logout'}</button></footer></div></Modal>}
     </div>
