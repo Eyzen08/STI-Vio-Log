@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { formatMinutes, summarizeStudentService, validateDateRange } from '../lib/studentService.js'
 import { formatManilaDateTime } from '../lib/displayFormat.js'
 import { formatLiveServiceTime, isActiveServiceSession, serviceSessionTiming } from '../lib/departmentService.js'
+import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
 
@@ -93,7 +94,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
         {displaySessions.length === 0 ? <p className="empty-state">No attendance sessions match this period.</p> : (
           <div className="session-list">{displaySessions.map((session) => <article className={isActiveServiceSession(session) ? 'student-active-session' : undefined} key={session.id}>
             <div><strong>{session.department_name}</strong><span>Assignment #{session.assignment_id}</span></div>
-            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Live elapsed' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ActiveTimer session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div></dl>
+            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Live elapsed' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ActiveTimer session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!isActiveServiceSession(session)&&<div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
             <span className={`status-badge status-${String(session.status).toLowerCase()}`}>{session.status}</span>
           </article>)}</div>
         )}

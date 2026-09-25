@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const pool = require('../src/config/database');
-const { calculateSessionCredit, calculateSessionWork, recordTimeIn } = require('../src/services/communityServiceSessionService');
+const { calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, recordTimeIn } = require('../src/services/communityServiceSessionService');
 const { communityServiceTimeIn, getActiveDepartmentSessions, getCommunityServiceAttendance } = require('../src/controllers/communityServiceAttendanceController');
 const { createDepartmentAccountService } = require('../src/services/departmentAccountService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
@@ -51,6 +51,19 @@ test('department time-out credit is capped at the remaining requirement',()=>{
 test('late time-out caps worked minutes at the remaining requirement',()=>{
   assert.deepEqual(calculateSessionWork({requiredHours:4,completedHours:3.5,elapsedMinutes:90}),{actualElapsedMinutes:90,timerLimitMinutes:30,workedMinutes:30,limitReached:true});
   assert.deepEqual(calculateSessionWork({requiredHours:4,completedHours:1,elapsedMinutes:45}),{actualElapsedMinutes:45,timerLimitMinutes:180,workedMinutes:45,limitReached:false});
+});
+
+test('attendance outcomes are enforced against authoritative remaining minutes',()=>{
+  assert.equal(validateAttendanceOutcome({attendanceOutcome:'TODAYS_SERVICE_COMPLETED',remainingMinutes:30}),'TODAYS_SERVICE_COMPLETED');
+  assert.equal(validateAttendanceOutcome({attendanceOutcome:'LEFT_EARLY',remainingMinutes:30}),'LEFT_EARLY');
+  assert.equal(validateAttendanceOutcome({attendanceOutcome:'SERVICE_COMPLETED',remainingMinutes:0}),'SERVICE_COMPLETED');
+  for(const input of [
+    {attendanceOutcome:'',remainingMinutes:30},
+    {attendanceOutcome:'SATISFACTORY',remainingMinutes:30},
+    {attendanceOutcome:'SERVICE_COMPLETED',remainingMinutes:30},
+    {attendanceOutcome:'TODAYS_SERVICE_COMPLETED',remainingMinutes:0},
+    {attendanceOutcome:'LEFT_EARLY',remainingMinutes:0}
+  ]) assert.throws(()=>validateAttendanceOutcome(input),(error)=>error.statusCode===400);
 });
 
 test('Department Account creation allows multiple accountable officers per department',async()=>{

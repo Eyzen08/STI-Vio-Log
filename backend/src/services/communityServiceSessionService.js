@@ -158,7 +158,22 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
     } finally { client.release(); }
 };
 
-const CONDITIONS = new Set(['SATISFACTORY', 'NEEDS_FOLLOW_UP', 'INCIDENT_REPORTED']);
+const ATTENDANCE_OUTCOMES = new Set(['TODAYS_SERVICE_COMPLETED', 'LEFT_EARLY', 'SERVICE_COMPLETED']);
+
+const validateAttendanceOutcome = ({ attendanceOutcome, remainingMinutes }) => {
+    const normalizedOutcome = String(attendanceOutcome || '').toUpperCase();
+    if (!ATTENDANCE_OUTCOMES.has(normalizedOutcome)) {
+        throw new CommunityServiceSessionError('Select an attendance outcome before time-out', 400, 'ATTENDANCE_OUTCOME_REQUIRED');
+    }
+    const completesService = Number(remainingMinutes) === 0;
+    if (completesService && normalizedOutcome !== 'SERVICE_COMPLETED') {
+        throw new CommunityServiceSessionError('Select Service Completed because this session fulfills all required community-service hours', 400, 'ATTENDANCE_OUTCOME_MISMATCH');
+    }
+    if (!completesService && normalizedOutcome === 'SERVICE_COMPLETED') {
+        throw new CommunityServiceSessionError("Select Today’s Service Completed or Left Early because required community-service hours remain", 400, 'ATTENDANCE_OUTCOME_MISMATCH');
+    }
+    return normalizedOutcome;
+};
 
 const calculateSessionCredit = ({ requiredHours, completedHours, workedMinutes }) => {
     const requiredMinutes = Math.max(0, Math.round(Number(requiredHours || 0) * 60));
@@ -182,7 +197,7 @@ const calculateSessionWork = ({ requiredHours, completedHours, elapsedMinutes })
     };
 };
 
-const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, condition, ipAddress, writeQrLog = false }) => {
+const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, attendanceOutcome, ipAddress, writeQrLog = false }) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
@@ -213,9 +228,6 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
             `SELECT GREATEST(FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - $1::timestamptz)) / 60), 0)::int AS minutes`,
             [session.time_in]
         )).rows[0].minutes;
-        const normalizedCondition = String(condition || '').toUpperCase();
-        if (!CONDITIONS.has(normalizedCondition)) throw new CommunityServiceSessionError('Select the student service condition before time-out', 400);
-
         const sessionWork = calculateSessionWork({
             requiredHours: assignment.required_hours,
             completedHours: assignment.completed_hours,
@@ -227,6 +239,7 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
             completedHours: assignment.completed_hours,
             workedMinutes: duration
         });
+        const normalizedOutcome = validateAttendanceOutcome({ attendanceOutcome, remainingMinutes });
 
         const completedSession = (await client.query(
             `UPDATE community_service_sessions
@@ -239,7 +252,7 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
                  review_notes = 'Automatically credited at department time-out',
                  updated_at = CURRENT_TIMESTAMP
              WHERE id = $4 AND time_out IS NULL RETURNING *`,
-            [duration, actor.id, attendance.id, session.id, normalizedCondition, notes || null, creditedMinutes, supervisor.officer_user_id]
+            [duration, actor.id, attendance.id, session.id, normalizedOutcome, notes || null, creditedMinutes, supervisor.officer_user_id]
         )).rows[0];
         if (!completedSession) throw new CommunityServiceSessionError("Community service session was already completed", 409);
 
@@ -278,7 +291,7 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
             )).rows[0];
         }
         await client.query(`UPDATE community_service_session_officer_history SET ends_at=CURRENT_TIMESTAMP WHERE session_id=$1 AND ends_at IS NULL`, [session.id]);
-        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { actual_elapsed_minutes: sessionWork.actualElapsedMinutes, timer_limit_minutes: sessionWork.timerLimitMinutes, worked_minutes: Number(duration), credited_minutes: creditedMinutes, limit_reached: sessionWork.limitReached, service_condition: normalizedCondition, supervising_officer_user_id: Number(supervisor.officer_user_id), supervisor_changed: supervisorChanged }, ipAddress });
+        await insertAudit({ client, actor, action: "TIME_OUT_CREDITED", sessionId: session.id, assignmentId, description: { actual_elapsed_minutes: sessionWork.actualElapsedMinutes, timer_limit_minutes: sessionWork.timerLimitMinutes, worked_minutes: Number(duration), credited_minutes: creditedMinutes, limit_reached: sessionWork.limitReached, attendance_outcome: normalizedOutcome, supervising_officer_user_id: Number(supervisor.officer_user_id), supervisor_changed: supervisorChanged }, ipAddress });
         await notifyStudent(client, assignment.student_id, {
             title: assignmentStatus === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
             message: `${creditedMinutes} service minute${creditedMinutes === 1 ? '' : 's'} credited at department time-out.`,
@@ -287,7 +300,7 @@ const recordTimeOut = async ({ assignmentId, expectedStudentId, departmentId, su
         });
         await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, action:'TIME_OUT', occurredAt:completedSession.time_out });
         await client.query("COMMIT");
-        return { assignment: updatedAssignment, attendance, session: completedSession, supervising_officer: supervisor, violation, clearanceSync, scanLog };
+        return { assignment: updatedAssignment, assignment_status: assignmentStatus, attendance_outcome: normalizedOutcome, attendance, session: { ...completedSession, attendance_outcome: normalizedOutcome }, supervising_officer: supervisor, violation, clearanceSync, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         throw error;
@@ -322,4 +335,4 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
     }catch(error){try{await client.query('ROLLBACK')}catch(_){}throw error}finally{client.release()}
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, calculateSessionWork, availableSupervisors, chooseSupervisor, CONDITIONS };
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, availableSupervisors, chooseSupervisor, ATTENDANCE_OUTCOMES };

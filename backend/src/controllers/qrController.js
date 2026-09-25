@@ -8,8 +8,8 @@ const { emitNotificationChange } = require('../services/realtimeEventService');
 
 const validateQrBody = (req) => {
     const allowed = req.user.role === "DEPARTMENT_HEAD"
-        ? ["qr_code", "notes", "condition", "supervising_officer_id"]
-        : ["qr_code", "notes", "condition", "department_id", "supervising_officer_id"];
+        ? ["qr_code", "notes", "attendance_outcome", "supervising_officer_id"]
+        : ["qr_code", "notes", "attendance_outcome", "department_id", "supervising_officer_id"];
     assertAllowedFields(req.body, allowed);
     const qrCode = typeof req.body.qr_code === "string" ? req.body.qr_code.trim() : "";
     const notes = req.body.notes == null ? "" : (typeof req.body.notes === "string" ? req.body.notes.trim() : null);
@@ -70,7 +70,7 @@ const handle = (operation) => async (req, res) => {
         if (!req.body.qr_code || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "qr_code and a valid staff department are required" });
         const { student, assignment } = await findStudentAndAssignment(req.body.qr_code, req.staffDepartmentId);
         attendanceStudentId = student.id;
-        const result = await (operation === "time-in" ? recordTimeIn : recordTimeOut)({ assignmentId: assignment.id, expectedStudentId: student.id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes: req.body.notes, condition: req.body.condition, ipAddress: req.ip, writeQrLog: true });
+        const result = await (operation === "time-in" ? recordTimeIn : recordTimeOut)({ assignmentId: assignment.id, expectedStudentId: student.id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes: req.body.notes, attendanceOutcome: req.body.attendance_outcome, ipAddress: req.ip, writeQrLog: true });
         await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: `Community service QR ${operation} recorded successfully`, student, studentId: student.id, hours_worked: result.session.worked_minutes == null ? undefined : result.session.worked_minutes / 60, ...result });
     } catch (error) {

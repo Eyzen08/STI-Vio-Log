@@ -155,7 +155,7 @@ test('portal navigation keeps transparent branding and a fixed navy palette in b
 test('dark QR attendance qualifiers use semantic dark pills', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   assert.match(guard, /\.record-fields \.record-field-label small\s*\{[^}]*background:var\(--surface-interactive\)[^}]*color:var\(--text-secondary\)/s)
-  assert.match(guard, /label:has\(\[name='condition'\]\) \.record-field-label small\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
+  assert.match(guard, /label:has\(\[name='attendance_outcome'\]\) \.record-field-label small\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
 })
 
 test('dark student routes cannot retain legacy light cards or low-contrast text', () => {

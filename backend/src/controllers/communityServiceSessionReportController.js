@@ -35,12 +35,14 @@ const getDTRReport = async (req, res) => {
         if (from) add(from, " AND css.time_in >= (?::date::timestamp AT TIME ZONE 'UTC')");
         if (to) add(to, " AND css.time_in < ((?::date + 1)::timestamp AT TIME ZONE 'UTC')");
         const result = await pool.query(
-            `SELECT s.student_number, s.first_name, s.last_name,
+            `SELECT a.id AS assignment_id, css.department_id, s.student_number, s.first_name, s.last_name,
                     d.department_name, a.required_hours,
                     a.completed_hours AS credited_hours, a.remaining_hours, a.status AS assignment_status,
                     COUNT(*) FILTER (WHERE css.status = 'COMPLETED')::int AS total_completed_sessions,
                     COALESCE(SUM(css.worked_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_worked_minutes,
                     COALESCE(SUM(css.credited_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_credited_minutes,
+                    (ARRAY_AGG(css.service_condition ORDER BY COALESCE(css.time_out, css.time_in) DESC, css.id DESC)
+                        FILTER (WHERE css.status = 'COMPLETED'))[1] AS attendance_outcome,
                     MIN(css.time_in) AS first_attendance_at, MAX(COALESCE(css.time_out, css.time_in)) AS latest_attendance_at
              FROM community_service_sessions css JOIN community_service_assignments a ON a.id = css.assignment_id
              JOIN students s ON s.id = a.student_id JOIN departments d ON d.id = css.department_id
@@ -75,6 +77,7 @@ const getMyDTR = async (req, res) => {
         const sessions = await pool.query(
             `SELECT css.id, css.assignment_id, css.department_id, d.department_name,
                     css.time_in, css.time_out, css.worked_minutes, css.credited_minutes, css.status,
+                    css.service_condition AS attendance_outcome,
                     ROUND(a.remaining_hours * 60)::int * 60 AS timer_limit_seconds,
                     CASE WHEN css.status = 'ACTIVE' THEN
                         LEAST(FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int, ROUND(a.remaining_hours * 60)::int * 60)

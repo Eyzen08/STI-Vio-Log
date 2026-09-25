@@ -20,6 +20,7 @@ export const departmentReportRows = (type, { dtr, nonCompliance } = {}) => {
     student_number: row.student_number,
     student_name: [row.first_name, row.last_name].filter(Boolean).join(' '),
     assignment_status: row.assignment_status,
+    latest_attendance_outcome: attendanceOutcomeLabel(row.attendance_outcome),
     completed_sessions: row.total_completed_sessions,
     worked_minutes: row.total_worked_minutes,
     credited_minutes: row.total_credited_minutes,
@@ -35,3 +36,4 @@ export const createDepartmentReportCsv = (rows) => {
 }
 
 export const departmentReportFilename = (type, date = new Date()) => `department-${type}-${date.toISOString().slice(0, 10)}.csv`
+import { attendanceOutcomeLabel } from './attendanceOutcome.js'

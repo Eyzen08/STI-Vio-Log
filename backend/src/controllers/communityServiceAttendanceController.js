@@ -38,12 +38,12 @@ const communityServiceTimeIn = async (req, res) => {
 const communityServiceTimeOut = async (req, res) => {
     try {
         const allowedFields = req.user.role === "DEPARTMENT_HEAD"
-            ? ["assignment_id", "student_id", "notes", "condition", "supervising_officer_id"]
-            : ["assignment_id", "student_id", "notes", "condition", "department_id", "supervising_officer_id"];
+            ? ["assignment_id", "student_id", "notes", "attendance_outcome", "supervising_officer_id"]
+            : ["assignment_id", "student_id", "notes", "attendance_outcome", "department_id", "supervising_officer_id"];
         assertAllowedFields(req.body, allowedFields);
-        const { assignment_id, student_id, notes, condition } = req.body;
+        const { assignment_id, student_id, notes, attendance_outcome } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
-        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, condition, ipAddress: req.ip });
+        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, attendanceOutcome: attendance_outcome, ipAddress: req.ip });
         await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
     } catch (error) { await recordFailureNotice(req, 'TIME_OUT_REJECTED', error); return sendError(res, error, "record community service time-out"); }
@@ -137,7 +137,8 @@ const getCommunityServiceSessions = async (req, res) => {
         if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'UTC')`; }
         if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'UTC')`; }
         const result = await pool.query(
-            `SELECT css.*, d.department_name, a.student_id, a.violation_id,
+            `SELECT css.*, css.service_condition AS attendance_outcome,
+                    d.department_name, a.student_id, a.violation_id,
                     a.required_hours, a.completed_hours, a.remaining_hours,
                     s.student_number, s.first_name, s.last_name,
                     COALESCE(sp.first_name,dh.first_name) AS supervising_officer_first_name,

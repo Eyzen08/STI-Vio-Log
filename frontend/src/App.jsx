@@ -384,7 +384,7 @@ function App() {
     department_id: '',
     supervising_officer_id: '',
     notes: '',
-    condition: ''
+    attendance_outcome: ''
   })
 
   const [qrError, setQrError] = useState('')
@@ -1519,8 +1519,8 @@ function App() {
         throw new Error('Select the department responsible for this attendance record.')
       }
 
-      if (action === 'time-out' && !currentQrForm.condition) {
-        throw new Error('Select the student service condition before Time Out.')
+      if (action === 'time-out' && !currentQrForm.attendance_outcome) {
+        throw new Error('Select an attendance outcome before Time Out.')
       }
       if (action !== 'scan' && !currentQrForm.supervising_officer_id) {
         throw new Error('Select the authorized officer supervising this session.')
@@ -1540,7 +1540,7 @@ function App() {
           }),
           notes: currentQrForm.notes.trim(),
           ...(action === 'scan' ? {} : { supervising_officer_id: Number(currentQrForm.supervising_officer_id) }),
-          ...(action === 'time-out' ? { condition: currentQrForm.condition } : {})
+          ...(action === 'time-out' ? { attendance_outcome: currentQrForm.attendance_outcome } : {})
         })
       })
 
@@ -1570,6 +1570,7 @@ function App() {
       }
       setVerifiedQr(normalizedQr)
       if (action !== 'scan') {
+        setQrForm((current) => ({ ...current, attendance_outcome: '', notes: '' }))
         setRecentQrScans((current) => [{
           key: `${Date.now()}-${action}`,
           studentName: `${data.student?.first_name||''} ${data.student?.last_name||''}`.trim(),

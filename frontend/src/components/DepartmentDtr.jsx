@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { formatDuration } from '../lib/departmentDashboard.js'
 import { departmentDtrSummary, displayDepartmentDtrDate } from '../lib/departmentDtr.js'
+import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
 
 function DepartmentDtr({ report, loading, error, onFilter }) {
   const [filters, setFilters] = useState({ from: '', to: '', student_id: '', assignment_id: '' })
@@ -51,11 +52,11 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
         ) : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Student</th><th>Assignment</th><th>Status</th><th>Sessions</th><th>Worked</th><th>Credited</th><th>Latest attendance</th></tr></thead>
+              <thead><tr><th>Student</th><th>Assignment</th><th>Status</th><th>Latest outcome</th><th>Sessions</th><th>Worked</th><th>Credited</th><th>Latest attendance</th></tr></thead>
               <tbody>{rows.map((row) => (
                 <tr key={`${row.assignment_id}-${row.department_id}`}>
                   <td><strong>{row.first_name} {row.last_name}</strong><small className="table-subtext">{row.student_number}</small></td>
-                  <td>#{row.assignment_id}</td><td><span className="status-badge">{String(row.assignment_status || 'UNKNOWN').replaceAll('_', ' ')}</span></td>
+                  <td>#{row.assignment_id}</td><td><span className="status-badge">{String(row.assignment_status || 'UNKNOWN').replaceAll('_', ' ')}</span></td><td>{attendanceOutcomeLabel(row.attendance_outcome)}</td>
                   <td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_worked_minutes)}</td><td>{formatDuration(row.total_credited_minutes)}</td>
                   <td>{displayDepartmentDtrDate(row.latest_attendance_at)}</td>
                 </tr>
