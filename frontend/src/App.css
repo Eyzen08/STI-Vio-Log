@@ -4838,7 +4838,7 @@ a {
 .table-card:has(.management-table-header) tbody tr:nth-child(even) { background: #fbfdff; }
 .table-card:has(.management-table-header) tbody tr:nth-child(even):hover { background: #f5faff; }
 .table-actions { flex-wrap: nowrap; align-items: center; }
-.icon-row-action,.row-action-trigger { width: 31px; height: 31px; display: grid; place-items: center; padding: 0 !important; border: 1px solid #cddbeb !important; border-radius: 6px !important; background: white !important; color: #0a4e98 !important; cursor: pointer; }
+.icon-row-action,.row-action-trigger { width: 31px; height: 31px; display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0 !important; border: 1px solid #cddbeb !important; border-radius: 6px !important; background: white !important; color: #0a4e98 !important; cursor: pointer; }
 .table-progress { min-width: 86px; display: grid; gap: 3px; }
 .table-progress > div { height: 6px; overflow: hidden; border-radius: 99px; background: #e2eaf3; }
 .table-progress > div span { display: block; height: 100%; border-radius: inherit; background: #1682f6; }
