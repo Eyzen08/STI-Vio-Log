@@ -710,6 +710,9 @@
   padding-top: .3rem;
 }
 
+.auth-shell .auth-card.login-card { --auth-floating-label-bg: rgba(255, 254, 250, .97); }
+[data-theme='dark'].auth-shell .auth-card.login-card { --auth-floating-label-bg: rgba(14, 34, 56, .97); }
+
 .auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label {
   position: absolute;
   z-index: 1;
@@ -719,6 +722,9 @@
   font-size: .9rem;
   font-weight: 500;
   line-height: 1;
+  padding: .15rem .4rem;
+  border-radius: .15rem;
+  background: var(--auth-floating-label-bg);
   pointer-events: none;
   transform: translateY(-50%);
   transform-origin: left center;
@@ -727,7 +733,7 @@
 
 .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > .login-floating-label,
 .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:has(input:not(:placeholder-shown)) > .login-floating-label {
-  top: .9rem;
+  top: .3rem;
   color: var(--auth-blue-700);
   font-size: .72rem;
   transform: translateY(-50%);
