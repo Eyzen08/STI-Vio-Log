@@ -90,6 +90,14 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: 44px !important/)
 })
 
+test('login fields use accessible floating labels with reduced-motion support', () => {
+  assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number<\/span>/)
+  assert.match(source, /labelClassName="login-floating-field" placeholder=" "/)
+  assert.match(portalCssSource, /label\.login-floating-field:focus-within > \.login-floating-label/)
+  assert.match(portalCssSource, /label\.login-floating-field:has\(input:not\(:placeholder-shown\)\)/)
+  assert.match(portalCssSource, /@media \(prefers-reduced-motion: reduce\)/)
+})
+
 test('authentication background keeps a stable crop while forms change height', () => {
   assert.match(portalCssSource, /height: calc\(100dvh - clamp\(1\.5rem, 4\.2vw, 3rem\)\)/)
   assert.match(portalCssSource, /\.auth-shell \.login-page--student-flow \{ overflow: visible; \}/)

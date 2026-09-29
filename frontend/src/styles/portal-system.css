@@ -703,6 +703,56 @@
 .auth-shell .login-form input:hover:not(:disabled) { border-color: #9bb1c8; }
 .auth-shell .login-form input:focus-visible { border-color: var(--auth-blue-600); }
 
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field {
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding-top: .3rem;
+}
+
+.auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label {
+  position: absolute;
+  z-index: 1;
+  top: 1.8rem;
+  left: .95rem;
+  color: var(--auth-muted);
+  font-size: .9rem;
+  font-weight: 500;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  transition: top .18s ease, color .18s ease, font-size .18s ease, transform .18s ease;
+}
+
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > .login-floating-label,
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:has(input:not(:placeholder-shown)) > .login-floating-label {
+  top: .9rem;
+  color: var(--auth-blue-700);
+  font-size: .72rem;
+  transform: translateY(-50%);
+}
+
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field > input,
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field .password-input-wrap input {
+  padding-top: .95rem;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > input,
+.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within .password-input-wrap input {
+  border-color: var(--auth-blue-600);
+  box-shadow: 0 0 0 2px rgba(7, 92, 173, .16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label,
+  .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field > input,
+  .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field .password-input-wrap input {
+    transition-duration: .01ms;
+  }
+}
+
 .auth-shell .auth-card .password-visibility {
   top: 3px;
   right: 3px;

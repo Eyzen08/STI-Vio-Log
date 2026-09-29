@@ -1,8 +1,8 @@
 import { useState } from 'react'
 
-export default function PasswordField({ label, id, value, onChange, onBlur, disabled, placeholder='', autoComplete='new-password', required=true, autoFocus=false, invalid=false, describedBy }) {
+export default function PasswordField({ label, labelClassName='', id, value, onChange, onBlur, disabled, placeholder='', autoComplete='new-password', required=true, autoFocus=false, invalid=false, describedBy }) {
   const [visible, setVisible] = useState(false)
-  return <label htmlFor={id}>{label}<span className="password-input-wrap">
+  return <label className={labelClassName} htmlFor={id}><span className="login-floating-label">{label}</span><span className="password-input-wrap">
     <input id={id} type={visible ? 'text' : 'password'} value={value} onChange={onChange} onBlur={onBlur} disabled={disabled} placeholder={placeholder}
       autoComplete={autoComplete} required={required} autoFocus={autoFocus} minLength="8" maxLength="128" aria-invalid={invalid} aria-describedby={describedBy} />
     <button type="button" className="password-visibility" onClick={() => setVisible((current) => !current)}
