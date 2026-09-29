@@ -2693,7 +2693,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .student-directory-table .table-actions { display: grid !important; grid-template-columns: minmax(0,.85fr) minmax(0,1.35fr) 44px; align-items: stretch !important; gap: 8px; }
   .student-directory-table .table-actions > button { width: 100% !important; min-width: 0; padding-inline: 9px !important; white-space: normal; }
   .student-directory-table .student-access-removal { width: 44px; justify-self: end; align-self: start; }
-  .student-directory-table .row-action-trigger { width: 44px !important; height: 44px; display: flex; align-items: center; justify-content: center; line-height: 1; }
+  .student-directory-table .row-action-trigger { width: 44px !important; min-width: 44px !important; height: 44px; display: flex; align-items: center; justify-content: center; line-height: 1; }
   .student-directory-table .row-action-menu > div { right: 0; left: auto; width: min(220px,calc(100vw - 32px)); }
 }
 
