@@ -66,10 +66,10 @@ test('academic and contact completion requires Google and atomically unlocks the
     return{rows:[]};
   });
   const service=createStudentOnboardingService({pool:db.pool});
-  const result=await service.completeProfile({userId:8,program:'bsit',section:'A103',yearLevel:2,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
+  const result=await service.completeProfile({userId:8,program:'bsit',section:'A103',yearLevel:4,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
   assert.deepEqual(result,{onboarding_required:false,onboarding_step:'COMPLETE'});
   assert(db.calls.some(({sql})=>sql.includes('onboarding_completed_at=CURRENT_TIMESTAMP')));
-  assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params.includes('COLLEGE')&&params.includes('BSIT')&&params.includes('A103')&&params.includes(2)));
+  assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params.includes('COLLEGE')&&params.includes('BSIT')&&params.includes('A103')&&params.includes(4)));
   assert(db.calls.some(({sql})=>sql.includes("'STUDENT_ONBOARDING_COMPLETE'")));
   assert(db.calls.some(({sql})=>sql==='COMMIT'));
 });
@@ -86,13 +86,24 @@ test('Senior High School completion saves section and year without a college pro
   assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params[1]==='SENIOR_HIGH_SCHOOL'&&params[2]===null&&params[3]==='11-A'&&params[4]===11));
 });
 
+test('Senior High School accepts Grade 12',async()=>{
+  const db=fakePool((sql)=>{
+    if(sql.includes('FROM students s JOIN users'))return{rows:[{id:9,onboarding_required:true,onboarding_completed_at:null,must_change_password:false,google_linked:true}]};
+    if(sql.startsWith('SELECT id FROM student_guardians'))return{rows:[]};
+    return{rows:[]};
+  });
+  const service=createStudentOnboardingService({pool:db.pool});
+  await service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',section:'12-A',yearLevel:12,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
+  assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params[1]==='SENIOR_HIGH_SCHOOL'&&params[4]===12));
+});
+
 test('onboarding rejects incomplete or invalid academic information before database access',async()=>{
   const db=fakePool(()=>({rows:[]}));const service=createStudentOnboardingService({pool:db.pool});
   const contact={phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'};
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'',section:'A103',yearLevel:1}),(error)=>error.code==='PROGRAM_REQUIRED');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'INVALID',section:'A103',yearLevel:1}),(error)=>error.code==='INVALID_PROGRAM');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'BSIT',section:'',yearLevel:1}),(error)=>error.code==='SECTION_REQUIRED');
-  await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'BSIT',section:'A103',yearLevel:9}),(error)=>error.code==='INVALID_YEAR_LEVEL');
+  await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'BSIT',section:'A103',yearLevel:5}),(error)=>error.code==='INVALID_YEAR_LEVEL');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',...contact,section:'11-A',yearLevel:10}),(error)=>error.code==='INVALID_YEAR_LEVEL');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',...contact,section:'11-A',yearLevel:13}),(error)=>error.code==='INVALID_YEAR_LEVEL');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'INVALID',...contact,section:'A103',yearLevel:1,program:'BSIT'}),(error)=>error.code==='INVALID_ACADEMIC_LEVEL');

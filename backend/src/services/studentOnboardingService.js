@@ -88,7 +88,7 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
     if (values.academicLevel === 'COLLEGE' && !isValidProgram(values.program)) throw new ApiError(400, 'INVALID_PROGRAM', 'Select a valid college program');
     if (![values.phoneNumber,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all student and guardian information');
     const minimumYearLevel = values.academicLevel === 'COLLEGE' ? 1 : 11;
-    const maximumYearLevel = values.academicLevel === 'COLLEGE' ? 8 : 12;
+    const maximumYearLevel = values.academicLevel === 'COLLEGE' ? 4 : 12;
     if (!Number.isInteger(values.yearLevel) || values.yearLevel < minimumYearLevel || values.yearLevel > maximumYearLevel) throw new ApiError(400, 'INVALID_YEAR_LEVEL', `Year level must be between ${minimumYearLevel} and ${maximumYearLevel}`);
     if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid Philippine phone numbers');
     values.phoneNumber = normalizePhone(values.phoneNumber);
