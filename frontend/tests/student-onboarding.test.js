@@ -42,3 +42,13 @@ test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',
   assert.match(css,/@media\(max-width:600px\).*\.onboarding-progress/s)
   assert.match(css,/:root\[data-theme='dark'\] \.student-onboarding/)
 });
+
+test('academic onboarding switches levels and keeps mode-specific fields and year ranges',()=>{
+  assert.match(onboarding,/role="radiogroup" aria-labelledby="onboarding-academic-level-label"/)
+  assert.match(onboarding,/form\.academicLevel==='COLLEGE'&&<label className="onboarding-program-field">Program/)
+  assert.match(onboarding,/academic_level:form\.academicLevel/)
+  assert.match(onboarding,/yearLevel:''\}\)\);setError\(''\)/)
+  assert.match(onboarding,/min=\{form\.academicLevel==='COLLEGE'\?'1':'11'\} max=\{form\.academicLevel==='COLLEGE'\?'8':'12'\}/)
+  assert.match(css,/\.onboarding-academic-grid\{display:grid;grid-template-columns:minmax\(0,1fr\)/)
+  assert.match(css,/@media\(min-width:900px\)\{\.onboarding-academic-grid\{grid-template-columns:minmax\(0,1\.15fr\) minmax\(0,\.85fr\)\}\}/)
+});

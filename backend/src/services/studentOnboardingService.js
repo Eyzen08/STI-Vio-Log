@@ -75,18 +75,25 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
     finally { client.release(); }
   };
 
-  const completeProfile = async ({ userId, program, section, yearLevel, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
+  const completeProfile = async ({ userId, academicLevel, program, section, yearLevel, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
     const values = {
+      academicLevel: academicLevel === undefined ? 'COLLEGE' : clean(academicLevel, 30).toUpperCase(),
       program: clean(program, 150).toUpperCase(), section: clean(section, 100), yearLevel: Number(yearLevel),
       phoneNumber: clean(phoneNumber, 30), guardianName: clean(guardianName, 200),
       guardianRelationship: clean(guardianRelationship, 100), guardianPhoneNumber: clean(guardianPhoneNumber, 30)
     };
-    if (![values.program,values.section,values.phoneNumber,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all academic, student, and guardian information');
-    if (!isValidProgram(values.program)) throw new ApiError(400, 'INVALID_PROGRAM', 'Select a valid program');
-    if (!Number.isInteger(values.yearLevel) || values.yearLevel < 1 || values.yearLevel > 8) throw new ApiError(400, 'INVALID_YEAR_LEVEL', 'Year level must be between 1 and 8');
+    if (!['COLLEGE','SENIOR_HIGH_SCHOOL'].includes(values.academicLevel)) throw new ApiError(400, 'INVALID_ACADEMIC_LEVEL', 'Select College or Senior High School');
+    if (!values.section) throw new ApiError(400, 'SECTION_REQUIRED', 'Enter your section');
+    if (values.academicLevel === 'COLLEGE' && !values.program) throw new ApiError(400, 'PROGRAM_REQUIRED', 'Select a valid college program');
+    if (values.academicLevel === 'COLLEGE' && !isValidProgram(values.program)) throw new ApiError(400, 'INVALID_PROGRAM', 'Select a valid college program');
+    if (![values.phoneNumber,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber].every(Boolean)) throw new ApiError(400, 'VALIDATION_ERROR', 'Complete all student and guardian information');
+    const minimumYearLevel = values.academicLevel === 'COLLEGE' ? 1 : 11;
+    const maximumYearLevel = values.academicLevel === 'COLLEGE' ? 8 : 12;
+    if (!Number.isInteger(values.yearLevel) || values.yearLevel < minimumYearLevel || values.yearLevel > maximumYearLevel) throw new ApiError(400, 'INVALID_YEAR_LEVEL', `Year level must be between ${minimumYearLevel} and ${maximumYearLevel}`);
     if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid Philippine phone numbers');
     values.phoneNumber = normalizePhone(values.phoneNumber);
     values.guardianPhoneNumber = normalizePhone(values.guardianPhoneNumber);
+    if (values.academicLevel === 'SENIOR_HIGH_SCHOOL') values.program = null;
 
     const client = await pool.connect();
     try {
@@ -104,7 +111,7 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
       }
       if (student.must_change_password) throw new ApiError(409, 'PASSWORD_CHANGE_REQUIRED', 'Change the temporary password before continuing');
       if (!student.google_linked) throw new ApiError(409, 'STUDENT_ONBOARDING_REQUIRED', 'Bind a Google account before completing contact information');
-      await client.query('UPDATE students SET program=$2,section=$3,year_level=$4,phone_number=$5,onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id,values.program,values.section,values.yearLevel,values.phoneNumber]);
+      await client.query('UPDATE students SET academic_level=$2,program=$3,section=$4,year_level=$5,phone_number=$6,onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id,values.academicLevel,values.program,values.section,values.yearLevel,values.phoneNumber]);
       const guardian = (await client.query('SELECT id FROM student_guardians WHERE student_id=$1 ORDER BY is_primary DESC,id ASC LIMIT 1 FOR UPDATE', [student.id])).rows[0];
       await client.query('UPDATE student_guardians SET is_primary=FALSE WHERE student_id=$1 AND ($2::bigint IS NULL OR id<>$2)', [student.id,guardian?.id||null]);
       if (guardian) await client.query('UPDATE student_guardians SET guardian_name=$2,relationship=$3,phone_number=$4,is_primary=TRUE WHERE id=$1', [guardian.id,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber]);

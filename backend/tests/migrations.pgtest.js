@@ -35,6 +35,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "042_student_academic_level.sql");
         assert.equal(first.applied.pop(), "041_attendance_outcomes.sql");
         assert.equal(first.applied.pop(), "040_data_api_lockdown.sql");
         assert.equal(first.applied.pop(), "039_student_google_email_confirmation.sql");
@@ -55,6 +56,11 @@ test("fresh migration chain is complete and idempotent", async () => {
         )).rows.map((row) => row.column_name);
         assert.ok(registrationColumns.includes('middle_name'));
         assert.ok(registrationColumns.includes('suffix'));
+        const academicLevelColumn = (await pool.query(
+            `SELECT is_nullable FROM information_schema.columns WHERE table_schema=$1 AND table_name='students' AND column_name='academic_level'`,
+            [freshSchema]
+        )).rows[0];
+        assert.equal(academicLevelColumn?.is_nullable, 'YES');
 
         const passwordHash = "$2b$04$abcdefghijklmnopqrstuuXJfM5Z0nJf4wPMFnYbPxM3Ya7kXyQYO";
         const users = (await pool.query(
