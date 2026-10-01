@@ -19,6 +19,8 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.match(api,/student-onboarding\/google-link/)
   assert.match(api,/student-onboarding\/google-email\/request/)
   assert.match(api,/student-onboarding\/google-email\/verify/)
+  assert.match(onboarding,/placeholder="@gmail\.com"/)
+  assert.match(onboarding,/Use personal Gmail only\. Microsoft Entra ID\/School emails \(@sti\.edu\.ph\) are not supported yet\./)
   assert.match(onboarding,/Email.*Verification code.*Google sign-in/s)
   assert.match(onboarding,/<OtpInput id="google-email-code"/)
   assert.match(api,/student-onboarding\/profile/)
