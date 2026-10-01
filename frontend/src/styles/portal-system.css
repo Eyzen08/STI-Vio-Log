@@ -710,8 +710,14 @@
   padding-top: .3rem;
 }
 
-.auth-shell .auth-card.login-card { --auth-floating-label-bg: rgba(255, 254, 250, .97); }
-:root[data-theme='dark'] .auth-shell .auth-card.login-card { --auth-floating-label-bg: rgba(14, 34, 56, .97); }
+.auth-shell .auth-card.login-card {
+  --auth-floating-label-bg: rgba(255, 254, 250, .97);
+  --auth-floating-label-active-color: var(--auth-blue-700);
+}
+:root[data-theme='dark'] .auth-shell .auth-card.login-card {
+  --auth-floating-label-bg: rgba(14, 34, 56, .97);
+  --auth-floating-label-active-color: #8acbff;
+}
 
 .auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label {
   position: absolute;
@@ -734,7 +740,7 @@
 .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > .login-floating-label,
 .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:has(input:not(:placeholder-shown)) > .login-floating-label {
   top: .3rem;
-  color: var(--auth-blue-700);
+  color: var(--auth-floating-label-active-color);
   font-size: .72rem;
   transform: translateY(-50%);
 }
