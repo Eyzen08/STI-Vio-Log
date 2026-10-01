@@ -97,7 +97,8 @@ test('login fields use accessible floating labels with reduced-motion support', 
   assert.match(portalCssSource, /label\.login-floating-field:has\(input:not\(:placeholder-shown\)\)/)
   assert.match(portalCssSource, /label\.login-floating-field:focus-within > \.login-floating-label,[\s\S]*?top: \.3rem/)
   assert.match(portalCssSource, /background: var\(--auth-floating-label-bg\)/)
-  assert.match(portalCssSource, /\[data-theme='dark'\]\.auth-shell \.auth-card\.login-card \{ --auth-floating-label-bg:/)
+  assert.match(portalCssSource, /:root\[data-theme='dark'\] \.auth-shell \.auth-card\.login-card \{ --auth-floating-label-bg:/)
+  assert.doesNotMatch(portalCssSource, /\[data-theme='dark'\]\.auth-shell/)
   assert.match(portalCssSource, /@media \(prefers-reduced-motion: reduce\)/)
 })
 
