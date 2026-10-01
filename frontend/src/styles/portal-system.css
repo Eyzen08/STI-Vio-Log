@@ -711,11 +711,11 @@
 }
 
 .auth-shell .auth-card.login-card {
-  --auth-floating-label-bg: rgba(255, 254, 250, .97);
+  --auth-floating-label-bg: #fff;
   --auth-floating-label-active-color: var(--auth-blue-700);
 }
 :root[data-theme='dark'] .auth-shell .auth-card.login-card {
-  --auth-floating-label-bg: rgba(14, 34, 56, .97);
+  --auth-floating-label-bg: #091b2d;
   --auth-floating-label-active-color: #8acbff;
 }
 
