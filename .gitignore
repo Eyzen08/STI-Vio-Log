@@ -5,6 +5,7 @@ node_modules/
 dist/
 build/
 coverage/
+.cache/
 frontend/artifacts/
 .vercel/
 .DS_Store
