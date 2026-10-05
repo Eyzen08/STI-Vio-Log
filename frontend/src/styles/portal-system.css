@@ -3656,6 +3656,22 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 :root[data-theme='dark'] .app-modal select option { background:var(--control-background) !important; color:var(--text-primary) !important; }
 
+/* Guidance keeps its information palette even under generic paragraph rules. */
+:root[data-theme='dark'] .form-guidance,
+:root[data-theme='dark'] :is(.app-shell,.app-modal) p.form-guidance {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+
+/* :disabled includes controls disabled by a parent fieldset in review drawers. */
+:root[data-theme='dark'] .app-modal :is(input,select,textarea):disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  opacity:1;
+}
+
 /* Wizard steps, modal actions, and disabled controls use intentional dark states. */
 :root[data-theme='dark'] .app-modal .compact-stepper { border-color:var(--border-subtle) !important; }
 :root[data-theme='dark'] .app-modal .compact-stepper button {
