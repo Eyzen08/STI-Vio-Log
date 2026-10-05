@@ -55,6 +55,14 @@ Run migrations once with the owner credential before routing traffic, then start
 
 If an automatic Render deployment fails because a migration is pending, apply the migration first and then explicitly redeploy the latest commit. A failed deployment does not automatically retry after the database becomes current, and an empty Git commit may not create a new Render deployment.
 
+For the College / Senior High School onboarding release, confirm `042_student_academic_level.sql` exists in the checkout and is applied before redeploying the backend. On Windows, run the masked migration helper from the repository root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\backend\scripts\migrate-production.ps1
+```
+
+This uses `npm.cmd` to avoid PowerShell blocking `npm.ps1`, checks migration status before and after applying pending migrations, and clears the prompted credential afterward (restoring any prior process value). The execution-policy override applies only to this PowerShell process. Use the owner direct/session-pooler URL at the masked prompt; do not put it in the command or chat. Stop on any error. Confirm `042_student_academic_level.sql` is marked `applied`, then manually deploy the latest backend commit on Render and wait for Live. Verify the Vercel production `API_PROXY_ORIGIN` points to that backend HTTPS origin, redeploy the frontend if needed, and test both onboarding modes with a test account. A healthy `/api/health` response alone does not verify that this migration or onboarding release is deployed.
+
 After deployment verify:
 
 1. `GET /api/health` returns 200 without disclosing configuration.
