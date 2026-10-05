@@ -1,23 +1,21 @@
 import { useEffect, useState } from 'react'
 import { formatMinutes, summarizeStudentService, validateDateRange } from '../lib/studentService.js'
 import { formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, isActiveServiceSession, serviceSessionTiming } from '../lib/departmentService.js'
+import { isActiveServiceSession } from '../lib/departmentService.js'
 import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
+import AttendanceIndicator from './AttendanceIndicator.jsx'
+import ServiceCountdown from './ServiceCountdown.jsx'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
 
-const ActiveTimer = ({ session, now }) => {
-  const timing = serviceSessionTiming(session, now)
-  return <><time dateTime={`PT${timing.elapsedSeconds}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(timing.elapsedSeconds)}</time>{timing.limitReached && <small className="timer-limit-notice">Service limit reached — Time Out required</small>}</>
-}
-
-function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRefreshService }) {
+function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, attendanceError }) {
   const [filters, setFilters] = useState({ from: '', to: '' })
   const [filterError, setFilterError] = useState('')
   const summary = summarizeStudentService(liveDtr || dtr)
   const assignments = Array.isArray(dtr?.assignments) ? dtr.assignments : []
   const sessions = Array.isArray(dtr?.sessions) ? dtr.sessions : []
   const latestSessions = Array.isArray(liveDtr?.sessions) ? liveDtr.sessions : sessions
+  const liveActiveSessions = Array.isArray(liveDtr?.sessions) ? liveDtr.sessions.filter(isActiveServiceSession) : []
   const latestById = new Map(latestSessions.map((session) => [session.id, session]))
   const filteredSessions = sessions.map((session) => latestById.get(session.id) || session)
   const filteredIds = new Set(filteredSessions.map((session) => session.id))
@@ -32,12 +30,6 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [activeSessionCount])
-  useEffect(() => {
-    if (!onRefreshService) return undefined
-    const refresh = () => { if (document.visibilityState === 'visible') onRefreshService() }
-    const polling = window.setInterval(refresh, 15000)
-    return () => window.clearInterval(polling)
-  }, [onRefreshService])
 
   const submitFilters = (event) => {
     event.preventDefault()
@@ -47,7 +39,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
   }
 
   if (loading && !dtr) {
-    return <section className="service-page" aria-live="polite"><div className="skeleton service-heading-skeleton" /><div className="stats-grid">{[1, 2, 3].map((item) => <div className="stat-card skeleton-card" key={item} />)}</div></section>
+    return <section className="service-page" aria-live="polite"><AttendanceIndicator ready={false} loading/><div className="skeleton service-heading-skeleton" /><div className="stats-grid">{[1, 2, 3].map((item) => <div className="stat-card skeleton-card" key={item} />)}</div></section>
   }
 
   return (
@@ -58,6 +50,11 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
       </header>
 
       {(error || filterError) && <p className="error-message" role="alert">{filterError || error}</p>}
+      <section className="student-attendance-summary" aria-label="Current attendance status">
+        <div><span>Attendance status</span><AttendanceIndicator sessions={liveDtr?.sessions || []} ready={Array.isArray(liveDtr?.sessions)} loading={loading} details/></div>
+        {liveActiveSessions.length > 0 && <div className="student-attendance-countdowns">{liveActiveSessions.map((session) => <div key={session.id}><span>Remaining session time · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
+        {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
+      </section>
 
       <section className="stats-grid service-stats" aria-label="Community-service summary">
         <article className="stat-card"><span>Required</span><strong>{formatMinutes(summary.requiredMinutes)}</strong></article>
@@ -94,8 +91,8 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, onRef
         {displaySessions.length === 0 ? <p className="empty-state">No attendance sessions match this period.</p> : (
           <div className="session-list">{displaySessions.map((session) => <article className={isActiveServiceSession(session) ? 'student-active-session' : undefined} key={session.id}>
             <div><strong>{session.department_name}</strong><span>Assignment #{session.assignment_id}</span></div>
-            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Live elapsed' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ActiveTimer session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!isActiveServiceSession(session)&&<div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
-            <span className={`status-badge status-${String(session.status).toLowerCase()}`}>{session.status}</span>
+            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Remaining session time' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ServiceCountdown session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!isActiveServiceSession(session)&&<div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
+            <AttendanceIndicator sessions={[session]}/>
           </article>)}</div>
         )}
       </section>

@@ -4723,3 +4723,65 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 @media (max-width: 600px) {
   .department-officer-page { --department-content-inset: 0; }
 }
+
+/* Attendance status stays explicit in both themes; timers are never live regions. */
+.app-shell .attendance-indicator {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .25rem;
+  margin-block: .25rem;
+  font-size: .8rem;
+  line-height: 1.4;
+}
+.app-shell .attendance-indicator-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .3rem .65rem;
+  border-radius: .4rem;
+  background: var(--surface-interactive);
+  color: var(--text-secondary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.app-shell .attendance-indicator--in .attendance-indicator-label {
+  background: var(--status-success-surface);
+  color: var(--status-success-text);
+}
+.attendance-indicator-label i { width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+.app-shell .attendance-indicator > small { color: var(--text-secondary); font-size: .8rem; }
+.student-attendance-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--border-subtle); border-radius: .65rem; background: var(--surface-raised); }
+.student-attendance-summary > div { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.student-attendance-summary > .student-attendance-countdowns { display: grid; gap: .75rem; }
+.student-attendance-countdowns > div { display: grid; gap: .25rem; }
+.student-attendance-countdowns > div > span { color: var(--text-secondary); font-size: .8rem; }
+.student-attendance-countdowns time { font-size: 1.4rem; font-weight: 750; font-variant-numeric: tabular-nums; }
+.attendance-update-error { margin: .5rem 0; padding: .75rem 1rem; border-left: 3px solid var(--status-warning-text); background: var(--status-warning-surface); color: var(--status-warning-text); font-size: .875rem; }
+.attendance-global-error { margin-inline: clamp(1rem, 3vw, 2rem); }
+.attendance-roster-toolbar { padding: .5rem 1.25rem 1rem; }
+.attendance-roster-toolbar label { display: grid; gap: .4rem; color: var(--text-secondary); font-size: .875rem; }
+.attendance-roster-toolbar input { width: 100%; min-width: 0; }
+.app-shell .attendance-roster-table { width: 100%; min-width: 0; table-layout: fixed; }
+.attendance-roster-table th:first-child { width: 24%; }
+.attendance-roster-table th:nth-child(2) { width: 27%; }
+.attendance-roster-table td { overflow-wrap: anywhere; white-space: normal; }
+.attendance-roster-session { display: grid; gap: .3rem; padding-block: .35rem; }
+.attendance-roster-session + .attendance-roster-session { margin-top: .5rem; padding-top: .75rem; border-top: 1px solid var(--border-subtle); }
+.attendance-roster-countdown { display: grid; gap: .2rem; }
+.attendance-roster-countdown > span { font-size: .8rem; color: var(--text-secondary); }
+.attendance-roster-countdown time, .department-service-countdown time { font-size: 1.2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.student-live-clocks, .department-service-countdown { display: grid; gap: .6rem; min-width: 0; }
+.app-shell .student-live-clock > span { font-size: .8rem; }
+.app-shell .timer-limit-notice { color: var(--status-warning-text); font-size: .8rem; }
+.department-service-countdown > span { color: var(--text-secondary); font-size: .8rem; }
+.attendance-notice-region { position: fixed; top: 5rem; right: 1.5rem; z-index: 110; max-width: min(32rem, calc(100vw - 2rem)); }
+.attendance-notice { display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--border-strong); border-radius: .65rem; background: var(--surface-raised); color: var(--text-primary); box-shadow: var(--shadow-md); }
+.attendance-notice p { margin: .25rem 0; }
+.attendance-notice button { min-height: 44px; flex-shrink: 0; }
+@media (max-width: 767px) {
+  .student-attendance-summary { align-items: flex-start; }
+  .attendance-notice-region { top: 4.5rem; right: 1rem; left: 1rem; max-width: none; }
+  .attendance-notice { flex-wrap: wrap; gap: .5rem; }
+  .attendance-roster-table td[data-label='Active service'] { min-width: 0; }
+}

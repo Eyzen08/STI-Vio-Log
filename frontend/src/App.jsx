@@ -40,6 +40,8 @@ const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
 import ManagementMetric from './components/ManagementMetric.jsx'
+import AttendanceIndicator from './components/AttendanceIndicator.jsx'
+import { attendanceTransitions } from './lib/attendanceStatus.js'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 import StudentCredentialsModal from './components/StudentCredentialsModal.jsx'
@@ -213,6 +215,12 @@ function App() {
   const [studentNotifications, setStudentNotifications] = useState([])
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activeServiceSessions, setActiveServiceSessions] = useState([])
+  const [adminAttendanceReady, setAdminAttendanceReady] = useState(false)
+  const [attendanceError, setAttendanceError] = useState('')
+  const [attendanceNotices, setAttendanceNotices] = useState([])
+  const studentAttendanceSnapshotRef = useRef(null)
+  const adminAttendanceSnapshotRef = useRef(null)
+  const attendanceAccountRef = useRef(null)
   const [notificationActionError, setNotificationActionError] = useState('')
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [pendingActionCounts, setPendingActionCounts] = useState({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
@@ -467,6 +475,44 @@ function App() {
   const isStudent =
     userRole === 'STUDENT'
 
+  useEffect(() => {
+    attendanceAccountRef.current = user?.id
+    studentAttendanceSnapshotRef.current = null
+    adminAttendanceSnapshotRef.current = null
+    setAdminAttendanceReady(false)
+    setAttendanceError('')
+    setAttendanceNotices([])
+  }, [user?.id])
+
+  const acceptStudentAttendance = useCallback((data, requestedAt) => {
+    if (attendanceAccountRef.current !== user?.id) return
+    if (!Array.isArray(data.sessions)) throw new Error('Invalid attendance response')
+    const previous = studentAttendanceSnapshotRef.current
+    if (previous && requestedAt < previous.requestedAt) return
+    const changes = attendanceTransitions(previous?.sessions, data.sessions)
+    studentAttendanceSnapshotRef.current = { sessions: data.sessions, requestedAt }
+    setStudentLiveDtr(data)
+    setAttendanceError('')
+    if (changes.length) setAttendanceNotices(changes)
+  }, [user?.id])
+
+  const acceptAdminAttendance = useCallback((data, requestedAt) => {
+    if (attendanceAccountRef.current !== user?.id) return
+    if (!Array.isArray(data.sessions)) throw new Error('Invalid attendance response')
+    const previous = adminAttendanceSnapshotRef.current
+    if (previous && requestedAt < previous.requestedAt) return
+    adminAttendanceSnapshotRef.current = { requestedAt }
+    setActiveServiceSessions(data.sessions)
+    setAdminAttendanceReady(true)
+    setAttendanceError('')
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!attendanceNotices.length) return undefined
+    const timeout = window.setTimeout(() => setAttendanceNotices([]), 6000)
+    return () => window.clearTimeout(timeout)
+  }, [attendanceNotices])
+
   const routeResolution = resolveRoute(routePath, userRole)
   const activeView = routeResolution.status === 'allowed' ? routeResolution.route.view : ''
 
@@ -624,6 +670,7 @@ function App() {
     }
 
     const loadDashboardData = async () => {
+      const requestedAt = Date.now()
       setDashboardLoading(true)
       setDashboardError('')
 
@@ -706,7 +753,7 @@ function App() {
           setCommunityServiceDestinations(destinationsData.destinations || [])
           setStudentNotifications(notificationsData.notifications || [])
           setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
-          setActiveServiceSessions(activeSessionsData.sessions || [])
+          acceptAdminAttendance(activeSessionsData, requestedAt)
 
           setClearanceRecords(
             clearanceData.clearanceRecords || []
@@ -772,7 +819,7 @@ function App() {
           setStudentProfile(profileData.student || null)
           setViolations(violationsData.violations || [])
           setCommunityServiceAssignments(assignmentsData.assignments || [])
-          setStudentLiveDtr(dtrData)
+          acceptStudentAttendance(dtrData, requestedAt)
           setStudentDtr((current) => {
             const { from, to } = studentDtrFiltersRef.current
             return (from || to) && current ? { ...current, assignments: dtrData.assignments } : dtrData
@@ -790,21 +837,8 @@ function App() {
           fetchError
         )
 
-        setStudents([])
-        setViolations([])
-        setCommunityServiceAssignments([])
-        setClearanceRecords([])
-        setStudentProfile(null)
-        setClearanceEligibility(null)
-        setClearanceCertificate(null)
-        setClearanceCertificateError('')
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
-        setDepartmentDtr(null)
-        setStudentDtr(null)
-        setStudentLiveDtr(null)
-        setStudentNotifications([])
-        setUnreadNotificationCount(0)
-        setActiveServiceSessions([])
+        if (isAdmin || isStudent) setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
       } finally {
         setDashboardLoading(false)
       }
@@ -819,7 +853,9 @@ function App() {
     isDepartmentHead,
     isStudent,
     user,
-    dashboardRefreshKey
+    dashboardRefreshKey,
+    acceptAdminAttendance,
+    acceptStudentAttendance
   ])
 
   const loadStudentDtr = useCallback(async ({ from = '', to = '' } = {}) => {
@@ -847,40 +883,53 @@ function App() {
   const refreshStudentLiveDtr = useCallback(async () => {
     if (!token || !isStudent || studentLiveRefreshRef.current) return
     studentLiveRefreshRef.current = true
+    const requestedAt = Date.now()
     try {
       const response = await fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: { Authorization: `Bearer ${token}` } })
       const data = await response.json().catch(() => ({}))
-      if (response.ok && data.success !== false) setStudentLiveDtr(data)
+      if (!response.ok || data.success === false) throw new Error('Attendance refresh failed')
+      acceptStudentAttendance(data, requestedAt)
     } catch {
-      // Quiet fallback polling must not replace existing live data with an error state.
+      setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
     } finally {
       studentLiveRefreshRef.current = false
     }
-  }, [isStudent, token])
+  }, [isStudent, token, acceptStudentAttendance])
 
   const refreshAdminAttendance = useCallback(async () => {
     if (!token || !isAdmin || adminAttendanceRefreshRef.current) return
     adminAttendanceRefreshRef.current = true
+    const requestedAt = Date.now()
     try {
       const response = await fetch(`${API_URL}/api/community-service/active-sessions`, { headers: { Authorization: `Bearer ${token}` } })
       const data = await response.json().catch(() => ({}))
-      if (response.ok && data.success !== false) setActiveServiceSessions(Array.isArray(data.sessions) ? data.sessions : [])
+      if (!response.ok || data.success === false) throw new Error('Attendance refresh failed')
+      acceptAdminAttendance(data, requestedAt)
     } catch {
-      // Socket updates remain primary when a background poll is temporarily unavailable.
+      setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
     } finally {
       adminAttendanceRefreshRef.current = false
     }
-  }, [isAdmin, token])
+  }, [isAdmin, token, acceptAdminAttendance])
 
   useEffect(() => {
-    if (!realtimeSocket) return undefined
+    if (!token || (!isStudent && !isAdmin)) return undefined
     const refreshLiveAttendance = () => {
       if (isStudent) refreshStudentLiveDtr()
       if (isAdmin) refreshAdminAttendance()
     }
-    realtimeSocket.on('community-service:changed', refreshLiveAttendance)
-    return () => realtimeSocket.off('community-service:changed', refreshLiveAttendance)
-  }, [isAdmin, isStudent, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
+    const refresh = () => { if (document.visibilityState === 'visible') refreshLiveAttendance() }
+    const polling = window.setInterval(refresh, 15000)
+    document.addEventListener('visibilitychange', refresh)
+    realtimeSocket?.on('community-service:changed', refreshLiveAttendance)
+    realtimeSocket?.on('connect', refreshLiveAttendance)
+    return () => {
+      window.clearInterval(polling)
+      document.removeEventListener('visibilitychange', refresh)
+      realtimeSocket?.off('community-service:changed', refreshLiveAttendance)
+      realtimeSocket?.off('connect', refreshLiveAttendance)
+    }
+  }, [isAdmin, isStudent, token, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
 
   const loadDepartmentDtr = async (filters = {}) => {
     setDepartmentDtrLoading(true)
@@ -1953,8 +2002,8 @@ function App() {
             liveDtr={studentLiveDtr}
             loading={dashboardLoading || studentDtrLoading}
             error={studentDtrError || dashboardError}
+            attendanceError={attendanceError}
             onFilter={loadStudentDtr}
-            onRefreshService={refreshStudentLiveDtr}
           />
         )
       }
@@ -2046,8 +2095,8 @@ function App() {
           dtr={studentLiveDtr || studentDtr}
           loading={dashboardLoading}
           error={dashboardError}
+          attendanceError={attendanceError}
           onNavigate={navigateTo}
-          onRefreshService={refreshStudentLiveDtr}
         />
       )
     }
@@ -2123,11 +2172,11 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onRefreshAttendance={refreshAdminAttendance} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
-      return <AdminActiveAttendance sessions={activeServiceSessions} loading={dashboardLoading} onRefresh={refreshAdminAttendance} onNavigate={navigateTo} />
+      return <AdminActiveAttendance sessions={activeServiceSessions} loading={dashboardLoading} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     /*
@@ -2409,6 +2458,7 @@ function App() {
                               <OffenseIndicator level={student.offense_indicator_level} compact />
                               <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
                             </div>
+                            <AttendanceIndicator sessions={activeServiceSessions.filter((session) => Number(session.student_id) === Number(student.id))} ready={adminAttendanceReady} loading={dashboardLoading}/>
                           </td>
 
                           <td data-label="Program / Strand">
@@ -2446,7 +2496,7 @@ function App() {
           </section>
 
           {guardianContactStudent && <Modal title="Guardian Contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
-          {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} onRefreshAttendance={refreshAdminAttendance} onClose={() => setServiceTimeStudent(null)} />}
+          {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} onClose={() => setServiceTimeStudent(null)} />}
 
           {reviewedStudent && reviewedCondition && (
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
@@ -3042,6 +3092,7 @@ function App() {
                             {(assignment.first_name || assignment.last_name) && (
                               <span className="table-cell-detail">{assignment.first_name} {assignment.last_name}</span>
                             )}
+                            <AttendanceIndicator sessions={activeServiceSessions.filter((session) => Number(session.assignment_id) === Number(assignment.id))} ready={adminAttendanceReady} loading={dashboardLoading}/>
                           </td>
 
 
@@ -3509,6 +3560,10 @@ function App() {
           onClick={toggleTheme}
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>}
 
+        {isLoggedIn && (isStudent || isAdmin) && attendanceError && !['Dashboard', 'My Service', 'Active Attendance'].includes(activeView) && <p className="attendance-update-error attendance-global-error">{attendanceError}</p>}
+        {isLoggedIn && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
+          {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss attendance notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
+        </div>}
         <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>

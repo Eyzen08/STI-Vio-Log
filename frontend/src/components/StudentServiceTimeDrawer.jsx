@@ -2,13 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import Modal from './Modal.jsx'
 import { assignmentsForStudent, summarizeServiceAssignments } from '../lib/adminServiceTime.js'
 import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, isActiveServiceSession, serviceProgress, serviceSessionTiming } from '../lib/departmentService.js'
+import { isActiveServiceSession, serviceProgress } from '../lib/departmentService.js'
+import AttendanceIndicator from './AttendanceIndicator.jsx'
+import ServiceCountdown from './ServiceCountdown.jsx'
 
-export default function StudentServiceTimeDrawer({ student, assignments = [], activeSessions = [], onClose, onRefreshAttendance }) {
+export default function StudentServiceTimeDrawer({ student, assignments = [], activeSessions = [], onClose, attendanceReady = true, attendanceError }) {
   const [now, setNow] = useState(Date.now())
   const studentAssignments = useMemo(() => assignmentsForStudent(assignments, student.id), [assignments, student.id])
   const summary = useMemo(() => summarizeServiceAssignments(studentAssignments), [studentAssignments])
-  const activeSession = activeSessions.filter(isActiveServiceSession).find((session) => Number(session.student_id) === Number(student.id))
+  const studentSessions = activeSessions.filter(isActiveServiceSession).filter((session) => Number(session.student_id) === Number(student.id))
+  const activeSession = studentSessions[0]
 
   useEffect(() => {
     if (!activeSession) return undefined
@@ -17,23 +20,12 @@ export default function StudentServiceTimeDrawer({ student, assignments = [], ac
     return () => window.clearInterval(timer)
   }, [activeSession?.session_id])
 
-  useEffect(() => {
-    if (!onRefreshAttendance) return undefined
-    const refreshWhenVisible = () => { if (document.visibilityState === 'visible') onRefreshAttendance() }
-    refreshWhenVisible()
-    const poller = window.setInterval(refreshWhenVisible, 15000)
-    document.addEventListener('visibilitychange', refreshWhenVisible)
-    return () => {
-      window.clearInterval(poller)
-      document.removeEventListener('visibilitychange', refreshWhenVisible)
-    }
-  }, [onRefreshAttendance])
-
-  const timing = activeSession ? serviceSessionTiming(activeSession, now) : null
   return <Modal title="Student Service Time" drawer onClose={onClose}>
     <section className="service-time-drawer">
       <header><span className="page-breadcrumb">Community service overview</span><h3>{student.first_name} {student.last_name}</h3><p>{student.student_number}</p></header>
-      {activeSession && <section className="service-time-live" aria-label="Active attendance session"><div><span>Currently timed in</span><time dateTime={`PT${timing.elapsedSeconds}S`}>{formatLiveServiceTime(timing.elapsedSeconds)}</time></div>{timing.limitReached && <p className="timer-limit-notice">Service limit reached — Time Out required</p>}<dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not assigned'}</dd></div><div><dt>Time in</dt><dd>{formatManilaDateTime(activeSession.time_in)}</dd></div></dl><p>Active time remains uncredited until time-out and review.</p></section>}
+      <AttendanceIndicator sessions={studentSessions} ready={attendanceReady} details/>
+      {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
+      {studentSessions.map((session) => <section key={session.session_id} className="service-time-live" aria-label="Active attendance session"><div><span>Remaining session time</span><ServiceCountdown session={session} now={now}/></div><dl><div><dt>Department</dt><dd>{session.department_name || 'Not assigned'}</dd></div><div><dt>Time in</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div></dl><p>Active time remains uncredited until time-out and review.</p></section>)}
       {studentAssignments.length ? <>
         <section className="service-time-summary" aria-label="Overall service progress"><div><span>Required</span><strong>{formatDuration(summary.required)}</strong></div><div><span>Completed</span><strong>{formatDuration(summary.completed)}</strong></div><div><span>Remaining</span><strong>{formatDuration(summary.remaining)}</strong></div></section>
         <div className="service-time-overall"><div><span style={{ width: `${summary.progress}%` }} /></div><p><strong>{summary.progress}%</strong> overall credited progress</p></div>

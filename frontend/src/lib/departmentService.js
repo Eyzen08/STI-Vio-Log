@@ -34,12 +34,15 @@ export const liveServiceSeconds = (timeIn, now = Date.now(), timerLimitSeconds =
 
 export const serviceSessionTiming = (session, now = Date.now()) => {
   const suppliedLimit = session?.timer_limit_seconds ?? (session?.remaining_hours == null ? null : Number(session.remaining_hours) * 3600)
-  const timerLimitSeconds = suppliedLimit == null ? null : Math.max(0, Math.floor(Number(suppliedLimit) || 0))
+  const timerLimitSeconds = suppliedLimit == null || !Number.isFinite(Number(suppliedLimit)) ? null : Math.max(0, Math.floor(Number(suppliedLimit)))
   const elapsedSeconds = liveServiceSeconds(session?.time_in, now, timerLimitSeconds)
+  const hasStart = session?.time_in != null && Number.isFinite(new Date(session.time_in).getTime())
   return {
     elapsedSeconds,
     timerLimitSeconds,
-    limitReached: Boolean(session?.limit_reached) || (timerLimitSeconds !== null && elapsedSeconds >= timerLimitSeconds)
+    remainingSeconds: timerLimitSeconds === null || !hasStart || !Number.isFinite(Number(now))
+      ? null : Math.max(timerLimitSeconds - elapsedSeconds, 0),
+    limitReached: Boolean(session?.limit_reached) || (hasStart && Number.isFinite(Number(now)) && timerLimitSeconds !== null && elapsedSeconds >= timerLimitSeconds)
   }
 }
 

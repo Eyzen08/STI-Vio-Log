@@ -66,7 +66,7 @@ test('all authorized staff roles use the single three-stage attendance workspace
 
 test('attendance realtime events refresh live student and admin state', async () => {
   const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  assert.match(appSource, /realtimeSocket\.on\('community-service:changed', refreshLiveAttendance\)/)
+  assert.match(appSource, /realtimeSocket\?\.on\('community-service:changed', refreshLiveAttendance\)/)
   assert.match(appSource, /if \(isStudent\) refreshStudentLiveDtr\(\)/)
   assert.match(appSource, /if \(isAdmin\) refreshAdminAttendance\(\)/)
 })

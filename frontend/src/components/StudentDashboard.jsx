@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { summarizeStudentDashboard } from '../lib/studentDashboard.js'
 import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDateTime } from '../lib/displayFormat.js'
-import { formatLiveServiceTime, isActiveServiceSession, serviceSessionTiming } from '../lib/departmentService.js'
+import { isActiveServiceSession } from '../lib/departmentService.js'
 import { formatMinutes, summarizeStudentService } from '../lib/studentService.js'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import DashboardQuickActions from './DashboardQuickActions.jsx'
+import AttendanceIndicator from './AttendanceIndicator.jsx'
+import ServiceCountdown from './ServiceCountdown.jsx'
 
 const hours = (value) => Math.max(0, Number(value) || 0)
 
-function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate, onRefreshService }) {
+function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate, attendanceError }) {
   const activeSessions = Array.isArray(dtr?.sessions) ? dtr.sessions.filter(isActiveServiceSession) : []
   const activeSession = activeSessions[0]
   const serviceSummary = summarizeStudentService(dtr)
@@ -20,12 +22,6 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [activeSessions.length])
-  useEffect(() => {
-    if (!onRefreshService) return undefined
-    const refresh = () => { if (document.visibilityState === 'visible') onRefreshService() }
-    const polling = window.setInterval(refresh, 15000)
-    return () => window.clearInterval(polling)
-  }, [onRefreshService])
 
   const summary = summarizeStudentDashboard({ violations, assignments, clearanceRecords, eligibility })
   const displayName = profile ? [profile.first_name, profile.middle_name, profile.last_name, profile.suffix].filter(Boolean).join(' ') : 'Student'
@@ -37,9 +33,8 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
   const currentAssignment = assignments.find(({ status }) => ['OPEN', 'IN_PROGRESS'].includes(status)) || assignments[0]
   const offenseLevel = violations.find((item) => item.offense_indicator_level)?.offense_indicator_level || (summary.activeViolations ? 'MINOR_1' : 'NEUTRAL')
   const clearanceLabel = formatDisplayLabel(summary.clearanceStatus)
-  const activeTiming = activeSession ? serviceSessionTiming(activeSession, now) : null
 
-  if (loading) return <section className="dashboard-loading" aria-live="polite"><div className="skeleton skeleton-heading"/><div className="stats-grid">{[1,2,3,4].map((item)=><div className="stat-card skeleton-card" key={item}/>)}</div></section>
+  if (loading && !dtr) return <section className="dashboard-loading" aria-live="polite"><AttendanceIndicator ready={false} loading/><div className="skeleton skeleton-heading"/><div className="stats-grid">{[1,2,3,4].map((item)=><div className="stat-card skeleton-card" key={item}/>)}</div></section>
 
   return <div className="student-dashboard portal-dashboard">
     <section className="portal-welcome portal-page-header">
@@ -47,6 +42,11 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
       <blockquote>“Better Choices<br/>A Brighter Tomorrow.”</blockquote>
     </section>
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
+    <section className="student-attendance-summary" aria-label="Current attendance status">
+      <div><span>Attendance status</span><AttendanceIndicator sessions={activeSessions} ready={Array.isArray(dtr?.sessions)} loading={loading} details/></div>
+      {activeSessions.length > 0 && <div className="student-attendance-countdowns">{activeSessions.map((session) => <div key={session.id}><span>Remaining session time · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
+      {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
+    </section>
     {summary.activeViolations > 0 && <section className="student-standing-alert"><OffenseIndicator level={offenseLevel}/><div><strong>{offenseLevel === 'MAJOR_LEVEL' ? 'Major-level status' : 'Requirements need attention'}</strong><span>Review your record and complete any remaining requirements.</span></div></section>}
     <section className="stats-grid student-stats" aria-label="Student status summary">
       <article className="stat-card metric-blue"><i><PortalIcon name="reports"/></i><div><span>Total violations</span><strong>{violations.length}</strong><small>{summary.activeViolations} currently open</small></div></article>
@@ -57,9 +57,9 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     <DashboardQuickActions role="STUDENT" onNavigate={onNavigate}/>
 
     {activeSession && <section className="dashboard-card student-live-session" aria-labelledby="student-live-session-title">
-      <header className="dashboard-section-heading"><div><h3 id="student-live-session-title">Service Session in Progress</h3><p>Your active attendance updates automatically.</p></div><span className="status-badge status-active">Live</span></header>
+      <header className="dashboard-section-heading"><div><h3 id="student-live-session-title">Service Session in Progress</h3><p>Your active attendance updates automatically.</p></div><AttendanceIndicator sessions={activeSessions}/></header>
       <div className="student-live-session-body">
-        <div className="student-live-clock"><span>Elapsed time</span><time dateTime={`PT${activeTiming.elapsedSeconds}S`} aria-label="Live elapsed service time">{formatLiveServiceTime(activeTiming.elapsedSeconds)}</time>{activeTiming.limitReached && <small className="timer-limit-notice">Service limit reached — Time Out required</small>}<small>Started {formatManilaDateTime(activeSession.time_in)}</small></div>
+        <div className="student-live-clocks">{activeSessions.map((session) => <div className="student-live-clock" key={session.id}><span>Remaining session time</span><ServiceCountdown session={session} now={now}/><small>{session.department_name || 'Service'} · Assignment #{session.assignment_id}</small><small>Started {formatManilaDateTime(session.time_in)}</small></div>)}</div>
         <dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not recorded'}</dd></div><div><dt>Required</dt><dd>{formatMinutes(serviceSummary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(serviceSummary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatMinutes(serviceSummary.remainingMinutes)}</dd></div></dl>
       </div>
       <footer><span>Current session time is credited after time-out and review.</span><button className="text-button" type="button" onClick={()=>onNavigate('/student/community-service')}>View My Service</button></footer>

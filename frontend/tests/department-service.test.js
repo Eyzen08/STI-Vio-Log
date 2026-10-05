@@ -19,7 +19,31 @@ test('live service timer uses the recorded server time-in safely', () => {
   assert.equal(formatLiveServiceTime(3723), '01:02:03')
   assert.equal(liveServiceSeconds('invalid', Date.now()), 0)
   assert.equal(liveServiceSeconds('2026-08-31T08:00:00.000Z', Date.parse('2026-08-31T09:02:03.000Z'), 1800), 1800)
-  assert.deepEqual(serviceSessionTiming({ time_in: '2026-08-31T08:00:00.000Z', timer_limit_seconds: 1800 }, Date.parse('2026-08-31T09:02:03.000Z')), { elapsedSeconds: 1800, timerLimitSeconds: 1800, limitReached: true })
+  assert.deepEqual(serviceSessionTiming({ time_in: '2026-08-31T08:00:00.000Z', timer_limit_seconds: 1800 }, Date.parse('2026-08-31T09:02:03.000Z')), { elapsedSeconds: 1800, timerLimitSeconds: 1800, remainingSeconds: 0, limitReached: true })
+})
+
+test('remaining time counts down to zero without changing attendance', () => {
+  const start = Date.parse('2026-08-31T08:00:00.000Z')
+  const session = { time_in: new Date(start).toISOString(), timer_limit_seconds: 3600, status: 'ACTIVE', time_out: null }
+  for (const [elapsed, remaining] of [[0, 3600], [1800, 1800], [3599, 1], [3600, 0], [7200, 0]]) {
+    const timing = serviceSessionTiming(session, start + elapsed * 1000)
+    assert.equal(timing.remainingSeconds, remaining)
+    assert.equal(timing.limitReached, elapsed >= 3600)
+    assert.equal(isActiveServiceSession(session), true)
+  }
+  assert.equal(serviceSessionTiming({ ...session, timer_limit_seconds: 0 }, start).remainingSeconds, 0)
+  assert.equal(serviceSessionTiming({ ...session, timer_limit_seconds: undefined, remaining_hours: 1.5 }, start).remainingSeconds, 5400)
+  assert.equal(serviceSessionTiming(session, start - 1000).remainingSeconds, 3600)
+})
+
+test('missing or malformed countdown data is unavailable, not zero', () => {
+  const now = Date.now()
+  for (const session of [null, {}, { timer_limit_seconds: 3600 },
+    { time_in: 'invalid', timer_limit_seconds: 3600 },
+    { time_in: new Date(now).toISOString() },
+    { time_in: new Date(now).toISOString(), timer_limit_seconds: 'bad' }]) {
+    assert.equal(serviceSessionTiming(session, now).remainingSeconds, null)
+  }
 })
 
 test('live timer requires authoritative active status without a time-out', () => {

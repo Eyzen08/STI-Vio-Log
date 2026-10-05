@@ -26,20 +26,18 @@ test('admin dashboard omits registration metrics and keeps additional totals acc
   assert.doesNotMatch(source, /pendingRegistrations|Pending reviews|Student registrations/)
 })
 
-test('active attendance sessions fill the dashboard primary column with responsive scrolling', () => {
+test('current attendance status fills the dashboard primary column with responsive scrolling', () => {
   const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   const primary = source.match(/className="admin-dashboard-primary"([\s\S]*?)className="admin-dashboard-secondary"/)?.[1] || ''
-  assert.ok(primary.indexOf('Recent violations') < primary.indexOf('Active attendance sessions'))
-  assert.match(primary, /visibleActiveSessions\.map/)
-  assert.match(primary, /Loading active attendance sessions/)
+  assert.ok(primary.indexOf('Recent Violations') < primary.indexOf('Current attendance status'))
+  assert.match(primary, /roster\.map/)
+  assert.match(primary, /Loading attendance status/)
   assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
-  assert.match(source, /setInterval\(refresh, 15000\)/)
   assert.match(source, /activeSessions\.filter\(isActiveServiceSession\)/)
-  assert.match(source, /serviceSessionTiming\(session, now\)/)
-  assert.match(primary, /<ActiveSessionTimer session=\{session\} now=\{now\}/)
+  assert.match(primary, /<ServiceCountdown session=\{session\} now=\{now\}/)
   assert.match(primary, /data-label="Student"/)
-  assert.match(primary, /data-label="Supervising officer"/)
+  assert.match(primary, /Supervising officer:/)
   assert.match(css, /\.active-session-card \.table-wrap \{[^}]*max-height: 20rem;[^}]*overflow: auto;/s)
   assert.match(css, /\.active-session-card thead th \{[^}]*position: sticky;[^}]*top: 0;/s)
   assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.admin-dashboard-grid \{[^}]*grid-template-columns: 1fr;/s)
