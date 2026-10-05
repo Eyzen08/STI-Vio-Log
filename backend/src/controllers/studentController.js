@@ -2,6 +2,8 @@ const { normalizeAcademic, inferAcademicLevel } = require('../utils/studentAcade
 const pool = require("../config/database");
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
+const { createEmailService } = require('../services/emailService');
+const { ApiError, sendError } = require('../utils/api');
 const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
@@ -78,19 +80,24 @@ const getStudentById = async (req, res) => {
 const createStudent = async (req, res) => {
     let client;
     try {
-        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix"]);
+        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email"]);
         const { student_number, first_name, middle_name, last_name, suffix } = req.body;
+        const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+        if (email.length > 255 || !isValidEmail(email) || !email.endsWith('@gmail.com')) return res.status(400).json({ success:false, message:'Enter a valid personal Gmail address (@gmail.com)' });
         if (!student_number || !first_name || !last_name) return res.status(400).json({ success: false, message: "student_number, first_name, and last_name are required" });
         if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
         const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), qr_code:`STI-${crypto.randomUUID()}` };
         client = await pool.connect();
         await client.query('BEGIN');
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('student-registration-email:' || LOWER($1)))", [email]);
+        if ((await client.query('SELECT 1 FROM students WHERE LOWER(email)=LOWER($1) LIMIT 1', [email])).rows.length) throw new ApiError(409, 'STUDENT_EMAIL_CONFLICT', 'That Gmail address is already assigned to another student');
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
         const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE) RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
-        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,qr_code,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.qr_code]);
+        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,qr_code,email,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.qr_code,email]);
         await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
         await client.query('COMMIT');
+        res.set?.('Cache-Control', 'no-store');
         return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true, onboarding_required:true, onboarding_step:'PASSWORD' });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
@@ -98,6 +105,48 @@ const createStudent = async (req, res) => {
         return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({ success:false, message:error.statusCode ? error.message : error.code === '23505' ? "A student account with that student number already exists" : "Failed to create student" });
     } finally { if (client) client.release(); }
 };
+
+const createStudentCredentialsEmailController = ({ db = pool, emailService = createEmailService() } = {}) => async (req, res) => {
+    let client;
+    try {
+        assertAllowedFields(req.body, ['temporary_password']);
+        const password = req.body?.temporary_password;
+        if (!isPositiveId(req.params.id) || typeof password !== 'string' || !password || Buffer.byteLength(password, 'utf8') > 72) throw new ApiError(400, 'VALIDATION_ERROR', 'A valid student and temporary password are required');
+        client = await db.connect();
+        await client.query('BEGIN');
+        // Keep the current credential and recipient stable until the provider accepts it.
+        const student = (await client.query(`SELECT s.id,s.email,s.first_name,s.middle_name,s.last_name,s.suffix,
+            s.onboarding_required,s.onboarding_completed_at,u.username,u.password_hash,u.is_active,u.must_change_password
+            FROM students s JOIN users u ON u.id=s.user_id AND u.role='STUDENT'
+            WHERE s.id=$1 FOR UPDATE OF s,u`, [Number(req.params.id)])).rows[0];
+        if (!student) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Student account not found');
+        if (!student.is_active || !student.must_change_password || !student.onboarding_required || student.onboarding_completed_at) throw new ApiError(409, 'CREDENTIALS_UNAVAILABLE', 'Temporary credentials can only be emailed before the student changes their password');
+        if (!isValidEmail(student.email) || student.email.length > 255 || !student.email.toLowerCase().endsWith('@gmail.com')) throw new ApiError(409, 'STUDENT_EMAIL_REQUIRED', 'A valid personal Gmail address must be saved for this student');
+        if (!student.password_hash || !await bcrypt.compare(password, student.password_hash)) throw new ApiError(409, 'CREDENTIALS_REPLACED', 'These temporary credentials are no longer valid. Use the student password-reset action for recovery');
+        let deliveryError;
+        try {
+            await emailService.sendStudentCredentials({
+                to:student.email, studentName:[student.first_name,student.middle_name,student.last_name,student.suffix].filter(Boolean).join(' '),
+                studentNumber:student.username, temporaryPassword:password
+            });
+        } catch (error) {
+            deliveryError = error;
+        }
+        await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
+            VALUES($1,$2,'students',$3,$4,$5)`, [req.user.id,deliveryError ? 'STUDENT_CREDENTIALS_EMAIL_FAILED' : 'STUDENT_CREDENTIALS_EMAIL_SENT',student.id,
+            deliveryError ? 'Student credential email delivery failed' : 'Student credential email accepted by provider',req.ip||null]);
+        await client.query('COMMIT');
+        res.set?.('Cache-Control', 'no-store');
+        if (deliveryError) return sendError(res,503,deliveryError.code === 'EMAIL_UNAVAILABLE' ? 'EMAIL_UNAVAILABLE' : 'EMAIL_DELIVERY_FAILED','Account created, but email could not be sent. Retry or copy the credentials for manual sharing');
+        return res.json({ success:true, email_status:'sent', message:'Credential email accepted by the email provider' });
+    } catch (error) {
+        if (client) try { await client.query('ROLLBACK'); } catch (_) {}
+        // Provider and request objects can contain the password; never log them.
+        return sendError(res,error.statusCode||500,error.statusCode ? error.code||'VALIDATION_ERROR' : 'INTERNAL_ERROR',error.statusCode ? error.message : 'Unable to email student credentials. Retry or copy them for manual sharing');
+    } finally { if (client) client.release(); }
+};
+
+const sendStudentCredentialsEmail = createStudentCredentialsEmailController();
 
 const updateStudent = async (req, res) => {
     let client;
@@ -403,6 +452,8 @@ module.exports = {
     getStudents,
     getStudentById,
     createStudent,
+    createStudentCredentialsEmailController,
+    sendStudentCredentialsEmail,
     updateStudent,
     resetStudentPassword,
     deleteStudent,

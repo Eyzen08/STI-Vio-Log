@@ -28,13 +28,13 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.doesNotMatch(onboarding,/student_number:/)
 });
 
-test('Discipline Office creation collects identity only and leaves QR generation to the server',()=>{
+test('Discipline Office creation collects identity and Gmail and leaves QR generation to the server',()=>{
   const start=app.indexOf('const [studentForm')
   const end=app.indexOf('const [studentFormError',start)
   const formState=app.slice(start,end)
-  for(const field of ['student_number','first_name','middle_name','last_name','suffix'])assert.match(formState,new RegExp(field))
-  for(const field of ['email','phone_number','program','section','year_level','qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
-  assert.match(app,/Enter only the Student Number and official legal name/)
+  for(const field of ['student_number','first_name','middle_name','last_name','suffix','email'])assert.match(formState,new RegExp(field))
+  for(const field of ['phone_number','program','section','year_level','qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
+  assert.match(app,/Enter the Student Number, official legal name, and personal Gmail address/)
 });
 
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{

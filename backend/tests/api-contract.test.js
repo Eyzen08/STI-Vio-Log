@@ -38,3 +38,16 @@ test("canonical violation and DTR enums remain stable", () => {
     assert.deepEqual(spec.components.schemas.ViolationAction.properties.action.enum, ["COMPLETE", "CLEAR", "INVALID_CANCEL", "REOPEN"]);
     assert.deepEqual(spec.components.schemas.DtrSession.properties.status.enum, ["ACTIVE", "COMPLETED"]);
 });
+
+test('student creation documents required Gmail and the separate protected email action',()=>{
+    const spec=JSON.parse(fs.readFileSync(path.resolve(__dirname,"../../docs/api/openapi.json"),"utf8"));
+    const creation=spec.paths['/students'].post.requestBody.content['application/json'].schema;
+    assert(creation.required.includes('email'));
+    assert.equal(creation.properties.email.format,'email');
+    const email=spec.paths['/students/{id}/credentials-email'].post;
+    const input=email.requestBody.content['application/json'].schema;
+    assert.deepEqual(input.required,['temporary_password']);
+    assert.equal(input.additionalProperties,false);
+    assert.equal(input.properties.temporary_password.writeOnly,true);
+    assert(email.responses['503']);
+});

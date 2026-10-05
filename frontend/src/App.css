@@ -2802,6 +2802,17 @@ th {
   overflow-wrap: anywhere;
 }
 
+.student-gmail-help {
+  color: var(--color-text-secondary);
+  font-size: .8rem;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.student-credentials { overflow-wrap: anywhere; }
+.student-credentials-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.student-credentials-actions button { min-height: 44px; }
+
 .form-guidance {
   padding: var(--space-3) var(--space-4);
   border-left: 4px solid var(--color-info);

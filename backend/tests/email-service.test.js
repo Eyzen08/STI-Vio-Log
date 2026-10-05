@@ -53,3 +53,35 @@ test('certificate email uses only the registered recipient and attaches the gene
   assert.equal(body.attachment[0].name,'STI-GC-COC-001.pdf');
   assert.equal(Buffer.from(body.attachment[0].content,'base64').toString(),'%PDF-test');
 });
+
+test('student credentials use Brevo with the login URL from the first configured frontend origin',async()=>{
+  let body;
+  const service=createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test',FRONTEND_URL:'https://portal.example.test,https://other.example.test'},fetchImpl:async(url,options)=>{assert.equal(url,BREVO_EMAIL_ENDPOINT);body=JSON.parse(options.body);return{ok:true}}});
+  const result=await service.sendStudentCredentials({to:'student@gmail.com',studentName:'Maria Santos',studentNumber:'02000123456',temporaryPassword:'Private-test!Aa1'});
+  assert.equal(result,undefined);
+  assert.deepEqual(body.to,[{email:'student@gmail.com'}]);
+  for(const value of ['Maria Santos','02000123456','Private-test!Aa1','https://portal.example.test/login','change this temporary password','guardian information']) assert(body.textContent.includes(value),value);
+  assert(!body.textContent.includes('other.example.test'));
+});
+
+test('student credentials use SMTP and never return provider data or passwords',async()=>{
+  let message;
+  const service=createEmailService({env:{MAIL_FROM:'STI <mailer@example.test>',FRONTEND_URL:'http://localhost:5173'},transport:{async sendMail(value){message=value;return{accepted:[value.to],rejected:[]}}}});
+  const result=await service.sendStudentCredentials({to:'student@gmail.com',studentName:'Maria Santos',studentNumber:'02000123456',temporaryPassword:'Private-test!Aa1'});
+  assert.equal(result,undefined);
+  assert.equal(message.to,'student@gmail.com');
+  assert.equal(message.from,'STI <mailer@example.test>');
+  assert.match(message.text,/http:\/\/localhost:5173\/login/);
+});
+
+test('student credential email reports missing configuration and sanitized provider failures',async()=>{
+  const input={to:'student@gmail.com',studentName:'Test Student',studentNumber:'02000123456',temporaryPassword:'Private-test!Aa1'};
+  await assert.rejects(createEmailService({env:{}}).sendStudentCredentials(input),e=>e.code==='EMAIL_UNAVAILABLE');
+  const failures=[
+    createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test'},fetchImpl:async()=>({ok:false,status:401})}),
+    createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test'},fetchImpl:async()=>{throw new Error(input.temporaryPassword)}}),
+    createEmailService({env:{},transport:{async sendMail(){throw new Error(input.temporaryPassword)}}}),
+    createEmailService({env:{},transport:{async sendMail(){return{rejected:['student@gmail.com']}}}})
+  ];
+  for(const service of failures) await assert.rejects(service.sendStudentCredentials(input),e=>e.statusCode===503&&e.code==='EMAIL_DELIVERY_FAILED'&&!e.message.includes(input.temporaryPassword));
+});

@@ -52,7 +52,10 @@ export const installMutationRequestGuard = (target = globalThis) => {
     activityCounts.delete(element)
     element.classList.remove('mutation-in-flight')
     element.removeAttribute('aria-busy')
-    if (element.dataset.mutationWasDisabled !== 'true') element.disabled = false
+    // React may keep disabled=true when busy changes to a final disabled state.
+    // Respect that state instead of changing the DOM behind React's renderer.
+    if (element.dataset.actionDisabled === 'true') element.disabled = true
+    else if (element.dataset.mutationWasDisabled !== 'true') element.disabled = false
     delete element.dataset.mutationWasDisabled
   }
   const guardedFetch = async (input, options = {}) => {

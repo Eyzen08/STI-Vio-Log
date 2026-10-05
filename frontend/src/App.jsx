@@ -42,6 +42,8 @@ import PortalIcon from './components/PortalIcon.jsx'
 import ManagementMetric from './components/ManagementMetric.jsx'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
+import StudentCredentialsModal from './components/StudentCredentialsModal.jsx'
+import { isValidStudentGmail, normalizeStudentGmail } from './lib/studentAccount.js'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
@@ -317,7 +319,8 @@ function App() {
     first_name: '',
     last_name: '',
     middle_name: '',
-    suffix: ''
+    suffix: '',
+    email: ''
   })
 
   const [studentFormError, setStudentFormError] = useState('')
@@ -1100,7 +1103,8 @@ function App() {
           studentForm.last_name.trim(),
 
         suffix:
-          studentForm.suffix.trim()
+          studentForm.suffix.trim(),
+        email: normalizeStudentGmail(studentForm.email)
       }
 
       if (
@@ -1112,6 +1116,7 @@ function App() {
           'Student number, first name, and last name are required.'
         )
       }
+      if (!isValidStudentGmail(payload.email)) throw new Error('Enter a valid personal Gmail address (@gmail.com).')
       const response =
         await fetch(
           `${API_URL}/api/students`,
@@ -1140,20 +1145,27 @@ function App() {
       setStudentFormSuccess(
         `Student ${payload.first_name} ${payload.last_name} was added.`
       )
-      setCreatedStudentCredentials({username:data.account.username,password:data.temporary_password})
+      setCreatedStudentCredentials({studentId:data.student.id,username:data.account.username,password:data.temporary_password,email:data.student.email})
+      setIsStudentFormOpen(false)
 
       setStudentForm({
         student_number: '',
         first_name: '',
         last_name: '',
         middle_name: '',
-        suffix: ''
+        suffix: '',
+        email: ''
       })
 
-      setStudents(await loadAllPages('/api/students', 'students', {
-        headers: { Authorization: `Bearer ${token}` }
-      }))
-      setIsStudentFormOpen(false)
+      // Account creation succeeded even if refreshing the directory fails.
+      setStudents((current) => [...current, data.student])
+      try {
+        setStudents(await loadAllPages('/api/students', 'students', {
+          headers: { Authorization: `Bearer ${token}` }
+        }))
+      } catch {
+        setStudentFormSuccess('Student account created. Refresh the directory to reload the student list.')
+      }
     } catch (studentError) {
       setStudentFormError(
         studentError.message
@@ -2179,7 +2191,7 @@ function App() {
             <ManagementMetric tone="orange" icon="service" value={studentsInService} label="Ongoing Community Service"/>
             <ManagementMetric tone="green" icon="clearance" value={clearedStudents} label="No Open Violations"/>
           </section>
-          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create the student account</strong><span>Enter only the Student Number and official legal name. The student completes the remaining information during first sign-in.</span></div>
+          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create the student account</strong><span>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</span></div>
           <section className="drawer-form-card">
             <div className="table-header">
               <h3>
@@ -2231,6 +2243,7 @@ function App() {
                       handleStudentFieldChange
                     }
                     placeholder="Juan"
+                    required
                   />
                 </label>
 
@@ -2247,6 +2260,7 @@ function App() {
                       handleStudentFieldChange
                     }
                     placeholder="Dela Cruz"
+                    required
                   />
                 </label>
 
@@ -2282,10 +2296,28 @@ function App() {
                   />
                 </label>
 
+                <label>
+                  Student Gmail
+                  <input
+                    type="email"
+                    name="email"
+                    value={studentForm.email}
+                    onChange={handleStudentFieldChange}
+                    onBlur={() => setStudentForm((current) => ({...current, email: normalizeStudentGmail(current.email)}))}
+                    placeholder="student@gmail.com"
+                    autoComplete="email"
+                    pattern="[^ @]+@[gG][mM][aA][iI][lL][.][cC][oO][mM]"
+                    maxLength={255}
+                    aria-describedby="student-gmail-help"
+                    required
+                  />
+                  <span id="student-gmail-help" className="student-gmail-help">Use personal Gmail (@gmail.com). You can email the temporary password after creating the account.</span>
+                </label>
+
               </div>
 
               {studentFormError && (
-                <p className="error-message">
+                <p className="error-message" role="alert">
                   {studentFormError}
                 </p>
               )}
@@ -2306,7 +2338,7 @@ function App() {
               </AsyncActionButton>
             </form>
           </section></Modal>}
-          {createdStudentCredentials&&<Modal title="Temporary student credentials" onClose={()=>setCreatedStudentCredentials(null)}><div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{createdStudentCredentials.username}</code></p><p>Temporary password: <code>{createdStudentCredentials.password}</code></p><p>The student must change this password, confirm their Google-account email by OTP, sign in with that same Google account, and complete academic, contact, and guardian information before entering the portal. This password will not be shown again.</p><button type="button" onClick={()=>setCreatedStudentCredentials(null)}>I stored it securely</button></div></Modal>}
+          {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)}/>}
 
           <section className="table-card">
             <div className="table-header management-table-header">

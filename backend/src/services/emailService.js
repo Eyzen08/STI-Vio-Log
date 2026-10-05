@@ -1,5 +1,6 @@
 const nodemailer = require('nodemailer');
 const { ApiError } = require('../utils/api');
+const { parseOrigins } = require('../config/security');
 
 const BREVO_EMAIL_ENDPOINT = 'https://api.brevo.com/v3/smtp/email';
 
@@ -84,7 +85,32 @@ const createEmailService = ({ env = process.env, transport, fetchImpl = global.f
     }
   };
 
-  return { sendOtp, sendCertificate };
+  const sendStudentCredentials = async ({ to, studentName, studentNumber, temporaryPassword }) => {
+    const loginUrl = new URL('/login', parseOrigins(env.FRONTEND_URL)[0] || 'http://localhost:5173').href;
+    const subject = 'Your STI Vio-Log student account';
+    const text = `Good day ${studentName},\n\nYour STI Vio-Log student account has been created.\n\nStudent Number (username): ${studentNumber}\nTemporary password: ${temporaryPassword}\nSign in: ${loginUrl}\n\nOn your first sign-in, change this temporary password, verify your Google-account email using the verification code, sign in with that same Google account, and complete your academic, contact, and guardian information.\n\nKeep these credentials private. Do not share this password.`;
+    try {
+      if (useBrevo) {
+        if (typeof fetchImpl !== 'function') throw new Error('HTTPS email client is unavailable');
+        const response = await fetchImpl(BREVO_EMAIL_ENDPOINT, {
+          method:'POST',
+          headers:{ accept:'application/json', 'api-key':env.BREVO_API_KEY, 'content-type':'application/json' },
+          body:JSON.stringify({ sender:{ name:env.BREVO_SENDER_NAME||'STI Vio-Log', email:env.BREVO_SENDER_EMAIL }, to:[{ email:to }], subject, textContent:text }),
+          signal:AbortSignal.timeout(timeout)
+        });
+        if (!response.ok) throw new Error('Email provider rejected the request');
+        return;
+      }
+      if (!smtpTransport) throw new ApiError(503, 'EMAIL_UNAVAILABLE', 'Student credential email is temporarily unavailable');
+      const result = await smtpTransport.sendMail({ from:env.MAIL_FROM||env.SMTP_USER, to, subject, text });
+      if (result?.rejected?.length) throw new Error('Email provider rejected the recipient');
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, 'EMAIL_DELIVERY_FAILED', 'Student credential email could not be sent. Please try again later');
+    }
+  };
+
+  return { sendOtp, sendCertificate, sendStudentCredentials };
 };
 
 module.exports = { createEmailService, BREVO_EMAIL_ENDPOINT };

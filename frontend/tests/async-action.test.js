@@ -38,3 +38,31 @@ test('mutation request guard sends identical concurrent mutations once', async (
   assert.equal(await first, response)
   assert.equal(await duplicate, response)
 })
+
+test('request completion preserves a button disabled by its rendered busy or final state', async () => {
+  for (const controlledDisabled of [true, false]) {
+    const listeners = {}
+    const element = {
+      isConnected: true, disabled: false, dataset: {},
+      classList: { add() {}, remove() {} },
+      setAttribute() {}, removeAttribute() {}
+    }
+    let release
+    const pending = new Promise(resolve => { release = resolve })
+    const response = { clone: () => response }
+    const target = {
+      document: { addEventListener(name, handler) { listeners[name] = handler } },
+      fetch: async () => { await pending; return response }
+    }
+    installMutationRequestGuard(target)
+    listeners.click({ target: { closest: () => element } })
+    const request = target.fetch('/mock-email', { method: 'POST', body: '{}' })
+    assert.equal(element.disabled, true)
+    // Simulate React rendering the asynchronous button while the request runs.
+    if (controlledDisabled) element.dataset.actionDisabled = 'true'
+    release()
+    await request
+    assert.equal(element.disabled, controlledDisabled)
+    assert.equal(element.dataset.mutationWasDisabled, undefined)
+  }
+})
