@@ -115,3 +115,6 @@ No independently confirmed critical/high vulnerability was established. Deployme
 - Centralized security-event monitoring for auth failures, step-up actions, exports, certificate/signature changes, and role/department transitions.
 - Written incident-response contacts, notification thresholds, evidence preservation, breach escalation, and student-data retention/deletion policy.
 - Annual independent application and cloud configuration review before each academic year.
+
+
+> Current academic support: College and SHS ABM/STEM are described in the [student academic model](../STUDENT-ACADEMIC-MODEL.md). This document retains its historical findings or design context; it does not override current account-provisioning or authorization behavior.

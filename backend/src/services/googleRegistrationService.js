@@ -1,3 +1,4 @@
+const { normalizeAcademic, inferAcademicLevel } = require('../utils/studentAcademic');
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
 const { ApiError } = require('../utils/api');
@@ -14,6 +15,8 @@ const publicRegistration = (row) => ({
   last_name: row.last_name,
   suffix: row.suffix || null,
   phone_number: row.phone_number || null,
+  academic_level: inferAcademicLevel(row),
+  strand: row.strand || null,
   program: row.program || null,
   section: row.section || null,
   year_level: row.year_level === null ? null : Number(row.year_level),
@@ -45,7 +48,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
     const safeLimit = parsedLimit;
     const result = await pool.query(
       `SELECT g.id,g.student_number,g.first_name,g.middle_name,g.last_name,g.suffix,g.google_email,g.phone_number,
-              g.program,g.section,g.year_level,g.guardian_name,g.guardian_relationship,g.guardian_phone_number,g.status,
+              g.academic_level,g.strand,g.program,g.section,g.year_level,g.guardian_name,g.guardian_relationship,g.guardian_phone_number,g.status,
               g.review_reason,g.reviewed_at,g.created_at,
               (g.status='PENDING' AND g.created_at<CURRENT_TIMESTAMP-INTERVAL '30 days') AS is_stale,
               EXISTS(SELECT 1 FROM students s WHERE s.student_number=g.student_number) AS student_number_in_use,
@@ -72,7 +75,7 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
       await client.query('BEGIN');
       const registration = (await client.query(
         `SELECT id, google_subject, google_email, student_number, first_name, last_name, phone_number,
-                program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status, created_at
+                academic_level, strand, program, section, year_level, guardian_name, guardian_relationship, guardian_phone_number, status, created_at
          FROM google_student_registrations WHERE id = $1 FOR UPDATE`,
         [Number(registrationId)]
       )).rows[0];
@@ -96,12 +99,13 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
         return publicRegistration(reviewed);
       }
 
-      if (!isValidPhone(registration.phone_number) || !registration.program || !registration.section
+      if (!isValidPhone(registration.phone_number) || !registration.section
         || !Number.isInteger(Number(registration.year_level)) || !registration.guardian_name
         || !registration.guardian_relationship || !isValidPhone(registration.guardian_phone_number)) {
         throw new ApiError(409, 'REGISTRATION_INCOMPLETE', 'The student must resubmit the registration with complete profile and guardian information');
       }
 
+      const academic = normalizeAcademic({...registration,academic_level:inferAcademicLevel(registration) || undefined},{legacy:true});
       const conflict = (await client.query(
         `SELECT 1 FROM users WHERE username = $1
          UNION ALL SELECT 1 FROM students WHERE student_number = $1
@@ -121,10 +125,10 @@ const createGoogleRegistrationService = ({ pool, hashPassword = (value) => bcryp
       )).rows[0];
       const qrCode = randomBytes(32).toString('base64url');
       const student = (await client.query(
-        `INSERT INTO students (user_id, student_number, first_name, last_name, email, phone_number, program, section, year_level, qr_code)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
+        `INSERT INTO students (user_id, student_number, first_name, last_name, email, phone_number, program, section, year_level, qr_code, academic_level, strand)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
         [user.id, registration.student_number, registration.first_name, registration.last_name, registration.google_email,
-          registration.phone_number, registration.program, registration.section, registration.year_level, qrCode]
+          registration.phone_number, academic.program, academic.section, academic.year_level, qrCode, academic.academic_level, academic.strand]
       )).rows[0];
       await client.query(
         `INSERT INTO student_guardians (student_id, guardian_name, relationship, phone_number, is_primary)

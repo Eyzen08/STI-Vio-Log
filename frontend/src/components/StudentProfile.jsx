@@ -1,4 +1,5 @@
-import { displayProfileValue, formatStudentName, formatYearLevel } from '../lib/studentProfile.js'
+import { academicLevelLabel, academicProgram, academicYear, isSeniorHigh } from '../lib/studentAcademic.js'
+import { displayProfileValue, formatStudentName } from '../lib/studentProfile.js'
 import { avatarInitials } from '../lib/avatarInitials.js'
 import { displayPhilippinePhone } from '../lib/phone.js'
 
@@ -43,7 +44,7 @@ function StudentProfile({ profile, username, loading, error }) {
         <div>
           <p className="eyebrow">Student profile</p>
           <h2>{formatStudentName(profile)}</h2>
-          <p>{profile.student_number} · {displayProfileValue(profile.program)}</p>
+          <p>{profile.student_number} · {academicProgram(profile)}</p>
         </div>
         <span className="profile-readonly-badge">Verified school record</span>
       </header>
@@ -57,8 +58,8 @@ function StudentProfile({ profile, username, loading, error }) {
         </div>
         <dl className="profile-details-grid">
           <ProfileField label="Student number" value={displayProfileValue(profile.student_number)} />
-          <ProfileField label="Program" value={displayProfileValue(profile.program)} />
-          <ProfileField label="Year level" value={formatYearLevel(profile.year_level)} />
+          <ProfileField label="Academic level" value={academicLevelLabel(profile)} /><ProfileField label={isSeniorHigh(profile)?"Strand":"Program"} value={academicProgram(profile)} />
+          <ProfileField label={isSeniorHigh(profile)?"Grade level":"Year level"} value={academicYear(profile)} />
           <ProfileField label="Section" value={displayProfileValue(profile.section)} />
         </dl>
       </div>

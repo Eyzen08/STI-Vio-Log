@@ -47,3 +47,11 @@ Migration `023_admin_account_profiles.sql` adds administrator identity and verif
 Migration `024_clearance_certificates.sql` adds managed Discipline Officer e-signatures, immutable PDF certificate snapshots, certificate versions and revocation state, selected-signature snapshots, and email-delivery status. Issued certificates are retained permanently; corrections require revocation and a new version.
 
 Migration `025_offense_escalation_incident_time.sql` adds optional incident time without changing historical incident dates, plus one derived offense-status row per student. The temporary policy scope is `ALL_HISTORY` because the application has no authoritative academic-term relation for violations. Invalid/cancelled records are excluded; completed and cleared records remain part of retained history. Source violation severities are never rewritten.
+
+
+Migration `043_student_academic_strands.sql` adds nullable `strand` (ABM/STEM) to students and adds `academic_level` and `strand` to pending password and Google registrations. Missing levels are inferred from year/grade without changing historical program values or student access. Apply it before the backend release.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](../STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

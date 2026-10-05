@@ -81,7 +81,7 @@ test('Senior High School completion saves section and year without a college pro
     return{rows:[]};
   });
   const service=createStudentOnboardingService({pool:db.pool});
-  const result=await service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',program:'BSIT',section:'11-A',yearLevel:11,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
+  const result=await service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',program:'BSIT',section:'11-A',yearLevel:11,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
   assert.deepEqual(result,{onboarding_required:false,onboarding_step:'COMPLETE'});
   assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params[1]==='SENIOR_HIGH_SCHOOL'&&params[2]===null&&params[3]==='11-A'&&params[4]===11));
 });
@@ -93,7 +93,7 @@ test('Senior High School accepts Grade 12',async()=>{
     return{rows:[]};
   });
   const service=createStudentOnboardingService({pool:db.pool});
-  await service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',section:'12-A',yearLevel:12,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
+  await service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',section:'12-A',yearLevel:12,phoneNumber:'09171234567',guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'});
   assert(db.calls.some(({sql,params})=>sql.startsWith('UPDATE students SET academic_level=')&&params[1]==='SENIOR_HIGH_SCHOOL'&&params[4]===12));
 });
 
@@ -104,8 +104,8 @@ test('onboarding rejects incomplete or invalid academic information before datab
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'INVALID',section:'A103',yearLevel:1}),(error)=>error.code==='INVALID_PROGRAM');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'BSIT',section:'',yearLevel:1}),(error)=>error.code==='SECTION_REQUIRED');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'COLLEGE',...contact,program:'BSIT',section:'A103',yearLevel:5}),(error)=>error.code==='INVALID_YEAR_LEVEL');
-  await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',...contact,section:'11-A',yearLevel:10}),(error)=>error.code==='INVALID_YEAR_LEVEL');
-  await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',...contact,section:'11-A',yearLevel:13}),(error)=>error.code==='INVALID_YEAR_LEVEL');
+  await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',...contact,section:'11-A',yearLevel:10}),(error)=>error.code==='INVALID_YEAR_LEVEL');
+  await assert.rejects(service.completeProfile({userId:8,academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',...contact,section:'11-A',yearLevel:13}),(error)=>error.code==='INVALID_YEAR_LEVEL');
   await assert.rejects(service.completeProfile({userId:8,academicLevel:'INVALID',...contact,section:'A103',yearLevel:1,program:'BSIT'}),(error)=>error.code==='INVALID_ACADEMIC_LEVEL');
   assert.equal(db.calls.length,0);
 });
@@ -113,8 +113,9 @@ test('onboarding rejects incomplete or invalid academic information before datab
 test('onboarding controller forwards academic level and preserves the completion response',async()=>{
   let received;const controller=createStudentOnboardingController({onboardingService:{completeProfile:async(input)=>{received=input;return{onboarding_required:false,onboarding_step:'COMPLETE'}}}});
   const response={json(body){this.body=body;return body},status(code){this.statusCode=code;return this}};
-  await controller.completeOnboarding({body:{academic_level:'SENIOR_HIGH_SCHOOL',program:null,section:'11-A',year_level:11,phone_number:'09171234567',guardian_name:'Maria Reyes',guardian_relationship:'Mother',guardian_phone_number:'09181234567'},user:{id:8,role:'STUDENT'}},response);
+  await controller.completeOnboarding({body:{academic_level:'SENIOR_HIGH_SCHOOL',strand:'STEM',program:null,section:'11-A',year_level:11,phone_number:'09171234567',guardian_name:'Maria Reyes',guardian_relationship:'Mother',guardian_phone_number:'09181234567'},user:{id:8,role:'STUDENT'}},response);
   assert.equal(received.academicLevel,'SENIOR_HIGH_SCHOOL');
+  assert.equal(received.strand,'STEM');
   assert.equal(received.program,null);
   assert.equal(response.body.success,true);
   assert.equal(response.body.user.onboarding_step,'COMPLETE');

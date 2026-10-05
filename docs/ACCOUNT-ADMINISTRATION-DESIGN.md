@@ -154,3 +154,8 @@ Loading, empty, validation, conflict, forbidden, expired-session, and retry stat
 5. [x] Role-aware system-admin accounts, departments, and audit frontend.
 6. [x] Full backend, frontend, migration, and integration verification.
 7. [ ] Provision named school accounts through the verified workflow; never through committed seed credentials.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

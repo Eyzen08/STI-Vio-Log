@@ -25,7 +25,7 @@ const audit = (client, actor, action, table, record, description, ip) => client.
 const getEligibleStudents = async (req, res) => {
   try {
     assertAllowedFields(req.query, []);
-    const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.program,s.email,
+    const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.email,
       sc.id AS clearance_id,sc.status AS clearance_status,sc.academic_year,sc.semester,sc.cleared_at,
       COALESCE(SUM(a.required_hours),0)::numeric AS required_hours,COALESCE(SUM(a.completed_hours),0)::numeric AS completed_hours,
       COUNT(a.id)::int AS assignment_count,
@@ -43,7 +43,7 @@ const getEligibleStudents = async (req, res) => {
 const getCertificateStudentDirectory = async (req, res) => {
   try {
     assertAllowedFields(req.query, []);
-    const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.program,s.email,
+    const result = await pool.query(`SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.email,
       sc.id AS clearance_id,sc.status AS clearance_status,sc.cleared_at,
       COALESCE(service.required_hours,0)::numeric AS required_hours,
       COALESCE(service.completed_hours,0)::numeric AS completed_hours,
@@ -233,7 +233,7 @@ const issueCertificate = async (req, res) => {
     const date = new Date().toISOString().slice(0, 10);
     const number = `STI-GC-COC-${date.replaceAll('-', '')}-${String(source.id).padStart(6, '0')}-V${version}`;
     const name = clean(req.body.student_name || studentName(source), 250);
-    const program = clean(req.body.program || source.program, 200);
+    const program = clean(req.body.program || (source.academic_level === 'SENIOR_HIGH_SCHOOL' ? source.strand : source.program), 200);
     if (!name || !program) throw new ApiError(400, 'VALIDATION_ERROR', 'Certificate name and program are required');
     const pdf = await renderCertificatePdf({ certificateNumber: number, studentName: name, program, completedHours: source.completed_hours, issueDate: date, signatures });
     certificate = (await client.query(`INSERT INTO clearance_certificates(student_id,clearance_id,certificate_number,version,student_name,student_number,program,completed_hours,issue_date,pdf_data,pdf_sha256,student_email,issued_by)

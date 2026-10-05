@@ -1442,3 +1442,6 @@ The system is ready for deployment only when:
 - [ ] Production environment works
 - [x] Database backup strategy exists
 - [ ] No critical security issues remain
+
+
+> Current academic support: College and SHS ABM/STEM are described in the [student academic model](STUDENT-ACADEMIC-MODEL.md). This document retains its historical findings or design context; it does not override current account-provisioning or authorization behavior.

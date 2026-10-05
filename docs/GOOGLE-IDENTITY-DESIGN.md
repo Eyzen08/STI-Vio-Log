@@ -88,3 +88,6 @@ Self-service unlinking and relinking are intentionally excluded. Recovery requir
 7. Full live Google submission, approval, and returning-login verification.
 
 Primary references: [Google backend ID-token verification](https://developers.google.com/identity/sign-in/web/backend-auth) and [Google OpenID Connect claims](https://developers.google.com/identity/openid-connect/reference).
+
+
+> Current academic support: College and SHS ABM/STEM are described in the [student academic model](STUDENT-ACADEMIC-MODEL.md). This document retains its historical findings or design context; it does not override current account-provisioning or authorization behavior.

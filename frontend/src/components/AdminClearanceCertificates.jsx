@@ -1,3 +1,4 @@
+import { academicProgram, isSeniorHigh } from '../lib/studentAcademic.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
@@ -85,11 +86,11 @@ function AdminClearanceCertificates({ token }) {
   const visibleStudents = useMemo(() => {
     const query = studentSearch.trim().toLowerCase()
     return students.filter((student) => (studentStatus === 'ALL' || student.qualification_status === studentStatus)
-      && (!query || [student.student_name, student.student_number, student.program].some((value) => String(value || '').toLowerCase().includes(query))))
+      && (!query || [student.student_name, student.student_number, student.program, student.strand].some((value) => String(value || '').toLowerCase().includes(query))))
   }, [students, studentSearch, studentStatus])
 
   const chooseStudent = (student) => {
-    setSelected(student); setDraft({ student_name: student.student_name, program: student.program || '' }); setSelectedSignatures([]); setError(''); setMessage('')
+    setSelected(student); setDraft({ student_name: student.student_name, program: (isSeniorHigh(student) ? student.strand : student.program) || '' }); setSelectedSignatures([]); setError(''); setMessage('')
   }
   const readSignature = async (event) => {
     const file = event.target.files?.[0]
@@ -187,14 +188,14 @@ function AdminClearanceCertificates({ token }) {
         <div className="clearance-directory-filters"><label><span className="sr-only">Search students</span><input type="search" name="clearance-student-filter" autoComplete="off" placeholder="Search by name, student number, or program…" value={studentSearch} onChange={(event) => setStudentSearch(event.target.value)} /></label><label><span className="sr-only">Filter by clearance status</span><select value={studentStatus} onChange={(event) => setStudentStatus(event.target.value)}><option value="ALL">All statuses</option><option value="QUALIFIED">Qualified</option><option value="AWAITING_CLEARANCE">Awaiting clearance</option><option value="NEEDS_SERVICE">Needs service hours</option><option value="BLOCKED">Blocked</option><option value="NO_SERVICE_REQUIRED">No service assignment</option></select></label></div>
         <div className="clearance-status-legend"><span><b>{qualifiedStudents.length}</b> qualified</span><span><b>{students.filter((student) => student.qualification_status === 'NEEDS_SERVICE').length}</b> need hours</span><span><b>{students.filter((student) => student.qualification_status === 'AWAITING_CLEARANCE').length}</b> awaiting approval</span></div>
         <div className="certificate-student-list">{visibleStudents.length ? visibleStudents.map((student) => <article key={student.id} className={`certificate-student-card${selected?.id === student.id ? ' selected' : ''}`}>
-          <span className={`clearance-directory-status status-${student.qualification_status.toLowerCase().replaceAll('_', '-')}`}>{student.qualification_status.replaceAll('_', ' ')}</span><strong>{student.student_name}</strong><span>{student.student_number} • {student.program || 'Program not recorded'}</span><small>{student.assignment_count ? `${formatDuration(student.completed_hours)} of ${formatDuration(student.required_hours)} completed` : 'No assigned community service hours'} • {student.qualification_reason}</small>
+          <span className={`clearance-directory-status status-${student.qualification_status.toLowerCase().replaceAll('_', '-')}`}>{student.qualification_status.replaceAll('_', ' ')}</span><strong>{student.student_name}</strong><span>{student.student_number} • {academicProgram(student)}</span><small>{student.assignment_count ? `${formatDuration(student.completed_hours)} of ${formatDuration(student.required_hours)} completed` : 'No assigned community service hours'} • {student.qualification_reason}</small>
           {student.qualification_status === 'AWAITING_CLEARANCE' && <button type="button" className="clearance-approve-button" onClick={() => { setApproveError(''); setApprovalTerm({ academic_year: '', semester: '1st Semester' }); setApproving(student) }}>Approve Clearance</button>}
           {student.certificate_eligible && !student.has_issued_certificate && <button type="button" className="clearance-issue-button" onClick={() => chooseStudent(student)}>Review &amp; Issue Certificate</button>}
         </article>) : <p className="empty-state">No students match this search and status filter.</p>}</div>
       </section>
       {selected && <Modal title={`Review Clearance — ${selected.student_number}`} drawer onClose={() => setSelected(null)}><section className="certificate-review"><div className="table-header"><h3>Review and Issue</h3><span>Draft preview</span></div>
         <>
-          <div className="student-form-grid"><label>Certificate name<input value={draft.student_name} onChange={(e) => setDraft({ ...draft, student_name: e.target.value })} /></label><label>Program or course<ProgramSelect value={draft.program} onChange={(e) => setDraft({ ...draft, program: e.target.value })} required /></label></div>
+          <div className="student-form-grid"><label>Certificate name<input value={draft.student_name} onChange={(e) => setDraft({ ...draft, student_name: e.target.value })} /></label><label>{isSeniorHigh(selected)?'Strand':'Program or course'}{isSeniorHigh(selected)?<select value={draft.program} onChange={e=>setDraft({...draft,program:e.target.value})} required><option value="">Select strand</option><option value="ABM">ABM</option><option value="STEM">STEM</option></select>:<ProgramSelect value={draft.program} onChange={(e) => setDraft({ ...draft, program: e.target.value })} required />}</label></div>
           <div className="certificate-preview"><p>STI COLLEGE - GLOBAL CITY</p><h3>CERTIFICATE OF COMPLIANCE</h3><p>This is to certify that</p><strong>{draft.student_name}</strong><p>is enrolled under the <b>{formatProgramName(draft.program)}</b> and has successfully completed community service for <b>{formatDuration(selected.completed_hours)}</b>.</p><small>Issued on {formatManilaDate(new Date())}</small></div>
           <fieldset className="signature-picker"><legend>Authorized signatures</legend>{signatures.filter((entry) => entry.is_active).map((entry) => <label key={entry.id}><input type="checkbox" checked={selectedSignatures.includes(Number(entry.id))} onChange={(e) => setSelectedSignatures((value) => e.target.checked ? [...value, Number(entry.id)].slice(0, 3) : value.filter((id) => id !== Number(entry.id)))} /><img src={entry.image_data_url} alt="" /><span>{entry.full_name}<small>{entry.position}</small></span></label>)}</fieldset>
           <button className="submit-btn" type="button" disabled={busy || !draft.student_name.trim() || !draft.program.trim() || !selectedSignatures.length} onClick={issue}>{busy ? 'Issuing Certificate…' : 'Issue, Email & Prepare PDF'}</button>

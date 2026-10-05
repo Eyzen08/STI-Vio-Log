@@ -58,7 +58,7 @@ const getGoodStandingReport = async (req, res) => {
     const { student_id, sort_by = 'student_number' } = req.query; validateId(student_id);
     if (!['student_number', 'name'].includes(sort_by)) bad('Unsupported sort_by value');
     const params = student_id ? [student_id] : []; const filter = student_id ? ' AND s.id = $1' : '';
-    const rows = (await pool.query(`SELECT s.student_number, s.first_name, s.last_name, s.program, s.year_level, s.section,
+    const rows = (await pool.query(`SELECT s.student_number, s.first_name, s.last_name, s.academic_level, s.strand, s.program, s.year_level, s.section,
       CASE WHEN COUNT(v.id) FILTER (WHERE v.status <> 'INVALID_CANCELLED') = 0 THEN 'GOOD_STANDING' ELSE 'CLEARED' END AS standing,
       COUNT(v.id) FILTER (WHERE v.status <> 'INVALID_CANCELLED')::int AS historical_violations
       FROM students s LEFT JOIN violations v ON v.student_id = s.id

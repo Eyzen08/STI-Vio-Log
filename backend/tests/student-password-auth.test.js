@@ -92,5 +92,5 @@ test('registration controller maps complete student and guardian information onl
   const response={statusCode:0,payload:null,status(code){this.statusCode=code;return this},json(value){this.payload=value;return this}};
   await controller.register({body},response);
   assert.equal(response.statusCode,202);
-  assert.deepEqual(received,{fullName:body.full_name,firstName:body.first_name,middleName:body.middle_name,lastName:body.last_name,suffix:body.suffix,studentNumber:body.student_number,email:body.email,phoneNumber:body.phone_number,program:body.program,section:body.section,yearLevel:body.year_level,guardianName:body.guardian_name,guardianRelationship:body.guardian_relationship,guardianPhoneNumber:body.guardian_phone_number,password:body.password,confirmPassword:body.confirm_password});
+  assert.deepEqual(received,{fullName:body.full_name,firstName:body.first_name,middleName:body.middle_name,lastName:body.last_name,suffix:body.suffix,studentNumber:body.student_number,email:body.email,phoneNumber:body.phone_number,academicLevel:body.academic_level,strand:body.strand,program:body.program,section:body.section,yearLevel:body.year_level,guardianName:body.guardian_name,guardianRelationship:body.guardian_relationship,guardianPhoneNumber:body.guardian_phone_number,password:body.password,confirmPassword:body.confirm_password});
 });

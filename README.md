@@ -26,7 +26,7 @@ A centralized discipline-management platform for **student violations, Community
 
 ## About the Project
 
-**STI Vio-Log** is a web-based student discipline and incident-management system developed for **STI College Global City**.
+**STI Vio-Log** is a web-based student discipline and incident-management system developed for **STI College Global City**. It supports College students and Senior High School students in **ABM** and **STEM**, Grades 11-12.
 
 The platform is designed to help the Discipline Office replace fragmented and manual processes with a centralized digital workflow for managing:
 
@@ -146,7 +146,7 @@ A typical disciplinary workflow in STI Vio-Log follows this process:
 - Student profile management
 - Student Number-based identity
 - Academic information
-- Program, year, and section information
+- Academic level, College program or SHS strand (ABM/STEM), year/grade, and section information
 - Guardian information
 - Student onboarding
 - Personal student QR code
@@ -1269,6 +1269,7 @@ The repository contains additional technical and project documentation.
 
 | Documentation | Purpose |
 |---|---|
+| [Student Academic Model](docs/STUDENT-ACADEMIC-MODEL.md) | College and SHS ABM/STEM rules, migration, and examples |
 | [Functional Requirements](docs/FUNCTIONAL-REQUIREMENTS.md) | Functional system requirements |
 | [Roadmap](docs/ROADMAP.md) | Development roadmap |
 | [Authentication User Guide](docs/AUTHENTICATION-USER-GUIDE.md) | Authentication guidance |
@@ -1360,3 +1361,7 @@ Development continues to focus on production validation, security verification, 
 Built to improve the visibility, consistency, accountability, and efficiency of student disciplinary and Community Service workflows.
 
 </div>
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](docs/STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

@@ -1,3 +1,4 @@
+import { academicSummary } from '../lib/studentAcademic.js'
 import { assignmentProgress, attendanceState, formatServiceMinutes, isVerifiedQr } from '../lib/departmentScanner.js'
 import { formatDisplayLabel, formatManilaDateTime } from '../lib/displayFormat.js'
 
@@ -24,7 +25,7 @@ function DepartmentQrScanner({ form, result, error, verifiedQr, isScanning, isSu
         {error&&<p className="error-message" role="alert">{error}</p>}<p className="qr-security-note">Only authorized staff can record attendance.</p>
       </article>
       <article className="qr-stage-card verify-stage" aria-live="polite"><h3><b>2</b> Student Verification</h3>{!verified?<div className="qr-empty-state"><span aria-hidden="true">⌁</span><strong>Waiting for student QR</strong><p>Scan or manually enter a code to review the active assignment.</p></div>:<>
-        <div className="verified-student"><span aria-hidden="true">{result.student.first_name?.[0]}{result.student.last_name?.[0]}</span><div><h4>{result.student.first_name} {result.student.last_name}</h4><p>{result.student.student_number}</p><p>{[result.student.program,result.student.section,result.student.year_level&&`Year ${result.student.year_level}`].filter(Boolean).join(' · ')}</p></div><mark>Verified</mark></div>
+        <div className="verified-student"><span aria-hidden="true">{result.student.first_name?.[0]}{result.student.last_name?.[0]}</span><div><h4>{result.student.first_name} {result.student.last_name}</h4><p>{result.student.student_number}</p><p>{academicSummary(result.student)}</p></div><mark>Verified</mark></div>
         <dl className="assignment-summary"><div><dt>Assignment</dt><dd>{result.assignment.department_name||`#${result.assignment.id}`}</dd></div><div><dt>Required</dt><dd>{formatServiceMinutes(progress.required*60)}</dd></div><div><dt>Completed</dt><dd>{formatServiceMinutes(progress.completed*60)}</dd></div><div><dt>Remaining</dt><dd>{formatServiceMinutes(progress.remaining*60)}</dd></div></dl>
         <div className="assignment-progress"><span>Progress</span><progress max="100" value={percent}>{percent}%</progress><strong>{percent}%</strong></div><div className={`attendance-state ${state.active?'active':''}`}>{state.label}{state.active&&result.assignment.active_time_in?<small> since {displayDate(result.assignment.active_time_in)}</small>:null}</div><div className="last-attendance"><span>Last activity</span><strong>{displayDate(result.assignment.last_activity_at)}</strong></div>
       </>}</article>

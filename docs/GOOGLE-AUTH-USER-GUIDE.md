@@ -9,13 +9,12 @@ The student cannot open normal portal pages until the password, Google, and prof
 ## Student registration and login
 
 1. Open the unified `/login` page and expand **Continue with Google**.
-2. Select **Continue with Google** and use the student's own school Google account.
+2. Select **Continue with Google** and use the student's linked Google account. Microsoft Entra school accounts are not Google accounts.
 3. If the Google identity is already linked to an active Student record, the student enters the portal immediately.
 4. On first use, enter the school-issued Student Number exactly as shown in the enrollment record, plus the student's first and last name.
 5. When an existing school-managed Student record matches, the Google identity is linked and the student signs in.
-6. When no record exists, a pending enrollment request is created. No portal session is granted yet.
-7. An Admin or Discipline Officer opens **Registrations**, verifies enrollment, records a reason, and approves or rejects the request.
-8. After approval, the student returns to `/login` and uses the same Google account.
+6. When no matching record exists, linking is rejected. Ask the Discipline Office to issue an account and complete required onboarding.
+7. Historical pending Google registrations remain available for authorized review; public creation of new registration requests is retired.
 
 Students never choose a Student ID or application role. One Google account cannot be linked to multiple portal users.
 
@@ -26,7 +25,7 @@ Department Google registration and login are retired. Historical registration an
 ## Production configuration checklist
 
 - The frontend and backend use the same Google Web Client ID.
-- Vercel defines `VITE_GOOGLE_CLIENT_ID` and the production `VITE_API_URL`.
+- Vercel defines `VITE_GOOGLE_CLIENT_ID` and the production server-side `API_PROXY_ORIGIN` (production browser requests use the same-origin proxy).
 - The backend defines `GOOGLE_CLIENT_ID` with the same public Web Client ID.
 - Google Cloud lists both the local frontend origin and the exact Vercel production origin under **Authorized JavaScript origins**.
 - The production backend allows the Vercel origin through `FRONTEND_URL`/CORS.
@@ -34,3 +33,8 @@ Department Google registration and login are retired. Historical registration an
 - Restart or redeploy services after environment-variable changes.
 
 No Google client secret is required for this ID-token verification flow. Google credentials, opaque session values, and CSRF tokens must never be logged.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

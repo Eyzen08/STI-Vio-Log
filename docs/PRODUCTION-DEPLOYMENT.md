@@ -55,13 +55,13 @@ Run migrations once with the owner credential before routing traffic, then start
 
 If an automatic Render deployment fails because a migration is pending, apply the migration first and then explicitly redeploy the latest commit. A failed deployment does not automatically retry after the database becomes current, and an empty Git commit may not create a new Render deployment.
 
-For the College / Senior High School onboarding release, confirm `042_student_academic_level.sql` exists in the checkout and is applied before redeploying the backend. On Windows, run the masked migration helper from the repository root:
+For the College / Senior High School ABM/STEM release, confirm migrations `042_student_academic_level.sql` and `043_student_academic_strands.sql` exist in the checkout and are applied before redeploying the backend. On Windows, run the masked migration helper from the repository root:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\backend\scripts\migrate-production.ps1
 ```
 
-This uses `npm.cmd` to avoid PowerShell blocking `npm.ps1`, checks migration status before and after applying pending migrations, and clears the prompted credential afterward (restoring any prior process value). The execution-policy override applies only to this PowerShell process. Use the owner direct/session-pooler URL at the masked prompt; do not put it in the command or chat. Stop on any error. Confirm `042_student_academic_level.sql` is marked `applied`, then manually deploy the latest backend commit on Render and wait for Live. Verify the Vercel production `API_PROXY_ORIGIN` points to that backend HTTPS origin, redeploy the frontend if needed, and test both onboarding modes with a test account. A healthy `/api/health` response alone does not verify that this migration or onboarding release is deployed.
+This uses `npm.cmd` to avoid PowerShell blocking `npm.ps1`, checks migration status before and after applying pending migrations, and clears the prompted credential afterward (restoring any prior process value). The execution-policy override applies only to this PowerShell process. Use the owner direct/session-pooler URL at the masked prompt; do not put it in the command or chat. Stop on any error. Confirm both migration 042 and `043_student_academic_strands.sql` are marked `applied`, then manually deploy the latest backend commit on Render and wait for Live. Verify the Vercel production `API_PROXY_ORIGIN` points to that backend HTTPS origin, redeploy the frontend if needed, and test College, ABM Grade 11, and STEM Grade 12 onboarding with test accounts. A healthy `/api/health` response alone does not verify that this migration or onboarding release is deployed.
 
 After deployment verify:
 
@@ -78,3 +78,8 @@ After deployment verify:
 ## Rollback and rotation
 
 Keep the previous application release available. Do not edit or reverse an applied migration manually. Restore into an isolated database before switching connections. Key rotation must deploy new keys, revoke all browser sessions, invalidate outstanding challenges, and retire the old keys after the maximum eight-hour session lifetime. A suspected database or session-key leak requires immediate credential rotation and incident review.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

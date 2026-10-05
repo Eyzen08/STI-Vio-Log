@@ -3,7 +3,7 @@ const text = (value) => String(value || '').toLocaleLowerCase()
 export const filterAdminStudents = (students = [], query = '') => {
   const needle = text(query).trim()
   if (!needle) return students
-  return students.filter((student) => [student.student_number, student.first_name, student.middle_name, student.last_name, student.program, student.section].some((value) => text(value).includes(needle)))
+  return students.filter((student) => [student.student_number, student.first_name, student.middle_name, student.last_name, student.program, student.strand, student.academic_level, student.section].some((value) => text(value).includes(needle)))
 }
 
 export const summarizeStudentCondition = (studentId, violations = []) => {

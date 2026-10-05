@@ -9,6 +9,8 @@ export const departmentReportRows = (type, { dtr, nonCompliance } = {}) => {
     return (Array.isArray(nonCompliance?.data) ? nonCompliance.data : []).map((row) => ({
       student_number: row.student_number,
       student_name: [row.first_name, row.last_name].filter(Boolean).join(' '),
+      academic_level: row.academic_level,
+      strand: row.strand,
       program: row.program,
       year_level: row.year_level,
       open_violations: row.open_violations,

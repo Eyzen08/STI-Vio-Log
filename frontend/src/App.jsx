@@ -1,3 +1,4 @@
+import { academicProgram, academicYear, isSeniorHigh, academicLevelLabel } from './lib/studentAcademic.js'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
@@ -2318,7 +2319,7 @@ function App() {
             </div>
 
             <div className="noncompliance-toolbar">
-              <label><span>Search students</span><input type="search" name="student-directory-filter" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, or section"/></label>
+              <label><span>Search students</span><input type="search" name="student-directory-filter" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, strand, or section"/></label>
             </div>
             <div className="offense-legend" aria-label="Offense indicator legend">
               <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
@@ -2378,9 +2379,9 @@ function App() {
                             </div>
                           </td>
 
-                          <td data-label="Program">
+                          <td data-label="Program / Strand">
                             {
-                              student.program ||
+                              academicProgram(student) ||
                               '—'
                             }
                           </td>
@@ -2392,9 +2393,9 @@ function App() {
                             }
                           </td>
 
-                          <td data-label="Year">
+                          <td data-label="Year / Grade">
                             {
-                              student.year_level ||
+                              academicYear(student) ||
                               '—'
                             }
                           </td>
@@ -2419,7 +2420,7 @@ function App() {
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card student-record-drawer">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
-              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Program', reviewedStudent.program], ['Section', reviewedStudent.section], ['Year level', reviewedStudent.year_level], ['Email', reviewedStudent.email], ['Phone', displayPhilippinePhone(reviewedStudent.phone_number)]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
+              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Academic level',academicLevelLabel(reviewedStudent)], [isSeniorHigh(reviewedStudent)?'Strand':'Program', academicProgram(reviewedStudent)], ['Section', reviewedStudent.section], [isSeniorHigh(reviewedStudent)?'Grade level':'Year level', academicYear(reviewedStudent)], ['Email', reviewedStudent.email], ['Phone', displayPhilippinePhone(reviewedStudent.phone_number)]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
@@ -3325,7 +3326,7 @@ function App() {
                                     cellIdx
                                   }
                                 >
-                                  {reportCell(Object.keys(row)[cellIdx], value)}
+                                  {reportCell(Object.keys(row)[cellIdx], value, row)}
                                 </td>
                               )
                             )}

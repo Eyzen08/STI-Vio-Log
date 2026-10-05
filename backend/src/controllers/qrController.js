@@ -22,7 +22,7 @@ const validateQrBody = (req) => {
 
 const findStudentAndAssignment = async (qrCode, departmentId) => {
     const studentResult = await pool.query(
-        `SELECT s.id,s.student_number,s.first_name,s.last_name,s.program,s.section,s.year_level,s.qr_code
+        `SELECT s.id,s.student_number,s.first_name,s.last_name,s.academic_level,s.strand,s.program,s.section,s.year_level,s.qr_code
          FROM students s JOIN users u ON u.id=s.user_id
          WHERE s.qr_code=$1 AND u.is_active=TRUE`, [qrCode]);
     if (!studentResult.rows.length) throw new CommunityServiceSessionError("Student not found", 404);

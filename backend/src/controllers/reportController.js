@@ -234,6 +234,8 @@ const getNonComplianceReport = async (req, res) => {
         s.first_name,
         s.last_name,
         s.student_number,
+        s.academic_level,
+        s.strand,
         s.program,
         s.year_level,
         COUNT(DISTINCT CASE WHEN v.status = 'OPEN' THEN v.id END) as open_violations,
@@ -252,7 +254,7 @@ const getNonComplianceReport = async (req, res) => {
         WHERE scoped_assignment.student_id = s.id
           AND scoped_session.department_id = $1
       )` : ''}
-      GROUP BY s.id, s.first_name, s.last_name, s.student_number, s.program, s.year_level
+      GROUP BY s.id, s.first_name, s.last_name, s.student_number, s.academic_level, s.strand, s.program, s.year_level
       HAVING COUNT(DISTINCT CASE WHEN v.status = 'OPEN' THEN v.id END) > 0
       ORDER BY ${sort_by === 'hours' ? 'pending_hours DESC' : sort_by === 'violations' ? 'open_violations DESC' : 'last_violation_date DESC'}
     `;

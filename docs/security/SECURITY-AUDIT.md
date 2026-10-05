@@ -192,3 +192,6 @@ Both lockfiles exist. No vulnerability verdict is provided: installed dependency
 
 - Verified by source inspection only: opaque HMAC-hashed sessions; per-request current identity/permission lookup; CSRF binding; administrator MFA path; bound one-use admin step-up; production key/TLS config validation; centralized permission mapping; transaction/lock use in sensitive workflows; SHA-pinned CI actions and narrow workflow permissions.
 - No runtime control received a PASS in this audit.
+
+
+> Current academic support: College and SHS ABM/STEM are described in the [student academic model](../STUDENT-ACADEMIC-MODEL.md). This document retains its historical findings or design context; it does not override current account-provisioning or authorization behavior.

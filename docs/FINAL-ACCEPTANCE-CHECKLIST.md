@@ -6,14 +6,14 @@ Run this checklist on a dedicated test student and test violation. Do not use a 
 
 - [ ] Create two distinct Discipline Office accounts and one Admin account. Each person receives only their own temporary password and changes it at first sign-in.
 - [ ] Create Department Account A and Department Account B for two different active departments.
-- [ ] Prepare one unlinked Google test account and one issued Student Number/password account.
+- [ ] Prepare unlinked Google test accounts and issued Student Number/password accounts for College, ABM Grade 11, and STEM Grade 12.
 - [ ] Confirm every test account can log out and that a revoked or deactivated account cannot reuse an old session.
 
 Never place passwords, Google credentials, session cookies, or CSRF tokens in screenshots or test notes.
 
 ## 2. Student registration and authentication
 
-- [ ] Register the Google test student using a new Student Number and complete the Discipline Office review.
+- [ ] Confirm public new-record Google self-registration is unavailable; prepare a historical pending request only in the isolated test database to test retained review.
 - [ ] Confirm the student cannot enter the portal while the request is pending.
 - [ ] Approve the request with a review note and confirm Google login now opens the same approved student record.
 - [ ] Try the same Google account and Student Number again; confirm no duplicate account or profile is created.
@@ -94,3 +94,17 @@ Release only when every applicable item passes, failures are documented and corr
 - [ ] Temporary-password accounts cannot call business APIs until changing password.
 - [ ] Password fields have keyboard-accessible show/hide controls.
 - [ ] SMTP variables are configured in Render before production testing.
+
+
+## College and SHS academic acceptance
+
+- [ ] Complete onboarding for College BSIT Year 2, ABM Grade 11, and STEM Grade 12 test accounts.
+- [ ] Verify required strand/program, section, guardian data, and mode-specific year validation.
+- [ ] Verify audited staff corrections and unrelated edits to legacy College years 5-8 and SHS records without a strand.
+- [ ] Verify profiles, QR details, directory search, reports, and certificate preparation show the correct program/strand and year/grade.
+- [ ] Confirm migration 043 preserves access, onboarding state, historical programs, and issued certificates.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

@@ -1,4 +1,6 @@
 const PROGRAM_NAMES = Object.freeze({
+  ABM: 'Accountancy, Business, and Management',
+  STEM: 'Science, Technology, Engineering, and Mathematics',
   BSCS: 'Bachelor of Science in Computer Science',
   BSIT: 'Bachelor of Science in Information Technology',
   BSA: 'Bachelor of Science in Accountancy',

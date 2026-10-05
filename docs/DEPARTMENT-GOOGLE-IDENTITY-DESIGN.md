@@ -141,3 +141,6 @@ The officer signs in with Google afterward to receive the normal role-scoped ses
 4. [x] Admin-only review service, department confirmation, approval/rejection, and audits.
 5. [x] Department registration/pending UI and Admin review queue.
 6. [ ] Full backend, frontend, migration, RBAC, and live Google verification.
+
+
+> Current academic support: College and SHS ABM/STEM are described in the [student academic model](STUDENT-ACADEMIC-MODEL.md). This document retains its historical findings or design context; it does not override current account-provisioning or authorization behavior.

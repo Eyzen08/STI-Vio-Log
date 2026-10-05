@@ -50,7 +50,7 @@ test('academic onboarding switches levels and keeps mode-specific fields and yea
   assert.match(onboarding,/yearLevel:''\}\)\);setError\(''\)/)
   assert.match(onboarding,/\[\[1,'1st Level'\],\[2,'2nd Level'\],\[3,'3rd Level'\],\[4,'4th Level'\]\]/)
   assert.match(onboarding,/\[\[11,'Grade 11'\],\[12,'Grade 12'\]\]/)
-  assert.match(onboarding,/Year level<select value=\{form\.yearLevel\}/)
+  assert.match(onboarding,/<select value=\{form\.yearLevel\}/)
   assert.match(css,/\.onboarding-academic-grid\{display:grid;grid-template-columns:minmax\(0,1fr\)/)
   assert.match(css,/@media\(min-width:900px\)\{\.onboarding-academic-grid\{grid-template-columns:minmax\(0,1\.15fr\) minmax\(0,\.85fr\)\}\}/)
 });

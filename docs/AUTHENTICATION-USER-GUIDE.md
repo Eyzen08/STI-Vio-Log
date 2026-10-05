@@ -14,14 +14,16 @@ When the Discipline Admin or Discipline Officer creates a Student account, staff
 2. Replace the temporary password.
 3. Enter a Google-account email and confirm the six-digit code sent to that inbox.
 4. Sign in with Google using the exact confirmed address. Personal Gmail and school-managed Google accounts are accepted.
-5. Enter program, section, year level, the student's phone number, and the primary guardian's name, relationship, and phone number.
+5. Select College or Senior High School. College requires program and year 1-4; SHS requires ABM or STEM and Grade 11 or 12. Enter section, the student's phone number, and the primary guardian's name, relationship, and phone number.
 6. Continue to the portal.
 
 The verified Google email becomes the account's password-recovery address. Student Number and legal name remain controlled by the Discipline Office and are read-only during onboarding. Academic, contact, and guardian details are saved together when the student completes onboarding; later corrections use the audited staff edit workflow. Signing out or refreshing during setup resumes the unfinished step. Accounts created before mandatory onboarding was introduced retain their existing access.
 
-### Email-verified registration
+### Retired email-verified registration (historical)
 
-1. Select **Create Student Account**.
+Public self-registration is retired. The following sequence describes historical registrations only. New accounts are issued by the Discipline Office.
+
+1. Select **Create Student Account** (historical UI).
 2. Enter the full name, an exactly 11-digit Student Number, email, and a compliant password. Any 11-digit school-issued number is accepted; no fixed prefix is required.
 3. Enter the six-digit code sent to the submitted email within ten minutes.
 4. After verification, return to the unified login and sign in using the Student Number and password.
@@ -58,3 +60,8 @@ Use the accessible eye button beside a password field to show or hide its value.
 For production, configure the Brevo HTTPS API with `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME`. The sender email must be verified in Brevo. `EMAIL_TIMEOUT_MS` defaults to 10000 milliseconds. Brevo is preferred automatically when configured.
 
 SMTP remains an optional fallback for local development or paid hosts through `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM`; `SMTP_TIMEOUT_MS` defaults to 10000 milliseconds. Free Render services block outbound SMTP ports, so production on Render Free must use the Brevo HTTPS configuration. Keep all real keys and credentials only in the deployment environment; never commit them.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.

@@ -1,7 +1,8 @@
+const { normalizeAcademic, inferAcademicLevel } = require('../utils/studentAcademic');
 const pool = require("../config/database");
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
-const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, isValidProgram, assertAllowedFields, parsePagination } = require("../utils/validators");
+const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 
 const getStudents = async (req, res) => {
     try {
@@ -10,7 +11,7 @@ const getStudents = async (req, res) => {
         const result = await pool.query(`
             SELECT
                 id, student_number, first_name, middle_name, last_name,
-                suffix, email, phone_number, program, section, year_level,
+                suffix, email, phone_number, academic_level, strand, program, section, year_level,
                 qr_code, profile_image, s.created_at, s.updated_at,
                 ose.indicator_level AS offense_indicator_level,
                 ose.minor_count, ose.major_count, ose.grave_count,
@@ -42,7 +43,7 @@ const getStudentById = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 s.id, s.student_number, s.first_name, s.middle_name, s.last_name,
-                s.suffix, s.email, s.phone_number, s.program, s.section, s.year_level,
+                s.suffix, s.email, s.phone_number, s.academic_level, s.strand, s.program, s.section, s.year_level,
                 s.qr_code, s.profile_image, s.created_at, s.updated_at,
                 ose.indicator_level AS offense_indicator_level,
                 ose.minor_count, ose.major_count, ose.grave_count,
@@ -104,7 +105,7 @@ const updateStudent = async (req, res) => {
         const { id } = req.params;
         const allowedFields = [
             "student_number", "first_name", "middle_name", "last_name",
-            "suffix", "email", "phone_number", "program", "section",
+            "suffix", "email", "phone_number", "academic_level", "strand", "program", "section",
             "year_level", "qr_code", "profile_image", "reason"
         ];
         assertAllowedFields(req.body, allowedFields);
@@ -113,43 +114,38 @@ const updateStudent = async (req, res) => {
         if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
             return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
         }
-        if (req.body.program !== undefined && req.body.program && !isValidProgram(req.body.program)) return res.status(400).json({ success:false, message:'Select a valid program' });
         if (req.body.first_name !== undefined && !sanitizeString(req.body.first_name)) return res.status(400).json({ success:false, message:'First name is required' });
         if (req.body.last_name !== undefined && !sanitizeString(req.body.last_name)) return res.status(400).json({ success:false, message:'Last name is required' });
         if (req.body.email && !isValidEmail(req.body.email)) return res.status(400).json({ success: false, message: "Invalid email format" });
         if (req.body.phone_number && !isValidPhone(req.body.phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
-        if (req.body.year_level !== undefined && req.body.year_level !== null && (!Number.isInteger(Number(req.body.year_level)) || Number(req.body.year_level) < 1 || Number(req.body.year_level) > 8)) return res.status(400).json({ success:false, message:'Year level must be between 1 and 8' });
-        const fields = [];
-        const values = [];
-
-        for (const field of allowedFields.filter((field) => field !== "reason")) {
-            if (req.body[field] !== undefined) {
-                const value = field === "year_level"
-                    ? (req.body[field] === null || req.body[field] === '' ? null : Number(req.body[field]))
-                    : field === "phone_number" && req.body[field]
-                        ? normalizePhone(req.body[field])
-                        : field === "program" && req.body[field]
-                            ? sanitizeString(req.body[field]).toUpperCase()
-                            : sanitizeString(req.body[field]);
-                values.push(value === "" ? null : value);
-                fields.push(`${field} = $${values.length}`);
-            }
-        }
-
-        if (fields.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "No student fields provided for update"
-            });
-        }
-
         client = await pool.connect();
         await client.query('BEGIN');
-        const current = (await client.query('SELECT id,user_id,student_number FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
-        if (!current) {
-            await client.query('ROLLBACK');
-            return res.status(404).json({ success: false, message: "Student not found" });
+        const current = (await client.query('SELECT id,user_id,student_number,academic_level,strand,program,section,year_level FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
+        if (!current) { await client.query('ROLLBACK'); return res.status(404).json({success:false,message:'Student not found'}); }
+        const changes = {...req.body};
+        const academicFields = ['academic_level','strand','program','section','year_level'];
+        const academicChanged = academicFields.some(field => Object.hasOwn(changes,field) && String(changes[field] ?? '') !== String(current[field] ?? ''));
+        if (academicChanged) {
+            const merged = {...current,...changes};
+            merged.academic_level = merged.academic_level || inferAcademicLevel(merged) || undefined;
+            if (changes.academic_level && changes.academic_level !== current.academic_level) {
+                if (changes.academic_level === 'COLLEGE') merged.strand = null;
+                else merged.program = null;
+            }
+            Object.assign(changes,normalizeAcademic(merged));
         }
+        const fields = [];
+        const values = [];
+        for (const field of allowedFields.filter(field => field !== 'reason')) {
+            if (changes[field] !== undefined) {
+                const value = field === 'year_level' ? (changes[field] === null || changes[field] === '' ? null : Number(changes[field]))
+                    : field === 'phone_number' && changes[field] ? normalizePhone(changes[field])
+                    : sanitizeString(changes[field]);
+                values.push(value === '' ? null : value);
+                fields.push(field + ' = $' + values.length);
+            }
+        }
+        if (!fields.length) throw Object.assign(new Error('No student fields provided for update'),{statusCode:400});
         values.push(id);
         const result = await client.query(
             `
@@ -240,7 +236,7 @@ const getMyProfile = async (req, res) => {
         const result = await pool.query(
             `SELECT
                 id, student_number, first_name, middle_name, last_name,
-                suffix, email, phone_number, program, section, year_level,
+                suffix, email, phone_number, academic_level, strand, program, section, year_level,
                 qr_code, profile_image,
                 (SELECT phone_number FROM student_guardians
                  WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)

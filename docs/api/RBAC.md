@@ -18,3 +18,8 @@
 Authentication uses one username-or-Student-Number login endpoint. The server reads the role from the current database account; clients never submit or select a role. Only ADMIN may provision DISCIPLINE_OFFICE or DEPARTMENT_HEAD accounts. A temporary-password session is restricted by backend middleware until the password is changed.
 
 Department Head scope comes from the current database account mapping, never JWT claims or a client-selected department. Guardian access additionally requires recorded attendance for that student in the authenticated department. ADMIN and DISCIPLINE_OFFICE must supply a valid department for attendance writes. Role checks return 403; absent/invalid authentication returns 401.
+
+
+## College and Senior High School support
+
+The system supports College programs (years 1-4 for new academic submissions) and Senior High School **ABM** (Accountancy, Business, and Management) and **STEM** (Science, Technology, Engineering, and Mathematics), Grades 11-12. SHS requires a strand and section instead of a College program. Both modes retain the same Student role and authorization rules. See the [student academic model](../STUDENT-ACADEMIC-MODEL.md) for account setup, audited corrections, API fields, historical records, migration 043, and acceptance examples.
