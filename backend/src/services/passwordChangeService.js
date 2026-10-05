@@ -1,3 +1,4 @@
+const { avatarSql } = require('./avatarService');
 const bcrypt = require('bcrypt');
 const { ApiError } = require('../utils/api');
 const { issueSessionToken } = require('./sessionTokenService');
@@ -13,7 +14,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const user = (await client.query(`SELECT u.id,u.username,u.role,u.password_hash,u.session_version,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
+      const user = (await client.query(`SELECT ${avatarSql('u.id')} AS avatar,u.id,u.username,u.role,u.password_hash,u.session_version,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
         EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked,
         COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
         COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name
@@ -34,7 +35,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
       );
       await client.query('COMMIT');
       const firstName=user.first_name||null,lastName=user.last_name||null;
-      return { token:issueToken(updated), user:{id:Number(updated.id),username:updated.username,role:updated.role,first_name:firstName,last_name:lastName,full_name:[firstName,lastName].filter(Boolean).join(' ')||null,password_change_required:false,...onboardingState({...user,...updated,must_change_password:false})} };
+      return { token:issueToken(updated), user:{avatar:user.avatar,id:Number(updated.id),username:updated.username,role:updated.role,first_name:firstName,last_name:lastName,full_name:[firstName,lastName].filter(Boolean).join(' ')||null,password_change_required:false,...onboardingState({...user,...updated,must_change_password:false})} };
     } catch(error) { try{await client.query('ROLLBACK');}catch(_){} throw error; }
     finally{client.release();}
   };

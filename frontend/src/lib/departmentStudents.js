@@ -12,6 +12,7 @@ export const buildDepartmentStudentRoster = (report = {}) => {
     if (!Number.isFinite(id)) continue
     const current = students.get(id) || {
       id,
+      avatar: row.avatar,
       studentNumber: row.student_number || 'Not provided',
       name: [row.first_name, row.last_name].filter(Boolean).join(' ') || 'Unnamed student',
       assignments: 0,

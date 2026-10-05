@@ -1,5 +1,5 @@
 import PortalIcon from './PortalIcon.jsx'
-import { avatarInitials } from '../lib/avatarInitials.js'
+import Avatar from './Avatar.jsx'
 import { formatDisplayLabel } from '../lib/displayFormat.js'
 
 const roleLabels = {
@@ -20,14 +20,13 @@ function ProfileField({ label, value }) {
 
 function StaffProfile({ user, onNavigate }) {
   const displayName = valueOrFallback(user?.full_name, [user?.first_name, user?.last_name].filter(Boolean).join(' ') || user?.username || 'Portal User')
-  const initials = avatarInitials(user)
   const role = roleLabels[user?.role] || formatDisplayLabel(user?.role, 'Portal User')
   const department = valueOrFallback(user?.department_name || user?.department_code, 'Not assigned')
   const settingsPath = user?.role === 'DEPARTMENT_HEAD' ? '/department/account-settings' : '/admin/account-settings'
 
   return <section className="profile-card staff-profile-card" aria-labelledby="staff-profile-title">
     <header className="profile-hero portal-page-header">
-      <div className="profile-avatar" aria-hidden="true">{initials}</div>
+      <Avatar className="profile-avatar" identity={user} />
       <div className="staff-profile-identity">
         <p className="eyebrow">Account Profile</p>
         <h2 id="staff-profile-title">{displayName}</h2>

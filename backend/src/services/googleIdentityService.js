@@ -1,3 +1,4 @@
+const { avatarSql, avatarMetadata } = require('./avatarService');
 const { ApiError } = require('../utils/api');
 const { isValidStudentNumber } = require('../utils/validators');
 const { issueSessionToken } = require('./sessionTokenService');
@@ -14,7 +15,7 @@ const namesMatch = (account, firstName, lastName) =>
   === normalizeName(`${firstName || ''} ${lastName || ''}`);
 
 const publicUser = (row) => ({
-  id: Number(row.id), username: row.username, role: row.role,
+  id: Number(row.id), avatar: row.avatar || avatarMetadata(row), username: row.username, role: row.role,
   first_name: row.first_name || null, last_name: row.last_name || null,
   full_name: [row.first_name, row.last_name].filter(Boolean).join(' ') || null,
   password_change_required: Boolean(row.must_change_password), ...onboardingState(row)
@@ -46,7 +47,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const result = await client.query(
-        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password, s.first_name, s.last_name,
+        `SELECT ${avatarSql('u.id')} AS avatar,u.id, u.username, u.role, u.session_version, u.must_change_password, s.first_name, s.last_name,
                 s.onboarding_required,s.onboarding_completed_at
          FROM students s JOIN users u ON u.id = s.user_id
          WHERE s.student_number = $1 AND u.role = 'STUDENT' AND u.is_active = TRUE
@@ -96,7 +97,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
     try {
       await client.query('BEGIN');
       const result = await client.query(
-        `SELECT u.id, u.username, u.role, u.session_version, u.must_change_password,
+        `SELECT ${avatarSql('u.id')} AS avatar,u.id, u.username, u.role, u.session_version, u.must_change_password,
                 s.onboarding_required,s.onboarding_completed_at,TRUE google_linked,
                 s.first_name, s.last_name, gil.id AS link_id
          FROM google_identity_links gil JOIN users u ON u.id = gil.user_id
@@ -133,7 +134,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
       await client.query('BEGIN');
       await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`google-identity:${identity.subject}`]);
       const account = (await client.query(
-        `SELECT u.id,u.username,u.role,u.session_version,u.must_change_password,s.id student_id,s.first_name,s.last_name,
+        `SELECT ${avatarSql('u.id')} AS avatar,u.id,u.username,u.role,u.session_version,u.must_change_password,s.id student_id,s.first_name,s.last_name,
                 s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
                 EXISTS(SELECT 1 FROM google_identity_links own WHERE own.user_id=u.id AND own.revoked_at IS NULL) google_linked
          FROM users u JOIN students s ON s.user_id=u.id

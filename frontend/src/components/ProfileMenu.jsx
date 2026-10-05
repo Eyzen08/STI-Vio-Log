@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import PortalIcon from './PortalIcon.jsx'
-import { avatarInitials } from '../lib/avatarInitials.js'
+import Avatar from './Avatar.jsx'
 
 const roleLabel = (role) => ({ DISCIPLINE_ADMIN: 'Discipline Administrator', DISCIPLINE_OFFICE: 'Discipline Office', DEPARTMENT_HEAD: 'Department Head', STUDENT: 'Student' }[role] || 'Portal user')
 const settingsPath = (role) => ({
@@ -45,7 +45,6 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
   }, [open])
 
   const username = user?.full_name || user?.username || 'Portal User'
-  const initials = avatarInitials({ ...user, ...profile })
   const navigateOnTouch = (event, path, action) => {
     event.preventDefault()
     event.stopPropagation()
@@ -75,10 +74,10 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
 
   return <div className="profile-menu" ref={rootRef}>
     <button ref={triggerRef} type="button" className="profile-menu-trigger" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-      <span className="account-avatar">{initials}</span><span className="account-summary"><strong>{username}</strong><small>{roleLabel(user?.role)}</small></span><span className="profile-menu-chevron" aria-hidden="true">{open ? '⏶' : '⏷'}</span>
+      <Avatar className="account-avatar" identity={{ ...user, ...profile }} /><span className="account-summary"><strong>{username}</strong><small>{roleLabel(user?.role)}</small></span><span className="profile-menu-chevron" aria-hidden="true">{open ? '⏶' : '⏷'}</span>
     </button>
     {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
-      <header><span className="account-avatar">{initials}</span><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
+      <header><Avatar className="account-avatar" identity={{ ...user, ...profile }} /><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
       <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, profilePath(user?.role))}><PortalIcon name="user"/><span>View Profile</span></a>
       <a role="menuitem" href={settingsPath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, settingsPath(user?.role))}><PortalIcon name="settings"/><span>Account Settings</span></a>
       <hr/>

@@ -1,3 +1,4 @@
+import Avatar from './Avatar.jsx'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import Modal from './Modal.jsx'
@@ -20,7 +21,7 @@ function Directory({ accounts, departments, responsibilities, counts, loading, f
         const department = departments.find((item)=>Number(item.id) === Number(account.department_id))
         const current = responsibilities.find((item)=>Number(item.officer_user_id) === Number(account.id) && item.status === 'ACTIVE')
         return <article key={account.id}>
-          <div><span className={`status-badge ${account.is_active ? '' : 'status-badge--muted'}`}>{account.is_active ? 'Active account' : 'Inactive account'}</span>{current && <> <span className={`status-badge availability-${String(current.availability_status).toLowerCase()}`}>{current.availability_status}</span></>}<h3>{account.department_name || 'Unassigned department'}</h3><p className="officer-name">{fullName(account)}</p><p>{account.username} · {roleLabel(account.role)}</p></div>
+          <div><span className={`status-badge ${account.is_active ? '' : 'status-badge--muted'}`}>{account.is_active ? 'Active account' : 'Inactive account'}</span>{current && <> <span className={`status-badge availability-${String(current.availability_status).toLowerCase()}`}>{current.availability_status}</span></>}<h3>{account.department_name || 'Unassigned department'}</h3><p className="officer-name"><Avatar identity={account}/>{fullName(account)}</p><p>{account.username} · {roleLabel(account.role)}</p></div>
           <dl><div><dt>Email</dt><dd>{account.email || 'Not provided'}</dd></div><div><dt>Employee no.</dt><dd>{account.employee_number || 'Not provided'}</dd></div><div><dt>Assignment</dt><dd>{current?.assignment_type || 'Not assigned'}</dd></div><div><dt>Created</dt><dd>{formatManilaDate(account.created_at)}</dd></div></dl>
           <div className="registration-review-actions">{department && <button type="button" onClick={()=>onOpenDepartment(department)}>Assigned Officers</button>}<button type="button" className="secondary-button" onClick={()=>onEditOfficer(account)}>Edit Officer</button>{current && <button type="button" className="secondary-button" onClick={()=>onAvailability(account,current)}>Availability</button>}<button type="button" className="secondary-button" onClick={()=>onReset(account)}>Reset Password</button><button type="button" className="secondary-button danger-button" onClick={()=>onStatus(account)}>{account.is_active ? 'Deactivate' : 'Activate'}</button></div>
         </article>

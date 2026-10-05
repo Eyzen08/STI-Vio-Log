@@ -1,3 +1,4 @@
+import Avatar from './Avatar.jsx'
 import { useMemo, useState } from 'react'
 import { formatDuration } from '../lib/departmentDashboard.js'
 import { formatDuration as formatHourDuration } from '../lib/displayFormat.js'
@@ -34,7 +35,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
           <div className="department-student-grid">
             {visibleStudents.map((student) => (
               <article key={student.id}>
-                <div className="student-roster-heading"><div className="student-avatar" aria-hidden="true">{student.name.charAt(0)}</div><div><h4>{student.name}</h4><span>{student.studentNumber}</span></div><span className={`status-badge ${student.hasActiveService ? 'status-open' : 'status-complete'}`}>{student.hasActiveService ? 'Active service' : 'No remaining service'}</span></div>
+                <div className="student-roster-heading"><Avatar className="student-avatar" identity={student}/><div><h4>{student.name}</h4><span>{student.studentNumber}</span></div><span className={`status-badge ${student.hasActiveService ? 'status-open' : 'status-complete'}`}>{student.hasActiveService ? 'Active service' : 'No remaining service'}</span></div>
                 <dl><div><dt>Assignments</dt><dd>{student.assignments}</dd></div><div><dt>Sessions</dt><dd>{student.completedSessions}</dd></div><div><dt>Credited</dt><dd>{formatDuration(student.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatHourDuration(student.remainingHours)}</dd></div></dl>
                 <p>Latest attendance: {displayDepartmentDtrDate(student.latestAttendanceAt)}</p>
               </article>

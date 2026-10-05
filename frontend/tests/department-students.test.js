@@ -11,7 +11,7 @@ const report = { data: [
 test('department student roster aggregates assignments without duplicating students', () => {
   const roster = buildDepartmentStudentRoster(report)
   assert.equal(roster.length, 2)
-  assert.deepEqual(roster[0], { id: 8, studentNumber: '02000111111', name: 'Ana Reyes', assignments: 2, completedSessions: 3, creditedMinutes: 150, remainingHours: 1.5, hasActiveService: true, latestAttendanceAt: '2026-08-22T09:00:00Z' })
+  assert.deepEqual(roster[0], { avatar:undefined, id: 8, studentNumber: '02000111111', name: 'Ana Reyes', assignments: 2, completedSessions: 3, creditedMinutes: 150, remainingHours: 1.5, hasActiveService: true, latestAttendanceAt: '2026-08-22T09:00:00Z' })
 })
 
 test('department student roster supports search and service-standing filters', () => {

@@ -1,6 +1,10 @@
 const express=require('express');
 const {passwordChange,profile,updateProfile,resendEmail,verifyEmail,requestGoogleEmail,verifyGoogleEmail,googleLink,completeOnboarding}=require('../controllers/accountController');
 const router=express.Router();
+const avatar=require('../controllers/avatarController');
+const {authorizeRoles}=require('../middleware/authMiddleware');
+router.get('/avatar',authorizeRoles('DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'),avatar.get);
+router.patch('/avatar',authorizeRoles('DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'),avatar.select);
 router.post('/password-change',passwordChange);
 router.post('/student-onboarding/google-email/request',requestGoogleEmail);
 router.post('/student-onboarding/google-email/verify',verifyGoogleEmail);

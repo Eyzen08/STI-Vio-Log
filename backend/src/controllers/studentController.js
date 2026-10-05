@@ -1,3 +1,4 @@
+const { avatarSql } = require('../services/avatarService');
 const { normalizeAcademic, inferAcademicLevel } = require('../utils/studentAcademic');
 const pool = require("../config/database");
 const bcrypt = require('bcrypt');
@@ -14,7 +15,7 @@ const getStudents = async (req, res) => {
             SELECT
                 id, student_number, first_name, middle_name, last_name,
                 suffix, email, phone_number, academic_level, strand, program, section, year_level,
-                qr_code, profile_image, s.created_at, s.updated_at,
+                qr_code, profile_image, ${avatarSql('s.user_id')} AS avatar, s.created_at, s.updated_at,
                 ose.indicator_level AS offense_indicator_level,
                 ose.minor_count, ose.major_count, ose.grave_count,
                 ose.major_level_review_required
@@ -46,7 +47,7 @@ const getStudentById = async (req, res) => {
             `SELECT
                 s.id, s.student_number, s.first_name, s.middle_name, s.last_name,
                 s.suffix, s.email, s.phone_number, s.academic_level, s.strand, s.program, s.section, s.year_level,
-                s.qr_code, s.profile_image, s.created_at, s.updated_at,
+                s.qr_code, s.profile_image, ${avatarSql('s.user_id')} AS avatar, s.created_at, s.updated_at,
                 ose.indicator_level AS offense_indicator_level,
                 ose.minor_count, ose.major_count, ose.grave_count,
                 ose.major_level_review_required
@@ -155,7 +156,7 @@ const updateStudent = async (req, res) => {
         const allowedFields = [
             "student_number", "first_name", "middle_name", "last_name",
             "suffix", "email", "phone_number", "academic_level", "strand", "program", "section",
-            "year_level", "qr_code", "profile_image", "reason"
+            "year_level", "qr_code", "reason"
         ];
         assertAllowedFields(req.body, allowedFields);
         const reason = sanitizeString(req.body.reason);
@@ -286,7 +287,7 @@ const getMyProfile = async (req, res) => {
             `SELECT
                 id, student_number, first_name, middle_name, last_name,
                 suffix, email, phone_number, academic_level, strand, program, section, year_level,
-                qr_code, profile_image,
+                qr_code, profile_image, ${avatarSql('students.user_id')} AS avatar,
                 (SELECT phone_number FROM student_guardians
                  WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)
                     AS guardian_phone_number

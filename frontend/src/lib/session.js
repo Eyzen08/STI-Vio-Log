@@ -1,6 +1,6 @@
 const USER_KEY = 'sti_vio_log_user'
 const CSRF_KEY = 'sti_vio_log_csrf'
-const DISPLAY_FIELDS = ['id','username','role','first_name','last_name','full_name','department_id','department_name','department_code','password_change_required','onboarding_required','onboarding_completed_at','onboarding_step','google_onboarding_stage','onboarding_google_email']
+const DISPLAY_FIELDS = ['avatar','id','username','role','first_name','last_name','full_name','department_id','department_name','department_code','password_change_required','onboarding_required','onboarding_completed_at','onboarding_step','google_onboarding_stage','onboarding_google_email']
 const displayUser = (user) => Object.fromEntries(DISPLAY_FIELDS.filter((field) => user?.[field] !== undefined).map((field) => [field, user[field]]))
 
 export const clearSession = () => {

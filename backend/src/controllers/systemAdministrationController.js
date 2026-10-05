@@ -1,3 +1,4 @@
+const { avatarSql } = require('../services/avatarService');
 const pool = require('../config/database');
 
 const boundedLimit = (value) => Math.min(Math.max(Number.parseInt(value, 10) || 25, 1), 100);
@@ -85,7 +86,7 @@ const securityEvents = async (req, res) => {
 
 const accountDirectory=async(req,res)=>{
   try{const search=String(req.query.search||'').trim().slice(0,100);const limit=Math.min(Math.max(Number(req.query.limit)||20,1),50);const value=`%${search}%`;
-    const result=await pool.query(`SELECT u.id,u.username,u.role,u.is_active,COALESCE(sp.first_name,dh.first_name,s.first_name) first_name,
+    const result=await pool.query(`SELECT ${avatarSql('u.id')} AS avatar,u.id,u.username,u.role,u.is_active,COALESCE(sp.first_name,dh.first_name,s.first_name) first_name,
       COALESCE(sp.last_name,dh.last_name,s.last_name) last_name,COALESCE(d.department_name,'No department') department_name,
       (SELECT COUNT(*)::int FROM users active_admin WHERE active_admin.role='DISCIPLINE_ADMIN' AND active_admin.is_active=TRUE) active_admin_count
       FROM users u LEFT JOIN staff_profiles sp ON sp.user_id=u.id LEFT JOIN department_heads dh ON dh.user_id=u.id

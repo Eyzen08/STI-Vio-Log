@@ -1,3 +1,4 @@
+const { avatarMetadata } = require('./avatarService');
 const crypto = require('node:crypto');
 const pool = require('../config/database');
 const { onboardingState } = require('./studentOnboardingService');
@@ -19,7 +20,7 @@ const appendCookie = (res, name, value, options={}) => {
   res.append('Set-Cookie',parts.join('; '));
 };
 const clearCookie=(res,name)=>appendCookie(res,name,'',{...cookieOptions(0),maxAge:0});
-const publicUser=(row)=>({id:Number(row.id),username:row.username,role:row.role,first_name:row.first_name||null,last_name:row.last_name||null,full_name:[row.first_name,row.last_name].filter(Boolean).join(' ')||null,password_change_required:Boolean(row.must_change_password),...onboardingState(row)});
+const publicUser=(row)=>({id:Number(row.id),avatar:row.avatar||avatarMetadata(row),username:row.username,role:row.role,first_name:row.first_name||null,last_name:row.last_name||null,full_name:[row.first_name,row.last_name].filter(Boolean).join(' ')||null,password_change_required:Boolean(row.must_change_password),...onboardingState(row)});
 
 const createSession = async ({userId,ipAddress,userAgent,database=pool}) => {
   const token=randomToken(),csrf=randomToken();

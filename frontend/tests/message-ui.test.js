@@ -73,7 +73,7 @@ test('participants reveal only role-appropriate conversation metadata', () => {
   )
   assert.deepEqual(
     messageParticipant({ student_name: 'Jose Reyes', student_number: '02000123456' }, 'ADMIN'),
-    { name: 'Jose Reyes', detail: '02000123456 · Student' }
+    { avatar:undefined, name: 'Jose Reyes', detail: '02000123456 · Student' }
   )
 })
 

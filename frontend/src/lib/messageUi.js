@@ -15,7 +15,7 @@ export const conversationParties = (conversation = {}) => {
 
 export const messageParticipant = (conversation, role) => role === 'STUDENT'
   ? { name:conversation.school_participant || conversation.department_name || 'Discipline Office', detail:conversation.assigned_department_id?'Department Head':'Discipline Office' }
-  : { name:conversation.student_name || `${conversation.first_name||''} ${conversation.last_name||''}`.trim() || 'Student', detail:`${conversation.student_number || 'Student number unavailable'} · Student` }
+  : { avatar:conversation.student_avatar, name:conversation.student_name || `${conversation.first_name||''} ${conversation.last_name||''}`.trim() || 'Student', detail:`${conversation.student_number || 'Student number unavailable'} · Student` }
 
 export const conversationMatchesTab = (conversation, tab) => tab === 'UNREAD'
   ? Number(conversation.unread_count)>0

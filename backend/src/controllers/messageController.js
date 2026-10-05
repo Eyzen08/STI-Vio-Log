@@ -1,3 +1,4 @@
+const { avatarSql } = require('../services/avatarService');
 const pool = require('../config/database');
 const { assertAllowedFields, isPositiveId, parsePagination } = require('../utils/validators');
 const { emitToRole, emitToUser } = require('../realtime');
@@ -24,7 +25,7 @@ const assertConversation = async (user, id, executor = pool) => {
   const params = [Number(id)];
   if (scoped.value !== null) params.push(scoped.value);
   const row = (await executor.query(
-    `SELECT mc.*,s.student_number,s.first_name,s.last_name,d.department_name
+    `SELECT mc.*,${avatarSql('s.user_id')} AS student_avatar,s.student_number,s.first_name,s.last_name,d.department_name
      FROM message_conversations mc
      JOIN students s ON s.id=mc.student_id
      LEFT JOIN departments d ON d.id=mc.assigned_department_id
@@ -68,7 +69,7 @@ const listConversations = async (req, res) => {
 
     const rows = (await pool.query(
       `SELECT mc.id,mc.subject,mc.status,mc.created_at,mc.updated_at,mc.assigned_department_id,
-        s.student_number,CONCAT_WS(' ',s.first_name,s.last_name) AS student_name,
+        ${avatarSql('s.user_id')} AS student_avatar,s.student_number,CONCAT_WS(' ',s.first_name,s.last_name) AS student_name,
         COALESCE(d.department_name,'Discipline Office') AS school_participant,
         latest.message_text AS message_preview,latest.created_at AS latest_message_at,
         COALESCE((SELECT COUNT(*) FROM conversation_messages unread
@@ -129,8 +130,8 @@ const listRecipients = async (req, res) => {
     const params = [];
     const filters = [];
     if (search) { params.push(pattern); filters.push(`(s.student_number ILIKE $${params.length} OR CONCAT_WS(' ',s.first_name,s.last_name) ILIKE $${params.length})`); }
-    const rows = (await pool.query(`SELECT s.id,s.student_number,s.first_name,s.last_name FROM students s ${filters.length?`WHERE ${filters.join(' AND ')}`:''} ORDER BY s.last_name,s.first_name LIMIT 100`, params)).rows;
-    return res.json({ success:true, recipients:rows.map((row) => ({ type:'STUDENT',id:Number(row.id),name:`${row.first_name} ${row.last_name}`.trim(),student_number:row.student_number,role:'STUDENT' })) });
+    const rows = (await pool.query(`SELECT ${avatarSql('s.user_id')} AS avatar,s.id,s.student_number,s.first_name,s.last_name FROM students s ${filters.length?`WHERE ${filters.join(' AND ')}`:''} ORDER BY s.last_name,s.first_name LIMIT 100`, params)).rows;
+    return res.json({ success:true, recipients:rows.map((row) => ({ type:'STUDENT',avatar:row.avatar,id:Number(row.id),name:`${row.first_name} ${row.last_name}`.trim(),student_number:row.student_number,role:'STUDENT' })) });
   } catch (error) { return fail(res, error); }
 };
 
@@ -168,7 +169,7 @@ const getConversation = async (req, res) => {
     const { page,limit,offset } = parsePagination(query,{ defaultLimit:50,maxLimit:100 });
     const conversation = await assertConversation(req.user,req.params.id);
     const rows = (await pool.query(
-      `SELECT * FROM (SELECT cm.id,cm.message_text,cm.created_at,cm.sender_user_id=$1 AS sent_by_me,u.role AS sender_role,
+      `SELECT * FROM (SELECT ${avatarSql('u.id')} AS sender_avatar,cm.id,cm.message_text,cm.created_at,cm.sender_user_id=$1 AS sent_by_me,u.role AS sender_role,
         CASE WHEN u.role='STUDENT' THEN CONCAT_WS(' ',s.first_name,s.last_name)
              WHEN u.role='DEPARTMENT_HEAD' THEN COALESCE(CONCAT_WS(' ',dh.first_name,dh.last_name),d.department_name,u.username)
              ELSE COALESCE(CONCAT_WS(' ',sp.first_name,sp.last_name),u.username) END AS sender_name,

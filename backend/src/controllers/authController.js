@@ -38,7 +38,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       if(issueToken===issueSessionToken)await throttles.success(throttleInput,database);
       if(user.role==='DISCIPLINE_ADMIN')await auditSecurityEvent({actor:{id:user.id,username:user.username,role:user.role},action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetId:user.id,targetLabel:user.username,details:{authentication_method:'PASSWORD'},result:'SUCCESS',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
       const fullName=[user.first_name,user.last_name].filter(Boolean).join(' ')||null;
-      const publicUser={id:user.id,username:user.username,role:user.role,first_name:user.first_name||null,last_name:user.last_name||null,full_name:fullName,password_change_required:Boolean(user.must_change_password),...onboardingState(user)};
+      const publicUser={avatar:require('../services/avatarService').avatarMetadata(user),id:user.id,username:user.username,role:user.role,first_name:user.first_name||null,last_name:user.last_name||null,full_name:fullName,password_change_required:Boolean(user.must_change_password),...onboardingState(user)};
       // Dependency-injected token issuers are retained only for isolated legacy unit tests.
       if(issueToken!==issueSessionToken)return res.json({success:true,message:'Login successful',token:issueToken(user,{env:{JWT_SECRET:jwtSecret()}}),user:publicUser});
       if(user.role==='DISCIPLINE_ADMIN'){

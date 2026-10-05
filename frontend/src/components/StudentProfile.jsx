@@ -1,6 +1,6 @@
 import { academicLevelLabel, academicProgram, academicYear, isSeniorHigh } from '../lib/studentAcademic.js'
 import { displayProfileValue, formatStudentName } from '../lib/studentProfile.js'
-import { avatarInitials } from '../lib/avatarInitials.js'
+import Avatar from './Avatar.jsx'
 import { displayPhilippinePhone } from '../lib/phone.js'
 
 function ProfileField({ label, value }) {
@@ -35,12 +35,11 @@ function StudentProfile({ profile, username, loading, error }) {
     )
   }
 
-  const initials = avatarInitials({ ...profile, username })
 
   return (
     <section className="profile-card">
       <header className="profile-hero portal-page-header">
-        <div className="profile-avatar" aria-hidden="true">{initials}</div>
+        <Avatar className="profile-avatar" identity={{ ...profile, username }} />
         <div>
           <p className="eyebrow">Student profile</p>
           <h2>{formatStudentName(profile)}</h2>

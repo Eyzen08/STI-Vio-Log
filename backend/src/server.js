@@ -153,6 +153,7 @@ app.use((req,res,next)=>{
 // Signature images are validated as PNG/JPEG <= 1 MB by the controller. Their
 // Base64 envelope needs a narrowly scoped parser larger than the API default.
 app.use(/^\/api\/clearance\/signatures(?:\/\d+)?$/, express.json({ limit: "1500kb" }));
+app.use(/^\/api\/students\/\d+\/avatar$/, express.json({ limit: "1500kb" }));
 app.use(express.json({ limit: "128kb" }));
 
 app.use((req,res,next)=>{
@@ -179,6 +180,7 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/messages', authenticateToken, auditAdministrativeRequest, messageRoutes);
 app.use('/api/notifications', authenticateToken, authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT'), notificationRoutes);
 
+app.get('/api/avatars/:userId/photo', authenticateToken, authorizeRoles('DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT'), require('./controllers/avatarController').photo);
 app.use('/api/account', authenticateToken, accountRoutes);
 app.use('/api/system', authenticateToken, systemAdministrationRoutes);
 app.use('/api/high-risk-actions', authenticateToken, auditAdministrativeRequest, highRiskActionRoutes);

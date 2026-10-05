@@ -1,3 +1,4 @@
+const { avatarSql } = require('../services/avatarService');
 const pool = require("../config/database");
 const sessionService = require('../services/browserSessionService');
 const { permissionsForRole } = require('../security/permissions');
@@ -41,7 +42,7 @@ const authenticateToken = async (req, res, next) => {
             `
             SELECT
                 u.id,
-                u.username,
+                u.username, ${avatarSql('u.id')} AS avatar,
                 u.role,
                 u.email_verified,
                 u.session_version,
@@ -101,7 +102,8 @@ const authenticateToken = async (req, res, next) => {
                 ? Number(account.department_id)
                 : null,
             first_name:account.first_name||null,
-            last_name:account.last_name||null
+            last_name:account.last_name||null,
+            avatar:account.avatar
         };
         req.user.base_permissions = [...permissionsForRole(account.role)];
         req.user.permissions = req.user.base_permissions;

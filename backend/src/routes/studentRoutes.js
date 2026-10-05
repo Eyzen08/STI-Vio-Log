@@ -19,6 +19,9 @@ const { getMyNotifications, markMyNotificationRead } = require("../controllers/n
 const { authorizeRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+const avatar = require('../controllers/avatarController');
+router.post('/:id/avatar', authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'), avatar.upload);
+router.delete('/:id/avatar', authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'), avatar.remove);
 
 
 // =====================================================

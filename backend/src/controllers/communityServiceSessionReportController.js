@@ -1,3 +1,4 @@
+const { avatarSql } = require('../services/avatarService');
 const pool = require("../config/database");
 const { CommunityServiceSessionError } = require("../services/communityServiceSessionService");
 const { parseDateFilters } = require("./communityServiceAttendanceController");
@@ -35,7 +36,7 @@ const getDTRReport = async (req, res) => {
         if (from) add(from, " AND css.time_in >= (?::date::timestamp AT TIME ZONE 'UTC')");
         if (to) add(to, " AND css.time_in < ((?::date + 1)::timestamp AT TIME ZONE 'UTC')");
         const result = await pool.query(
-            `SELECT a.id AS assignment_id, css.department_id, s.student_number, s.first_name, s.last_name,
+            `SELECT ${avatarSql('s.user_id')} AS avatar,a.student_id,a.id AS assignment_id, css.department_id, s.student_number, s.first_name, s.last_name,
                     d.department_name, a.required_hours,
                     a.completed_hours AS credited_hours, a.remaining_hours, a.status AS assignment_status,
                     COUNT(*) FILTER (WHERE css.status = 'COMPLETED')::int AS total_completed_sessions,
@@ -47,7 +48,7 @@ const getDTRReport = async (req, res) => {
              FROM community_service_sessions css JOIN community_service_assignments a ON a.id = css.assignment_id
              JOIN students s ON s.id = a.student_id JOIN departments d ON d.id = css.department_id
              WHERE 1=1${filters}
-             GROUP BY a.id, a.student_id, s.student_number, s.first_name, s.last_name,
+             GROUP BY a.id, a.student_id, s.user_id, s.student_number, s.first_name, s.last_name,
                       a.violation_id, css.department_id, d.department_name
              ORDER BY latest_attendance_at DESC, a.id DESC`, params);
         const totals = result.rows.reduce((sum, row) => ({ completed_sessions: sum.completed_sessions + row.total_completed_sessions, worked_minutes: sum.worked_minutes + row.total_worked_minutes, credited_minutes: sum.credited_minutes + row.total_credited_minutes }), { completed_sessions: 0, worked_minutes: 0, credited_minutes: 0 });

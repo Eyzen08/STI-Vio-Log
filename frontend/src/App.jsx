@@ -1,3 +1,6 @@
+import Avatar from './components/Avatar.jsx'
+import StudentAvatarUpload from './components/StudentAvatarUpload.jsx'
+import './styles/avatars.css'
 import { academicProgram, academicYear, isSeniorHigh, academicLevelLabel } from './lib/studentAcademic.js'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
@@ -1709,6 +1712,13 @@ function App() {
     })
   }
 
+  const updateOwnAvatar = (avatar) => {
+    const updated = { ...user, avatar }
+    setUser(updated)
+    saveSession({ user: updated })
+    setStudentProfile((current) => current ? { ...current, avatar } : current)
+  }
+
   const acceptSession = (data) => {
     saveSession(data)
     setToken('cookie-session')
@@ -1984,8 +1994,8 @@ function App() {
     }
 
     if (activeView === 'Account Settings') {
-      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings token={token} onSession={acceptSession} />
-      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} />
+      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
+      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
     }
 
     /*
@@ -2455,7 +2465,7 @@ function App() {
                         >
                           <td data-label="Student">
                             <div className="student-cell">
-                              <OffenseIndicator level={student.offense_indicator_level} compact />
+                              <Avatar identity={student}/><OffenseIndicator level={student.offense_indicator_level} compact />
                               <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
                             </div>
                             <AttendanceIndicator sessions={activeServiceSessions.filter((session) => Number(session.student_id) === Number(student.id))} ready={adminAttendanceReady} loading={dashboardLoading}/>
@@ -2502,6 +2512,7 @@ function App() {
             <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
             <section className="table-card modal-content-card student-record-drawer">
               <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
+              <StudentAvatarUpload key={reviewedStudent.id} student={reviewedStudent} onUpdated={(updated) => { setReviewedStudent(updated); setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? { ...item, avatar: updated.avatar } : item)) }} />
               <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Academic level',academicLevelLabel(reviewedStudent)], [isSeniorHigh(reviewedStudent)?'Strand':'Program', academicProgram(reviewedStudent)], ['Section', reviewedStudent.section], [isSeniorHigh(reviewedStudent)?'Grade level':'Year level', academicYear(reviewedStudent)], ['Email', reviewedStudent.email], ['Phone', displayPhilippinePhone(reviewedStudent.phone_number)]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
               {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>

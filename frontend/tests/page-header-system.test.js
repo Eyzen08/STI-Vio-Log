@@ -48,12 +48,12 @@ test('shared page headers are card surfaces across themes and viewports', () => 
   assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header \.messages-new-button\s*\{[^}]*width: 100%;[^}]*min-height: 2\.75rem;[^}]*flex: 0 0 auto;/s)
 })
 
-test('student and staff profile initials remain compact square avatars', () => {
+test('student and staff profile avatars retain the compact header dimensions', () => {
   const studentProfile = read('../src/components/StudentProfile.jsx')
   const staffProfile = read('../src/components/StaffProfile.jsx')
 
-  assert.match(studentProfile, /className="profile-avatar"[^>]*>\{initials\}/)
-  assert.match(staffProfile, /className="profile-avatar"[^>]*>\{initials\}/)
+  assert.match(studentProfile, /<Avatar className="profile-avatar"/)
+  assert.match(staffProfile, /<Avatar className="profile-avatar"/)
   assert.match(portal, /\.profile-card > \.portal-page-header > \.profile-avatar\s*\{[^}]*width: 4\.5rem;[^}]*height: 4\.5rem;[^}]*flex: 0 0 4\.5rem;[^}]*align-self: center;/s)
   assert.match(portal, /@media \(max-width: 767px\)[\s\S]*?\.profile-card > \.portal-page-header > \.profile-avatar\s*\{[^}]*width: 3\.5rem;[^}]*height: 3\.5rem;[^}]*flex-basis: 3\.5rem;[^}]*align-self: flex-start;/s)
 })
