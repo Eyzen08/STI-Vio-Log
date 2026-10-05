@@ -17,6 +17,7 @@ export const buildConfig = (env = process.env) => {
   return {
     rewrites: [
       ...(apiOrigin ? [{ source:'/api/:path*', destination:`${apiOrigin}/api/:path*` },
+      { source:'/socket.io/', destination:`${apiOrigin}/socket.io/` },
       { source:'/socket.io/:path*', destination:`${apiOrigin}/socket.io/:path*` }] : []),
       { source:'/(.*)', destination:'/index.html' }
     ],

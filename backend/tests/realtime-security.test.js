@@ -2,7 +2,27 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { room, loadSocketAuthorization, synchronizeSocketAuthorization } = require('../src/realtime');
+const { room, loadSocketAuthorization, synchronizeSocketAuthorization, isAllowedRealtimeRequest } = require('../src/realtime');
+
+test('same-origin polling handshakes require approved Referer and browser fetch metadata', () => {
+  const allowedOrigins = ['https://app.example.edu'];
+  const request = { method:'GET', url:'/socket.io/?EIO=4&transport=polling',
+    headers:{referer:'https://app.example.edu/admin/violations','sec-fetch-site':'same-origin'} };
+  assert.equal(isAllowedRealtimeRequest(request, allowedOrigins), true);
+  for (const headers of [
+    {},
+    {...request.headers, referer:'https://attacker.example/admin'},
+    {...request.headers, referer:'invalid'},
+    {...request.headers, referer:'https://app.example.edu.attacker.example/'},
+    {...request.headers, 'sec-fetch-site':'cross-site'},
+    {...request.headers, 'sec-fetch-site':undefined},
+    {...request.headers, origin:'https://attacker.example'},
+    {...request.headers, origin:'null'}
+  ]) assert.equal(isAllowedRealtimeRequest({...request, headers}, allowedOrigins), false);
+  assert.equal(isAllowedRealtimeRequest({...request,method:'POST'}, allowedOrigins), false);
+  assert.equal(isAllowedRealtimeRequest({...request,url:'/socket.io/?transport=websocket'}, allowedOrigins), false);
+  assert.equal(isAllowedRealtimeRequest({...request,headers:{origin:allowedOrigins[0]}}, allowedOrigins), true);
+});
 
 test('realtime rooms isolate users, roles, and departments', () => {
   assert.equal(room.user(12), 'user:12');

@@ -9,10 +9,11 @@ import { realtimeOptions } from '../src/lib/realtime.js'
 // Exercise the frontend against the same Socket.IO dependency as the backend.
 const requireBackend = createRequire(new URL('../../backend/package.json', import.meta.url))
 const { Server } = requireBackend('socket.io')
+const { isAllowedRealtimeRequest } = requireBackend('./src/realtime.js')
 
-const startServer = async (t, transports) => {
+const startServer = async (t, transports, serverOptions = {}) => {
   const httpServer = createServer()
-  const server = new Server(httpServer, { transports })
+  const server = new Server(httpServer, { transports, ...serverOptions })
   t.after(() => new Promise((resolve) => server.close(resolve)))
   httpServer.listen(0, '127.0.0.1')
   await once(httpServer, 'listening')
@@ -20,11 +21,14 @@ const startServer = async (t, transports) => {
 }
 
 test('production receives live events and reconnects when WebSocket is unavailable', { timeout: 10000 }, async (t) => {
-  const { server, url } = await startServer(t, ['polling'])
+  const { server, url } = await startServer(t, ['polling'], {
+    allowRequest: (req, callback) => callback(null, isAllowedRealtimeRequest(req, ['https://app.example.edu']))
+  })
   const options = realtimeOptions(true)
   assert.equal(options.withCredentials, true)
   assert.equal(options.reconnection, true)
-  const socket = io(url, { ...options, autoConnect: false, reconnectionDelay: 10, reconnectionDelayMax: 20 })
+  const socket = io(url, { ...options, autoConnect: false, reconnectionDelay: 10, reconnectionDelayMax: 20,
+    extraHeaders: { Referer: 'https://app.example.edu/admin/violations', 'Sec-Fetch-Site': 'same-origin' } })
   t.after(() => socket.disconnect())
   let upgrades = 0
   server.on('connection', (peer) => {

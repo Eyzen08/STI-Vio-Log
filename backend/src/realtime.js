@@ -46,10 +46,24 @@ const synchronizeSocketAuthorization = async (socket, database = pool) => {
   return current;
 };
 
+const isAllowedRealtimeRequest = (req, allowedOrigins) => {
+  if (req.headers.origin !== undefined) return allowedOrigins.includes(req.headers.origin);
+  // Browsers omit Origin on same-origin polling GETs. Require both browser
+  // fetch metadata and an allowlisted Referer before accepting that handshake.
+  if (req.method !== 'GET' || req.headers['sec-fetch-site'] !== 'same-origin') return false;
+  try {
+    const refererOrigin = new URL(req.headers.referer).origin;
+    const transport = new URL(req.url, refererOrigin).searchParams.get('transport');
+    return transport === 'polling' && allowedOrigins.includes(refererOrigin);
+  } catch (_) {
+    return false;
+  }
+};
+
 const initializeRealtime = (httpServer, allowedOrigins) => {
   io = new Server(httpServer, {
     cors: { origin: allowedOrigins, credentials: true, methods: ['GET', 'POST'] },
-    allowRequest:(req,callback)=>callback(null,Boolean(req.headers.origin&&allowedOrigins.includes(req.headers.origin))),
+    allowRequest:(req,callback)=>callback(null,isAllowedRealtimeRequest(req,allowedOrigins)),
     maxHttpBufferSize:100000,
     pingTimeout:20000
   });
@@ -121,4 +135,4 @@ const disconnectUserSockets = async (userId, reason = 'security_state_changed') 
   return sockets.length;
 };
 
-module.exports = { initializeRealtime, emitToUser, emitToRole, emitToDepartment, disconnectUserSockets, loadSocketAuthorization, synchronizeSocketAuthorization, room };
+module.exports = { initializeRealtime, emitToUser, emitToRole, emitToDepartment, disconnectUserSockets, loadSocketAuthorization, synchronizeSocketAuthorization, isAllowedRealtimeRequest, room };

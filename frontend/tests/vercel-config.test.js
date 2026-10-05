@@ -10,6 +10,7 @@ const { buildConfig } = await import('../vercel.mjs')
 test('Vercel proxies API and realtime traffic to the environment-specific backend', () => {
   assert.deepEqual(buildConfig(process.env).rewrites, [
     { source:'/api/:path*', destination:'https://staging-api.example.edu/api/:path*' },
+    { source:'/socket.io/', destination:'https://staging-api.example.edu/socket.io/' },
     { source:'/socket.io/:path*', destination:'https://staging-api.example.edu/socket.io/:path*' },
     { source:'/(.*)', destination:'/index.html' }
   ])

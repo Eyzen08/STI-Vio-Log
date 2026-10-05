@@ -6,7 +6,9 @@ Deploy the Vite frontend on Vercel and the Express API on Render. Vercel proxies
 
 The browser must use the Vercel origin for API requests. `frontend/vercel.mjs` builds the same-origin proxy from the environment-scoped `API_PROXY_ORIGIN`; it fails non-production builds that match `PRODUCTION_API_ORIGIN`. Do not configure browser requests to bypass that proxy. Custom same-site domains remain recommended if they are added later.
 
-Production frontend builds, including deployed previews, use Socket.IO HTTP long-polling through `/socket.io/*` with WebSocket upgrades disabled. This still delivers live events and preserves first-party session cookies through the existing proxy. Local development connects with polling first and may upgrade to WebSocket. No backend configuration or database migration is required for this transport change; deploy a new frontend build to activate it.
+Production frontend builds, including deployed previews, use Socket.IO HTTP long-polling through `/socket.io/*` with WebSocket upgrades disabled. This still delivers live events and preserves first-party session cookies through the existing proxy. Local development connects with polling first and may upgrade to WebSocket. The proxy explicitly rewrites `/socket.io/` as well as its subpaths so the trailing-slash handshake cannot fall through to the SPA. Deploy both the frontend routing fix and the backend request policy; no database migration is required.
+
+The backend accepts an allowlisted `Origin`, or a polling GET with no `Origin` only when `Sec-Fetch-Site` is `same-origin` and the `Referer` origin is allowlisted. Preserve these browser headers through the proxy. An explicitly unapproved `Origin` always fails, and every Socket.IO connection still requires a valid browser session.
 
 ## Vercel frontend
 
