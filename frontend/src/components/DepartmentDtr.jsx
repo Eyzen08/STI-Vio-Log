@@ -53,14 +53,14 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
           <div className="department-empty"><h4>No Matching Attendance</h4><p>Try a wider date range or remove an ID filter.</p></div>
         ) : (
           <div className="table-wrap">
-            <table>
+            <table className="responsive-record-table department-dtr-table">
               <thead><tr><th>Student</th><th>Assignment</th><th>Status</th><th>Latest outcome</th><th>Sessions</th><th>Worked</th><th>Credited</th><th>Latest attendance</th></tr></thead>
               <tbody>{rows.map((row) => (
                 <tr key={`${row.assignment_id}-${row.department_id}`}>
-                  <td><strong>{row.first_name} {row.last_name}</strong><small className="table-subtext">{row.student_number}</small></td>
-                  <td>#{row.assignment_id}</td><td><span className="status-badge">{formatDisplayLabel(row.assignment_status || 'UNKNOWN')}</span></td><td>{attendanceOutcomeLabel(row.attendance_outcome)}</td>
-                  <td>{row.total_completed_sessions}</td><td>{formatDuration(row.total_worked_minutes)}</td><td>{formatDuration(row.total_credited_minutes)}</td>
-                  <td>{displayDepartmentDtrDate(row.latest_attendance_at)}</td>
+                  <td data-label="Student"><strong>{row.first_name} {row.last_name}</strong><small className="table-subtext">{row.student_number}</small></td>
+                  <td data-label="Assignment">#{row.assignment_id}</td><td data-label="Status"><span className="status-badge">{formatDisplayLabel(row.assignment_status || 'UNKNOWN')}</span></td><td data-label="Latest outcome">{attendanceOutcomeLabel(row.attendance_outcome)}</td>
+                  <td data-label="Sessions">{row.total_completed_sessions}</td><td data-label="Worked">{formatDuration(row.total_worked_minutes)}</td><td data-label="Credited">{formatDuration(row.total_credited_minutes)}</td>
+                  <td data-label="Latest attendance">{displayDepartmentDtrDate(row.latest_attendance_at)}</td>
                 </tr>
               ))}</tbody>
             </table>

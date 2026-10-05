@@ -3445,7 +3445,7 @@ tbody tr:hover {
 
 /* Final responsive and accessibility safeguards */
 .main-panel {
-  overflow-x: hidden;
+  min-width: 0;
 }
 
 .topbar-title > div,
@@ -3458,7 +3458,6 @@ tbody tr:hover {
 .table-header h3,
 .registration-review-heading h3,
 .registration-review-heading h4,
-td,
 dd {
   overflow-wrap: anywhere;
 }

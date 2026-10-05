@@ -2745,7 +2745,16 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table className="management-record-table">
+                <table className="management-record-table violation-record-table">
+                  <colgroup>
+                    <col className="violation-col-id" />
+                    <col className="violation-col-student" />
+                    <col className="violation-col-incident" />
+                    <col />
+                    <col className="violation-col-classification" />
+                    <col className="violation-col-status" />
+                    <col className="violation-col-actions" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>
@@ -2800,7 +2809,7 @@ function App() {
                             <td data-label="Status">
                               <span className="status-badge">
                                 {
-                                  violation.status
+                                  formatDisplayLabel(violation.status)
                                 }
                               </span>
                             </td>
@@ -2814,7 +2823,7 @@ function App() {
               </div>
             )}
           </section>
-          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{viewingViolation.status}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{(viewingViolation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>{viewingViolation.status === 'OPEN' ? 'Edit audited record' : 'Reopen to edit'}</button>}<button type="button" className="secondary-button" onClick={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }} disabled={!students.some((item) => Number(item.id) === Number(viewingViolation.student_id))}>Add violation for this student</button></div></Modal>}
+          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{formatDisplayLabel(viewingViolation.status)}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{(viewingViolation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>{viewingViolation.status === 'OPEN' ? 'Edit audited record' : 'Reopen to edit'}</button>}<button type="button" className="secondary-button" onClick={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }} disabled={!students.some((item) => Number(item.id) === Number(viewingViolation.student_id))}>Add violation for this student</button></div></Modal>}
         </>
       )
     }
@@ -3372,7 +3381,7 @@ function App() {
               </p>
             ) : (
               <div className="table-wrap">
-                <table>
+                <table className="responsive-record-table report-record-table">
                   <thead>
                     <tr>
                       {Object.keys(
@@ -3403,6 +3412,7 @@ function App() {
                                 cellIdx
                               ) => (
                                 <td
+                                  data-label={reportColumnLabel(Object.keys(row)[cellIdx])}
                                   key={
                                     cellIdx
                                   }

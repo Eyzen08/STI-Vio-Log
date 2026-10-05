@@ -2587,7 +2587,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 /* Mobile management workspaces: contain intrinsic controls and replace dense
    audit columns with records that can be scanned comfortably on a phone. */
 @media (max-width: 767px) {
-  html,body,#root { max-width: 100%; overflow-x: clip; }
+  html,body,#root { max-width: 100%; }
   .app-shell.auth-shell {
     width: 100%;
     width: 100vw;
@@ -5000,4 +5000,164 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 @media (forced-colors: active) {
   .app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) { outline: 2px solid Highlight !important; outline-offset: -2px; }
+}
+
+/* Responsive portal contract. Keep layout sizing together so legacy page styles
+   cannot reintroduce intrinsic overflow or compress short labels into fragments. */
+.app-shell:not(.auth-shell) { --sidebar-width: 11.75rem; min-width: 0; }
+.app-shell:not(.auth-shell) .main-panel { min-width: 0; max-width: 100%; overflow-x: visible; }
+.app-shell .page-content { width: 100%; min-width: 0; }
+.app-shell .page-content :where(section,article,form,fieldset,div,label,dl) { min-width: 0; }
+.app-shell :is(.table-card,.form-card,.dashboard-card,.table-wrap,.responsive-table) { min-width: 0; max-width: 100%; }
+.app-shell :is(.table-wrap,.responsive-table) { overflow-x: auto; overscroll-behavior-x: contain; }
+.app-shell :is(th,td) { word-break: normal; overflow-wrap: normal; }
+.app-shell td :is(p,strong,small),
+.app-shell td[data-label]:not([data-label='Record ID']):not([data-label='Assignment']):not([data-label='Status']):not([data-label='Actions']) { overflow-wrap: anywhere; }
+.app-shell :is(.internal-record-id,.status-badge,.primary-row-action,.icon-row-action) { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.app-shell :is(.table-actions,.inline-actions) { flex-wrap: wrap; gap: 8px; }
+.app-shell :is(.table-actions,.inline-actions) > button { flex: 0 0 auto; white-space: nowrap; }
+.app-shell .primary-row-action { min-width: 4.5rem; }
+.app-shell .student-cell > span { min-width: 0; }
+.app-shell .student-cell :is(strong,small) { white-space: normal; }
+.app-shell :is(.management-page-header,.table-header,.dashboard-section-heading,.qr-attendance-header,.clearance-hero) { flex-wrap: wrap; }
+.app-shell .management-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.app-shell .management-metrics--five { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.app-shell .management-metric { overflow: visible; }
+.app-shell .management-metric > div { min-width: 0; }
+.app-shell :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+.app-shell .directory-toolbar,
+.app-shell .table-card .management-filter-bar { grid-template-columns: minmax(0,1fr) minmax(0,13rem) minmax(0,11rem); }
+.app-shell .directory-toolbar > :is(input,select) { width: 100%; grid-column: auto; }
+.app-shell :is(img,video,canvas) { max-width: 100%; }
+.app-shell .support-scope-grid { grid-template-columns: repeat(auto-fit,minmax(min(13rem,100%),1fr)); }
+.app-shell .active-attendance-toolbar { grid-template-columns: minmax(0,1fr); max-width: 32rem; }
+.app-shell .department-officer-tabs { max-width: 100%; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.app-shell .main-panel .department-officer-tabs button,
+.app-shell .main-panel .department-officer-tabs button:first-child,
+.app-shell .main-panel .department-officer-tabs button:last-child { min-width: 0; white-space: normal; overflow-wrap: normal; }
+
+@media (min-width: 768px) {
+  .app-shell:not(.auth-shell) { grid-template-columns: var(--sidebar-width) minmax(0,1fr); }
+  .app-shell:not(.auth-shell) .sidebar { width: var(--sidebar-width); height: 100dvh; }
+  .app-shell:not(.auth-shell).sidebar-collapsed { --sidebar-width: 80px; grid-template-columns: var(--sidebar-width) minmax(0,1fr); }
+  .app-shell:not(.auth-shell).sidebar-collapsed .sidebar { width: var(--sidebar-width); }
+  .app-shell .topbar-search { width: auto; flex: 1 1 20rem; min-width: 0; max-width: 27rem; }
+  .app-shell .topbar-title { flex: 1 1 auto; min-width: 0; }
+  .app-shell .account-actions { flex: 0 0 auto; }
+  .app-shell .profile-menu-trigger { min-width: 0; }
+  .app-shell .account-summary { min-width: 0; max-width: 12rem; overflow-wrap: anywhere; }
+  .app-shell .violation-record-table { width: 100%; min-width: 70rem !important; table-layout: fixed; }
+  .violation-col-id { width: 6rem; }
+  .violation-col-student { width: 14rem; }
+  .violation-col-incident { width: 12rem; }
+  .violation-col-classification { width: 8rem; }
+  .violation-col-status { width: 11rem; }
+  .violation-col-actions { width: 9rem; }
+  .app-shell .violation-record-table td[data-label='Offense'] { overflow-wrap: anywhere; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .app-shell :is(.admin-dashboard-grid,.department-overview-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell .management-metrics--five { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .directory-toolbar > input { grid-column: 1 / -1; }
+  .app-shell .department-dtr-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .department-dtr-filters > button { grid-column: 1 / -1; }
+  .app-shell .dashboard-quick-actions > div { grid-template-columns: repeat(auto-fit,minmax(min(8rem,100%),1fr)); overflow: visible; }
+}
+
+/* Dialogs are portaled outside app-shell and need their own sizing contract. */
+.app-modal { min-width: 0; display: flex; flex-direction: column; overflow: hidden; max-height: calc(100dvh - 2rem); }
+.app-modal-header { flex: 0 0 auto; min-width: 0; }
+.app-modal-header h2 { min-width: 0; overflow-wrap: anywhere; }
+.app-modal-close { flex: 0 0 44px; width: 44px; min-height: 44px; }
+.app-modal-body { flex: 1 1 auto; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.app-modal-body :where(div,section,form,fieldset,label,dl) { min-width: 0; }
+.app-modal-body :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+.app-modal--drawer { height: 100dvh; max-height: 100dvh; }
+.app-modal--drawer .app-modal-body { padding-bottom: max(28px,env(safe-area-inset-bottom)); }
+
+@media (max-width: 767px) {
+  .app-shell:not(.auth-shell),
+  .app-shell:not(.auth-shell).sidebar-collapsed { display: block; }
+  .app-shell:not(.auth-shell) .sidebar { width: min(286px,86vw); height: 100dvh; }
+  .app-shell:not(.auth-shell) .main-panel { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .app-shell .page-content { padding: 14px 12px 24px; }
+  .app-shell .management-metrics,
+  .app-shell .management-metrics--five { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell :is(.admin-dashboard-grid,.department-overview-grid,.student-overview-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell :is(.support-decision-summary,.signature-form,.record-fields,.admin-settings-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell .topbar { gap: 4px; }
+  .app-shell .main-panel--messages .topbar { gap: 4px; }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header { flex-direction: column; align-items: stretch; }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width: 100%; }
+  .app-shell .main-panel--messages .messages-workspace { grid-template-columns: minmax(0,1fr); }
+  .app-shell .topbar-title { gap: 4px; }
+  .app-shell .mobile-brand { padding: 0 !important; gap: 4px; }
+  .app-shell .mobile-brand img { width: 32px; }
+  .app-shell .mobile-brand span { font-size: .8rem; }
+  .app-shell :is(.mobile-menu-button,.notification-button,.theme-toggle,.profile-menu-trigger,.sidebar-close) { width: 44px; min-width: 44px; min-height: 44px; padding: 0 !important; flex-shrink: 0; }
+  .app-shell .profile-menu-trigger { justify-content: center; gap: 0; }
+  .app-shell .profile-menu-trigger > svg { display: none; }
+  .app-shell .sidebar .nav-item { min-height: 44px; }
+  .app-shell .mobile-bottom-nav { grid-template-columns: repeat(5,minmax(0,1fr)); }
+  .app-shell .mobile-bottom-nav button { min-height: 44px; }
+  .app-shell :is(.table-actions,.inline-actions) { flex-direction: row; align-items: center; }
+  .app-shell :is(button,input,select,textarea) { min-height: 44px; }
+  .app-shell input:not([type='checkbox']):not([type='radio']),
+  .app-shell :is(select,textarea),
+  .app-modal input:not([type='checkbox']):not([type='radio']),
+  .app-modal :is(select,textarea) { font-size: 16px; }
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .directory-toolbar > input { grid-column: 1 / -1; }
+  .app-shell .table-header > span { overflow-wrap: anywhere; }
+  .app-shell .table-wrap:has(> :is(.management-record-table,.responsive-record-table,.audit-record-table)),
+  .app-shell .responsive-table:has(> .responsive-record-table) { overflow: visible; border: 0; border-radius: 0; }
+  .app-shell :is(.table-card,.dashboard-card,.qr-stage-card) :is(table.management-record-table,table.responsive-record-table,table.audit-record-table) {
+    display: block; width: 100%; min-width: 0 !important; table-layout: auto; background: transparent;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) colgroup { display: none; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) thead {
+    position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%);
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tbody { display: grid; gap: 12px; width: 100%; padding: 12px; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tr {
+    display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; width: 100%; margin: 0; padding: 14px;
+    border: 1px solid var(--color-border); border-radius: 10px; background: var(--surface-raised);
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td {
+    display: grid !important; align-content: start; min-width: 0; max-width: 100%; gap: 4px; padding: 0 !important; border: 0 !important;
+    font-size: .875rem; line-height: 1.5; overflow-wrap: anywhere;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td::before {
+    content: attr(data-label); color: var(--text-secondary); font-size: .75rem; font-weight: 650;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) :is(td[data-label='Student'],td[data-label='Student Name'],td[data-label='Offense'],td[data-label='Description'],td[data-label='Actions'],td[data-label='Action'],td[data-label='Supervising officer']) { grid-column: 1 / -1; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) .internal-record-id { display: grid !important; font-size: .75rem; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) .status-badge { width: fit-content; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal; }
+  .app-shell .violation-record-table td[data-label='Status'] { grid-column: 1 / -1; }
+  .app-shell .violation-record-table .status-badge { white-space: nowrap; }
+  .app-shell :is(.table-actions,.inline-actions) button { min-height: 44px; }
+  .app-shell .icon-row-action { width: 44px !important; min-width: 44px; height: 44px; }
+  .app-modal { max-width: 100%; max-height: calc(100dvh - env(safe-area-inset-top)); }
+  .app-modal--drawer .app-modal-header { padding-top: max(14px,env(safe-area-inset-top)); }
+  .app-modal--drawer .student-form-grid { grid-template-columns: minmax(0,1fr); }
+  .app-modal-body :is(button,input,select,textarea) { min-height: 44px; }
+}
+
+@media (max-width: 599px) {
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: minmax(0,1fr); }
+  .app-shell .directory-toolbar > input { grid-column: auto; }
+}
+
+@media (max-width: 389px) {
+  .app-shell .mobile-brand img { display: none; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tr { grid-template-columns: minmax(0,1fr); }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td[data-label] { grid-column: 1; }
+  .app-shell .management-metric { gap: 8px; padding: 10px; }
+  .app-shell .management-metric i { width: 32px; height: 32px; }
 }
