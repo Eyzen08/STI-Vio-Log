@@ -90,20 +90,30 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: 44px !important/)
 })
 
-test('login fields use accessible floating labels with reduced-motion support', () => {
+test('outlined sign-in retains accessible fields and puts account help before submission', () => {
+  assert.match(source, /className="login-form login-form--outlined"/)
   assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number<\/span>/)
   assert.match(source, /labelClassName="login-floating-field" placeholder=" "/)
-  assert.match(portalCssSource, /label\.login-floating-field:focus-within > \.login-floating-label/)
-  assert.match(portalCssSource, /label\.login-floating-field:has\(input:not\(:placeholder-shown\)\)/)
-  assert.match(portalCssSource, /label\.login-floating-field:focus-within > \.login-floating-label,[\s\S]*?top: \.3rem/)
-  assert.match(portalCssSource, /background: var\(--auth-floating-label-bg\)/)
-  assert.match(portalCssSource, /--auth-floating-label-bg: #fff;/)
-  assert.match(portalCssSource, /:root\[data-theme='dark'\] \.auth-shell \.auth-card\.login-card \{[\s\S]*?--auth-floating-label-bg: #091b2d;/)
-  assert.match(portalCssSource, /--auth-floating-label-active-color: var\(--auth-blue-700\)/)
-  assert.match(portalCssSource, /:root\[data-theme='dark'\] \.auth-shell \.auth-card\.login-card \{[\s\S]*?--auth-floating-label-active-color: #8acbff;/)
-  assert.match(portalCssSource, /color: var\(--auth-floating-label-active-color\)/)
-  assert.doesNotMatch(portalCssSource, /\[data-theme='dark'\]\.auth-shell/)
-  assert.match(portalCssSource, /@media \(prefers-reduced-motion: reduce\)/)
+  assert.match(source, /autoComplete="username"/)
+  assert.match(source, /autoComplete="current-password"/)
+  assert.match(source, /aria-describedby=\{error\?'login-error':undefined\}/)
+  assert.match(source, /<form[^>]*>[\s\S]*?<nav className="auth-entry-actions"[\s\S]*?<button type="submit" className="login-submit"[\s\S]*?<\/form>/)
+})
+
+test('outlined labels cover focus, filled, autofilled, invalid, and reduced-motion states', () => {
+  const styles = portalCssSource.slice(portalCssSource.indexOf('/* Outlined fields belong only'))
+  assert.match(styles, /--auth-floating-label-bg: var\(--surface-raised\)/)
+  assert.match(styles, /background: transparent;[\s\S]*?font-size: 16px;/)
+  assert.match(styles, /label\.login-floating-field:focus-within > \.login-floating-label/)
+  assert.match(styles, /:has\(input:is\(:not\(:placeholder-shown\),:autofill,:-webkit-autofill\)\)/)
+  assert.match(styles, /top: 0;\s*font-size: 12px;\s*background: var\(--auth-floating-label-bg\)/)
+  assert.match(styles, /height: 56px;[\s\S]*?border-radius: 4px;/)
+  assert.match(styles, /box-shadow: inset 0 0 0 1px var\(--auth-outline-color\)/)
+  assert.match(styles, /input\[aria-invalid='true'\]\) > \.login-floating-label \{ color: var\(--status-danger-text\)/)
+  assert.match(styles, /input:disabled \{[\s\S]*?color: var\(--text-secondary\) !important;/)
+  assert.match(styles, /width: 44px !important;\s*min-width: 44px;\s*min-height: 44px;/)
+  assert.match(styles, /transition: top 160ms ease/)
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none !important/)
 })
 
 test('authentication background keeps a stable crop while forms change height', () => {

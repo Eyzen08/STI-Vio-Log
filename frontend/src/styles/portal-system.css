@@ -703,68 +703,6 @@
 .auth-shell .login-form input:hover:not(:disabled) { border-color: #9bb1c8; }
 .auth-shell .login-form input:focus-visible { border-color: var(--auth-blue-600); }
 
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field {
-  position: relative;
-  display: block;
-  min-width: 0;
-  padding-top: .3rem;
-}
-
-.auth-shell .auth-card.login-card {
-  --auth-floating-label-bg: #fff;
-  --auth-floating-label-active-color: var(--auth-blue-700);
-}
-:root[data-theme='dark'] .auth-shell .auth-card.login-card {
-  --auth-floating-label-bg: #091b2d;
-  --auth-floating-label-active-color: #8acbff;
-}
-
-.auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label {
-  position: absolute;
-  z-index: 1;
-  top: 1.8rem;
-  left: .95rem;
-  color: var(--auth-muted);
-  font-size: .9rem;
-  font-weight: 500;
-  line-height: 1;
-  padding: .15rem .4rem;
-  border-radius: .15rem;
-  background: var(--auth-floating-label-bg);
-  pointer-events: none;
-  transform: translateY(-50%);
-  transform-origin: left center;
-  transition: top .18s ease, color .18s ease, font-size .18s ease, transform .18s ease;
-}
-
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > .login-floating-label,
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:has(input:not(:placeholder-shown)) > .login-floating-label {
-  top: .3rem;
-  color: var(--auth-floating-label-active-color);
-  font-size: .72rem;
-  transform: translateY(-50%);
-}
-
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field > input,
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field .password-input-wrap input {
-  padding-top: .95rem;
-  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
-}
-
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within > input,
-.auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field:focus-within .password-input-wrap input {
-  border-color: var(--auth-blue-600);
-  box-shadow: 0 0 0 2px rgba(7, 92, 173, .16);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .auth-shell .login-page:not(.login-page--student-flow) .login-form .login-floating-label,
-  .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field > input,
-  .auth-shell .login-page:not(.login-page--student-flow) .login-form label.login-floating-field .password-input-wrap input {
-    transition-duration: .01ms;
-  }
-}
-
 .auth-shell .auth-card .password-visibility {
   top: 3px;
   right: 3px;
@@ -4942,3 +4880,108 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 :root[data-theme='dark'] .route-state :is(h2,.route-state-code) { color: var(--text-primary) !important; }
 :root[data-theme='dark'] .route-state > p { color: var(--text-secondary) !important; }
 :root[data-theme='dark'] .skip-link { background: var(--surface-raised); color: var(--link-color); }
+
+/* Outlined fields belong only to the username/password sign-in form. */
+.app-shell.auth-shell .auth-card.login-card:has(> .login-form--outlined) {
+  --auth-floating-label-bg: var(--surface-raised);
+  background: var(--auth-floating-label-bg) !important;
+}
+.app-shell.auth-shell .login-form--outlined { gap: 20px; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field {
+  --auth-outline-color: var(--border-strong);
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding: 0;
+}
+.app-shell.auth-shell .login-form--outlined .login-floating-label {
+  position: absolute;
+  z-index: 1;
+  top: 28px;
+  left: 12px;
+  max-width: calc(100% - 24px);
+  padding: 0 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  transition: top 160ms ease, font-size 160ms ease, color 160ms ease;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within > .login-floating-label,
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input:is(:not(:placeholder-shown),:autofill,:-webkit-autofill)) > .login-floating-label {
+  top: 0;
+  font-size: 12px;
+  background: var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input {
+  display: block;
+  width: 100%;
+  height: 56px;
+  min-height: 56px;
+  padding: 0 16px;
+  border: 1px solid var(--auth-outline-color) !important;
+  border-radius: 4px;
+  background: var(--auth-floating-label-bg) !important;
+  color: var(--text-primary) !important;
+  font-size: 16px;
+  line-height: 1.5;
+  outline: none !important;
+  box-shadow: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:hover:not(:disabled) { border-color: var(--text-secondary) !important; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) { --auth-outline-color: var(--link-color); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) > .login-floating-label { color: var(--link-color); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) {
+  border-color: var(--auth-outline-color) !important;
+  box-shadow: inset 0 0 0 1px var(--auth-outline-color);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']),
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) { --auth-outline-color: var(--status-danger-text); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']) > .login-floating-label,
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) > .login-floating-label { color: var(--status-danger-text); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input[aria-invalid='true']:hover:not(:disabled) { border-color: var(--status-danger-text) !important; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:is(:autofill,:-webkit-autofill) {
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+  box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:is(:autofill,:-webkit-autofill):not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--auth-outline-color), inset 0 0 0 1000px var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled {
+  border-color: var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary);
+  opacity: 1;
+  box-shadow: none;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled:is(:autofill,:-webkit-autofill) { box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field .password-input-wrap input { padding-right: 60px; }
+.app-shell.auth-shell .login-form--outlined .password-visibility {
+  top: 6px;
+  right: 6px;
+  bottom: 6px;
+  width: 44px !important;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 4px;
+  background: transparent !important;
+  color: var(--link-color) !important;
+}
+.app-shell.auth-shell .login-form--outlined .password-visibility:hover:not(:disabled) { background: var(--surface-interactive) !important; }
+.app-shell.auth-shell .login-form--outlined .auth-entry-actions { margin: -12px 0 -8px; }
+.app-shell.auth-shell .login-form--outlined .auth-entry-actions a { font-size: 14px; }
+.app-shell.auth-shell .login-form--outlined .login-submit { width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.auth-shell .login-form--outlined .login-floating-label,
+  .app-shell.auth-shell .login-form--outlined label.login-floating-field input { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) { outline: 2px solid Highlight !important; outline-offset: -2px; }
+}
