@@ -8,6 +8,8 @@ import ServiceCountdown from './ServiceCountdown.jsx'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
 
+import ServiceHourCorrections from './ServiceHourCorrections.jsx'
+
 function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, attendanceError }) {
   const [filters, setFilters] = useState({ from: '', to: '' })
   const [filterError, setFilterError] = useState('')
@@ -79,6 +81,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, atten
         )}
       </section>
 
+      <ServiceHourCorrections corrections={dtr?.hourCorrections || []}/>
       <section className="table-card dtr-card">
         <div className="dtr-heading">
           <div><p className="eyebrow">Digital Time Record</p><h3>Attendance Sessions</h3></div>

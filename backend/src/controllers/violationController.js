@@ -50,7 +50,7 @@ const getViolations = async (req, res) => {
         assertAllowedFields(req.query, ["page", "limit"]);
         const { page, limit, offset } = parsePagination(req.query);
         const result = await pool.query(`
-            SELECT v.*, vt.violation_code, vt.violation_name, vt.severity,
+            SELECT v.*, substring(v.description from '^Handbook offense: ([^\n]*)') AS exact_offense, vt.violation_code, vt.violation_name, vt.severity,
                 s.student_number,
                 CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name,
                 ose.indicator_level AS offense_indicator_level,
@@ -94,7 +94,7 @@ const getViolationById = async (req, res) => {
 
         const result = await pool.query(
             `
-            SELECT v.*, vt.violation_code, vt.violation_name, vt.severity,
+            SELECT v.*, substring(v.description from '^Handbook offense: ([^\n]*)') AS exact_offense, vt.violation_code, vt.violation_name, vt.severity,
                 s.student_number,
                 CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix) AS student_name,
                 ose.indicator_level AS offense_indicator_level,
@@ -334,298 +334,21 @@ const createViolation = async (req, res) => {
 const updateViolation = async (req, res) => {
     const client = await pool.connect();
     try {
-        assertAllowedFields(req.body, ["violation_type_id", "incident_date", "incident_time", "description", "required_service_hours", "reason"]);
-        const { id } = req.params;
-        const reason = String(req.body.reason || "").trim();
-        if (!reason) return res.status(400).json({ success: false, message: "reason is required for an audited violation update" });
-        if (req.body.incident_date !== undefined && !isIsoDate(req.body.incident_date)) {
-            return res.status(400).json({ success: false, message: "incident_date must be a valid date" });
-        }
-        if (req.body.incident_time !== undefined && !isTimeOfDay(req.body.incident_time)) {
-            return res.status(400).json({ success: false, message: "incident_time must be a valid 24-hour time" });
-        }
-
-        if (req.body.required_service_hours !== undefined) {
-            const requiredHours = Number(req.body.required_service_hours);
-            if (!Number.isFinite(requiredHours) || requiredHours < 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: "required_service_hours must be a valid non-negative number"
-                });
-            }
-            req.body.required_service_hours = requiredHours;
-        }
-
-        const allowedFields = [
-            "violation_type_id",
-            "incident_date",
-            "incident_time",
-            "description",
-            "required_service_hours"
-        ];
-
-        const updates = [];
-        const values = [];
-
-        for (const field of allowedFields) {
-            if (req.body[field] !== undefined) {
-                values.push(req.body[field]);
-
-                updates.push(
-                    `${field} = $${values.length}`
-                );
-            }
-        }
-
-        if (updates.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message:
-                    "No violation fields provided for update"
-            });
-        }
-
-        await client.query("BEGIN");
-        values.push(id);
-
-        const result = await client.query(
-            `
-            UPDATE violations
-            SET
-                ${updates.join(", ")},
-                updated_at = CURRENT_TIMESTAMP
-            WHERE id = $${values.length}
-            RETURNING *
-            `,
-            values
-        );
-
-        if (result.rows.length === 0) {
-            await client.query("ROLLBACK");
-            return res.status(404).json({
-                success: false,
-                message: "Violation not found"
-            });
-        }
-
-        const violation = result.rows[0];
-
-        if (
-            req.body.required_service_hours !== undefined &&
-            violation.status !== "OPEN"
-        ) {
-            await client.query("ROLLBACK");
-            return res.status(400).json({
-                success: false,
-                message: "Service hours can only be changed while the violation is open"
-            });
-        }
-
-        // -------------------------------------------------
-        // Synchronize community service assignment
-        // -------------------------------------------------
-
-        let assignment = null;
-
-        const assignmentResult = await client.query(
-            `
-            SELECT *
-            FROM community_service_assignments
-            WHERE violation_id = $1
-            FOR UPDATE
-            `,
-            [violation.id]
-        );
-
-        if (assignmentResult.rows.length > 0) {
-            const existingAssignment =
-                assignmentResult.rows[0];
-
-            const requiredHours = Number(
-                violation.required_service_hours || 0
-            );
-
-            const completedHours = Number(
-                violation.completed_service_hours || 0
-            );
-
-            const remainingHours = Math.max(
-                requiredHours - completedHours,
-                0
-            );
-
-            const newStatus =
-                remainingHours <= 0
-                    ? "COMPLETED"
-                    : completedHours > 0
-                        ? "IN_PROGRESS"
-                        : "OPEN";
-
-            const completedAt =
-                remainingHours <= 0
-                    ? existingAssignment.completed_at ||
-                      new Date()
-                    : null;
-
-            const updatedAssignment =
-                await client.query(
-                    `
-                    UPDATE community_service_assignments
-                    SET
-                        student_id = $1,
-                        required_hours = $2,
-                        completed_hours = $3,
-                        remaining_hours = $4,
-                        status = $5,
-                        completed_at = $6
-                    WHERE violation_id = $7
-                    RETURNING *
-                    `,
-                    [
-                        violation.student_id,
-                        requiredHours,
-                        completedHours,
-                        remainingHours,
-                        newStatus,
-                        completedAt,
-                        violation.id
-                    ]
-                );
-
-            assignment =
-                updatedAssignment.rows[0];
-
-        } else if (
-    Number(
-        violation.required_service_hours || 0
-    ) > 0
-) {
-
-    console.log(
-        "AUTO ASSIGNMENT TRIGGERED:",
-        {
-            violation_id: violation.id,
-            student_id: violation.student_id,
-            required_service_hours:
-                violation.required_service_hours,
-            completed_service_hours:
-                violation.completed_service_hours
-        }
-    );
-
-    const requiredHours = Number(
-        violation.required_service_hours
-    );
-
-    const completedHours = Number(
-        violation.completed_service_hours || 0
-    );
-
-    const remainingHours = Math.max(
-        requiredHours - completedHours,
-        0
-    );
-
-    const assignmentResult =
-        await client.query(
-            `
-            INSERT INTO community_service_assignments (
-                violation_id,
-                student_id,
-                required_hours,
-                completed_hours,
-                remaining_hours,
-                status,
-                completed_at
-            )
-            VALUES (
-                $1,
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7
-            )
-            RETURNING *
-            `,
-            [
-                violation.id,
-                violation.student_id,
-                requiredHours,
-                completedHours,
-                remainingHours,
-                remainingHours <= 0
-                    ? "COMPLETED"
-                    : "OPEN",
-                remainingHours <= 0
-                    ? new Date()
-                    : null
-            ]
-        );
-
-    assignment =
-        assignmentResult.rows[0];
-
-    console.log(
-        "AUTO ASSIGNMENT CREATED:",
-        assignment
-    );
-}
-
-        // -------------------------------------------------
-        // Synchronize clearance
-        // -------------------------------------------------
-
-        const clearanceSync =
-            await syncClearanceStatusForStudent(
-                violation.student_id,
-                client
-            );
-        const offenseStatus = await recalculateOffenseStatus({
-            client, studentId: violation.student_id, actor: req.user, ipAddress: req.ip
+        await client.query('BEGIN');
+        const result = await require('../services/violationEditService').editViolationWithClient({
+            client, violationId: req.params.id, body: req.body, actor: req.user, ipAddress: req.ip
         });
-
-        // -------------------------------------------------
-        // Audit log
-        // -------------------------------------------------
-
-        await client.query(
-            `INSERT INTO audit_logs (
-                user_id, action, table_name, record_id, description, ip_address
-             ) VALUES ($1, 'UPDATE', 'violations', $2, $3, $4)`,
-            [
-                req.user.id,
-                violation.id,
-                JSON.stringify({ actor_role: req.user.role, fields: allowedFields.filter((field) => req.body[field] !== undefined), reason }),
-                req.ip || null
-            ]
-        );
-
-        await client.query("COMMIT");
-
-        return res.json({
-            success: true,
-            violation,
-            assignment,
-            clearanceSync,
-            offenseStatus
+        await client.query('COMMIT');
+        if (result.assignment) await require('../services/realtimeEventService').emitCommunityServiceChange({
+            assignmentId: result.assignment.id, studentId: result.violation.student_id,
+            departmentId: result.assignment.department_id, action: 'VIOLATION_UPDATED'
         });
-
+        return res.json({ success: true, ...result });
     } catch (error) {
-        try { await client.query("ROLLBACK"); } catch (_) {}
-        console.error(
-            "Update violation error:",
-            error
-        );
-
-        return res.status(error.statusCode || 500).json({
-            success: false,
-            message: error.statusCode ? error.message : "Failed to update violation"
-        });
-    } finally {
-        client.release();
-    }
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        if (!error.statusCode) console.error('Update violation error:', error);
+        return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({ success: false, message: error.statusCode ? error.message : error.code === '23505' ? 'A service assignment was created concurrently. Refresh the case and try again.' : 'Failed to update violation' });
+    } finally { client.release(); }
 };
 
 const getStudentViolationHistory = async (req, res) => {
@@ -636,7 +359,7 @@ const getStudentViolationHistory = async (req, res) => {
         const { page, limit, offset } = parsePagination(req.query);
         const [records, count, summaryResult, categoryResult, escalationResult] = await Promise.all([
             pool.query(`
-                SELECT v.*, vt.violation_code, vt.violation_name, vt.severity
+                SELECT v.*, substring(v.description from '^Handbook offense: ([^\n]*)') AS exact_offense, vt.violation_code, vt.violation_name, vt.severity
                 FROM violations v
                 JOIN violation_types vt ON vt.id = v.violation_type_id
                 WHERE v.student_id = $1
@@ -652,7 +375,7 @@ const getStudentViolationHistory = async (req, res) => {
                 FROM violations WHERE student_id = $1`, [studentId]),
             pool.query(`SELECT vt.violation_code, vt.violation_name, COUNT(*)::int AS offense_count
                 FROM violations v JOIN violation_types vt ON vt.id = v.violation_type_id
-                WHERE v.student_id = $1 AND vt.violation_code LIKE 'HANDBOOK_%'
+                WHERE v.student_id = $1 AND v.status <> 'INVALID_CANCEL' AND vt.violation_code LIKE 'HANDBOOK_%'
                 GROUP BY vt.violation_code, vt.violation_name
                 ORDER BY vt.violation_code`, [studentId]),
             pool.query('SELECT * FROM student_offense_escalations WHERE student_id = $1', [studentId])
@@ -688,6 +411,11 @@ const performViolationAction = async (req, res) => {
             reason: req.body.reason,
             actor: req.user,
             ipAddress: req.ip
+        });
+
+        if (result.assignment) await require('../services/realtimeEventService').emitCommunityServiceChange({
+            assignmentId: result.assignment.id, studentId: result.violation.student_id,
+            departmentId: result.assignment.department_id, action: req.body.action
         });
 
         return res.json({
@@ -740,9 +468,16 @@ const getViolationActions = async (req, res) => {
             [req.params.id]
         );
 
+        const corrections = await pool.query(
+            `SELECT c.* FROM community_service_hour_corrections c
+             JOIN community_service_assignments a ON a.id = c.assignment_id
+             WHERE a.violation_id = $1 ORDER BY c.created_at, c.id`, [req.params.id]
+        );
+
         return res.json({
             success: true,
-            actions: result.rows
+            actions: result.rows,
+            hourCorrections: corrections.rows
         });
     } catch (error) {
         console.error("Get violation actions error:", error);

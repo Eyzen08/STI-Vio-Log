@@ -12,6 +12,10 @@ test('student DTR totals derive from authoritative minute fields', () => {
   assert.equal(formatMinutes(135), '2h 15m')
 })
 
+test('cancelled service obligations do not inflate student totals', () => {
+  assert.deepEqual(summarizeStudentService({ assignments: [{ status: 'INVALID_CANCELLED', required_minutes: 180, credited_minutes: 60, remaining_minutes: 120 }], sessions: [{ status: 'COMPLETED' }] }), { requiredMinutes: 0, creditedMinutes: 0, remainingMinutes: 0, completedSessions: 1, activeSessions: 0 })
+})
+
 test('student DTR summary remains safe while data is loading or malformed', () => {
   const empty = { requiredMinutes: 0, creditedMinutes: 0, remainingMinutes: 0, completedSessions: 0, activeSessions: 0 }
   assert.deepEqual(summarizeStudentService(null), empty)

@@ -28,6 +28,8 @@ const getCommunityServiceAssignments = async (req, res) => {
                 cs.required_hours,
                 cs.completed_hours,
                 cs.remaining_hours,
+                COALESCE((SELECT json_agg(h ORDER BY h.created_at DESC, h.id DESC)
+                    FROM community_service_hour_corrections h WHERE h.assignment_id = cs.id), '[]'::json) AS hour_corrections,
                 cs.status,
                 cs.assigned_at,
                 cs.completed_at
@@ -163,19 +165,7 @@ const createCommunityServiceAssignment = async (req, res) => {
 
         await client.query("BEGIN");
 
-        const destination = (await client.query(
-            `SELECT dh.id, dh.user_id, d.department_code, d.department_name, dh.first_name, dh.last_name
-             FROM department_heads dh
-             JOIN users u ON u.id = dh.user_id AND u.role = 'DEPARTMENT_HEAD' AND u.is_active = TRUE
-             JOIN departments d ON d.id = dh.department_id AND d.is_active = TRUE
-             WHERE d.id = $1 AND dh.id = $2
-             FOR SHARE OF dh, u, d`,
-            [department_id, department_head_id]
-        )).rows[0];
-        if (!destination) {
-            await client.query("ROLLBACK");
-            return res.status(400).json({ success: false, message: "Select an active Department Head assigned to the chosen department" });
-        }
+        const destination = await require('../services/serviceAssignmentDestination').validateServiceDestination(client, department_id, department_head_id);
 
         const violationResult = await client.query(
             `SELECT id, student_id, status
@@ -302,94 +292,31 @@ const getCommunityServiceAssignmentOptions = async (req, res) => {
 const updateCommunityServiceAssignment = async (req, res) => {
     const client = await pool.connect();
     try {
-        const { id } = req.params;
-        const required = Number(req.body.required_hours);
-
-        const unsupportedFields = Object.keys(req.body).filter(
-            (field) => field !== "required_hours"
-        );
-
-        if (unsupportedFields.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Service progress, ownership, and status cannot be changed through this endpoint"
-            });
+        assertAllowedFields(req.body, ['required_hours', 'reason']);
+        if (!isPositiveId(req.params.id)) return res.status(400).json({ success: false, message: 'Assignment ID must be a positive ID' });
+        if (req.body.required_hours === undefined) return res.status(400).json({ success: false, message: 'required_hours is required' });
+        await client.query('BEGIN');
+        const current = (await client.query('SELECT * FROM community_service_assignments WHERE id = $1 FOR UPDATE', [req.params.id])).rows[0];
+        if (!current) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ success: false, message: 'Community service assignment not found' });
         }
-
-        if (req.body.required_hours === undefined || !Number.isFinite(required) || required < 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Only a valid non-negative required_hours value may be updated directly"
-            });
-        }
-
-        await client.query("BEGIN");
-        const currentResult = await client.query(
-            `SELECT * FROM community_service_assignments WHERE id = $1 FOR UPDATE`,
-            [id]
-        );
-
-        if (currentResult.rows.length === 0) {
-            await client.query("ROLLBACK");
-            return res.status(404).json({ success: false, message: "Community service assignment not found" });
-        }
-
-        const current = currentResult.rows[0];
-        const completed = Number(current.completed_hours || 0);
-        if (required < completed) {
-            await client.query("ROLLBACK");
-            return res.status(400).json({ success: false, message: "required_hours cannot be less than completed_hours" });
-        }
-
-        const remaining = Math.max(required - completed, 0);
-        const status = remaining <= 0
-            ? "COMPLETED"
-            : completed > 0 ? "IN_PROGRESS" : "OPEN";
-
-        const result = await client.query(
-            `
-            UPDATE community_service_assignments
-            SET required_hours = $1,
-                remaining_hours = $2,
-                status = $3,
-                completed_at = $4
-            WHERE id = $5
-            RETURNING *
-            `,
-            [required, remaining, status, remaining <= 0 ? current.completed_at || new Date() : null, id]
-        );
-
-        await client.query(
-            `UPDATE violations
-             SET required_service_hours = $1,
-                 updated_at = CURRENT_TIMESTAMP
-             WHERE id = $2`,
-            [required, current.violation_id]
-        );
-
-        await client.query("COMMIT");
-
-        return res.json({
-            success: true,
-            assignment: result.rows[0]
+        const result = await require('../services/violationEditService').editViolationWithClient({
+            client, violationId: current.violation_id,
+            body: { required_service_hours: req.body.required_hours, reason: req.body.reason }, actor: req.user, ipAddress: req.ip
         });
-
+        await client.query('COMMIT');
+        await require('../services/realtimeEventService').emitCommunityServiceChange({
+            assignmentId: result.assignment.id, studentId: result.violation.student_id,
+            departmentId: result.assignment.department_id, action: 'HOURS_UPDATED'
+        });
+        return res.json({ success: true, ...result });
     } catch (error) {
-        console.error(
-            "Update community service assignment error:",
-            error
-        );
-
-        try { await client.query("ROLLBACK"); } catch (_) {}
-        return res.status(500).json({
-            success: false,
-            message: "Failed to update community service assignment"
-        });
-    } finally {
-        client.release();
-    }
+        try { await client.query('ROLLBACK'); } catch (_) {}
+        if (!error.statusCode) console.error('Update community service assignment error:', error);
+        return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : 'Failed to update community service assignment' });
+    } finally { client.release(); }
 };
-
 
 // =====================================================
 // DELETE COMMUNITY SERVICE ASSIGNMENT

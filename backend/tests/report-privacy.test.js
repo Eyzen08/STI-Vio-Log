@@ -27,7 +27,7 @@ test('good-standing history excludes invalid or cancelled violations', () => {
 
 test('community-service report totals PostgreSQL numeric values numerically', async () => {
   const original = pool.query;
-  pool.query = async () => ({ rows: [{ remaining_hours: '1.25' }, { remaining_hours: '2.50' }] });
+  pool.query = async () => ({ rows: [{ status: 'OPEN', remaining_hours: '1.25' }, { status: 'IN_PROGRESS', remaining_hours: '2.50' }, { status: 'INVALID_CANCELLED', remaining_hours: '8.00' }] });
   const res = { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   try {
     await getCommunityServiceReport({ query: {} }, res);

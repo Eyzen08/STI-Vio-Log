@@ -378,6 +378,7 @@ const getMyViolations = async (req, res) => {
                 vt.violation_code,
                 vt.violation_name,
                 vt.severity,
+                substring(v.description from '^Handbook offense: ([^\n]*)') AS exact_offense,
                 v.incident_date,
                 v.incident_time,
                 v.description,

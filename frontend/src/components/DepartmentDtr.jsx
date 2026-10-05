@@ -3,6 +3,7 @@ import { formatDuration } from '../lib/departmentDashboard.js'
 import { departmentDtrSummary, displayDepartmentDtrDate } from '../lib/departmentDtr.js'
 import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
 import { formatDisplayLabel } from '../lib/displayFormat.js'
+import ServiceHourCorrections from './ServiceHourCorrections.jsx'
 
 function DepartmentDtr({ report, loading, error, onFilter }) {
   const [filters, setFilters] = useState({ from: '', to: '', student_id: '', assignment_id: '' })
@@ -66,6 +67,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
           </div>
         )}
       </section>
+      <ServiceHourCorrections corrections={report?.hourCorrections || []}/>
       <p className="scope-note">Department scope is derived from your authenticated account and cannot be changed here.</p>
     </div>
   )

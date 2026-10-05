@@ -11,6 +11,7 @@ const DepartmentCommunityService = lazy(() => import('./components/DepartmentCom
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
 const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
 import DepartmentDtr from './components/DepartmentDtr.jsx'
+import ServiceHourCorrections from './components/ServiceHourCorrections.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
@@ -38,6 +39,7 @@ import OffenseIndicator from './components/OffenseIndicator.jsx'
 const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const AdminActiveAttendance = lazy(() => import('./components/AdminActiveAttendance.jsx'))
+const ViolationEditDrawer = lazy(() => import('./components/ViolationEditDrawer.jsx'))
 const StudentServiceTimeDrawer = lazy(() => import('./components/StudentServiceTimeDrawer.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
@@ -55,7 +57,7 @@ import { applyTheme, readDocumentTheme } from './lib/theme.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
 import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
-import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
+import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
@@ -363,8 +365,6 @@ function App() {
   const [violationTypes, setViolationTypes] = useState([])
   const [editingViolation, setEditingViolation] = useState(null)
   const [viewingViolation, setViewingViolation] = useState(null)
-  const [violationEditForm, setViolationEditForm] = useState({description:'',reason:''})
-  const [violationEditError, setViolationEditError] = useState('')
 
   const [violationFormError, setViolationFormError] = useState('')
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
@@ -414,6 +414,7 @@ function App() {
 
   const [reportType, setReportType] = useState('violations')
   const [reportData, setReportData] = useState([])
+  const [reportHourCorrections, setReportHourCorrections] = useState([])
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState('')
 
@@ -975,13 +976,14 @@ function App() {
     }
   }
 
-  const startViolationEdit = (violation) => {
-    setEditingViolation(violation)
-    setViolationEditError('')
-    setViolationEditForm({
-      description: violation.description || '',
-      reason: ''
-    })
+  const startViolationEdit = (violation) => setEditingViolation(violation)
+  const addViolationForStudent = (student) => {
+    setReviewedStudent(null)
+    setViewingViolation(null)
+    setViolationForm({ student_id: student.id, student_search: studentOptionLabel(student), violation_type_id: '', incident_date: '', incident_time: '', exact_offense: '', incident_details: '' })
+    setViolationFormError(''); setViolationFormSuccess('')
+    navigateTo('/admin/violations')
+    setIsViolationFormOpen(true)
   }
 
   const loadReviewedStudentHistory = async (student, page = 1, append = false) => {
@@ -1008,26 +1010,13 @@ function App() {
     }
   }
 
-  const handleViolationUpdate = async (event) => {
-    event.preventDefault()
-    return performMutation('violationUpdate', async () => {
-    setViolationEditError('')
-    const payload = buildViolationUpdatePayload(violationEditForm)
-    if (!payload.description || !payload.reason) return setViolationEditError('Updated details and an audit reason are required.')
-    try {
-      const response = await fetch(`${API_URL}/api/violations/${editingViolation.id}`, {
-        method: 'PUT',
-        headers: {'Content-Type':'application/json',Authorization:`Bearer ${token}`},
-        body: JSON.stringify(payload)
-      })
-      const data = await response.json().catch(() => null)
-      if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to update violation.')
-      setViolations((current) => current.map((item) => item.id === editingViolation.id ? data.violation : item))
-      setEditingViolation(null)
-    } catch (error) {
-      setViolationEditError(error.message)
-    }
-    })
+  const handleViolationChanged = (data, action) => {
+    setViolations((current) => current.map((item) => Number(item.id) === Number(data.violation.id) ? { ...item, ...data.violation } : item))
+    setDashboardRefreshKey((value) => value + 1)
+    refreshPendingActions()
+    if (reviewedStudent) loadReviewedStudentHistory(reviewedStudent)
+    if (action === 'REOPEN') setEditingViolation((current) => ({ ...current, ...data.violation }))
+    else setEditingViolation(null)
   }
 
   /*
@@ -1252,12 +1241,11 @@ function App() {
         !payload.student_id ||
           !payload.violation_type_id ||
           !payload.incident_date ||
-          !violationForm.incident_time ||
           !violationForm.exact_offense.trim() ||
         !violationForm.incident_details.trim()
       ) {
         throw new Error(
-          'Student, classification, exact offense, incident date and time, and incident details are required.'
+          'Student, classification, exact offense, incident date, and incident details are required.'
         )
       }
 
@@ -1304,6 +1292,8 @@ function App() {
         headers: { Authorization: `Bearer ${token}` }
       }))
       setIsViolationFormOpen(false)
+      setDashboardRefreshKey((value) => value + 1)
+      refreshPendingActions()
     } catch (violationError) {
       setViolationFormError(
         violationError.message
@@ -1803,6 +1793,7 @@ function App() {
       return
     }
     setReportGenerated(false)
+    setReportHourCorrections([])
     setReportPage(1)
     setReportLoading(true)
     setReportError('')
@@ -1832,6 +1823,7 @@ function App() {
           data.data || []
         )
         setReportGenerated(true)
+        setReportHourCorrections(data.hourCorrections || [])
       } else {
         setReportData([])
         setReportError(data.message || 'Unable to generate this report.')
@@ -2524,7 +2516,8 @@ function App() {
               <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
               {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
               {reviewedStudentError&&<p className="error-message" role="alert">{reviewedStudentError}</p>}
-              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><dl><div><dt>Required service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl></article>)}</div>}
+              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><button type="button" onClick={() => { setReviewedStudent(null); setViewingViolation(violation) }}>View case</button><dl><div><dt>Required service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl></article>)}</div>}
+              <button type="button" onClick={() => addViolationForStudent(reviewedStudent)}>Add violation for this student</button>
               {reviewedStudentHasMore&&<button type="button" className="secondary-button" disabled={reviewedStudentLoading} onClick={()=>loadReviewedStudentHistory(reviewedStudent,reviewedStudentPage+1,true)}>{reviewedStudentLoading?'Loading...':'Load older violations'}</button>}
               <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
             </section>
@@ -2567,8 +2560,8 @@ function App() {
             <ManagementMetric tone="purple" icon="violations" value={violationSeverityCount('GRAVE')} label="Grave"/>
             <ManagementMetric icon="reports" value={violationStatusCount('OPEN')} label="Open"/>
             <ManagementMetric tone="orange" icon="hourglass" value={violationStatusCount('PENDING')} label="Pending"/>
-            <ManagementMetric tone="green" icon="check" value={violationStatusCount('COMPLETED')} label="Completed"/>
-            <ManagementMetric tone="green" icon="clearance" value={violationStatusCount('CLEARED')} label="Cleared"/>
+            <ManagementMetric tone="green" icon="check" value={violationStatusCount('COMPLETE')} label="Completed"/>
+            <ManagementMetric tone="green" icon="clearance" value={violationStatusCount('CLEAR')} label="Cleared"/>
           </section>
           {isViolationFormOpen && <Modal title="Record Violation" drawer onClose={() => setIsViolationFormOpen(false)}><div className="drawer-intro"><strong>Create an incident record</strong><span>Choose the exact handbook classification and document only verified facts.</span></div>
           <section className="drawer-form-card">
@@ -2731,19 +2724,7 @@ function App() {
             </form>
           </section></Modal>}
 
-          {editingViolation && (
-            <Modal title={`Edit violation #${editingViolation.id}`} drawer onClose={()=>setEditingViolation(null)}><section className="drawer-form-card">
-              <div className="table-header"><h3>Edit violation #{editingViolation.id}</h3><span>Open cases only</span></div>
-              <form className="student-form" onSubmit={handleViolationUpdate}>
-                <div className="student-form-grid">
-                  <label className="full-width-field">Violation and incident details<textarea rows="5" value={violationEditForm.description} onChange={(event)=>setViolationEditForm({...violationEditForm,description:event.target.value})} required/></label>
-                  <label className="full-width-field">Reason for change<textarea rows="3" value={violationEditForm.reason} onChange={(event)=>setViolationEditForm({...violationEditForm,reason:event.target.value})} placeholder="Explain why this record is being updated" required/></label>
-                </div>
-                {violationEditError && <p className="error-message" role="alert">{violationEditError}</p>}
-                <div className="registration-review-actions"><AsyncActionButton type="submit" busy={mutationBusy.violationUpdate} busyLabel="Saving changes…">Save audited changes</AsyncActionButton><button type="button" className="secondary-button" disabled={mutationBusy.violationUpdate} onClick={()=>setEditingViolation(null)}>Cancel</button></div>
-              </form>
-            </section></Modal>
-          )}
+          {editingViolation && <ViolationEditDrawer key={editingViolation.id + ':' + editingViolation.status} violation={editingViolation} types={violationTypes} assignments={communityServiceAssignments} destinations={communityServiceDestinations} role={userRole} token={token} onClose={() => setEditingViolation(null)} onChanged={handleViolationChanged}/>}
 
           <section className="table-card">
             <div className="table-header management-table-header">
@@ -2755,7 +2736,7 @@ function App() {
                   : `${violations.length} entries`}
               </span>
             </div>
-            <div className="directory-toolbar management-filter-bar"><input type="search" name="violation-directory-filter" autoComplete="off" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="PENDING">Pending</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
+            <div className="directory-toolbar management-filter-bar"><input type="search" name="violation-directory-filter" autoComplete="off" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="COMPLETE">Completed</option><option value="CLEAR">Cleared</option><option value="INVALID_CANCEL">Invalid / Cancelled</option></select></div>
 
             {visibleViolations.length === 0 &&
             !dashboardLoading ? (
@@ -2824,7 +2805,7 @@ function App() {
                               </span>
                             </td>
 
-                            <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{violation.status === 'OPEN' && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
+                            <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{(violation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
                           </tr>
                         )
                       )}
@@ -2833,7 +2814,7 @@ function App() {
               </div>
             )}
           </section>
-          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{viewingViolation.status}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{viewingViolation.status === 'OPEN' && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>Edit audited record</button>}</div></Modal>}
+          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{viewingViolation.status}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{(viewingViolation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>{viewingViolation.status === 'OPEN' ? 'Edit audited record' : 'Reopen to edit'}</button>}<button type="button" className="secondary-button" onClick={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }} disabled={!students.some((item) => Number(item.id) === Number(viewingViolation.student_id))}>Add violation for this student</button></div></Modal>}
         </>
       )
     }
@@ -3437,6 +3418,7 @@ function App() {
                 </table>
               </div>
             )}
+            {reportType === 'dtr' && reportGenerated && <ServiceHourCorrections corrections={reportHourCorrections}/>}
             {reportData.length > 50 && <nav className="report-pagination" aria-label="Report result pages"><button type="button" className="secondary-button" disabled={reportPage === 1} onClick={() => setReportPage((page) => page - 1)}>Previous</button><span role="status">Page {reportPage} of {Math.ceil(reportData.length / 50)} · {reportData.length} records</span><button type="button" className="secondary-button" disabled={reportPage >= Math.ceil(reportData.length / 50)} onClick={() => setReportPage((page) => page + 1)}>Next</button></nav>}
           </section>
         </div>

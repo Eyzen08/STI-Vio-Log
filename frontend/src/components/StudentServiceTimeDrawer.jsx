@@ -5,6 +5,7 @@ import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import { isActiveServiceSession, serviceProgress } from '../lib/departmentService.js'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServiceCountdown from './ServiceCountdown.jsx'
+import ServiceHourCorrections from './ServiceHourCorrections.jsx'
 
 export default function StudentServiceTimeDrawer({ student, assignments = [], activeSessions = [], onClose, attendanceReady = true, attendanceError }) {
   const [now, setNow] = useState(Date.now())
@@ -33,6 +34,7 @@ export default function StudentServiceTimeDrawer({ student, assignments = [], ac
           const progress = serviceProgress(assignment)
           return <article key={assignment.id}><header><div><h4>{assignment.department_name || assignment.department_code || 'Department not assigned'}</h4><p>{assignment.violation_name || assignment.exact_offense || `Assignment #${assignment.id}`}</p></div><span className="status-badge">{String(assignment.status || 'OPEN').replaceAll('_', ' ')}</span></header><div className="table-progress"><div><span style={{ width: `${progress}%` }} /></div><small>{formatDuration(assignment.completed_hours)} completed of {formatDuration(assignment.required_hours)} · {formatDuration(assignment.remaining_hours)} remaining</small></div></article>
         })}</section>
+        <ServiceHourCorrections corrections={studentAssignments.flatMap((assignment) => assignment.hour_corrections || [])}/>
       </> : <p className="empty-state">This student has no community service assignment.</p>}
     </section>
   </Modal>

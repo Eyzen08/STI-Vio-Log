@@ -5,7 +5,7 @@ export const assignmentsForStudent = (assignments = [], studentId) => assignment
 )
 
 export const summarizeServiceAssignments = (assignments = []) => {
-  const totals = assignments.reduce((summary, assignment) => {
+  const totals = assignments.filter((assignment) => !['INVALID_CANCELLED', 'ADMIN_CLOSED'].includes(assignment.status)).reduce((summary, assignment) => {
     const required = amount(assignment.required_hours)
     const hasCompleted = assignment.completed_hours !== null && assignment.completed_hours !== undefined
     const hasRemaining = assignment.remaining_hours !== null && assignment.remaining_hours !== undefined

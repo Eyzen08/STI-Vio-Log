@@ -10,7 +10,7 @@ export const formatMinutes = (value) => {
 
 export const summarizeStudentService = (dtr = {}) => {
   const safeDtr = dtr && typeof dtr === 'object' ? dtr : {}
-  const assignments = Array.isArray(safeDtr.assignments) ? safeDtr.assignments : []
+  const assignments = (Array.isArray(safeDtr.assignments) ? safeDtr.assignments : []).filter((item) => !['INVALID_CANCELLED', 'ADMIN_CLOSED'].includes(item.status))
   const sessions = Array.isArray(safeDtr.sessions) ? safeDtr.sessions : []
   return {
     requiredMinutes: assignments.reduce((sum, item) => sum + number(item.required_minutes), 0),

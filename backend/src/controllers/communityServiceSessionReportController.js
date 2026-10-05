@@ -39,6 +39,8 @@ const getDTRReport = async (req, res) => {
             `SELECT ${avatarSql('s.user_id')} AS avatar,a.student_id,a.id AS assignment_id, css.department_id, s.student_number, s.first_name, s.last_name,
                     d.department_name, a.required_hours,
                     a.completed_hours AS credited_hours, a.remaining_hours, a.status AS assignment_status,
+                    COALESCE((SELECT SUM(h.new_completed_hours - h.previous_completed_hours)
+                        FROM community_service_hour_corrections h WHERE h.assignment_id = a.id), 0) AS manual_adjustment_hours,
                     COUNT(*) FILTER (WHERE css.status = 'COMPLETED')::int AS total_completed_sessions,
                     COALESCE(SUM(css.worked_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_worked_minutes,
                     COALESCE(SUM(css.credited_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_credited_minutes,
@@ -52,7 +54,19 @@ const getDTRReport = async (req, res) => {
                       a.violation_id, css.department_id, d.department_name
              ORDER BY latest_attendance_at DESC, a.id DESC`, params);
         const totals = result.rows.reduce((sum, row) => ({ completed_sessions: sum.completed_sessions + row.total_completed_sessions, worked_minutes: sum.worked_minutes + row.total_worked_minutes, credited_minutes: sum.credited_minutes + row.total_credited_minutes }), { completed_sessions: 0, worked_minutes: 0, credited_minutes: 0 });
-        return res.json({ success: true, report_type: "community_service_dtr", timezone: "UTC", filters: { from: from || null, to: to || null, department_id: effectiveDepartment ? Number(effectiveDepartment) : null, student_id: student_id ? Number(student_id) : null, assignment_id: assignment_id ? Number(assignment_id) : null }, totals, total_records: result.rows.length, data: result.rows, generated_at: new Date().toISOString() });
+        const correctionParams = []; let correctionFilters = '';
+        const addCorrection = (value, sql) => { correctionParams.push(value); correctionFilters += sql.replace('?', '$' + correctionParams.length); };
+        if (effectiveDepartment) addCorrection(effectiveDepartment, ' AND a.department_id = ?');
+        if (student_id) addCorrection(student_id, ' AND a.student_id = ?');
+        if (assignment_id) addCorrection(assignment_id, ' AND a.id = ?');
+        if (from) addCorrection(from, " AND h.created_at >= (?::date::timestamp AT TIME ZONE 'UTC')");
+        if (to) addCorrection(to, " AND h.created_at < ((?::date + 1)::timestamp AT TIME ZONE 'UTC')");
+        const corrections = await pool.query(
+            `SELECT h.*, s.student_number, s.first_name, s.last_name, a.violation_id, d.department_name
+             FROM community_service_hour_corrections h JOIN community_service_assignments a ON a.id = h.assignment_id
+             JOIN students s ON s.id = a.student_id LEFT JOIN departments d ON d.id = a.department_id
+             WHERE 1=1${correctionFilters} ORDER BY h.created_at DESC, h.id DESC`, correctionParams);
+        return res.json({ success: true, report_type: "community_service_dtr", timezone: "UTC", filters: { from: from || null, to: to || null, department_id: effectiveDepartment ? Number(effectiveDepartment) : null, student_id: student_id ? Number(student_id) : null, assignment_id: assignment_id ? Number(assignment_id) : null }, totals, total_records: result.rows.length, data: result.rows, hourCorrections: corrections.rows, generated_at: new Date().toISOString() });
     } catch (error) { return fail(res, error); }
 };
 
@@ -89,7 +103,13 @@ const getMyDTR = async (req, res) => {
              FROM community_service_sessions css JOIN community_service_assignments a ON a.id = css.assignment_id
              JOIN students s ON s.id = a.student_id JOIN departments d ON d.id = css.department_id
              WHERE s.user_id = $1${filters} ORDER BY css.time_in DESC, css.id DESC`, params);
-        return res.json({ success: true, timezone: "UTC", assignments: assignments.rows, total_sessions: sessions.rows.length, sessions: sessions.rows });
+        const corrections = await pool.query(
+            `SELECT h.id, h.assignment_id, h.previous_completed_hours, h.new_completed_hours, h.reason, h.created_at
+             FROM community_service_hour_corrections h JOIN community_service_assignments a ON a.id = h.assignment_id
+             JOIN students s ON s.id = a.student_id
+             WHERE s.user_id = $1${filters.replaceAll('css.time_in', 'h.created_at')}
+             ORDER BY h.created_at DESC, h.id DESC`, params);
+        return res.json({ success: true, timezone: "UTC", assignments: assignments.rows, total_sessions: sessions.rows.length, sessions: sessions.rows, hourCorrections: corrections.rows });
     } catch (error) { return fail(res, error); }
 };
 

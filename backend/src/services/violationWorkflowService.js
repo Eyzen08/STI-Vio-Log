@@ -10,6 +10,7 @@ const {
     syncClearanceStatusForStudent
 } = require("../controllers/clearanceController");
 const { recalculateOffenseStatus } = require('./offenseEscalationService');
+const { notifyStudent } = require('./notificationService');
 
 class ViolationWorkflowError extends Error {
     constructor(message, statusCode, code) {
@@ -186,6 +187,15 @@ const transitionViolationWithClient = async ({
         );
     }
 
+    if (action === 'INVALID_CANCEL') {
+        const active = await client.query(
+            `SELECT css.id FROM community_service_sessions css
+             JOIN community_service_assignments a ON a.id = css.assignment_id
+             WHERE a.violation_id = $1 AND css.time_out IS NULL`, [violationId]
+        );
+        if (active.rows.length) throw new ViolationWorkflowError('Time out the active attendance session before cancelling this violation', 409, 'ACTIVE_SESSION_EXISTS');
+    }
+
     const clearedAt = ["CLEAR", "COMPLETE"].includes(policy.to)
         ? new Date()
         : null;
@@ -234,6 +244,14 @@ const transitionViolationWithClient = async ({
     const offenseStatus = await recalculateOffenseStatus({
         client, studentId: current.student_id, actor, ipAddress
     });
+
+    if (['INVALID_CANCEL', 'REOPEN'].includes(action)) {
+        await notifyStudent(client, current.student_id, {
+            title: action === 'REOPEN' ? 'Violation reopened' : 'Violation cancelled',
+            message: `Violation #${current.id} was ${action === 'REOPEN' ? 'reopened for review' : 'cancelled and retained in your history'}.`,
+            type: `VIOLATION_${action}`, eventKey: `violation-action:${history.id}`
+        });
+    }
 
     return {
         violation: updatedResult.rows[0],

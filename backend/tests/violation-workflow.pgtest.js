@@ -126,6 +126,10 @@ async function act(token, violationId, action, reason) {
   });
 }
 
+async function edit(token, violationId, fields) {
+  return request(`/api/violations/${violationId}`, { token, method: 'PUT', body: { reason: 'Verified case correction', ...fields } });
+}
+
 async function assignService(token, violationId, studentId, requiredHours) {
   const destination = (await pool.query(
     `SELECT d.id AS department_id, dh.id AS department_head_id
@@ -193,6 +197,146 @@ test.after(async () => {
 
   await adminPool.query(`DROP SCHEMA IF EXISTS ${schemaName} CASCADE`);
   await adminPool.end();
+});
+
+test('admin hour corrections create routed assignments and preserve attendance evidence', async () => {
+  const admin = await login('admin_test');
+  const head = await login('head_test');
+  const student = await login('student_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const violation = await createViolation(admin, studentId);
+  const destination = (await pool.query('SELECT department_id, id AS department_head_id FROM department_heads LIMIT 1')).rows[0];
+  const created = await edit(admin, violation.id, { required_service_hours: 3, completed_service_hours: 1, ...destination });
+  assert.equal(created.status, 200, JSON.stringify(created.body));
+  assert.equal(Number(created.body.assignment.remaining_hours), 2);
+  assert.equal(Number(created.body.hourCorrection.previous_completed_hours), 0);
+  assert.equal(Number(created.body.assignment.department_id), Number(destination.department_id));
+  const assignmentId = created.body.assignment.id;
+  assert.equal((await request('/api/qr/time-in', { token: head, method: 'POST', body: { qr_code: 'QR-TEST' } })).status, 201);
+  await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '30 minutes' WHERE assignment_id = $1", [assignmentId]);
+  const timeOut = await request('/api/qr/time-out', { token: head, method: 'POST', body: { qr_code: 'QR-TEST', attendance_outcome: 'TODAYS_SERVICE_COMPLETED' } });
+  assert.equal(timeOut.status, 201, JSON.stringify(timeOut.body));
+  assert.equal(Number(timeOut.body.assignment.completed_hours), 1.5);
+  const evidence = (await pool.query('SELECT * FROM community_service_sessions WHERE assignment_id = $1', [assignmentId])).rows;
+  const reduced = await edit(admin, violation.id, { required_service_hours: 2, completed_service_hours: 0.5 });
+  assert.equal(reduced.status, 200, JSON.stringify(reduced.body));
+  assert.equal(Number(reduced.body.assignment.remaining_hours), 1.5);
+  assert.deepEqual((await pool.query('SELECT * FROM community_service_sessions WHERE assignment_id = $1', [assignmentId])).rows, evidence);
+  const history = await request(`/api/violations/${violation.id}/actions`, { token: admin });
+  assert.equal(history.body.hourCorrections.length, 2);
+  await assert.rejects(pool.query('UPDATE community_service_hour_corrections SET reason = $1', ['Overwrite']), /append-only/);
+  await assert.rejects(pool.query('DELETE FROM community_service_hour_corrections'), /append-only/);
+  const dtr = await request('/api/students/me/community-service/dtr', { token: student });
+  assert.equal(dtr.status, 200, JSON.stringify(dtr.body));
+  assert.equal(dtr.body.hourCorrections.length, 2);
+  const report = await request('/api/reports/dtr', { token: admin });
+  assert.equal(report.status, 200, JSON.stringify(report.body));
+  assert.equal(report.body.hourCorrections.length, 2);
+  assert.equal(Number(report.body.data[0].manual_adjustment_hours), 0);
+  const audit = (await pool.query("SELECT previous_values, new_values, reason FROM audit_logs WHERE action = 'UPDATE' AND table_name = 'violations' ORDER BY id DESC LIMIT 1")).rows[0];
+  assert.equal(Number(audit.previous_values.completed_service_hours), 1.5);
+  assert.equal(Number(audit.new_values.completed_service_hours), 0.5);
+  assert.ok(audit.reason);
+});
+
+test('violation edits validate category changes, numeric hours, destinations, and admin-only credit', async () => {
+  const admin = await login('admin_test');
+  await pool.query("UPDATE users SET role = 'DISCIPLINE_OFFICE' WHERE username = 'discipline_test'");
+  const office = await login('discipline_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const { violation, assignment } = await createServiceViolation(admin, studentId, 3);
+  for (const value of [-1, null, '', 'invalid', 1.234, 10000]) assert.equal((await edit(admin, violation.id, { required_service_hours: value })).status, 400);
+  assert.equal((await edit(admin, violation.id, { required_service_hours: 1, completed_service_hours: 2 })).status, 400);
+  assert.equal((await edit(admin, violation.id, { incident_date: '2026-02-30' })).status, 400);
+  assert.equal((await edit(admin, violation.id, { reason: ' ', description: 'Facts' })).status, 400);
+  assert.equal((await edit(admin, violation.id, { reason: 'x'.repeat(1001), description: 'Facts' })).status, 400);
+  assert.equal((await edit(office, violation.id, { completed_service_hours: 1 })).status, 403);
+  assert.equal((await edit(office, violation.id, { required_service_hours: 4 })).status, 200);
+  assert.equal((await edit(admin, violation.id, { department_id: 1, department_head_id: 1 })).status, 400);
+  const type = (await pool.query("SELECT * FROM violation_types WHERE violation_code = 'HANDBOOK_MAJOR_A'")).rows[0];
+  assert.equal((await edit(admin, violation.id, { violation_type_id: type.id, description: 'Unclassified facts' })).status, 400);
+  const offense = require('../../shared/handbookOffenses.json').HANDBOOK_MAJOR_A[0];
+  const changed = await edit(admin, violation.id, { violation_type_id: type.id, description: `Handbook offense: ${offense}\nIncident details: Corrected facts`, incident_time: null });
+  assert.equal(changed.status, 200, JSON.stringify(changed.body));
+  assert.equal(changed.body.offenseStatus.indicator_level, 'MAJOR_LEVEL');
+  assert.equal(Number(changed.body.assignment.id), Number(assignment.id));
+  const unassigned = await createViolation(admin, studentId);
+  assert.equal((await edit(admin, unassigned.id, { required_service_hours: 1 })).status, 400);
+  assert.equal((await edit(admin, unassigned.id, { required_service_hours: 1, department_id: 99999, department_head_id: 99999 })).status, 400);
+  assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_assignments WHERE violation_id = $1', [unassigned.id])).rows[0].count, 0);
+});
+
+test('hour editing and cancellation are blocked during active attendance without losing credits', async () => {
+  const admin = await login('admin_test');
+  const head = await login('head_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const { violation, assignment } = await createServiceViolation(admin, studentId, 3);
+  const attempts = await Promise.all([
+    request('/api/qr/time-in', { token: head, method: 'POST', body: { qr_code: 'QR-TEST' } }),
+    edit(admin, violation.id, { required_service_hours: 4 })
+  ]);
+  assert.equal(attempts[0].status, 201);
+  assert.ok([200, 409].includes(attempts[1].status));
+  const required = Number((await pool.query('SELECT required_hours FROM community_service_assignments WHERE id = $1', [assignment.id])).rows[0].required_hours);
+  assert.equal((await edit(admin, violation.id, { required_service_hours: 5 })).status, 409);
+  assert.equal((await edit(admin, violation.id, { completed_service_hours: 1 })).status, 409);
+  assert.equal((await act(admin, violation.id, 'INVALID_CANCEL', 'Duplicate')).status, 409);
+  assert.equal((await request(`/api/community-service/${assignment.id}`, { token: admin, method: 'PUT', body: { required_hours: 5, reason: 'Requirement correction' } })).status, 409);
+  assert.equal((await edit(admin, violation.id, { description: 'Metadata can be corrected while attendance continues' })).status, 200);
+  await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '30 minutes' WHERE assignment_id = $1", [assignment.id]);
+  const timedOut = await request('/api/qr/time-out', { token: head, method: 'POST', body: { qr_code: 'QR-TEST', attendance_outcome: 'TODAYS_SERVICE_COMPLETED' } });
+  assert.equal(timedOut.status, 201);
+  assert.equal(Number(timedOut.body.assignment.completed_hours), 0.5);
+  assert.equal(Number(timedOut.body.assignment.required_hours), required);
+  const corrected = await edit(admin, violation.id, { completed_service_hours: 1 });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  const cancelled = await act(admin, violation.id, 'INVALID_CANCEL', 'Confirmed duplicate');
+  assert.equal(cancelled.body.assignment.status, 'INVALID_CANCELLED');
+  assert.equal(cancelled.body.offenseStatus.indicator_level, 'NEUTRAL');
+  assert.equal(cancelled.body.clearanceSync.eligible, true);
+  const cancelledHistory = await request(`/api/violations/student/${studentId}`, { token: admin });
+  assert.deepEqual(cancelledHistory.body.summary.categoryCounts, []);
+  assert.equal(cancelledHistory.body.summary.remainingHours, 0);
+  const serviceReport = await request('/api/reports/community-service', { token: admin });
+  assert.equal(serviceReport.body.total_pending_hours, 0);
+  assert.equal((await edit(admin, violation.id, { description: 'Closed edit' })).status, 409);
+  assert.equal((await act(admin, violation.id, 'REOPEN', 'Correction required')).status, 200);
+  assert.equal((await request(`/api/violations/${violation.id}/actions`, { token: admin })).body.hourCorrections.length, 1);
+});
+
+test('fully credited positive hours complete the violation; zero-hour edits remain open', async () => {
+  const admin = await login('admin_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const { violation } = await createServiceViolation(admin, studentId, 2);
+  const complete = await edit(admin, violation.id, { completed_service_hours: 2 });
+  assert.equal(complete.status, 200, JSON.stringify(complete.body));
+  assert.equal(complete.body.violation.status, 'COMPLETE');
+  assert.equal(complete.body.assignment.status, 'COMPLETED');
+  assert.equal(complete.body.clearanceSync.eligible, true);
+  assert.equal((await edit(admin, violation.id, { completed_service_hours: 1 })).status, 409);
+  await act(admin, violation.id, 'REOPEN', 'Review credited hours');
+  const zero = await edit(admin, violation.id, { required_service_hours: 0, completed_service_hours: 0 });
+  assert.equal(zero.status, 200, JSON.stringify(zero.body));
+  assert.equal(zero.body.violation.status, 'OPEN');
+  assert.equal(Number(zero.body.assignment.remaining_hours), 0);
+});
+
+test('failed edit audit rolls back new assignment, hour corrections, and violation changes', async () => {
+  const admin = await login('admin_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const violation = await createViolation(admin, studentId);
+  const destination = (await pool.query('SELECT department_id, id AS department_head_id FROM department_heads LIMIT 1')).rows[0];
+  await pool.query(`CREATE FUNCTION fail_edit_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.action = 'UPDATE' AND NEW.table_name = 'violations' THEN RAISE EXCEPTION 'forced edit audit failure'; END IF; RETURN NEW; END $$`);
+  await pool.query('CREATE TRIGGER fail_edit_audit_trigger BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION fail_edit_audit()');
+  try {
+    assert.equal((await edit(admin, violation.id, { required_service_hours: 2, completed_service_hours: 1, ...destination })).status, 500);
+    assert.equal(Number((await pool.query('SELECT required_service_hours FROM violations WHERE id = $1', [violation.id])).rows[0].required_service_hours), 0);
+    assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_assignments')).rows[0].count, 0);
+    assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_hour_corrections')).rows[0].count, 0);
+  } finally {
+    await pool.query('DROP TRIGGER fail_edit_audit_trigger ON audit_logs');
+    await pool.query('DROP FUNCTION fail_edit_audit()');
+  }
 });
 
 test('violation lifecycle transitions preserve structured history and audit records', async () => {

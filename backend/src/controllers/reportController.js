@@ -209,7 +209,7 @@ const getCommunityServiceReport = async (req, res) => {
       success: true,
       report_type: 'community_service',
       total_records: result.rows.length,
-      total_pending_hours: result.rows.reduce((sum, row) => sum + Number(row.remaining_hours || 0), 0),
+      total_pending_hours: result.rows.filter((row) => ['OPEN', 'IN_PROGRESS'].includes(row.status)).reduce((sum, row) => sum + Number(row.remaining_hours || 0), 0),
       data: result.rows,
       generated_at: new Date().toISOString()
     });

@@ -1,40 +1,6 @@
-export const HANDBOOK_OFFENSES = {
-  HANDBOOK_MINOR: [
-    'Non-adherence to STI Student Decorum', 'Discourtesy toward the STI community or campus visitors',
-    'Non-wearing, incomplete, or improper use of school uniform or ID', 'Wearing inappropriate campus attire',
-    'Losing or forgetting an ID three times', 'Disrespect to national symbols or a similar infraction',
-    'Irresponsible or improper use of school property', 'Gambling on school premises or during official functions',
-    'Staying or eating inside a classroom without permission', 'Disruption of classes, activities, peace, or order',
-    'Display of affection that negatively affects the individuals reputation', 'Violation of classroom, laboratory, library, or office procedure',
-    'Possession of cigarettes or vapes', 'Bringing pets onto school premises'
-  ],
-  HANDBOOK_MAJOR_A: [
-    'More than three commissions of any minor offense', 'Lending, borrowing, wearing, or using a tampered school ID',
-    'Smoking or vaping inside the campus', 'Entering intoxicated or bringing or drinking liquor inside the campus',
-    'Allowing a non-STI individual to enter without official business', 'Cheating, unauthorized resources, plagiarism, prohibited communication, impersonation, or commissioned academic work'
-  ],
-  HANDBOOK_MAJOR_B: [
-    'Vandalizing, damaging, or destroying property', 'Posting content disrespectful to STI or another person',
-    'Recording or uploading content that violates another persons data privacy', 'Going to a place of ill repute while wearing the school uniform',
-    'Giving false testimony during an official investigation', 'Using profane language that gravely insults a member of the STI community'
-  ],
-  HANDBOOK_MAJOR_C: [
-    'Hacking a school or other institution computer system', 'Stealing, tampering with, or forging records or receipts',
-    'Theft or robbery of property', 'Embezzlement or malversation of school or organization funds or property',
-    'Disrupting academic functions through illegal assemblies or related public disorder', 'Act of immorality',
-    'Bullying, including physical, cyber, or verbal bullying', 'Participation in brawls or infliction of physical injuries',
-    'Physical assault', 'Failure or refusal to comply with mandatory random drug testing',
-    'False or malicious fire alarm or bomb threat', 'Unjustified use of fire-protection or firefighting equipment'
-  ],
-  HANDBOOK_MAJOR_D: [
-    'Unlawful involvement with prohibited drugs, controlled substances, or related chemicals', 'Refusal of confirmatory drug procedures or failure to follow the intervention program',
-    'Carrying or possessing firearms, deadly weapons, or explosives', 'Membership in an organization that employs or advocates illegal rites or hazing',
-    'Participation in illegal rites, initiation, or hazing', 'Crime involving moral turpitude or gross misconduct',
-    'Sexual harassment', 'Extortion, blackmail, bribery, or coercion',
-    'Subversion, sedition, or insurgency', 'Unauthorized copying, distribution, modification, or exhibition of eLMS or learning materials',
-    'Unauthorized possession or removal of examination questionnaires', 'Use of a device to capture examination materials or activities'
-  ]
-}
+import handbookOffenses from '../../../shared/handbookOffenses.json' with { type: 'json' }
+
+export const HANDBOOK_OFFENSES = handbookOffenses
 
 export const offensesForType = (type) => {
   const offenses = type ? HANDBOOK_OFFENSES[type.violation_code] : null
@@ -64,7 +30,55 @@ export const studentIdFromSearch = (students = [], search = '') => {
   return match ? Number(match.id) : ''
 }
 
-export const buildViolationUpdatePayload = (form = {}) => ({
-  description: String(form.description || '').trim(),
+export const parseViolationDescription = (description = '') => {
+  const match = /^Handbook offense: ([^\n]*)\nIncident details: ([\s\S]*)$/.exec(description)
+  return match ? { exact_offense: match[1], incident_details: match[2], legacy: false }
+    : { exact_offense: '', incident_details: description, legacy: true }
+}
+
+export const violationEditForm = (violation = {}) => ({
+  ...parseViolationDescription(violation.description || ''),
+  violation_type_id: String(violation.violation_type_id || ''),
+  incident_date: String(violation.incident_date || '').slice(0, 10),
+  incident_time: String(violation.incident_time || '').slice(0, 5),
+  required_service_hours: String(violation.required_service_hours ?? 0),
+  completed_service_hours: String(violation.completed_service_hours ?? 0),
+  department_id: '', department_head_id: '', reason: ''
+})
+
+export const buildViolationUpdatePayload = (form = {}, original = {}, hasAssignment = true) => ({
+  violation_type_id: Number(form.violation_type_id),
+  incident_date: form.incident_date,
+  incident_time: form.incident_time || null,
+  description: form.legacy && !form.exact_offense ? String(form.incident_details || '').trim() : buildViolationDescription(form),
+  ...(Number(form.required_service_hours) !== Number(original.required_service_hours) ? { required_service_hours: Number(form.required_service_hours) } : {}),
+  ...(Number(form.completed_service_hours) !== Number(original.completed_service_hours) ? { completed_service_hours: Number(form.completed_service_hours) } : {}),
+  ...(!hasAssignment && Number(form.required_service_hours) > 0 ? {
+    department_id: Number(form.department_id), department_head_id: Number(form.department_head_id)
+  } : {}),
   reason: String(form.reason || '').trim()
 })
+
+export const validateViolationEditForm = (form, original, types, hasAssignment) => {
+  const errors = {}
+  const type = selectedViolationType(types, form.violation_type_id)
+  const changedType = Number(form.violation_type_id) !== Number(original.violation_type_id)
+  const originalOffense = parseViolationDescription(original.description || '').exact_offense
+  if (!type && changedType) errors.violation_type_id = 'Select an active classification.'
+  if (changedType && !offensesForType(type).includes(form.exact_offense)) errors.exact_offense = 'Select an offense for the new classification.'
+  else if (!form.legacy && !form.exact_offense) errors.exact_offense = 'Select an offense.'
+  else if (form.exact_offense && form.exact_offense !== originalOffense && !offensesForType(type).includes(form.exact_offense)) errors.exact_offense = 'Select a valid offense.'
+  if (!String(form.incident_details || '').trim()) errors.incident_details = 'Enter incident details.'
+  if (!form.incident_date) errors.incident_date = 'Enter the incident date.'
+  for (const field of ['required_service_hours', 'completed_service_hours']) {
+    const value = Number(form[field])
+    if (String(form[field]).trim() === '' || !Number.isFinite(value) || value < 0 || value > 9999.99 || Math.abs(value * 100 - Math.round(value * 100)) > 0.000001) errors[field] = 'Enter hours from 0 to 9999.99, with up to two decimal places.'
+  }
+  if (Number(form.completed_service_hours) > Number(form.required_service_hours)) errors.completed_service_hours = 'Completed hours cannot exceed required hours.'
+  if (!hasAssignment && Number(form.required_service_hours) > 0) {
+    if (!form.department_id) errors.department_id = 'Select a department.'
+    if (!form.department_head_id) errors.department_head_id = 'Select an active Department Head.'
+  }
+  if (!String(form.reason || '').trim() || form.reason.length > 1000) errors.reason = 'Enter a reason of 1 to 1000 characters.'
+  return errors
+}
