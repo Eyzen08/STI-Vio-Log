@@ -28,6 +28,8 @@
   --text-secondary: #526174;
   --text-muted: #6b7b90;
   --text-on-accent: #ffffff;
+  --action-primary-surface: var(--color-primary);
+  --action-primary-hover: var(--color-primary-dark);
   --border-subtle: #dee5ef;
   --border-strong: #b8c9da;
   --link-color: #075fb8;
@@ -125,6 +127,8 @@ html {
 :root[data-theme='dark'] {
   color-scheme: dark;
   --color-primary: #45a3f3;
+  --action-primary-surface: #0969c7;
+  --action-primary-hover: #0755a3;
   --color-primary-dark: #80c4ff;
   --color-secondary: #69b8fb;
   --color-accent: #f4ca38;

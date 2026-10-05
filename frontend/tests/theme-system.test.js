@@ -341,3 +341,33 @@ test('certificate and QR light canvases are the only explicit dark-theme excepti
   }
   assert.match(exception, /color-scheme:\s*light/)
 })
+
+test('shared password guidance is themed without relying on page-specific classes', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /:root\[data-theme='dark'\] \.password-requirements\s*\{[^}]*background: var\(--surface-nested\) !important;[^}]*color: var\(--text-primary\) !important;/s)
+  assert.match(guard, /:root\[data-theme='dark'\] \.password-requirements strong \{ color: var\(--text-primary\) !important; \}/)
+  assert.match(guard, /:root\[data-theme='dark'\] \.password-requirements \.valid \{ color: var\(--status-success-text\) !important; \}/)
+  assert.match(guard, /:root\[data-theme='dark'\] \.password-requirements \.invalid \{ color: var\(--status-danger-text\) !important; \}/)
+})
+
+test('dark action surfaces support white labels without darkening link accents', () => {
+  const dark = foundation.slice(foundation.indexOf(":root[data-theme='dark']"))
+  for (const token of ['--action-primary-surface', '--action-primary-hover']) {
+    const value = dark.match(new RegExp(`${token}:\\s*(#[a-f0-9]{6});`))[1]
+    assert.ok(contrast('#ffffff', value) >= 4.5, `${token} must support white labels`)
+  }
+  assert.match(portal, /\.audit-filter-card button:not\(\[type='button'\]\):not\(:disabled\)/)
+  assert.match(portal, /\.app-shell :is\(\.portal-avatar,\.avatar-choice-check\)[^}]*background: var\(--action-primary-surface\) !important;[^}]*color: var\(--text-on-accent\) !important;/s)
+})
+
+test('remaining summary, helper, error, and password visibility colors are themed', () => {
+  for (const selector of ['.department-summary-grid b', '.department-summary-grid span', '.clearance-status-legend b', '.portal-welcome blockquote', '.conversation-title-row > span', '.auth-shell .auth-divider span', '.route-state', '.skip-link']) {
+    assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+  }
+  assert.match(portal, /\.password-visibility:not\(:disabled\)[^}]*background: var\(--control-background\) !important;[^}]*color: var\(--link-color\) !important;/s)
+  assert.match(portal, /:root\[data-theme='dark'\] \.route-state\s*\{[^}]*background: var\(--surface-raised\) !important;/s)
+  assert.match(portal, /:root\[data-theme='dark'\] \.skip-link \{ background: var\(--surface-raised\); color: var\(--link-color\); \}/)
+  assert.match(portal, /\.department-welcome > button:not\(:disabled\)[^}]*background: var\(--surface-interactive\) !important;/s)
+  assert.match(portal, /\.portal-page-header \.scanner-state\s*\{[^}]*background: var\(--status-info-surface\) !important;/s)
+  assert.match(portal, /\.portal-page-header \.scanner-state.active\s*\{[^}]*background: var\(--status-success-surface\) !important;/s)
+})

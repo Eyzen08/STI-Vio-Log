@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel } from '../src/lib/portalNavigation.js'
-import { getNavItems } from '../src/lib/routes.js'
+import { getHomePath, getNavItems } from '../src/lib/routes.js'
 
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const cssSource = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
@@ -39,4 +39,13 @@ test('responsive portal includes a dedicated mobile bottom navigation', () => {
   assert.match(appSource, /className="mobile-bottom-nav"/)
   assert.match(cssSource, /@media \(max-width: 767px\)[\s\S]*\.mobile-bottom-nav/)
   assert.match(cssSource, /grid-template-columns: repeat\(5,1fr\)/)
+})
+
+test('sidebar and mobile logos use one dashboard action with navigation cleanup', () => {
+  assert.match(appSource, /const goToDashboard = async \(\) => \{\s*if \(isQrScanning\) await stopQrScanner\(\)\s*setIsMobileNavOpen\(false\)\s*navigateTo\(getHomePath\(userRole\)\)\s*\}/)
+  assert.equal((appSource.match(/onClick=\{goToDashboard\} aria-label="Go to dashboard"/g) || []).length, 2)
+  assert.match(appSource, /className="brand-home"[^>]*>[\s\S]*className="brand-logo"[\s\S]*className="brand-favicon"[^>]*\/>\s*<\/button>\s*<button\s*className="sidebar-close"/)
+  for (const [role, path] of Object.entries({ DISCIPLINE_ADMIN: '/admin/dashboard', DISCIPLINE_OFFICE: '/admin/dashboard', DEPARTMENT_HEAD: '/department/dashboard', STUDENT: '/student/dashboard' })) {
+    assert.equal(getHomePath(role), path)
+  }
 })

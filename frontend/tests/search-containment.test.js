@@ -46,3 +46,9 @@ test('search and preview containers include explicit shrink and overflow rules',
   assert.match(css, /directory-toolbar[\s\S]*min-width: 0/)
   assert.match(css, /registration-review-heading[\s\S]*overflow-wrap: anywhere/)
 })
+
+test('dark header search overrides generic input surfaces and keeps a wrapper focus indicator', () => {
+  const css = read('src/styles/portal-system.css')
+  assert.match(css, /:root\[data-theme='dark'\] \.app-shell \.main-panel \.topbar-search input\s*\{[^}]*background: transparent !important;/s)
+  assert.match(css, /:root\[data-theme='dark'\] \.app-shell \.main-panel \.topbar-search:focus-within \{ border-color: var\(--link-color\) !important; \}/)
+})

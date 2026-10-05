@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import PortalIcon from './PortalIcon.jsx'
 import { normalizeViolation, statusLabel } from '../lib/studentViolations.js'
 import { formatDuration, formatIncidentDateTime, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
 
@@ -84,7 +85,7 @@ function StudentViolations({ violations, loading, error }) {
                     <h3>{violation.violation_name}</h3>
                     <p>{violation.violation_code || `Record #${violation.id}`} · Incident {formatIncidentDateTime(violation.incident_date, violation.incident_time)}</p>
                   </div>
-                  <span className="violation-toggle" aria-hidden="true">{expanded ? '−' : '+'}</span>
+                  <span className="violation-toggle" aria-hidden="true"><PortalIcon name="chevron-right" className="violation-chevron" size={20} /></span>
                 </button>
 
                 {expanded && (

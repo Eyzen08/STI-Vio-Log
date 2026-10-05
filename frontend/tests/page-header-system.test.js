@@ -65,9 +65,9 @@ test('light department page headers override the legacy pale hero text', () => {
 })
 
 test('dark account settings keeps password requirements on themed surfaces', () => {
-  assert.match(portal, /:root\[data-theme='dark'\] \.account-settings-page \.password-requirements\s*\{[^}]*background: var\(--surface-nested\) !important;[^}]*color: var\(--text-primary\) !important;/s)
-  assert.match(portal, /\.account-settings-page \.password-requirements \.valid\s*\{[^}]*color: var\(--status-success-text\) !important;/s)
-  assert.match(portal, /\.account-settings-page \.password-requirements \.invalid\s*\{[^}]*color: var\(--status-danger-text\) !important;/s)
+  assert.match(portal, /:root\[data-theme='dark'\] \.password-requirements\s*\{[^}]*background: var\(--surface-nested\) !important;[^}]*color: var\(--text-primary\) !important;/s)
+  assert.match(portal, /:root\[data-theme='dark'\] \.password-requirements \.valid\s*\{[^}]*color: var\(--status-success-text\) !important;/s)
+  assert.match(portal, /:root\[data-theme='dark'\] \.password-requirements \.invalid\s*\{[^}]*color: var\(--status-danger-text\) !important;/s)
 })
 
 test('public and authentication pages do not use portal page headers', () => {
