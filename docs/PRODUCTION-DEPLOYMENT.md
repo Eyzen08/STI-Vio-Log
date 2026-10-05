@@ -6,6 +6,8 @@ Deploy the Vite frontend on Vercel and the Express API on Render. Vercel proxies
 
 The browser must use the Vercel origin for API requests. `frontend/vercel.mjs` builds the same-origin proxy from the environment-scoped `API_PROXY_ORIGIN`; it fails non-production builds that match `PRODUCTION_API_ORIGIN`. Do not configure browser requests to bypass that proxy. Custom same-site domains remain recommended if they are added later.
 
+Production frontend builds, including deployed previews, use Socket.IO HTTP long-polling through `/socket.io/*` with WebSocket upgrades disabled. This still delivers live events and preserves first-party session cookies through the existing proxy. Local development connects with polling first and may upgrade to WebSocket. No backend configuration or database migration is required for this transport change; deploy a new frontend build to activate it.
+
 ## Vercel frontend
 
 Set these encrypted environment variables for Production (and separately for Preview if previews are allowed):
@@ -74,6 +76,10 @@ After deployment verify:
 7. CSP has no violations during Google login, MFA, QR camera, exports, certificates, and realtime use.
 8. Supabase Table Editor confirms RLS enabled and `anon`/`authenticated` have no table privileges.
 9. Run `npm run smoke:production` with `PRODUCTION_FRONTEND_URL` and `PRODUCTION_API_URL` set locally.
+
+For the realtime transport release, sign in with test accounts and filter the browser Network panel for `/socket.io/`. Confirm polling requests succeed and no WebSocket requests are attempted; a pending long-polling GET while waiting for events is normal. In two authenticated test sessions, confirm messages and attendance changes update automatically, a temporary offline interruption reconnects after network restoration, and logout stops the connection. If polling fails, inspect its response and Render logs for proxy, Origin, or session errors before declaring the release verified. Clear the Console before checking so historical WebSocket failures are excluded.
+
+Verify a fresh MFA code completes login and an invalid code shows the expected authentication error. Invalid codes and expired MFA challenges should continue returning HTTP 401. Vercel Analytics remains enabled; `ERR_BLOCKED_BY_CLIENT` for its script in browsers with privacy extensions is harmless and is not a realtime failure.
 
 ## Rollback and rotation
 
