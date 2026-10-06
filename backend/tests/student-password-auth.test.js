@@ -34,6 +34,111 @@ test('shared password policy enforces every required class', () => {
   assert.deepEqual(passwordRequirements('UniquePass@1234'), {length:true,uppercase:true,number:true,special:true,uncommon:true});
 });
 
+test('shared password policy accepts 8-128 characters without relaxing complexity', () => {
+  for (const length of [7,8,9,11,12,128,129]) {
+    const password = 'Aa1!' + 'x'.repeat(length - 4);
+    const accepted = length >= 8 && length <= 128;
+    assert.equal(passwordRequirements(password).length, accepted, `length ${length}`);
+    assert.equal(passwordIsStrong(password), accepted, `length ${length}`);
+  }
+  for (const password of ['aa1!xxxx','Aaaa!xxx','Aaa1xxxx','Admin123!']) {
+    assert.equal(passwordRequirements(password).length, true);
+    assert.equal(passwordIsStrong(password), false, password);
+  }
+});
+
+test('registration rejects 7 characters and accepts 8 and 9 while requiring email verification', async () => {
+  const base = {firstName:'Jose',lastName:'Reyes',studentNumber:'02000123456',email:'student@example.test',phoneNumber:'09171234567',program:'BSIT',section:'A103',yearLevel:2,guardianName:'Maria Reyes',guardianRelationship:'Mother',guardianPhoneNumber:'09181234567'};
+  for (const length of [7,8,9]) {
+    const password = 'Aa1!' + 'x'.repeat(length - 4);
+    const queries = [], hashed = [], issued = [];
+    const client = {
+      async query(sql, params) {
+        queries.push({sql:String(sql),params});
+        if (String(sql).includes('INSERT INTO student_account_registrations')) return {rows:[{id:7,email:base.email}]};
+        return {rows:[]};
+      },
+      release() {}
+    };
+    const service = createStudentPasswordAuthService({
+      pool:{connect:async()=>client},
+      hashPassword:async(value)=>{hashed.push(value);return 'safe-hash';},
+      otpService:{issue:async(input)=>{issued.push(input);}}
+    });
+    const action = service.register({...base,password,confirmPassword:password});
+    if (length === 7) {
+      await assert.rejects(action, error=>error.code==='WEAK_PASSWORD' && /at least 8 characters/.test(error.message));
+      assert.deepEqual(queries, []);
+      assert.deepEqual(hashed, []);
+      assert.deepEqual(issued, []);
+    } else {
+      assert.deepEqual(await action, {registration_id:7,email:base.email});
+      assert.deepEqual(hashed, [password]);
+      assert.deepEqual(issued, [{purpose:'STUDENT_EMAIL_VERIFICATION',registrationId:7,email:base.email}]);
+      assert(queries.some(({sql,params})=>sql.includes('INSERT INTO student_account_registrations') && params[3]==='safe-hash'));
+      assert.equal(queries.some(({sql})=>sql.includes('INSERT INTO users')), false);
+      assert.equal(queries.at(-1).sql, 'COMMIT');
+      assert.equal(JSON.stringify(queries).includes(password), false);
+    }
+  }
+});
+
+test('Student and administrator resets enforce the new minimum and consume authorization', async () => {
+  for (const role of ['STUDENT','DISCIPLINE_ADMIN']) {
+    for (const length of [7,8,9]) {
+      const newPassword = 'Aa1!' + 'x'.repeat(length - 4);
+      const queries = [], hashed = [];
+      const client = {
+        async query(sql, params) {
+          queries.push({sql:String(sql),params});
+          if (String(sql).includes('SELECT * FROM password_reset_authorizations')) return {rows:[{id:7,user_id:3}]};
+          if (String(sql).includes('SELECT password_hash,role')) return {rows:[{password_hash:'old-hash',role}]};
+          return {rows:[]};
+        },
+        release() {}
+      };
+      const service = createStudentPasswordAuthService({
+        pool:{connect:async()=>client},otpService:{},comparePassword:async()=>false,
+        hashPassword:async(value)=>{hashed.push(value);return 'safe-hash';}
+      });
+      const action = service.resetPassword({resetToken:'reset-token',newPassword,confirmPassword:newPassword});
+      if (length === 7) {
+        await assert.rejects(action, error=>error.code==='WEAK_PASSWORD' && /at least 8 characters/.test(error.message));
+        assert.deepEqual(queries, []);
+        assert.deepEqual(hashed, []);
+      } else {
+        await action;
+        assert.deepEqual(hashed, [newPassword]);
+        assert(queries.some(({sql})=>sql.includes('used_at IS NULL AND expires_at>CURRENT_TIMESTAMP')));
+        assert(queries.some(({sql,params})=>sql.includes('UPDATE users') && sql.includes('session_version=session_version+1') && sql.includes('must_change_password=FALSE') && params[1]==='safe-hash'));
+        assert(queries.some(({sql,params})=>sql.includes('UPDATE password_reset_authorizations SET used_at') && params[0]===7));
+        assert(queries.some(({sql,params})=>sql.includes('INSERT INTO audit_logs') && params[1]===(role==='STUDENT'?'STUDENT_PASSWORD_RESET':'ADMIN_PASSWORD_RESET')));
+        assert.equal(queries.at(-1).sql, 'COMMIT');
+        assert.equal(JSON.stringify(queries).includes(newPassword), false);
+      }
+    }
+  }
+});
+
+test('8-character resets still reject invalid authorization and password reuse', async () => {
+  for (const code of ['RESET_AUTHORIZATION_INVALID','PASSWORD_REUSE']) {
+    const queries = [];
+    const client = {
+      async query(sql) {
+        queries.push(String(sql));
+        if (String(sql).includes('SELECT * FROM password_reset_authorizations')) return {rows:code==='RESET_AUTHORIZATION_INVALID'?[]:[{id:7,user_id:3}]};
+        if (String(sql).includes('SELECT password_hash,role')) return {rows:[{password_hash:'old-hash',role:'STUDENT'}]};
+        return {rows:[]};
+      },
+      release() {}
+    };
+    const service = createStudentPasswordAuthService({pool:{connect:async()=>client},otpService:{},comparePassword:async()=>true,hashPassword:async()=>assert.fail('Rejected reset must not hash a password')});
+    await assert.rejects(service.resetPassword({resetToken:'reset-token',newPassword:'Aa1!xxxx',confirmPassword:'Aa1!xxxx'}), error=>error.code===code);
+    assert.equal(queries.some(sql=>sql.startsWith('UPDATE ')), false);
+    assert.equal(queries.at(-1), 'ROLLBACK');
+  }
+});
+
 test('OTP generation is six digits and hashing does not expose the code', () => {
   for(let index=0;index<20;index+=1) assert.match(secureOtp(), /^\d{6}$/);
   const digest=hashSecret('123456','s'.repeat(48));

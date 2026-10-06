@@ -3,7 +3,7 @@ import { passwordRequirements } from '../lib/passwordPolicy.js'
 export default function PasswordRequirements({ password }) {
   const requirements = passwordRequirements(password)
   const rows = [
-    ['length', '12 or more characters'],
+    ['length', '8 or more characters'],
     ['uppercase', 'One uppercase letter'],
     ['number', 'One number'],
     ['special', 'One special character'],

@@ -13,6 +13,9 @@ test("OpenAPI contract parses and documents critical endpoint groups", () => {
     assert.equal(spec.components.securitySchemes.sessionCookie.name, 'sti_session');
     assert.equal(spec.components.securitySchemes.csrfHeader.name, 'X-CSRF-Token');
     assert.deepEqual(spec.security, [{ sessionCookie: [] }]);
+    const password = spec.paths['/login'].post.requestBody.content['application/json'].schema.properties.password;
+    assert.equal(password.minLength, 8);
+    assert.equal(password.maxLength, 128);
     const studentMessage = spec.paths['/messages/conversations'].post.requestBody.content['application/json'].schema.oneOf[0];
     assert.deepEqual(studentMessage.required, ['subject', 'message']);
     assert.equal(studentMessage.additionalProperties, false);
