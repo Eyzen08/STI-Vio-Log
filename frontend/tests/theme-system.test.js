@@ -111,6 +111,16 @@ test('dark validation and destructive controls share danger tokens', () => {
   assert.doesNotMatch(portal, /button:not\(\[type='button'\]\):last-child\s*\{[^}]*background:var\(--color-primary\)/)
 })
 
+test('discard confirmation buttons keep readable dark-theme states', () => {
+  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
+  assert.match(guard, /\.app-modal \.discard-edits button:not\(\.danger-button\):not\(:disabled\)\s*\{[^}]*border-color:var\(--border-strong\)[^}]*background:var\(--surface-interactive\)[^}]*color:var\(--link-color\)/s)
+  assert.match(guard, /\.app-modal \.discard-edits button:not\(\.danger-button\):hover:not\(:disabled\)\s*\{[^}]*background:var\(--surface-interactive-hover\)[^}]*color:var\(--link-hover\)/s)
+  assert.match(guard, /\.app-modal \.discard-edits button:not\(\.danger-button\):focus-visible\s*\{[^}]*outline-color:var\(--link-color\)/s)
+  assert.match(guard, /\.danger-button\s*\{[^}]*background:var\(--status-danger-surface\)[^}]*color:var\(--status-danger-text\)/s)
+  assert.match(guard, /\.danger-button:hover:not\(:disabled\),[\s\S]*background:var\(--color-danger\)/)
+  assert.match(guard, /\.app-modal :is\(button,[^}]*:disabled\s*\{[^}]*background:var\(--control-disabled-background\)/s)
+})
+
 test('dark notifications and account controls cannot fall back to light surfaces', () => {
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   for (const selector of ['.notifications-hero', '.notification-list > article', '.notification-heading > span', '.account-directory-panel', '.account-directory-search', '.account-action-results > button', '.account-action-form', '.selected-account-summary', '.account-result-avatar', '.monitoring-slide .table-wrap thead th']) {

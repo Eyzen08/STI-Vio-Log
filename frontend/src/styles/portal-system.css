@@ -3451,6 +3451,21 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   box-shadow:0 0 0 3px color-mix(in srgb,var(--color-danger) 35%,transparent) !important;
 }
 
+/* The discard prompt lives in a portal, outside the themed app shell. */
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):not(:disabled) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):hover:not(:disabled) {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive-hover) !important;
+  color:var(--link-hover) !important;
+}
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):focus-visible {
+  outline-color:var(--link-color) !important;
+}
+
 :root[data-theme='dark'] .main-panel--messages :is(.messages-workspace,.conversation-pane,.chat-pane,.chat-header,.chat-composer) {
   border-color: var(--border-subtle) !important;
   background: var(--surface-raised) !important;
