@@ -7,10 +7,11 @@ import ServiceCountdown from './ServiceCountdown.jsx'
 import OffenseIndicator from './OffenseIndicator.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import DashboardQuickActions from './DashboardQuickActions.jsx'
+import DashboardAnalytics from './DashboardAnalytics.jsx'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 
-function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], unreadMessages = 0, loading, role, onNavigate, attendanceReady = true, attendanceError }) {
+function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], unreadMessages = 0, loading, error, role, onNavigate, attendanceReady = true, attendanceError }) {
   const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
   const [attendanceQuery, setAttendanceQuery] = useState('')
   const roster = attendanceRoster(students, assignments, activeSessions, attendanceQuery)
@@ -91,6 +92,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
         <article className="dashboard-card recent-activity-card"><header className="dashboard-section-heading"><div><h3>Recent activity</h3><p>Updates requiring awareness</p></div></header><ul>{violations.slice(0,3).map((item)=><li key={item.id}><i><PortalIcon name="violations"/></i><div><strong>Violation {item.status?.toLowerCase()}</strong><span>{item.student_name || `Student #${item.student_id}`}</span></div></li>)}</ul></article>
       </div>
     </section>
+    <DashboardAnalytics students={students} violations={violations} assignments={assignments} loading={loading} error={error}/>
   </div>
 }
 
