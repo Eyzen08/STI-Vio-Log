@@ -4,11 +4,16 @@ import fs from 'node:fs'
 
 import { validateSignatureFile } from '../src/lib/signatureImage.js'
 
-test('administrative Reports places analytics below report results and pagination', () => {
+test('analytics is its own administrative view and Reports contains only report content', () => {
   const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const reports = source.slice(source.indexOf('className="reports-workspace"'))
-  assert.ok(reports.indexOf('<DashboardAnalytics') > reports.indexOf('className="report-pagination"'))
-  assert.match(reports, /focusOnOpen=\{focusAnalytics\}/)
+  const analytics = source.indexOf("activeView === 'Analytics & Trends'")
+  const reports = source.indexOf("activeView === 'Reports'", analytics)
+  assert.ok(analytics > 0 && reports > analytics)
+  assert.match(source.slice(analytics, reports), /<DashboardAnalytics/)
+  assert.doesNotMatch(source.slice(reports, source.indexOf('MAIN APPLICATION LAYOUT', reports)), /<DashboardAnalytics/)
+  const quickActions = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
+  assert.match(quickActions, /Graphs<\/span>/)
+  assert.match(quickActions, /onNavigate\?\.\('\/admin\/analytics'\)/)
 })
 
 test('quick actions are role scoped and navigate only within the role portal', () => {

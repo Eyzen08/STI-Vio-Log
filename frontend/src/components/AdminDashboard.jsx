@@ -10,7 +10,7 @@ import DashboardQuickActions from './DashboardQuickActions.jsx'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 
-function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], unreadMessages = 0, loading, role, onNavigate, onOpenGraphs, attendanceReady = true, attendanceError }) {
+function AdminDashboard({ students = [], violations = [], assignments = [], clearanceRecords = [], activeSessions = [], unreadMessages = 0, loading, role, onNavigate, attendanceReady = true, attendanceError }) {
   const visibleActiveSessions = activeSessions.filter(isActiveServiceSession)
   const [attendanceQuery, setAttendanceQuery] = useState('')
   const roster = attendanceRoster(students, assignments, activeSessions, attendanceQuery)
@@ -61,7 +61,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], clea
   return <div className="admin-dashboard portal-dashboard">
     <section className="portal-welcome portal-page-header"><div><h2>Welcome back, {firstLabel}!</h2><p>Here’s what’s happening at STI Global City today.</p></div><time>{new Intl.DateTimeFormat('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date())}</time></section>
     <section className="stats-grid admin-stats" aria-label="Priority administrative summary">{primaryMetrics.map(metricCard)}</section>
-    <DashboardQuickActions role={role} onNavigate={onNavigate} onOpenGraphs={onOpenGraphs}/>
+    <DashboardQuickActions role={role} onNavigate={onNavigate}/>
     <details className="dashboard-additional-metrics"><summary>View additional totals</summary><section className="stats-grid admin-stats" aria-label="Additional administrative totals">{additionalMetrics.map(metricCard)}</section></details>
     <section className="admin-dashboard-grid">
       <div className="admin-dashboard-primary">

@@ -2,8 +2,8 @@ import Avatar from './components/Avatar.jsx'
 import StudentAvatarUpload from './components/StudentAvatarUpload.jsx'
 import './styles/avatars.css'
 import { academicProgram, academicYear, isSeniorHigh, academicLevelLabel } from './lib/studentAcademic.js'
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { flushSync } from 'react-dom'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal, flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
@@ -69,7 +69,7 @@ import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
-import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath } from './lib/portalNavigation.js'
+import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { displayPhilippinePhone } from './lib/phone.js'
@@ -79,6 +79,25 @@ import './App.css'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
 const EMPTY_MFA_DRAFT = { code:'', recovery:false }
+
+function SidebarTooltip({ anchor, text }) {
+  const tooltipRef = useRef(null)
+
+  useLayoutEffect(() => {
+    const tooltip = tooltipRef.current
+    if (!tooltip || !anchor.isConnected) return
+    tooltip.style.visibility = 'hidden'
+    const trigger = anchor.getBoundingClientRect()
+    const { width, height } = tooltip.getBoundingClientRect()
+    const gap = 8
+    const right = trigger.right + gap
+    tooltip.style.left = `${right + width <= window.innerWidth - gap ? right : Math.max(gap, trigger.left - width - gap)}px`
+    tooltip.style.top = `${Math.max(gap, Math.min(window.innerHeight - height - gap, trigger.top + (trigger.height - height) / 2))}px`
+    tooltip.style.visibility = 'visible'
+  }, [anchor, text])
+
+  return createPortal(<div className="sidebar-tooltip" role="tooltip" ref={tooltipRef}>{text}</div>, document.body)
+}
 
 function SessionRestoringScreen() {
   return (
@@ -128,6 +147,8 @@ function App() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isDesktopNavigation, setIsDesktopNavigation] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const [openSidebarGroup, setOpenSidebarGroup] = useState(() => sidebarGroupForPath(sidebarNavigationFor(initialSession.user?.role), routePath))
+  const [sidebarTooltip, setSidebarTooltip] = useState(null)
+  const sidebarTooltipTimerRef = useRef(null)
   const [theme, setTheme] = useState(() => readDocumentTheme(document))
   const themeTransitionTimerRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -201,7 +222,6 @@ function App() {
   const [violations, setViolations] = useState([])
   const [dashboardLoading, setDashboardLoading] = useState(false)
   const [dashboardError, setDashboardError] = useState('')
-  const [focusAnalytics, setFocusAnalytics] = useState(false)
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
@@ -454,6 +474,50 @@ function App() {
   const activeSidebarGroup = sidebarGroupForPath(sidebarEntries, routePath)
   const isSidebarIconRail = isSidebarCollapsed && isDesktopNavigation
 
+  const hideSidebarTooltip = useCallback(() => {
+    window.clearTimeout(sidebarTooltipTimerRef.current)
+    setSidebarTooltip(null)
+  }, [])
+  const sidebarTooltipProps = (label, suppressed = false) => {
+    const text = sidebarTooltipFor(label)
+    const show = (anchor, delay = 0) => {
+      window.clearTimeout(sidebarTooltipTimerRef.current)
+      if (!delay) {
+        if (anchor.isConnected) setSidebarTooltip({ anchor, text })
+      } else {
+        sidebarTooltipTimerRef.current = window.setTimeout(() => {
+          if (anchor.isConnected) setSidebarTooltip({ anchor, text })
+        }, delay)
+      }
+    }
+    return {
+      'aria-description': text,
+      onPointerEnter: (event) => {
+        if (isDesktopNavigation && !suppressed && event.pointerType === 'mouse') show(event.currentTarget, 500)
+      },
+      onPointerLeave: hideSidebarTooltip,
+      onFocus: (event) => {
+        if (isDesktopNavigation && !suppressed && event.currentTarget.matches(':focus-visible')) show(event.currentTarget)
+      },
+      onBlur: hideSidebarTooltip,
+      onKeyDown: (event) => { if (event.key === 'Escape') hideSidebarTooltip() }
+    }
+  }
+
+  useEffect(() => {
+    hideSidebarTooltip()
+  }, [hideSidebarTooltip, routePath, isSidebarCollapsed, isMobileNavOpen, openSidebarGroup, user?.role, isDesktopNavigation])
+
+  useEffect(() => {
+    window.addEventListener('scroll', hideSidebarTooltip, true)
+    window.addEventListener('resize', hideSidebarTooltip)
+    return () => {
+      window.removeEventListener('scroll', hideSidebarTooltip, true)
+      window.removeEventListener('resize', hideSidebarTooltip)
+      window.clearTimeout(sidebarTooltipTimerRef.current)
+    }
+  }, [hideSidebarTooltip])
+
   useEffect(() => {
     setOpenSidebarGroup(activeSidebarGroup)
   }, [routePath, user?.role, activeSidebarGroup])
@@ -603,16 +667,11 @@ function App() {
   }
 
   const navigateTo = (path, { replace = false } = {}) => {
-    setFocusAnalytics(false)
+    hideSidebarTooltip()
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
     setRoutePath(path)
     setOpenSidebarGroup(sidebarGroupForPath(sidebarEntries, path))
     window.scrollTo({ top: 0, behavior: 'instant' })
-  }
-
-  const openGraphs = () => {
-    navigateTo('/admin/reports')
-    setFocusAnalytics(true)
   }
 
   const goToDashboard = async () => {
@@ -1744,7 +1803,7 @@ function App() {
    * ============================================================
    */
 
-  const requestLogout = () => setLogoutConfirmation(true)
+  const requestLogout = () => { hideSidebarTooltip(); setLogoutConfirmation(true) }
 
   const handleLogout = async () => {
     if (logoutBusy) return
@@ -2187,7 +2246,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onOpenGraphs={openGraphs} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
@@ -3186,6 +3245,10 @@ function App() {
      * ==========================================================
      */
 
+    if (activeView === 'Analytics & Trends') {
+      return <div className="analytics-workspace"><DashboardAnalytics students={students} violations={violations} assignments={communityServiceAssignments} loading={dashboardLoading} error={dashboardError}/></div>
+    }
+
     if (
       activeView === 'Reports'
     ) {
@@ -3438,7 +3501,6 @@ function App() {
             {reportType === 'dtr' && reportGenerated && <ServiceHourCorrections corrections={reportHourCorrections}/>}
             {reportData.length > 50 && <nav className="report-pagination" aria-label="Report result pages"><button type="button" className="secondary-button" disabled={reportPage === 1} onClick={() => setReportPage((page) => page - 1)}>Previous</button><span role="status">Page {reportPage} of {Math.ceil(reportData.length / 50)} · {reportData.length} records</span><button type="button" className="secondary-button" disabled={reportPage >= Math.ceil(reportData.length / 50)} onClick={() => setReportPage((page) => page + 1)}>Next</button></nav>}
           </section>
-          <DashboardAnalytics students={students} violations={violations} assignments={communityServiceAssignments} loading={dashboardLoading} error={dashboardError} focusOnOpen={focusAnalytics} onFocusHandled={() => setFocusAnalytics(false)}/>
         </div>
       )
     }
@@ -3465,7 +3527,7 @@ function App() {
         type="button"
         aria-label={item.label}
         aria-current={routePath === item.path ? 'page' : undefined}
-        title={isSidebarIconRail ? item.label : undefined}
+        {...sidebarTooltipProps(item.label)}
       >
         <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
         {formatActionCount(badge.count) && <span className="nav-pending-badge" aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</span>}
@@ -3520,8 +3582,9 @@ function App() {
                 aria-label={entry.label}
                 aria-expanded={expanded}
                 aria-controls={`sidebar-${entry.id}-pages`}
-                title={isSidebarIconRail ? entry.label : undefined}
+                {...sidebarTooltipProps(entry.label, expanded)}
                 onClick={() => {
+                  hideSidebarTooltip()
                   if (isSidebarIconRail) {
                     setIsSidebarCollapsed(false)
                     setOpenSidebarGroup(entry.id)
@@ -3540,9 +3603,11 @@ function App() {
           })}
         </nav>
         <div className="nav-account-actions">
-          <button type="button" className="nav-item" aria-label="Logout" title={isSidebarIconRail ? 'Logout' : undefined} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
+          <button type="button" className="nav-item" aria-label="Logout" {...sidebarTooltipProps('Logout')} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
         </div>
       </aside>}
+
+      {sidebarTooltip && isLoggedIn && isDesktopNavigation && <SidebarTooltip anchor={sidebarTooltip.anchor} text={sidebarTooltip.text} />}
 
       <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">
         {isLoggedIn && <header className="topbar">

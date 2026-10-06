@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath } from '../src/lib/portalNavigation.js'
+import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from '../src/lib/portalNavigation.js'
 import { APP_ROUTES, getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
 
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
@@ -20,17 +20,40 @@ test('role navigation uses meaningful visual categories and icons', () => {
 const sidebarPages = (entries) => entries.flatMap((entry) => entry.type === 'group' ? entry.items : [entry])
 const sidebarLabels = (role) => sidebarNavigationFor(role).map((entry) => entry.type === 'group' ? [entry.label, entry.items.map((item) => item.label)] : entry.label)
 
+test('sidebar tooltips describe every permitted item with the approved copy', () => {
+  const expected = {
+    Dashboard: 'View discipline overview', Students: 'Manage student records', Discipline: 'View discipline modules',
+    Violations: 'Add student violation', 'Active Attendance': 'Monitor active attendance', 'Community Service': 'Manage community service',
+    'QR Scan': 'Scan attendance QR code', Clearance: 'Manage student clearance', Messages: 'View student messages',
+    Reports: 'Generate discipline reports', 'System & Management': 'Manage system settings', Logout: 'Sign out of STI Vio-Log',
+    'Departments & Officer Accounts': 'Manage departments and officers', 'Duplicate Review': 'Review duplicate records',
+    'System Monitoring': 'Monitor system activity', Settings: 'Configure system settings',
+    'Assigned Students': 'View assigned student records', Attendance: 'Review attendance records',
+    'Service Results': 'Review service results', 'Follow-up': 'Review non-compliance follow-ups',
+    'My Profile': 'View your profile', 'My Violations': 'View your violations', 'My Service': 'View your service progress',
+    'My QR': 'View your QR code', 'My Clearance': 'View your clearance', 'Audit Log': 'Review discipline audit log',
+    'Analytics & Trends': 'Explore discipline trends'
+  }
+  for (const [label, description] of Object.entries(expected)) assert.equal(sidebarTooltipFor(label), description)
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+    for (const entry of sidebarNavigationFor(role)) {
+      assert.ok(sidebarTooltipFor(entry.label), `${role}: ${entry.label}`)
+      if (entry.type === 'group') for (const item of entry.items) assert.ok(sidebarTooltipFor(item.label), `${role}: ${item.label}`)
+    }
+  }
+})
+
 test('administrator sidebar follows the requested hierarchy and child order', () => {
   assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
     'Dashboard', 'Students',
     ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
-    'Messages', ['Reports', ['Reports', 'Audit Log']],
+    'Messages', ['Reports', ['Reports', 'Audit Log', 'Analytics & Trends']],
     ['System & Management', ['Departments & Officer Accounts', 'Duplicate Review', 'System Monitoring', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
     'Dashboard', 'Students',
     ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
-    'Messages', ['Reports', ['Reports']], ['System & Management', ['Settings']]
+    'Messages', ['Reports', ['Reports', 'Analytics & Trends']], ['System & Management', ['Settings']]
   ])
 })
 
@@ -78,6 +101,10 @@ test('sidebar route grouping recognizes every child and keeps direct pages indep
     assert.equal(sidebarGroupForPath(entries, '/admin/registrations'), null)
   }
   assert.equal(sidebarGroupForPath(sidebarNavigationFor('DISCIPLINE_OFFICE'), '/admin/audit-log'), null)
+  assert.equal(resolveRoute('/admin/analytics', 'DISCIPLINE_ADMIN').status, 'allowed')
+  assert.equal(resolveRoute('/admin/analytics', 'DISCIPLINE_OFFICE').status, 'allowed')
+  assert.equal(resolveRoute('/admin/analytics', 'DEPARTMENT_HEAD').status, 'unauthorized')
+  assert.equal(resolveRoute('/admin/analytics', 'STUDENT').status, 'unauthorized')
   assert.equal(sidebarGroupForPath(sidebarNavigationFor('STUDENT'), '/admin/violations'), null)
 })
 

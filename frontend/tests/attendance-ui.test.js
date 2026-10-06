@@ -21,12 +21,12 @@ const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, statu
 
 test('administrative dashboards offer Graphs without mounting analytics cards', () => {
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
-    const html = render('AdminDashboard', { role, onNavigate() {}, onOpenGraphs() {} })
+    const html = render('AdminDashboard', { role, onNavigate() {} })
     assert.match(html, />Graphs</)
     assert.doesNotMatch(html, /Analytics &amp; Trends|Recorded Violations Over Time/)
   }
   for (const role of ['DEPARTMENT_HEAD', 'STUDENT']) {
-    assert.doesNotMatch(render('DashboardQuickActions', { role, onOpenGraphs() {} }), />Graphs</)
+    assert.doesNotMatch(render('DashboardQuickActions', { role, onNavigate() {} }), />Graphs</)
   }
 })
 

@@ -21,6 +21,7 @@ export const APP_ROUTES = [
   { path: '/admin/qr-scan', label: 'QR Scan', view: 'QR Scan', roles: ROLE_GROUPS.administration },
   { path: '/admin/clearance', label: 'Clearance', view: 'Clearance', roles: ROLE_GROUPS.administration },
   { path: '/admin/reports', label: 'Reports', view: 'Reports', roles: ROLE_GROUPS.administration },
+  { path: '/admin/analytics', label: 'Analytics & Trends', view: 'Analytics & Trends', roles: ROLE_GROUPS.administration },
   { path: '/admin/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.administration },
   { path: '/admin/messages', label: 'Messages', view: 'Messages', roles: ROLE_GROUPS.administration },
   { path: '/admin/system-monitoring', label: 'System Monitoring', view: 'System Dashboard', roles: ['DISCIPLINE_ADMIN'] },

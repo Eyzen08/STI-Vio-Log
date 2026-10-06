@@ -2,7 +2,7 @@ import { APP_ROUTES, getNavItems } from './routes.js'
 
 const SIDEBAR_GROUPS = [
   { id: 'discipline', label: 'Discipline', icon: 'violations', views: ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance'] },
-  { id: 'reports', label: 'Reports', icon: 'reports', views: ['Reports', 'Audit Log'] },
+  { id: 'reports', label: 'Reports', icon: 'reports', views: ['Reports', 'Audit Log', 'Analytics & Trends'] },
   { id: 'management', label: 'System & Management', icon: 'settings', views: ['Departments & Officer Accounts', 'Duplicate Review', 'System Dashboard', 'Account Settings'] }
 ]
 
@@ -31,11 +31,43 @@ export const sidebarNavigationFor = (role = '') => {
 export const sidebarGroupForPath = (entries = [], path = '') =>
   entries.find((entry) => entry.type === 'group' && entry.items.some((item) => item.path === path))?.id || null
 
+const SIDEBAR_TOOLTIPS = {
+  Dashboard: 'View discipline overview',
+  Students: 'Manage student records',
+  Discipline: 'View discipline modules',
+  Violations: 'Add student violation',
+  'Active Attendance': 'Monitor active attendance',
+  'Community Service': 'Manage community service',
+  'QR Scan': 'Scan attendance QR code',
+  Clearance: 'Manage student clearance',
+  Messages: 'View student messages',
+  Reports: 'Generate discipline reports',
+  'System & Management': 'Manage system settings',
+  Logout: 'Sign out of STI Vio-Log',
+  'Departments & Officer Accounts': 'Manage departments and officers',
+  'Duplicate Review': 'Review duplicate records',
+  'System Monitoring': 'Monitor system activity',
+  Settings: 'Configure system settings',
+  'Assigned Students': 'View assigned student records',
+  Attendance: 'Review attendance records',
+  'Service Results': 'Review service results',
+  'Follow-up': 'Review non-compliance follow-ups',
+  'My Profile': 'View your profile',
+  'My Violations': 'View your violations',
+  'My Service': 'View your service progress',
+  'My QR': 'View your QR code',
+  'My Clearance': 'View your clearance',
+  'Audit Log': 'Review discipline audit log',
+  'Analytics & Trends': 'Explore discipline trends'
+}
+
+export const sidebarTooltipFor = (label) => SIDEBAR_TOOLTIPS[label]
+
 export const iconNameForView = (view = '') => ({
   Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', 'My Profile': 'students', 'Assigned Students': 'students',
   'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',
-  'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'My Clearance': 'clearance', Reports: 'reports',
+  'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'My Clearance': 'clearance', Reports: 'reports', 'Analytics & Trends': 'reports',
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings',
   'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations'
 }[view] || 'dashboard')
