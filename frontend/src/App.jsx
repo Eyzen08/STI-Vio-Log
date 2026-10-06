@@ -2246,7 +2246,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} loading={dashboardLoading} error={dashboardError} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
@@ -3536,7 +3536,7 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       {isLoggedIn && isMobileNavOpen && (
         <button
@@ -3640,7 +3640,7 @@ function App() {
             </button>
 
             {(isAdmin || isDepartmentHead) && <form className="topbar-search" role="search" onSubmit={(event)=>{event.preventDefault(); navigateTo(isAdmin?'/admin/students':'/department/students')}}>
-              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search student directory…'}/>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search students, violations, IDs...'}/>
             </form>}
           </div>
 

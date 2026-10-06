@@ -12,8 +12,9 @@ test('analytics is its own administrative view and Reports contains only report 
   assert.match(source.slice(analytics, reports), /<DashboardAnalytics/)
   assert.doesNotMatch(source.slice(reports, source.indexOf('MAIN APPLICATION LAYOUT', reports)), /<DashboardAnalytics/)
   const quickActions = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
-  assert.match(quickActions, /Graphs<\/span>/)
-  assert.match(quickActions, /onNavigate\?\.\('\/admin\/analytics'\)/)
+  assert.doesNotMatch(quickActions, /Graphs<\/span>/)
+  const navigation = fs.readFileSync(new URL('../src/lib/portalNavigation.js', import.meta.url), 'utf8')
+  assert.match(navigation, /'Reports', 'Audit Log', 'Analytics & Trends'/)
 })
 
 test('quick actions are role scoped and navigate only within the role portal', () => {
@@ -30,30 +31,19 @@ test('quick actions are role scoped and navigate only within the role portal', (
   }
 })
 
-test('admin dashboard omits registration metrics and keeps additional totals accessible', () => {
+test('admin reference uses four summaries and an active-only compact attendance card', () => {
   const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
-  assert.match(source, /const primaryMetrics = \[/)
-  assert.match(source, /View additional totals/)
-  assert.match(source, /dashboard-additional-metrics/)
-  assert.doesNotMatch(source, /pendingRegistrations|Pending reviews|Student registrations/)
-})
-
-test('current attendance status fills the dashboard primary column with responsive scrolling', () => {
-  const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  const primary = source.match(/className="admin-dashboard-primary"([\s\S]*?)className="admin-dashboard-secondary"/)?.[1] || ''
-  assert.ok(primary.indexOf('Recent Violations') < primary.indexOf('Current attendance status'))
-  assert.match(primary, /roster\.map/)
-  assert.match(primary, /Loading attendance status/)
+  const css = fs.readFileSync(new URL('../src/styles/admin-dashboard.css', import.meta.url), 'utf8')
+  assert.match(source, /Cases Resolved/)
+  assert.doesNotMatch(source, /pendingRegistrations|Pending reviews|Student registrations|attendanceQuery/)
+  assert.match(source, /roster\.slice\(0, 3\)\.map/)
+  assert.match(source, /filter\(\(student\) => student\.sessions\.length\)/)
+  assert.match(source, /Loading attendance status/)
   assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
   assert.match(source, /activeSessions\.filter\(isActiveServiceSession\)/)
-  assert.match(primary, /<ServiceCountdown session=\{session\} now=\{now\}/)
-  assert.match(primary, /data-label="Student"/)
-  assert.match(primary, /Supervising officer:/)
-  assert.match(css, /\.active-session-card \.table-wrap \{[^}]*max-height: 20rem;[^}]*overflow: auto;/s)
-  assert.match(css, /\.active-session-card thead th \{[^}]*position: sticky;[^}]*top: 0;/s)
-  assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.admin-dashboard-grid \{[^}]*grid-template-columns: 1fr;/s)
-  assert.match(css, /@media \(max-width: 1100px\)[\s\S]*?\.active-session-card \.table-wrap \{[^}]*max-height: none;[^}]*overflow: visible;/s)
+  assert.match(source, /<ServiceCountdown session=\{session\} now=\{now\}/)
+  assert.match(css, /grid-template-areas:'violations offense' 'violations service' 'attendance activity'/)
+  assert.match(css, /@media \(max-width:767px\)/)
 })
 
 test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {

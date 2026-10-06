@@ -28,7 +28,7 @@ function DashboardQuickActions({ role, onNavigate }) {
   if (!actions.length) return null
   return <section className="dashboard-card dashboard-quick-actions" aria-labelledby={`${role}-quick-actions`}>
     <header><h3 id={`${role}-quick-actions`}>Quick Actions</h3></header>
-    <div>{actions.map(([icon, label, path]) => <button type="button" key={path} onClick={() => onNavigate?.(path)}><PortalIcon name={icon}/><span>{label}</span></button>)}{['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role) && <button type="button" onClick={() => onNavigate?.('/admin/analytics')}><PortalIcon name="reports"/><span>Graphs</span></button>}</div>
+    <div>{actions.map(([icon, label, path]) => <button type="button" key={path} onClick={() => onNavigate?.(path)}><PortalIcon name={icon}/><span>{label}</span></button>)}</div>
   </section>
 }
 

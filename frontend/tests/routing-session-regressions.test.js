@@ -24,10 +24,10 @@ test('student account settings render before the student dashboard fallback', ()
   assert.match(renderContent.slice(settings, studentFallback), /AccountSecuritySettings/)
 })
 
-test('clearance-ready dashboard total uses authoritative pending clearance records', () => {
-  assert.match(app, /clearanceRecords=\{clearanceRecords\}/)
-  assert.match(dashboard, /clearanceRecords\.filter\(\(item\) => item\.status === 'PENDING'\)\.length/)
-  assert.doesNotMatch(dashboard, /const clearanceReady = assignments/)
+test('resolved dashboard total uses authoritative completed or cleared violations', () => {
+  assert.match(dashboard, /\['COMPLETE', 'CLEAR'\]\.includes\(status\)/)
+  assert.match(dashboard, /violations\.filter\(\(item\) => resolved\(item\.status\)\)\.length/)
+  assert.doesNotMatch(dashboard, /const casesResolved = assignments/)
 })
 
 test('notification badges use the API summary instead of the loaded page length', () => {
