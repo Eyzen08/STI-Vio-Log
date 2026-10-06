@@ -68,7 +68,7 @@ import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
 import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
-import { iconNameForView, mobileNavItemsFor, mobileNavLabel } from './lib/portalNavigation.js'
+import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { displayPhilippinePhone } from './lib/phone.js'
@@ -125,6 +125,8 @@ function App() {
   const [routePath, setRoutePath] = useState(() => window.location.pathname)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isDesktopNavigation, setIsDesktopNavigation] = useState(() => window.matchMedia('(min-width: 768px)').matches)
+  const [openSidebarGroup, setOpenSidebarGroup] = useState(() => sidebarGroupForPath(sidebarNavigationFor(initialSession.user?.role), routePath))
   const [theme, setTheme] = useState(() => readDocumentTheme(document))
   const themeTransitionTimerRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -431,17 +433,6 @@ function App() {
 
   const navItems = getNavItems(user?.role)
 
-  const navGroupName = (item) => {
-    if (item.view === 'Dashboard') return 'Overview'
-    if (['Students','Duplicate Review','My Profile','My QR','My Violations','My Service','My Clearance','Notifications','Assigned Students'].includes(item.view)) return user?.role === 'STUDENT' ? 'My portal' : 'Students'
-    if (['Violations','Active Attendance','Community Service','QR Scan','Clearance','DTR','Non-Compliance','Service Results','Attendance','Follow-up'].includes(item.view)) return 'Discipline'
-    if (item.view === 'Departments & Officer Accounts') return 'Management'
-    if (item.view === 'Messages') return 'Communication'
-    if (item.view === 'System Dashboard') return 'System'
-    if (['Reports','Audit Log'].includes(item.view)) return 'Reports'
-    return 'Account'
-  }
-
   const markAllNotificationsRead = async (category = 'ALL') => performMutation('notificationsReadAll', async () => {
     setNotificationActionError('')
     try {
@@ -457,12 +448,19 @@ function App() {
     } catch (error) { setNotificationActionError(error.message) }
   })
 
-  const navGroups = navItems.filter((item) => item.view !== 'Account Settings').reduce((groups, item) => {
-    const name = navGroupName(item)
-    const group = groups.find((candidate) => candidate.name === name)
-    if (group) group.items.push(item)
-    else groups.push({ name, items: [item] })
-    return groups
+  const sidebarEntries = sidebarNavigationFor(user?.role)
+  const activeSidebarGroup = sidebarGroupForPath(sidebarEntries, routePath)
+  const isSidebarIconRail = isSidebarCollapsed && isDesktopNavigation
+
+  useEffect(() => {
+    setOpenSidebarGroup(activeSidebarGroup)
+  }, [routePath, user?.role, activeSidebarGroup])
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 768px)')
+    const updateViewport = (event) => setIsDesktopNavigation(event.matches)
+    media.addEventListener('change', updateViewport)
+    return () => media.removeEventListener('change', updateViewport)
   }, [])
 
   const mobileNavItems = mobileNavItemsFor(navItems, user?.role)
@@ -605,6 +603,7 @@ function App() {
   const navigateTo = (path, { replace = false } = {}) => {
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
     setRoutePath(path)
+    setOpenSidebarGroup(sidebarGroupForPath(sidebarEntries, path))
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
 
@@ -3443,6 +3442,28 @@ function App() {
    * ============================================================
    */
 
+  const renderSidebarPage = (item) => {
+    const badge = badgeForNavigationItem(item)
+    return (
+      <button
+        key={item.path}
+        className={`nav-item${item.view === 'Messages' ? ' messages-nav-item' : ''}${routePath === item.path ? ' active' : ''}`}
+        onClick={() => {
+          if (isQrScanning && item.view !== 'QR Scan') stopQrScanner()
+          setIsMobileNavOpen(false)
+          navigateTo(item.path)
+        }}
+        type="button"
+        aria-label={item.label}
+        aria-current={routePath === item.path ? 'page' : undefined}
+        title={isSidebarIconRail ? item.label : undefined}
+      >
+        <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
+        {formatActionCount(badge.count) && <span className="nav-pending-badge" aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</span>}
+      </button>
+    )
+  }
+
   return (
     <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
@@ -3479,34 +3500,39 @@ function App() {
         </div>
 
         <nav className="nav" aria-label="Primary navigation">
-          {navGroups.map((group) => <div className="nav-group" key={group.name}>
-            {group.name !== 'Overview' && <span className="nav-group-label">{group.name}</span>}
-            {group.items.map((item) => { const badge = badgeForNavigationItem(item); return (
+          {sidebarEntries.map((entry) => {
+            if (entry.type === 'page') return renderSidebarPage(entry)
+            const expanded = !isSidebarIconRail && openSidebarGroup === entry.id
+            return <div className="nav-group" key={entry.id}>
               <button
-                key={item.path}
-                className={`nav-item${item.view === 'Messages' ? ' messages-nav-item' : ''} ${
-                  routePath === item.path
-                    ? 'active'
-                    : ''
-                }`}
-                onClick={() => {
-                  if (isQrScanning && item.view !== 'QR Scan') stopQrScanner()
-                  setIsMobileNavOpen(false)
-                  navigateTo(item.path)
-                }}
                 type="button"
-                aria-current={routePath === item.path ? 'page' : undefined}
-                title={isSidebarCollapsed ? item.label : undefined}
+                id={`sidebar-${entry.id}-toggle`}
+                className={`nav-item nav-group-toggle${activeSidebarGroup === entry.id && !expanded ? ' active-section' : ''}`}
+                aria-label={entry.label}
+                aria-expanded={expanded}
+                aria-controls={`sidebar-${entry.id}-pages`}
+                title={isSidebarIconRail ? entry.label : undefined}
+                onClick={() => {
+                  if (isSidebarIconRail) {
+                    setIsSidebarCollapsed(false)
+                    setOpenSidebarGroup(entry.id)
+                  } else {
+                    setOpenSidebarGroup((current) => current === entry.id ? null : entry.id)
+                  }
+                }}
               >
-                <span className="nav-item-label"><PortalIcon name={iconNameForView(item.view)}/><span>{item.label}</span></span>
-                {formatActionCount(badge.count) && <span className="nav-pending-badge" aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</span>}
+                <span className="nav-item-label"><PortalIcon name={entry.icon}/><span>{entry.label}</span></span>
+                <span className="nav-chevron" aria-hidden="true">{expanded ? '▾' : '▸'}</span>
               </button>
-            )})}
-          </div>)}
-          <div className="nav-account-actions">
-            <button type="button" className="nav-item" title={isSidebarCollapsed ? 'Logout' : undefined} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
-          </div>
+              <div className="nav-group-children" id={`sidebar-${entry.id}-pages`} hidden={!expanded}>
+                {entry.items.map(renderSidebarPage)}
+              </div>
+            </div>
+          })}
         </nav>
+        <div className="nav-account-actions">
+          <button type="button" className="nav-item" aria-label="Logout" title={isSidebarIconRail ? 'Logout' : undefined} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
+        </div>
       </aside>}
 
       <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">

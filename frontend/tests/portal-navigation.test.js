@@ -1,8 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
-import { iconNameForView, mobileNavItemsFor, mobileNavLabel } from '../src/lib/portalNavigation.js'
-import { getHomePath, getNavItems } from '../src/lib/routes.js'
+import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath } from '../src/lib/portalNavigation.js'
+import { APP_ROUTES, getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
 
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const cssSource = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
@@ -14,7 +14,93 @@ test('role navigation uses meaningful visual categories and icons', () => {
   assert.equal(iconNameForView('Community Service'), 'service')
   assert.equal(iconNameForView('Active Attendance'), 'clock')
   assert.match(appSource, /className="nav-group"/)
-  assert.match(appSource, /className="nav-group-label"/)
+  assert.match(appSource, /nav-group-toggle/)
+})
+
+const sidebarPages = (entries) => entries.flatMap((entry) => entry.type === 'group' ? entry.items : [entry])
+const sidebarLabels = (role) => sidebarNavigationFor(role).map((entry) => entry.type === 'group' ? [entry.label, entry.items.map((item) => item.label)] : entry.label)
+
+test('administrator sidebar follows the requested hierarchy and child order', () => {
+  assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
+    'Dashboard', 'Students',
+    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
+    'Messages', ['Reports', ['Reports', 'Audit Log']],
+    ['System & Management', ['Departments & Officer Accounts', 'Duplicate Review', 'System Monitoring', 'Settings']]
+  ])
+  assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
+    'Dashboard', 'Students',
+    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
+    'Messages', ['Reports', ['Reports']], ['System & Management', ['Settings']]
+  ])
+})
+
+test('department and student sidebars retain their role-specific pages and labels', () => {
+  assert.deepEqual(sidebarLabels('DEPARTMENT_HEAD'), [
+    'Dashboard', 'Assigned Students', ['Discipline', ['Attendance', 'Service Results', 'QR Scan', 'Follow-up']],
+    ['Reports', ['Reports']], ['System & Management', ['Settings']]
+  ])
+  assert.deepEqual(sidebarLabels('STUDENT'), [
+    'Dashboard', 'My Profile', ['Discipline', ['My Violations', 'My Service', 'My QR', 'My Clearance']],
+    'Messages', ['System & Management', ['Settings']]
+  ])
+})
+
+test('sidebar keeps each permitted page once, adds only authorized Settings, and omits empty groups', () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+    const entries = sidebarNavigationFor(role)
+    const pages = sidebarPages(entries)
+    const expected = [...getNavItems(role).filter((item) => item.view !== 'Notifications'),
+      APP_ROUTES.find((route) => route.view === 'Account Settings' && route.roles.includes(role))]
+    assert.deepEqual(pages.map((item) => item.path).sort(), expected.map((item) => item.path).sort())
+    assert.equal(new Set(pages.map((item) => item.path)).size, pages.length)
+    assert.ok(entries.every((entry) => entry.type !== 'group' || entry.items.length > 0))
+    for (const item of pages) assert.equal(resolveRoute(item.path, role).status, 'allowed')
+    const settings = pages.find((item) => item.label === 'Settings')
+    assert.equal(settings.view, 'Account Settings')
+    assert.equal(APP_ROUTES.find((route) => route.path === settings.path).label, 'Account Settings')
+    assert.equal(getNavItems(role).some((item) => item.view === 'Account Settings'), false)
+  }
+  assert.deepEqual(sidebarNavigationFor('SYSTEM_ADMIN'), [])
+  assert.deepEqual(sidebarNavigationFor(), [])
+})
+
+test('sidebar route grouping recognizes every child and keeps direct pages independent', () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+    const entries = sidebarNavigationFor(role)
+    for (const entry of entries) {
+      if (entry.type === 'group') {
+        for (const item of entry.items) assert.equal(sidebarGroupForPath(entries, item.path), entry.id)
+      } else {
+        assert.equal(sidebarGroupForPath(entries, entry.path), null)
+      }
+    }
+    assert.equal(sidebarGroupForPath(entries, '/unknown'), null)
+    assert.equal(sidebarGroupForPath(entries, '/admin/registrations'), null)
+  }
+  assert.equal(sidebarGroupForPath(sidebarNavigationFor('DISCIPLINE_OFFICE'), '/admin/audit-log'), null)
+  assert.equal(sidebarGroupForPath(sidebarNavigationFor('STUDENT'), '/admin/violations'), null)
+})
+
+test('notifications are omitted only from sidebar presentation', () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+    const notification = getNavItems(role).find((item) => item.view === 'Notifications')
+    assert.ok(notification)
+    assert.equal(resolveRoute(notification.path, role).status, 'allowed')
+    assert.equal(sidebarPages(sidebarNavigationFor(role)).some((item) => item.view === 'Notifications'), false)
+    assert.equal(mobileNavItemsFor(getNavItems(role), role).some((item) => item.view === 'Notifications'), false)
+  }
+  assert.match(appSource, /className="notification-button"[^>]+onClick=\{\(\)=>navigateTo\(isStudent\?'\/student\/notifications'/)
+})
+
+test('sidebar exposes accessible disclosure state and synchronizes groups only on route or role changes', () => {
+  assert.match(appSource, /setOpenSidebarGroup\(activeSidebarGroup\)[\s\S]*?\[routePath, user\?\.role, activeSidebarGroup\]/)
+  assert.match(appSource, /aria-expanded=\{expanded\}/)
+  assert.match(appSource, /aria-controls=\{`sidebar-\$\{entry.id\}-pages`\}/)
+  assert.match(appSource, /hidden=\{!expanded\}/)
+  assert.match(appSource, /aria-current=\{routePath === item.path \? 'page' : undefined\}/)
+  assert.match(appSource, /if \(isSidebarIconRail\) \{\s*setIsSidebarCollapsed\(false\)\s*setOpenSidebarGroup\(entry.id\)/)
+  assert.match(appSource, /setOpenSidebarGroup\(\(current\) => current === entry.id \? null : entry.id\)/)
+  assert.match(appSource, /<\/nav>\s*<div className="nav-account-actions">[\s\S]*?onClick=\{requestLogout\}/)
 })
 
 test('department mobile navigation places Service after QR Scan', () => {
