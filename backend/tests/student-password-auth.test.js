@@ -6,6 +6,15 @@ const { STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, REGISTRATION_TTL_HOURS, normalize
 const { createStudentPasswordAuthService } = require('../src/services/studentPasswordAuthService');
 const { createStudentPasswordAuthController } = require('../src/controllers/studentPasswordAuthController');
 
+const setResetSigningKey = (t) => {
+  const previous = process.env.OTP_HASH_KEY;
+  process.env.OTP_HASH_KEY = 'test-only-reset-signing-key'.repeat(2);
+  t.after(() => {
+    if (previous === undefined) delete process.env.OTP_HASH_KEY;
+    else process.env.OTP_HASH_KEY = previous;
+  });
+};
+
 test('student number and email validation follow the registration contract', () => {
   assert.equal(REGISTRATION_TTL_HOURS,24);
   assert.equal(STUDENT_NUMBER_PATTERN.test('02000123456'), true);
@@ -83,7 +92,8 @@ test('registration rejects 7 characters and accepts 8 and 9 while requiring emai
   }
 });
 
-test('Student and administrator resets enforce the new minimum and consume authorization', async () => {
+test('Student and administrator resets enforce the new minimum and consume authorization', async (t) => {
+  setResetSigningKey(t);
   for (const role of ['STUDENT','DISCIPLINE_ADMIN']) {
     for (const length of [7,8,9]) {
       const newPassword = 'Aa1!' + 'x'.repeat(length - 4);
@@ -120,7 +130,8 @@ test('Student and administrator resets enforce the new minimum and consume autho
   }
 });
 
-test('8-character resets still reject invalid authorization and password reuse', async () => {
+test('8-character resets still reject invalid authorization and password reuse', async (t) => {
+  setResetSigningKey(t);
   for (const code of ['RESET_AUTHORIZATION_INVALID','PASSWORD_REUSE']) {
     const queries = [];
     const client = {
