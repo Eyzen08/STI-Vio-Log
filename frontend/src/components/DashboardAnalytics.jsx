@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyticsForRange, availablePrograms, manilaDateKey, periodRange } from '../lib/dashboardAnalytics.js'
 
 const number = new Intl.NumberFormat('en-PH')
@@ -14,7 +14,14 @@ function HorizontalBars({ items, color = 'blue' }) {
   </div>)}</dl>
 }
 
-function DashboardAnalytics({ students, violations, assignments, loading, error }) {
+function DashboardAnalytics({ students, violations, assignments, loading, error, focusOnOpen = false, onFocusHandled }) {
+  const headingRef = useRef(null)
+  useEffect(() => {
+    if (!focusOnOpen) return
+    headingRef.current?.focus({ preventScroll: true })
+    headingRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' })
+    onFocusHandled?.()
+  }, [focusOnOpen, onFocusHandled])
   const [today] = useState(() => manilaDateKey())
   const firstRange = useMemo(() => periodRange('THIS_MONTH', today), [today])
   const [period, setPeriod] = useState('THIS_MONTH')
@@ -40,7 +47,7 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
 
   return <section className="dashboard-analytics" aria-labelledby="dashboard-analytics-title">
     <div className="dashboard-analytics-heading">
-      <div><h2 id="dashboard-analytics-title">Analytics &amp; Trends</h2><p>Monitor violation patterns, service completion, and student compliance.</p></div>
+      <div><h2 id="dashboard-analytics-title" ref={headingRef} tabIndex={-1}>Analytics &amp; Trends</h2><p>Monitor violation patterns, service completion, and student compliance.</p></div>
       <div className="dashboard-analytics-filters">
         <label>Date range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="THIS_MONTH">This Month</option><option value="LAST_MONTH">Last Month</option><option value="THIS_YEAR">This Year</option><option value="CUSTOM">Custom</option></select></label>
         <label>Department / Program<select value={program} onChange={(event) => setProgram(event.target.value)}><option value="ALL">All Departments / Programs</option>{options.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>

@@ -5211,6 +5211,9 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .dashboard-analytics { display: grid; gap: .7rem; min-width: 0; }
 .dashboard-analytics-heading { display: flex; align-items: end; justify-content: space-between; flex-wrap: wrap; gap: .8rem; }
 .dashboard-analytics-heading h2 { margin: 0; color: var(--color-text); font-size: 1.05rem; }
+.reports-workspace .dashboard-analytics { margin-top: 1.5rem; }
+.dashboard-analytics-heading h2 { scroll-margin-top: 6rem; }
+.dashboard-analytics-heading h2:focus-visible { outline: 2px solid var(--color-primary); outline-offset: .3rem; border-radius: .2rem; }
 .dashboard-analytics-heading p { margin: .15rem 0 0; color: var(--color-text-secondary); font-size: .72rem; }
 .dashboard-analytics-filters,.dashboard-analytics-custom { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; }
 .dashboard-analytics-filters label { display: grid; gap: .2rem; color: var(--color-text-secondary); font-size: .66rem; font-weight: 650; }

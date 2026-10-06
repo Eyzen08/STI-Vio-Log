@@ -9,7 +9,7 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
 })
@@ -18,6 +18,17 @@ const render = (name, props) => renderToStaticMarkup(createElement(components[na
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('administrative dashboards offer Graphs without mounting analytics cards', () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
+    const html = render('AdminDashboard', { role, onNavigate() {}, onOpenGraphs() {} })
+    assert.match(html, />Graphs</)
+    assert.doesNotMatch(html, /Analytics &amp; Trends|Recorded Violations Over Time/)
+  }
+  for (const role of ['DEPARTMENT_HEAD', 'STUDENT']) {
+    assert.doesNotMatch(render('DashboardQuickActions', { role, onOpenGraphs() {} }), />Graphs</)
+  }
+})
 
 test('countdown renders remaining time, stops at zero, and does not announce every tick', () => {
   const midway = render('ServiceCountdown', { session: active, now: start + 1800000 })

@@ -38,6 +38,7 @@ const AdminClearanceCertificates = lazy(() => import('./components/AdminClearanc
 import OffenseIndicator from './components/OffenseIndicator.jsx'
 const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
+const DashboardAnalytics = lazy(() => import('./components/DashboardAnalytics.jsx'))
 const AdminActiveAttendance = lazy(() => import('./components/AdminActiveAttendance.jsx'))
 const ViolationEditDrawer = lazy(() => import('./components/ViolationEditDrawer.jsx'))
 const StudentServiceTimeDrawer = lazy(() => import('./components/StudentServiceTimeDrawer.jsx'))
@@ -200,6 +201,7 @@ function App() {
   const [violations, setViolations] = useState([])
   const [dashboardLoading, setDashboardLoading] = useState(false)
   const [dashboardError, setDashboardError] = useState('')
+  const [focusAnalytics, setFocusAnalytics] = useState(false)
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
@@ -601,10 +603,16 @@ function App() {
   }
 
   const navigateTo = (path, { replace = false } = {}) => {
+    setFocusAnalytics(false)
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
     setRoutePath(path)
     setOpenSidebarGroup(sidebarGroupForPath(sidebarEntries, path))
     window.scrollTo({ top: 0, behavior: 'instant' })
+  }
+
+  const openGraphs = () => {
+    navigateTo('/admin/reports')
+    setFocusAnalytics(true)
   }
 
   const goToDashboard = async () => {
@@ -2179,7 +2187,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} error={dashboardError} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} clearanceRecords={clearanceRecords} activeSessions={activeServiceSessions} unreadMessages={unreadMessages} loading={dashboardLoading} role={userRole} onNavigate={navigateTo} onOpenGraphs={openGraphs} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
@@ -3430,6 +3438,7 @@ function App() {
             {reportType === 'dtr' && reportGenerated && <ServiceHourCorrections corrections={reportHourCorrections}/>}
             {reportData.length > 50 && <nav className="report-pagination" aria-label="Report result pages"><button type="button" className="secondary-button" disabled={reportPage === 1} onClick={() => setReportPage((page) => page - 1)}>Previous</button><span role="status">Page {reportPage} of {Math.ceil(reportData.length / 50)} · {reportData.length} records</span><button type="button" className="secondary-button" disabled={reportPage >= Math.ceil(reportData.length / 50)} onClick={() => setReportPage((page) => page + 1)}>Next</button></nav>}
           </section>
+          <DashboardAnalytics students={students} violations={violations} assignments={communityServiceAssignments} loading={dashboardLoading} error={dashboardError} focusOnOpen={focusAnalytics} onFocusHandled={() => setFocusAnalytics(false)}/>
         </div>
       )
     }

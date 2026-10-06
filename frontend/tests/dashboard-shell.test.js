@@ -4,6 +4,13 @@ import fs from 'node:fs'
 
 import { validateSignatureFile } from '../src/lib/signatureImage.js'
 
+test('administrative Reports places analytics below report results and pagination', () => {
+  const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const reports = source.slice(source.indexOf('className="reports-workspace"'))
+  assert.ok(reports.indexOf('<DashboardAnalytics') > reports.indexOf('className="report-pagination"'))
+  assert.match(reports, /focusOnOpen=\{focusAnalytics\}/)
+})
+
 test('quick actions are role scoped and navigate only within the role portal', () => {
   const source = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
   for (const label of ['Add Student', 'Issue Violation', 'Record Attendance', 'Generate Report']) assert.match(source, new RegExp(label))
