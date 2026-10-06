@@ -26,6 +26,7 @@ test('preview deployments without a backend disable API and Socket.IO proxies', 
 
 test('CSP permits only exact API and websocket origins', () => {
   const csp = buildConfig(process.env).headers[0].headers.find(({ key }) => key === 'Content-Security-Policy').value
+  assert.match(csp, /img-src 'self' data: blob: https:\/\/\*\.googleusercontent\.com;/)
   assert.match(csp, /connect-src 'self' https:\/\/staging-api\.example\.edu wss:\/\/staging-api\.example\.edu/)
   assert.doesNotMatch(csp, /connect-src 'self' https: wss:/)
   assert.doesNotMatch(csp, /script-src[^;]*unsafe-inline/)
@@ -35,6 +36,7 @@ test('production build adds an API-origin-specific CSP', () => {
   const source = fs.readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')
   assert.match(source,/loadEnv/)
   assert.match(source,/api\.origin/)
+  assert.match(source,/img-src 'self' data: blob: \$\{apiOrigin\} https:\/\/\*\.googleusercontent\.com/)
   assert.match(source,/connect-src 'self'/)
   assert.doesNotMatch(source,/script-src[^\n]*unsafe-inline/)
   assert.doesNotMatch(source,/unsafe-eval/)
