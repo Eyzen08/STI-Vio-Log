@@ -1,4 +1,4 @@
-import { formatManilaDate } from './displayFormat.js'
+import { formatManilaDate, formatManilaTime } from './displayFormat.js'
 
 export const MESSAGE_MAX_LENGTH = 1000
 
@@ -29,6 +29,11 @@ export const messageDateLabel = (value, now = new Date()) => {
   yesterday.setDate(yesterday.getDate() - 1)
   if (target === formatManilaDate(yesterday, '')) return 'Yesterday'
   return target
+}
+
+export const conversationTimeLabel = (value, now = new Date()) => {
+  const date = messageDateLabel(value, now)
+  return date === 'Today' ? formatManilaTime(value) : date
 }
 
 export const groupMessagesByDate = (messages) => messages.reduce((groups,message)=>{

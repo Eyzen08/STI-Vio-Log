@@ -2057,7 +2057,7 @@ function App() {
     }
 
     if (activeView === 'Messages') {
-      return <MessagesPage token={token} role={userRole} students={students} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
+      return <MessagesPage token={token} role={userRole} students={students} currentUser={user} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
     }
 
     if (activeView === 'Profile' && !isStudent) {

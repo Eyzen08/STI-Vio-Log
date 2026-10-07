@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
-import { conversationMatchesTab, conversationParties, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../src/lib/messageUi.js'
+import { conversationMatchesTab, conversationTimeLabel, conversationParties, groupMessagesByDate, MESSAGE_MAX_LENGTH, messageParticipant } from '../src/lib/messageUi.js'
 
 test('message UI helpers expose the required text limit and filters', () => {
   assert.equal(MESSAGE_MAX_LENGTH, 1000)
@@ -53,17 +53,12 @@ test('messages sent by the signed-in account align to the right', async () => {
   assert.match(css, /\.message-bubble-row\.mine\s*\{[^}]*flex-direction:\s*row-reverse;[^}]*justify-content:\s*flex-start;/s)
 })
 
-test('Messages navigation stays yellow while previews use spaced light-blue cards', async () => {
-  const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.match(app, /messages-nav-item/)
-  assert.match(css, /\.sidebar \.nav-item\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\)/s)
-  assert.match(css, /\.main-panel \.conversation-list\s*\{[^}]*gap:\s*8px;[^}]*padding:\s*8px;/s)
-  assert.match(css, /\.conversation-list > button:not\(\.conversation-load-more\)\s*\{[^}]*border:\s*1px solid var\(--portal-message-border\);[^}]*border-radius:\s*10px;[^}]*background:\s*#edf6ff;/s)
-  assert.match(css, /\.conversation-list > button\.active\s*\{[^}]*border-color:\s*#075cad;[^}]*background:\s*#d9ecff;[^}]*inset 4px 0 #075cad/s)
-  assert.match(css, /\.conversation-list > button\.unread:not\(\.active\)\s*\{[^}]*border-color:\s*#266493;[^}]*background:\s*#e2f1ff;/s)
-  assert.match(css, /\.conversation-summary\s*\{\s*padding-right:\s*46px;/s)
-  assert.match(css, /\.mobile-bottom-nav button\.messages-nav-item\.active\s*\{[^}]*background:\s*var\(--portal-yellow\) !important/s)
+test('Messages previews use compact blue selected cards', async () => {
+ const css=await readFile(new URL('../src/styles/messages-workflow.css',import.meta.url),'utf8')
+ assert.match(css,/grid-template-columns:380px minmax/)
+ assert.match(css,/min-height:78px/)
+ assert.match(css,/background:#e0efff!important/)
+ assert.match(css,/conversation-preview/)
 })
 
 test('participants reveal only role-appropriate conversation metadata', () => {
@@ -89,34 +84,24 @@ test('conversation parties identify the student and institutional recipient', ()
   assert.equal(conversationParties({}).label, 'Student ↔ Discipline Office')
 })
 
-test('participant names are the primary conversation title and subject is secondary', async () => {
-  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
-  assert.match(component, /className="conversation-primary"><strong title=\{parties\.label\}>\{parties\.label\}<\/strong>/)
-  assert.match(component, /className="conversation-subject-detail" title=\{`Subject: \$\{conversation\.subject\}`\}>Subject: \{conversation\.subject\}<\/span>/)
-  assert.match(component, /<h3 title=\{selectedParties\.label\}>\{selectedParties\.label\}<\/h3>/)
-  assert.match(component, /Conversation between \$\{parties\.student\} and \$\{parties\.school\}, subject: \$\{conversation\.subject\}/)
+test('participant names and previews avoid repeated institutional labels', async () => {
+ const component=await readFile(new URL('../src/components/MessagesPage.jsx',import.meta.url),'utf8')
+ assert.match(component,/title=\{itemParticipant.name\}/)
+ assert.match(component,/conversation.message_preview/)
+ assert.match(component,/title=\{participant.name\}/)
+ assert.doesNotMatch(component,/conversationParties|selectedParties/)
 })
 
-test('new message recipient picker supports explicit student search', async () => {
-  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
-  assert.match(component, /query\.set\('search',normalizedSearch\)/)
-  assert.match(component, /placeholder="Search name or student number"/)
-  assert.match(component, /onKeyDown=\{onRecipientSearchKeyDown\}/)
-  assert.match(component, /window\.setTimeout\(\(\)=>loadRecipients\(recipientSearch\),300\)/)
-  assert.match(component, /className="recipient-preview-list" role="listbox"/)
-  assert.match(component, /const selectedRecipient=recipients\.find/)
-  assert.match(component, /selectedRecipient\?<div id="recipient-preview-list"/)
-  assert.match(component, /<b>Change<\/b>/)
-  assert.match(component, /const changeRecipient=.*recipientSearchRef\.current\?\.focus\(\)/)
-  assert.match(component, /disabled=\{Boolean\(selectedRecipient\)\}/)
-  assert.match(component, /Start typing to preview matching students\./)
-  assert.match(component, /No students found\. Try a different name or student number\./)
-  assert.match(component, /!isStudent\?<section className="recipient-picker"/)
-  assert.match(css, /\.recipient-search-row\s*\{[^}]*grid-template-columns:\s*minmax\(0,1fr\) auto;/s)
-  assert.match(css, /\.recipient-search-row > button\s*\{[^}]*min-height:\s*44px;/s)
-  assert.match(css, /\.recipient-preview-list\s*\{[^}]*max-height:\s*220px;[^}]*overflow-y:\s*auto;/s)
-  assert.match(css, /@media \(max-width: 600px\)[\s\S]*\.recipient-search-row\s*\{[^}]*grid-template-columns:\s*1fr;/)
+test('recipient autocomplete searches authorized results and supports keyboard selection', async () => {
+ const component=await readFile(new URL('../src/components/MessagesPage.jsx',import.meta.url),'utf8')
+ assert.match(component,/query.set\('search',normalizedSearch\)/)
+ assert.match(component,/recipientSearch.trim\(\).length<2/)
+ assert.match(component,/window.setTimeout\(\(\)=>loadRecipients\(recipientSearch\),300\)/)
+ assert.match(component,/ArrowDown','ArrowUp/)
+ assert.match(component,/aria-activedescendant/)
+ assert.match(component,/requestId!==recipientRequestRef.current/)
+ assert.match(component,/aria-label="Change recipient"/)
+ assert.doesNotMatch(component,/searchRecipients/)
 })
 
 test('message history is grouped into accessible date sections', () => {
@@ -128,4 +113,10 @@ test('message history is grouped into accessible date sections', () => {
   const groups = groupMessagesByDate(messages)
   assert.equal(groups.length, 2)
   assert.deepEqual(groups.map(({ messages: items }) => items.map(({ id }) => id)), [[1, 2], [3]])
+})
+
+test('preview times use the Manila calendar and today time',()=>{
+ const now=new Date('2026-10-07T08:00:00Z')
+ assert.match(conversationTimeLabel('2026-10-07T07:32:00Z',now),/3:32 PM/)
+ assert.equal(conversationTimeLabel('2026-10-06T07:32:00Z',now),'Yesterday')
 })
