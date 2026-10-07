@@ -78,6 +78,10 @@ import './App.css'
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
 const EMPTY_MFA_DRAFT = { code:'', recovery:false }
+const EMPTY_QR_SERVICE_DRAFT = {
+  department_id: '', assignment_id: '', supervising_officer_id: '', notes: '',
+  attendance_outcome: '', session_type: '', selected_duration_minutes: null
+}
 
 function SidebarTooltip({ anchor, text }) {
   const tooltipRef = useRef(null)
@@ -433,13 +437,7 @@ function App() {
   const [viewingServiceAssignment, setViewingServiceAssignment] = useState(null)
   const [serviceTableFilters, setServiceTableFilters] = useState({ search: '', status: 'ALL', department: 'ALL' })
 
-  const [qrForm, setQrForm] = useState({
-    qr_code: '',
-    department_id: '',
-    supervising_officer_id: '',
-    notes: '',
-    attendance_outcome: '', session_type: '', selected_duration_minutes: null, assignment_id: ''
-  })
+  const [qrForm, setQrForm] = useState({ ...EMPTY_QR_SERVICE_DRAFT, qr_code: '' })
 
   const [qrError, setQrError] = useState('')
   const [qrResult, setQrResult] = useState(null)
@@ -1518,16 +1516,18 @@ function App() {
           const decodedQr = decodedText.trim()
           qrInputVersionRef.current += 1
           const decodedVersion = qrInputVersionRef.current
-          qrFormRef.current = { ...qrFormRef.current, qr_code: decodedQr }
+          qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: decodedQr }
           setQrInputSource('camera')
           setQrForm((current) => ({
             ...current,
+            ...EMPTY_QR_SERVICE_DRAFT,
             qr_code: decodedQr
           }))
 
           setVerifiedQr('')
           verifiedQrRef.current = ''
           setQrResult(null)
+          setQrHistory([])
           setQrError('')
 
           stopQrScanner(scanner)
@@ -1633,12 +1633,15 @@ function App() {
     if (event.target.name==='service_selection') {setQrForm(current=>({...current,...event.target.value}));return}
     if (event.target.name==='assignment_id') {
       const id=Number(event.target.value)||''
-      setQrForm(current=>({...current,assignment_id:id,session_type:'',selected_duration_minutes:null}))
+      qrInputVersionRef.current += 1
+      qrFormRef.current={...qrFormRef.current,...EMPTY_QR_SERVICE_DRAFT,assignment_id:id}
+      setQrForm(qrFormRef.current)
+      setQrHistory([])
       handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
     }
     const { name, value } = event.target
     if (name === 'qr_code') {
-      qrFormRef.current = { ...qrFormRef.current, qr_code: value }
+      qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: value }
       qrInputVersionRef.current += 1
       setQrInputSource('manual')
       sessionStorage.removeItem('service-attendance-qr:'+user.id)
@@ -1646,6 +1649,7 @@ function App() {
 
     setQrForm((current) => ({
       ...current,
+      ...(name==='qr_code'?EMPTY_QR_SERVICE_DRAFT:{}),
 
       [name]:
         ['department_id', 'supervising_officer_id'].includes(name)
@@ -1657,6 +1661,7 @@ function App() {
       setVerifiedQr('')
       verifiedQrRef.current = ''
       setQrResult(null)
+      setQrHistory([])
       setQrError('')
       setQrForm((current) => ({ ...current, supervising_officer_id: '' }))
     }
@@ -1686,14 +1691,17 @@ function App() {
       const data=await response.json()
       if(action==='scan'&&version!==qrInputVersionRef.current) return false
       if(!response.ok||!data.success) throw new Error(data.message||'Unable to process attendance.')
+      const resetDraft=action==='scan'&&(!quiet||normalizedQr!==verifiedQrRef.current||Number(data.assignment?.id||0)!==Number(current.assignment_id||0))
+      if(resetDraft) setQrHistory([])
       setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
       setVerifiedQr(normalizedQr)
       verifiedQrRef.current=normalizedQr
       sessionStorage.setItem('service-attendance-qr:'+user.id,normalizedQr)
       const officers=data.available_officers||[]
       const active=data.active_session||data.session
-      const officerId=active?.supervising_officer_user_id||officers.find(officer=>Number(officer.officer_user_id)===Number(user.id))?.officer_user_id||(officers.length===1?officers[0].officer_user_id:'')
-      setQrForm(form=>({...form,qr_code:normalizedQr,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
+      const selectedOfficer=!resetDraft&&officers.find(officer=>Number(officer.officer_user_id)===Number(qrFormRef.current.supervising_officer_id))?.officer_user_id
+      const officerId=active?.supervising_officer_user_id||selectedOfficer||officers.find(officer=>Number(officer.officer_user_id)===Number(user.id))?.officer_user_id||(officers.length===1?officers[0].officer_user_id:'')
+      setQrForm(form=>({...form,...(resetDraft?EMPTY_QR_SERVICE_DRAFT:{}),qr_code:normalizedQr,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
       if(data.assignment?.id) {
         const historyResponse=await fetch(API_URL+'/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
         const historyData=await historyResponse.json()

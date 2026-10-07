@@ -45,12 +45,18 @@ test('QR workflow shows automatic department, duration limits and active session
   const result={action:'scan',server_time:new Date(start).toISOString(),student:{first_name:'Ana',last_name:'Reyes',student_number:'02000',program:'BSIT'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},allowance:{available_minutes:300,completed_today_minutes:180,daily_remaining_minutes:300,day_ends_at:'2026-10-05T16:00:00Z'},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}
   const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'}}
   const idle=render('DepartmentQrScanner',props)
+  const initial=render('DepartmentQrScanner',{...props,form:{...form,session_type:'',selected_duration_minutes:null}})
+  assert.match(initial,/How long will the student serve today\?/)
+  assert.doesNotMatch(initial,/aria-pressed="true"|service-large-clock/)
+  assert.match(initial,/disabled="">Confirm Time In/)
   assert.match(idle,/Community Service Requirement/);assert.match(idle,/45 min/);assert.match(idle,/5 hrs 15 min/)
   assert.match(idle,/Confirm Time In/);assert.match(idle,/Open Time/);assert.match(idle,/Minimum/);assert.match(idle,/Maximum/)
   assert.doesNotMatch(idle,/name="department_id"|Select Outcome/)
   assert.match(idle,/disabled=""[^]*?6 Hours/)
   const activeResult={...result,active_session:{...active,session_type:'FIXED',selected_duration_minutes:120,credit_cutoff_at:'2026-10-05T06:00:00Z'}}
   const timedIn=render('DepartmentQrScanner',{...props,result:activeResult})
+  assert.match(timedIn,/Already timed in/)
+  assert.match(timedIn,/Oct 5, 2026, 9:00 AM/)
   assert.match(timedIn,/Active Service Session/);assert.match(timedIn,/Time Out/);assert.doesNotMatch(timedIn,/Confirm Time In|service-duration-tile/)
   const stale=render('DepartmentQrScanner',{...props,verifiedQr:'another-code'})
   assert.match(stale,/Waiting for student QR/);assert.doesNotMatch(stale,/Ana Reyes/)
