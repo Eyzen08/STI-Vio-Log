@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Avatar from './Avatar.jsx'
 import { changeStudentPhoto, prepareAvatarPhoto } from '../lib/avatar.js'
 
-export default function StudentAvatarUpload({ student, onUpdated }) {
+export default function StudentAvatarUpload({ student, onUpdated, onDirtyChange, onBusyChange }) {
   const [image, setImage] = useState('')
   const [reason, setReason] = useState('')
   const [busy, setBusy] = useState(false)
@@ -10,6 +10,8 @@ export default function StudentAvatarUpload({ student, onUpdated }) {
   const [message, setMessage] = useState('')
   const input = useRef(null)
   const fileVersion = useRef(0)
+  useEffect(() => { onDirtyChange?.(Boolean(image || reason.trim())) }, [image, reason, onDirtyChange])
+  useEffect(() => { onBusyChange?.(busy) }, [busy, onBusyChange])
   const choose = async (event) => {
     const version = ++fileVersion.current
     const file = event.target.files?.[0]

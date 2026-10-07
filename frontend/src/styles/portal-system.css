@@ -4661,7 +4661,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 /* Attendance status stays explicit in both themes; timers are never live regions. */
-.app-shell .attendance-indicator {
+:is(.app-shell,.app-modal) .attendance-indicator {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -4670,7 +4670,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   font-size: .8rem;
   line-height: 1.4;
 }
-.app-shell .attendance-indicator-label {
+:is(.app-shell,.app-modal) .attendance-indicator-label {
   display: inline-flex;
   align-items: center;
   gap: .45rem;
@@ -4681,12 +4681,12 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   font-weight: 700;
   white-space: nowrap;
 }
-.app-shell .attendance-indicator--in .attendance-indicator-label {
+:is(.app-shell,.app-modal) .attendance-indicator--in .attendance-indicator-label {
   background: var(--status-success-surface);
   color: var(--status-success-text);
 }
 .attendance-indicator-label i { width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
-.app-shell .attendance-indicator > small { color: var(--text-secondary); font-size: .8rem; }
+:is(.app-shell,.app-modal) .attendance-indicator > small { color: var(--text-secondary); font-size: .8rem; }
 .student-attendance-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--border-subtle); border-radius: .65rem; background: var(--surface-raised); }
 .student-attendance-summary > div { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
 .student-attendance-summary > .student-attendance-countdowns { display: grid; gap: .75rem; }

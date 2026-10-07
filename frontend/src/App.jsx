@@ -1,6 +1,4 @@
-import StudentAvatarUpload from './components/StudentAvatarUpload.jsx'
 import './styles/avatars.css'
-import { academicProgram, academicYear, isSeniorHigh, academicLevelLabel } from './lib/studentAcademic.js'
 import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal, flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
@@ -14,6 +12,7 @@ import ServiceHourCorrections from './components/ServiceHourCorrections.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentManagement = lazy(() => import('./components/StudentManagement.jsx'))
+const StudentRecordDrawer = lazy(() => import('./components/StudentRecordDrawer.jsx'))
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
 import Modal from './components/Modal.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
@@ -62,7 +61,6 @@ import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
-import { handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
@@ -72,7 +70,6 @@ import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from './li
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
-import { displayPhilippinePhone } from './lib/phone.js'
 import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from './lib/inputNormalization.js'
 import './App.css'
 
@@ -2312,8 +2309,6 @@ function App() {
     if (
       activeView === 'Students'
     ) {
-      const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, reviewedStudentViolations) : null
-      const sanctionGuidance = handbookSanctionGuidance(reviewedStudentSummary?.categoryCounts || [])
       return (
         <>
           <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
@@ -2468,26 +2463,14 @@ function App() {
           </section></Modal>}
           {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)}/>}
 
-          {guardianContactStudent && <Modal title="Guardian Contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
+          {guardianContactStudent && <Modal title="Guardian Contact" className="student-action-modal guardian-contact-modal" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel key={guardianContactStudent.id} token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
           {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} onClose={() => setServiceTimeStudent(null)} />}
 
-          {reviewedStudent && reviewedCondition && (
-            <Modal title={`Student record — ${reviewedStudent.student_number}`} drawer onClose={()=>setReviewedStudent(null)}>
-            <section className="table-card modal-content-card student-record-drawer">
-              <div className="table-header"><div><h3>{reviewedStudent.first_name} {reviewedStudent.last_name}</h3><span>{reviewedStudentSummary?.condition || reviewedCondition.condition}</span></div></div>
-              <StudentAvatarUpload key={reviewedStudent.id} student={reviewedStudent} onUpdated={(updated) => { setReviewedStudent(updated); setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? { ...item, avatar: updated.avatar } : item)) }} />
-              <section className="student-record-overview" aria-label="Student overview"><h4>Student overview</h4><dl>{[['Student number', reviewedStudent.student_number], ['Academic level',academicLevelLabel(reviewedStudent)], [isSeniorHigh(reviewedStudent)?'Strand':'Program', academicProgram(reviewedStudent)], ['Section', reviewedStudent.section], [isSeniorHigh(reviewedStudent)?'Grade level':'Year level', academicYear(reviewedStudent)], ['Email', reviewedStudent.email], ['Phone', displayPhilippinePhone(reviewedStudent.phone_number)]].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></section>
-              {reviewedStudentSummary?.offenseStatus && <div className="offense-summary"><OffenseIndicator level={reviewedStudentSummary.offenseStatus.indicator_level} label={reviewedStudentSummary.offenseStatus.major_level_review_required ? 'Major-level review required from repeated minor offenses' : undefined} /></div>}
-              <section className="stats-grid department-stats" aria-label="Student violation condition"><article className="stat-card"><span>Total violations</span><strong>{reviewedStudentSummary?.total ?? reviewedCondition.total}</strong></article><article className="stat-card"><span>Open violations</span><strong>{reviewedStudentSummary?.open ?? reviewedCondition.open}</strong></article><article className="stat-card"><span>Resolved violations</span><strong>{reviewedStudentSummary?.resolved ?? reviewedCondition.resolved}</strong></article><article className="stat-card"><span>Remaining service</span><strong>{formatDuration(reviewedStudentSummary?.remainingHours ?? reviewedCondition.remainingHours)}</strong></article></section>
-              {sanctionGuidance.length>0&&<section className="registration-review-list" aria-label="Handbook sanction guidance"><div className="table-header"><div><h3>Handbook sanction reference</h3><span>Verify the offense sequence and case circumstances before deciding</span></div></div>{sanctionGuidance.map((item)=><article key={item.code}><div className="registration-review-heading"><div><h4>{item.name}</h4><p>{item.count} recorded offense{item.count===1?'':'s'} in this classification</p></div></div><p><strong>Handbook reference:</strong> {item.guidance}</p></article>)}</section>}
-              {reviewedStudentError&&<p className="error-message" role="alert">{reviewedStudentError}</p>}
-              {reviewedStudentLoading&&reviewedCondition.records.length===0?<p className="empty-state">Loading violation history...</p>:reviewedCondition.records.length===0?<p className="empty-state">No violation history for this student.</p>:<div className="registration-review-list">{reviewedCondition.records.map((violation)=><article key={violation.id}><div className="registration-review-heading"><div><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><p>{formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {violation.severity || 'Severity unavailable'}</p></div><span className="status-badge">{violation.status}</span></div><p>{violation.description || 'No incident details recorded.'}</p><button type="button" onClick={() => { setReviewedStudent(null); setViewingViolation(violation) }}>View case</button><dl><div><dt>Required service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl></article>)}</div>}
-              <button type="button" onClick={() => addViolationForStudent(reviewedStudent)}>Add violation for this student</button>
-              {reviewedStudentHasMore&&<button type="button" className="secondary-button" disabled={reviewedStudentLoading} onClick={()=>loadReviewedStudentHistory(reviewedStudent,reviewedStudentPage+1,true)}>{reviewedStudentLoading?'Loading...':'Load older violations'}</button>}
-              <p className="form-guidance">Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.</p>
-            </section>
-            </Modal>
-          )}
+          {reviewedStudent && <StudentRecordDrawer key={reviewedStudent.id} student={reviewedStudent} violations={reviewedStudentViolations} summary={reviewedStudentSummary} loading={reviewedStudentLoading} error={reviewedStudentError} hasMore={reviewedStudentHasMore}
+            onLoadMore={() => loadReviewedStudentHistory(reviewedStudent, reviewedStudentPage + 1, true)} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token}
+            onClose={() => setReviewedStudent(null)} onViewCase={(violation) => { setReviewedStudent(null); navigateTo('/admin/violations'); setViewingViolation(violation) }} onAddViolation={addViolationForStudent}
+            onPhotoUpdated={(updated) => { setReviewedStudent(updated); setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? { ...item, avatar: updated.avatar } : item)) }}/>
+          }
         </>
       )
     }

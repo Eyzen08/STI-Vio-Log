@@ -12,12 +12,65 @@ before(async () => {
   for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
+  components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
+  components.StudentServiceTimeContent = (await server.ssrLoadModule('/src/components/StudentServiceTimeDrawer.jsx')).StudentServiceTimeContent
 })
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], props))
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('student record overview uses full API totals, two case previews and four accessible tabs', () => {
+  const violations = Array.from({ length: 3 }, (_, index) => ({ id: index + 1, student_id: 1, status: 'OPEN', severity: 'MAJOR', violation_name: `Case ${index + 1}`, exact_offense: 'Documented handbook offense', description: 'Recorded incident details', required_service_hours: 2, completed_service_hours: 0.5 }))
+  violations.unshift({ id: 88, student_id: 2, status: 'OPEN', violation_name: 'Other student case' })
+  const html = render('StudentRecordContent', { student: { id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000123456', academic_level: 'SENIOR_HIGH_SCHOOL', strand: 'STEM', year_level: 11 }, violations,
+    summary: { total: 30, open: 5, resolved: 25, remainingHours: 5.25, condition: 'Requires action', offenseStatus: { indicator_level: 'MAJOR_LEVEL', major_level_review_required: true } } })
+  assert.equal((html.match(/role="tab" /g) || []).length, 4)
+  assert.equal((html.match(/role="tabpanel"/g) || []).length, 4)
+  assert.match(html, /aria-selected="true" tabindex="0">Overview/)
+  assert.match(html, /Violations \(30\)/)
+  assert.match(html, /5 hr 15 min/)
+  assert.match(html, /Grade 11/)
+  assert.match(html, /STEM/)
+  assert.equal((html.match(/class="record-case-card record-case-preview"/g) || []).length, 2)
+  assert.match(html, /Recorded incident details/)
+  assert.match(html, /Case 1/)
+  assert.match(html, /Case 2/)
+  assert.doesNotMatch(html, /Other student case|Case 3/)
+  assert.match(html, /2 hr/)
+  assert.match(html, /30 min/)
+  assert.match(html, /Review required for repeated minor offenses/)
+  assert.match(html, /Edit photo for Ana Reyes/)
+  assert.doesNotMatch(html, /type="file"|Photo change reason/)
+})
+
+test('embedded service content keeps assignments, credited time, corrections and attendance', () => {
+  const html = render('StudentServiceTimeContent', { student: { id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000123456' }, assignments: [
+    { id: 21, student_id: 1, status: 'IN_PROGRESS', department_name: 'Library', department_head_first_name: 'Ana', department_head_last_name: 'Montana', required_hours: 4, remaining_hours: 3, hour_corrections: [{ id: 8, assignment_id: 21, previous_completed_hours: 0.5, new_completed_hours: 1, reason: 'Verified attendance correction' }] },
+    { id: 22, student_id: 2, status: 'OPEN', department_name: 'Other Department', required_hours: 10, remaining_hours: 10 }
+  ], activeSessions: [active] })
+  assert.match(html, /Assignment #21/)
+  assert.match(html, /Ana Montana/)
+  assert.match(html, /aria-label="Credited progress for assignment #21" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"/)
+  assert.match(html, /1 hr completed of 4 hr/)
+  assert.match(html, /3 hr remaining/)
+  assert.match(html, /25%/)
+  assert.match(html, /Verified attendance correction/)
+  assert.match(html, /TIME IN/)
+  assert.doesNotMatch(html, /Other Department|Assignment #22/)
+})
+
+test('service drawer has explicit zero totals, attendance and corrections when there are no assignments', () => {
+  const html = render('StudentServiceTimeContent', { student: { id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000123456' }, activeSessions: [], assignments: [] })
+  assert.match(html, /TIME OUT/)
+  assert.match(html, /Not currently serving/)
+  assert.match(html, /0 assignments/)
+  assert.match(html, /No community service assignments yet/)
+  assert.match(html, /No completed-hour corrections recorded/)
+  assert.match(html, /aria-label="Overall credited service progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/)
+  assert.equal((html.match(/<strong>0 min<\/strong>/g) || []).length, 3)
+})
 
 test('student directory keeps five compact rows, real counts, and only relevant attendance', () => {
   const students = Array.from({ length: 7 }, (_, index) => ({ id: index + 1, first_name: `Student ${index + 1}`, last_name: 'Test', student_number: `0200010000${index}`, program: 'BSIT', section: 'A101', year_level: 2 }))
