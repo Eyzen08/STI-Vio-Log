@@ -87,7 +87,7 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /\.auth-card \.password-input-wrap \{ position: relative; display: block; \}/)
   assert.match(portalCssSource, /\.auth-card \.password-visibility \{ position: absolute;/)
   assert.match(portalCssSource, /padding-right: 52px/)
-  assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: 44px !important/)
+  assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: var\(--control-height\) !important/)
 })
 
 test('outlined sign-in retains accessible fields and puts account help before submission', () => {
@@ -103,15 +103,15 @@ test('outlined sign-in retains accessible fields and puts account help before su
 test('outlined labels cover focus, filled, autofilled, invalid, and reduced-motion states', () => {
   const styles = portalCssSource.slice(portalCssSource.indexOf('/* Outlined fields belong only'))
   assert.match(styles, /--auth-floating-label-bg: var\(--surface-raised\)/)
-  assert.match(styles, /background: transparent;[\s\S]*?font-size: 16px;/)
+  assert.match(styles, /background: transparent;[\s\S]*?font-size: var\(--text-control\);/)
   assert.match(styles, /label\.login-floating-field:focus-within > \.login-floating-label/)
   assert.match(styles, /:has\(input:is\(:not\(:placeholder-shown\),:autofill,:-webkit-autofill\)\)/)
-  assert.match(styles, /top: 0;\s*font-size: 12px;\s*background: var\(--auth-floating-label-bg\)/)
-  assert.match(styles, /height: 56px;[\s\S]*?border-radius: 4px;/)
+  assert.match(styles, /top: 0;\s*font-size: var\(--text-xs\);\s*background: var\(--auth-floating-label-bg\)/)
+  assert.match(styles, /height: var\(--control-height\);[\s\S]*?border-radius: 4px;/)
   assert.match(styles, /box-shadow: inset 0 0 0 1px var\(--auth-outline-color\)/)
   assert.match(styles, /input\[aria-invalid='true'\]\) > \.login-floating-label \{ color: var\(--status-danger-text\)/)
   assert.match(styles, /input:disabled \{[\s\S]*?color: var\(--text-secondary\) !important;/)
-  assert.match(styles, /width: 44px !important;\s*min-width: 44px;\s*min-height: 44px;/)
+  assert.match(styles, /width: var\(--control-height\) !important;\s*min-width: var\(--control-height\);\s*min-height: var\(--control-height\);/)
   assert.match(styles, /transition: top 160ms ease/)
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none !important/)
 })

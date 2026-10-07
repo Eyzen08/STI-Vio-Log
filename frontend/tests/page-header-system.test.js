@@ -16,6 +16,7 @@ test('authenticated route headers use the shared page-header class', () => {
     '../src/components/AdminDashboard.jsx',
     '../src/components/AdminDepartmentOfficers.jsx',
     '../src/components/AdminDuplicateReview.jsx',
+    '../src/components/CommunityServiceManagement.jsx',
     '../src/components/DepartmentCommunityService.jsx',
     '../src/components/DepartmentDashboard.jsx',
     '../src/components/DepartmentDtr.jsx',
@@ -30,9 +31,11 @@ test('authenticated route headers use the shared page-header class', () => {
     '../src/components/StudentDashboard.jsx',
     '../src/components/StudentNotifications.jsx',
     '../src/components/StudentProfile.jsx',
+    '../src/components/StudentManagement.jsx',
     '../src/components/StudentQr.jsx',
     '../src/components/StudentViolations.jsx',
-    '../src/components/SystemDashboard.jsx'
+    '../src/components/SystemDashboard.jsx',
+    '../src/components/ViolationManagement.jsx'
   ]
 
   for (const source of sources) assert.match(read(source), /portal-page-header/, source)
@@ -45,7 +48,7 @@ test('shared page headers are card surfaces across themes and viewports', () => 
   assert.match(portal, /@media \(max-width: 390px\)[\s\S]*?\.portal-page-header \.page-breadcrumb\s*\{[^}]*display: none;/s)
   assert.match(portal, /\.portal-page-header > :is\(button, \.primary-action, \.messages-new-button\)\s*\{[^}]*width: 100%;/s)
   assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/s)
-  assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header \.messages-new-button\s*\{[^}]*width: 100%;[^}]*min-height: 2\.75rem;[^}]*flex: 0 0 auto;/s)
+  assert.match(portal, /\.main-panel--messages \.messages-page-heading\.portal-page-header \.messages-new-button\s*\{[^}]*width: 100%;[^}]*min-height: var\(--page-action-height\);[^}]*flex: 0 0 auto;/s)
 })
 
 test('student and staff profile avatars retain the compact header dimensions', () => {

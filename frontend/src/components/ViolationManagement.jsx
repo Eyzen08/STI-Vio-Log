@@ -31,7 +31,7 @@ export default function ViolationManagement({ violations = [], loading = false, 
   const statuses = [...new Set(['OPEN', 'PENDING', 'COMPLETE', 'CLEAR', 'INVALID_CANCEL', ...violations.map((item) => String(item.status || '').toUpperCase()).filter(Boolean)])]
 
   return <section className="violation-management" aria-labelledby="violation-management-title">
-    <header className="violation-page-heading">
+    <header className="violation-page-heading portal-page-header">
       <div><nav aria-label="Breadcrumb">Home <span aria-hidden="true">/</span> Violations</nav><h2 id="violation-management-title">Violation Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
       <button type="button" className="violation-record-button" onClick={onRecord}><span aria-hidden="true">＋</span>Record Violation</button>
     </header>

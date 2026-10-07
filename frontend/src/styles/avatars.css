@@ -1,7 +1,7 @@
-.portal-avatar { display: inline-grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; overflow: hidden; border-radius: 50%; background: var(--color-primary, #0a306a); color: #fff; font-size: 13px; font-weight: 750; vertical-align: middle; }
+.portal-avatar { display: inline-grid; place-items: center; flex: 0 0 auto; width: 42px; height: 42px; overflow: hidden; border-radius: 50%; background: var(--color-primary, #0a306a); color: #fff; font-size: var(--text-sm); font-weight: 700; vertical-align: middle; }
 .portal-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .portal-avatar.profile-avatar { border-radius: 50%; }
-.portal-avatar.avatar-preview { width: 72px; height: 72px; font-size: 22px; }
+.portal-avatar.avatar-preview { width: 72px; height: 72px; font-size: var(--text-xl); }
 .avatar-settings { margin-bottom: 24px; padding: 24px; }
 .account-settings-page { align-items: start; }
 .account-settings-page > .account-summary-card { grid-column: 1 / -1; }
@@ -17,9 +17,9 @@
 .avatar-choice:hover { border-color: var(--border-strong, #98b7d9); }
 .avatar-choice.is-selected { border-color: var(--color-primary, #0a306a); }
 .avatar-choice:focus-within { outline: 3px solid var(--link-color, #147ad3); outline-offset: 3px; }
-.avatar-choice-check { position: absolute; right: -1px; bottom: -1px; width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: var(--color-primary, #0a306a); color: #fff; font-size: 13px; font-weight: 800; border: 2px solid var(--surface-card, #fff); }
+.avatar-choice-check { position: absolute; right: -1px; bottom: -1px; width: 21px; height: 21px; display: grid; place-items: center; border-radius: 50%; background: var(--color-primary, #0a306a); color: #fff; font-size: var(--text-sm); font-weight: 700; border: 2px solid var(--surface-card, #fff); }
 .avatar-special-choices { display: flex; gap: 24px; padding-bottom: 24px; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle, #dbe5f0); }
-.avatar-special-choices > div { display: grid; justify-items: center; gap: 6px; font-size: 13px; }
+.avatar-special-choices > div { display: grid; justify-items: center; gap: 6px; font-size: var(--text-sm); }
 .avatar-settings-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 24px; }
 .avatar-settings-actions .success-message { color: var(--color-success, #08794f); }
 .avatar-settings button, .student-avatar-editor button { min-height: 44px; }
@@ -30,7 +30,7 @@
 .student-avatar-editor form { gap: 16px; }
 .student-avatar-editor input[type='file'] { width: 100%; min-width: 0; }
 .student-avatar-editor textarea { min-height: 80px; }
-.student-photo-preview { display: flex; gap: 16px; align-items: center; font-size: 13px; }
+.student-photo-preview { display: flex; gap: 16px; align-items: center; font-size: var(--text-sm); }
 .student-photo-preview img { width: 96px; height: 96px; border-radius: 50%; object-fit: cover; }
 .student-cell .portal-avatar { width: 36px; height: 36px; }
 .officer-name .portal-avatar { margin-right: 8px; }

@@ -18,7 +18,7 @@ test('mobile messages keep a compact heading and keyboard-safe composer', async 
   assert.match(app, /activeView === 'Messages' \? ' main-panel--messages' : ''/)
   assert.match(css, /\.messages-page-heading \{ display: flex; flex-direction: row;/)
   assert.match(css, /\.chat-composer \{ position: sticky; bottom: 0;/)
-  assert.match(css, /\.chat-composer textarea \{[^}]*font-size: 16px/s)
+  assert.match(css, /\.chat-composer textarea \{[^}]*font-size: var\(--text-control\)/s)
   assert.match(baseCss, /\.chat-composer > button \{[^}]*align-self:\s*center;/s)
 })
 

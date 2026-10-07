@@ -4,6 +4,24 @@ import fs from 'node:fs'
 
 import { validateSignatureFile } from '../src/lib/signatureImage.js'
 
+test('shared sizing stays independent of the active route', () => {
+  const foundation = fs.readFileSync(new URL('../src/index.css', import.meta.url), 'utf8')
+  for (const [token, value] of Object.entries({
+    'text-base': '0.875rem', 'sidebar-expanded-width': '13.75rem',
+    'topbar-height': '4.6875rem', 'topbar-mobile-height': '3.75rem',
+    'topbar-search-width': '35.875rem', 'control-height': '2.75rem',
+    'page-action-height': '3.0625rem', 'filter-height': '3.25rem'
+  })) assert.ok(foundation.includes(`--${token}: ${value};`), token)
+  assert.match(foundation, /--font-sans: Arial,/)
+  assert.match(foundation, /html\s*\{\s*font-size: 100%;/)
+  const files = ['../src/App.css', ...fs.readdirSync(new URL('../src/styles/', import.meta.url)).filter((name) => name.endsWith('.css')).map((name) => `../src/styles/${name}`)]
+  for (const file of files) {
+    const css = fs.readFileSync(new URL(file, import.meta.url), 'utf8')
+    assert.doesNotMatch(css, /html\s*\{[^}]*font-size:/, file)
+    assert.doesNotMatch(css, /[^{}]*:has\([^{}]*\.(?:sidebar|topbar|page-content)[^{}]*\{[^}]*?(?:--sidebar-width|grid-template-columns|min-height|padding(?:-inline)?|max-width)\s*:/, file)
+  }
+})
+
 test('analytics is its own administrative view and Reports contains only report content', () => {
   const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const analytics = source.indexOf("activeView === 'Analytics & Trends'")
@@ -95,11 +113,11 @@ test('communication, reporting, dark mode, and accessibility share the final res
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition-duration: 0\.01ms !important;/)
 })
 
-test('desktop shell follows the compact attached-reference proportions', () => {
+test('desktop shell follows the shared Students proportions', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.match(css, /@media \(min-width: 1200px\)[\s\S]*?grid-template-columns: 12\.5rem minmax\(0, 1fr\);/)
-  assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 4\.75rem;/s)
-  assert.match(css, /\.dashboard-quick-actions button \{[^}]*min-height: 2\.35rem;/s)
+  assert.match(css, /@media \(min-width: 1200px\)[\s\S]*?grid-template-columns: var\(--sidebar-width\) minmax\(0, 1fr\);/)
+  assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 99px;/s)
+  assert.match(css, /\.dashboard-quick-actions button \{[^}]*min-height: var\(--control-height\);/s)
   assert.match(css, /\.admin-dashboard-grid \{[^}]*minmax\(0, 1\.7fr\) minmax\(16rem, 0\.72fr\);/s)
   assert.match(css, /\[data-theme='dark'\] \.app-shell:not\(\.auth-shell\) \.sidebar/)
 })
@@ -107,10 +125,10 @@ test('desktop shell follows the compact attached-reference proportions', () => {
 test('final portal authority prevents legacy premium rules from overriding the reference shell', () => {
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   const authority = css.slice(css.lastIndexOf('Authenticated portal final authority'))
-  assert.match(authority, /grid-template-columns: 11\.75rem minmax\(0, 1fr\)/)
+  assert.match(authority, /grid-template-columns: var\(--sidebar-width\) minmax\(0, 1fr\)/)
   assert.match(authority, /\.sidebar \.brand \{[\s\S]*?min-height: 3\.6rem;[\s\S]*?box-shadow: none;/)
   assert.match(authority, /\.sidebar \.nav-item\.active,[\s\S]*?background: #0878df;[\s\S]*?color: #fff;/)
-  assert.match(authority, /\.page-content \{[\s\S]*?padding: 0\.75rem 0\.9rem 1rem;/)
+  assert.match(authority, /\.page-content \{[\s\S]*?padding: 14px 20px 20px;/)
   assert.match(authority, /\.dashboard-quick-actions > div \{[\s\S]*?repeat\(5, minmax\(0, 1fr\)\)/)
   assert.match(authority, /\.dashboard-card:hover \{[\s\S]*?transform: none;/)
 })
@@ -220,7 +238,7 @@ test('desktop sidebar toggle lives in the top bar without clipped positioning', 
   assert.doesNotMatch(brand, /sidebar-collapse/)
   assert.match(topbarTitle, /className="sidebar-collapse"[\s\S]*?aria-controls="portal-navigation"[\s\S]*?aria-expanded=\{!isSidebarCollapsed\}/)
   assert.match(topbarTitle, /isSidebarCollapsed \? 'panel-left-open' : 'panel-left-close'/)
-  assert.match(css, /\.sidebar-collapse \{[^}]*width: 38px;[^}]*border-radius: 9px !important;/s)
+  assert.match(css, /\.sidebar-collapse \{[^}]*width: var\(--control-height\);[^}]*border-radius: 9px !important;/s)
   assert.match(css, /\.sidebar-collapse:focus-visible \{[^}]*outline: 3px solid/s)
   assert.doesNotMatch(css, /\.sidebar-collapse \{[^}]*(?:right:\s*-|position:\s*absolute)/s)
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.sidebar-collapse \{ display: none; \}/)
