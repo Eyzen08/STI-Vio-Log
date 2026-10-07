@@ -1,0 +1,114 @@
+/* The approved violation reference uses a compact six-card summary and seven-row table. */
+.app-shell.admin-portal:has(.violation-management):not(.sidebar-collapsed) { --sidebar-width:226px; }
+.admin-portal:has(.violation-management) .topbar { min-height:68px; }
+.admin-portal:has(.violation-management) .topbar-search { max-width:550px; min-height:48px; }
+.admin-portal:has(.violation-management) .sidebar .brand { margin-bottom:30px; }
+.admin-portal:has(.violation-management) .sidebar .brand-logo { width:170px; max-width:170px; }
+.admin-portal:has(.violation-management) .sidebar .nav-item { min-height:48px; font-size:15px; }
+.admin-portal:has(.violation-management) .sidebar .nav-group-children .nav-item { min-height:48px; font-size:14px; }
+.admin-portal:has(.violation-management) .page-content { padding:28px 30px 24px; }
+.violation-management { --vio-ink:#102f60; --vio-muted:#506c96; --vio-line:#dce8f3; --vio-surface:#fff; --vio-soft:#f4f8fc; display:grid; gap:24px; min-width:0; color:var(--vio-ink); font-family:Arial,"Segoe UI",sans-serif; }
+.violation-management :is(h2,h3,p) { margin:0; }
+.violation-management :is(button,input,select) { font-family:inherit; }
+.violation-page-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; min-height:88px; }
+.violation-page-heading nav { margin-bottom:7px; color:var(--vio-muted); font-size:14px; line-height:18px; }
+.admin-portal .violation-page-heading h2 { color:var(--vio-ink); font-size:34px; font-weight:800; line-height:1.15; letter-spacing:-.025em; }
+.violation-page-heading p { margin-top:4px; color:var(--vio-muted); font-size:15px; line-height:22px; }
+.admin-portal .violation-record-button { display:flex; align-items:center; justify-content:center; flex-shrink:0; gap:14px; min-height:48px; padding:12px 25px; border:1px solid #0067da; border-radius:10px; background:#0068df; color:#fff; font-size:15px; font-weight:700; box-shadow:none; }
+.violation-record-button > span { font-size:22px; line-height:1; font-weight:400; }
+.violation-summary-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
+.admin-portal .violation-summary-grid .management-metric { min-height:108px; gap:20px; padding:20px; border:1px solid var(--vio-line); border-radius:14px; background:var(--vio-surface); box-shadow:0 3px 12px rgb(20 54 90 / 3%); }
+.violation-summary-grid .management-metric i { width:60px; height:60px; border-radius:14px; }
+.violation-summary-grid .management-metric svg { width:26px; height:26px; }
+.violation-summary-grid .management-metric > div { gap:8px; min-width:0; }
+.admin-portal .violation-summary-grid .management-metric strong { color:var(--vio-ink); font-size:26px; line-height:1; font-weight:750; font-variant-numeric:tabular-nums; }
+.admin-portal .violation-summary-grid .management-metric span { color:var(--vio-muted); font-size:14px; line-height:18px; font-weight:400; letter-spacing:0; text-transform:none; }
+.violation-records-card { min-width:0; border:1px solid var(--vio-line); border-radius:16px; background:var(--vio-surface); overflow:hidden; }
+.violation-records-heading { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:19px 20px 16px; }
+.admin-portal .violation-records-heading h3 { color:var(--vio-ink); font-size:22px; line-height:27px; font-weight:750; letter-spacing:-.025em; }
+.violation-records-heading p { margin-top:3px; color:var(--vio-muted); font-size:15px; line-height:21px; }
+.violation-records-heading > span { flex-shrink:0; color:var(--vio-muted); font-size:15px; font-weight:600; }
+.violation-toolbar { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,1.08fr) minmax(0,1fr); gap:12px; margin:0 20px 18px; }
+.violation-search { display:flex; align-items:center; min-width:0; padding:0 18px; gap:12px; border:1px solid #cbdff3; border-radius:9px; background:var(--vio-soft); color:var(--vio-muted); }
+.violation-search svg { flex-shrink:0; }
+.admin-portal .violation-search input { width:100%; height:50px; min-width:0; padding:0; border:0; border-radius:0; background:transparent; color:var(--vio-ink); font-size:15px; box-shadow:none; }
+.violation-search input::placeholder { color:var(--vio-muted); opacity:1; }
+.admin-portal .violation-toolbar select { width:100%; min-width:0; height:52px; padding:0 16px; border:1px solid #cbdff3; border-radius:9px; background-color:var(--vio-surface); color:var(--vio-ink); font-size:15px; box-shadow:none; }
+.violation-table-wrap { overflow-x:auto; overscroll-behavior-x:contain; }
+.admin-portal .violation-table { width:100%; min-width:1180px; margin:0; border-collapse:collapse; table-layout:fixed; }
+.admin-portal .violation-table th { height:40px; padding:8px 20px; border-bottom:1px solid var(--vio-line); background:#edf4fa; color:var(--vio-ink); font-size:13px; font-weight:700; line-height:18px; text-align:left; letter-spacing:0; text-transform:none; }
+.admin-portal .violation-table th button { display:flex; align-items:center; gap:12px; min-height:24px; padding:0; border:0; border-radius:0; background:transparent; color:inherit; font-size:inherit; font-weight:inherit; box-shadow:none; }
+.sort-descending { transform:rotate(90deg); }
+.sort-ascending { transform:rotate(-90deg); }
+.admin-portal .violation-table td { height:58px; padding:7px 20px; border-bottom:1px solid var(--vio-line); background:var(--vio-surface); color:var(--vio-muted); font-size:14px; line-height:19px; vertical-align:middle; overflow-wrap:anywhere; }
+.admin-portal .violation-table tr:last-child td { border-bottom:0; }
+.admin-portal .violation-table tbody tr:hover td { background:var(--vio-soft); }
+.violation-student { display:flex; align-items:center; gap:12px; min-width:0; }
+.violation-student > div { display:grid; gap:3px; min-width:0; }
+.admin-portal .violation-student strong { color:var(--vio-ink); font-size:14px; line-height:17px; font-weight:700; }
+.violation-student small { font-size:13px; line-height:17px; }
+.violation-student .offense-indicator { flex-shrink:0; padding:0; border:0; background:transparent; }
+.violation-student .offense-dot { width:14px; height:14px; }
+.violation-incident { display:grid; }
+.violation-incident small { font-size:inherit; line-height:inherit; }
+.violation-offense { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
+.violation-classification,.violation-status { display:inline-flex; align-items:center; justify-content:center; min-height:32px; padding:5px 15px; border-radius:16px; background:#e8edf3; color:#41536f; font-size:13px; line-height:18px; font-weight:650; white-space:nowrap; }
+.violation-classification { border-radius:12px; }
+.classification-minor,.status-pending { background:#fff4dc; color:#9b5800; }
+.classification-major,.classification-grave { background:#ffe5e9; color:#ca1734; }
+.status-open { background:#dcedff; color:#0061d6; }
+.status-complete,.status-clear { background:#dbf6e9; color:#00823e; }
+.violation-actions { display:flex; align-items:center; gap:10px; }
+.admin-portal .violation-actions button { min-height:40px; min-width:86px; padding:7px 20px; border:1px solid #0072ec; border-radius:8px; background:#0072ec; color:#fff; font-size:13px; font-weight:700; line-height:20px; box-shadow:none; }
+.admin-portal .violation-actions .violation-edit-button { display:grid; place-items:center; min-width:44px; width:44px; height:40px; padding:0; border-color:#cbdff3; background:var(--vio-surface); color:var(--vio-ink); }
+.admin-portal .violation-table .violation-empty { height:130px; text-align:center; }
+.violation-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 20px; border-top:1px solid var(--vio-line); color:var(--vio-muted); font-size:13px; }
+.violation-pagination nav { display:flex; gap:5px; }
+.admin-portal .violation-pagination button { display:grid; place-items:center; width:38px; min-height:38px; padding:0; border:1px solid var(--vio-line); border-radius:7px; background:var(--vio-soft); color:var(--vio-ink); font-size:14px; box-shadow:none; }
+.admin-portal .violation-pagination button[aria-current='page'] { background:#0072ec; border-color:#0072ec; color:white; font-weight:700; }
+.violation-pagination .previous-page { transform:rotate(180deg); }
+.violation-pagination button:disabled { opacity:.45; cursor:default; }
+.violation-management :is(button,input,select,[tabindex]):focus-visible { outline:2px solid #0072ec; outline-offset:3px; }
+.violation-search:focus-within { outline:2px solid #0072ec; outline-offset:2px; }
+.violation-management .violation-search input:focus { outline:none; }
+.admin-portal .violation-record-button:hover,.admin-portal .violation-actions button:not(.violation-edit-button):hover { background:#0058bd; border-color:#0058bd; }
+:root[data-theme='dark'] .violation-management { --vio-ink:var(--text-primary); --vio-muted:var(--text-secondary); --vio-line:var(--border-subtle); --vio-surface:var(--surface-raised); --vio-soft:var(--surface-nested); }
+:root[data-theme='dark'] .admin-portal .violation-table th { background:var(--surface-nested); }
+:root[data-theme='dark'] .violation-management :is(.classification-major,.classification-grave) { background:var(--status-danger-surface); color:var(--status-danger-text); }
+:root[data-theme='dark'] .violation-management :is(.classification-minor,.status-pending) { background:var(--status-warning-surface); color:var(--status-warning-text); }
+:root[data-theme='dark'] .violation-management :is(.status-complete,.status-clear) { background:var(--status-success-surface); color:var(--status-success-text); }
+:root[data-theme='dark'] .violation-management .status-open { background:var(--surface-interactive); color:var(--link-color); }
+:root[data-theme='dark'] .violation-management .status-invalid_cancel { background:var(--surface-nested); color:var(--text-secondary); }
+@media (max-width:1450px) { .admin-portal .violation-summary-grid .management-metric { gap:12px; padding:16px 12px; } .violation-summary-grid .management-metric i { width:46px; height:46px; } .violation-summary-grid .management-metric span { font-size:13px; } }
+@media (max-width:1200px) { .violation-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .admin-portal .violation-summary-grid .management-metric { min-height:92px; } .violation-toolbar { grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); } }
+@media (max-width:767px) {
+  .admin-portal:has(.violation-management) .page-content { padding:18px 12px 84px; }
+  .violation-management { gap:16px; }
+  .violation-page-heading { align-items:flex-start; flex-direction:column; gap:14px; }
+  .admin-portal .violation-page-heading h2 { font-size:28px; }
+  .violation-page-heading p { font-size:14px; }
+  .violation-summary-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .admin-portal .violation-summary-grid .management-metric { gap:10px; padding:12px; min-height:92px; }
+  .violation-summary-grid .management-metric i { width:38px; height:38px; }
+  .violation-summary-grid .management-metric svg { width:23px; height:23px; }
+  .admin-portal .violation-summary-grid .management-metric strong { font-size:24px; }
+  .violation-records-heading { padding:16px 14px; align-items:flex-start; }
+  .violation-records-heading > span { font-size:13px; }
+  .violation-records-heading p { font-size:13px; }
+  .violation-toolbar { grid-template-columns:minmax(0,1fr); margin:0 14px 16px; gap:9px; }
+  .violation-toolbar :is(input,select) { font-size:16px !important; }
+  .admin-portal .violation-table { min-width:0; table-layout:auto; }
+  .violation-table :is(colgroup,thead) { display:none; }
+  .violation-table tbody { display:grid; }
+  .admin-portal .violation-table tr { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:12px; padding:16px 14px; border-top:1px solid var(--vio-line); }
+  .admin-portal .violation-table td { display:grid; gap:5px; height:auto; padding:0; border:0; background:transparent; min-width:0; }
+  .violation-table td::before { content:attr(data-label); color:var(--vio-muted); font-size:11px; font-weight:650; }
+  .violation-table td[data-label='Student'],.violation-table td[data-label='Offense'],.violation-table td[data-label='Actions'] { grid-column:1 / -1; }
+  .violation-table td[data-label='ID'] { grid-column:1 / -1; font-size:12px; }
+  .violation-table td[data-label='ID']::before { display:none; }
+  .violation-classification,.violation-status { justify-self:start; max-width:100%; white-space:normal; text-align:center; }
+  .admin-portal .violation-actions button { min-height:44px; }
+  .violation-pagination { flex-wrap:wrap; padding:14px; }
+  .admin-portal .violation-pagination button { min-height:44px; width:40px; }
+}
+@media (prefers-reduced-motion:reduce) { .violation-management * { transition:none !important; } }

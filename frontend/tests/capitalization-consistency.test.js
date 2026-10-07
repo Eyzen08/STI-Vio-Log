@@ -6,14 +6,13 @@ const source = (path) => readFileSync(new URL(`../src/${path}`, import.meta.url)
 
 test('canonical page and navigation names keep approved capitalization', () => {
   const routes = source('lib/routes.js')
-  const app = source('App.jsx')
   const departmentDtr = source('components/DepartmentDtr.jsx')
 
   for (const label of ['Community Service', 'Account Settings', 'Assigned Students', 'Audit Log', 'QR Scan']) {
     assert.match(routes, new RegExp(`label: '${label}'`))
   }
   assert.match(source('components/StudentManagement.jsx'), /<h2 id="student-management-title">Student Management<\/h2>/)
-  assert.match(app, /<h2>Violation Management<\/h2>/)
+  assert.match(source('components/ViolationManagement.jsx'), /<h2 id="violation-management-title">Violation Management<\/h2>/)
   assert.match(departmentDtr, /<h2>Daily Time Record<\/h2>/)
   assert.doesNotMatch(departmentDtr, />Daily time record</)
 })

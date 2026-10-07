@@ -38,6 +38,8 @@ const AccountSecuritySettings = lazy(() => import('./components/AccountSecurityS
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const DashboardAnalytics = lazy(() => import('./components/DashboardAnalytics.jsx'))
 const AdminActiveAttendance = lazy(() => import('./components/AdminActiveAttendance.jsx'))
+const ViolationManagement = lazy(() => import('./components/ViolationManagement.jsx'))
+const ViolationDetailsDrawer = lazy(() => import('./components/ViolationDetailsDrawer.jsx'))
 const ViolationEditDrawer = lazy(() => import('./components/ViolationEditDrawer.jsx'))
 const StudentServiceTimeDrawer = lazy(() => import('./components/StudentServiceTimeDrawer.jsx'))
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
@@ -66,7 +68,7 @@ import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, c
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from './lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration } from './lib/displayFormat.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
@@ -2486,31 +2488,9 @@ function App() {
     ) {
       const selectedType = selectedViolationType(violationTypes, violationForm.violation_type_id)
       const exactOffenses = offensesForType(selectedType)
-      const violationStatusCount = (status) => violations.filter((item) => String(item.status).toUpperCase() === status).length
-      const violationSeverityCount = (severity) => violations.filter((item) => String(item.severity).toUpperCase().includes(severity)).length
-      const visibleViolations = violations.filter((item) => {
-        const query = violationTableFilters.search.trim().toLowerCase()
-        const matchesSearch = !query || [item.student_name, item.student_number, item.exact_offense, item.violation_name].filter(Boolean).join(' ').toLowerCase().includes(query)
-        const matchesStatus = violationTableFilters.status === 'ALL' || String(item.status).toUpperCase() === violationTableFilters.status
-        const matchesSeverity = violationTableFilters.severity === 'ALL' || String(item.severity).toUpperCase().includes(violationTableFilters.severity)
-        return matchesSearch && matchesStatus && matchesSeverity
-      })
       return (
         <>
-          <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Violations</span><h2>Violation Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
-            <button type="button" className="primary-action" onClick={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }}>＋ Record Violation</button>
-          </header>
-          <section className="management-metrics management-metrics--wide" aria-label="Violation summary">
-            <ManagementMetric tone="red" icon="violations" value={violations.length} label="Total Violations"/>
-            <ManagementMetric tone="orange" icon="violations" value={violationSeverityCount('MINOR')} label="Minor"/>
-            <ManagementMetric tone="red" icon="violations" value={violationSeverityCount('MAJOR')} label="Major"/>
-            <ManagementMetric tone="purple" icon="violations" value={violationSeverityCount('GRAVE')} label="Grave"/>
-            <ManagementMetric icon="reports" value={violationStatusCount('OPEN')} label="Open"/>
-            <ManagementMetric tone="orange" icon="hourglass" value={violationStatusCount('PENDING')} label="Pending"/>
-            <ManagementMetric tone="green" icon="check" value={violationStatusCount('COMPLETE')} label="Completed"/>
-            <ManagementMetric tone="green" icon="clearance" value={violationStatusCount('CLEAR')} label="Cleared"/>
-          </section>
+          <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={setViewingViolation} onEdit={startViolationEdit}/>
           {isViolationFormOpen && <Modal title="Record Violation" drawer onClose={() => setIsViolationFormOpen(false)}><div className="drawer-intro"><strong>Create an incident record</strong><span>Choose the exact handbook classification and document only verified facts.</span></div>
           <section className="drawer-form-card">
             <div className="table-header">
@@ -2672,106 +2652,10 @@ function App() {
             </form>
           </section></Modal>}
 
-          {editingViolation && <ViolationEditDrawer key={editingViolation.id + ':' + editingViolation.status} violation={editingViolation} types={violationTypes} assignments={communityServiceAssignments} destinations={communityServiceDestinations} role={userRole} token={token} onClose={() => setEditingViolation(null)} onChanged={handleViolationChanged}/>}
+          {editingViolation && <ViolationEditDrawer key={editingViolation.id + ':' + editingViolation.status} violation={editingViolation} student={students.find((item) => Number(item.id) === Number(editingViolation.student_id))} types={violationTypes} assignments={communityServiceAssignments} destinations={communityServiceDestinations} role={userRole} token={token} onClose={() => setEditingViolation(null)} onChanged={handleViolationChanged}/>}
 
-          <section className="table-card">
-            <div className="table-header management-table-header">
-              <div><h3>Violation Records</h3><p>Most recent incidents and their current status.</p></div>
+          {viewingViolation && <ViolationDetailsDrawer violation={viewingViolation} student={students.find((item) => Number(item.id) === Number(viewingViolation.student_id))} role={userRole} onClose={() => setViewingViolation(null)} onEdit={() => { const violation = viewingViolation; setViewingViolation(null); startViolationEdit(violation) }} canAdd={students.some((item) => Number(item.id) === Number(viewingViolation.student_id))} onAdd={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }}/>}
 
-              <span>
-                {dashboardLoading
-                  ? 'Loading...'
-                  : `${violations.length} entries`}
-              </span>
-            </div>
-            <div className="directory-toolbar management-filter-bar"><input type="search" name="violation-directory-filter" autoComplete="off" aria-label="Search violations" value={violationTableFilters.search} onChange={(event)=>setViolationTableFilters({...violationTableFilters,search:event.target.value})} placeholder="Search student, number, or offense…"/><select aria-label="Filter violation classification" value={violationTableFilters.severity} onChange={(event)=>setViolationTableFilters({...violationTableFilters,severity:event.target.value})}><option value="ALL">All classifications</option><option value="MINOR">Minor</option><option value="MAJOR">Major</option><option value="GRAVE">Grave</option></select><select aria-label="Filter violation status" value={violationTableFilters.status} onChange={(event)=>setViolationTableFilters({...violationTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="COMPLETE">Completed</option><option value="CLEAR">Cleared</option><option value="INVALID_CANCEL">Invalid / Cancelled</option></select></div>
-
-            {visibleViolations.length === 0 &&
-            !dashboardLoading ? (
-              <p className="empty-state">
-                No violations match the selected filters.
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table className="management-record-table violation-record-table">
-                  <colgroup>
-                    <col className="violation-col-id" />
-                    <col className="violation-col-student" />
-                    <col className="violation-col-incident" />
-                    <col />
-                    <col className="violation-col-classification" />
-                    <col className="violation-col-status" />
-                    <col className="violation-col-actions" />
-                  </colgroup>
-                  <thead>
-                    <tr>
-                      <th>
-                        ID
-                      </th>
-
-                      <th>
-                        Student
-                      </th>
-
-                      <th>Incident</th>
-
-                      <th>Offense</th>
-
-                      <th>Classification</th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {visibleViolations
-                      .slice(0, 10)
-                      .map(
-                        (violation) => (
-                          <tr
-                            key={
-                              violation.id
-                            }
-                          >
-                            <td data-label="Record ID" className="internal-record-id">
-                              #{violation.id}
-                            </td>
-
-                            <td data-label="Student">
-                              <div className="student-cell">
-                                <OffenseIndicator level={violation.offense_indicator_level} compact />
-                                <span><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></span>
-                              </div>
-                            </td>
-
-                            <td data-label="Incident">{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</td>
-
-                            <td data-label="Offense">{violation.exact_offense || violation.violation_name || 'Not recorded'}</td>
-
-                            <td data-label="Classification">{violation.severity || '—'}</td>
-
-                            <td data-label="Status">
-                              <span className="status-badge">
-                                {
-                                  formatDisplayLabel(violation.status)
-                                }
-                              </span>
-                            </td>
-
-                            <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>setViewingViolation(violation)}>View</button>{(violation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" className="icon-row-action" aria-label={`Edit violation ${violation.id}`} onClick={()=>startViolationEdit(violation)}>✎</button>}</div></td>
-                          </tr>
-                        )
-                      )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-          {viewingViolation && <Modal title={`Violation #${viewingViolation.id}`} drawer onClose={()=>setViewingViolation(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Incident record</span><h3>{viewingViolation.student_name || viewingViolation.student_number || 'Student record'}</h3><p>{viewingViolation.student_number || 'Student number unavailable'}</p></div><span className="status-badge">{formatDisplayLabel(viewingViolation.status)}</span></header><dl><div><dt>Offense</dt><dd>{viewingViolation.exact_offense || viewingViolation.violation_name || 'Not recorded'}</dd></div><div><dt>Classification</dt><dd>{viewingViolation.severity || 'Not recorded'}</dd></div><div><dt>Incident</dt><dd>{formatIncidentDateTime(viewingViolation.incident_date, viewingViolation.incident_time)}</dd></div><div><dt>Required service</dt><dd>{formatDuration(viewingViolation.required_service_hours)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(viewingViolation.completed_service_hours)}</dd></div></dl><section><h4>Incident details</h4><p>{viewingViolation.description || viewingViolation.incident_details || 'No incident details recorded.'}</p></section>{(viewingViolation.status === 'OPEN' || userRole === 'DISCIPLINE_ADMIN') && <button type="button" onClick={()=>{setViewingViolation(null);startViolationEdit(viewingViolation)}}>{viewingViolation.status === 'OPEN' ? 'Edit audited record' : 'Reopen to edit'}</button>}<button type="button" className="secondary-button" onClick={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }} disabled={!students.some((item) => Number(item.id) === Number(viewingViolation.student_id))}>Add violation for this student</button></div></Modal>}
         </>
       )
     }

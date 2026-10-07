@@ -141,8 +141,10 @@ test('mobile shell exposes real branding, scoped directory search, and the syste
 test('primary management tables expose labeled mobile record cards', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
-  assert.equal((app.match(/className="management-record-table(?: violation-record-table)?"/g) || []).length, 2)
-  for (const label of ['Student', 'Status', 'Actions']) assert.match(app, new RegExp(`data-label="${label}"`))
+  assert.equal((app.match(/className="management-record-table"/g) || []).length, 1)
+  const violations = fs.readFileSync(new URL('../src/components/ViolationManagement.jsx', import.meta.url), 'utf8')
+  for (const label of ['Student', 'Status', 'Actions']) assert.match(violations, new RegExp(`data-label="${label}"`))
+  for (const label of ['Student', 'Status']) assert.match(app, new RegExp(`data-label="${label}"`))
   assert.match(css, /\.management-record-table td::before/)
   assert.match(css, /content: attr\(data-label\)/)
   assert.match(css, /\.management-record-table \.table-actions \{[^}]*flex-direction: row !important/s)

@@ -23,10 +23,10 @@ test('dynamic report cells derive mobile labels from the same keys as their head
 })
 
 test('violation list and detail use readable status labels and keep record IDs', async () => {
-  const app = await source('App.jsx')
   const dashboard = await source('components/StudentDashboard.jsx')
-  assert.match(app, /formatDisplayLabel\(violation.status\)/)
-  assert.match(app, /formatDisplayLabel\(viewingViolation.status\)/)
+  const violations = await source('components/ViolationManagement.jsx')
+  assert.match(violations, /formatDisplayLabel\(violation.status\)/)
+  assert.match(await source('components/ViolationDrawerContext.jsx'), /formatDisplayLabel\(violation.status\)/)
   assert.match(dashboard, /formatDisplayLabel\(violation.status\)/)
-  assert.match(app, /data-label="Record ID" className="internal-record-id"/)
+  assert.match(violations, /data-label="ID">#\{violation.id\}/)
 })

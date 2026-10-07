@@ -1,4 +1,7 @@
 const paths = {
+  save: <><path d="M4 3h13l4 4v14H3V3ZM7 3v6h10V3M7 21v-8h10v8"/></>,
+  trash: <><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></>,
+  edit: <><path d="m16 3 5 5-12 12-6 1 1-6L16 3ZM14 5l5 5"/></>,
   lock: <><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></>,
   history: <><path d="M3 11a9 9 0 1 1 2.5 7M3 4v7h7M12 7v5l4 2"/></>,
   camera: <><path d="M4 7h4l2-3h4l2 3h4v13H4Z"/><circle cx="12" cy="13" r="4"/></>,

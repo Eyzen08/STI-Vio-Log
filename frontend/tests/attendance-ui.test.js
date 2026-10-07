@@ -9,17 +9,85 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
   components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
   components.StudentServiceTimeContent = (await server.ssrLoadModule('/src/components/StudentServiceTimeDrawer.jsx')).StudentServiceTimeContent
+  components.ViolationDetailsContent = (await server.ssrLoadModule('/src/components/ViolationDetailsDrawer.jsx')).ViolationDetailsContent
+  components.ViolationEditHistory = (await server.ssrLoadModule('/src/components/ViolationEditDrawer.jsx')).ViolationEditHistory
 })
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], props))
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('violation detail separates structured incident notes and preserves totals and action permissions', () => {
+  const violation = { id: 23, student_id: 1, student_name: 'Ana Reyes', student_number: '02000', status: 'OPEN', severity: 'GRAVE', violation_name: 'Major Offense - Category D', exact_offense: 'Documented offense', description: 'Handbook offense: Documented offense\nIncident details: Recorded incident note', required_service_hours: 6, completed_service_hours: 0.75, incident_date: '2026-10-05', incident_time: '16:00:00' }
+  const html = render('ViolationDetailsContent', { violation, role: 'DISCIPLINE_OFFICE', canAdd: true })
+  assert.match(html, /Ana Reyes/)
+  assert.match(html, /Incident Summary/)
+  assert.match(html, /Recorded incident note/)
+  assert.doesNotMatch(html, /Handbook offense:|Incident details:/)
+  assert.match(html, /45 min/)
+  assert.match(html, /5 hr 15 min/)
+  assert.match(html, /Major Offense - Category D/)
+  assert.match(html, /Edit audited record/)
+  const closed = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_OFFICE', canAdd:false })
+  assert.doesNotMatch(closed, /Edit audited record|Reopen to edit/)
+  assert.match(closed, /disabled=""/)
+  const reopened = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_ADMIN', canAdd:true })
+  assert.match(reopened, /Reopen to edit/)
+  const legacy = render('ViolationDetailsContent', { violation: { ...violation, description:'Legacy incident facts', exact_offense:null } })
+  assert.match(legacy, /Legacy incident facts/)
+})
+
+test('audited edit history displays real transitions and credited-hour corrections without inventing staff names', () => {
+  const props = { violation: { created_at:'2026-10-05T07:54:00Z' }, history:{ actions:[{ id:1, action:'INVALID_CANCEL', from_status:'OPEN', to_status:'INVALID_CANCEL', reason:'Verified duplicate', created_at:'2026-10-05T08:00:00Z', performed_by_role:'DISCIPLINE_ADMIN', performed_by_user_id:7 }], hourCorrections:[{ id:1, previous_completed_hours:0.25, new_completed_hours:1.5, created_at:'2026-10-05T08:00:00Z', reason:'Reviewed credited time', performed_by_user_id:7 }] } }
+  const html = render('ViolationEditHistory', props)
+  assert.match(html, /Created on/)
+  assert.match(html, /Verified duplicate/)
+  assert.match(html, /Discipline Administrator · User #7/)
+  assert.match(html, /15 min → 1 hr 30 min/)
+  assert.match(html, /Administrator #7/)
+  assert.match(html, /Reviewed credited time/)
+  assert.doesNotMatch(html, /No completed-hour corrections/)
+  const loading = render('ViolationEditHistory', {violation:{}})
+  assert.match(loading, /Loading corrections/)
+  assert.doesNotMatch(loading, /No completed-hour corrections/)
+  const failure = render('ViolationEditHistory', {violation:{},error:'History unavailable'})
+  assert.match(failure, /History unavailable/)
+  assert.doesNotMatch(failure, /No completed-hour corrections/)
+})
+
+test('violation management keeps six real metrics, seven dated rows, filters and authorized actions', () => {
+  const violations = Array.from({ length: 12 }, (_, index) => ({ id: index + 1, student_name: `Student ${index + 1}`, student_number: `02000${index + 1}`, incident_date: '2026-10-05', incident_time: '16:00:00', exact_offense: 'Recorded offense', severity: ['MINOR', 'MAJOR', 'GRAVE'][index % 3], status: ['OPEN', 'COMPLETE', 'CLEAR', 'PENDING'][index % 4] }))
+  const filters = { search: '', severity: 'ALL', status: 'ALL' }
+  const props = { violations, filters, role: 'DISCIPLINE_OFFICE' }
+  const html = render('ViolationManagement', props)
+  assert.equal((html.match(/class="management-metric /g) || []).length, 6)
+  assert.equal((html.match(/<th scope="col"/g) || []).length, 7)
+  assert.equal((html.match(/class="violation-student"/g) || []).length, 7)
+  assert.match(html, /Showing 1–7 of 12 records/)
+  assert.match(html, /October 5, 2026<\/span><small>4:00 PM/)
+  assert.match(html, /View violation 12/)
+  assert.doesNotMatch(html, /View violation 5|Edit violation 12/)
+  assert.match(html, /Edit violation 9/)
+  assert.match(html, /value="PENDING">Pending/)
+  const admin = render('ViolationManagement', { ...props, role: 'DISCIPLINE_ADMIN' })
+  assert.match(admin, /Edit violation 12/)
+  const filtered = render('ViolationManagement', { ...props, filters: { ...filters, search: 'student 9', severity: 'GRAVE', status: 'OPEN' } })
+  assert.match(filtered, /1 record/)
+  assert.equal((filtered.match(/class="violation-student"/g) || []).length, 1)
+  assert.match(filtered, /View violation 9/)
+  const empty = render('ViolationManagement', { ...props, filters: { ...filters, status: 'INVALID_CANCEL' } })
+  assert.match(empty, /No violations match the selected filters/)
+  assert.doesNotMatch(empty, /Violation records pagination/)
+  const loading = render('ViolationManagement', { ...props, loading: true })
+  assert.match(loading, /Loading violation records/)
+  assert.doesNotMatch(loading, /View violation 12/)
+})
 
 test('student record overview uses full API totals, two case previews and four accessible tabs', () => {
   const violations = Array.from({ length: 3 }, (_, index) => ({ id: index + 1, student_id: 1, status: 'OPEN', severity: 'MAJOR', violation_name: `Case ${index + 1}`, exact_offense: 'Documented handbook offense', description: 'Recorded incident details', required_service_hours: 2, completed_service_hours: 0.5 }))
