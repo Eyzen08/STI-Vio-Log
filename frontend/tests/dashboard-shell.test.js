@@ -142,18 +142,18 @@ test('primary management tables expose labeled mobile record cards', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
   assert.equal((app.match(/className="management-record-table(?: violation-record-table)?"/g) || []).length, 2)
-  for (const label of ['Student', 'Status', 'Actions', 'Service progress']) assert.match(app, new RegExp(`data-label="${label}"`))
+  for (const label of ['Student', 'Status', 'Actions']) assert.match(app, new RegExp(`data-label="${label}"`))
   assert.match(css, /\.management-record-table td::before/)
   assert.match(css, /content: attr\(data-label\)/)
   assert.match(css, /\.management-record-table \.table-actions \{[^}]*flex-direction: row !important/s)
 })
 
-test('guardian contact action keeps its phone icon aligned with its label', () => {
+test('student directory connects guardian contact and service time to the existing overflow actions', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
-  assert.match(app, /className="secondary-button guardian-contact-button"[\s\S]*?<PortalIcon name="phone"\/><span>Guardian Contact<\/span>/)
-  assert.match(css, /\.table-actions \.guardian-contact-button \{[^}]*display: inline-flex;[^}]*align-items: center;[^}]*gap: 6px;/s)
-  assert.match(css, /\.table-actions \.guardian-contact-button svg \{[^}]*flex: 0 0 16px;/s)
+  const actions = fs.readFileSync(new URL('../src/components/StudentAccountActions.jsx', import.meta.url), 'utf8')
+  assert.match(app, /onServiceTime=\{setServiceTimeStudent\} onGuardianContact=\{setGuardianContactStudent\}/)
+  assert.match(actions, /secondary\(onGuardianContact\)[\s\S]*?<PortalIcon name="phone"\/>Guardian Contact/)
+  assert.match(actions, /secondary\(onServiceTime\)[\s\S]*?<PortalIcon name="clock"\/>Show Service Time/)
 })
 
 test('administrative forms use aligned labels and consistent enhanced dropdowns', () => {
@@ -177,9 +177,12 @@ test('student row actions use a controlled accessible menu on mobile', () => {
   assert.doesNotMatch(accountActions, /<details/)
 })
 
-test('student and violation legends include the grave offense indicator', () => {
+test('violation legend keeps grave classification while the student directory shows severity inline', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 2)
+  const directory = fs.readFileSync(new URL('../src/components/StudentManagement.jsx', import.meta.url), 'utf8')
+  assert.equal((app.match(/<OffenseIndicator level="GRAVE" label="Grave"\/>/g) || []).length, 1)
+  assert.match(directory, /severity-\$\{student.tone\}/)
+  assert.doesNotMatch(directory, /offense-legend|AttendanceIndicator/)
 })
 
 test('desktop sidebar scrolls vertically without hover-created horizontal overflow', () => {

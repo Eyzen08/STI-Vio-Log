@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import PortalIcon from './PortalIcon.jsx'
 import { API_URL } from '../lib/api.js'
 import { buildGoogleRecoveryPayload } from '../lib/accountAdmin.js'
 import Modal from './Modal.jsx'
@@ -10,18 +12,39 @@ import StudentAcademicFields from './StudentAcademicFields.jsx'
 const editableFields = ['student_number','first_name','middle_name','last_name','suffix','email','phone_number','academic_level','strand','program','section','year_level']
 const initialEdit = (student) => Object.fromEntries(editableFields.map((field) => [field, student[field] ?? '']))
 
-function StudentAccountActions({ token, student, onUpdated }) {
+function StudentAccountActions({ token, student, onUpdated, onServiceTime, onGuardianContact }) {
   const menuRef = useRef(null)
+  const popupRef = useRef(null)
   const triggerRef = useRef(null)
   const [menuOpen,setMenuOpen]=useState(false)
+  const [menuPosition, setMenuPosition] = useState({})
   useEffect(() => {
-    const dismiss = (event) => { if (menuRef.current && !menuRef.current.contains(event.target)) setMenuOpen(false) }
+    if (!menuOpen) return undefined
+    popupRef.current?.querySelector('button')?.focus()
+    const dismiss = (event) => { if (!menuRef.current?.contains(event.target) && !popupRef.current?.contains(event.target)) setMenuOpen(false) }
     const escape = (event) => { if (event.key === 'Escape') { setMenuOpen(false); triggerRef.current?.focus() } }
+    const reposition = (event) => { if (!popupRef.current?.contains(event.target)) setMenuOpen(false) }
     document.addEventListener('pointerdown', dismiss)
     document.addEventListener('focusin', dismiss)
     document.addEventListener('keydown', escape)
-    return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('focusin', dismiss); document.removeEventListener('keydown', escape) }
-  }, [])
+    window.addEventListener('scroll', reposition, true)
+    window.addEventListener('resize', reposition)
+    return () => { document.removeEventListener('pointerdown', dismiss); document.removeEventListener('focusin', dismiss); document.removeEventListener('keydown', escape); window.removeEventListener('scroll', reposition, true); window.removeEventListener('resize', reposition) }
+  }, [menuOpen])
+  const toggleMenu = () => {
+    const rect = triggerRef.current.getBoundingClientRect()
+    const height = 3 * 44 + Number(Boolean(onServiceTime)) * 44 + Number(Boolean(onGuardianContact)) * 44 + 12
+    setMenuPosition({ left: Math.max(8, Math.min(rect.right - 230, window.innerWidth - 238)), top: rect.bottom + height + 8 > window.innerHeight ? Math.max(8, rect.top - height - 6) : rect.bottom + 6 })
+    setMenuOpen((value) => !value)
+  }
+  const menuKeys = (event) => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const items = [...popupRef.current.querySelectorAll('button')]
+    const current = items.indexOf(document.activeElement)
+    items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus()
+  }
+  const secondary = (action) => { setMenuOpen(false); action() }
   const [mode,setMode]=useState(''),[reason,setReason]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState(''),[success,setSuccess]=useState(''),[secret,setSecret]=useState(null)
   const [edit,setEdit]=useState(()=>initialEdit(student))
   const headers={Authorization:`Bearer ${token}`,'Content-Type':'application/json'}
@@ -52,8 +75,12 @@ function StudentAccountActions({ token, student, onUpdated }) {
   const title=secret?'Temporary student credentials':mode==='edit'?'Edit student information':mode==='password'?'Issue temporary password':mode==='google'?'Remove Google access':'Action completed'
   return <div className="student-access-removal">
     <div ref={menuRef} className="row-action-menu">
-      <button ref={triggerRef} type="button" className="row-action-trigger" aria-label={`More actions for ${student.first_name} ${student.last_name}`} aria-expanded={menuOpen} aria-haspopup="menu" onClick={()=>setMenuOpen((value)=>!value)}>⋮</button>
-      {menuOpen&&<div role="menu"><button role="menuitem" type="button" onClick={()=>open('edit')}>Edit information</button><button role="menuitem" type="button" onClick={()=>open('password')}>Issue password</button><button role="menuitem" type="button" className="danger-text" onClick={()=>open('google')}>Remove Google access</button></div>}
+      <button ref={triggerRef} type="button" className="row-action-trigger" aria-label={`More actions for ${student.first_name} ${student.last_name}`} aria-expanded={menuOpen} aria-haspopup="menu" aria-controls={menuOpen ? `student-actions-${student.id}` : undefined} onClick={toggleMenu} onKeyDown={(event) => { if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); if (!menuOpen) toggleMenu() } }}>⋮</button>
+      {menuOpen&&createPortal(<div ref={popupRef} id={`student-actions-${student.id}`} role="menu" aria-label={`Actions for ${student.first_name} ${student.last_name}`} className="student-account-menu" style={menuPosition} onKeyDown={menuKeys}>
+        {onServiceTime && <button role="menuitem" type="button" onClick={() => secondary(onServiceTime)}><PortalIcon name="clock"/>Show Service Time</button>}
+        {onGuardianContact && <button role="menuitem" type="button" onClick={() => secondary(onGuardianContact)}><PortalIcon name="phone"/>Guardian Contact</button>}
+        <button role="menuitem" type="button" onClick={()=>open('edit')}>Edit information</button><button role="menuitem" type="button" onClick={()=>open('password')}>Issue password</button><button role="menuitem" type="button" className="danger-text" onClick={()=>open('google')}>Remove Google access</button>
+      </div>, document.body)}
     </div>
     {(mode||secret)&&<Modal title={title} wide={mode==='edit'} dirty={!secret && mode !== 'success' && (Boolean(reason.trim()) || mode === 'edit' && JSON.stringify(edit) !== JSON.stringify(initialEdit(student)))} onClose={() => !busy && close()}>
       {secret?<div className="registration-pending" role="alert"><strong>Copy these credentials now</strong><p>Username: <code>{secret.username}</code></p><p>Temporary password: <code>{secret.password}</code></p><p>The student must change this password after first sign-in.</p><button type="button" onClick={close}>I stored it securely</button></div>:mode==='success'?<div><p className="success-message" role="status">{success}</p><button type="button" onClick={close}>Done</button></div>:<form className="student-form account-action-form" onSubmit={submit}>

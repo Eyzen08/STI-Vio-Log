@@ -12,7 +12,7 @@ test('canonical page and navigation names keep approved capitalization', () => {
   for (const label of ['Community Service', 'Account Settings', 'Assigned Students', 'Audit Log', 'QR Scan']) {
     assert.match(routes, new RegExp(`label: '${label}'`))
   }
-  assert.match(app, /<h2>Student Management<\/h2>/)
+  assert.match(source('components/StudentManagement.jsx'), /<h2 id="student-management-title">Student Management<\/h2>/)
   assert.match(app, /<h2>Violation Management<\/h2>/)
   assert.match(departmentDtr, /<h2>Daily Time Record<\/h2>/)
   assert.doesNotMatch(departmentDtr, />Daily time record</)

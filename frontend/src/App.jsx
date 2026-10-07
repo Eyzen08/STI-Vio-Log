@@ -1,4 +1,3 @@
-import Avatar from './components/Avatar.jsx'
 import StudentAvatarUpload from './components/StudentAvatarUpload.jsx'
 import './styles/avatars.css'
 import { academicProgram, academicYear, isSeniorHigh, academicLevelLabel } from './lib/studentAcademic.js'
@@ -14,7 +13,7 @@ import DepartmentDtr from './components/DepartmentDtr.jsx'
 import ServiceHourCorrections from './components/ServiceHourCorrections.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
-const StudentAccountActions = lazy(() => import('./components/StudentAccountActions.jsx'))
+const StudentManagement = lazy(() => import('./components/StudentManagement.jsx'))
 import GuardianContactPanel from './components/GuardianContactPanel.jsx'
 import Modal from './components/Modal.jsx'
 import RouteStatePage from './components/RouteStatePage.jsx'
@@ -63,7 +62,7 @@ import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
-import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
+import { handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
@@ -2313,24 +2312,13 @@ function App() {
     if (
       activeView === 'Students'
     ) {
-      const visibleStudents = filterAdminStudents(students, studentRosterSearch)
       const reviewedCondition = reviewedStudent ? summarizeStudentCondition(reviewedStudent.id, reviewedStudentViolations) : null
       const sanctionGuidance = handbookSanctionGuidance(reviewedStudentSummary?.categoryCounts || [])
-      const studentsWithViolations = new Set(violations.map((item) => Number(item.student_id))).size
-      const studentsInService = new Set(communityServiceAssignments.filter((item) => !['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase())).map((item) => Number(item.student_id))).size
-      const clearedStudents = students.filter((student) => summarizeStudentCondition(student.id, violations).open === 0).length
       return (
         <>
-          <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Students</span><h2>Student Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
-            <button type="button" className="primary-action" onClick={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }}>＋ Add Student</button>
-          </header>
-          <section className="management-metrics" aria-label="Student summary">
-            <ManagementMetric icon="students" value={students.length} label="Total Students"/>
-            <ManagementMetric tone="red" icon="violations" value={studentsWithViolations} label="With Violations"/>
-            <ManagementMetric tone="orange" icon="service" value={studentsInService} label="Ongoing Community Service"/>
-            <ManagementMetric tone="green" icon="clearance" value={clearedStudents} label="No Open Violations"/>
-          </section>
+          <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
+            onAdd={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
+            onUpdated={(updated) => setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item))}/>
           {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create the student account</strong><span>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</span></div>
           <section className="drawer-form-card">
             <div className="table-header">
@@ -2479,112 +2467,6 @@ function App() {
             </form>
           </section></Modal>}
           {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)}/>}
-
-          <section className="table-card">
-            <div className="table-header management-table-header">
-              <div><h3>Student Directory</h3><p>Search and review records available to your account.</p></div>
-              <span>
-                {dashboardLoading
-                  ? 'Loading...'
-                  : `${students.length} records`}
-              </span>
-            </div>
-
-            <div className="noncompliance-toolbar">
-              <label><span>Search students</span><input type="search" name="student-directory-filter" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="Student number, name, program, strand, or section"/></label>
-            </div>
-            <div className="offense-legend" aria-label="Offense indicator legend">
-              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
-            </div>
-
-            {visibleStudents.length === 0 &&
-            !dashboardLoading ? (
-              <p className="empty-state">
-                No students match this search.
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table className="management-record-table student-directory-table">
-                  <thead>
-                    <tr>
-                      <th>
-                        Student
-                      </th>
-
-                      <th>
-                        Program
-                      </th>
-
-                      <th>
-                        Section
-                      </th>
-
-                      <th>
-                        Year
-                      </th>
-                      <th>Violations</th>
-                      <th>Community Service</th>
-                      <th>Clearance</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {visibleStudents.map(
-                      (student) => {
-                        const condition = summarizeStudentCondition(student.id, violations)
-                        const assignment = communityServiceAssignments.find((item) => Number(item.student_id) === Number(student.id))
-                        const required = Number(assignment?.required_hours || 0)
-                        const remaining = Number(assignment?.remaining_hours ?? required)
-                        const completed = Math.max(0, required - remaining)
-                        const progress = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0
-                        return (
-                        <tr
-                          key={
-                            student.id
-                          }
-                        >
-                          <td data-label="Student">
-                            <div className="student-cell">
-                              <Avatar identity={student}/><OffenseIndicator level={student.offense_indicator_level} compact />
-                              <span><strong>{student.first_name} {student.last_name}</strong><small>{student.student_number}</small></span>
-                            </div>
-                            <AttendanceIndicator sessions={activeServiceSessions.filter((session) => Number(session.student_id) === Number(student.id))} ready={adminAttendanceReady} loading={dashboardLoading}/>
-                          </td>
-
-                          <td data-label="Program / Strand">
-                            {
-                              academicProgram(student) ||
-                              '—'
-                            }
-                          </td>
-
-                          <td data-label="Section">
-                            {
-                              student.section ||
-                              '—'
-                            }
-                          </td>
-
-                          <td data-label="Year / Grade">
-                            {
-                              academicYear(student) ||
-                              '—'
-                            }
-                          </td>
-                          <td data-label="Violations">{condition.total} total / {condition.open} open</td>
-                          <td data-label="Service progress">{assignment ? <div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{formatDuration(completed)} / {formatDuration(required)}</small></div> : '—'}</td>
-                          <td data-label="Clearance"><span className={`status-badge ${condition.open === 0 ? 'status-cleared' : 'status-pending'}`}>{condition.open === 0 ? 'Eligible' : 'Not cleared'}</span></td>
-                          <td data-label="Actions"><div className="table-actions"><button type="button" className="primary-row-action" onClick={()=>loadReviewedStudentHistory(student)}>View Student</button><button type="button" className="secondary-button service-time-button" onClick={()=>setServiceTimeStudent(student)} aria-label={`Show service time for ${student.first_name} ${student.last_name}`}><PortalIcon name="clock"/><span>Show Service Time</span></button><button type="button" className="secondary-button guardian-contact-button" onClick={()=>setGuardianContactStudent(student)} aria-label={`Guardian Contact for ${student.first_name} ${student.last_name}`}><PortalIcon name="phone"/><span>Guardian Contact</span></button><StudentAccountActions token={token} student={student} onUpdated={(updated)=>setStudents(current=>current.map(item=>Number(item.id)===Number(updated.id)?updated:item))}/></div></td>
-                        </tr>
-                        )
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
 
           {guardianContactStudent && <Modal title="Guardian Contact" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
           {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} onClose={() => setServiceTimeStudent(null)} />}

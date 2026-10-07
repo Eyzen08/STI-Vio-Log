@@ -9,7 +9,7 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
 })
@@ -18,6 +18,21 @@ const render = (name, props) => renderToStaticMarkup(createElement(components[na
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('student directory keeps five compact rows, real counts, and only relevant attendance', () => {
+  const students = Array.from({ length: 7 }, (_, index) => ({ id: index + 1, first_name: `Student ${index + 1}`, last_name: 'Test', student_number: `0200010000${index}`, program: 'BSIT', section: 'A101', year_level: 2 }))
+  const html = render('StudentManagement', { students, activeSessions: [active], onQueryChange() {}, violations: [{ student_id: 1, status: 'OPEN', severity: 'GRAVE' }], clearances: [{ student_id: 2, status: 'CLEARED' }], assignments: [{ student_id: 1, status: 'OPEN', required_hours: 5, remaining_hours: 4 }] })
+  assert.equal((html.match(/scope="col"/g) || []).length, 6)
+  assert.equal((html.match(/class="directory-student"/g) || []).length, 5)
+  assert.equal((html.match(/class="directory-timed-in"/g) || []).length, 1)
+  assert.equal((html.match(/<progress/g) || []).length, 1)
+  assert.match(html, /1 hr \/ 5 hr/)
+  assert.match(html, /Showing 1–5 of 7 students/)
+  assert.match(html, /Academic Info/)
+  assert.match(html, /clearance-cleared">Cleared/)
+  assert.match(html, /aria-label="More actions for Student 1 Test"/)
+  assert.doesNotMatch(html, /TIME OUT|Offense indicator legend|Show Service Time|Guardian Contact/)
+})
 
 test('administrative dashboards keep four quick actions and compact analytics access', () => {
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
