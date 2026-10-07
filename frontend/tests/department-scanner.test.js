@@ -49,7 +49,7 @@ test('all authorized staff roles use the single three-stage attendance workspace
   assert.match(scannerSource, /ServiceTimeOutDialog/)
   assert.doesNotMatch(scannerSource, /name="department_id"|Select Outcome/)
   assert.match(scannerSource, /Confirm Time In/)
-  assert.match(appSource, /handleQrAction\('scan', decodedQr\)/)
+  assert.match(appSource, /qrActionRef\.current\('scan', decodedQr\)/)
 
 })
 

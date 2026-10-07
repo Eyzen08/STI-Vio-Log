@@ -444,6 +444,9 @@ function App() {
   const [qrError, setQrError] = useState('')
   const [qrResult, setQrResult] = useState(null)
   const [verifiedQr, setVerifiedQr] = useState('')
+  const [qrInputSource, setQrInputSource] = useState('manual')
+  const verifiedQrRef = useRef('')
+  const qrInputVersionRef = useRef(0)
   const [qrSubmitting, setQrSubmitting] = useState(false)
   const [qrHistory,setQrHistory] = useState([])
   const qrActionRef = useRef(null)
@@ -1475,6 +1478,9 @@ function App() {
   const startQrScanner = async (facingMode = qrFacingMode, restart = false) => {
     setQrError('')
     setQrResult(null)
+    setVerifiedQr('')
+    verifiedQrRef.current = ''
+    qrInputVersionRef.current += 1
 
     try {
       const unavailable = cameraUnavailableMessage({
@@ -1510,17 +1516,22 @@ function App() {
           if (qrDecodeBusyRef.current) return
           qrDecodeBusyRef.current = true
           const decodedQr = decodedText.trim()
+          qrInputVersionRef.current += 1
+          const decodedVersion = qrInputVersionRef.current
+          qrFormRef.current = { ...qrFormRef.current, qr_code: decodedQr }
+          setQrInputSource('camera')
           setQrForm((current) => ({
             ...current,
             qr_code: decodedQr
           }))
 
           setVerifiedQr('')
+          verifiedQrRef.current = ''
           setQrResult(null)
           setQrError('')
 
           stopQrScanner(scanner)
-            .then(() => handleQrAction('scan', decodedQr))
+            .then(() => decodedVersion===qrInputVersionRef.current && qrActionRef.current('scan', decodedQr))
             .finally(() => { qrDecodeBusyRef.current = false })
         },
 
@@ -1626,6 +1637,12 @@ function App() {
       handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
     }
     const { name, value } = event.target
+    if (name === 'qr_code') {
+      qrFormRef.current = { ...qrFormRef.current, qr_code: value }
+      qrInputVersionRef.current += 1
+      setQrInputSource('manual')
+      sessionStorage.removeItem('service-attendance-qr:'+user.id)
+    }
 
     setQrForm((current) => ({
       ...current,
@@ -1638,6 +1655,7 @@ function App() {
 
     if (name === 'qr_code' || name === 'department_id') {
       setVerifiedQr('')
+      verifiedQrRef.current = ''
       setQrResult(null)
       setQrError('')
       setQrForm((current) => ({ ...current, supervising_officer_id: '' }))
@@ -1645,24 +1663,32 @@ function App() {
   }
 
   const handleQrAction = async (action, qrValue = qrForm.qr_code, options = {}) => {
-    if (qrActionBusyRef.current) return
-    qrActionBusyRef.current = true
     const quiet=Boolean(options.quiet)
+    const version=qrInputVersionRef.current
+    while (qrActionBusyRef.current) {
+      if (quiet || action!=='scan') return
+      await qrActionBusyRef.current
+    }
+    if (version!==qrInputVersionRef.current) return false
+    let release
+    qrActionBusyRef.current = new Promise(resolve=>{release=resolve})
     if (!quiet) {setQrError('');setQrSubmitting(true)}
     const normalizedQr=typeof qrValue==='string'?qrValue.trim():''
     const current=qrFormRef.current
     try {
       if (!normalizedQr) throw new Error('QR code is required.')
-      if (action!=='scan'&&normalizedQr!==verifiedQr) throw new Error('Verify the student before recording attendance.')
+      if (action!=='scan'&&normalizedQr!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
       if (action==='time-in'&&(!current.session_type||!current.supervising_officer_id)) throw new Error('Select service time and an authorized supervising officer.')
-      const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQr?current.assignment_id:undefined
+      const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQrRef.current?current.assignment_id:undefined
       const response=await fetch(API_URL+'/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
         ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
         ...(action==='time-in'?{session_type:current.session_type,selected_duration_minutes:current.selected_duration_minutes,supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
       const data=await response.json()
+      if(action==='scan'&&version!==qrInputVersionRef.current) return false
       if(!response.ok||!data.success) throw new Error(data.message||'Unable to process attendance.')
       setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
       setVerifiedQr(normalizedQr)
+      verifiedQrRef.current=normalizedQr
       sessionStorage.setItem('service-attendance-qr:'+user.id,normalizedQr)
       const officers=data.available_officers||[]
       const active=data.active_session||data.session
@@ -1671,24 +1697,24 @@ function App() {
       if(data.assignment?.id) {
         const historyResponse=await fetch(API_URL+'/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
         const historyData=await historyResponse.json()
-        if(historyResponse.ok) setQrHistory(historyData.sessions||[])
+        if(historyResponse.ok&&version===qrInputVersionRef.current) setQrHistory(historyData.sessions||[])
       } else setQrHistory([])
       if(action!=='scan') {
         setDashboardRefreshKey(key=>key+1);refreshPendingActions()
         if(isAdmin) refreshAdminAttendance()
       }
       return true
-    } catch(failure) {setQrError(failure.message);return false}
-    finally {if(!quiet) setQrSubmitting(false);qrActionBusyRef.current=false}
+    } catch(failure) {if(version===qrInputVersionRef.current) setQrError(failure.message);return false}
+    finally {if(!quiet) setQrSubmitting(false);qrActionBusyRef.current=null;release()}
   }
   qrActionRef.current=handleQrAction
 
   useEffect(()=>{
     if(activeView!=='QR Scan'||!token||!user?.id) return undefined
-    const saved=qrFormRef.current.qr_code||sessionStorage.getItem('service-attendance-qr:'+user.id)
+    const saved=verifiedQrRef.current||(!qrFormRef.current.qr_code&&sessionStorage.getItem('service-attendance-qr:'+user.id))
     if(saved) qrActionRef.current('scan',saved,{quiet:true})
     const refresh=()=>{
-      const code=qrFormRef.current.qr_code
+      const code=verifiedQrRef.current
       if(document.visibilityState==='visible'&&code) qrActionRef.current('scan',code,{quiet:true})
     }
     const timer=window.setInterval(refresh,15000)
@@ -2647,7 +2673,7 @@ function App() {
         viewingAssignment={viewingServiceAssignment} onView={setViewingServiceAssignment} onCloseAssignment={() => setViewingServiceAssignment(null)}/>
     }
     if (activeView === 'QR Scan') {
-      return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr}
+      return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr} inputSource={qrInputSource}
         isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory}
         onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
         onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}

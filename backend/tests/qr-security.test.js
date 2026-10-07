@@ -49,3 +49,26 @@ test('QR verification requires an active linked student account', async () => {
     assert.match(studentSql, /u\.is_active=TRUE/);
   } finally { database.query = originalQuery; }
 });
+
+test('admin and department staff can verify a completed student without a client department', async () => {
+  const originalQuery = database.query;
+  database.query = async (sql) => {
+    if (String(sql).includes('officer_department_assignments')) return {rows:[{id:5}]};
+    if (String(sql).includes('WHERE s.qr_code=$1')) return {rows:[{id:40,first_name:'Test',last_name:'Student'}]};
+    if (String(sql)==='SELECT clock_timestamp() AS now') return {rows:[{now:new Date('2026-10-08T01:00:00Z')}]};
+    if (String(sql).includes('SUM(credited_minutes)')) return {rows:[{minutes:0}]};
+    return {rows:[]};
+  };
+  try {
+    for (const user of [{id:1,role:'DISCIPLINE_ADMIN'},{id:12,role:'DEPARTMENT_HEAD',department_id:5}]) {
+      const res=response();
+      await scanQrCode({user,body:{qr_code:'completed-student'}},res);
+      assert.equal(res.statusCode,200);
+      assert.equal(res.body.success,true);
+      assert.equal(res.body.student.id,40);
+      assert.equal(res.body.assignment,null);
+      assert.equal(res.body.student_status,'No active service requirement');
+      assert.equal(res.body.allowance.available_minutes,0);
+    }
+  } finally { database.query=originalQuery; }
+});

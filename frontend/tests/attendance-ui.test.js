@@ -60,6 +60,18 @@ test('QR workflow shows automatic department, duration limits and active session
   assert.match(final,/Final remainder/)
 })
 
+test('camera QR verification is automatic and Verify is reserved for manual input', () => {
+  const props={form:{qr_code:'camera-code',notes:''},verifiedQr:'camera-code',result:{student:{first_name:'Ana',last_name:'Reyes'},allowance:{},available_officers:[]}}
+  const camera=render('DepartmentQrScanner',{...props,inputSource:'camera'})
+  assert.doesNotMatch(camera,/>Verify<\/button>/)
+  assert.match(camera,/Camera scan verified automatically/)
+  const pending=render('DepartmentQrScanner',{...props,inputSource:'camera',isSubmitting:true,verifiedQr:''})
+  assert.match(pending,/Verifying camera scan/)
+  assert.doesNotMatch(pending,/>Verify<\/button>/)
+  const manual=render('DepartmentQrScanner',{...props,inputSource:'manual',verifiedQr:''})
+  assert.match(manual,/>Verify<\/button>/)
+})
+
 test('violation detail separates structured incident notes and preserves totals and action permissions', () => {
   const violation = { id: 23, student_id: 1, student_name: 'Ana Reyes', student_number: '02000', status: 'OPEN', severity: 'GRAVE', violation_name: 'Major Offense - Category D', exact_offense: 'Documented offense', description: 'Handbook offense: Documented offense\nIncident details: Recorded incident note', required_service_hours: 6, completed_service_hours: 0.75, incident_date: '2026-10-05', incident_time: '16:00:00' }
   const html = render('ViolationDetailsContent', { violation, role: 'DISCIPLINE_OFFICE', canAdd: true })
