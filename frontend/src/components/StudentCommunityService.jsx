@@ -48,13 +48,13 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, atten
     <section className="service-page" aria-labelledby="service-title">
       <header className="page-intro portal-page-header">
         <div><p className="eyebrow">Community Service</p><h2 id="service-title">My Service and DTR</h2><p>Track assigned hours and authoritative attendance sessions.</p></div>
-        <span className="record-count">UTC records</span>
+        <span className="record-count">Manila service dates</span>
       </header>
 
       {(error || filterError) && <p className="error-message" role="alert">{filterError || error}</p>}
       <section className="student-attendance-summary" aria-label="Current attendance status">
         <div><span>Attendance status</span><AttendanceIndicator sessions={liveDtr?.sessions || []} ready={Array.isArray(liveDtr?.sessions)} loading={loading} details/></div>
-        {liveActiveSessions.length > 0 && <div className="student-attendance-countdowns">{liveActiveSessions.map((session) => <div key={session.id}><span>Remaining session time · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
+        {liveActiveSessions.length > 0 && <div className="student-attendance-countdowns">{liveActiveSessions.map((session) => <div key={session.id}><span>{session.session_type==='OPEN_TIME'?'Time elapsed':'Remaining session time'} · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
         {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
       </section>
 
@@ -95,7 +95,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, atten
           <div className="session-list">{displaySessions.map((session) => <article className={isActiveServiceSession(session) ? 'student-active-session' : undefined} key={session.id}>
             <div><strong>{session.department_name}</strong><span>Assignment #{session.assignment_id}</span></div>
             <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Remaining session time' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ServiceCountdown session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!isActiveServiceSession(session)&&<div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
-            <AttendanceIndicator sessions={[session]}/>
+            <dl><div><dt>Mode / Target</dt><dd>{session.session_type==='FIXED'?formatMinutes(session.selected_duration_minutes):session.session_type==='OPEN_TIME'?'Open Time':'Legacy session'}</dd></div><div><dt>Session status</dt><dd>{session.completion_reason?.replaceAll('_',' ')||session.status}</dd></div><div><dt>Authorized by</dt><dd>{session.time_out_recorder_name||session.time_in_recorder_name||'Staff #'+(session.time_out_by_user_id||session.time_in_by_user_id)} · {session.time_out_role||session.time_in_role||'Staff'}</dd></div><div><dt>Notes / Remarks</dt><dd>{session.result_notes||session.notes||'—'}</dd></div></dl><AttendanceIndicator sessions={[session]}/>
           </article>)}</div>
         )}
       </section>

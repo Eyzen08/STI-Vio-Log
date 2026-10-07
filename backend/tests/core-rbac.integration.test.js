@@ -34,6 +34,11 @@ function tokenFor(id, options = {}) {
 function mockResult(sql, params = []) {
   const text = String(sql).replace(/\s+/g, ' ').trim();
 
+  if (text==='SELECT clock_timestamp() AS now') return {rows:[{now:new Date('2026-10-07T01:00:00Z')}]};
+  if (text.startsWith('SELECT u.id,u.role,u.is_active,u.session_version')) return {rows:[{...accounts[Number(params[0])],is_active:true}]};
+  if (text.includes('COALESCE(SUM(credited_minutes)')) return {rows:[{minutes:0}]};
+  if (text.includes('FOR UPDATE OF s')) return {rows:[{id:40,is_active:true}]};
+  if (text==='SELECT department_id FROM community_service_assignments WHERE id=$1') return {rows:[{department_id:9}]};
   if (text.includes('FROM browser_sessions bs') && text.includes('JOIN users u')) {
     const id=Object.keys(accounts).find(value=>sessionService.hash(`session-${value}`)===params[0]);
     const account = accounts[Number(id)];
@@ -71,7 +76,7 @@ function mockResult(sql, params = []) {
   }
 
   if (text.includes('FROM community_service_assignments cs') && text.includes('WHERE s.user_id = $1')) {
-    return { rows: [{ id: 80, student_id: 40, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN' }] };
+    return { rows: [{ id: 80, student_id: 40, department_id:9, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN' }] };
   }
 
   if (text.includes('FROM student_clearance sc') && text.includes('WHERE sc.student_id = $1')) {
@@ -94,7 +99,7 @@ function mockResult(sql, params = []) {
     return { rows: [{ id: 40, student_number: '02000123456', first_name: 'Test', last_name: 'Student', qr_code: 'QR-40' }] };
   }
 
-  if (text.includes('community_service_assignments') && text.includes("status IN ('OPEN', 'IN_PROGRESS')")) {
+  if (text.includes('community_service_assignments') && text.includes("status IN ('OPEN','IN_PROGRESS')")) {
     return { rows: [{ id: 80, violation_id: 70, student_id: 40, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN' }] };
   }
 
@@ -159,12 +164,13 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
       if (text.includes('FROM community_service_assignments a') && text.includes('JOIN violations v')) {
         return { rows: [{ id: 80, violation_id: 70, student_id: 40, department_id: 9, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN', violation_status: 'OPEN' }] };
       }
+      if (text.includes('COALESCE(SUM(credited_minutes)')) return {rows:[{minutes:0}]};
       if (text.includes('FROM community_service_sessions')) return { rows: [] };
       if (text.includes('INSERT INTO community_service_attendance')) {
         capturedAttendanceParams = params;
         return { rows: [{ id: 100, assignment_id: 80, scanned_by: params[3], department_id: params[2], scanned_at: new Date() }] };
       }
-      if (text.includes('INSERT INTO community_service_sessions')) return { rows: [{ id: 110, assignment_id: 80, status: 'ACTIVE', worked_minutes: null }] };
+      if (text.includes('INSERT INTO community_service_sessions')) return { rows: [{ id: 110, assignment_id: 80, student_id:40, status: 'ACTIVE', worked_minutes: null,time_in:new Date('2026-10-07T01:00:00Z'),credit_cutoff_at:new Date('2026-10-07T03:00:00Z'),session_type:'FIXED',selected_duration_minutes:120 }] };
       if (text.includes('INSERT INTO qr_scan_logs')) return { rows: [{ id: 101 }] };
       if (text.includes('INSERT INTO audit_logs')) return { rows: [] };
       return mockResult(sql, params);
@@ -231,7 +237,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/clearance', { token: discipline })).status, 200);
 
   assert.equal((await request(baseUrl, '/api/qr/scan', { token: head, method: 'POST', body: { qr_code: 'QR-40', department_id: 999, scanned_by: 999 } })).status, 400);
-  assert.equal((await request(baseUrl, '/api/qr/time-in', { token: head, method: 'POST', body: { qr_code: 'QR-40' } })).status, 201);
+  assert.equal((await request(baseUrl, '/api/qr/time-in', { token: head, method: 'POST', body: { qr_code: 'QR-40',session_type:'FIXED',selected_duration_minutes:120 } })).status, 201);
   assert.equal(capturedAttendanceParams[2], 9);
   assert.equal(capturedAttendanceParams[3], 3);
   assert.equal((await request(baseUrl, '/api/violations', { token: head, method: 'POST', body: {} })).status, 403);

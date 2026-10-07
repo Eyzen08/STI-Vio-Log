@@ -9,6 +9,7 @@ const { createGoogleIdentityService } = require("../src/services/googleIdentityS
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
 const { createDepartmentAdministrationService } = require('../src/services/departmentAdministrationService');
 const { testDatabaseConfig } = require('./testDatabase');
+const { listMigrationFiles } = require('../scripts/migrate');
 
 require("dotenv").config({ quiet: true });
 
@@ -31,10 +32,43 @@ test.after(async () => {
     await adminPool.end();
 });
 
+test('duration upgrade reports duplicate active students, preserves history and backfills Open Time',async()=>{
+    const schema=`sti_vio_log_test_duration_${suffix}`;
+    await adminPool.query(`CREATE SCHEMA ${schema}`);
+    const pool=schemaPool(schema);
+    try {
+        for(const file of listMigrationFiles(migrationsDir).filter(file=>file<'046')) await pool.query(fs.readFileSync(path.join(migrationsDir,file),'utf8'));
+        await pool.query(`INSERT INTO users(username,password_hash,role) VALUES('duration_admin','hash','DISCIPLINE_ADMIN'),('duration_head','hash','DEPARTMENT_HEAD'),('duration_student','hash','STUDENT');
+            INSERT INTO departments(department_code,department_name) VALUES('DURATION','Duration test');
+            INSERT INTO department_heads(user_id,department_id,first_name,last_name) VALUES(2,1,'Test','Officer');
+            INSERT INTO students(user_id,student_number,first_name,last_name,qr_code) VALUES(3,'DURATION-1','Test','Student','DURATION-QR');
+            INSERT INTO violations(student_id,violation_type_id,incident_date,description,required_service_hours) VALUES(1,1,CURRENT_DATE,'Duration migration test',20),(1,1,CURRENT_DATE,'Second assignment',20);
+            INSERT INTO community_service_assignments(violation_id,student_id,department_id,department_head_id,required_hours,remaining_hours) VALUES(1,1,1,1,20,20),(2,1,1,1,20,20);
+            INSERT INTO community_service_sessions(assignment_id,department_id,time_in,time_in_by_user_id,supervising_officer_user_id) VALUES(1,1,'2026-10-07T15:00:00Z',1,2),(2,1,'2026-10-07T15:00:00Z',1,2);
+            INSERT INTO community_service_sessions(assignment_id,department_id,time_in,time_out,time_in_by_user_id,time_out_by_user_id,supervising_officer_user_id,status,review_status,worked_minutes,credited_minutes) VALUES(1,1,'2026-10-07T01:00:00Z','2026-10-07T03:00:00Z',1,1,2,'COMPLETED','APPROVED',120,120)`);
+        const historical=(await pool.query('SELECT * FROM community_service_sessions WHERE id=3')).rows[0];
+        const migration=fs.readFileSync(path.join(migrationsDir,'046_service_session_duration.sql'),'utf8');
+        await pool.query('BEGIN');
+        await assert.rejects(pool.query(migration),/duplicate active student sessions.*1: sessions 1, 2/i);
+        await pool.query('ROLLBACK');
+        assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_sessions')).rows[0].count,3);
+        await pool.query('DELETE FROM community_service_sessions WHERE id=2');
+        await pool.query('BEGIN');await pool.query(migration);await pool.query('COMMIT');
+        const active=(await pool.query('SELECT * FROM community_service_sessions WHERE id=1')).rows[0];
+        assert.equal(active.session_type,'OPEN_TIME');assert.equal(active.student_id,'1');
+        assert.equal(active.credit_cutoff_at.toISOString(),'2026-10-07T16:00:00.000Z');
+        const preserved=(await pool.query('SELECT * FROM community_service_sessions WHERE id=3')).rows[0];
+        for(const field of ['time_in','time_out','worked_minutes','status','review_status']) assert.deepEqual(preserved[field],historical[field]);
+        assert.equal(Number(preserved.credited_minutes),Number(historical.credited_minutes));
+        await assert.rejects(pool.query(`INSERT INTO community_service_sessions(assignment_id,student_id,department_id,time_in,time_in_by_user_id,supervising_officer_user_id,session_type,service_date,credit_cutoff_at) VALUES(2,1,1,'2026-10-07T15:00:00Z',1,2,'OPEN_TIME','2026-10-07','2026-10-07T16:00:00Z')`),error=>error.constraint==='uq_service_active_student');
+    } finally {await pool.end();await adminPool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);}
+});
+
 test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "046_service_session_duration.sql");
         assert.equal(first.applied.pop(), "045_service_hour_corrections.sql");
         assert.equal(first.applied.pop(), "044_account_avatars.sql");
         assert.equal(first.applied.pop(), "043_student_academic_strands.sql");
@@ -211,6 +245,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "046_service_session_duration.sql");
         assert.equal(legacyResult.applied.pop(), "045_service_hour_corrections.sql");
         assert.equal(legacyResult.applied.pop(), "044_account_avatars.sql");
         assert.equal(legacyResult.applied.pop(), "043_student_academic_strands.sql");

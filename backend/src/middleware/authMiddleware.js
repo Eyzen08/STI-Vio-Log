@@ -190,11 +190,27 @@ const authorizeAnyPermission = (...allowedPermissions) => (req, res, next) => {
     return next();
 };
 
-const requireAuthorizedDepartment = async (req, res, next) => {
+const requireAuthorizedDepartment = async (req, res, next, database = pool) => {
+    if (req.user.role==='DEPARTMENT_HEAD' && !req.user.department_id) return res.status(403).json({success:false,message:'No authorized department is assigned to this account'});
+    // Resolve service routing from stored assignments/sessions, never a client-selected department.
+    let assignedDepartment;
+    if (req.body?.assignment_id || req.body?.session_id || req.params?.sessionId) {
+        try {
+            const sessionId = req.body?.session_id || req.params?.sessionId;
+            const result = sessionId
+                ? await database.query('SELECT department_id FROM community_service_sessions WHERE id=$1',[sessionId])
+                : await database.query('SELECT department_id FROM community_service_assignments WHERE id=$1',[req.body.assignment_id]);
+            assignedDepartment = result.rows[0]?.department_id;
+            if (!assignedDepartment) return res.status(404).json({success:false,message:'Service assignment or session not found'});
+            if (req.body?.department_id && Number(req.body.department_id)!==Number(assignedDepartment)) return res.status(403).json({success:false,message:'Department does not match the service assignment'});
+        } catch (error) { return res.status(400).json({success:false,message:'A valid assignment or session ID is required'}); }
+    }
     const scopedOfficer = ["DEPARTMENT_HEAD", "DISCIPLINE_OFFICE"].includes(req.user.role) && req.user.department_id;
     const departmentId = scopedOfficer
         ? req.user.department_id
-        : req.body.department_id;
+        : assignedDepartment || req.body?.department_id;
+
+    if (assignedDepartment && Number(departmentId)!==Number(assignedDepartment)) return res.status(403).json({success:false,message:'This session is outside your authorized department'});
 
     if (!departmentId) {
         return res.status(400).json({
@@ -205,16 +221,16 @@ const requireAuthorizedDepartment = async (req, res, next) => {
 
     try {
         const result = scopedOfficer
-            ? await pool.query(
+            ? await database.query(
                 `SELECT d.id FROM officer_department_assignments oda
                  JOIN departments d ON d.id=oda.department_id
                  LEFT JOIN department_heads dh ON dh.user_id=oda.officer_user_id
                  WHERE oda.officer_user_id=$1 AND oda.department_id=$2 AND oda.status='ACTIVE'
-                   AND oda.starts_at<=CURRENT_TIMESTAMP AND (oda.ends_at IS NULL OR oda.ends_at>CURRENT_TIMESTAMP)
+                   AND oda.starts_at<=clock_timestamp() AND (oda.ends_at IS NULL OR oda.ends_at>clock_timestamp())
                    AND d.is_active=TRUE AND ($3::text<>'DEPARTMENT_HEAD' OR COALESCE(dh.qr_scanner_enabled,FALSE)=TRUE)`,
                 [req.user.id, departmentId, req.user.role]
             )
-            : await pool.query(
+            : await database.query(
                 "SELECT id FROM departments WHERE id = $1 AND is_active = TRUE",
                 [departmentId]
             );

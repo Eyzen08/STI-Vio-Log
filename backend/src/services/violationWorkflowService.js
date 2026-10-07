@@ -187,13 +187,13 @@ const transitionViolationWithClient = async ({
         );
     }
 
-    if (action === 'INVALID_CANCEL') {
+    if (['INVALID_CANCEL','CLEAR'].includes(action)) {
         const active = await client.query(
             `SELECT css.id FROM community_service_sessions css
              JOIN community_service_assignments a ON a.id = css.assignment_id
              WHERE a.violation_id = $1 AND css.time_out IS NULL`, [violationId]
         );
-        if (active.rows.length) throw new ViolationWorkflowError('Time out the active attendance session before cancelling this violation', 409, 'ACTIVE_SESSION_EXISTS');
+        if (active.rows.length) throw new ViolationWorkflowError('Time out the active attendance session before closing this violation', 409, 'ACTIVE_SESSION_EXISTS');
     }
 
     const clearedAt = ["CLEAR", "COMPLETE"].includes(policy.to)

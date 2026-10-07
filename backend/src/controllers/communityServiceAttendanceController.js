@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult } = require("../services/communityServiceSessionService");
+const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, hydrateSessions, previewTimeOut } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
 const { emitAttendanceChange, emitCommunityServiceChange } = require('../services/realtimeEventService');
@@ -24,12 +24,12 @@ const sendError = (res, error, operation) => {
 const communityServiceTimeIn = async (req, res) => {
     try {
         const allowedFields = req.user.role === "DEPARTMENT_HEAD"
-            ? ["assignment_id", "student_id", "notes", "supervising_officer_id"]
-            : ["assignment_id", "student_id", "notes", "department_id", "supervising_officer_id"];
+            ? ["assignment_id", "student_id", "notes", "supervising_officer_id", "session_type", "selected_duration_minutes"]
+            : ["assignment_id", "student_id", "notes", "department_id", "supervising_officer_id", "session_type", "selected_duration_minutes"];
         assertAllowedFields(req.body, allowedFields);
         const { assignment_id, student_id, notes } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
-        const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, ipAddress: req.ip });
+        const result = await recordTimeIn({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, sessionType:req.body.session_type,selectedDurationMinutes:req.body.selected_duration_minutes, actor: req.user, notes, ipAddress: req.ip });
         await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-in recorded successfully", ...result });
     } catch (error) { await recordFailureNotice(req, 'TIME_IN_REJECTED', error); return sendError(res, error, "record community service time-in"); }
@@ -38,13 +38,13 @@ const communityServiceTimeIn = async (req, res) => {
 const communityServiceTimeOut = async (req, res) => {
     try {
         const allowedFields = req.user.role === "DEPARTMENT_HEAD"
-            ? ["assignment_id", "student_id", "notes", "attendance_outcome", "supervising_officer_id"]
-            : ["assignment_id", "student_id", "notes", "attendance_outcome", "department_id", "supervising_officer_id"];
+            ? ["assignment_id", "student_id", "session_id", "notes", "attendance_outcome", "supervising_officer_id"]
+            : ["assignment_id", "student_id", "session_id", "notes", "attendance_outcome", "department_id", "supervising_officer_id"];
         assertAllowedFields(req.body, allowedFields);
-        const { assignment_id, student_id, notes, attendance_outcome } = req.body;
+        const { assignment_id, student_id, notes } = req.body;
         if (!assignment_id || !student_id || !req.staffDepartmentId) return res.status(400).json({ success: false, message: "assignment_id, student_id, and a valid staff department are required" });
-        const result = await recordTimeOut({ assignmentId: assignment_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, attendanceOutcome: attendance_outcome, ipAddress: req.ip });
-        await emitAttendanceChange(result, req.staffDepartmentId);
+        const result = await recordTimeOut({ assignmentId: assignment_id, sessionId:req.body.session_id, expectedStudentId: student_id, departmentId: req.staffDepartmentId, supervisingOfficerId: req.body.supervising_officer_id, actor: req.user, notes, ipAddress: req.ip });
+        if (!result.already_completed) await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(201).json({ success: true, message: "Community service time-out recorded successfully", hours_worked: result.session.worked_minutes / 60, ...result });
     } catch (error) { await recordFailureNotice(req, 'TIME_OUT_REJECTED', error); return sendError(res, error, "record community service time-out"); }
 };
@@ -78,7 +78,7 @@ const getActiveDepartmentSessions = async (req, res) => {
         if (!isOperationalStaff && !scopedDepartment) return res.status(403).json({ success: false, message: 'No authorized department is assigned to this account' });
         const departmentWhere = scopedDepartment ? 'css.department_id=$1 AND a.department_id=$1' : '$1::bigint IS NULL';
         const result = await pool.query(
-            `SELECT css.id AS session_id, css.assignment_id, css.time_in, css.time_out, css.status, css.notes,
+            `SELECT css.*, css.id AS session_id,
                     LEAST(
                         FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in)))::int,
                         ROUND(a.remaining_hours * 60)::int * 60
@@ -106,7 +106,8 @@ const getActiveDepartmentSessions = async (req, res) => {
              ORDER BY css.time_in ASC, css.id ASC`,
             [scopedDepartment]
         );
-        return res.json({ success: true, server_time: new Date().toISOString(), sessions: result.rows });
+        const sessions = await hydrateSessions(pool,result.rows);
+        return res.json({ success: true, server_time: sessions[0]?.server_time || new Date().toISOString(), sessions });
     } catch (error) { return sendError(res, error, "get active department sessions"); }
 };
 
@@ -134,10 +135,10 @@ const getCommunityServiceSessions = async (req, res) => {
             filters += ` AND css.department_id = $${params.length}`;
             if (req.user.role === "DEPARTMENT_HEAD") filters += ` AND a.department_id = $${params.length}`;
         }
-        if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'UTC')`; }
-        if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'UTC')`; }
+        if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Manila')`; }
+        if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Manila')`; }
         const result = await pool.query(
-            `SELECT css.*, css.service_condition AS attendance_outcome,
+            `SELECT css.*, (SELECT username FROM users WHERE id=css.time_in_by_user_id) AS time_in_recorder_name, (SELECT username FROM users WHERE id=css.time_out_by_user_id) AS time_out_recorder_name, css.service_condition AS attendance_outcome,
                     d.department_name, a.student_id, a.violation_id,
                     a.required_hours, a.completed_hours, a.remaining_hours,
                     s.student_number, s.first_name, s.last_name,
@@ -152,7 +153,7 @@ const getCommunityServiceSessions = async (req, res) => {
              LEFT JOIN department_heads dh ON dh.user_id=supervisor.id
              WHERE css.assignment_id = $1${filters}
              ORDER BY css.time_in DESC, css.id DESC`, params);
-        return res.json({ success: true, assignment_id: Number(req.params.assignmentId), total_sessions: result.rows.length, sessions: result.rows });
+        return res.json({ success: true, assignment_id: Number(req.params.assignmentId), total_sessions: result.rows.length, sessions: await hydrateSessions(pool,result.rows) });
     } catch (error) { return sendError(res, error, "get community service sessions"); }
 };
 
@@ -171,4 +172,8 @@ const getCommunityServiceAttendance = async (req, res) => {
     } catch (error) { return sendError(res, error, "get community service attendance"); }
 };
 
-module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters };
+const getTimeOutPreview = async (req,res) => {
+    try { return res.json({success:true,...await previewTimeOut({sessionId:req.params.sessionId,departmentId:req.staffDepartmentId})}); }
+    catch(error) { return sendError(res,error,'preview community service time-out'); }
+};
+module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters, getTimeOutPreview };

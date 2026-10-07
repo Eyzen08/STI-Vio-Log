@@ -3,6 +3,7 @@ import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServiceCountdown from './ServiceCountdown.jsx'
+import ServiceTimeOutDialog from './ServiceTimeOutDialog.jsx'
 
 const progressForSession = (session) => {
   const required = Math.max(0, Number(session.required_hours) || 0)
@@ -13,8 +14,9 @@ const progressForSession = (session) => {
   return { required, completed, remaining, progress: required ? Math.min(100, Math.round((completed / required) * 100)) : 0 }
 }
 
-export default function AdminActiveAttendance({ sessions = [], loading = false, onNavigate, attendanceReady = true, attendanceError }) {
+export default function AdminActiveAttendance({ sessions = [], loading = false, onNavigate, attendanceReady = true, attendanceError,token,onAttendanceSaved }) {
   const [query, setQuery] = useState('')
+  const [selectedSession,setSelectedSession] = useState(null)
   const [now, setNow] = useState(Date.now())
   const activeSessions = useMemo(() => sessions.filter(isActiveServiceSession), [sessions])
 
@@ -52,10 +54,11 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
             <td data-label="Remaining session time"><ServiceCountdown session={session} now={now} className="active-attendance-clock"/></td>
             <td data-label="Service hours"><span>{formatDuration(service.completed)} completed</span><small>{formatDuration(service.remaining)} remaining of {formatDuration(service.required)}</small></td>
             <td data-label="Credited progress"><div className="table-progress"><div><span style={{ width: `${service.progress}%` }} /></div><small>{service.progress}% credited</small></div></td>
-            <td data-label="Action"><button type="button" className="secondary-button" onClick={() => onNavigate('/admin/community-service')}>Manage assignment</button></td>
+            <td data-label="Action"><button type="button" className="secondary-button time-out-button" onClick={()=>setSelectedSession(session)}>Time Out</button><button type="button" className="text-button" onClick={()=>onNavigate('/admin/community-service')}>Assignment</button></td>
           </tr>
         })}</tbody>
       </table></div>}
     </section>
+    {selectedSession&&<ServiceTimeOutDialog session={selectedSession} token={token} onClose={()=>setSelectedSession(null)} onSaved={onAttendanceSaved}/>}
   </div>
 }

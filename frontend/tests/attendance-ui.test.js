@@ -40,24 +40,24 @@ test('community workflow keeps assignment filters, actual attendance, eligible c
   assert.match(form,/value="4" selected/); assert.doesNotMatch(form,/value="5"|value="6"|value="10"/)
 })
 
-test('QR workflow enforces verified identity, active session, outcome and authorized officer controls', () => {
-  const form={qr_code:'test-code',department_id:3,supervising_officer_id:9,notes:'',attendance_outcome:''}
-  const result={action:'scan',student:{first_name:'Ana',last_name:'Reyes',student_number:'02000'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}
-  const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'},departments:[{id:3,name:'Library'}]}
+test('QR workflow shows automatic department, duration limits and active session without another Time In', () => {
+  const form={qr_code:'test-code',supervising_officer_id:9,notes:'',session_type:'FIXED',selected_duration_minutes:120}
+  const result={action:'scan',server_time:new Date(start).toISOString(),student:{first_name:'Ana',last_name:'Reyes',student_number:'02000',program:'BSIT'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},allowance:{available_minutes:300,completed_today_minutes:180,daily_remaining_minutes:300,day_ends_at:'2026-10-05T16:00:00Z'},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}
+  const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'}}
   const idle=render('DepartmentQrScanner',props)
-  assert.match(idle,/Community Service Assignment/); assert.match(idle,/45 min/); assert.match(idle,/5 hrs 15 min/)
-  assert.match(idle,/<button type="button"><svg[^]*?Time In<\/button>/)
-  assert.match(idle,/class="time-out-button" disabled=""/)
-  const activeResult={...result,assignment:{...result.assignment,active_session_id:11,active_time_in:new Date(start).toISOString()}}
-  const timedIn=render('DepartmentQrScanner',{...props,result:activeResult,form:{...form,attendance_outcome:'LEFT_EARLY'}})
-  assert.match(timedIn,/disabled=""><svg[^]*?Time In<\/button>/)
-  assert.match(timedIn,/class="time-out-button"><svg/)
+  assert.match(idle,/Community Service Requirement/);assert.match(idle,/45 min/);assert.match(idle,/5 hrs 15 min/)
+  assert.match(idle,/Confirm Time In/);assert.match(idle,/Open Time/);assert.match(idle,/Minimum/);assert.match(idle,/Maximum/)
+  assert.doesNotMatch(idle,/name="department_id"|Select Outcome/)
+  assert.match(idle,/disabled=""[^]*?6 Hours/)
+  const activeResult={...result,active_session:{...active,session_type:'FIXED',selected_duration_minutes:120,credit_cutoff_at:'2026-10-05T06:00:00Z'}}
+  const timedIn=render('DepartmentQrScanner',{...props,result:activeResult})
+  assert.match(timedIn,/Active Service Session/);assert.match(timedIn,/Time Out/);assert.doesNotMatch(timedIn,/Confirm Time In|service-duration-tile/)
   const stale=render('DepartmentQrScanner',{...props,verifiedQr:'another-code'})
-  assert.match(stale,/Waiting for student QR/); assert.doesNotMatch(stale,/Ana Reyes/)
-  const scoped=render('DepartmentQrScanner',{...props,recorder:{role:'DEPARTMENT_HEAD'}})
-  assert.doesNotMatch(scoped,/name="department_id"/)
+  assert.match(stale,/Waiting for student QR/);assert.doesNotMatch(stale,/Ana Reyes/)
   const noOfficer=render('DepartmentQrScanner',{...props,result:{...result,available_officers:[]}})
-  assert.match(noOfficer,/No authorized officer available/); assert.match(noOfficer,/class="time-out-button" disabled=""/)
+  assert.match(noOfficer,/No authorized officer available/);assert.match(noOfficer,/disabled="">Confirm Time In/)
+  const final=render('DepartmentQrScanner',{...props,result:{...result,allowance:{...result.allowance,available_minutes:60}}})
+  assert.match(final,/Final remainder/)
 })
 
 test('violation detail separates structured incident notes and preserves totals and action permissions', () => {

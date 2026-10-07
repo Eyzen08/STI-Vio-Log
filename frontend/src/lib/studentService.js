@@ -1,6 +1,7 @@
 const number = (value) => Number.isFinite(Number(value)) ? Number(value) : 0
 
 export const formatMinutes = (value) => {
+  if (number(value)>0 && number(value)<1) return `${Number(number(value).toFixed(6))}m`
   const minutes = Math.max(0, Math.round(number(value)))
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60

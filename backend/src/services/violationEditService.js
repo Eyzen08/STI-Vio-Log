@@ -45,7 +45,8 @@ const validateEdit = (body, actor) => {
 const editViolationWithClient = async ({ client, violationId, body, actor, ipAddress }) => {
     if (!isPositiveId(violationId)) fail('Violation ID must be a positive ID');
     const { fields, reason } = validateEdit(body, actor);
-    // Follow the same assignment -> violation lock order as attendance.
+    // All credit changes serialize on the student before assignment/violation locks.
+    await client.query('SELECT s.id FROM students s JOIN violations v ON v.student_id=s.id WHERE v.id=$1 FOR UPDATE OF s', [violationId]);
     let assignment = (await client.query('SELECT * FROM community_service_assignments WHERE violation_id = $1 FOR UPDATE', [violationId])).rows[0] || null;
     const current = (await client.query('SELECT * FROM violations WHERE id = $1 FOR UPDATE', [violationId])).rows[0];
     if (!current) fail('Violation not found', 404);
@@ -105,7 +106,7 @@ const editViolationWithClient = async ({ client, violationId, body, actor, ipAdd
         )).rows[0];
     }
     if (assignment && (hoursChanged || createdAssignment)) {
-        const remaining = Math.round((required - completed) * 100) / 100;
+        const remaining = Math.round((required - completed) * 1e6) / 1e6;
         const status = remaining === 0 ? 'COMPLETED' : completed > 0 ? 'IN_PROGRESS' : 'OPEN';
         assignment = (await client.query(
             `UPDATE community_service_assignments SET required_hours = $1, completed_hours = $2, remaining_hours = $3,

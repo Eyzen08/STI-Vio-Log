@@ -30,6 +30,7 @@ export const attendanceState = (assignment) => assignment?.active_session_id
   : { active: false, label: 'Not timed in' }
 
 export const formatServiceMinutes = (value) => {
+  if (Number(value)>0 && Number(value)<1) return `${Number(Number(value).toFixed(6))} min`
   const minutes = Math.max(0, Math.round(Number(value) || 0))
   const hours = Math.floor(minutes / 60)
   const remainder = minutes % 60

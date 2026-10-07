@@ -64,7 +64,7 @@ import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
-import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
@@ -438,14 +438,15 @@ function App() {
     department_id: '',
     supervising_officer_id: '',
     notes: '',
-    attendance_outcome: ''
+    attendance_outcome: '', session_type: '', selected_duration_minutes: null, assignment_id: ''
   })
 
   const [qrError, setQrError] = useState('')
   const [qrResult, setQrResult] = useState(null)
   const [verifiedQr, setVerifiedQr] = useState('')
   const [qrSubmitting, setQrSubmitting] = useState(false)
-  const [recentQrScans, setRecentQrScans] = useState([])
+  const [qrHistory,setQrHistory] = useState([])
+  const qrActionRef = useRef(null)
   const qrFormRef = useRef(qrForm)
   qrFormRef.current = qrForm
 
@@ -1012,11 +1013,13 @@ function App() {
     const refresh = () => { if (document.visibilityState === 'visible') refreshLiveAttendance() }
     const polling = window.setInterval(refresh, 15000)
     document.addEventListener('visibilitychange', refresh)
+    window.addEventListener('online',refresh)
     realtimeSocket?.on('community-service:changed', refreshLiveAttendance)
     realtimeSocket?.on('connect', refreshLiveAttendance)
     return () => {
       window.clearInterval(polling)
       document.removeEventListener('visibilitychange', refresh)
+      window.removeEventListener('online',refresh)
       realtimeSocket?.off('community-service:changed', refreshLiveAttendance)
       realtimeSocket?.off('connect', refreshLiveAttendance)
     }
@@ -1616,6 +1619,12 @@ function App() {
   }, [qrScanner])
 
   const handleQrFieldChange = (event) => {
+    if (event.target.name==='service_selection') {setQrForm(current=>({...current,...event.target.value}));return}
+    if (event.target.name==='assignment_id') {
+      const id=Number(event.target.value)||''
+      setQrForm(current=>({...current,assignment_id:id,session_type:'',selected_duration_minutes:null}))
+      handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
+    }
     const { name, value } = event.target
 
     setQrForm((current) => ({
@@ -1635,101 +1644,60 @@ function App() {
     }
   }
 
-  const handleQrAction = async (action, qrValue = qrForm.qr_code) => {
+  const handleQrAction = async (action, qrValue = qrForm.qr_code, options = {}) => {
     if (qrActionBusyRef.current) return
     qrActionBusyRef.current = true
-    setQrError('')
-    setQrSubmitting(true)
-    const normalizedQr = typeof qrValue === 'string' ? qrValue.trim() : ''
-    const currentQrForm = qrFormRef.current
-
+    const quiet=Boolean(options.quiet)
+    if (!quiet) {setQrError('');setQrSubmitting(true)}
+    const normalizedQr=typeof qrValue==='string'?qrValue.trim():''
+    const current=qrFormRef.current
     try {
-      if (!normalizedQr) {
-        throw new Error('QR code is required.')
-      }
-
-      if (action !== 'scan' && normalizedQr !== verifiedQr) {
-        throw new Error('Verify the student before recording attendance.')
-      }
-
-      if (!isDepartmentHead && !currentQrForm.department_id) {
-        throw new Error('Select the department responsible for this attendance record.')
-      }
-
-      if (action === 'time-out' && !currentQrForm.attendance_outcome) {
-        throw new Error('Select an attendance outcome before Time Out.')
-      }
-      if (action !== 'scan' && !currentQrForm.supervising_officer_id) {
-        throw new Error('Select the authorized officer supervising this session.')
-      }
-
-
-      const response = await fetch(`${API_URL}/api/qr/${action}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          qr_code: normalizedQr,
-          ...(isDepartmentHead ? {} : {
-            department_id: Number(currentQrForm.department_id)
-          }),
-          notes: currentQrForm.notes.trim(),
-          ...(action === 'scan' ? {} : { supervising_officer_id: Number(currentQrForm.supervising_officer_id) }),
-          ...(action === 'time-out' ? { attendance_outcome: currentQrForm.attendance_outcome } : {})
-        })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok || !data.success) {
-        throw new Error(
-          data.message ||
-          `Unable to ${action.replace('-', ' ')}.`
-        )
-      }
-
-      setQrResult({
-        action,
-        message: data.message,
-        student: data.student || null,
-        studentId: data.studentId || null,
-        notes: data.notes || null,
-        assignment: data.assignment || qrResult?.assignment || null,
-        session: data.session || null,
-        supervising_officer: data.supervising_officer || null,
-        available_officers: data.available_officers || qrResult?.available_officers || []
-      })
-      if (action === 'scan') {
-        const officers = data.available_officers || []
-        setQrForm((current) => ({ ...current, supervising_officer_id: officers.length === 1 ? Number(officers[0].officer_user_id) : '' }))
-      }
+      if (!normalizedQr) throw new Error('QR code is required.')
+      if (action!=='scan'&&normalizedQr!==verifiedQr) throw new Error('Verify the student before recording attendance.')
+      if (action==='time-in'&&(!current.session_type||!current.supervising_officer_id)) throw new Error('Select service time and an authorized supervising officer.')
+      const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQr?current.assignment_id:undefined
+      const response=await fetch(API_URL+'/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
+        ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
+        ...(action==='time-in'?{session_type:current.session_type,selected_duration_minutes:current.selected_duration_minutes,supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
+      const data=await response.json()
+      if(!response.ok||!data.success) throw new Error(data.message||'Unable to process attendance.')
+      setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
       setVerifiedQr(normalizedQr)
-      if (action !== 'scan') {
-        setQrForm((current) => ({ ...current, attendance_outcome: '', notes: '' }))
-        setRecentQrScans((current) => [{
-          key: `${Date.now()}-${action}`,
-          studentName: `${data.student?.first_name||''} ${data.student?.last_name||''}`.trim(),
-          studentNumber: data.student?.student_number||'',
-          action: action === 'time-in' ? 'Time In' : 'Time Out',
-          time: data.session?.time_out||data.session?.time_in||new Date().toISOString(),
-          department: data.assignment?.department_name||serviceDepartmentOptions(communityServiceDestinations).find((item)=>Number(item.id)===Number(currentQrForm.department_id))?.name||'Assigned department'
-        },...current].slice(0,5))
-        const refreshed=await fetch(`${API_URL}/api/qr/scan`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({qr_code:normalizedQr,...(isDepartmentHead?{}:{department_id:Number(currentQrForm.department_id)}),notes:''})})
-        const refreshedData=await refreshed.json().catch(()=>({}))
-        if(refreshed.ok&&refreshedData.success){setQrResult((current)=>({...current,student:refreshedData.student,assignment:refreshedData.assignment,available_officers:refreshedData.available_officers||[]}));const officers=refreshedData.available_officers||[];setQrForm((current)=>({...current,supervising_officer_id:officers.length===1?Number(officers[0].officer_user_id):current.supervising_officer_id}))}
-        setDashboardRefreshKey((current) => current + 1)
-        refreshPendingActions()
-        if (isAdmin) refreshAdminAttendance()
+      sessionStorage.setItem('service-attendance-qr:'+user.id,normalizedQr)
+      const officers=data.available_officers||[]
+      const active=data.active_session||data.session
+      const officerId=active?.supervising_officer_user_id||officers.find(officer=>Number(officer.officer_user_id)===Number(user.id))?.officer_user_id||(officers.length===1?officers[0].officer_user_id:'')
+      setQrForm(form=>({...form,qr_code:normalizedQr,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
+      if(data.assignment?.id) {
+        const historyResponse=await fetch(API_URL+'/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
+        const historyData=await historyResponse.json()
+        if(historyResponse.ok) setQrHistory(historyData.sessions||[])
+      } else setQrHistory([])
+      if(action!=='scan') {
+        setDashboardRefreshKey(key=>key+1);refreshPendingActions()
+        if(isAdmin) refreshAdminAttendance()
       }
-    } catch (qrErrorObject) {
-      setQrError(qrErrorObject.message)
-    } finally {
-      setQrSubmitting(false)
-      qrActionBusyRef.current = false
-    }
+      return true
+    } catch(failure) {setQrError(failure.message);return false}
+    finally {if(!quiet) setQrSubmitting(false);qrActionBusyRef.current=false}
   }
+  qrActionRef.current=handleQrAction
+
+  useEffect(()=>{
+    if(activeView!=='QR Scan'||!token||!user?.id) return undefined
+    const saved=qrFormRef.current.qr_code||sessionStorage.getItem('service-attendance-qr:'+user.id)
+    if(saved) qrActionRef.current('scan',saved,{quiet:true})
+    const refresh=()=>{
+      const code=qrFormRef.current.qr_code
+      if(document.visibilityState==='visible'&&code) qrActionRef.current('scan',code,{quiet:true})
+    }
+    const timer=window.setInterval(refresh,15000)
+    document.addEventListener('visibilitychange',refresh)
+    window.addEventListener('online',refresh)
+    realtimeSocket?.on('community-service:changed',refresh)
+    realtimeSocket?.on('connect',refresh)
+    return ()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',refresh);realtimeSocket?.off('connect',refresh)}
+  },[activeView,token,user?.id,realtimeSocket])
 
   /*
    * ============================================================
@@ -2265,7 +2233,7 @@ function App() {
     }
 
     if (isAdmin && activeView === 'Active Attendance') {
-      return <AdminActiveAttendance sessions={activeServiceSessions} loading={dashboardLoading} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
+      return <AdminActiveAttendance sessions={activeServiceSessions} loading={dashboardLoading} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token} onAttendanceSaved={()=>{refreshAdminAttendance();setDashboardRefreshKey(key=>key+1)}} />
     }
 
     /*
@@ -2679,15 +2647,11 @@ function App() {
         viewingAssignment={viewingServiceAssignment} onView={setViewingServiceAssignment} onCloseAssignment={() => setViewingServiceAssignment(null)}/>
     }
     if (activeView === 'QR Scan') {
-      const scannerDepartments = serviceDepartmentOptions(communityServiceDestinations)
-      const assignedDepartmentId = Number(user?.department_id)
-      const assignedDepartments = isDepartmentHead && Number.isInteger(assignedDepartmentId) && assignedDepartmentId > 0
-        ? [{ id:assignedDepartmentId, name:user?.department_name||'Assigned department', code:user?.department_code||'' }]
-        : scannerDepartments
       return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr}
-        isScanning={isQrScanning} isSubmitting={qrSubmitting} departments={assignedDepartments} recorder={user}
-        recentScans={recentQrScans} onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
-        onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}/>
+        isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory}
+        onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
+        onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}
+        onAttendanceSaved={async result=>{setQrResult(current=>({...current,...result,active_session:null,action:'time-out'}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>
     }
 
 

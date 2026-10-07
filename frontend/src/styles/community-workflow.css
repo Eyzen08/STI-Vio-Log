@@ -1,4 +1,4 @@
-/* The four approved service screens share surfaces, while keeping separate layouts. */
+/* Service screens share surfaces while keeping separate layouts. */
 :is(.community-service-management,.qr-attendance,.service-workflow-modal) { --service-ink:#102f60; --service-muted:#5c78a2; --service-line:#d9e7f5; --service-surface:#fff; --service-soft:#f3f8fd; color:var(--service-ink); font-family:var(--font-sans); }
 .community-service-management { display:grid; gap:var(--page-gap); min-width:0; }
 .community-service-management :is(h2,h3,p),.service-workflow-modal :is(h3,p,dl,dd) { margin:0; }
@@ -217,3 +217,54 @@
   .qr-attendance .attendance-footer > div { display:grid; grid-template-columns:minmax(0,1fr); width:100%; }.qr-attendance .record-fields :is(input,select),.qr-attendance .qr-manual-field input,.app-modal .assign-service-grid :is(input,select) { font-size:var(--text-control); min-height:var(--control-height); }
 }
 @media (prefers-reduced-motion:reduce) { :is(.community-service-management,.service-workflow-modal,.qr-attendance) * { animation:none !important; transition:none !important; } }
+
+/* Duration selection and authoritative service session views. */
+.service-duration-heading { margin:8px 0 20px; }
+.service-duration-heading h4 { margin:0 0 6px; font-size:20px; }
+.service-duration-heading p,.field-help { color:var(--service-muted,#5c78a2); font-size:14px; }
+.service-duration-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px; }
+.qr-attendance .service-duration-tile { width:100%;min-height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:var(--service-surface);color:var(--service-ink);border:1px solid var(--service-line);border-radius:12px; }
+.service-duration-tile strong { font-size:19px; }
+.service-duration-tile small { font-size:12px;font-weight:400; }
+.qr-attendance .service-duration-tile.selected { background:var(--service-soft);border:2px solid #0069df;color:#0069df; }
+.qr-attendance .service-duration-tile:disabled { background:#f4f5f7;color:#818b98;border-color:#e0e5eb;cursor:not-allowed; }
+.duration-disabled-reason { position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+.service-confirm-panel { padding:22px;border:1px solid var(--service-line);border-radius:12px;background:var(--service-soft); }
+.service-confirm-panel .record-fields { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px; }
+.service-confirm-details,.service-daily-summary { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin:20px 0; }
+.service-confirm-details div,.service-daily-summary div { min-width:0; }
+.service-confirm-details dt,.service-daily-summary dt { color:var(--service-muted,#5c78a2);font-size:13px;margin-bottom:6px; }
+.service-confirm-details dd,.service-daily-summary dd { margin:0;font-weight:600; }
+.service-confirm-actions { display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-top:22px; }
+.service-confirm-actions .field-help { margin-right:auto; }
+.service-confirm-actions button { min-height:48px;padding:12px 20px;border:1px solid var(--color-primary);border-radius:8px;background:var(--color-primary);color:white;font:inherit;font-weight:600;cursor:pointer; }
+.service-confirm-actions button.secondary-button { background:var(--surface-raised);color:var(--color-primary); }
+.service-confirm-actions button:disabled { opacity:.55;cursor:not-allowed; }
+.service-workflow-modal label { display:grid;gap:8px;margin-top:16px; }
+.service-workflow-modal select { width:100%;min-height:44px; }
+.service-active-panel { max-width:1000px;margin:auto; }
+.service-active-heading { display:flex;align-items:center;justify-content:space-between;gap:16px; }
+.service-active-clock { text-align:center;padding:26px 10px; }
+.service-active-clock>span { display:block;color:var(--service-muted);font-size:14px;margin-bottom:10px; }
+.service-large-clock { display:block;font-size:clamp(38px,6vw,76px);font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.03em;color:var(--service-ink); }
+.service-clock-details { display:grid;gap:8px;font-size:14px;font-variant-numeric:tabular-nums;margin-top:10px; }
+.service-clock-details strong { margin-left:6px; }
+.target-complete { color:#168649;font-weight:600; }
+.service-timer-warning { padding:10px 14px;border-radius:8px;background:#fff8e6;color:#895b08; }
+.service-active-panel progress { width:100%;height:10px;accent-color:#0069df; }
+.qr-attendance .service-target-ready { background:#168649;border-color:#168649; }
+.active-attendance-table tr:has(.target-complete,.timer-limit-notice) .time-out-button,
+.service-assignment-list article:has(.target-complete,.timer-limit-notice) .time-out-button { background:var(--color-success);border-color:var(--color-success);color:white; }
+.service-workflow-modal textarea { width:100%;min-height:80px;margin-top:8px; }
+.service-workflow-modal .service-confirm-actions button { min-height:44px; }
+.qr-attendance label:has(select[name=assignment_id]) { display:grid;gap:8px;margin:16px 0; }
+.qr-attendance select[name=assignment_id] { width:100%;min-height:44px;border:1px solid var(--service-line);border-radius:8px;padding:8px; }
+@media(max-width:700px) {
+ .service-duration-grid { grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+ .service-confirm-panel { padding:16px; }
+ .service-confirm-panel .record-fields { grid-template-columns:1fr; }
+ .service-confirm-actions,.service-active-heading { flex-wrap:wrap; }
+ .service-confirm-actions button { flex:1;min-height:48px; }
+ .service-confirm-actions .field-help { width:100%; }
+ .service-large-clock { font-size:clamp(36px,10vw,58px); }
+}

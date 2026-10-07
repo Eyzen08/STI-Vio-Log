@@ -44,7 +44,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
     <section className="student-attendance-summary" aria-label="Current attendance status">
       <div><span>Attendance status</span><AttendanceIndicator sessions={activeSessions} ready={Array.isArray(dtr?.sessions)} loading={loading} details/></div>
-      {activeSessions.length > 0 && <div className="student-attendance-countdowns">{activeSessions.map((session) => <div key={session.id}><span>Remaining session time · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
+      {activeSessions.length > 0 && <div className="student-attendance-countdowns">{activeSessions.map((session) => <div key={session.id}><span>{session.session_type==='OPEN_TIME'?'Time elapsed':'Remaining session time'} · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
       {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
     </section>
     {summary.activeViolations > 0 && <section className="student-standing-alert"><OffenseIndicator level={offenseLevel}/><div><strong>{offenseLevel === 'MAJOR_LEVEL' ? 'Major-level status' : 'Requirements need attention'}</strong><span>Review your record and complete any remaining requirements.</span></div></section>}
@@ -59,10 +59,10 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
     {activeSession && <section className="dashboard-card student-live-session" aria-labelledby="student-live-session-title">
       <header className="dashboard-section-heading"><div><h3 id="student-live-session-title">Service Session in Progress</h3><p>Your active attendance updates automatically.</p></div><AttendanceIndicator sessions={activeSessions}/></header>
       <div className="student-live-session-body">
-        <div className="student-live-clocks">{activeSessions.map((session) => <div className="student-live-clock" key={session.id}><span>Remaining session time</span><ServiceCountdown session={session} now={now}/><small>{session.department_name || 'Service'} · Assignment #{session.assignment_id}</small><small>Started {formatManilaDateTime(session.time_in)}</small></div>)}</div>
+        <div className="student-live-clocks">{activeSessions.map((session) => <div className="student-live-clock" key={session.id}><span>{session.session_type==='OPEN_TIME'?'Time elapsed':'Remaining session time'}</span><ServiceCountdown session={session} now={now}/><small>{session.department_name || 'Service'} · Assignment #{session.assignment_id}</small><small>Started {formatManilaDateTime(session.time_in)}</small></div>)}</div>
         <dl><div><dt>Department</dt><dd>{activeSession.department_name || 'Not recorded'}</dd></div><div><dt>Required</dt><dd>{formatMinutes(serviceSummary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(serviceSummary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatMinutes(serviceSummary.remainingMinutes)}</dd></div></dl>
       </div>
-      <footer><span>Current session time is credited after time-out and review.</span><button className="text-button" type="button" onClick={()=>onNavigate('/student/community-service')}>View My Service</button></footer>
+      <footer><span>Current session time is credited after Time Out is saved.</span><button className="text-button" type="button" onClick={()=>onNavigate('/student/community-service')}>View My Service</button></footer>
     </section>}
 
     <section className="student-overview-grid">

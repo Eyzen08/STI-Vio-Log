@@ -42,9 +42,9 @@ test('student dashboard and DTR render active sessions with live credited-safe t
     assert.match(source, /<AttendanceIndicator/)
     assert.match(source, /clearInterval\(clock\)/)
   }
-  assert.match(countdown, /Service limit reached — Time Out required/)
+  assert.match(countdown, /Time Out required/)
   assert.match(countdown, /timing.remainingSeconds/)
-  assert.match(dashboard, /Current session time is credited after time-out and review\./)
+  assert.match(dashboard, /Current session time is credited after Time Out is saved\./)
   assert.match(service, /isActiveServiceSession\(session\) \? 'Remaining session time' : 'Worked'/)
   assert.match(app, /setInterval\(refresh, 15000\)/)
   assert.match(app, /document\.visibilityState === 'visible'/)

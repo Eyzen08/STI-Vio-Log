@@ -33,6 +33,19 @@ export const liveServiceSeconds = (timeIn, now = Date.now(), timerLimitSeconds =
 }
 
 export const serviceSessionTiming = (session, now = Date.now()) => {
+  if (session?.session_type && session?.credit_cutoff_at) {
+    const started = new Date(session.time_in).getTime()
+    const elapsed = Math.max(0, Math.floor((Number(now)-started)/1000))
+    const cutoff = new Date(session.credit_cutoff_at).getTime()
+    const eligible = Math.max(0, Math.min((Number(now)-started)/1000, (cutoff-started)/1000))
+    const target = session.session_type==='FIXED' ? Number(session.selected_duration_minutes)*60 : null
+    const targetCompleted = target!==null && eligible+0.001>=target
+    return { elapsedSeconds:elapsed, timerLimitSeconds:target,
+      remainingSeconds:target===null ? null : targetCompleted ? 0 : Math.max(0,Math.ceil(target-eligible)),
+      targetCompleted, additionalSeconds:target===null ? 0 : Math.max(0,Math.floor(eligible-target)),
+      dailyRemainingSeconds:Math.max(0,Math.ceil((480-Number(session.completed_today_minutes||0))*60-eligible)),
+      creditRemainingSeconds:Math.max(0,Math.ceil((cutoff-Number(now))/1000)),limitReached:Number(now)>=cutoff }
+  }
   const suppliedLimit = session?.timer_limit_seconds ?? (session?.remaining_hours == null ? null : Number(session.remaining_hours) * 3600)
   const timerLimitSeconds = suppliedLimit == null || !Number.isFinite(Number(suppliedLimit)) ? null : Math.max(0, Math.floor(Number(suppliedLimit)))
   const elapsedSeconds = liveServiceSeconds(session?.time_in, now, timerLimitSeconds)
@@ -45,6 +58,8 @@ export const serviceSessionTiming = (session, now = Date.now()) => {
     limitReached: Boolean(session?.limit_reached) || (hasStart && Number.isFinite(Number(now)) && timerLimitSeconds !== null && elapsedSeconds >= timerLimitSeconds)
   }
 }
+
+export const serverClockTime = (serverTime, receivedAt, monotonicNow) => new Date(serverTime).getTime()+Math.max(0,monotonicNow-receivedAt)
 
 export const isActiveServiceSession = (session) => Boolean(
   session && session.status === 'ACTIVE' && !session.time_out

@@ -296,7 +296,7 @@ const updateCommunityServiceAssignment = async (req, res) => {
         if (!isPositiveId(req.params.id)) return res.status(400).json({ success: false, message: 'Assignment ID must be a positive ID' });
         if (req.body.required_hours === undefined) return res.status(400).json({ success: false, message: 'required_hours is required' });
         await client.query('BEGIN');
-        const current = (await client.query('SELECT * FROM community_service_assignments WHERE id = $1 FOR UPDATE', [req.params.id])).rows[0];
+        const current = (await client.query('SELECT * FROM community_service_assignments WHERE id = $1', [req.params.id])).rows[0];
         if (!current) {
             await client.query('ROLLBACK');
             return res.status(404).json({ success: false, message: 'Community service assignment not found' });
