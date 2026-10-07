@@ -98,6 +98,120 @@ const createViolationWorkbook = (rows) => {
   return workbook;
 };
 
+const ANALYTICS_HEADERS = ['Section', 'Metric', 'From', 'To', 'Value', 'Unit'];
+const ANALYTICS_SECTIONS = ['Filters', 'Violations Over Time', 'Classification', 'Community Service', 'Department', 'Key Insights'];
+const validateAnalyticsSnapshot = (body) => {
+  const object = (value, fields) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) bad('Expected an analytics object');
+    assertAllowedFields(value, fields);
+    if (fields.some(field => value[field] === undefined)) bad('Missing analytics fields');
+  };
+  const text = (value) => {
+    if (typeof value !== 'string' || !value.trim() || value.length > 500 || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(value)) bad('Invalid analytics text');
+  };
+  const count = (value) => { if (!Number.isSafeInteger(value) || value < 0) bad('Analytics counts must be nonnegative integers'); };
+  const date = (value) => {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) bad('Analytics dates must use YYYY-MM-DD');
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) bad('Invalid analytics date');
+  };
+  object(body, ['range', 'program', 'analytics', 'insights']);
+  const { range, analytics, insights } = body;
+  object(range, ['from', 'to', 'previousFrom', 'previousTo']);
+  Object.values(range).forEach(date);
+  if (range.from > range.to || range.previousFrom > range.previousTo || range.previousTo >= range.from) bad('Invalid analytics date range');
+  text(body.program);
+  object(analytics, ['violationCount', 'previousViolationCount', 'trend', 'classifications', 'programs', 'service']);
+  count(analytics.violationCount); count(analytics.previousViolationCount);
+  if (!Array.isArray(analytics.trend) || !analytics.trend.length || analytics.trend.length > 6) bad('Invalid analytics trend');
+  for (const bucket of analytics.trend) {
+    object(bucket, ['from', 'to', 'count']); date(bucket.from); date(bucket.to); count(bucket.count);
+    if (bucket.from > bucket.to || bucket.from < range.from || bucket.to > range.to) bad('Invalid trend date range');
+  }
+  if (!Array.isArray(analytics.classifications) || analytics.classifications.length !== 4 || !Array.isArray(analytics.programs)) bad('Invalid analytics groups');
+  const levels = ['MINOR_1', 'MINOR_2', 'MAJOR_LEVEL', 'GRAVE'];
+  analytics.classifications.forEach((item, index) => {
+    object(item, ['level', 'label', 'count']); text(item.label); count(item.count);
+    if (item.level !== levels[index]) bad('Invalid analytics classification');
+  });
+  for (const item of analytics.programs) { object(item, ['label', 'count']); text(item.label); count(item.count); }
+  const total = (rows) => rows.reduce((sum, row) => sum + row.count, 0);
+  if (total(analytics.trend) !== analytics.violationCount || total(analytics.programs) !== analytics.violationCount || total(analytics.classifications) > analytics.violationCount) bad('Analytics counts do not match');
+  object(analytics.service, ['completed', 'active', 'total', 'completionPercent']);
+  const service = analytics.service;
+  Object.values(service).forEach(count);
+  if (service.completed + service.active !== service.total || service.completionPercent !== (service.total ? Math.round(service.completed / service.total * 100) : 0)) bad('Invalid community service totals');
+  const labels = ['Violation change', 'Active service', 'Service completion', 'Overdue assignments'];
+  if (!Array.isArray(insights) || insights.length !== labels.length) bad('Invalid analytics insights');
+  insights.forEach((item, index) => {
+    object(item, ['label', 'value']); text(item.value);
+    if (item.label !== labels[index]) bad('Invalid analytics insight');
+  });
+  return body;
+};
+
+const analyticsRows = (snapshot, generatedAt = new Date()) => {
+  const { range, program, analytics, insights } = validateAnalyticsSnapshot(snapshot);
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(generatedAt);
+  const part = type => parts.find(item => item.type === type).value;
+  const stamp = `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}:${part('second')} (Asia/Manila)`;
+  const row = (section, metric, value, unit = '', from = range.from, to = range.to) => [section, metric, from, to, value, unit];
+  const { service } = analytics;
+  return [
+    row('Filters', 'Department / Program', program === 'ALL' ? 'All Departments / Programs' : program, '', '', ''),
+    row('Filters', 'Date range', '', '', range.from, range.to),
+    row('Filters', 'Comparison dates', '', '', range.previousFrom, range.previousTo),
+    row('Filters', 'Generated at', stamp, '', '', ''),
+    row('Filters', 'Current violations', analytics.violationCount, 'violations'),
+    row('Filters', 'Previous violations', analytics.previousViolationCount, 'violations', range.previousFrom, range.previousTo),
+    row('Filters', 'Classification basis', 'Current student classification across selected records'),
+    row('Filters', 'Service basis', 'Current status of assignments created in the selected range'),
+    ...analytics.trend.map(bucket => row('Violations Over Time', 'Recorded violations', bucket.count, 'violations', bucket.from, bucket.to)),
+    ...analytics.classifications.map(item => row('Classification', item.label, item.count, 'violations')),
+    row('Community Service', 'Total assignments', service.total, 'assignments'),
+    row('Community Service', 'Completed', service.completed, 'assignments'),
+    row('Community Service', 'In Progress', service.active, 'assignments'),
+    row('Community Service', 'Completion', service.completionPercent, 'percent'),
+    row('Community Service', 'In Progress share', service.total ? 100 - service.completionPercent : 0, 'percent'),
+    row('Community Service', 'Overdue assignments', 'Overdue data unavailable'),
+    ...analytics.programs.map(item => row('Department', item.label, item.count, 'violations')),
+    ...(!analytics.programs.length ? [row('Department', 'No records for this selection.', 0, 'violations')] : []),
+    ...(!service.total ? [row('Community Service', 'Status', 'No assignments')] : []),
+    ...insights.map(item => row('Key Insights', item.label, item.value))
+  ];
+};
+
+const analyticsCsv = (snapshot, generatedAt) => `\uFEFF${[ANALYTICS_HEADERS.join(','), ...analyticsRows(snapshot, generatedAt).map(row => row.map(csvCell).join(','))].join('\r\n')}\r\n`;
+const createAnalyticsWorkbook = (snapshot, generatedAt = new Date()) => {
+  const rows = analyticsRows(snapshot, generatedAt);
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'STI Vio-Log'; workbook.created = generatedAt;
+  for (const section of ANALYTICS_SECTIONS) {
+    const sheet = workbook.addWorksheet(section, { views: [{ state: 'frozen', ySplit: 1 }] });
+    sheet.columns = ANALYTICS_HEADERS.map((header, index) => ({ header, width: [26, 32, 14, 14, 60, 16][index] }));
+    rows.filter(row => row[0] === section).forEach(row => sheet.addRow(row));
+    sheet.getRow(1).font = { bold: true };
+    sheet.eachRow(row => { row.alignment = { vertical: 'top', wrapText: true }; });
+  }
+  return workbook;
+};
+
+const exportAnalytics = async (req, res) => {
+  try {
+    assertAllowedFields(req.query, []);
+    const snapshot = validateAnalyticsSnapshot(req.body);
+    const format = req.path.endsWith('.xlsx') ? 'xlsx' : 'csv';
+    const generatedAt = new Date();
+    const contents = format === 'xlsx' ? Buffer.from(await createAnalyticsWorkbook(snapshot, generatedAt).xlsx.writeBuffer()) : analyticsCsv(snapshot, generatedAt);
+    res.setHeader('Content-Type', format === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="STI_Vio-Log_Analytics_${snapshot.range.from}_${snapshot.range.to}.${format}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).send(contents);
+  } catch (error) {
+    return fail(res, error, 'Failed to export analytics. Please try again.');
+  }
+};
+
 // Violation Report
 const getViolationReport = async (req, res) => {
   try {
@@ -278,6 +392,10 @@ const getNonComplianceReport = async (req, res) => {
 };
 
 module.exports = {
+  exportAnalytics,
+  analyticsCsv,
+  createAnalyticsWorkbook,
+  validateAnalyticsSnapshot,
   getViolationReport,
   exportViolationReportCsv,
   exportViolationReportXlsx,

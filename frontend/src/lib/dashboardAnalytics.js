@@ -91,3 +91,15 @@ export const analyticsForRange = ({ students = [], violations = [], assignments 
 }
 
 export const availablePrograms = (students = []) => [...new Set(students.map(studentProgram))].sort((a, b) => a.localeCompare(b))
+
+export const analyticsInsights = (analytics) => {
+  const { violationCount: current, previousViolationCount: previous, service } = analytics
+  const number = new Intl.NumberFormat('en-PH')
+  const change = previous ? `${current >= previous ? '↑' : '↓'} ${Math.abs(Math.round((current - previous) / previous * 100))}% violations vs previous period` : current ? `${number.format(current)} violations; no prior baseline` : 'No violations in either period'
+  return [
+    { label: 'Violation change', value: change },
+    { label: 'Active service', value: `${number.format(service.active)} assignment${service.active === 1 ? '' : 's'}` },
+    { label: 'Service completion', value: service.total ? `${service.completionPercent}%` : 'No assignments' },
+    { label: 'Overdue assignments', value: 'Data unavailable' }
+  ]
+}

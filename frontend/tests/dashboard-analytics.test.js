@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { analyticsForRange, periodRange, manilaDateKey } from '../src/lib/dashboardAnalytics.js'
+import * as analyticsModule from '../src/lib/dashboardAnalytics.js'
+const { analyticsForRange, periodRange, manilaDateKey } = analyticsModule
 
 test('Manila ranges compare equivalent prior periods and reject invalid custom dates', () => {
   assert.deepEqual(periodRange('THIS_MONTH', '2026-10-06'), {
@@ -19,6 +20,23 @@ test('Manila ranges compare equivalent prior periods and reject invalid custom d
   assert.equal(periodRange('CUSTOM', '2026-10-06', '2026-13-01', '2026-13-02'), null)
   assert.equal(manilaDateKey('2026-09-30T17:00:00Z'), '2026-10-01')
   assert.equal(manilaDateKey('invalid'), '')
+})
+
+test('exported key insights use the same comparison and service labels as the dashboard', () => {
+  assert.equal(typeof analyticsModule.analyticsInsights, 'function')
+  const range = periodRange('THIS_MONTH', '2026-10-07')
+  const empty = analyticsForRange({ range })
+  assert.deepEqual(analyticsModule.analyticsInsights(empty), [
+    { label: 'Violation change', value: 'No violations in either period' },
+    { label: 'Active service', value: '0 assignments' },
+    { label: 'Service completion', value: 'No assignments' },
+    { label: 'Overdue assignments', value: 'Data unavailable' }
+  ])
+  const active = { ...empty, violationCount: 2, previousViolationCount: 4, service: { active: 1, total: 2, completionPercent: 50 } }
+  assert.equal(analyticsModule.analyticsInsights(active)[0].value, '↓ 50% violations vs previous period')
+  assert.equal(analyticsModule.analyticsInsights(active)[1].value, '1 assignment')
+  assert.equal(analyticsModule.analyticsInsights(active)[2].value, '50%')
+  assert.equal(analyticsModule.analyticsInsights({ ...active, previousViolationCount: 0 })[0].value, '2 violations; no prior baseline')
 })
 
 test('analytics use current offense indicators, student programs, and assignment status', () => {

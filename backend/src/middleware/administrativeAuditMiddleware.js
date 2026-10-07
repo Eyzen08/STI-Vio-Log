@@ -16,7 +16,7 @@ const classifyAdministrativeRequest=({method='',baseUrl='',path='',originalUrl='
   if((route.startsWith('/api/admin/accounts')||route.startsWith('/api/department-accounts'))&&mutation)return{action:'STAFF_ACCOUNT_ADMIN_ACTION',targetType:'USER_ACCOUNT'};
   if(route.startsWith('/api/admin/departments')&&mutation)return{action:'DEPARTMENT_ADMIN_ACTION',targetType:'DEPARTMENT'};
   if(route.startsWith('/api/admin/officer-responsibilities')&&mutation)return{action:'OFFICER_ASSIGNMENT_ADMIN_ACTION',targetType:'OFFICER_ASSIGNMENT'};
-  if(route.endsWith('.csv'))return{action:'SENSITIVE_DATA_EXPORT',targetType:'REPORT'};
+  if(/\.(csv|xlsx)$/.test(route))return{action:'SENSITIVE_DATA_EXPORT',targetType:'REPORT'};
   return null;
 };
 

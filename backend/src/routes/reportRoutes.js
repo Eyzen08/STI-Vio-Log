@@ -3,6 +3,7 @@ const { authenticateToken, authorizePermissions, authorizeAnyPermission } = requ
 const { PERMISSIONS } = require('../security/permissions');
 const { auditAdministrativeRequest } = require('../middleware/administrativeAuditMiddleware');
 const {
+  exportAnalytics,
   getViolationReport,
   exportViolationReportCsv,
   exportViolationReportXlsx,
@@ -16,6 +17,8 @@ const router = express.Router();
 
 const canViewReport = authorizePermissions(PERMISSIONS.REPORT_VIEW);
 const canViewDepartmentReport = authorizeAnyPermission(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DEPARTMENT_REPORT_VIEW);
+router.post('/analytics.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportAnalytics);
+router.post('/analytics.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportAnalytics);
 router.get('/violations.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportCsv);
 router.get('/violations.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportXlsx);
 router.get('/violations', authenticateToken, canViewReport, getViolationReport);
