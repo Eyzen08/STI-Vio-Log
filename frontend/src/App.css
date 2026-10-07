@@ -3968,6 +3968,7 @@ a {
 .session-restoring-progress span { display: block; width: 42%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #075eba, #1685eb); animation: session-progress 1.35s cubic-bezier(.65, 0, .35, 1) infinite; }
 .session-restoring-note { display: flex; align-items: center; gap: 8px; margin: 13px 0 0; color: #718197; font-size: .74rem; font-weight: 600; }
 .session-restoring-note span { width: 7px; height: 7px; border-radius: 50%; background: #16a36a; box-shadow: 0 0 0 4px rgba(22, 163, 106, .12); }
+.session-restoring-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 30px; }
 
 [data-theme='dark'] .session-restoring-screen { background: radial-gradient(circle at 18% 12%, rgba(255, 213, 31, .1), transparent 26rem), radial-gradient(circle at 88% 84%, rgba(20, 126, 224, .18), transparent 30rem), #08182c; }
 [data-theme='dark'] .session-restoring-card { border-color: rgba(116, 151, 190, .24); background: rgba(13, 35, 62, .9); box-shadow: 0 28px 70px rgba(0, 0, 0, .3), inset 0 1px rgba(255, 255, 255, .06); }

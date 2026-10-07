@@ -62,6 +62,7 @@ import { buildViolationPayload, offensesForType, selectedViolationType, studentI
 import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
+import { restoreSession } from './lib/restoreSession.js'
 import { filterAdminStudents, handbookSanctionGuidance, summarizeStudentCondition } from './lib/adminStudentReview.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
 import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
@@ -99,18 +100,20 @@ function SidebarTooltip({ anchor, text }) {
   return createPortal(<div className="sidebar-tooltip" role="tooltip" ref={tooltipRef}>{text}</div>, document.body)
 }
 
-function SessionRestoringScreen() {
+function SessionRestoringScreen({ error, onRetry, onSignOut }) {
   return (
-    <section className="session-restoring-screen" role="status" aria-live="polite" aria-label="Restoring your secure session">
+    <section className="session-restoring-screen" role={error ? 'alert' : 'status'} aria-live="polite" aria-label={error ? 'Session verification failed' : 'Restoring your secure session'}>
       <div className="session-restoring-card">
         <img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" />
         <div className="session-restoring-copy">
           <p className="session-restoring-eyebrow">Secure student discipline portal</p>
-          <h1>Welcome Back</h1>
-          <p>Restoring your secure session. This should only take a moment.</p>
+          <h1>{error ? 'Connection interrupted' : 'Welcome Back'}</h1>
+          <p>{error ? 'We could not verify your session. Check your connection and try again.' : 'Restoring your secure session. This should only take a moment.'}</p>
         </div>
-        <div className="session-restoring-progress" aria-hidden="true"><span /></div>
-        <p className="session-restoring-note"><span aria-hidden="true" /> Verifying account access</p>
+        {error ? <div className="session-restoring-actions"><button type="button" className="submit-btn" onClick={onRetry}>Try again</button><button type="button" className="secondary-button" onClick={onSignOut}>Sign out</button></div> : <>
+          <div className="session-restoring-progress" aria-hidden="true"><span /></div>
+          <p className="session-restoring-note"><span aria-hidden="true" /> Verifying account access</p>
+        </>}
       </div>
     </section>
   )
@@ -163,6 +166,16 @@ function App() {
   const [token, setToken] = useState('')
   const [user, setUser] = useState(null)
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
+  const [sessionRestoreError, setSessionRestoreError] = useState(false)
+  const [sessionRestoreAttempt, setSessionRestoreAttempt] = useState(0)
+
+  const signOutFailedRestoration = () => {
+    clearSession()
+    setSessionRestoreError(false)
+    setSessionRestoring(false)
+    window.history.replaceState({}, '', '/login')
+    setRoutePath('/login')
+  }
 
   const toggleTheme = useCallback(() => {
     const root = document.documentElement
@@ -198,25 +211,29 @@ function App() {
       setSessionRestoring(false)
       return undefined
     }
-    let active = true
-    apiRequest('/api/auth/session')
+    if (!sessionRestoring) return undefined
+    const controller = new AbortController()
+    restoreSession((signal) => apiRequest('/api/auth/session', { signal }), { signal: controller.signal })
       .then((data) => {
-        if (active && data.user) {
-          saveSession(data)
-          setUser(data.user)
-          setToken('cookie-session')
-        }
+        if (controller.signal.aborted) return
+        saveSession(data)
+        setUser(data.user)
+        setToken('cookie-session')
+        setSessionRestoring(false)
       })
-      .catch(() => {
-        if (active) {
+      .catch((error) => {
+        if (controller.signal.aborted) return
+        if (error?.status === 401) {
           clearSession()
           setUser(null)
           setToken('')
+          setSessionRestoring(false)
+        } else {
+          setSessionRestoreError(true)
         }
       })
-      .finally(() => { if (active) setSessionRestoring(false) })
-    return () => { active = false }
-  }, [initialSession.user])
+    return () => controller.abort()
+  }, [initialSession.user, sessionRestoreAttempt, sessionRestoring])
 
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
@@ -1992,7 +2009,7 @@ function App() {
      */
 
     if (sessionRestoring) {
-      return <SessionRestoringScreen />
+      return <SessionRestoringScreen error={sessionRestoreError} onRetry={() => { setSessionRestoreError(false); setSessionRestoreAttempt((attempt) => attempt + 1) }} onSignOut={signOutFailedRestoration} />
     }
 
     if (routePath === '/privacy' || routePath === '/terms') {
