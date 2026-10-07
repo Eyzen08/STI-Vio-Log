@@ -1,7 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { academicProgram, academicYear, academicLevelLabel, isSeniorHigh } from '../lib/studentAcademic.js'
 import { handbookSanctionGuidance, summarizeStudentCondition } from '../lib/adminStudentReview.js'
-import { formatDisplayLabel, formatDuration, formatIncidentDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDate } from '../lib/displayFormat.js'
 import { displayPhilippinePhone } from '../lib/phone.js'
 import Modal from './Modal.jsx'
 import Avatar from './Avatar.jsx'
@@ -17,13 +17,18 @@ const levelLabels = { NEUTRAL: 'Good Standing', MINOR_1: '1 Minor', MINOR_2: '2 
 
 function ViolationCaseCard({ violation, onView, preview = false }) {
   const resolved = ['COMPLETE', 'CLEAR'].includes(violation.status)
+  const title = violation.violation_name || `Violation #${violation.id}`
+  const offense = violation.exact_offense
+  const note = violation.incident_details || violation.description
+  const distinct = (text, other) => text?.trim().toLowerCase() !== other?.trim().toLowerCase()
   return <article className={`record-case-card${preview ? ' record-case-preview' : ''}`}>
-    <header><h4>{violation.violation_name || `Violation #${violation.id}`}</h4><span className={`record-case-status${resolved ? ' record-case-resolved' : ''}`}>{formatDisplayLabel(violation.status)}</span></header>
-    <p className="record-case-date"><PortalIcon name="calendar"/>{formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {formatDisplayLabel(violation.severity, 'Severity unavailable')}</p>
-    {violation.exact_offense && <p className="record-case-offense">{violation.exact_offense}</p>}
-    <p className="record-case-description">{violation.description || violation.incident_details || 'No incident details recorded.'}</p>
+    <header><h4>{title}</h4><span className={`record-case-status${resolved ? ' record-case-resolved' : ''}`}>{formatDisplayLabel(violation.status)}</span></header>
+    <p className="record-case-date"><PortalIcon name="calendar"/>{preview ? formatManilaDate(violation.incident_date) : formatIncidentDateTime(violation.incident_date, violation.incident_time)} · {formatDisplayLabel(violation.severity, 'Severity unavailable')}</p>
+    {offense && distinct(offense, title) && <p className="record-case-offense">{offense}</p>}
+    {note && distinct(note, offense || title) && <p className="record-case-description">Incident note: {note}</p>}
+    {!preview && violation.description && distinct(violation.description, note) && distinct(violation.description, offense || title) && <p className="record-case-description">{violation.description}</p>}
     <button type="button" className="record-view-case" onClick={() => onView(violation)}><PortalIcon name="eye"/>View case</button>
-    <dl className="record-case-service"><div><dt>Required Service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed Service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl>
+    {!preview && <dl className="record-case-service"><div><dt>Required Service</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div><div><dt>Completed Service</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div></dl>}
   </article>
 }
 
@@ -69,19 +74,16 @@ export function StudentRecordContent({ student, violations = [], summary, loadin
       <section className="record-violation-summary" aria-labelledby={`${id}-summary-title`}><h4 id={`${id}-summary-title`}>Violation Summary</h4><div className="record-metrics">
         {[['Total Violations', total, 'info', 'red'], ['Open Violations', open, 'clock', 'orange'], ['Resolved Violations', resolved, 'check', 'green'], ['Remaining Service', formatDuration(remaining), 'clock', 'blue']].map(([label, value, icon, tone]) => <article key={label} className={`record-metric record-metric-${tone}`}><i><PortalIcon name={icon} size={26}/></i><div><span>{label}</span><strong>{loading && !summary ? '—' : value}</strong></div></article>)}
       </div></section>
-      <section className="record-overview-card" aria-label="Student overview"><h4>Student Overview</h4><div className="record-overview-grid"><dl>{overviewFields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl><aside className={`record-discipline-status record-discipline-${level.toLowerCase()}`}><OffenseIndicator level={level}/>{summary?.offenseStatus?.major_level_review_required ? <p>Review required for repeated minor offenses</p> : guidance.length > 0 && <p>{guidance[0].name}</p>}</aside></div></section>
+      <section className="record-overview-card" aria-label="Student information"><h4>Student Information</h4><div className="record-overview-grid"><dl>{overviewFields.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value || 'Not recorded'}</dd></div>)}</dl></div></section>
       <section className="record-recent-cases" aria-label="Recent violations"><header className="record-section-heading"><h4>Recent Violations</h4><button type="button" onClick={() => selectTab('violations', true)}>View all ({total})</button></header>
         {loading && !recent.length ? <p className="record-empty" role="status">Loading violation history…</p> : !recent.length ? <p className="record-empty">No violation history for this student.</p> : <div className="record-case-grid">{recent.map((violation) => <ViolationCaseCard key={violation.id} violation={violation} onView={onViewCase} preview/>)}</div>}
       </section>
-      <aside className="record-handbook-note"><i><PortalIcon name="info" size={22}/></i><div><strong>Handbook sanction reference</strong><p>{handbookNote}</p></div></aside>
     </section>
     <section className="record-tab-panel" role="tabpanel" id={`${id}-violations-panel`} aria-labelledby={`${id}-violations-tab`} hidden={tab !== 'violations'} tabIndex={0}>{visited.includes('violations') && <>
       <header className="record-section-heading"><div><h4>Disciplinary History</h4><p>{total} total · {open} open · {resolved} resolved</p></div><button type="button" className="record-primary-button" onClick={() => onAddViolation(student)}>＋ Add Violation</button></header>
-      <section className="record-history-standing"><OffenseIndicator level={level}/><p>{summary?.offenseStatus?.major_level_review_required ? 'Major-level review required from repeated minor offenses.' : formatDisplayLabel(standing)}</p></section>
-      {guidance.length > 0 && <section className="record-sanction-guidance" aria-label="Handbook sanction guidance"><h4>Handbook Sanction Reference</h4>{guidance.map((item) => <article key={item.code}><strong>{item.name}</strong><span>{item.count} recorded offense{Number(item.count) === 1 ? '' : 's'}</span><p>{item.guidance}</p></article>)}</section>}
+      <section className="record-history-standing record-sanction-guidance" aria-label="Disciplinary classification and handbook guidance"><h4>Disciplinary Classification</h4><OffenseIndicator level={level}/>{summary?.offenseStatus?.major_level_review_required && <p>Major-level review required from repeated minor offenses.</p>}<h4>Handbook Guidance</h4>{guidance.map((item) => <article key={item.code}><strong>{item.name}</strong><span>{item.count} recorded offense{Number(item.count) === 1 ? '' : 's'}</span><p>{item.guidance}</p></article>)}<p>{handbookNote}</p></section>
       {loading && !records.length ? <p className="record-empty" role="status">Loading violation history…</p> : !records.length ? <p className="record-empty">No violation history for this student.</p> : <div className="record-history-list">{records.map((violation) => <ViolationCaseCard key={violation.id} violation={violation} onView={onViewCase}/>)}</div>}
       {hasMore && <button type="button" className="record-load-more" disabled={loading} onClick={onLoadMore}>{loading ? 'Loading…' : 'Load older violations'}</button>}
-      <aside className="record-handbook-note"><i><PortalIcon name="info"/></i><div><strong>Handbook sanction reference</strong><p>{handbookNote}</p></div></aside>
     </>}</section>
     <section className="record-tab-panel record-service-panel" role="tabpanel" id={`${id}-service-panel`} aria-labelledby={`${id}-service-tab`} hidden={tab !== 'service'} tabIndex={0}>{visited.includes('service') && <StudentServiceTimeContent student={student} assignments={assignments} activeSessions={activeSessions} attendanceReady={attendanceReady} attendanceError={attendanceError}/>}</section>
     <section className="record-tab-panel record-guardian-panel" role="tabpanel" id={`${id}-contact-panel`} aria-labelledby={`${id}-contact-tab`} hidden={tab !== 'contact'} tabIndex={0}>{visited.includes('contact') && <GuardianContactPanel token={token} student={student} showClose={false}/>}</section>

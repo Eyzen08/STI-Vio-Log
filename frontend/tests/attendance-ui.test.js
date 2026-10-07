@@ -38,11 +38,14 @@ test('student record overview uses full API totals, two case previews and four a
   assert.match(html, /Case 1/)
   assert.match(html, /Case 2/)
   assert.doesNotMatch(html, /Other student case|Case 3/)
-  assert.match(html, /2 hr/)
-  assert.match(html, /30 min/)
-  assert.match(html, /Review required for repeated minor offenses/)
+  assert.match(html, /Student Information/)
+  assert.doesNotMatch(html, /record-case-service|Handbook sanction reference|record-discipline-status|Review required for repeated minor offenses/)
+  assert.equal((html.match(/Major Level/g) || []).length, 1)
+  assert.equal((html.match(/5 hr 15 min/g) || []).length, 1)
   assert.match(html, /Edit photo for Ana Reyes/)
   assert.doesNotMatch(html, /type="file"|Photo change reason/)
+  const duplicate = render('StudentRecordContent', { student: { id: 1, first_name: 'Ana' }, violations: [{ id: 1, student_id: 1, violation_name: 'Documented offense', exact_offense: 'Documented offense', description: 'Documented offense' }] })
+  assert.equal((duplicate.match(/Documented offense/g) || []).length, 1)
 })
 
 test('embedded service content keeps assignments, credited time, corrections and attendance', () => {
