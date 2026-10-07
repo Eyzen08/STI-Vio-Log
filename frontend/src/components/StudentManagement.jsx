@@ -5,6 +5,7 @@ import { isActiveServiceSession } from '../lib/departmentService.js'
 import Avatar from './Avatar.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import StudentAccountActions from './StudentAccountActions.jsx'
+import StudentDirectorySelect from './StudentDirectorySelect.jsx'
 import '../styles/admin-students.css'
 
 const clearanceLabels = { NOT_CLEARED: 'Not Cleared', ELIGIBLE: 'Eligible', CLEARED: 'Cleared' }
@@ -47,14 +48,14 @@ export default function StudentManagement({ students = [], violations = [], assi
       <header className="student-directory-heading"><div><h3 id="student-directory-title">Student Directory</h3><p>Search and manage student records.</p></div><span>{loading ? 'Loading…' : `${visible.length} student${visible.length === 1 ? '' : 's'}`}</span></header>
       <div className="student-directory-toolbar">
         <label className="student-directory-search"><span className="sr-only">Search students</span><PortalIcon name="search" size={22}/><input type="search" name="student-directory-filter" autoComplete="off" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search student number, name, or program..."/></label>
-        <label className="student-directory-select"><span>Program</span><select value={filters.program} onChange={(event) => setFilter('program', event.target.value)}><option value="">All Programs</option>{options('programLabel').map((option) => <option key={option}>{option}</option>)}</select></label>
-        <label className="student-directory-select"><span>Year Level</span><select value={filters.year} onChange={(event) => setFilter('year', event.target.value)}><option value="">All Years</option>{options('yearLabel').map((option) => <option key={option}>{option}</option>)}</select></label>
-        <label className="student-directory-select"><span>Status</span><select value={filters.status} onChange={(event) => setFilter('status', event.target.value)}><option value="">All Status</option>{Object.entries(clearanceLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+        <StudentDirectorySelect label="Program" value={filters.program} onChange={(value) => setFilter('program', value)} options={[{ value: '', label: 'All Programs' }, ...options('programLabel').map((value) => ({ value, label: value }))]}/>
+        <StudentDirectorySelect label="Year Level" value={filters.year} onChange={(value) => setFilter('year', value)} options={[{ value: '', label: 'All Years' }, ...options('yearLabel').map((value) => ({ value, label: value }))]}/>
+        <StudentDirectorySelect label="Status" value={filters.status} onChange={(value) => setFilter('status', value)} options={[{ value: '', label: 'All Statuses' }, ...Object.entries(clearanceLabels).map(([value, label]) => ({ value, label }))]}/>
         <button type="button" className="student-filter-toggle" aria-expanded={filtersOpen} aria-controls="student-extra-filters" onClick={() => setFiltersOpen(!filtersOpen)}><PortalIcon name="filter" size={22}/>Filters{(filters.severity || filters.attendance) && <span className="student-filter-count">{Number(Boolean(filters.severity)) + Number(Boolean(filters.attendance))}</span>}</button>
       </div>
       {filtersOpen && <div id="student-extra-filters" className="student-extra-filters">
-        <label>Offense severity<select value={filters.severity} onChange={(event) => setFilter('severity', event.target.value)}><option value="">All Severities</option><option value="minor">Minor</option><option value="major">Major / Repeat Minor</option><option value="grave">Grave</option><option value="neutral">No Violations</option></select></label>
-        <label>Attendance<select value={filters.attendance} onChange={(event) => setFilter('attendance', event.target.value)} disabled={!attendanceReady}><option value="">All Attendance</option><option value="timed-in">Currently Timed In</option></select></label>
+        <StudentDirectorySelect label="Offense severity" value={filters.severity} onChange={(value) => setFilter('severity', value)} options={[{ value: '', label: 'All Severities' }, { value: 'minor', label: 'Minor' }, { value: 'major', label: 'Major / Repeat Minor' }, { value: 'grave', label: 'Grave' }, { value: 'neutral', label: 'No Violations' }]}/>
+        <StudentDirectorySelect label="Attendance" value={filters.attendance} onChange={(value) => setFilter('attendance', value)} disabled={!attendanceReady} options={[{ value: '', label: 'All Attendance' }, { value: 'timed-in', label: 'Currently Timed In' }]}/>
         <button type="button" onClick={() => { setFilters({ program: '', year: '', status: '', tab: 'all', severity: '', attendance: '' }); onQueryChange('') }}>Clear Filters</button>
       </div>}
       <div className="student-directory-tabs" role="group" aria-label="Student quick filters">{tabs.map(([key, label]) => <button type="button" key={key} aria-pressed={filters.tab === key} onClick={() => setFilter('tab', key)}>{label} ({counts[key]})</button>)}</div>
