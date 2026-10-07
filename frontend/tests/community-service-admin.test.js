@@ -6,8 +6,10 @@ const students = [{ id: 7, student_number: '02000123456', first_name: 'Jose Pedr
 
 test('community-service student search resolves an exact roster option', () => {
   const label = communityServiceStudentLabel(students[0])
-  assert.equal(label, '02000123456 - Jose Pedro Reyes')
+  assert.equal(label, 'Jose Pedro Reyes - 02000123456')
   assert.equal(resolveCommunityServiceStudent(students, label), 7)
+  assert.equal(resolveCommunityServiceStudent(students, '  JOSE PEDRO REYES - 02000123456 '), 7)
+  assert.equal(resolveCommunityServiceStudent(students, '02000123456 - Jose Pedro Reyes'), 7)
   assert.equal(resolveCommunityServiceStudent(students, 'Jose'), '')
 })
 

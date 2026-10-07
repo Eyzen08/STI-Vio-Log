@@ -45,8 +45,8 @@ const StudentServiceTimeDrawer = lazy(() => import('./components/StudentServiceT
 const SystemDashboard = lazy(() => import('./components/SystemDashboard.jsx'))
 const ServiceResultReview = lazy(() => import('./components/ServiceResultReview.jsx'))
 import PortalIcon from './components/PortalIcon.jsx'
-import ManagementMetric from './components/ManagementMetric.jsx'
-import AttendanceIndicator from './components/AttendanceIndicator.jsx'
+const CommunityServiceManagement = lazy(() => import('./components/CommunityServiceManagement.jsx'))
+
 import { attendanceTransitions } from './lib/attendanceStatus.js'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
@@ -64,11 +64,11 @@ import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
 import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
-import { buildCommunityServiceAssignmentPayload, communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent, serviceDepartmentOptions } from './lib/communityServiceAdmin.js'
 import { createDepartmentReportCsv } from './lib/departmentReports.js'
 import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDisplayLabel, formatDuration } from './lib/displayFormat.js'
+import { formatDisplayLabel } from './lib/displayFormat.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
@@ -2666,324 +2666,18 @@ function App() {
      * ==========================================================
      */
 
-    if (
-      activeView === 'Community Service'
-    ) {
-      const serviceViolations = eligibleServiceViolations(
-        violations,
-        communityServiceAssignments,
-        communityServiceForm.student_id
-      )
-      const departmentOptions = serviceDepartmentOptions(communityServiceDestinations)
-      const departmentHeads = headsForDepartment(communityServiceDestinations, communityServiceForm.department_id)
-      const activeAssignments = communityServiceAssignments.filter((item) => !['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase()))
-      const timedInAssignments = communityServiceAssignments.filter((item) => ['TIMED_IN', 'IN_PROGRESS'].includes(String(item.status).toUpperCase())).length
-      const nearCompletionAssignments = activeAssignments.filter((item) => Number(item.remaining_hours) > 0 && Number(item.remaining_hours) <= 2).length
-      const completedAssignments = communityServiceAssignments.filter((item) => ['COMPLETED', 'CLEARED'].includes(String(item.status).toUpperCase())).length
-      const visibleAssignments = communityServiceAssignments.filter((item) => {
-        const query = serviceTableFilters.search.trim().toLowerCase()
-        const matchesSearch = !query || [item.first_name, item.last_name, item.student_number, item.department_name, item.department_code].filter(Boolean).join(' ').toLowerCase().includes(query)
-        const matchesStatus = serviceTableFilters.status === 'ALL' || String(item.status || 'OPEN').toUpperCase() === serviceTableFilters.status
-        const departmentValue = String(item.department_id || item.department_code || '')
-        const matchesDepartment = serviceTableFilters.department === 'ALL' || departmentValue === serviceTableFilters.department
-        return matchesSearch && matchesStatus && matchesDepartment
-      })
-      return (
-        <>
-          <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Community Service</span><h2>Community Service</h2><p>Track assignments, time logs, accountable departments, and student progress.</p></div>
-            <button type="button" className="primary-action" onClick={() => { setCommunityServiceFormError(''); setCommunityServiceFormSuccess(''); setIsCommunityServiceFormOpen(true) }}>＋ Assign Service</button>
-          </header>
-          <section className="management-metrics management-metrics--five" aria-label="Community service summary">
-            <ManagementMetric icon="service" value={activeAssignments.length} label="Active Assignments"/>
-            <ManagementMetric tone="green" icon="clock" value={timedInAssignments} label="Students Timed In"/>
-            <ManagementMetric tone="orange" icon="hourglass" value={nearCompletionAssignments} label="Near Completion"/>
-            <ManagementMetric tone="red" icon="violations" value={activeAssignments.filter((item) => Number(item.remaining_hours) >= Number(item.required_hours || 0)).length} label="Not Started"/>
-            <ManagementMetric tone="green" icon="check" value={completedAssignments} label="Completed"/>
-          </section>
-          {isAdmin && <ServiceResultReview token={token} onChanged={() => { refreshPendingActions(); setDashboardRefreshKey((current) => current + 1) }} />}
-          {isCommunityServiceFormOpen && <Modal title="Assign Community Service" drawer onClose={() => setIsCommunityServiceFormOpen(false)}><div className="drawer-intro"><strong>Create a service assignment</strong><span>Connect an open violation to an accountable department head.</span></div>
-          <section className="drawer-form-card">
-            <div className="table-header">
-              <h3>
-                Assign community service
-              </h3>
-
-              <span>
-                New assignment
-              </span>
-            </div>
-
-            <form
-              className="student-form"
-              onSubmit={
-                handleCommunityServiceSubmit
-              }
-            >
-              <div className="student-form-grid">
-                <label>
-                  Student
-
-                  <input
-                    type="search"
-                    name="student_search"
-                    list="community-service-student-options"
-                    autoComplete="off"
-                    placeholder="Type a student number or name"
-                    value={
-                      communityServiceForm.student_search
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    required
-                  />
-                  <datalist id="community-service-student-options">
-                    {students.map((student) => (
-                      <option key={student.id} value={communityServiceStudentLabel(student)} />
-                    ))}
-                  </datalist>
-                  <span>Search by Student Number, first name, or last name, then select the matching result.</span>
-                </label>
-
-                <label>
-                  Open violation
-
-                  <select
-                    name="violation_id"
-                    value={
-                      communityServiceForm.violation_id
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    disabled={!communityServiceForm.student_id}
-                    required
-                  >
-                    <option value="">
-                      {communityServiceForm.student_id ? 'Select an open violation' : 'Select a student first'}
-                    </option>
-                    {serviceViolations.map((violation) => (
-                      <option key={violation.id} value={violation.id}>
-                        {communityServiceViolationLabel(violation)}
-                      </option>
-                    ))}
-                  </select>
-                  {communityServiceForm.student_id && serviceViolations.length === 0 && (
-                    <span>This student has no open violation available for a new assignment.</span>
-                  )}
-                </label>
-
-                <label>
-                  Required hours
-
-                  <input
-                    type="number"
-                    name="required_hours"
-                    value={
-                      communityServiceForm.required_hours
-                    }
-                    onChange={
-                      handleCommunityServiceFieldChange
-                    }
-                    min="0"
-                    step="1"
-                  />
-                </label>
-
-                <label>
-                  Required minutes
-                  <input
-                    type="number"
-                    name="required_minutes"
-                    value={communityServiceForm.required_minutes}
-                    onChange={handleCommunityServiceFieldChange}
-                    min="0"
-                    step="1"
-                    inputMode="numeric"
-                  />
-                  <span>Values of 60 or more are automatically converted to hours.</span>
-                </label>
-
-                <label>
-                  Service department type
-                  <select name="department_id" value={communityServiceForm.department_id} onChange={handleCommunityServiceFieldChange} required>
-                    <option value="">Select a department type</option>
-                    {departmentOptions.map((department) => (
-                      <option key={department.id} value={department.id}>{department.name}</option>
-                    ))}
-                  </select>
-                </label>
-
-                <label>
-                  Department Head
-                  <select name="department_head_id" value={communityServiceForm.department_head_id} onChange={handleCommunityServiceFieldChange} disabled={!communityServiceForm.department_id} required>
-                    <option value="">{communityServiceForm.department_id ? 'Select the accountable Department Head' : 'Select a department first'}</option>
-                    {departmentHeads.map((head) => (
-                      <option key={head.department_head_id} value={head.department_head_id}>{head.first_name} {head.last_name}</option>
-                    ))}
-                  </select>
-                  {communityServiceForm.department_id && departmentHeads.length === 0 && <span>No active Department Head is assigned to this department.</span>}
-                </label>
-              </div>
-
-              {communityServiceFormError && (
-                <p className="error-message">
-                  {
-                    communityServiceFormError
-                  }
-                </p>
-              )}
-
-              {communityServiceFormSuccess && (
-                <p className="success-message">
-                  {
-                    communityServiceFormSuccess
-                  }
-                </p>
-              )}
-
-              <AsyncActionButton
-                type="submit"
-                className="submit-btn"
-                busy={mutationBusy.serviceCreate}
-                busyLabel="Saving assignment…"
-              >
-                Save Assignment
-              </AsyncActionButton>
-            </form>
-          </section></Modal>}
-
-          <section className="table-card">
-            <div className="table-header management-table-header">
-              <div><h3>Community Service Tracking</h3><p>Required, completed, and remaining time per assignment.</p></div>
-
-              <span>
-                {
-                  communityServiceAssignments.length
-                }{' '}
-                assignments
-              </span>
-            </div>
-            <div className="directory-toolbar management-filter-bar"><input type="search" name="service-assignment-filter" autoComplete="off" aria-label="Search service assignments" value={serviceTableFilters.search} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,search:event.target.value})} placeholder="Search student, number, or department…"/><select aria-label="Filter service department" value={serviceTableFilters.department} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,department:event.target.value})}><option value="ALL">All departments</option>{departmentOptions.map((department)=><option value={String(department.id)} key={department.id}>{department.name}</option>)}</select><select aria-label="Filter service status" value={serviceTableFilters.status} onChange={(event)=>setServiceTableFilters({...serviceTableFilters,status:event.target.value})}><option value="ALL">All statuses</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option><option value="CLEARED">Cleared</option></select></div>
-
-            {visibleAssignments.length === 0 ? (
-              <p className="empty-state">
-                No community service assignments match the selected filters.
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table className="management-record-table">
-                  <thead>
-                    <tr>
-                      <th>
-                        ID
-                      </th>
-
-                      <th>
-                        Student
-                      </th>
-
-                      <th>
-                        Violation
-                      </th>
-
-                      <th>Department</th>
-
-                      <th>Department Head</th>
-
-                      <th>
-                        Required
-                      </th>
-
-                      <th>
-                        Remaining
-                      </th>
-
-                      <th>Progress</th>
-
-                      <th>
-                        Status
-                      </th>
-
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {visibleAssignments.map(
-                      (assignment) => {
-                        const required = Number(assignment.required_hours || 0)
-                        const remaining = Number(assignment.remaining_hours ?? required)
-                        const progress = required > 0 ? Math.min(100, Math.round(((required - remaining) / required) * 100)) : 0
-                        return (
-                        <tr
-                          key={
-                            assignment.id
-                          }
-                        >
-                          <td data-label="Record ID" className="internal-record-id">
-                            #{assignment.id}
-                          </td>
-
-                          <td data-label="Student">
-                            <strong>{assignment.student_number || `Student #${assignment.student_id}`}</strong>
-                            {(assignment.first_name || assignment.last_name) && (
-                              <span className="table-cell-detail">{assignment.first_name} {assignment.last_name}</span>
-                            )}
-                            <AttendanceIndicator sessions={activeServiceSessions.filter((session) => Number(session.assignment_id) === Number(assignment.id))} ready={adminAttendanceReady} loading={dashboardLoading}/>
-                          </td>
-
-
-                          <td data-label="Violation">
-                            {
-                              `#${assignment.violation_id}`
-                            }
-                          </td>
-
-                          <td data-label="Department">{assignment.department_code || assignment.department_name || 'Historical assignment'}</td>
-
-                          <td data-label="Department head">{assignment.department_head_first_name || assignment.department_head_last_name ? `${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Not recorded'}</td>
-
-                          <td data-label="Required">
-                            {formatDuration(assignment.required_hours)}
-                          </td>
-
-                          <td data-label="Remaining">
-                            {formatDuration(assignment.remaining_hours ?? assignment.required_hours ?? 0)}
-                          </td>
-
-                          <td data-label="Progress"><div className="table-progress"><div><span style={{width:`${progress}%`}} /></div><small>{progress}%</small></div></td>
-
-                          <td data-label="Status">
-                            <span className="status-badge">
-                              {
-                                assignment.status ||
-                                'OPEN'
-                              }
-                            </span>
-                          </td>
-                          <td data-label="Action"><button type="button" className="primary-row-action" onClick={()=>setViewingServiceAssignment(assignment)}>View</button></td>
-                        </tr>
-                        )
-                      }
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-          {viewingServiceAssignment && (() => { const required = Number(viewingServiceAssignment.required_hours || 0); const remaining = Number(viewingServiceAssignment.remaining_hours ?? required); const completed = Math.max(0, required - remaining); const progress = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 0; return <Modal title={`Service assignment #${viewingServiceAssignment.id}`} drawer onClose={()=>setViewingServiceAssignment(null)}><div className="record-detail-drawer"><header><div><span className="page-breadcrumb">Community service assignment</span><h3>{[viewingServiceAssignment.first_name, viewingServiceAssignment.last_name].filter(Boolean).join(' ') || viewingServiceAssignment.student_number || 'Student record'}</h3><p>{viewingServiceAssignment.student_number || `Student #${viewingServiceAssignment.student_id}`}</p></div><span className="status-badge">{viewingServiceAssignment.status || 'OPEN'}</span></header><dl><div><dt>Violation</dt><dd>#{viewingServiceAssignment.violation_id}</dd></div><div><dt>Department</dt><dd>{viewingServiceAssignment.department_name || viewingServiceAssignment.department_code || 'Historical assignment'}</dd></div><div><dt>Department head</dt><dd>{[viewingServiceAssignment.department_head_first_name, viewingServiceAssignment.department_head_last_name].filter(Boolean).join(' ') || 'Not recorded'}</dd></div><div><dt>Required time</dt><dd>{formatDuration(required)}</dd></div><div><dt>Completed time</dt><dd>{formatDuration(completed)}</dd></div><div><dt>Remaining time</dt><dd>{formatDuration(remaining)}</dd></div></dl><section><div className="record-progress-heading"><h4>Service progress</h4><strong>{progress}%</strong></div><div className="record-progress"><span style={{width:`${progress}%`}} /></div></section></div></Modal> })()}
-        </>
-      )
+    if (activeView === 'Community Service') {
+      return <CommunityServiceManagement students={students} assignments={communityServiceAssignments}
+        activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading}
+        filters={serviceTableFilters} onFiltersChange={setServiceTableFilters}
+        pendingResults={isAdmin && <ServiceResultReview token={token} onChanged={() => { refreshPendingActions(); setDashboardRefreshKey((current) => current + 1) }} />}
+        onAssign={() => { setCommunityServiceFormError(''); setCommunityServiceFormSuccess(''); setIsCommunityServiceFormOpen(true) }}
+        formOpen={isCommunityServiceFormOpen} onCloseForm={() => setIsCommunityServiceFormOpen(false)}
+        formProps={{ form:communityServiceForm, violations, destinations:communityServiceDestinations,
+          busy:mutationBusy.serviceCreate, error:communityServiceFormError, success:communityServiceFormSuccess,
+          onFieldChange:handleCommunityServiceFieldChange, onSubmit:handleCommunityServiceSubmit }}
+        viewingAssignment={viewingServiceAssignment} onView={setViewingServiceAssignment} onCloseAssignment={() => setViewingServiceAssignment(null)}/>
     }
-
-    /*
-     * ==========================================================
-     * QR SCAN
-     * ==========================================================
-     */
-
     if (activeView === 'QR Scan') {
       const scannerDepartments = serviceDepartmentOptions(communityServiceDestinations)
       const assignedDepartmentId = Number(user?.department_id)

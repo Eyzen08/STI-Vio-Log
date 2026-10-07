@@ -1,9 +1,10 @@
-import { studentIdFromSearch, studentOptionLabel } from './violationAdmin.js'
+import { studentIdFromSearch } from './violationAdmin.js'
 
-export const communityServiceStudentLabel = studentOptionLabel
+export const communityServiceStudentLabel = (student = {}) =>
+  `${[student.first_name, student.last_name].filter(Boolean).join(' ')} - ${student.student_number}`
 
 export const resolveCommunityServiceStudent = (students = [], search = '') =>
-  studentIdFromSearch(students, search)
+  students.find(student => communityServiceStudentLabel(student).toLocaleLowerCase() === search.trim().toLocaleLowerCase())?.id ?? studentIdFromSearch(students, search)
 
 export const eligibleServiceViolations = (violations = [], assignments = [], studentId) => {
   const assignedViolationIds = new Set(assignments.map((assignment) => Number(assignment.violation_id)))

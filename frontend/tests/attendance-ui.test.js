@@ -9,19 +9,56 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
   components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
   components.StudentServiceTimeContent = (await server.ssrLoadModule('/src/components/StudentServiceTimeDrawer.jsx')).StudentServiceTimeContent
   components.ViolationDetailsContent = (await server.ssrLoadModule('/src/components/ViolationDetailsDrawer.jsx')).ViolationDetailsContent
   components.ViolationEditHistory = (await server.ssrLoadModule('/src/components/ViolationEditDrawer.jsx')).ViolationEditHistory
+  Object.assign(components, await server.ssrLoadModule('/src/components/CommunityServiceManagement.jsx'))
 })
 after(async () => { await server?.close() })
-const render = (name, props) => renderToStaticMarkup(createElement(components[name], props))
+const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('community workflow keeps assignment filters, actual attendance, eligible choices and detailed progress', () => {
+  const assignment = {id:21,student_id:1,violation_id:4,first_name:'Ana',last_name:'Reyes',student_number:'02000',department_id:3,department_name:'Library',department_head_first_name:'Mara',department_head_last_name:'Cruz',status:'IN_PROGRESS',required_hours:6,remaining_hours:5.25}
+  const props={assignments:[assignment],activeSessions:[active,{...active,id:12,assignment_id:22}],attendanceReady:true,filters:{search:'',department:'ALL',status:'ALL'},formProps:{destinations:[]}}
+  const html=render('CommunityServiceManagement',props)
+  assert.equal((html.match(/class="management-metric /g)||[]).length,5)
+  assert.match(html, /<strong>1<\/strong><span>Students Timed In/)
+  assert.match(html, /TIME IN/)
+  assert.match(html, /5 hr 15 min/)
+  assert.match(html, /View service assignment 21/)
+  assert.match(render('CommunityServiceManagement',{...props,filters:{...props.filters,department:'99'}}), /No community service assignments match/)
+  const details=render('ServiceAssignmentContent',{assignment})
+  assert.match(details,/45 min/); assert.match(details,/13%/); assert.match(details,/Mara Cruz/)
+  const form=render('AssignServiceForm',{form:{student_id:1,student_search:'02000 - Ana Reyes',violation_id:4,required_hours:1,required_minutes:60,department_id:3,department_head_id:9},violations:[{id:4,student_id:1,status:'OPEN'},{id:5,student_id:2,status:'OPEN'},{id:6,student_id:1,status:'COMPLETE'}],destinations:[{department_id:3,department_head_id:9,first_name:'Mara'},{department_id:4,department_head_id:10,first_name:'Other'}]})
+  assert.match(form,/value="4" selected/); assert.doesNotMatch(form,/value="5"|value="6"|value="10"/)
+})
+
+test('QR workflow enforces verified identity, active session, outcome and authorized officer controls', () => {
+  const form={qr_code:'test-code',department_id:3,supervising_officer_id:9,notes:'',attendance_outcome:''}
+  const result={action:'scan',student:{first_name:'Ana',last_name:'Reyes',student_number:'02000'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}
+  const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'},departments:[{id:3,name:'Library'}]}
+  const idle=render('DepartmentQrScanner',props)
+  assert.match(idle,/Community Service Assignment/); assert.match(idle,/45 min/); assert.match(idle,/5 hrs 15 min/)
+  assert.match(idle,/<button type="button"><svg[^]*?Time In<\/button>/)
+  assert.match(idle,/class="time-out-button" disabled=""/)
+  const activeResult={...result,assignment:{...result.assignment,active_session_id:11,active_time_in:new Date(start).toISOString()}}
+  const timedIn=render('DepartmentQrScanner',{...props,result:activeResult,form:{...form,attendance_outcome:'LEFT_EARLY'}})
+  assert.match(timedIn,/disabled=""><svg[^]*?Time In<\/button>/)
+  assert.match(timedIn,/class="time-out-button"><svg/)
+  const stale=render('DepartmentQrScanner',{...props,verifiedQr:'another-code'})
+  assert.match(stale,/Waiting for student QR/); assert.doesNotMatch(stale,/Ana Reyes/)
+  const scoped=render('DepartmentQrScanner',{...props,recorder:{role:'DEPARTMENT_HEAD'}})
+  assert.doesNotMatch(scoped,/name="department_id"/)
+  const noOfficer=render('DepartmentQrScanner',{...props,result:{...result,available_officers:[]}})
+  assert.match(noOfficer,/No authorized officer available/); assert.match(noOfficer,/class="time-out-button" disabled=""/)
+})
 
 test('violation detail separates structured incident notes and preserves totals and action permissions', () => {
   const violation = { id: 23, student_id: 1, student_name: 'Ana Reyes', student_number: '02000', status: 'OPEN', severity: 'GRAVE', violation_name: 'Major Offense - Category D', exact_offense: 'Documented offense', description: 'Handbook offense: Documented offense\nIncident details: Recorded incident note', required_service_hours: 6, completed_service_hours: 0.75, incident_date: '2026-10-05', incident_time: '16:00:00' }
