@@ -5162,3 +5162,81 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .dashboard-analytics-custom > label { flex: 1 1 8rem; }
 }
 @media (max-width: 420px) { .analytics-insights dl { grid-template-columns: minmax(0,1fr); } }
+
+/* Departments & Officer Accounts: approved directory and two-step form. */
+.department-officer-page { gap: 28px; width: min(100%,94rem); }
+.department-officer-page .department-welcome.portal-page-header { padding: 0 var(--department-content-inset) 2px; background: transparent; border: 0; box-shadow: none; }
+.department-officer-page .department-welcome .eyebrow { margin: 0 0 8px; color: #526d94 !important; font-size: 12px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+.department-officer-page .department-welcome h2 { margin: 0 0 7px; color: #081c68; font-size: clamp(2rem,3vw,2.75rem); font-weight: 800; letter-spacing: -.035em; line-height: 1.12; }
+.department-officer-page .department-welcome p:last-child { margin: 0; color: #647fa6; font-size: 15px; }
+.department-officer-page .department-officer-tabs { width: min(100%,34rem); flex: 0 0 auto; box-shadow: none; }
+.department-officer-page .department-officer-tabs button { width: 100% !important; font-weight: 750; font-size: 14px; }
+.department-summary-grid { gap: 14px; }
+.department-summary-grid .department-stat { display: flex; align-items: center; gap: 22px; min-height: 106px; padding: 18px 24px; border: 1px solid #dfebf6; border-radius: 13px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-stat-icon { display: grid; place-items: center; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 50%; background: #e9f4ff; color: #076bd4 !important; font-size: 32px !important; line-height: 1; }
+.department-stat--active .department-stat-icon { background: #e7f8ee; color: #008d42 !important; }
+.department-stat--heads .department-stat-icon { background: #f1ecff; color: #7542dc !important; }
+.department-stat--discipline .department-stat-icon { background: #fff2e7; color: #f47b1c !important; }
+.department-summary-grid .department-stat > div { display: grid; gap: 2px; }
+.department-summary-grid .department-stat b { color: #0869c9; font-size: 28px; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.department-summary-grid .department-stat div span { color: #6680a6; font-size: 13px; }
+.department-directory-surface { padding: 16px; border: 1px solid #e0ebf6; border-radius: 14px; background: var(--color-surface); }
+.department-officer-page .directory-toolbar { margin: 0 0 18px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.department-officer-page .directory-toolbar :is(input,select) { min-height: 48px; padding: 10px 16px; border: 1px solid #d4e4f4; border-radius: 9px; background: var(--color-surface); color: #173b70; font-size: 14px; }
+.department-officer-page .directory-toolbar input { background: #f4f8fc; }
+.department-officer-page .directory-toolbar input::placeholder { color: #8299ba; }
+.department-officer-page .officer-directory { gap: 16px; }
+.department-officer-page .officer-directory > .officer-card { display: flex; flex-direction: column; min-height: 350px; padding: 18px 20px 16px; border: 1px solid #e3edf8; border-radius: 15px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-officer-page .officer-directory > .officer-card::before { display: none; }
+.officer-card-badges { display: flex; flex-wrap: wrap; gap: 7px; min-height: 30px; }
+.officer-card-badges .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid #c6dffc; border-radius: 999px; background: #eaf5ff; color: #0866bf; font-size: 12px; font-weight: 700; text-transform: none; }
+.officer-card-badges .status-badge::before { width: 9px; height: 9px; border-radius: 50%; background: #0bb783; content: ''; }
+.officer-card-badges .availability-available { border-color: #b5edca; background: #e7f9ed; color: #087139; }
+.officer-card-badges .availability-available::before { background: #0ca63d; }
+.officer-card-badges .availability-unavailable,.officer-card-badges .availability-absent { border-color: #f0d694; background: #fff7e2; color: #825800; }
+.officer-card-badges .availability-unavailable::before,.officer-card-badges .availability-absent::before { background: #e0a21c; }
+.officer-card-badges .status-badge--muted { border-color: #d9e1ea; background: #eef2f6; color: #5c6879; }
+.officer-card-badges .status-badge--muted::before { background: #8998a8; }
+.officer-card-identity { display: flex; align-items: center; gap: 16px; min-height: 95px; padding: 12px 0 15px; }
+.officer-card-identity .portal-avatar { flex: 0 0 64px; width: 64px; height: 64px; background: #0871d5; color: #fff; font-size: 21px; }
+.officer-card-identity h3 { margin: 0 0 3px; color: #0b315f; font-size: 19px; font-weight: 800; }
+.officer-card-identity strong { display: block; color: #113b71; font-size: 13px; }
+.officer-card-identity p { margin: 5px 0 0 !important; color: #6c86ac; font-size: 13px; }
+.department-officer-page .officer-card dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 22px; margin: 0 0 16px; padding: 16px 10px; border-top: 1px solid #e4edf7; }
+.department-officer-page .officer-card dt { color: #6b84a6; font-size: 12px; }
+.department-officer-page .officer-card dd { margin-top: 3px; color: #15396e; font-size: 13px; }
+.department-officer-page .officer-card .registration-review-actions { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #e4edf7; }
+.department-officer-page .officer-card .registration-review-actions > button { flex: 1 1 auto; min-height: 39px; padding: 7px 10px; border-radius: 8px; font-size: 11px; font-weight: 750; white-space: nowrap; }
+.department-officer-page .officer-card .registration-review-actions > button:first-child { border-color: #0871d5; background: #0871d5; color: white; }
+.department-officer-page .officer-card .registration-review-actions > .secondary-button { border-color: #d2e3f5; background: var(--color-surface); color: #0866bf; }
+.department-officer-page .officer-card .registration-review-actions > .danger-button { border-color: #ff9ba4 !important; background: #fffafa; color: #d92339 !important; }
+.department-officer-create.department-tab-panel { width: calc(100% - 2 * var(--department-content-inset)); max-width: none; padding: 30px 34px 18px; border-radius: 15px; box-shadow: 0 5px 18px rgba(20,58,104,.035); }
+.department-officer-create .compact-stepper { gap: 28px; margin: 0 0 27px; padding: 0 0 25px; }
+.department-officer-create .compact-stepper button { gap: 13px; padding: 0 !important; color: #8a9cba; font-size: 14px; font-weight: 750; }
+.department-officer-create .compact-stepper button b { width: 40px; height: 40px; background: #edf3fa; color: #8296b3; font-size: 16px; }
+.department-officer-create .compact-stepper button.active { color: #0871d5; }
+.department-officer-create .compact-stepper button.active b { background: #0871d5; color: #fff; }
+.department-officer-create .compact-stepper button.complete b { background: #e4f8e9; color: #088539; }
+.department-officer-create .section-heading { margin: 0 0 24px; }
+.department-officer-create .section-heading h3 { margin: 0 0 4px; color: #0b2869; font-size: 23px; font-weight: 800; }
+.department-officer-create .section-heading p { margin: 0; color: #6b83a7; font-size: 15px; }
+.department-officer-create .student-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px 26px; }
+.department-officer-create .student-form-grid label { display: grid; align-content: start; gap: 7px; color: #32547f; font-size: 14px; font-weight: 700; }
+.department-officer-create .student-form-grid :is(input,select,textarea) { width: 100%; min-height: 50px; padding: 11px 16px; border: 1px solid #cfe1f4; border-radius: 9px; background: var(--color-surface); color: #142e65; font-size: 14px; }
+.department-officer-create .student-form-grid :is(input,textarea)::placeholder { color: #8ba0c0; }
+.department-officer-create .student-form-grid textarea { min-height: 76px; resize: vertical; }
+.department-officer-create .student-form-grid .department-status-field { grid-column: 1; }
+.department-officer-create .field-error { color: #b42332; font-size: 12px; font-weight: 600; }
+.department-officer-create .student-form-grid [aria-invalid='true'] { border-color: #d92339; }
+.department-officer-create .wizard-actions { align-items: center; gap: 12px; margin-top: 26px; padding-top: 12px; border-top: 1px solid #e3ecf6; }
+.department-officer-create .wizard-actions button { min-height: 49px; padding: 11px 22px; border-radius: 9px; font-size: 14px; font-weight: 750; }
+.department-officer-create .wizard-actions button:not(.secondary-button) { border-color: #0871d5; background: #0871d5; color: #fff; }
+.department-officer-create .wizard-actions .secondary-button { min-width: 105px; border-color: #8dc2ff; background: var(--color-surface); color: #0871d5; }
+.department-skeleton { border-radius: 8px; background: linear-gradient(90deg,#eaf1f8,#f7faff,#eaf1f8); background-size: 200% 100%; animation: department-shimmer 1.5s linear infinite; }
+.department-stat .department-skeleton { display: block; width: 32px; height: 30px; }
+.officer-card-skeleton { min-height: 330px; }
+@keyframes department-shimmer { to { background-position: -200% 0; } }
+@media (max-width: 1100px) { .department-officer-page .department-welcome { flex-wrap: wrap; } .department-officer-page .department-officer-tabs { width: min(100%,34rem); } .department-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 900px) { .department-officer-page .officer-directory { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .department-officer-page { gap: 18px; } .department-officer-page .department-welcome.portal-page-header { padding-inline: 0; } .department-officer-page .department-welcome h2 { font-size: 27px; } .department-summary-grid { grid-template-columns: 1fr; } .department-directory-surface { padding: 12px; } .department-officer-page .directory-toolbar { grid-template-columns: 1fr; } .department-officer-create.department-tab-panel { width: 100%; padding: 22px 18px; } .department-officer-create .compact-stepper { gap: 10px; } .department-officer-create .compact-stepper button { gap: 6px; font-size: 12px; } .department-officer-create .compact-stepper button b { width: 32px; height: 32px; } .department-officer-create .student-form-grid { grid-template-columns: 1fr; } .department-officer-create .student-form-grid .department-status-field { grid-column: 1; } }
+@media (prefers-reduced-motion: reduce) { .department-skeleton { animation: none; } }
