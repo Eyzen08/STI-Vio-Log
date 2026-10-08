@@ -1,4 +1,5 @@
-import { formatDisplayLabel, formatDuration } from './displayFormat.js'
+import { formatDuration } from './displayFormat.js'
+export { statusLabel } from '../../../shared/reportPresentation.mjs'
 
 const asHours = (value) => {
   const hours = Number(value)
@@ -21,12 +22,3 @@ export const normalizeViolation = (violation) => ({
   remaining_service_hours: asHours(violation.remaining_service_hours),
   history: Array.isArray(violation.history) ? violation.history : []
 })
-
-export const statusLabel = (status) => ({
-  OPEN: 'Open',
-  COMPLETE: 'Completed',
-  CLEAR: 'Cleared',
-  INVALID_CANCEL: 'Invalid / Cancelled',
-  CREATE: 'Recorded',
-  REOPEN: 'Reopened'
-}[status] || formatDisplayLabel(status, 'Unknown'))

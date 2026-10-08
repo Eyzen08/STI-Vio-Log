@@ -1,3 +1,5 @@
+import { parseViolationDescription } from '../../../shared/reportPresentation.mjs'
+export { parseViolationDescription }
 import handbookOffenses from '../../../shared/handbookOffenses.json' with { type: 'json' }
 
 export const HANDBOOK_OFFENSES = handbookOffenses
@@ -28,12 +30,6 @@ export const studentIdFromSearch = (students = [], search = '') => {
   const normalized = String(search).trim().toLocaleLowerCase()
   const match = students.find((student) => studentOptionLabel(student).toLocaleLowerCase() === normalized)
   return match ? Number(match.id) : ''
-}
-
-export const parseViolationDescription = (description = '') => {
-  const match = /^Handbook offense: ([^\n]*)\nIncident details: ([\s\S]*)$/.exec(description)
-  return match ? { exact_offense: match[1], incident_details: match[2], legacy: false }
-    : { exact_offense: '', incident_details: description, legacy: true }
 }
 
 export const violationEditForm = (violation = {}) => ({

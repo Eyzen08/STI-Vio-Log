@@ -8,7 +8,6 @@ const DepartmentCommunityService = lazy(() => import('./components/DepartmentCom
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
 const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
 import DepartmentDtr from './components/DepartmentDtr.jsx'
-import ServiceHourCorrections from './components/ServiceHourCorrections.jsx'
 import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentManagement = lazy(() => import('./components/StudentManagement.jsx'))
@@ -30,6 +29,7 @@ const AdminDuplicateReview = lazy(() => import('./components/AdminDuplicateRevie
 const PasswordChangeRequired = lazy(() => import('./components/PasswordChangeRequired.jsx'))
 const StudentOnboarding = lazy(() => import('./components/StudentOnboarding.jsx'))
 const AdminAuditLog = lazy(() => import('./components/AdminAuditLog.jsx'))
+const AdminReports = lazy(() => import('./components/AdminReports.jsx'))
 const AdminDepartmentOfficers = lazy(() => import('./components/AdminDepartmentOfficers.jsx'))
 const AdminAccountSettings = lazy(() => import('./components/AdminAccountSettings.jsx'))
 const AdminClearanceCertificates = lazy(() => import('./components/AdminClearanceCertificates.jsx'))
@@ -63,12 +63,8 @@ import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
-import { buildAdminReportQuery, defaultReportSort, reportSortOptions } from './lib/adminReports.js'
 import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
-import { createDepartmentReportCsv } from './lib/departmentReports.js'
-import { reportCell, reportColumnLabel, presentedReportRows } from './lib/reportPresentation.js'
 import { connectRealtime } from './lib/realtime.js'
-import { formatDisplayLabel } from './lib/displayFormat.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
@@ -385,8 +381,6 @@ function App() {
   const [createdStudentCredentials,setCreatedStudentCredentials]=useState(null)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
-  const [reportPage, setReportPage] = useState(1)
-  const [reportGenerated, setReportGenerated] = useState(false)
   const [reviewedStudentViolations, setReviewedStudentViolations] = useState([])
   const [reviewedStudentPage, setReviewedStudentPage] = useState(1)
   const [reviewedStudentHasMore, setReviewedStudentHasMore] = useState(false)
@@ -452,21 +446,6 @@ function App() {
   qrFormRef.current = qrForm
 
   const [clearanceRecords, setClearanceRecords] = useState([])
-
-  const [reportType, setReportType] = useState('violations')
-  const [reportData, setReportData] = useState([])
-  const [reportHourCorrections, setReportHourCorrections] = useState([])
-  const [reportLoading, setReportLoading] = useState(false)
-  const [reportError, setReportError] = useState('')
-
-  const [reportFilters, setReportFilters] = useState({
-    search: '',
-    status: '',
-    student_id: '',
-    from_date: '',
-    to_date: '',
-    sort_by: 'date_desc'
-  })
 
   const isLoggedIn = Boolean(user)
 
@@ -1863,144 +1842,6 @@ function App() {
     window.location.replace(new URL('/login', window.location.href).href)
   }
 
-  /*
-   * ============================================================
-   * REPORTS
-   * ============================================================
-   */
-
-  const fetchReport = async () => {
-    if (reportLoading) return
-    if (reportFilters.from_date && reportFilters.to_date && reportFilters.from_date > reportFilters.to_date) {
-      setReportError('Choose an end date on or after the start date.')
-      return
-    }
-    setReportGenerated(false)
-    setReportHourCorrections([])
-    setReportPage(1)
-    setReportLoading(true)
-    setReportError('')
-
-    try {
-      const params = buildAdminReportQuery(reportType, reportFilters)
-
-      const response =
-        await fetch(
-          `${API_URL}/api/reports/${reportType}${params ? `?${params}` : ''}`,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`
-            }
-          }
-        )
-
-      const data =
-        await response.json()
-
-      if (
-        response.ok &&
-        data.success
-      ) {
-        setReportData(
-          data.data || []
-        )
-        setReportGenerated(true)
-        setReportHourCorrections(data.hourCorrections || [])
-      } else {
-        setReportData([])
-        setReportError(data.message || 'Unable to generate this report.')
-      }
-    } catch (error) {
-      console.error(
-        'Report fetch error:',
-        error
-      )
-
-      setReportData([])
-      setReportError(error.message || 'Unable to generate this report.')
-    } finally {
-      setReportLoading(false)
-    }
-  }
-
-  const handleReportFilterChange = (
-    event
-  ) => {
-    const {
-      name,
-      value
-    } = event.target
-
-    setReportFilters((current) => ({
-      ...current,
-      [name]: value
-    }))
-  }
-
-  const exportReport = async () => {
-    if (reportType !== 'violations' && reportData.length === 0) {
-      return
-    }
-
-    if (reportType === 'violations') {
-      setReportError('')
-      try {
-        const params = buildAdminReportQuery(reportType, reportFilters)
-        const response = await fetch(`${API_URL}/api/reports/violations.xlsx${params ? `?${params}` : ''}`, { headers:{ Authorization:`Bearer ${token}` } })
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}))
-          throw new Error(data.message || 'Unable to export this report.')
-        }
-        const blob = await response.blob()
-        const disposition = response.headers.get('content-disposition') || ''
-        const filename = disposition.match(/filename="([^"]+)"/)?.[1] || `violations-report-${new Date().toISOString().slice(0,10)}.xlsx`
-        const url = window.URL.createObjectURL(blob)
-        const anchor = document.createElement('a')
-        anchor.href = url
-        anchor.download = filename
-        anchor.click()
-        window.URL.revokeObjectURL(url)
-      } catch (error) { setReportError(error.message) }
-      return
-    }
-
-    const csvContent = createDepartmentReportCsv(presentedReportRows(reportData))
-
-    const blob =
-      new Blob(
-        [csvContent],
-        {
-          type: 'text/csv'
-        }
-      )
-
-    const url =
-      window.URL.createObjectURL(
-        blob
-      )
-
-    const a =
-      document.createElement('a')
-
-    a.href = url
-
-    a.download =
-      `${reportType}-report-${new Date().toISOString().slice(0, 10)}.csv`
-
-    a.click()
-
-    window.URL.revokeObjectURL(
-      url
-    )
-  }
-
-  /*
-   * ============================================================
-   * RENDER CONTENT
-   * ============================================================
-   */
-
   const renderContent = () => {
     /*
      * ==========================================================
@@ -2710,257 +2551,7 @@ function App() {
     if (
       activeView === 'Reports'
     ) {
-      return (
-        <div className="reports-workspace">
-          <header className="management-page-header portal-page-header">
-            <div><span className="page-breadcrumb">Home / Reports</span><h2>Reports</h2><p>Generate operational reports using current records and supported filters.</p></div>
-          </header>
-          <section className="table-card report-filter-card">
-            <div className="table-header management-table-header"><div><h3>Filters</h3><p>Choose a report type, scope, date range, and sort order.</p></div><span>{reportData.length ? `${reportData.length} current results` : 'Ready to generate'}</span></div>
-
-            {reportError && <p className="error-message" role="alert">{reportError}</p>}
-
-            <div
-              className="student-form-grid"
-              style={{
-                marginBottom: '16px'
-              }}
-            >
-              <label>
-                Search
-
-                <input type="search" name="report-search-filter" autoComplete="off" value={reportFilters.search} onChange={handleReportFilterChange} placeholder="Student or violation" disabled={reportType !== 'violations'} />
-              </label>
-
-              <label>
-                Report Type
-
-                <select
-                  value={reportType}
-                  onChange={(event) => {
-                    setReportType(
-                      event.target.value
-                    )
-
-                    setReportData([])
-                    setReportFilters((current) => ({ ...current, status: '', from_date: '', to_date: '', sort_by: defaultReportSort(event.target.value) }))
-                  }}
-                >
-                  <option value="violations">
-                    Violations Report
-                  </option>
-
-                  <option value="community-service">
-                    Community Service Report
-                  </option>
-
-                  <option value="dtr">
-                    DTR / Attendance Report
-                  </option>
-
-                  <option value="non-compliance">
-                    Non-Compliance Report
-                  </option>
-                  <option value="parent-contacts">Guardian Contact Report</option>
-                  <option value="clearance">Clearance Report</option>
-                  <option value="good-standing">Good-Standing Report</option>
-                </select>
-              </label>
-
-              <label>
-                Status Filter
-
-                <select
-                  name="status"
-                  value={
-                    reportFilters.status
-                  }
-                  onChange={
-                    handleReportFilterChange
-                  }
-                >
-                  <option value="">
-                    All
-                  </option>
-
-                  <option value="OPEN">
-                    OPEN
-                  </option>
-
-                  <option value="IN_PROGRESS">
-                    IN PROGRESS
-                  </option>
-
-                  <option value="COMPLETED">
-                    COMPLETED
-                  </option>
-
-                  <option value="CLEARED">
-                    CLEARED
-                  </option>
-                </select>
-              </label>
-
-              <label>
-                Student ID
-
-                <input
-                  type="number"
-                  name="student_id"
-                  value={
-                    reportFilters.student_id
-                  }
-                  onChange={
-                    handleReportFilterChange
-                  }
-                  placeholder="Optional"
-                />
-              </label>
-
-              <label>
-                Sort By
-
-                <select
-                  name="sort_by"
-                  value={
-                    reportFilters.sort_by
-                  }
-                  onChange={
-                    handleReportFilterChange
-                  }
-                >
-                  {reportSortOptions(reportType).map((sort)=><option value={sort} key={sort}>{formatDisplayLabel(sort)}</option>)}
-                </select>
-              </label>
-
-              <label>
-                From Date
-
-                <input
-                  type="date"
-                  name="from_date"
-                  value={
-                    reportFilters.from_date
-                  }
-                  onChange={
-                    handleReportFilterChange
-                  }
-                />
-              </label>
-
-              <label>
-                To Date
-
-                <input
-                  type="date"
-                  name="to_date"
-                  value={
-                    reportFilters.to_date
-                  }
-                  onChange={
-                    handleReportFilterChange
-                  }
-                />
-              </label>
-            </div>
-
-            <div className="report-filter-actions">
-              <button
-                className="secondary-button"
-                onClick={
-                  fetchReport
-                }
-                disabled={
-                  reportLoading
-                }
-              >
-                {reportLoading
-                  ? 'Loading...'
-                  : 'Generate Report'}
-              </button>
-
-              <button
-                className="submit-btn"
-                onClick={
-                  exportReport
-                }
-                disabled={
-                  reportLoading || (reportType !== 'violations' && reportData.length === 0)
-                }
-              >
-                {reportType === 'violations' ? 'Export Excel' : 'Export CSV'}
-              </button>
-            </div>
-          </section>
-
-          <section className="table-card report-results-card">
-            <div className="table-header management-table-header">
-              <div><h3>Generated Report</h3><p>Results use the live data available to your role.</p></div>
-
-              <span>
-                {reportData.length}{' '}
-                records
-              </span>
-            </div>
-
-            {reportLoading ? <p className="empty-state" role="status">Generating your report…</p> : reportData.length === 0 ? (
-              <p className="empty-state">
-                {reportError ? 'The report could not be generated. Review the message above and try again.' : reportGenerated ? 'No records match these filters. Try a wider date range or another status.' : 'Choose filters and generate a report to see results.'}
-              </p>
-            ) : (
-              <div className="table-wrap">
-                <table className="responsive-record-table report-record-table">
-                  <thead>
-                    <tr>
-                      {Object.keys(
-                        reportData[0] || {}
-                      ).map(
-                        (key) => (
-                          <th key={key}>
-                            {reportColumnLabel(key)}
-                          </th>
-                        )
-                      )}
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {reportData
-                      .slice((reportPage - 1) * 50, reportPage * 50)
-                      .map(
-                        (row, idx) => (
-                          <tr
-                            key={idx}
-                          >
-                            {Object.values(
-                              row
-                            ).map(
-                              (
-                                value,
-                                cellIdx
-                              ) => (
-                                <td
-                                  data-label={reportColumnLabel(Object.keys(row)[cellIdx])}
-                                  key={
-                                    cellIdx
-                                  }
-                                >
-                                  {reportCell(Object.keys(row)[cellIdx], value, row)}
-                                </td>
-                              )
-                            )}
-                          </tr>
-                        )
-                      )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-            {reportType === 'dtr' && reportGenerated && <ServiceHourCorrections corrections={reportHourCorrections}/>}
-            {reportData.length > 50 && <nav className="report-pagination" aria-label="Report result pages"><button type="button" className="secondary-button" disabled={reportPage === 1} onClick={() => setReportPage((page) => page - 1)}>Previous</button><span role="status">Page {reportPage} of {Math.ceil(reportData.length / 50)} · {reportData.length} records</span><button type="button" className="secondary-button" disabled={reportPage >= Math.ceil(reportData.length / 50)} onClick={() => setReportPage((page) => page + 1)}>Next</button></nav>}
-          </section>
-        </div>
-      )
+      return <AdminReports token={token} students={students}/>
     }
 
   }

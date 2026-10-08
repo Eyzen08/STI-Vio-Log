@@ -14,10 +14,11 @@ test('department attendance retains every column label in mobile records', async
 })
 
 test('dynamic report cells derive mobile labels from the same keys as their headings', async () => {
-  const app = await source('App.jsx')
+  const reports = await source('components/AdminReports.jsx')
   const department = await source('components/DepartmentReports.jsx')
-  assert.match(app, /<table className="responsive-record-table report-record-table">/)
-  assert.match(app, /data-label=\{reportColumnLabel\(Object.keys\(row\)\[cellIdx\]\)\}/)
+  assert.match(reports, /responsive-record-table report-record-table/)
+  assert.match(reports, /<th scope="col" key=\{key\}>\{label\}<\/th>/)
+  assert.match(reports, /data-label=\{label\}/)
   assert.match(department, /<table className="responsive-record-table report-record-table">/)
   assert.match(department, /data-label=\{formatDisplayLabel\(header\)\}/)
 })

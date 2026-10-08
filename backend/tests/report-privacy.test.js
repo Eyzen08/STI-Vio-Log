@@ -22,7 +22,7 @@ test('report failures do not return raw database error messages', () => {
 });
 
 test('good-standing history excludes invalid or cancelled violations', () => {
-  assert.match(read('../src/controllers/extendedReportController.js'), /FILTER \(WHERE v\.status <> 'INVALID_CANCELLED'\)/);
+  assert.match(read('../src/controllers/extendedReportController.js'), /FILTER \(WHERE v\.status <> 'INVALID_CANCEL'\)/);
 });
 
 test('community-service report totals PostgreSQL numeric values numerically', async () => {

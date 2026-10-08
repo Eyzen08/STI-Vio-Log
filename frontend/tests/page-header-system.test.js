@@ -7,7 +7,7 @@ const portal = read('../src/styles/portal-system.css')
 
 test('authenticated route headers use the shared page-header class', () => {
   const sources = [
-    '../src/App.jsx',
+    '../src/components/AdminReports.jsx',
     '../src/components/AccountSecuritySettings.jsx',
     '../src/components/AdminAccountSettings.jsx',
     '../src/components/AdminActiveAttendance.jsx',

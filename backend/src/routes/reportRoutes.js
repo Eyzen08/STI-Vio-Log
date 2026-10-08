@@ -12,6 +12,7 @@ const {
 } = require('../controllers/reportController');
 const { getDTRReport } = require('../controllers/communityServiceSessionReportController');
 const { getParentContactReport, getClearanceReport, getGoodStandingReport } = require('../controllers/extendedReportController');
+const { exportReport } = require('../controllers/reportExportController');
 
 const router = express.Router();
 
@@ -21,6 +22,11 @@ router.post('/analytics.xlsx', authenticateToken, auditAdministrativeRequest, au
 router.post('/analytics.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportAnalytics);
 router.get('/violations.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportCsv);
 router.get('/violations.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportXlsx);
+for (const type of ['community-service','dtr','non-compliance','parent-contacts','clearance','good-standing']) {
+  const view = ['dtr','non-compliance'].includes(type) ? canViewDepartmentReport : canViewReport;
+  const exportPermissions = type==='parent-contacts' ? authorizePermissions(PERMISSIONS.DATA_EXPORT,PERMISSIONS.GUARDIAN_CONTACT_VIEW) : authorizePermissions(PERMISSIONS.DATA_EXPORT);
+  router.get(`/${type}.xlsx`,authenticateToken,auditAdministrativeRequest,view,exportPermissions,exportReport(type));
+}
 router.get('/violations', authenticateToken, canViewReport, getViolationReport);
 router.get('/community-service', authenticateToken, canViewReport, getCommunityServiceReport);
 router.get('/dtr', authenticateToken, canViewDepartmentReport, getDTRReport);

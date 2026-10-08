@@ -5276,6 +5276,44 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .audit-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
 .audit-export-note:empty { padding: 0; }
 .audit-results-card > .error-message { padding: 0 20px 12px; }
+.reports-workspace .report-filter-card .student-form { padding: 16px 20px; gap: 0; }
+.reports-workspace .reports-filter-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding: 0; }
+.reports-workspace .report-pagination { position: static; }
+.reports-workspace .report-filter-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 0; }
+.report-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
+.report-results-card .table-header > button { flex-shrink: 0; }
+.reports-workspace button span { color: inherit !important; }
+.report-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
+.report-export-note:empty { padding: 0; }
+.report-results-card > .error-message { padding: 0 20px 12px; }
+.report-change-note { color: var(--text-secondary); font-size: 13px; }
+.report-applied-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 12px; }
+.report-applied-filters span { padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12px; color: var(--text-secondary); }
+.reports-workspace .report-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
+.reports-workspace .report-record-table { width: 100%; min-width: 1050px; }
+.reports-workspace .report-table-violations { table-layout: fixed; }
+.reports-workspace .report-table-violations th:nth-child(1) { width: 18%; }
+.reports-workspace .report-table-violations th:nth-child(2) { width: 30%; }
+.reports-workspace .report-table-violations th:nth-child(3) { width: 135px; }
+.reports-workspace .report-table-violations th:nth-child(4) { width: 135px; }
+.reports-workspace .report-record-table :is(th,td) { padding: 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.report-record-table strong { display: block; font-weight: 600; }
+.report-student-number { display: block; margin-top: 4px; font-size: 12px; white-space: nowrap; color: var(--text-secondary); }
+.report-cell-incident_date { white-space: nowrap; }
+.report-text, .report-text-preview { margin: 0; white-space: pre-wrap; line-height: 1.6; }
+.report-text-details { margin-top: 10px; }
+.report-text-details summary { width: fit-content; cursor: pointer; color: var(--color-primary); font-size: 12px; font-weight: 600; }
+.report-text-details summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.report-text-details .report-text { margin-top: 10px; }
+.report-cell-violation_name > .report-text { display: block; margin-top: 5px; }
+@media (max-width: 1100px) { .reports-workspace .reports-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767px) {
+  .app-shell .reports-workspace .report-record-table { min-width: 0; table-layout: auto; }
+  .app-shell .reports-workspace .report-results-card .table-wrap { overflow: visible; }
+  .app-shell .reports-workspace .report-record-table :is(.report-cell-violation_name,.report-cell-incident_details,.report-cell-notes,.report-cell-remarks,.report-cell-reason) { grid-column: 1 / -1; }
+  .report-date-note { width: 100%; }
+}
+@media (max-width: 450px) { .reports-workspace .reports-filter-grid { grid-template-columns: minmax(0,1fr); } }
 .audit-workspace .audit-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
 .audit-workspace .audit-record-table { width: 100%; min-width: 1080px; table-layout: fixed; }
 .audit-date-col { width: 130px; }

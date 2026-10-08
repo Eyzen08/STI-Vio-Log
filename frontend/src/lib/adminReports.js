@@ -1,26 +1,20 @@
-const SORTS = {
-  violations: ['date_desc','date_asc','status'],
-  'community-service': ['hours_desc','hours_asc','status'],
-  dtr: [],
-  'non-compliance': ['date','hours','violations'],
-  'parent-contacts': ['date_desc','date_asc'],
-  clearance: ['date_desc','date_asc','status'],
-  'good-standing': ['student_number','name']
+export * from '../../../shared/adminReports.mjs'
+import { buildAdminReportQuery } from '../../../shared/adminReports.mjs'
+import { API_URL } from './api.js'
+import { reportFilename } from '../../../shared/reportPresentation.mjs'
+
+export async function downloadReportExcel(type, filters, token) {
+  const query = buildAdminReportQuery(type, filters)
+  const response = await fetch(`${API_URL}/api/reports/${type}.xlsx${query ? `?${query}` : ''}`, { headers: { Authorization: `Bearer ${token}` } })
+  if (!response.ok) {
+    const data = await response.json().catch(() => null)
+    throw new Error(data?.error?.message || data?.message || 'Unable to export this report. Please try again.')
+  }
+  const url = URL.createObjectURL(await response.blob())
+  try {
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = response.headers.get('Content-Disposition')?.match(/filename="([^"]+\.xlsx)"/)?.[1] || reportFilename(type)
+    anchor.click()
+  } finally { URL.revokeObjectURL(url) }
 }
-
-export const reportSortOptions = (type) => SORTS[type] || []
-
-export const buildAdminReportQuery = (type, filters = {}) => {
-  const params = new URLSearchParams()
-  const add = (key,value) => { if (String(value ?? '').trim()) params.set(key,String(value).trim()) }
-  if (['violations','community-service','clearance'].includes(type)) add('status',filters.status)
-  if (type === 'violations') add('search', filters.search)
-  if (type !== 'non-compliance') add('student_id',filters.student_id)
-  if (['violations','parent-contacts'].includes(type)) { add('from_date',filters.from_date);add('to_date',filters.to_date) }
-  if (type === 'dtr') { add('from',filters.from_date);add('to',filters.to_date) }
-  const validSorts=reportSortOptions(type)
-  if(validSorts.includes(filters.sort_by))add('sort_by',filters.sort_by)
-  return params.toString()
-}
-
-export const defaultReportSort = (type) => reportSortOptions(type)[0] || ''
