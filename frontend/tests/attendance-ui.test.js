@@ -311,12 +311,13 @@ test('student directory keeps five compact rows, real counts, and only relevant 
   assert.doesNotMatch(html, /TIME OUT|Offense indicator legend|Show Service Time|Guardian Contact/)
 })
 
-test('administrative dashboards keep four quick actions and compact analytics access', () => {
+test('administrative dashboards split primary and secondary actions with compact analytics access', () => {
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
     const html = render('AdminDashboard', { role, onNavigate() {} })
     assert.doesNotMatch(html, />Graphs</)
     assert.equal((html.match(/<button/g) || []).length > 4, true)
-    assert.match(html, /Offense Breakdown/)
+    assert.match(html, /Offense distribution/)
+    for (const label of ['Scan QR','Issue violation','Add student','Generate report']) assert.match(html,new RegExp(label))
     assert.equal((render('DashboardQuickActions', { role, onNavigate() {} }).match(/<button/g) || []).length, 4)
     assert.doesNotMatch(html, /Analytics &amp; Trends|Recorded Violations Over Time/)
   }
@@ -422,13 +423,13 @@ test('admin attendance shows only active students and counts students rather tha
     activeSessions: [active, { ...active, id: 12, session_id: 12, assignment_id: 22, department_name: 'Clinic' }],
     role: 'DISCIPLINE_ADMIN', onNavigate() {}
   })
-  assert.match(html, /Current Attendance Status/)
-  assert.match(html, /TIMED IN/)
+  assert.match(html, /Active attendance/)
+  assert.match(html, /TIME IN/)
   assert.doesNotMatch(html, /TIME OUT|Ben Cruz|type="search"/)
   assert.match(html, /Ana Reyes/)
   assert.match(html, /Library/)
   assert.match(html, /Clinic/)
-  assert.match(html, /Students Timed In<\/span><strong>1<\/strong>/)
+  assert.match(html, /Timed-in students<\/span><strong>1<\/strong>/)
   assert.equal((html.match(/class="dashboard-active-student"/g) || []).length, 1)
 })
 
@@ -438,13 +439,13 @@ test('admin summary derives resolved cases, severity, and progress from supplied
     violations: ['OPEN', 'COMPLETE', 'CLEAR', 'CANCELLED', 'PENDING'].map((status, id) => ({ id, student_id: id, student_name: `Student ${id}`, status, severity: 'GRAVE', offense_indicator_level: 'GRAVE' })),
     assignments: [{ id: 1, student_id: 1, status: 'OPEN', required_hours: 10, remaining_hours: 4 }]
   })
-  assert.match(html, /Cases Resolved<\/span><strong>2<\/strong>/)
+  assert.match(html, /Resolved cases<\/span><strong>2<\/strong>/)
   assert.match(html, /Open Violations<\/span><strong>2<\/strong>/)
   assert.match(html, /severity-grave">Grave/)
   assert.match(html, /<progress value="60" max="100"/)
-  assert.match(html, /6 hr completed/)
-  assert.match(html, /4 hr remaining/)
-  assert.equal((html.match(/Manage violation for/g) || []).length, 4)
+  assert.match(html, /<dt>Credited<\/dt><dd>6 hr/)
+  assert.match(html, /<dt>Remaining<\/dt><dd>4 hr/)
+  assert.equal((html.match(/aria-label="View violation /g) || []).length, 4)
   assert.match(render('AdminDashboard', { role: 'DISCIPLINE_ADMIN', onNavigate() {}, attendanceReady: false }), /Attendance unavailable/)
   assert.match(render('AdminDashboard', { role: 'DISCIPLINE_ADMIN', onNavigate() {}, error: 'Unable to load administration data' }), /role="alert"/)
 })
@@ -456,4 +457,35 @@ test('admin attendance caps preview at three students and excludes ended session
   })
   assert.equal((html.match(/class="dashboard-active-student"/g) || []).length, 3)
   assert.match(html, /View all 4 timed-in students/)
+})
+
+test('admin dashboard prioritizes work and shows each recent case once for both office roles', () => {
+  for (const role of ['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE']) {
+    const html = render('AdminDashboard', { role, onNavigate() {}, onViewViolation() {},
+      violations: Array.from({length:5},(_,id)=>({id,student_name:`Case student ${id}`,exact_offense:`Unique incident ${id}`,status:'OPEN',severity:'GRAVE',offense_indicator_level:'GRAVE'})) })
+    assert.match(html, /Scan QR/)
+    assert.match(html, /Issue violation/)
+    assert.ok(html.indexOf('Active attendance') < html.indexOf('Community service'))
+    assert.ok(html.indexOf('Community service') < html.indexOf('Recent violations'))
+    assert.ok(html.indexOf('Recent violations') < html.indexOf('Offense distribution'))
+    assert.doesNotMatch(html, /Recent case summary|offense-donut|dashboard-attendance-totals/)
+    assert.equal((html.match(/Unique incident 0/g)||[]).length,1)
+    assert.equal((html.match(/aria-label="View violation /g)||[]).length,4)
+    assert.doesNotMatch(html, /Unique incident 4/)
+    assert.match(html, /Awaiting clearance/)
+    assert.match(html, /<progress[^>]*aria-label="Grave: 5 of 5 classified cases"[^>]*value="5"[^>]*max="5"/)
+  }
+})
+
+test('admin dashboard labels each session mode and keeps capped timers and active status once', () => {
+  const session = {...active,session_type:'OPEN_TIME',credit_cutoff_at:'2026-10-05T07:00:00Z',cutoff_reason:'DAILY_LIMIT',server_time:'2026-10-05T08:00:00Z',completed_today_minutes:120,remaining_hours:12}
+  const html=render('AdminDashboard',{role:'DISCIPLINE_ADMIN',onNavigate() {}, activeSessions:[session,{...session,id:12,session_id:12,assignment_id:22,session_type:'FIXED',selected_duration_minutes:120,expected_completion_at:'2026-10-05T03:00:00Z',department_name:'Clinic'}]})
+  assert.equal((html.match(/class="dashboard-session-label">Time elapsed/g)||[]).length,1)
+  assert.equal((html.match(/class="dashboard-session-label">Remaining session time/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Time elapsed"/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.match(html,/06:00:00/)
+  assert.match(html,/Daily Community Service Limit Reached — Time Out required/)
+  assert.equal((html.match(/class="dashboard-active-student"/g)||[]).length,1)
+  assert.match(html,/TIME IN/)
 })

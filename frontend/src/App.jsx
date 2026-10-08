@@ -2074,7 +2074,7 @@ function App() {
     }
 
     if (activeView === 'Dashboard') {
-      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} loading={dashboardLoading} error={dashboardError} role={userRole} onNavigate={navigateTo} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
+      return <AdminDashboard students={students} violations={violations} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} loading={dashboardLoading} error={dashboardError} role={userRole} onNavigate={navigateTo} onViewViolation={(violation) => { navigateTo('/admin/violations'); setViewingViolation(violation) }} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} />
     }
 
     if (isAdmin && activeView === 'Active Attendance') {

@@ -53,7 +53,7 @@ test('quick actions are role scoped and navigate only within the role portal', (
 test('admin reference uses four summaries and an active-only compact attendance card', () => {
   const source = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
   const css = fs.readFileSync(new URL('../src/styles/admin-dashboard.css', import.meta.url), 'utf8')
-  assert.match(source, /Cases Resolved/)
+  assert.match(source, /Resolved cases/)
   assert.doesNotMatch(source, /pendingRegistrations|Pending reviews|Student registrations|attendanceQuery/)
   assert.match(source, /roster\.slice\(0, 3\)\.map/)
   assert.match(source, /filter\(\(student\) => student\.sessions\.length\)/)
@@ -61,14 +61,18 @@ test('admin reference uses four summaries and an active-only compact attendance 
   assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
   assert.match(source, /activeSessions\.filter\(isActiveServiceSession\)/)
   assert.match(source, /<ServiceCountdown session=\{session\} now=\{now\}/)
-  assert.match(css, /grid-template-areas:'violations offense' 'violations service' 'attendance activity'/)
+  assert.match(css, /grid-template-areas:'attendance service' 'violations offense' 'violations actions'/)
+  assert.match(css, /grid-template-areas:'attendance' 'service' 'violations' 'offense' 'actions'/)
+  assert.match(css, /sti-global-city-building-night\.jpg/)
   assert.match(css, /@media \(max-width:767px\)/)
+  assert.match(css, /\.dashboard-violations-table thead \{[^}]*clip-path:inset\(50%\)/)
+  assert.doesNotMatch(css, /\.dashboard-violations-table :is\(colgroup,thead\) \{ display:none/)
 })
 
 test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {
   for (const component of ['AdminDashboard.jsx']) {
     const source = fs.readFileSync(new URL(`../src/components/${component}`, import.meta.url), 'utf8')
-    assert.ok(source.indexOf('className="stats-grid') < source.indexOf('<DashboardQuickActions'))
+    assert.ok(source.indexOf('className="stats-grid') < source.indexOf('className="admin-dashboard-grid'))
   }
   const department = fs.readFileSync(new URL('../src/components/DepartmentDashboard.jsx', import.meta.url), 'utf8')
   assert.ok(department.indexOf('className="department-metrics"') < department.indexOf('Recent attendance'))
@@ -77,7 +81,9 @@ test('dashboard hierarchy leads with live metrics and derives the offense chart 
   assert.ok(student.indexOf('className="student-dashboard-summary"') < student.indexOf('Recent violations'))
   const admin = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
   assert.match(admin, /violations\.filter\(\(violation\) => violation\.offense_indicator_level === item\.level\)/)
-  assert.match(admin, /aria-label=\{`\$\{classifiedTotal\} classified violation records`\}/)
+  assert.match(admin, /aria-label=\{`\$\{item.label\}: \$\{item.count\} of \$\{classifiedTotal\} classified cases`\}/)
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  assert.match(app, /onViewViolation=\{\(violation\) => \{ navigateTo\('\/admin\/violations'\); setViewingViolation\(violation\) \}\}/)
   assert.doesNotMatch(admin, /124|Juan Dela Cruz|Maria Lopez/)
 })
 
