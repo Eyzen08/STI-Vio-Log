@@ -196,6 +196,7 @@ test('dark student profile themes its hero, fields, dividers, and help footer', 
   assert.match(studentCss, /\.profile-value-missing[^}]*color:var\(--text-muted\)/s)
   assert.match(studentCss, /\.profile-help\s*\{[^}]*background:transparent[^}]*color:var\(--text-secondary\)/s)
   assert.match(studentCss, /\.student-clearance-status\s*\{[^}]*background:transparent; border:0;/s)
+  assert.match(studentCss, /:root \.app-shell \.student-page \.qr-download-button\s*\{[^}]*color:var\(--text-on-accent\) !important;/s)
 })
 
 test('dark dashboard clearance status uses semantic pending and ready states', () => {
