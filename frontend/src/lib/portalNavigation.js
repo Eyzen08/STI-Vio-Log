@@ -18,7 +18,7 @@ export const sidebarNavigationFor = (role = '') => {
   }
   const groups = SIDEBAR_GROUPS.map((group) => {
     const views = group.id !== 'discipline' ? group.views
-      : role === 'DEPARTMENT_HEAD' ? ['DTR', 'Community Service', 'QR Scan', 'Non-Compliance']
+      : role === 'DEPARTMENT_HEAD' ? ['DTR', 'Community Service', 'QR Scan']
       : role === 'STUDENT' ? ['My Violations', 'My Service', 'My QR', 'My Clearance']
       : group.views
     return { id: group.id, label: group.label, icon: group.icon, type: 'group', items: views.map(page).filter(Boolean) }
@@ -53,7 +53,6 @@ const SIDEBAR_TOOLTIPS = {
   'Assigned Students': 'View assigned student records',
   Attendance: 'Review attendance records',
   'Service Results': 'Review service results',
-  'Follow-up': 'Review non-compliance follow-ups',
   'My Profile': 'View your profile',
   'My Violations': 'View your violations',
   'My Service': 'View your service progress',
@@ -71,14 +70,18 @@ export const iconNameForView = (view = '') => ({
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',
   'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'Awaiting Clearance': 'check', 'My Clearance': 'clearance', Reports: 'reports', 'Analytics & Trends': 'reports',
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings',
-  'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations'
+  'Departments & Officer Accounts': 'service'
 }[view] || 'dashboard')
 
-export const mobileNavItemsFor = (navItems = [], role = '') => [
+export const mobileNavItemsFor = (navItems = [], role = '') => role === 'DEPARTMENT_HEAD'
+  ? ['Dashboard', 'QR Scan', 'Community Service', 'DTR'].map(view => navItems.find(item => item.view === view)).filter(Boolean)
+  : [
   navItems.find(({ view }) => ['Dashboard', 'System Dashboard'].includes(view)),
   navItems.find(({ view }) => role === 'STUDENT' ? view === 'My Service' : ['Students', 'Assigned Students'].includes(view)),
   navItems.find(({ view }) => role === 'STUDENT' ? view === 'My QR' : ['Violations', 'QR Scan'].includes(view)),
   navItems.find(({ view }) => role === 'DEPARTMENT_HEAD' ? view === 'Community Service' : view === 'Messages')
 ].filter(Boolean)
 
-export const mobileNavLabel = (item = {}) => item.view === 'Dashboard' && item.path?.startsWith('/student/') ? 'Home' : item.label === 'Service Results' ? 'Service' : String(item.label || '').replace('My ', '')
+export const mobileNavLabel = (item = {}) => item.path?.startsWith('/department/')
+  ? ({ Dashboard:'Home', 'QR Scan':'Scan', 'Community Service':'Service', DTR:'Attendance' }[item.view] || item.label)
+  : item.view === 'Dashboard' && item.path?.startsWith('/student/') ? 'Home' : String(item.label || '').replace('My ', '')

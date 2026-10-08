@@ -13,7 +13,7 @@ test('each supported role receives its own dashboard and navigation', () => {
   assert.deepEqual(getNavItems('STUDENT').map(({ label }) => label), [
     'Dashboard', 'My Profile', 'My QR', 'My Violations', 'My Service', 'Notifications', 'Messages', 'My Clearance'
   ])
-  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Follow-up', 'Reports', 'Notifications'])
+  assert.deepEqual(getNavItems('DEPARTMENT_HEAD').map(({ label }) => label), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service Results', 'Attendance', 'Notifications'])
   const adminReviewItems = getNavItems('DISCIPLINE_ADMIN').filter(({ view }) => view === 'Duplicate Review')
   assert.deepEqual(adminReviewItems.map(({ label }) => label), ['Duplicate Review'])
   assert.equal(getNavItems('DISCIPLINE_OFFICE').some(({ view }) => view === 'Duplicate Review'), false)

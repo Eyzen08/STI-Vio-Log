@@ -30,7 +30,7 @@ test('sidebar tooltips describe every permitted item with the approved copy', ()
     'Departments & Officer Accounts': 'Manage departments and officers', 'Duplicate Review': 'Review duplicate records',
     'System Monitoring': 'Monitor system activity', Settings: 'Configure system settings',
     'Assigned Students': 'View assigned student records', Attendance: 'Review attendance records',
-    'Service Results': 'Review service results', 'Follow-up': 'Review non-compliance follow-ups',
+    'Service Results': 'Review service results',
     'My Profile': 'View your profile', 'My Violations': 'View your violations', 'My Service': 'View your service progress',
     'My QR': 'View your QR code', 'My Clearance': 'View your clearance', 'Audit Log': 'Review discipline audit log',
     'Analytics & Trends': 'Explore discipline trends'
@@ -60,8 +60,8 @@ test('administrator sidebar follows the requested hierarchy and child order', ()
 
 test('department and student sidebars retain their role-specific pages and labels', () => {
   assert.deepEqual(sidebarLabels('DEPARTMENT_HEAD'), [
-    'Dashboard', 'Assigned Students', ['Discipline', ['Attendance', 'Service Results', 'QR Scan', 'Follow-up']],
-    'Notifications', ['Reports', ['Reports']], ['System & Management', ['Settings']]
+    'Dashboard', 'Assigned Students', ['Discipline', ['Attendance', 'Service Results', 'QR Scan']],
+    'Notifications', ['System & Management', ['Settings']]
   ])
   assert.deepEqual(sidebarLabels('STUDENT'), [
     'Dashboard', 'My Profile', ['Discipline', ['My Violations', 'My Service', 'My QR', 'My Clearance']],
@@ -135,11 +135,11 @@ test('department mobile navigation places Service after QR Scan', () => {
   const items = mobileNavItemsFor(getNavItems('DEPARTMENT_HEAD'), 'DEPARTMENT_HEAD')
   assert.deepEqual(items.map(({ path }) => path), [
     '/department/dashboard',
-    '/department/students',
     '/department/qr-scan',
-    '/department/community-service'
+    '/department/community-service',
+    '/department/dtr'
   ])
-  assert.deepEqual(items.map(mobileNavLabel), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service'])
+  assert.deepEqual(items.map(mobileNavLabel), ['Home', 'Scan', 'Service', 'Attendance'])
 })
 
 test('student mobile shortcuts prioritize service and QR without changing other roles', () => {

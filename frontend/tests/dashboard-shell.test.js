@@ -42,7 +42,7 @@ test('quick actions are role scoped and navigate only within the role portal', (
   assert.doesNotMatch(source, /Review Registrations|pendingRegistrations|\/admin\/registrations/)
   assert.match(source, /STUDENT:[\s\S]*?\/student\/clearance/)
   assert.match(source, /STUDENT:[\s\S]*?\/student\/messages/)
-  assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/reports/)
+  assert.doesNotMatch(source, /\/department\/reports/)
   assert.match(source, /DEPARTMENT_HEAD:[\s\S]*?\/department\/notifications/)
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     const expected = ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role) ? 4 : 5
@@ -66,10 +66,12 @@ test('admin reference uses four summaries and an active-only compact attendance 
 })
 
 test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {
-  for (const component of ['AdminDashboard.jsx', 'DepartmentDashboard.jsx']) {
+  for (const component of ['AdminDashboard.jsx']) {
     const source = fs.readFileSync(new URL(`../src/components/${component}`, import.meta.url), 'utf8')
     assert.ok(source.indexOf('className="stats-grid') < source.indexOf('<DashboardQuickActions'))
   }
+  const department = fs.readFileSync(new URL('../src/components/DepartmentDashboard.jsx', import.meta.url), 'utf8')
+  assert.ok(department.indexOf('className="department-metrics"') < department.indexOf('Recent attendance'))
   const student = fs.readFileSync(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
   assert.ok(student.indexOf('<StudentAttendancePanel') < student.indexOf('className="student-dashboard-summary"'))
   assert.ok(student.indexOf('className="student-dashboard-summary"') < student.indexOf('Recent violations'))

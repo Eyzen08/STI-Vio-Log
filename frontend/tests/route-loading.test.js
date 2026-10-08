@@ -14,12 +14,10 @@ test('portal base and overrides load in cascade order before rendering', () => {
   assert.ok(base >= 0 && base < overrides && overrides < dashboard && dashboard < render)
 })
 
-test('department student, follow-up, and attendance screens remain in the stable entry bundle', () => {
+test('department student and attendance screens remain in the stable entry bundle', () => {
   assert.match(app, /import DepartmentStudents from '\.\/components\/DepartmentStudents\.jsx'/)
-  assert.match(app, /import DepartmentNonCompliance from '\.\/components\/DepartmentNonCompliance\.jsx'/)
   assert.match(app, /import DepartmentDtr from '\.\/components\/DepartmentDtr\.jsx'/)
   assert.doesNotMatch(app, /lazy\(\(\) => import\('\.\/components\/DepartmentStudents\.jsx'\)\)/)
-  assert.doesNotMatch(app, /lazy\(\(\) => import\('\.\/components\/DepartmentNonCompliance\.jsx'\)\)/)
   assert.doesNotMatch(app, /lazy\(\(\) => import\('\.\/components\/DepartmentDtr\.jsx'\)\)/)
 })
 

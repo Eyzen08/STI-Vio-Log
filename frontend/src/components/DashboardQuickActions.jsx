@@ -13,7 +13,7 @@ const ACTIONS = {
   ],
   DEPARTMENT_HEAD: [
     ['qr', 'Scan QR Code', '/department/qr-scan'], ['students', 'Assigned Students', '/department/students'],
-    ['clock', 'Service Monitoring', '/department/community-service'], ['reports', 'Generate Report', '/department/reports'],
+    ['service', 'Service Results', '/department/community-service'], ['clock', 'Attendance', '/department/dtr'],
     ['notifications', 'Notifications', '/department/notifications']
   ],
   STUDENT: [

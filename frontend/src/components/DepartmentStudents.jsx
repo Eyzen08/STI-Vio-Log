@@ -12,7 +12,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
   const visibleStudents = useMemo(() => filterDepartmentStudents(roster, query, status), [roster, query, status])
 
   return (
-    <div className="department-students-page">
+    <div className="department-students-page department-page">
       <section className="department-welcome portal-page-header">
         <div><p className="eyebrow">Department Roster</p><h2>Students Served</h2><p>Students with community-service attendance recorded by your department.</p></div>
         <button type="button" onClick={onOpenDtr}>View full DTR</button>
@@ -30,7 +30,7 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
         {loading ? (
           <div className="department-empty" aria-live="polite"><p>Loading department students…</p></div>
         ) : visibleStudents.length === 0 ? (
-          <div className="department-empty"><h4>{roster.length ? 'No students match these filters' : 'No students served yet'}</h4><p>{roster.length ? 'Try another name or service standing.' : 'Students appear after attendance is recorded in your department.'}</p></div>
+          <div className="department-empty"><h4>{error ? 'Student records unavailable' : roster.length ? 'No students match these filters' : 'No students served yet'}</h4><p>{roster.length ? 'Try another name or service standing.' : 'Students appear after attendance is recorded in your department.'}</p></div>
         ) : (
           <div className="department-student-grid">
             {visibleStudents.map((student) => (

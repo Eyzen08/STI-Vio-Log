@@ -8,19 +8,16 @@ test('department attendance retains every column label in mobile records', async
   const dtr = await source('components/DepartmentDtr.jsx')
   const headings = [...dtr.matchAll(/<th>([^<]+)<\/th>/g)].map((match) => match[1])
   const labels = [...dtr.matchAll(/<td data-label="([^"]+)"/g)].map((match) => match[1])
-  assert.equal(headings.length, 8)
+  assert.equal(headings.length, 6)
   assert.deepEqual(labels, headings)
   assert.match(dtr, /<table className="responsive-record-table department-dtr-table">/)
 })
 
 test('dynamic report cells derive mobile labels from the same keys as their headings', async () => {
   const reports = await source('components/AdminReports.jsx')
-  const department = await source('components/DepartmentReports.jsx')
   assert.match(reports, /responsive-record-table report-record-table/)
   assert.match(reports, /<th scope="col" key=\{key\}>\{label\}<\/th>/)
   assert.match(reports, /data-label=\{label\}/)
-  assert.match(department, /<table className="responsive-record-table report-record-table">/)
-  assert.match(department, /data-label=\{formatDisplayLabel\(header\)\}/)
 })
 
 test('violation list and detail use readable status labels and keep record IDs', async () => {

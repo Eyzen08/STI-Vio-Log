@@ -1,0 +1,140 @@
+.department-portal .page-content { padding-bottom:28px; }
+.department-portal :is(.department-page,.qr-attendance,.staff-profile-card,.account-settings-page,.student-notifications-page) { width:100%; max-width:1120px; margin:0 auto; min-width:0; color:var(--text-primary); }
+.department-portal :is(.department-page,.account-settings-page,.student-notifications-page) { display:grid; gap:20px; }
+.department-portal :is(h2,h3,h4,strong,dd,p,small,span) { overflow-wrap:anywhere; }
+.department-portal :is(.department-page,.qr-attendance,.staff-profile-card,.account-settings-page,.student-notifications-page) :is(button,a,summary,input,select):focus-visible { outline:2px solid var(--link-color); outline-offset:3px; }
+.department-portal :is(button,input,select,summary) { min-height:44px; }
+.department-portal :is(input,select,textarea) { font-size:16px; min-width:0; max-width:100%; }
+.department-portal :is(.table-card,.dashboard-card,.qr-stage-card) { padding:20px; border:1px solid var(--border-subtle); border-radius:12px; box-shadow:none; background:var(--surface-raised); min-width:0; }
+.department-portal .portal-page-header { padding:20px 24px; min-height:0; margin:0; gap:16px; }
+.department-portal .portal-page-header :is(p,.eyebrow) { color:var(--text-secondary); }
+.department-portal .portal-page-header h2 { font-size:var(--text-page-title); }
+.department-portal .portal-page-header > div { min-width:0; }
+.department-portal .table-header { display:flex; flex-direction:row; justify-content:space-between; text-align:left; margin:0 0 16px; padding:0; background:transparent; border:0; gap:12px; align-items:center; }
+.department-portal .table-header h3 { margin:0; font-size:var(--text-lg); color:var(--text-primary); }
+.department-portal .table-header p { margin:4px 0 0; color:var(--text-secondary); }
+.department-portal .table-header > span { font-size:var(--text-sm); color:var(--text-secondary); }
+.department-header-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.department-portal .department-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin:0; }
+.department-portal .department-metrics > article { display:flex; flex-direction:column; align-items:flex-start; gap:8px; padding:16px 20px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-raised); min-width:0; }
+.department-portal .department-metrics span { font-size:var(--text-sm); color:var(--text-secondary); }
+.department-portal .department-metrics strong { font-size:var(--text-metric); color:var(--text-primary); line-height:1.2; }
+.department-dashboard-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:20px; }
+.department-activity-list > article { display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-top:1px solid var(--border-subtle); }
+.department-activity-list > article > div { display:grid; gap:6px; min-width:0; align-content:start; }
+.department-activity-list small,.department-activity-list time,.department-caption { color:var(--text-secondary); font-size:var(--text-sm); }
+.department-portal .department-progress-summary > strong { font-size:var(--text-lg); }
+.department-portal .department-progress-summary progress { display:block; width:100%; height:10px; margin:16px 0; accent-color:var(--action-primary-surface); }
+.department-progress-summary dl { margin:0; display:grid; gap:10px; }
+.department-progress-summary dl > div { display:flex; justify-content:space-between; gap:12px; }
+.department-progress-summary dd { margin:0; font-weight:600; }
+.department-progress-summary dt { color:var(--text-secondary); }
+.department-portal :is(.student-roster-tools,.department-dtr-filters) { padding:16px 20px; margin:0; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-raised); display:grid; gap:12px; align-items:end; }
+.department-portal .student-roster-tools { grid-template-columns:minmax(0,2fr) minmax(180px,1fr); }
+.department-portal .department-dtr-filters { grid-template-columns:repeat(4,minmax(0,1fr)) auto; }
+.department-portal label { min-width:0; }
+.department-portal label > span:not(.portal-avatar):not(.avatar-choice-check) { display:block; margin-bottom:6px; }
+.department-portal :is(.department-student-grid,.service-assignment-list) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.department-portal :is(.department-student-grid,.service-assignment-list) > article { min-width:0; margin:0; padding:16px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-nested); color:var(--text-primary); }
+.department-portal :is(.department-student-grid,.service-assignment-list) > article:hover { background:var(--surface-nested) !important; }
+.department-portal :is(.student-roster-heading,.service-assignment-heading) { display:flex; flex-direction:row; flex-wrap:wrap; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.department-portal .student-roster-heading > div { flex:1; min-width:100px; }
+.department-portal :is(.student-roster-heading,.service-assignment-heading) :is(h4,strong) { color:var(--text-primary); margin:0 0 4px; font-size:var(--text-base); }
+.department-portal :is(.student-roster-heading,.service-assignment-heading) :is(span,p) { color:var(--text-secondary); font-size:var(--text-sm); }
+.department-portal .department-student-grid dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:12px 0; }
+.department-portal .department-student-grid dt { color:var(--text-secondary); font-size:var(--text-sm); }
+.department-portal .department-student-grid dd { margin:4px 0 0; font-weight:600; }
+.department-portal .department-student-grid article > p { color:var(--text-secondary); font-size:var(--text-sm); margin-bottom:0; }
+.department-portal .service-assignment-list:has(.department-service-countdown) { grid-template-columns:1fr; }
+.department-portal .service-assignment-heading > div:first-child { flex:1 1 180px; min-width:0; }
+.department-portal .department-service-countdown { display:grid; gap:8px; flex:0 1 420px; min-width:0; align-items:start; justify-items:start; text-align:left; }
+.department-portal .department-session-clock { font-size:var(--text-section-title); font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+.department-portal .service-clock-details { width:100%; display:grid; gap:6px; color:var(--text-secondary); }
+.department-portal .timer-limit-notice { display:block; width:100%; padding:10px 12px; border-radius:8px; background:var(--status-warning-surface); color:var(--status-warning-text); font-size:var(--text-sm); }
+.department-portal .service-assignment-list .time-out-button { min-width:140px; margin-top:8px; }
+.department-portal .service-progress-meta { gap:12px; flex-wrap:wrap; }
+.department-portal .table-wrap { max-width:100%; overflow:auto; }
+.department-portal table { width:100%; min-width:680px; border-collapse:collapse; table-layout:fixed; }
+.department-portal :is(th,td) { padding:12px; text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+.department-portal thead th { position:sticky; top:0; background:var(--surface-nested); z-index:1; }
+.department-portal td small { display:block; margin-top:6px; color:var(--text-secondary); }
+.department-portal .department-corrections { padding:0 20px 16px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-raised); }
+.department-portal .department-corrections > summary { padding:12px 0; font-weight:600; cursor:pointer; }
+.department-portal .department-corrections .table-card { padding:0; border:0; }
+.department-portal .scope-note { margin:0; color:var(--text-secondary); font-size:var(--text-sm); }
+.department-portal .department-empty { min-height:0; padding:20px; margin:0; color:var(--text-secondary); }
+.department-portal .qr-attendance { display:grid; gap:20px; }
+.department-portal .qr-stage-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
+.department-portal .qr-stage-card { margin:0; }
+.department-portal .qr-stage-card > h3 { margin:0 0 16px; }
+.department-portal .service-duration-grid { grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+.department-portal .service-duration-tile { padding:12px 8px; min-height:72px; }
+.department-portal .service-confirm-details { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.department-portal .service-active-clock { width:100%; }
+.department-portal .verified-student { align-items:flex-start; gap:12px; }
+.department-portal .verified-student > div { min-width:0; }
+.department-portal .staff-profile-card { border:1px solid var(--border-subtle); background:var(--surface-raised); border-radius:12px; overflow:hidden; }
+.department-portal .staff-profile-card .profile-hero { background:var(--surface-raised); border:0; border-bottom:1px solid var(--border-subtle); border-radius:0; box-shadow:none; }
+.department-portal .staff-profile-card .profile-section { display:block; padding:20px 24px; border-color:var(--border-subtle); }
+.department-portal .staff-profile-card .profile-section-heading { margin-bottom:16px; }
+.department-portal .staff-profile-card .profile-details-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px 24px; margin:0; }
+.department-portal .staff-profile-card :is(dt,.profile-value-missing,.profile-help p) { color:var(--text-secondary); }
+.department-portal .staff-profile-card dd { margin:4px 0 0; color:var(--text-primary); }
+.department-portal .staff-profile-card .profile-help { padding:16px 24px; background:transparent; border-color:var(--border-subtle); }
+.department-portal .account-settings-page { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+.department-portal .account-settings-page .account-summary-card { grid-column:1/-1; }
+.department-portal .account-settings-page :is(.avatar-settings,.form-card) { margin:0; align-self:start; }
+.department-portal .account-password-form { max-width:none; padding:0; }
+.department-portal .account-password-form .password-input-wrap { display:block; position:relative; }
+.department-portal .account-password-form .password-input-wrap input { width:100%; padding-right:48px; }
+.department-portal .account-password-form .password-visibility { position:absolute; top:0; right:0; display:grid; place-items:center; width:44px; height:44px; padding:0; margin:0; border:0; background:transparent; color:var(--text-secondary); box-shadow:none; }
+.department-portal .avatar-preset-grid { grid-template-columns:repeat(auto-fit,minmax(64px,1fr)); }
+.department-portal .notification-filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
+.department-portal .notification-list { border:0; background:transparent; }
+.department-portal .notification-list > article { padding:16px 0; border-radius:0; border-bottom:1px solid var(--border-subtle); }
+.department-portal .notification-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.department-portal .notification-heading { flex-wrap:wrap; gap:8px; }
+@media(max-width:1023px) {
+  .department-dashboard-grid { grid-template-columns:1fr; }
+  .department-portal .qr-stage-grid { grid-template-columns:1fr; }
+  .department-portal .department-dtr-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .department-portal .department-dtr-filters button { grid-column:1/-1; }
+  .department-portal .account-settings-page { grid-template-columns:1fr; }
+}
+@media(max-width:767px) {
+  .department-portal .main-panel { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+  .department-portal .page-content { padding-bottom:20px; }
+  .department-portal :is(.department-page,.qr-attendance,.account-settings-page,.student-notifications-page) { gap:16px; }
+  .department-portal :is(.table-card,.dashboard-card,.qr-stage-card,.portal-page-header,.student-roster-tools,.department-dtr-filters) { padding:16px; }
+  .department-portal .department-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .department-portal .department-metrics > article { padding:14px; }
+  .department-portal .department-metrics strong { font-size:var(--text-section-title); }
+  .department-portal :is(.qr-stage-grid,.department-student-grid,.service-assignment-list,.student-roster-tools) { grid-template-columns:1fr; }
+  .department-portal .department-service-countdown { flex-basis:100%; width:100%; }
+  .department-portal .service-assignment-list .time-out-button { width:100%; }
+  .department-portal .table-header { flex-wrap:wrap; }
+  .department-portal :is(.scanner-control-row,.service-confirm-actions,.qr-manual-field > div) { flex-wrap:wrap; gap:8px; }
+  .department-portal :is(.scanner-control-row,.service-confirm-actions) > button { flex:1; min-width:120px; }
+  .department-portal .qr-manual-input { min-width:0; width:100%; flex:1 1 100%; }
+  .department-portal .service-duration-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .department-portal :is(.record-fields,.service-confirm-details) { grid-template-columns:1fr; }
+  .department-portal .verified-student { flex-wrap:wrap; }
+  .department-portal .verified-student > div { flex:1; min-width:140px; }
+  .department-portal .service-active-heading { flex-wrap:wrap; gap:8px; }
+  .department-portal .staff-profile-card :is(.profile-section,.profile-help) { padding:16px; }
+  .department-portal .staff-profile-card .profile-details-grid { grid-template-columns:1fr; }
+  .department-portal .staff-profile-footer { flex-wrap:wrap; gap:12px; }
+  .department-portal .staff-profile-footer button { width:100%; }
+  .department-portal .notification-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+  .department-portal .notification-filters button { grid-column:1/-1; }
+  .department-portal .notification-actions > button { flex:1; }
+  .department-portal .mobile-bottom-nav span { font-size:11px; white-space:normal; }
+  .department-portal .responsive-record-table :is(table,tbody,tr,td) { min-width:0; }
+  .department-portal table.responsive-record-table { min-width:0; }
+}
+@media(max-width:389px) {
+  .department-portal :is(.department-dtr-filters,.notification-filters) { grid-template-columns:1fr; }
+  .department-header-actions { width:100%; }
+  .department-header-actions button { flex:1; }
+  .department-activity-list > article { flex-direction:column; gap:8px; }
+}

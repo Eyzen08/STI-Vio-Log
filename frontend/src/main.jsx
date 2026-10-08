@@ -11,6 +11,7 @@ import { installSearchInputGuard } from './lib/searchControls.js'
 await import('./styles/portal-system.css')
 await import('./styles/portal-overrides.css')
 await import('./styles/admin-dashboard.css')
+await import('./styles/department-portal.css')
 
 installMutationRequestGuard(window)
 installSearchInputGuard(document)

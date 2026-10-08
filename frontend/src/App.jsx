@@ -6,9 +6,7 @@ const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
 const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
-const DepartmentReports = lazy(() => import('./components/DepartmentReports.jsx'))
 import DepartmentDtr from './components/DepartmentDtr.jsx'
-import DepartmentNonCompliance from './components/DepartmentNonCompliance.jsx'
 import DepartmentStudents from './components/DepartmentStudents.jsx'
 const StudentManagement = lazy(() => import('./components/StudentManagement.jsx'))
 const StudentRecordDrawer = lazy(() => import('./components/StudentRecordDrawer.jsx'))
@@ -56,8 +54,7 @@ const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
-import { buildDepartmentDtrQuery } from './lib/departmentDtr.js'
-import { nonComplianceSortQuery } from './lib/departmentNonCompliance.js'
+import useDepartmentAttendance from './lib/useDepartmentAttendance.js'
 import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
@@ -243,13 +240,6 @@ function App() {
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
   const [clearanceCertificate, setClearanceCertificate] = useState(null)
   const [clearanceCertificateError, setClearanceCertificateError] = useState('')
-  const [departmentDtr, setDepartmentDtr] = useState(null)
-  const [departmentDtrLoading, setDepartmentDtrLoading] = useState(false)
-  const [departmentDtrError, setDepartmentDtrError] = useState('')
-  const [departmentNonCompliance, setDepartmentNonCompliance] = useState(null)
-  const [departmentNonComplianceLoading, setDepartmentNonComplianceLoading] = useState(false)
-  const [departmentNonComplianceError, setDepartmentNonComplianceError] = useState('')
-  const [departmentNonComplianceSort, setDepartmentNonComplianceSort] = useState('date')
   const [studentDtr, setStudentDtr] = useState(null)
   const [studentLiveDtr, setStudentLiveDtr] = useState(null)
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
@@ -540,6 +530,10 @@ function App() {
   const isStudent =
     userRole === 'STUDENT'
 
+  const refreshDepartment = useCallback(() => setDashboardRefreshKey(key => key + 1), [])
+  const department = useDepartmentAttendance({token, userId:user?.id, enabled:isLoggedIn && isDepartmentHead, realtimeSocket, refreshKey:dashboardRefreshKey, onChanged:refreshDepartment})
+  const departmentDashboardAccountRef = useRef(null)
+
   useEffect(() => {
     attendanceAccountRef.current = user?.id
     studentAttendanceSnapshotRef.current = null
@@ -723,6 +717,7 @@ function App() {
 
   useEffect(() => {
     if (!isLoggedIn || !token || !userRole) {
+      departmentDashboardAccountRef.current = null
       setStudents([])
       setViolations([])
       setCommunityServiceAssignments([])
@@ -732,7 +727,6 @@ function App() {
       setClearanceCertificate(null)
       setClearanceCertificateError('')
       setDashboardError('')
-      setDepartmentDtr(null)
       setStudentDtr(null)
       setStudentLiveDtr(null)
       setStudentDtrError('')
@@ -742,9 +736,16 @@ function App() {
       return
     }
 
+    let current = true
     const loadDashboardData = async () => {
       const requestedAt = Date.now()
-      setDashboardLoading(true)
+      const departmentAccount = `${user?.id}:${token}`
+      if (!isDepartmentHead || departmentDashboardAccountRef.current !== departmentAccount) setDashboardLoading(true)
+      if (isDepartmentHead && departmentDashboardAccountRef.current !== departmentAccount) {
+        setCommunityServiceAssignments([])
+        setStudentNotifications([])
+        setUnreadNotificationCount(0)
+      }
       setDashboardError('')
 
       try {
@@ -847,15 +848,15 @@ function App() {
             fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
           ])
           const notificationsData = await notificationsResponse.json().catch(() => ({}))
+          if (!current) return
 
           if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load assigned community service')
+          departmentDashboardAccountRef.current = departmentAccount
 
           setStudents([])
           setViolations([])
           setCommunityServiceAssignments(allAssignments)
           setClearanceRecords([])
-          setDepartmentDtr(null)
-          setDepartmentNonCompliance(null)
           setStudentNotifications(notificationsData.notifications || [])
           setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
 
@@ -905,6 +906,7 @@ function App() {
           return
         }
       } catch (fetchError) {
+        if (isDepartmentHead && !current) return
         console.error(
           'Dashboard data loading error:',
           fetchError
@@ -913,11 +915,12 @@ function App() {
         setDashboardError(fetchError.message || 'Unable to load dashboard data')
         if (isAdmin || isStudent) setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
       } finally {
-        setDashboardLoading(false)
+        if (!isDepartmentHead || current) setDashboardLoading(false)
       }
     }
 
     loadDashboardData()
+    return () => { current = false }
   }, [
     isLoggedIn,
     token,
@@ -1005,41 +1008,6 @@ function App() {
       realtimeSocket?.off('connect', refreshLiveAttendance)
     }
   }, [isAdmin, isStudent, token, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
-
-  const loadDepartmentDtr = async (filters = {}) => {
-    setDepartmentDtrLoading(true)
-    setDepartmentDtrError('')
-    try {
-      const query = buildDepartmentDtrQuery(filters)
-      const response = await fetch(`${API_URL}/api/reports/dtr${query ? `?${query}` : ''}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.message || 'Unable to load department DTR')
-      setDepartmentDtr(data)
-    } catch (dtrError) {
-      setDepartmentDtrError(dtrError.message || 'Unable to load department DTR')
-    } finally {
-      setDepartmentDtrLoading(false)
-    }
-  }
-
-  const loadDepartmentNonCompliance = async (sortBy) => {
-    setDepartmentNonComplianceSort(sortBy)
-    setDepartmentNonComplianceLoading(true)
-    setDepartmentNonComplianceError('')
-    try {
-      const query = nonComplianceSortQuery(sortBy)
-      const response = await fetch(`${API_URL}/api/reports/non-compliance${query ? `?${query}` : ''}`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.message || 'Unable to load non-compliance report')
-      setDepartmentNonCompliance(data)
-    } catch (reportError) {
-      setDepartmentNonComplianceError(reportError.message || 'Unable to load non-compliance report')
-    } finally {
-      setDepartmentNonComplianceLoading(false)
-    }
-  }
 
   const startViolationEdit = (violation) => setEditingViolation(violation)
   const addViolationForStudent = (student) => {
@@ -2048,9 +2016,13 @@ function App() {
     ) {
       return (
         <DepartmentDashboard
-          report={departmentDtr}
-          loading={dashboardLoading}
-          error={dashboardError}
+          report={department.overview}
+          loading={department.overviewLoading}
+          error={department.overviewError || dashboardError}
+          activeSessions={department.activeSessions}
+          attendanceReady={department.attendanceReady}
+          attendanceError={department.attendanceError}
+          departmentName={user?.department_name}
           onOpenScanner={() => navigateTo('/department/qr-scan')}
           onNavigate={navigateTo}
         />
@@ -2060,10 +2032,10 @@ function App() {
     if (isDepartmentHead && activeView === 'DTR') {
       return (
         <DepartmentDtr
-          report={departmentDtr}
-          loading={dashboardLoading || departmentDtrLoading}
-          error={departmentDtrError || dashboardError}
-          onFilter={loadDepartmentDtr}
+          report={department.report}
+          loading={department.reportLoading}
+          error={department.reportError}
+          onFilter={department.onFilter}
         />
       )
     }
@@ -2071,9 +2043,9 @@ function App() {
     if (isDepartmentHead && activeView === 'Students') {
       return (
         <DepartmentStudents
-          report={departmentDtr}
-          loading={dashboardLoading}
-          error={dashboardError}
+          report={department.overview}
+          loading={department.overviewLoading}
+          error={department.overviewError}
           onOpenDtr={() => navigateTo('/department/dtr')}
           token={token}
         />
@@ -2088,18 +2060,13 @@ function App() {
           error={dashboardError}
           onOpenScanner={() => navigateTo('/department/qr-scan')}
           token={token}
-          onAttendanceUpdated={() => setDashboardRefreshKey((current) => current + 1)}
-          realtimeSocket={realtimeSocket}
+          onAttendanceUpdated={refreshDepartment}
+          activeSessions={department.activeSessions}
+          attendanceReady={department.attendanceReady}
+          attendanceLoading={department.attendanceLoading}
+          attendanceError={department.attendanceError}
         />
       )
-    }
-
-    if (isDepartmentHead && activeView === 'Non-Compliance') {
-      return <DepartmentNonCompliance report={departmentNonCompliance} loading={dashboardLoading || departmentNonComplianceLoading} error={departmentNonComplianceError || dashboardError} sortBy={departmentNonComplianceSort} onSort={loadDepartmentNonCompliance} />
-    }
-
-    if (isDepartmentHead && activeView === 'Reports') {
-      return <DepartmentReports dtr={departmentDtr} nonCompliance={departmentNonCompliance} loading={dashboardLoading} error={dashboardError} />
     }
 
     if (activeView === 'Notifications') {
@@ -2588,7 +2555,7 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isStudent ? ' student-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isStudent ? ' student-portal' : ''}${isLoggedIn && isDepartmentHead ? ' department-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       {isLoggedIn && isMobileNavOpen && (
         <button

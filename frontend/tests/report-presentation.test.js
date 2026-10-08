@@ -1,7 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { reportCell, presentedReportRows } from '../src/lib/reportPresentation.js'
-import { createDepartmentReportCsv } from '../src/lib/departmentReports.js'
 import * as presentation from '../src/lib/reportPresentation.js'
 
 test('report presentation preserves student numbers and formats durations and states', () => {
@@ -11,10 +10,10 @@ test('report presentation preserves student numbers and formats durations and st
   assert.equal(reportCell('assignment_status', 'IN_PROGRESS'), 'In Progress')
   assert.equal(reportCell('remaining_hours', null), 'Not recorded')
 })
-test('display exports share readable cells and retain spreadsheet escaping', () => {
+test('display exports share readable duration cells', () => {
   const rows = presentedReportRows([{ student_name: '=SUM(1)', remaining_hours: 0.5 }])
   assert.equal(rows[0]['Remaining Hours'], '30 min')
-  assert.match(createDepartmentReportCsv(rows), /'=SUM\(1\)/)
+  assert.equal(rows[0]['Student Name'], '=SUM(1)')
 })
 
 test('report schemas explain all seven reports without raw identifiers or avatars', () => {
