@@ -24,7 +24,7 @@ test('sidebar tooltips describe every permitted item with the approved copy', ()
   const expected = {
     Dashboard: 'View discipline overview', Students: 'Manage student records', Discipline: 'View discipline modules',
     Violations: 'Add student violation', 'Active Attendance': 'Monitor active attendance', 'Community Service': 'Manage community service',
-    'QR Scan': 'Scan attendance QR code', Clearance: 'Manage student clearance', Messages: 'View student messages',
+    'QR Scan': 'Scan attendance QR code', Clearance: 'Manage student clearance', Messages: 'View student messages', Notifications: 'View your notifications',
     Reports: 'Generate discipline reports', 'System & Management': 'Manage system settings', Logout: 'Sign out of STI Vio-Log',
     'Departments & Officer Accounts': 'Manage departments and officers', 'Duplicate Review': 'Review duplicate records',
     'System Monitoring': 'Monitor system activity', Settings: 'Configure system settings',
@@ -47,24 +47,24 @@ test('administrator sidebar follows the requested hierarchy and child order', ()
   assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
     'Dashboard', 'Students',
     ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
-    'Messages', ['Reports', ['Reports', 'Audit Log', 'Analytics & Trends']],
+    'Messages', 'Notifications', ['Reports', ['Reports', 'Audit Log', 'Analytics & Trends']],
     ['System & Management', ['Departments & Officer Accounts', 'Duplicate Review', 'System Monitoring', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
     'Dashboard', 'Students',
     ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
-    'Messages', ['Reports', ['Reports', 'Analytics & Trends']], ['System & Management', ['Settings']]
+    'Messages', 'Notifications', ['Reports', ['Reports', 'Analytics & Trends']], ['System & Management', ['Settings']]
   ])
 })
 
 test('department and student sidebars retain their role-specific pages and labels', () => {
   assert.deepEqual(sidebarLabels('DEPARTMENT_HEAD'), [
     'Dashboard', 'Assigned Students', ['Discipline', ['Attendance', 'Service Results', 'QR Scan', 'Follow-up']],
-    ['Reports', ['Reports']], ['System & Management', ['Settings']]
+    'Notifications', ['Reports', ['Reports']], ['System & Management', ['Settings']]
   ])
   assert.deepEqual(sidebarLabels('STUDENT'), [
     'Dashboard', 'My Profile', ['Discipline', ['My Violations', 'My Service', 'My QR', 'My Clearance']],
-    'Messages', ['System & Management', ['Settings']]
+    'Messages', 'Notifications', ['System & Management', ['Settings']]
   ])
 })
 
@@ -72,7 +72,7 @@ test('sidebar keeps each permitted page once, adds only authorized Settings, and
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     const entries = sidebarNavigationFor(role)
     const pages = sidebarPages(entries)
-    const expected = [...getNavItems(role).filter((item) => item.view !== 'Notifications'),
+    const expected = [...getNavItems(role),
       APP_ROUTES.find((route) => route.view === 'Account Settings' && route.roles.includes(role))]
     assert.deepEqual(pages.map((item) => item.path).sort(), expected.map((item) => item.path).sort())
     assert.equal(new Set(pages.map((item) => item.path)).size, pages.length)
@@ -108,12 +108,12 @@ test('sidebar route grouping recognizes every child and keeps direct pages indep
   assert.equal(sidebarGroupForPath(sidebarNavigationFor('STUDENT'), '/admin/violations'), null)
 })
 
-test('notifications are omitted only from sidebar presentation', () => {
+test('notifications appear once in each authorized sidebar and remain reachable from the bell', () => {
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     const notification = getNavItems(role).find((item) => item.view === 'Notifications')
     assert.ok(notification)
     assert.equal(resolveRoute(notification.path, role).status, 'allowed')
-    assert.equal(sidebarPages(sidebarNavigationFor(role)).some((item) => item.view === 'Notifications'), false)
+    assert.deepEqual(sidebarPages(sidebarNavigationFor(role)).filter((item) => item.view === 'Notifications').map((item) => item.path), [notification.path])
     assert.equal(mobileNavItemsFor(getNavItems(role), role).some((item) => item.view === 'Notifications'), false)
   }
   assert.match(appSource, /className="notification-button"[^>]+onClick=\{\(\)=>navigateTo\(isStudent\?'\/student\/notifications'/)

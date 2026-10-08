@@ -2705,7 +2705,7 @@ function App() {
               >
                 <PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} />
               </button>
-              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <b>{formatActionCount(unreadNotificationCount)}</b>}</button>
+              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <span className="notification-count-badge" aria-hidden="true">{formatActionCount(unreadNotificationCount)}</span>}</button>
               <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={requestLogout}/>
             </div>
           )}

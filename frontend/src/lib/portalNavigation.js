@@ -24,7 +24,7 @@ export const sidebarNavigationFor = (role = '') => {
     return { id: group.id, label: group.label, icon: group.icon, type: 'group', items: views.map(page).filter(Boolean) }
   })
 
-  return [page('Dashboard'), page(role === 'STUDENT' ? 'My Profile' : 'Students'), groups[0], page('Messages'), groups[1], groups[2]]
+  return [page('Dashboard'), page(role === 'STUDENT' ? 'My Profile' : 'Students'), groups[0], page('Messages'), page('Notifications'), groups[1], groups[2]]
     .filter((entry) => entry && (entry.type === 'page' || entry.items.length > 0))
 }
 
@@ -41,6 +41,7 @@ const SIDEBAR_TOOLTIPS = {
   'QR Scan': 'Scan attendance QR code',
   Clearance: 'Manage student clearance',
   Messages: 'View student messages',
+  Notifications: 'View your notifications',
   Reports: 'Generate discipline reports',
   'System & Management': 'Manage system settings',
   Logout: 'Sign out of STI Vio-Log',
