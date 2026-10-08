@@ -273,6 +273,18 @@ test('countdown renders remaining time, stops at zero, and does not announce eve
   assert.match(render('ServiceCountdown', { session: {}, now: start }), /Time unavailable/)
 })
 
+test('daily-limit timer freezes while attendance still requires Time Out', () => {
+  const session = {...active,session_type:'OPEN_TIME',selected_duration_minutes:null,
+    completed_today_minutes:120,credit_cutoff_at:new Date(start+6*3600000).toISOString()}
+  for (const hours of [6,7]) {
+    const html = render('ServiceCountdown', { session, now: start+hours*3600000 })
+    assert.match(html, /aria-label="Time elapsed">06:00:00<\/time>/)
+    assert.match(html, /Daily time remaining <strong>00:00:00<\/strong>/)
+    assert.match(html, /Daily Community Service Limit Reached — Time Out required/)
+    assert.match(render('AttendanceIndicator', { sessions: [session] }), /TIME IN/)
+  }
+})
+
 test('attendance indicator distinguishes TIME OUT, loading, and unavailable data', () => {
   assert.match(render('AttendanceIndicator', { sessions: [], details: true }), /TIME OUT.*Not currently serving/)
   assert.match(render('AttendanceIndicator', { sessions: [active], ready: false, loading: true }), /Loading attendance/)
