@@ -1,30 +1,24 @@
 import { APP_ROUTES, getNavItems } from './routes.js'
 
-const SIDEBAR_GROUPS = [
-  { id: 'discipline', label: 'Discipline', icon: 'violations', views: ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance', 'Awaiting Clearance'] },
-  { id: 'reports', label: 'Reports', icon: 'reports', views: ['Reports', 'Audit Log', 'Analytics & Trends'] },
-  { id: 'management', label: 'System & Management', icon: 'settings', views: ['Departments & Officer Accounts', 'Duplicate Review', 'System Dashboard', 'Account Settings'] }
-]
-
 // Sidebar presentation is separate from route protection and mobile shortcuts.
 export const sidebarNavigationFor = (role = '') => {
   const items = getNavItems(role)
-  const settings = APP_ROUTES.find((route) => route.view === 'Account Settings' && route.roles.includes(role))
-  if (settings) items.push({ ...settings, label: 'Settings' })
+  items.push(...APP_ROUTES.filter(route => route.roles.includes(role) && ['Profile','Account Settings'].includes(route.view)).map(route => ({...route,label:route.view==='Account Settings'?'Settings':route.label})))
 
   const page = (view) => {
     const item = items.find((candidate) => candidate.view === view)
     return item ? { ...item, type: 'page' } : null
   }
-  const groups = SIDEBAR_GROUPS.map((group) => {
-    const views = group.id !== 'discipline' ? group.views
-      : role === 'DEPARTMENT_HEAD' ? ['DTR', 'Community Service', 'QR Scan']
-      : role === 'STUDENT' ? ['My Violations', 'My Service', 'My QR', 'My Clearance']
-      : group.views
-    return { id: group.id, label: group.label, icon: group.icon, type: 'group', items: views.map(page).filter(Boolean) }
-  })
-
-  return [page('Dashboard'), page(role === 'STUDENT' ? 'My Profile' : 'Students'), groups[0], page('Messages'), page('Notifications'), groups[1], groups[2]]
+  const section = (id,label,views) => ({id,label,type:'section',items:views.map(page).filter(Boolean)})
+  const sections = role === 'STUDENT'
+    ? [section('student-services','Student services',['My Service','My QR','My Violations','My Clearance'])]
+    : role === 'DEPARTMENT_HEAD'
+      ? [section('daily-work','Daily work',['QR Scan','Community Service','DTR','Students'])]
+      : [section('student-records','Student records',['Students','Violations']),section('attendance-service','Attendance & service',['QR Scan','Active Attendance','Community Service']),section('clearance','Clearance',['Awaiting Clearance','Clearance'])]
+  return [page('Dashboard'), ...sections, section('updates','Updates',['Messages','Notifications']),
+    {...section('reports','Reporting',['Reports','Analytics & Trends']),type:'group',icon:'reports'},
+    {...section('management','Administration',['Departments & Officer Accounts','Duplicate Review','Audit Log','System Dashboard']),type:'group',icon:'settings'},
+    {...section('account','Account',[role==='STUDENT'?'My Profile':'Profile','Account Settings']),placement:'footer'}]
     .filter((entry) => entry && (entry.type === 'page' || entry.items.length > 0))
 }
 
@@ -34,7 +28,6 @@ export const sidebarGroupForPath = (entries = [], path = '') =>
 const SIDEBAR_TOOLTIPS = {
   Dashboard: 'View discipline overview',
   Students: 'Manage student records',
-  Discipline: 'View discipline modules',
   Violations: 'Add student violation',
   'Active Attendance': 'Monitor active attendance',
   'Community Service': 'Manage community service',
@@ -44,7 +37,8 @@ const SIDEBAR_TOOLTIPS = {
   Messages: 'View student messages',
   Notifications: 'View your notifications',
   Reports: 'Generate discipline reports',
-  'System & Management': 'Manage system settings',
+  Reporting: 'View reports and analytics',
+  Administration: 'Manage administration tools',
   Logout: 'Sign out of STI Vio-Log',
   'Departments & Officer Accounts': 'Manage departments and officers',
   'Duplicate Review': 'Review duplicate records',
@@ -54,6 +48,7 @@ const SIDEBAR_TOOLTIPS = {
   Attendance: 'Review attendance records',
   'Service Results': 'Review service results',
   'My Profile': 'View your profile',
+  Profile: 'View your profile',
   'My Violations': 'View your violations',
   'My Service': 'View your service progress',
   'My QR': 'View your QR code',
@@ -65,7 +60,7 @@ const SIDEBAR_TOOLTIPS = {
 export const sidebarTooltipFor = (label) => SIDEBAR_TOOLTIPS[label]
 
 export const iconNameForView = (view = '') => ({
-  Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', 'My Profile': 'students', 'Assigned Students': 'students',
+  Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', Profile:'user', 'My Profile': 'user', 'Assigned Students': 'students',
   'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',
   'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'Awaiting Clearance': 'check', 'My Clearance': 'clearance', Reports: 'reports', 'Analytics & Trends': 'reports',

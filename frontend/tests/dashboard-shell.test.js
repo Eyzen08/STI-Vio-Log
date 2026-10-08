@@ -4,11 +4,12 @@ import assert from 'node:assert/strict'
 import fs from 'node:fs'
 
 import { validateSignatureFile } from '../src/lib/signatureImage.js'
+import { sidebarNavigationFor } from '../src/lib/portalNavigation.js'
 
 test('shared sizing stays independent of the active route', () => {
   const foundation = fs.readFileSync(new URL('../src/index.css', import.meta.url), 'utf8')
   for (const [token, value] of Object.entries({
-    'text-base': '0.875rem', 'sidebar-expanded-width': '13.75rem',
+    'text-base': '0.875rem', 'sidebar-expanded-width': '15.5rem',
     'topbar-height': '4.6875rem', 'topbar-mobile-height': '3.75rem',
     'topbar-search-width': '35.875rem', 'control-height': '2.75rem',
     'page-action-height': '3.0625rem', 'filter-height': '3.25rem'
@@ -32,8 +33,7 @@ test('analytics is its own administrative view and Reports contains only report 
   assert.doesNotMatch(source.slice(reports, source.indexOf('MAIN APPLICATION LAYOUT', reports)), /<DashboardAnalytics/)
   const quickActions = fs.readFileSync(new URL('../src/components/DashboardQuickActions.jsx', import.meta.url), 'utf8')
   assert.doesNotMatch(quickActions, /Graphs<\/span>/)
-  const navigation = fs.readFileSync(new URL('../src/lib/portalNavigation.js', import.meta.url), 'utf8')
-  assert.match(navigation, /'Reports', 'Audit Log', 'Analytics & Trends'/)
+  assert.deepEqual(sidebarNavigationFor('DISCIPLINE_ADMIN').find(entry=>entry.id==='reports').items.map(item=>item.view),['Reports','Analytics & Trends'])
 })
 
 test('quick actions are role scoped and navigate only within the role portal', () => {

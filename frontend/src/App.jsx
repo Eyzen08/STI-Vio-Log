@@ -2590,8 +2590,12 @@ function App() {
         </div>
 
         <nav className="nav" aria-label="Primary navigation">
-          {sidebarEntries.map((entry) => {
+          {sidebarEntries.filter(entry => entry.placement !== 'footer').map((entry) => {
             if (entry.type === 'page') return renderSidebarPage(entry)
+            if (entry.type === 'section') return <div className="nav-section" key={entry.id}>
+              <p className="nav-group-label" id={`sidebar-${entry.id}-label`}>{entry.label}</p>
+              <div className="nav-section-pages" role="group" aria-labelledby={`sidebar-${entry.id}-label`}>{entry.items.map(renderSidebarPage)}</div>
+            </div>
             const expanded = !isSidebarIconRail && openSidebarGroup === entry.id
             return <div className="nav-group" key={entry.id}>
               <button
@@ -2621,7 +2625,8 @@ function App() {
             </div>
           })}
         </nav>
-        <div className="nav-account-actions">
+        <div className="nav-account-actions" role="navigation" aria-label="Account navigation">
+          {sidebarEntries.filter(entry => entry.placement === 'footer').flatMap(entry => entry.items).map(renderSidebarPage)}
           <button type="button" className="nav-item" aria-label="Logout" {...sidebarTooltipProps('Logout')} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
         </div>
       </aside>}
