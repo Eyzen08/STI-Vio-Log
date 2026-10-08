@@ -5270,6 +5270,12 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-bottom: 12px; }
 .audit-workspace .audit-filter-card .registration-review-actions { margin-top: 0; padding-top: 0; border-top: 0; }
 .audit-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
+.audit-results-card .table-header .audit-results-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.audit-results-tools > span { white-space: nowrap; color: var(--text-secondary); }
+.audit-results-tools button span { color: inherit !important; }
+.audit-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
+.audit-export-note:empty { padding: 0; }
+.audit-results-card > .error-message { padding: 0 20px 12px; }
 .audit-workspace .audit-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
 .audit-workspace .audit-record-table { width: 100%; min-width: 1080px; table-layout: fixed; }
 .audit-date-col { width: 130px; }

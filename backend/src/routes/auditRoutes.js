@@ -1,11 +1,13 @@
 const express = require('express');
 const {
   getAuditLogs,
-  getAuditLogStats
+  getAuditLogStats,
+  exportAuditLogs
 } = require('../controllers/auditController');
 
 const router = express.Router();
-const { authorizeAnyPermission } = require('../middleware/authMiddleware');
+const { authorizeAnyPermission, authorizePermissions } = require('../middleware/authMiddleware');
+const { auditAdministrativeRequest } = require('../middleware/administrativeAuditMiddleware');
 const { PERMISSIONS } = require('../security/permissions');
 const canViewAudit = authorizeAnyPermission(PERMISSIONS.OPERATIONAL_AUDIT_VIEW, PERMISSIONS.TECHNICAL_AUDIT_VIEW);
 
@@ -14,5 +16,6 @@ router.get('/', canViewAudit, getAuditLogs);
 
 // Get audit log statistics
 router.get('/stats', canViewAudit, getAuditLogStats);
+router.get('/export.xlsx', auditAdministrativeRequest, canViewAudit, authorizePermissions(PERMISSIONS.DATA_EXPORT), exportAuditLogs);
 
 module.exports = router;

@@ -84,4 +84,15 @@ const enrichAuditRecords = async (database, rows) => {
   });
 };
 
-module.exports = { sanitizeAuditDescription, auditDetails, enrichAuditRecords };
+const presentAuditRows = async (database, rows) => {
+  const contexts = await enrichAuditRecords(database, rows);
+  return rows.map((row, index) => {
+    const details = auditDetails(row);
+    return { id: row.id, user_id: row.user_id, actor_username: row.actor_username, actor_name: row.actor_name,
+      actor_role: row.recorded_actor_role || details.actor_role || row.actor_role, action: row.action,
+      table_name: row.table_name, record_id: row.record_id, description: sanitizeAuditDescription(row.description),
+      record_context: contexts[index], details, created_at: row.created_at };
+  });
+};
+
+module.exports = { sanitizeAuditDescription, auditDetails, enrichAuditRecords, presentAuditRows };

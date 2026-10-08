@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
-import { auditActorLabel, auditDetailRows, auditRecordLabel, auditRecordType, auditSummary, buildAuditQuery, formatAuditAction } from '../lib/auditLog.js'
+import { auditActorLabel, auditDetailRows, auditRecordLabel, auditRecordType, auditSummary, buildAuditQuery, downloadAuditExcel, formatAuditAction } from '../lib/auditLog.js'
 import { formatDisplayLabel, formatManilaDate, formatManilaTime } from '../lib/displayFormat.js'
+import { useActionLock } from '../lib/asyncAction.js'
+import AsyncActionButton from './AsyncActionButton.jsx'
 
 const initialFilters = { action: '', table_name: '', from_date: '', to_date: '' }
 
@@ -26,6 +28,10 @@ function AdminAuditLog({ token }) {
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
+  const [exportStatus, setExportStatus] = useState('')
+  const runAction = useActionLock()
   const load = useCallback(async (signal) => {
     setLoading(true); setError('')
     try {
@@ -38,6 +44,14 @@ function AdminAuditLog({ token }) {
     } catch (loadError) { if (!signal?.aborted) { setEntries([]); setError(loadError.message) } } finally { if (!signal?.aborted) setLoading(false) }
   }, [applied, page, token])
   useEffect(() => { const controller = new AbortController(); load(controller.signal); return () => controller.abort() }, [load])
+  const generateExcel = () => runAction('audit-export', async () => {
+    if (loading || error || pagination.total === 0) return
+    setExporting(true); setExportError(''); setExportStatus('')
+    try {
+      await downloadAuditExcel(applied, token)
+      setExportStatus('Excel generated. Your download has started.')
+    } catch (downloadError) { setExportError(downloadError.message) } finally { setExporting(false) }
+  })
   const lastPage = Math.max(1, Math.ceil(pagination.total / pagination.limit))
   const activeFilters = [applied.action && formatAuditAction(applied.action), applied.table_name && auditRecordType(applied.table_name), applied.from_date && `From ${applied.from_date}`, applied.to_date && `Through ${applied.to_date}`].filter(Boolean)
   return <section className="audit-workspace">
@@ -49,7 +63,10 @@ function AdminAuditLog({ token }) {
       <label>To date<input type="date" value={filters.to_date} min={filters.from_date || undefined} onChange={(event) => setFilters({ ...filters, to_date: event.target.value })} /></label>
     </div><div className="registration-review-actions"><span className="audit-date-note">Dates use Manila time.</span><button disabled={loading}>Apply filters</button><button type="button" className="secondary-button" onClick={() => { setFilters(initialFilters); setApplied(initialFilters); setPage(1) }} disabled={loading}>Clear</button></div></form></section>
     {error && <p className="error-message" role="alert">{error} <button type="button" onClick={() => load()}>Retry</button></p>}
-    <section className="table-card audit-results-card" aria-busy={loading}><div className="table-header management-table-header"><div><h3>Recorded Activity</h3><p aria-live="polite">{loading ? 'Loading events…' : `${pagination.total} ${activeFilters.length ? 'matching ' : ''}events · ${entries.length ? `${(page - 1) * pagination.limit + 1}–${(page - 1) * pagination.limit + entries.length} shown` : '0 shown'}`}</p></div><span>Page {pagination.page} of {lastPage}</span></div>
+    <section className="table-card audit-results-card" aria-busy={loading}><div className="table-header management-table-header"><div><h3>Recorded Activity</h3><p aria-live="polite">{loading ? 'Loading events…' : `${pagination.total} ${activeFilters.length ? 'matching ' : ''}events · ${entries.length ? `${(page - 1) * pagination.limit + 1}–${(page - 1) * pagination.limit + entries.length} shown` : '0 shown'}`}</p></div><div className="audit-results-tools"><span>Page {pagination.page} of {lastPage}</span><AsyncActionButton type="button" className="primary-action" busy={exporting} busyLabel="Generating Excel…" disabled={loading || Boolean(error) || pagination.total === 0} onClick={generateExcel} aria-describedby="audit-export-scope">Generate Excel</AsyncActionButton></div></div>
+      <p id="audit-export-scope" className="audit-export-note">Export all activities matching the applied filters, across every page.</p>
+      <p className="audit-export-note" role="status">{exportStatus}</p>
+      {exportError && <p className="error-message" role="alert">{exportError} <button type="button" className="secondary-button" disabled={loading || Boolean(error) || pagination.total === 0 || exporting} onClick={generateExcel}>Retry Excel export</button></p>}
       {activeFilters.length > 0 && <div className="audit-active-filters" aria-label="Active filters">{activeFilters.map((label, index) => <span key={`${index}:${label}`}>{label}</span>)}</div>}
       {loading ? <p className="empty-state" aria-live="polite">Loading audit activity…</p> : !error && entries.length === 0 ? <p className="empty-state">No audit activity matches these filters.</p> : entries.length > 0 && <div className="table-wrap"><table className="audit-record-table"><colgroup><col className="audit-date-col"/><col className="audit-actor-col"/><col className="audit-action-col"/><col className="audit-record-col"/><col/></colgroup><thead><tr><th scope="col">Date</th><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Description</th></tr></thead><tbody>{entries.map((entry) => <AuditRow key={entry.id} entry={entry}/>)}</tbody></table></div>}
       <div className="registration-review-actions"><button type="button" className="secondary-button" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</button><button type="button" className="secondary-button" disabled={loading || page >= lastPage} onClick={() => setPage((value) => value + 1)}>Next</button></div>

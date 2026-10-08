@@ -25,6 +25,12 @@ test('audit fallbacks keep existing text and identify unknown or missing records
 test('audit query sends only non-empty filters with bounded page size', () => {
   assert.equal(buildAuditQuery({ action: ' ACCOUNT_CREATE ', table_name: '', from_date: '2026-08-01' }, 2), 'page=2&limit=25&action=ACCOUNT_CREATE&from_date=2026-08-01')
 })
+
+test('Excel query uses applied activity filters without current-page limits', () => {
+  assert.equal(typeof audit.buildAuditExportQuery, 'function')
+  assert.equal(audit.buildAuditExportQuery({ action: ' TIME_IN ', table_name: 'community_service_sessions', from_date: '', to_date: '2026-10-08' }), 'action=TIME_IN&table_name=community_service_sessions&to_date=2026-10-08')
+  assert.equal(audit.buildAuditExportQuery({}), '')
+})
 test('audit labels remain readable without exposing extra identity fields', () => {
   assert.equal(formatAuditAction('ACCOUNT_PASSWORD_RESET'), 'Account Password Reset'); assert.equal(auditActorLabel({ user_id: 7 }), 'User #7'); assert.equal(auditActorLabel({}), 'System')
 })
