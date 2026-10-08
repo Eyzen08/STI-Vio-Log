@@ -54,6 +54,39 @@ test.beforeEach(async()=>{
 });
 test.after(async()=>{await pool.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);await admin.end();});
 
+test('All remaining targets persist and complete fractional-hour assignments exactly',async()=>{
+  for (const [hours,minutes] of [[6.5,390],[1.5,90],[0.01,0.6],[5.500001,330.00006]]) {
+    const a=await assignment(hours)
+    const opened=await start(a,'FIXED',minutes)
+    assert.equal(Number(opened.session.selected_duration_minutes),minutes)
+    // Existing Time Out constraints require whole worked minutes to cover fractional credit.
+    instant=new Date(Date.parse(instant)+Math.ceil(minutes)*60000).toISOString()
+    const closed=await finish(a,opened.session)
+    assert.equal(Number(closed.session.credited_minutes),minutes)
+    assert.equal(Number(closed.assignment.remaining_hours),0)
+    assert.equal(closed.assignment.status,'COMPLETED')
+    instant=new Date(Date.parse(instant)+86400000).toISOString()
+  }
+});
+
+test('stale All remaining selections roll back when the live balance or allowance changes',async()=>{
+  const a=await assignment(6.5)
+  await assert.rejects(start(a,'FIXED',150),e=>e.code==='INVALID_SERVICE_DURATION')
+  const served=await assignment(2)
+  const opened=await start(served)
+  instant='2026-10-07T03:00:00Z'
+  await finish(served,opened.session)
+  await assert.rejects(start(a,'FIXED',390),e=>e.code==='INVALID_SERVICE_DURATION')
+  await pool.query('UPDATE community_service_assignments SET completed_hours=1,remaining_hours=5.5 WHERE id=$1',[a.id])
+  await assert.rejects(start(a,'FIXED',390),e=>e.code==='INVALID_SERVICE_DURATION')
+  instant='2026-10-07T15:30:00Z'
+  await assert.rejects(start(a,'FIXED',330),e=>e.code==='INVALID_SERVICE_DURATION')
+  const short=await assignment(1.5)
+  await assert.rejects(start(short,'FIXED',90),e=>e.code==='INVALID_SERVICE_DURATION')
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS count FROM community_service_sessions')).rows[0].count),1)
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS count FROM community_service_attendance')).rows[0].count),2)
+});
+
 test('fixed target permits overtime, records raw work and retries Time Out without duplicate credit',async()=>{
   const a=await assignment();const opened=await start(a);
   assert.equal(Number(opened.session.selected_duration_minutes),120);

@@ -66,6 +66,40 @@ test('QR workflow shows automatic department, duration limits and active session
   assert.match(final,/Final remainder/)
 })
 
+test('QR All remaining uses the exact balance and respects daily and midnight allowances', () => {
+  const form={qr_code:'test-code',notes:'',session_type:'FIXED',supervising_officer_id:9}
+  const result={student:{first_name:'Ana'},assignment:{id:21,department_name:'Library'},available_officers:[{officer_user_id:9}],allowance:{daily_remaining_minutes:480}}
+  const scan=(remaining,available,selected=remaining,daily=480)=>render('DepartmentQrScanner',{
+    form:{...form,selected_duration_minutes:selected},verifiedQr:'test-code',
+    result:{...result,assignment:{...result.assignment,remaining_hours:remaining/60},allowance:{available_minutes:available,daily_remaining_minutes:daily}}
+  })
+  for (const [balance,label] of [[390,'6 hrs 30 min'],[90,'1 hr 30 min'],[0.6,'0.6 min'],[330.00002,'5 hrs 30 min'],[180,'3 hrs']]) {
+    const html=scan(balance,balance)
+    assert.match(html,new RegExp('aria-pressed="true"[^>]*><strong>All remaining</strong><small>'+label+'</small>'))
+    assert.doesNotMatch(html,/disabled="">Confirm Time In/)
+    assert.doesNotMatch(html,/Final remainder/)
+    const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1])
+    assert.equal(new Set(ids).size,ids.length)
+  }
+  for (const balance of [0,480,540]) assert.doesNotMatch(scan(balance,Math.min(balance,480)),/All remaining/)
+  for (const [balance,stale] of [[420,390],[120,90]]) {
+    const html=scan(balance,balance,stale)
+    assert.doesNotMatch(html,/aria-pressed="true"/)
+    assert.match(html,/disabled="">Confirm Time In/)
+  }
+  for (const [available,daily,reason] of [[300,300,"today’s remaining allowance"],[30,480,'Manila midnight'],[0,0,'Daily Community Service Limit Reached']]) {
+    const html=scan(390,available,390,daily)
+    assert.match(html,/disabled=""[^>]*><strong>All remaining<\/strong><small>6 hrs 30 min<\/small>/)
+    assert.match(html,new RegExp(reason))
+    assert.match(html,/disabled="">Confirm Time In/)
+    if (available===30) assert.match(html,/<strong>Final remainder<\/strong><small>30 min<\/small>/)
+    if (available===0) {
+      assert.doesNotMatch(html,/Final remainder/)
+      assert.match(html,/disabled=""[^>]*><strong>Open Time/)
+    }
+  }
+})
+
 test('camera QR verification is automatic and Verify is reserved for manual input', () => {
   const props={form:{qr_code:'camera-code',notes:''},verifiedQr:'camera-code',result:{student:{first_name:'Ana',last_name:'Reyes'},allowance:{},available_officers:[]}}
   const camera=render('DepartmentQrScanner',{...props,inputSource:'camera'})

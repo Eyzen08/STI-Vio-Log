@@ -172,7 +172,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
         const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
         const completedToday = await dailyCredit(client, assignment.student_id, serviceDate(now));
         const allowance = serviceAllowance(assignment, completedToday, now);
-        const selection = validateDuration(sessionType, selectedDurationMinutes, allowance.available_minutes);
+        const selection = validateDuration(sessionType, selectedDurationMinutes, allowance.available_minutes, Number(assignment.remaining_hours) * 60);
         const cutoff = new Date(Math.ceil(new Date(now).getTime() + allowance.available_minutes * 60000));
 
         const supervisor = await chooseSupervisor(client, { departmentId, selectedOfficerId: supervisingOfficerId });

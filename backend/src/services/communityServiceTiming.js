@@ -13,7 +13,7 @@ const serviceAllowance = (assignment, completedToday, now) => {
         day_ends_at: new Date(midnight(now)).toISOString() };
 };
 
-const validateDuration = (type, duration, available) => {
+const validateDuration = (type, duration, available, remainingMinutes) => {
     const fail = (message) => { const error = new Error(message); error.statusCode = 400; error.code = 'INVALID_SERVICE_DURATION'; throw error; };
     if (!(available > 0)) fail('No community service time is available today.');
     if (type === 'OPEN_TIME') {
@@ -21,12 +21,14 @@ const validateDuration = (type, duration, available) => {
         return { session_type: type, selected_duration_minutes: null };
     }
     const selected = Number(duration);
-    const finalRemainder = available < 120 && selected < 120 && selected + 0.000001 >= available;
+    const remaining = round(remainingMinutes);
+    const allRemaining = remaining > 0 && remaining < DAILY_MINUTES && remaining <= available && Math.abs(selected - remaining) <= 0.000001;
+    const finalRemainder = available < 120 && selected < 120 && Math.abs(selected - available) <= 0.000001;
     if (type !== 'FIXED' || duration == null || typeof duration === 'boolean' || !Number.isFinite(selected) || selected <= 0
-        || (!finalRemainder && (selected > available || available < 120 || selected < 120 || selected > 480 || selected % 60 !== 0))) {
+        || (!allRemaining && !finalRemainder && (selected > available || available < 120 || selected < 120 || selected > 480 || selected % 60 !== 0))) {
         fail('Select 2–8 whole hours within the available allowance, or the exact final remainder.');
     }
-    return { session_type: type, selected_duration_minutes: round(finalRemainder ? available : selected) };
+    return { session_type: type, selected_duration_minutes: round(allRemaining ? remaining : finalRemainder ? available : selected) };
 };
 
 const sessionTiming = (session, assignment, completedToday, now) => {

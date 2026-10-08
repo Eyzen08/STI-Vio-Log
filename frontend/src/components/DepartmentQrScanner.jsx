@@ -22,16 +22,21 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
   const timing=session?serviceSessionTiming(session,now):null
   const allowance=result?.allowance||{}
   const available=Number(allowance.available_minutes||0)
+  const remainingMinutes=Math.round(progress.remaining*60*1e6)/1e6
+  const hasAllRemaining=remainingMinutes>0&&remainingMinutes<480
+  const remainingDisabledReason=Number(allowance.daily_remaining_minutes)<remainingMinutes?'Exceeds today’s remaining allowance.':'Cannot finish before Manila midnight.'
   const officers=result?.available_officers||[]
   const noOfficer=verified&&officers.length===0
   const selected=form.session_type==='OPEN_TIME'?null:Number(form.selected_duration_minutes)
-  const selectedValid=form.session_type==='OPEN_TIME'?available>0:form.session_type==='FIXED'&&selected>0&&selected<=available
+  const selectedValid=form.session_type==='OPEN_TIME'?available>0:form.session_type==='FIXED'&&selected>0&&selected<=available&&(
+    (selected>=120&&selected<=480&&selected%60===0)||(hasAllRemaining&&selected===remainingMinutes)||(available<120&&selected===available)
+  )
   const cameraAvailable=typeof window==='undefined'||(window.isSecureContext&&Boolean(navigator.mediaDevices?.getUserMedia))
   const choose=(mode,minutes)=>onFieldChange({target:{name:'service_selection',value:{session_type:mode,selected_duration_minutes:minutes}}})
-  const preset=(minutes,label,caption)=> {
+  const preset=(minutes,label,caption,disabledReason)=> {
     const disabled=minutes>available || (available<120&&minutes>=120)
-    const id='duration-'+minutes
-    return <div key={minutes}><button type="button" className={'service-duration-tile'+(form.session_type==='FIXED'&&selected===minutes?' selected':'')} onClick={()=>choose('FIXED',minutes)} disabled={disabled||isSubmitting} aria-pressed={form.session_type==='FIXED'&&selected===minutes} aria-describedby={disabled?id:undefined}><strong>{label}</strong>{caption&&<small>{caption}</small>}</button>{disabled&&<small id={id} className="duration-disabled-reason">Exceeds available service time.</small>}</div>
+    const id='duration-'+label.replaceAll(' ','-')
+    return <div key={label}><button type="button" className={'service-duration-tile'+(form.session_type==='FIXED'&&selected===minutes?' selected':'')} onClick={()=>choose('FIXED',minutes)} disabled={disabled||isSubmitting} aria-pressed={form.session_type==='FIXED'&&selected===minutes} aria-describedby={disabled?id:undefined}><strong>{label}</strong>{caption&&<small>{caption}</small>}{disabled&&disabledReason&&<small id={id}>{disabledReason}</small>}</button>{disabled&&!disabledReason&&<small id={id} className="duration-disabled-reason">Exceeds available service time.</small>}</div>
   }
   const eligibleMinutes=session?Math.max(0,(Math.min(now,new Date(session.credit_cutoff_at).getTime())-new Date(session.time_in).getTime())/60000):0
   const projectedMinutes=Math.min(progress.remaining*60,eligibleMinutes>=progress.remaining*60?eligibleMinutes:Math.floor(eligibleMinutes))
@@ -60,11 +65,13 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
         <dl className="service-confirm-details"><div><dt>Time In</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div><div><dt>{session.session_type==='FIXED'?'Expected completion':'Credit stops at'}</dt><dd>{formatManilaTime(session.session_type==='FIXED'?session.expected_completion_at:session.credit_cutoff_at)}</dd></div><div><dt>Available service time</dt><dd>{formatLiveServiceTime(timing.creditRemainingSeconds)}</dd></div><div><dt>Projected total / remaining</dt><dd>{formatServiceMinutes(progress.completed*60+projectedMinutes)} / {formatServiceMinutes(Math.max(0,progress.remaining*60-projectedMinutes))}</dd></div></dl>
         <p className="field-help">Current session time is credited only after Time Out is saved.</p><div className="service-confirm-actions"><button type="button" className="secondary-button" onClick={()=>setStudentOpen(true)}>View Student</button><button type="button" className={'time-out-button'+(timing.targetCompleted||timing.limitReached?' service-target-ready':'')} onClick={()=>setTimeOutOpen(true)} disabled={isSubmitting}>Time Out</button></div>
       </div>:<>
-        {available>0&&result.assignment?<><div className="service-duration-heading"><h4>How long will the student serve today?</h4><p>Minimum 2 hours · Maximum 8 credited hours per Manila calendar day</p></div>
-          {available<120&&<p className="service-timer-warning">Only {formatServiceMinutes(available)} is available before the requirement, daily allowance, or midnight cutoff. A final-remainder session is allowed.</p>}
+        {result.assignment&&(available>0||hasAllRemaining)?<><div className="service-duration-heading"><h4>How long will the student serve today?</h4><p>Minimum 2 hours, except final remainder · Maximum 8 credited hours per Manila calendar day</p></div>
+          {available<=0&&<p className="service-timer-warning">{Number(allowance.daily_remaining_minutes)===0?'Daily Community Service Limit Reached. New service can begin tomorrow.':'No creditable service time remains.'}</p>}
+          {available>0&&available<120&&<p className="service-timer-warning">Only {formatServiceMinutes(available)} is available before the requirement, daily allowance, or midnight cutoff. A final-remainder session is allowed.</p>}
           <div className="service-duration-grid">{[120,180,240,300,360,420,480].map(minutes=>preset(minutes,minutes/60+' Hours',minutes===120?'Minimum':minutes===480?'Maximum':null))}
-            <div><button type="button" className={'service-duration-tile'+(form.session_type==='OPEN_TIME'?' selected':'')} aria-pressed={form.session_type==='OPEN_TIME'} onClick={()=>choose('OPEN_TIME',null)} disabled={isSubmitting}><strong>Open Time</strong><small>Up to {formatServiceMinutes(available)}</small></button></div>
-            {available<120&&preset(available,'Final remainder',formatServiceMinutes(available))}
+            <div><button type="button" className={'service-duration-tile'+(form.session_type==='OPEN_TIME'?' selected':'')} aria-pressed={form.session_type==='OPEN_TIME'} onClick={()=>choose('OPEN_TIME',null)} disabled={isSubmitting||available<=0}><strong>Open Time</strong><small>Up to {formatServiceMinutes(available)}</small></button></div>
+            {hasAllRemaining&&preset(remainingMinutes,'All remaining',formatServiceMinutes(remainingMinutes),remainingDisabledReason)}
+            {available>0&&available<120&&available!==remainingMinutes&&preset(available,'Final remainder',formatServiceMinutes(available))}
           </div>
           <div className="service-confirm-panel"><div className="record-fields"><label>Department<input readOnly value={result.assignment.department_name||''}/></label><label>Supervising officer<select name="supervising_officer_id" value={form.supervising_officer_id||''} onChange={onFieldChange} disabled={isSubmitting||officers.length<=1}><option value="">{noOfficer?'No authorized officer available':'Select supervising officer'}</option>{officers.map(officer=><option key={officer.officer_user_id} value={officer.officer_user_id}>{officer.first_name} {officer.last_name} · {formatDisplayLabel(officer.role)}</option>)}</select></label><label><span className="record-field-label">Attendance note <small>Optional</small></span><input name="notes" maxLength="500" value={form.notes} onChange={onFieldChange} disabled={isSubmitting}/></label></div>
             {noOfficer&&<p className="error-message">Contact the Discipline Office: no authorized officer is currently available.</p>}

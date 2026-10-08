@@ -15,6 +15,16 @@ test('normal durations, Open Time and exact final remainder are validated', () =
   assert.equal(validateDuration('FIXED', 0.6, 0.6).selected_duration_minutes, 0.6);
   for (const [type, minutes, cap] of [['FIXED', 60, 480], ['FIXED', 150, 480], ['FIXED', 180, 120], ['FIXED', 30, 60], ['BAD', 120, 480], ['OPEN_TIME', 120, 480], ['FIXED', NaN, 480]]) assert.throws(() => validateDuration(type, minutes, cap));
 });
+test('fixed sessions accept the exact assignment balance below eight hours', () => {
+  for (const balance of [390, 90, 0.6, 330.00002]) {
+    assert.equal(validateDuration('FIXED', balance, balance, balance).selected_duration_minutes, balance);
+  }
+  assert.equal(validateDuration('FIXED', 330.00001999999995, 330.00002, 330.00002).selected_duration_minutes, 330.00002);
+  for (const [selected, available, remaining] of [[390, 300, 390], [390, 30, 390], [90, 60, 90], [150, 390, 390], [390, 480, 480], [479.5, 480, 480], [480.5, 500, 480.5]]) {
+    assert.throws(() => validateDuration('FIXED', selected, available, remaining), { code: 'INVALID_SERVICE_DURATION' });
+  }
+  assert.equal(validateDuration('FIXED', 30, 30, 390).selected_duration_minutes, 30);
+});
 test('fixed target reaches zero while overtime and actual time keep increasing', () => {
   const session = { time_in: now, session_type: 'FIXED', selected_duration_minutes: 120, credit_cutoff_at: '2026-10-07T09:00:00Z', service_date: '2026-10-07' };
   const timing = sessionTiming(session, { remaining_hours: 20 }, 0, '2026-10-07T03:05:00Z');

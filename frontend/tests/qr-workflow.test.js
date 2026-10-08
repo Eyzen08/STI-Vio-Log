@@ -157,6 +157,20 @@ test('polling preserves a chosen duration, supervisor and note only for the same
   assert.equal(context.qrFormRef.current.notes,'')
 })
 
+test('Time In sends exact All remaining targets without rounding',async()=>{
+  for (const minutes of [390,90,0.6,330.00002]) {
+    const {action,context,requests}=setup()
+    Object.assign(context.qrFormRef.current,{session_type:'FIXED',selected_duration_minutes:minutes})
+    const confirmed=action('time-in','old')
+    const body=JSON.parse(requests[0].options.body)
+    assert.equal(body.session_type,'FIXED')
+    assert.equal(body.selected_duration_minutes,minutes)
+    requests[0].pending.resolve(ok('old',{assignment:{id:21},session:{id:7,status:'ACTIVE',session_type:'FIXED',selected_duration_minutes:minutes}}))
+    assert.equal(await confirmed,true)
+    assert.equal(context.result.session.selected_duration_minutes,minutes)
+  }
+})
+
 test('Time In requires selection, preserves it on failure and starts only after confirmation',async()=>{
   const {action,context,requests}=setup()
   context.qrFormRef.current.session_type=''
