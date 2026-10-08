@@ -190,7 +190,10 @@ body:has(.admin-portal) { overflow-x:clip; }
   .admin-portal .dashboard-quick-actions button { flex-direction:column; justify-content:center; text-align:center; }
 }
 
-:root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-image:linear-gradient(to right,var(--dash-surface) 0%,var(--dash-surface) 50%,color-mix(in srgb,var(--dash-surface) 92%,transparent) 65%,color-mix(in srgb,var(--dash-surface) 10%,transparent) 100%),url('../assets/sti-global-city-building-night.jpg') !important; }
+:root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-image:linear-gradient(to right,var(--dash-surface) 0%,var(--dash-surface) 50%,color-mix(in srgb,var(--dash-surface) 92%,transparent) 65%,color-mix(in srgb,var(--dash-surface) 10%,transparent) 100%),url('../assets/sti-global-city-building-night.jpg') !important; background-size:cover,45% auto !important; background-position:center,right 30% !important; background-repeat:no-repeat !important; }
+@media (max-width:767px) {
+  :root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-size:cover,auto 150% !important; }
+}
 :root[data-theme='dark'] .admin-portal .admin-dashboard .dashboard-timed-in { background:var(--status-success-surface) !important; color:var(--status-success-text) !important; }
 :root[data-theme='dark'] .admin-portal .dashboard-session-countdown .timer-limit-notice { color:var(--status-warning-text) !important; }
 :root[data-theme='dark'] .admin-portal .dashboard-quick-actions button:nth-child(3) svg { color:#ba96ff; }
