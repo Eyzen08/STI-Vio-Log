@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import PortalIcon from './PortalIcon.jsx'
 import { normalizeViolation, statusLabel } from '../lib/studentViolations.js'
-import { formatDuration, formatIncidentDateTime, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
+import { parseViolationDescription } from '../lib/violationAdmin.js'
+import '../styles/student-portal.css'
 
 const formatDate = (value, includeTime = false) => {
   if (!value) return 'Not recorded'
@@ -37,7 +39,7 @@ function StudentViolations({ violations, loading, error }) {
 
   if (loading) {
     return (
-      <section className="violations-page" aria-live="polite">
+      <section className="student-page violations-page" aria-live="polite">
         <div className="skeleton violations-heading-skeleton" />
         {[1, 2, 3].map((item) => <div className="skeleton violation-card-skeleton" key={item} />)}
       </section>
@@ -45,10 +47,9 @@ function StudentViolations({ violations, loading, error }) {
   }
 
   return (
-    <section className="violations-page" aria-labelledby="violations-title">
+    <section className="student-page violations-page" aria-labelledby="violations-title">
       <header className="page-intro portal-page-header">
         <div>
-          <p className="eyebrow">Disciplinary record</p>
           <h2 id="violations-title">My Violations</h2>
           <p>Review your records, required service, and status history.</p>
         </div>
@@ -68,6 +69,10 @@ function StudentViolations({ violations, loading, error }) {
           {records.map((violation) => {
             const expanded = expandedId === violation.id
             const panelId = `violation-details-${violation.id}`
+            const parsed = parseViolationDescription(violation.description || '')
+            const offense = violation.exact_offense || parsed.exact_offense || violation.violation_name
+            const notes = violation.incident_details || parsed.incident_details
+            const distinctNotes = notes?.trim() && notes.trim().toLowerCase() !== offense.trim().toLowerCase() ? notes : ''
             return (
               <article className="violation-card" key={violation.id}>
                 <button
@@ -79,21 +84,19 @@ function StudentViolations({ violations, loading, error }) {
                 >
                   <div className="violation-summary-main">
                     <div className="violation-badges">
-                      <span className={`severity-badge severity-${violation.severity.toLowerCase()}`}>{violation.severity}</span>
+                      <span className={`severity-badge severity-${violation.severity.toLowerCase()}`}>{formatDisplayLabel(violation.severity)}</span>
                       <span className={`status-badge status-${violation.status.toLowerCase().replaceAll('_', '-')}`}>{statusLabel(violation.status)}</span>
                     </div>
-                    <h3>{violation.violation_name}</h3>
-                    <p>{violation.violation_code || `Record #${violation.id}`} · Incident {formatIncidentDateTime(violation.incident_date, violation.incident_time)}</p>
+                    <h3>{offense}</h3>
+                    {violation.violation_name !== offense && <p>{violation.violation_name}</p>}
+                    <p>Record #{violation.id}{violation.violation_code && ` · ${violation.violation_code}`} · {formatIncidentDateTime(violation.incident_date, violation.incident_time)}</p>
                   </div>
                   <span className="violation-toggle" aria-hidden="true"><PortalIcon name="chevron-right" className="violation-chevron" size={20} /></span>
                 </button>
 
                 {expanded && (
                   <div className="violation-details" id={panelId}>
-                    <div className="violation-description">
-                      <h4>Details</h4>
-                      <p>{violation.description || 'No additional description was provided.'}</p>
-                    </div>
+                    {distinctNotes && <div className="violation-description"><h4>Incident notes</h4><p>{distinctNotes}</p></div>}
 
                     <ServiceProgress violation={violation} />
 

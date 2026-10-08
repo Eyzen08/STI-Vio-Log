@@ -70,6 +70,7 @@ import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from './lib/inputNormalization.js'
 import './App.css'
+import './styles/student-portal.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
@@ -1936,6 +1937,7 @@ function App() {
             error={studentDtrError || dashboardError}
             attendanceError={attendanceError}
             onFilter={loadStudentDtr}
+            onNavigate={navigateTo}
           />
         )
       }
@@ -2002,6 +2004,7 @@ function App() {
             error={clearanceCertificateError || dashboardError}
             certificate={clearanceCertificate}
             onLoadCertificate={loadClearanceCertificate}
+            onNavigate={navigateTo}
             token={token}
           />
         )
@@ -2585,7 +2588,7 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isStudent ? ' student-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
       {isLoggedIn && isMobileNavOpen && (
         <button

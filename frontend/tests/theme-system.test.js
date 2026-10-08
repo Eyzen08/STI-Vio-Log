@@ -5,6 +5,7 @@ import { readFile } from 'node:fs/promises'
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const studentDashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
+const studentCss = await readFile(new URL('../src/styles/student-portal.css', import.meta.url), 'utf8')
 const passwordChange = await readFile(new URL('../src/components/PasswordChangeRequired.jsx', import.meta.url), 'utf8')
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
@@ -190,19 +191,18 @@ test('dark student dashboard standing notices use semantic status surfaces', () 
 })
 
 test('dark student profile themes its hero, fields, dividers, and help footer', () => {
-  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
-  assert.match(guard, /\.profile-card \.profile-hero\s*\{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-primary\)/s)
-  assert.match(guard, /\.profile-card \.profile-hero :is\(\.eyebrow,h2\)[^}]*color:var\(--text-primary\)/s)
-  assert.match(guard, /\.profile-card \.profile-field \.profile-value-missing[^}]*color:var\(--text-muted\)/s)
-  assert.match(guard, /\.profile-card \.profile-help\s*\{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-secondary\)/s)
+  assert.match(studentCss, /\.student-profile-page\s*\{[^}]*background:var\(--surface-raised\)[^}]*border:1px solid var\(--border-subtle\)/s)
+  assert.match(studentCss, /\.student-profile-identity\s*\{[^}]*background:var\(--surface-raised\)/s)
+  assert.match(studentCss, /\.profile-value-missing[^}]*color:var\(--text-muted\)/s)
+  assert.match(studentCss, /\.profile-help\s*\{[^}]*background:transparent[^}]*color:var\(--text-secondary\)/s)
+  assert.match(studentCss, /\.student-clearance-status\s*\{[^}]*background:transparent; border:0;/s)
 })
 
 test('dark dashboard clearance status uses semantic pending and ready states', () => {
-  const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
-  assert.match(studentDashboard, /clearance-state clearance-state--ready/)
-  assert.match(studentDashboard, /clearance-state clearance-state--pending/)
-  assert.match(guard, /\.clearance-summary-card \.clearance-state\s*\{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
-  assert.match(guard, /\.clearance-summary-card \.clearance-state--ready\s*\{[^}]*background:var\(--status-success-surface\)[^}]*color:var\(--status-success-text\)/s)
+  assert.match(studentDashboard, /student-clearance-ready/)
+  assert.match(studentDashboard, /student-clearance-pending/)
+  assert.match(studentCss, /\.student-clearance-pending\s*\{[^}]*color:var\(--status-warning-text\)/s)
+  assert.match(studentCss, /\.student-clearance-ready\s*\{[^}]*color:var\(--status-success-text\)/s)
 })
 
 test('dark recent activity uses themed icons, dividers, and text', () => {

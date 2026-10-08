@@ -9,7 +9,7 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'StudentProfile', 'StudentViolations', 'StudentQr', 'StudentClearance', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
   components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
@@ -23,6 +23,59 @@ const render = (name, props) => renderToStaticMarkup(createElement(components[na
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
+
+test('student overview renders each timer and service total once with three recent records', () => {
+  const html = render('StudentDashboard', { dtr:{sessions:[active]}, assignments:[{required_hours:6,remaining_hours:5.25,status:'IN_PROGRESS'}],
+    violations:Array.from({length:5},(_,id)=>({id,status:'OPEN',exact_offense:`Offense ${id}`,severity:'GRAVE',required_service_hours:2})) })
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.equal((html.match(/5 hr 15 min/g)||[]).length,1)
+  assert.equal((html.match(/class="student-recent-record"/g)||[]).length,3)
+  assert.match(html, /My QR code/)
+  assert.match(html, /Message Office/)
+  assert.doesNotMatch(html, /Service Session in Progress|student-stats|standing-card/)
+})
+
+test('student DTR preserves active attendance and hides secondary fields in disclosures', () => {
+  const html=render('StudentCommunityService',{liveDtr:{assignments:[],sessions:[active]},dtr:{assignments:[],sessions:[{...active,id:12,status:'COMPLETED',time_out:'2026-10-05T02:00:00Z',worked_minutes:45,credited_minutes:30,notes:'Preserved remarks',time_out_recorder_name:'Mara Cruz',time_out_role:'DEPARTMENT_HEAD'}]}})
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.match(html, /See current session above/)
+  assert.match(html, /<details class="student-session-details"><summary>Details<\/summary>/)
+  assert.match(html, /Worked<\/dt><dd>45m/)
+  assert.match(html, /Credited<\/dt><dd>30m/)
+  assert.match(html, /Mara Cruz/)
+  assert.match(html, /Department Head/)
+  assert.match(html, /Preserved remarks/)
+  assert.match(html, /<details class="student-corrections"><summary>Hour corrections<\/summary>/)
+})
+
+test('student pages retain profile data, violation facts and unavailable states', () => {
+  const profile=render('StudentProfile',{profile:{first_name:'Ana',last_name:'Reyes',student_number:'02000',academic_level:'SENIOR_HIGH_SCHOOL',strand:'STEM',year_level:11},username:'ana'})
+  assert.match(profile,/STEM/)
+  assert.match(profile,/Grade 11/)
+  assert.match(profile,/Not provided/)
+  assert.doesNotMatch(profile,/<input/)
+  const violation=render('StudentViolations',{violations:[{id:1,violation_name:'Major Offense - Category C',severity:'GRAVE',status:'OPEN',description:'Handbook offense: Documented offense\nIncident details: Preserved notes'}]})
+  assert.match(violation,/Documented offense/)
+  assert.match(violation,/Major Offense - Category C/)
+  assert.match(violation,/Grave/)
+  assert.match(render('StudentQr',{profile:null}),/No QR code is assigned/)
+  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View violations/)
+  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View service/)
+})
+
+test('student portal retains loading, empty, and failed-data states without invented attendance', () => {
+  for (const name of ['StudentDashboard','StudentCommunityService','StudentProfile','StudentViolations','StudentQr','StudentClearance']) {
+    assert.match(render(name,{loading:true,violations:[]}),/aria-live="polite"/)
+    assert.match(render(name,{error:'Records unavailable',violations:[]}),/Records unavailable/)
+  }
+  assert.match(render('StudentDashboard',{dtr:{sessions:[]}}),/No violations on record/)
+  const service=render('StudentCommunityService',{dtr:{assignments:[],sessions:[active]}})
+  assert.match(service,/Current attendance unavailable/)
+  assert.doesNotMatch(service,/See current session above|<time/)
+  assert.match(render('StudentCommunityService',{dtr:{assignments:[],sessions:[]},liveDtr:{sessions:[]}}),/No attendance sessions match this period/)
+  assert.match(render('StudentViolations',{violations:[]}),/No Violations on Record/)
+  assert.match(render('StudentClearance',{}),/No clearance records yet/)
+})
 
 test('community workflow keeps assignment filters, actual attendance, eligible choices and detailed progress', () => {
   const assignment = {id:21,student_id:1,violation_id:4,first_name:'Ana',last_name:'Reyes',student_number:'02000',department_id:3,department_name:'Library',department_head_first_name:'Mara',department_head_last_name:'Cruz',status:'IN_PROGRESS',required_hours:6,remaining_hours:5.25}

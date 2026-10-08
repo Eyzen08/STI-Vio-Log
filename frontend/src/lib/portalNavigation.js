@@ -76,9 +76,9 @@ export const iconNameForView = (view = '') => ({
 
 export const mobileNavItemsFor = (navItems = [], role = '') => [
   navItems.find(({ view }) => ['Dashboard', 'System Dashboard'].includes(view)),
-  navItems.find(({ view }) => ['Students', 'Assigned Students', 'My Violations'].includes(view)),
-  navItems.find(({ view }) => ['Violations', 'QR Scan', 'My Service'].includes(view)),
+  navItems.find(({ view }) => role === 'STUDENT' ? view === 'My Service' : ['Students', 'Assigned Students'].includes(view)),
+  navItems.find(({ view }) => role === 'STUDENT' ? view === 'My QR' : ['Violations', 'QR Scan'].includes(view)),
   navItems.find(({ view }) => role === 'DEPARTMENT_HEAD' ? view === 'Community Service' : view === 'Messages')
 ].filter(Boolean)
 
-export const mobileNavLabel = (item = {}) => item.label === 'Service Results' ? 'Service' : String(item.label || '').replace('My ', '')
+export const mobileNavLabel = (item = {}) => item.view === 'Dashboard' && item.path?.startsWith('/student/') ? 'Home' : item.label === 'Service Results' ? 'Service' : String(item.label || '').replace('My ', '')

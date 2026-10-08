@@ -27,11 +27,9 @@ test('authenticated route headers use the shared page-header class', () => {
     '../src/components/DepartmentStudents.jsx',
     '../src/components/MessagesPage.jsx',
     '../src/components/StaffProfile.jsx',
-    '../src/components/StudentClearance.jsx',
     '../src/components/StudentCommunityService.jsx',
     '../src/components/StudentDashboard.jsx',
     '../src/components/StudentNotifications.jsx',
-    '../src/components/StudentProfile.jsx',
     '../src/components/StudentManagement.jsx',
     '../src/components/StudentQr.jsx',
     '../src/components/StudentViolations.jsx',
@@ -40,6 +38,8 @@ test('authenticated route headers use the shared page-header class', () => {
   ]
 
   for (const source of sources) assert.match(read(source), /portal-page-header/, source)
+  assert.match(read('../src/components/StudentProfile.jsx'), /student-profile-identity/)
+  assert.match(read('../src/components/StudentClearance.jsx'), /student-clearance-status/)
 })
 
 test('shared page headers are card surfaces across themes and viewports', () => {

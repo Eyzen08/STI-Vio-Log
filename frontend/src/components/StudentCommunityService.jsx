@@ -1,106 +1,60 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { formatMinutes, summarizeStudentService, validateDateRange } from '../lib/studentService.js'
-import { formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatManilaDateTime } from '../lib/displayFormat.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
-import ServiceCountdown from './ServiceCountdown.jsx'
+import StudentAttendancePanel from './StudentAttendancePanel.jsx'
+import ServiceHourCorrections from './ServiceHourCorrections.jsx'
+import '../styles/student-portal.css'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
 
-import ServiceHourCorrections from './ServiceHourCorrections.jsx'
-
-function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, attendanceError }) {
+function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, attendanceError, onNavigate }) {
   const [filters, setFilters] = useState({ from: '', to: '' })
   const [filterError, setFilterError] = useState('')
   const summary = summarizeStudentService(liveDtr || dtr)
   const assignments = Array.isArray(dtr?.assignments) ? dtr.assignments : []
   const sessions = Array.isArray(dtr?.sessions) ? dtr.sessions : []
   const latestSessions = Array.isArray(liveDtr?.sessions) ? liveDtr.sessions : sessions
-  const liveActiveSessions = Array.isArray(liveDtr?.sessions) ? liveDtr.sessions.filter(isActiveServiceSession) : []
   const latestById = new Map(latestSessions.map((session) => [session.id, session]))
   const filteredSessions = sessions.map((session) => latestById.get(session.id) || session)
   const filteredIds = new Set(filteredSessions.map((session) => session.id))
   const currentSessions = latestSessions.filter(isActiveServiceSession).filter((session) => !filteredIds.has(session.id))
   const displaySessions = [...currentSessions, ...filteredSessions]
-  const activeSessionCount = displaySessions.filter(isActiveServiceSession).length
-  const [now, setNow] = useState(Date.now())
-
-  useEffect(() => {
-    if (!activeSessionCount) return undefined
-    setNow(Date.now())
-    const clock = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(clock)
-  }, [activeSessionCount])
-
   const submitFilters = (event) => {
     event.preventDefault()
     const validationError = validateDateRange(filters)
     setFilterError(validationError)
     if (!validationError) onFilter(filters)
   }
+  if (loading && !dtr) return <section className="student-page" aria-live="polite"><AttendanceIndicator ready={false} loading/><div className="skeleton service-heading-skeleton"/></section>
 
-  if (loading && !dtr) {
-    return <section className="service-page" aria-live="polite"><AttendanceIndicator ready={false} loading/><div className="skeleton service-heading-skeleton" /><div className="stats-grid">{[1, 2, 3].map((item) => <div className="stat-card skeleton-card" key={item} />)}</div></section>
-  }
-
-  return (
-    <section className="service-page" aria-labelledby="service-title">
-      <header className="page-intro portal-page-header">
-        <div><p className="eyebrow">Community Service</p><h2 id="service-title">My Service and DTR</h2><p>Track assigned hours and authoritative attendance sessions.</p></div>
-        <span className="record-count">Manila service dates</span>
-      </header>
-
-      {(error || filterError) && <p className="error-message" role="alert">{filterError || error}</p>}
-      <section className="student-attendance-summary" aria-label="Current attendance status">
-        <div><span>Attendance status</span><AttendanceIndicator sessions={liveDtr?.sessions || []} ready={Array.isArray(liveDtr?.sessions)} loading={loading} details/></div>
-        {liveActiveSessions.length > 0 && <div className="student-attendance-countdowns">{liveActiveSessions.map((session) => <div key={session.id}><span>{session.session_type==='OPEN_TIME'?'Time elapsed':'Remaining session time'} · {session.department_name || `Assignment #${session.assignment_id}`}</span><ServiceCountdown session={session} now={now}/></div>)}</div>}
-        {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
-      </section>
-
-      <section className="stats-grid service-stats" aria-label="Community-service summary">
-        <article className="stat-card"><span>Required</span><strong>{formatMinutes(summary.requiredMinutes)}</strong></article>
-        <article className="stat-card stat-card-featured"><span>Credited</span><strong>{formatMinutes(summary.creditedMinutes)}</strong></article>
-        <article className="stat-card"><span>Remaining</span><strong>{formatMinutes(summary.remainingMinutes)}</strong></article>
-        <article className="stat-card"><span>Completed sessions</span><strong>{summary.completedSessions}</strong></article>
-      </section>
-
-      <section className="table-card service-assignments">
-        <div className="table-header"><h3>Assignments</h3><span>{assignments.length} records</span></div>
-        {assignments.length === 0 ? <p className="empty-state">No community-service assignments.</p> : (
-          <div className="assignment-list">{assignments.map((assignment) => {
-            const required = Number(assignment.required_minutes) || 0
-            const credited = Number(assignment.credited_minutes) || 0
-            const percentage = required ? Math.min(100, Math.round((credited / required) * 100)) : 100
-            return <article key={assignment.assignment_id}>
-              <div><strong>{assignment.department_code || assignment.department_name || `Assignment #${assignment.assignment_id}`}</strong><span>Violation #{assignment.violation_id}</span><span>{assignment.department_head_first_name || assignment.department_head_last_name ? `Department Head: ${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Department Head not recorded'}</span></div>
-              <div className="assignment-progress"><div className="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percentage}><span style={{ width: `${percentage}%` }} /></div><small>{percentage}% complete</small></div>
-              <span className="status-badge">{String(assignment.status).replaceAll('_', ' ')}</span>
-            </article>
-          })}</div>
-        )}
-      </section>
-
-      <ServiceHourCorrections corrections={dtr?.hourCorrections || []}/>
-      <section className="table-card dtr-card">
-        <div className="dtr-heading">
-          <div><p className="eyebrow">Digital Time Record</p><h3>Attendance Sessions</h3></div>
-          <form className="dtr-filters" onSubmit={submitFilters}>
-            <label>From<input type="date" value={filters.from} onChange={(event) => setFilters((current) => ({ ...current, from: event.target.value }))} /></label>
-            <label>To<input type="date" value={filters.to} onChange={(event) => setFilters((current) => ({ ...current, to: event.target.value }))} /></label>
-            <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply'}</button>
-          </form>
-        </div>
-        {displaySessions.length === 0 ? <p className="empty-state">No attendance sessions match this period.</p> : (
-          <div className="session-list">{displaySessions.map((session) => <article className={isActiveServiceSession(session) ? 'student-active-session' : undefined} key={session.id}>
-            <div><strong>{session.department_name}</strong><span>Assignment #{session.assignment_id}</span></div>
-            <dl><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{dateTime(session.time_out)}</dd></div><div><dt>{isActiveServiceSession(session) ? 'Remaining session time' : 'Worked'}</dt><dd>{isActiveServiceSession(session) ? <ServiceCountdown session={session} now={now}/> : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!isActiveServiceSession(session)&&<div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
-            <dl><div><dt>Mode / Target</dt><dd>{session.session_type==='FIXED'?formatMinutes(session.selected_duration_minutes):session.session_type==='OPEN_TIME'?'Open Time':'Legacy session'}</dd></div><div><dt>Session status</dt><dd>{session.completion_reason?.replaceAll('_',' ')||session.status}</dd></div><div><dt>Authorized by</dt><dd>{session.time_out_recorder_name||session.time_in_recorder_name||'Staff #'+(session.time_out_by_user_id||session.time_in_by_user_id)} · {session.time_out_role||session.time_in_role||'Staff'}</dd></div><div><dt>Notes / Remarks</dt><dd>{session.result_notes||session.notes||'—'}</dd></div></dl><AttendanceIndicator sessions={[session]}/>
-          </article>)}</div>
-        )}
-      </section>
+  return <section className="student-page student-service-page" aria-labelledby="service-title">
+    <header className="portal-page-header student-page-heading"><div><h2 id="service-title">My service &amp; attendance</h2><p>Track credited hours and attendance in Manila time.</p></div>{onNavigate && <button className="student-primary-button" type="button" onClick={()=>onNavigate('/student/qr')}>My QR code</button>}</header>
+    {(error || filterError) && <p className="error-message" role="alert">{filterError || error}</p>}
+    <StudentAttendancePanel sessions={liveDtr?.sessions || []} ready={Array.isArray(liveDtr?.sessions)} loading={loading} error={attendanceError}/>
+    <section className="student-section" aria-label="Community-service summary"><dl className="student-totals"><div><dt>Required</dt><dd>{formatMinutes(summary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(summary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd><strong>{formatMinutes(summary.remainingMinutes)}</strong></dd></div></dl></section>
+    <section className="student-section">
+      <header className="student-section-heading"><h3>Assignments</h3><span>{assignments.length} records</span></header>
+      {!assignments.length ? <p className="student-empty">No community-service assignments.</p> : <div className="student-assignment-list">{assignments.map((assignment)=>{
+        const required=Number(assignment.required_minutes)||0, credited=Number(assignment.credited_minutes)||0
+        const percentage=required ? Math.min(100,Math.round(credited/required*100)) : 100
+        return <article key={assignment.assignment_id}><header><div><strong>{assignment.department_name || assignment.department_code || `Assignment #${assignment.assignment_id}`}</strong><span>Assignment #{assignment.assignment_id} · Violation #{assignment.violation_id}</span><span>{assignment.department_head_first_name || assignment.department_head_last_name ? `Department Head: ${assignment.department_head_first_name || ''} ${assignment.department_head_last_name || ''}`.trim() : 'Department Head not recorded'}</span></div><span className="status-badge">{formatDisplayLabel(assignment.status)}</span></header><div className="student-assignment-credit"><span>{formatMinutes(credited)} credited of {formatMinutes(required)}</span><span>{formatMinutes(assignment.remaining_minutes)} remaining</span></div><div className="progress-track" role="progressbar" aria-label={`Assignment #${assignment.assignment_id} credited progress`} aria-valuemin="0" aria-valuemax="100" aria-valuenow={percentage}><span style={{width:`${percentage}%`}}/></div><small>{percentage}% credited</small></article>
+      })}</div>}
     </section>
-  )
+    <details className="student-corrections"><summary>Hour corrections</summary><ServiceHourCorrections corrections={dtr?.hourCorrections || []}/></details>
+    <section className="student-section student-dtr" aria-labelledby="student-dtr-title">
+      <header className="student-section-heading"><div><h3 id="student-dtr-title">Attendance sessions</h3><p>{summary.completedSessions} completed sessions</p></div><form className="student-date-filters" onSubmit={submitFilters}><label>From<input type="date" value={filters.from} onChange={(event)=>setFilters({...filters,from:event.target.value})}/></label><label>To<input type="date" value={filters.to} onChange={(event)=>setFilters({...filters,to:event.target.value})}/></label><button type="submit" className="student-primary-button" disabled={loading}>{loading ? 'Loading…' : 'Apply'}</button></form></header>
+      {!displaySessions.length ? <p className="student-empty">No attendance sessions match this period.</p> : <div className="student-dtr-list">{displaySessions.map((session)=>{
+        const active=isActiveServiceSession(session)
+        return <article className={active?'student-dtr-record student-dtr-record-active':'student-dtr-record'} key={session.id}>
+          <header><div><strong>{session.department_name || 'Department not recorded'}</strong><span>Assignment #{session.assignment_id}</span></div><AttendanceIndicator sessions={[session]}/></header>
+          <dl className="student-session-facts"><div><dt>Time in</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time out</dt><dd>{active?'Pending staff Time Out':dateTime(session.time_out)}</dd></div><div><dt>Worked</dt><dd>{active ? Array.isArray(liveDtr?.sessions) ? 'See current session above' : 'Current attendance unavailable' : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!active && <div><dt>Attendance outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
+          <details className="student-session-details"><summary>Details</summary><dl className="student-session-facts"><div><dt>Mode / target</dt><dd>{session.session_type==='FIXED'?formatMinutes(session.selected_duration_minutes):session.session_type==='OPEN_TIME'?'Open Time':'Legacy session'}</dd></div><div><dt>Session status</dt><dd>{formatDisplayLabel(session.completion_reason || session.status)}</dd></div><div><dt>Recorded by</dt><dd>{session.time_out_recorder_name || session.time_in_recorder_name || ((session.time_out_by_user_id || session.time_in_by_user_id) ? `Staff #${session.time_out_by_user_id || session.time_in_by_user_id}` : 'Staff not recorded')} · {formatDisplayLabel(session.time_out_role || session.time_in_role,'Staff')}</dd></div><div className="student-full-width"><dt>Notes / remarks</dt><dd>{session.result_notes || session.notes || '—'}</dd></div></dl></details>
+        </article>
+      })}</div>}
+    </section>
+  </section>
 }
-
 export default StudentCommunityService

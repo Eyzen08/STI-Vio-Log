@@ -66,10 +66,13 @@ test('admin reference uses four summaries and an active-only compact attendance 
 })
 
 test('dashboard hierarchy leads with live metrics and derives the offense chart from records', () => {
-  for (const component of ['AdminDashboard.jsx', 'StudentDashboard.jsx', 'DepartmentDashboard.jsx']) {
+  for (const component of ['AdminDashboard.jsx', 'DepartmentDashboard.jsx']) {
     const source = fs.readFileSync(new URL(`../src/components/${component}`, import.meta.url), 'utf8')
     assert.ok(source.indexOf('className="stats-grid') < source.indexOf('<DashboardQuickActions'))
   }
+  const student = fs.readFileSync(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
+  assert.ok(student.indexOf('<StudentAttendancePanel') < student.indexOf('className="student-dashboard-summary"'))
+  assert.ok(student.indexOf('className="student-dashboard-summary"') < student.indexOf('Recent violations'))
   const admin = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
   assert.match(admin, /violations\.filter\(\(violation\) => violation\.offense_indicator_level === item\.level\)/)
   assert.match(admin, /aria-label=\{`\$\{classifiedTotal\} classified violation records`\}/)

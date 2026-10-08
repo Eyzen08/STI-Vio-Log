@@ -142,6 +142,12 @@ test('department mobile navigation places Service after QR Scan', () => {
   assert.deepEqual(items.map(mobileNavLabel), ['Dashboard', 'Assigned Students', 'QR Scan', 'Service'])
 })
 
+test('student mobile shortcuts prioritize service and QR without changing other roles', () => {
+  const items=mobileNavItemsFor(getNavItems('STUDENT'),'STUDENT')
+  assert.deepEqual(items.map(({view})=>view),['Dashboard','My Service','My QR','Messages'])
+  assert.deepEqual(items.map(mobileNavLabel),['Home','Service','QR','Messages'])
+})
+
 test('Daily time record light header overrides legacy hero colors', async () => {
   const portalCss = readPortalStyles()
   assert.match(portalCss, /:root:not\(\[data-theme='dark'\]\) \.dtr-intro\.portal-page-header :is\(h2, strong\)/)

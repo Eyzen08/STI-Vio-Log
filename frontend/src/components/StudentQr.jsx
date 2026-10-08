@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { getStudentQrPayload, qrDownloadName } from '../lib/studentQr.js'
+import '../styles/student-portal.css'
 
 function StudentQr({ profile, loading, error }) {
   const [imageUrl, setImageUrl] = useState('')
@@ -29,7 +30,7 @@ function StudentQr({ profile, loading, error }) {
 
   if (loading) {
     return (
-      <section className="student-qr-page" aria-live="polite">
+      <section className="student-page student-qr-page" aria-live="polite">
         <div className="skeleton qr-page-heading-skeleton" />
         <div className="skeleton qr-code-skeleton" />
       </section>
@@ -39,14 +40,12 @@ function StudentQr({ profile, loading, error }) {
   const unavailableMessage = error || renderError || (!payload ? 'No QR code is assigned to this student account.' : '')
 
   return (
-    <section className="student-qr-page" aria-labelledby="student-qr-title">
+    <section className="student-page student-qr-page" aria-labelledby="student-qr-title">
       <header className="page-intro portal-page-header qr-page-intro">
         <div>
-          <p className="eyebrow">Student identification</p>
           <h2 id="student-qr-title">My QR Code</h2>
           <p>Present this code to authorized staff when recording community-service attendance.</p>
         </div>
-        <span className="profile-readonly-badge">Personal code</span>
       </header>
 
       <div className="qr-display-card">
@@ -68,10 +67,6 @@ function StudentQr({ profile, loading, error }) {
                 : <div className="skeleton qr-code-skeleton" aria-label="Generating QR code" />}
             </div>
 
-            <p className="qr-security-note">
-              This QR contains only your system-issued attendance code. It does not contain your password or login token.
-            </p>
-
             {imageUrl && (
               <a className="qr-download-button" href={imageUrl} download={qrDownloadName(profile.student_number)}>
                 Download QR code
@@ -82,9 +77,7 @@ function StudentQr({ profile, loading, error }) {
       </div>
 
       <aside className="qr-guidance" aria-label="QR code guidance">
-        <div><strong>Keep it private</strong><span>Do not post your personal QR publicly.</span></div>
-        <div><strong>Increase brightness</strong><span>A bright screen helps staff scan quickly.</span></div>
-        <div><strong>Use only your code</strong><span>Attendance is linked to your student account.</span></div>
+        <p>Increase screen brightness for scanning. Keep your QR private and use only your own code. It contains your attendance code, never your password or login token.</p>
       </aside>
     </section>
   )

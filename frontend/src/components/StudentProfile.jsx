@@ -2,6 +2,7 @@ import { academicLevelLabel, academicProgram, academicYear, isSeniorHigh } from 
 import { displayProfileValue, formatStudentName } from '../lib/studentProfile.js'
 import Avatar from './Avatar.jsx'
 import { displayPhilippinePhone } from '../lib/phone.js'
+import '../styles/student-portal.css'
 
 function ProfileField({ label, value }) {
   const isMissing = value === 'Not provided'
@@ -16,7 +17,7 @@ function ProfileField({ label, value }) {
 function StudentProfile({ profile, username, loading, error }) {
   if (loading) {
     return (
-      <section className="profile-card" aria-live="polite">
+      <section className="student-page profile-card" aria-live="polite">
         <div className="skeleton profile-heading-skeleton" />
         <div className="profile-details-grid">
           {[1, 2, 3, 4, 5, 6].map((item) => <div className="skeleton profile-field-skeleton" key={item} />)}
@@ -27,7 +28,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
   if (!profile) {
     return (
-      <section className="profile-card profile-unavailable">
+      <section className="student-page profile-card profile-unavailable">
         <p className="eyebrow">Student profile</p>
         <h2>Profile Information Is Unavailable</h2>
         <p>{error || 'No student record is linked to this account.'}</p>
@@ -37,13 +38,12 @@ function StudentProfile({ profile, username, loading, error }) {
 
 
   return (
-    <section className="profile-card">
-      <header className="profile-hero portal-page-header">
+    <section className="student-page student-profile-page">
+      <header className="profile-hero student-profile-identity">
         <Avatar className="profile-avatar" identity={{ ...profile, username }} />
         <div>
-          <p className="eyebrow">Student profile</p>
           <h2>{formatStudentName(profile)}</h2>
-          <p>{profile.student_number} · {academicProgram(profile)}</p>
+          <p>{profile.student_number}</p>
         </div>
         <span className="profile-readonly-badge">Verified school record</span>
       </header>
@@ -52,8 +52,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Academic Information</h3>
-          <p>Your current student record details.</p>
+          <h3>Academic information</h3>
         </div>
         <dl className="profile-details-grid">
           <ProfileField label="Student number" value={displayProfileValue(profile.student_number)} />
@@ -65,8 +64,7 @@ function StudentProfile({ profile, username, loading, error }) {
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Contact and Account</h3>
-          <p>Information used to identify and contact you.</p>
+          <h3>Contact and account</h3>
         </div>
         <dl className="profile-details-grid">
           <ProfileField label="Email address" value={displayProfileValue(profile.email)} />

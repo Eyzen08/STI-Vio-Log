@@ -1,4 +1,3 @@
-import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -35,21 +34,24 @@ test('student dashboard and DTR render active sessions with live credited-safe t
   const dashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
   const service = await readFile(new URL('../src/components/StudentCommunityService.jsx', import.meta.url), 'utf8')
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = readPortalStyles()
+  const css = await readFile(new URL('../src/styles/student-portal.css', import.meta.url), 'utf8')
+  const panel = await readFile(new URL('../src/components/StudentAttendancePanel.jsx', import.meta.url), 'utf8')
   const countdown = await readFile(new URL('../src/components/ServiceCountdown.jsx', import.meta.url), 'utf8')
   for (const source of [dashboard, service]) {
-    assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
-    assert.match(source, /<ServiceCountdown session=\{session\} now=\{now\}/)
-    assert.match(source, /<AttendanceIndicator/)
-    assert.match(source, /clearInterval\(clock\)/)
+    assert.match(source, /<StudentAttendancePanel/)
+    assert.doesNotMatch(source, /<ServiceCountdown/)
   }
+  assert.match(panel, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)
+  assert.match(panel, /<ServiceCountdown session=\{session\} now=\{now\}/)
+  assert.match(panel, /<AttendanceIndicator/)
+  assert.match(panel, /clearInterval\(clock\)/)
   assert.match(countdown, /Time Out required/)
   assert.match(countdown, /timing.remainingSeconds/)
-  assert.match(dashboard, /Current session time is credited after Time Out is saved\./)
-  assert.match(service, /isActiveServiceSession\(session\) \? 'Remaining session time' : 'Worked'/)
+  assert.match(panel, /Current session time is credited after staff records Time Out\./)
+  assert.match(service, /See current session above/)
   assert.match(app, /setInterval\(refresh, 15000\)/)
   assert.match(app, /document\.visibilityState === 'visible'/)
   assert.match(app, /addEventListener\('visibilitychange', refresh\)/)
   assert.match(app, /dtr=\{studentDtr\}/)
-  assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.student-live-session-body \{ grid-template-columns: 1fr; \}/s)
+  assert.match(css, /@media \(max-width:767px\)[\s\S]*?\.student-current-session \{ grid-template-columns:minmax\(0,1fr\);/s)
 })

@@ -17,13 +17,13 @@ test('canonical page and navigation names keep approved capitalization', () => {
   assert.doesNotMatch(departmentDtr, />Daily time record</)
 })
 
-test('headings and actions use title case while descriptions stay sentence case', () => {
+test('compact student labels and account actions retain their approved wording', () => {
   const dashboard = source('components/StudentDashboard.jsx')
   const account = source('components/AccountSecuritySettings.jsx')
 
-  assert.match(dashboard, />Service Session in Progress</)
-  assert.match(dashboard, />My QR Code</)
-  assert.match(dashboard, />View All</)
+  assert.match(dashboard, />Service progress</)
+  assert.match(dashboard, />My QR code</)
+  assert.match(dashboard, />View all</)
   assert.match(account, />Change Password</)
   assert.match(account, /Changing your password signs out other sessions\./)
 })
