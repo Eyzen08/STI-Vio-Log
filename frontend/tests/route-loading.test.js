@@ -6,6 +6,14 @@ const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const main = await readFile(new URL('../src/main.jsx', import.meta.url), 'utf8')
 const boundary = await readFile(new URL('../src/components/RouteErrorBoundary.jsx', import.meta.url), 'utf8')
 
+test('portal base and overrides load in cascade order before rendering', () => {
+  const base = main.indexOf("await import('./styles/portal-system.css')")
+  const overrides = main.indexOf("await import('./styles/portal-overrides.css')")
+  const dashboard = main.indexOf("await import('./styles/admin-dashboard.css')")
+  const render = main.indexOf('createRoot(')
+  assert.ok(base >= 0 && base < overrides && overrides < dashboard && dashboard < render)
+})
+
 test('department student, follow-up, and attendance screens remain in the stable entry bundle', () => {
   assert.match(app, /import DepartmentStudents from '\.\/components\/DepartmentStudents\.jsx'/)
   assert.match(app, /import DepartmentNonCompliance from '\.\/components\/DepartmentNonCompliance\.jsx'/)

@@ -2536,7 +2536,7 @@ function App() {
      * ==========================================================
      */
 
-    if (activeView === 'Clearance') return <AdminClearanceCertificates token={token} />
+    if (activeView === 'Clearance' || activeView === 'Awaiting Clearance') return <AdminClearanceCertificates key={activeView} token={token} awaitingOnly={activeView === 'Awaiting Clearance'} onNavigate={navigateTo} />
 
     /*
      * ==========================================================

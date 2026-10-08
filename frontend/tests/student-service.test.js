@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -34,7 +35,7 @@ test('student dashboard and DTR render active sessions with live credited-safe t
   const dashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
   const service = await readFile(new URL('../src/components/StudentCommunityService.jsx', import.meta.url), 'utf8')
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   const countdown = await readFile(new URL('../src/components/ServiceCountdown.jsx', import.meta.url), 'utf8')
   for (const source of [dashboard, service]) {
     assert.match(source, /setInterval\(\(\) => setNow\(Date\.now\(\)\), 1000\)/)

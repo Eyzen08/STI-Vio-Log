@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -8,7 +9,7 @@ const mfa = await readFile(new URL('../src/components/MfaChallenge.jsx', import.
 const password = await readFile(new URL('../src/components/StudentPasswordAccess.jsx', import.meta.url), 'utf8')
 const onboarding = await readFile(new URL('../src/components/StudentOnboarding.jsx', import.meta.url), 'utf8')
 const admin = await readFile(new URL('../src/components/AdminAccountSettings.jsx', import.meta.url), 'utf8')
-const styles = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+const styles = readPortalStyles()
 
 test('OTP helpers keep only six numeric digits', () => {
   assert.equal(sanitizeOtp('1a2-3 4567'), '123456')

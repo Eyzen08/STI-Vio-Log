@@ -1,10 +1,11 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 
 const dashboard=fs.readFileSync(new URL('../src/components/SystemDashboard.jsx',import.meta.url),'utf8')
 const routes=fs.readFileSync(new URL('../src/lib/routes.js',import.meta.url),'utf8')
-const portalStyles=fs.readFileSync(new URL('../src/styles/portal-system.css',import.meta.url),'utf8')
+const portalStyles=readPortalStyles()
 
 test('unified System Monitoring uses account search and one direct password-confirmed action',()=>{
   assert.match(dashboard,/api\/system\/accounts\?search=/)

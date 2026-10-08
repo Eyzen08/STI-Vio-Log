@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -46,13 +47,13 @@ test('sidebar tooltips describe every permitted item with the approved copy', ()
 test('administrator sidebar follows the requested hierarchy and child order', () => {
   assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
     'Dashboard', 'Students',
-    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
+    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance', 'Awaiting Clearance']],
     'Messages', 'Notifications', ['Reports', ['Reports', 'Audit Log', 'Analytics & Trends']],
     ['System & Management', ['Departments & Officer Accounts', 'Duplicate Review', 'System Monitoring', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
     'Dashboard', 'Students',
-    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance']],
+    ['Discipline', ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance', 'Awaiting Clearance']],
     'Messages', 'Notifications', ['Reports', ['Reports', 'Analytics & Trends']], ['System & Management', ['Settings']]
   ])
 })
@@ -142,7 +143,7 @@ test('department mobile navigation places Service after QR Scan', () => {
 })
 
 test('Daily time record light header overrides legacy hero colors', async () => {
-  const portalCss = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const portalCss = readPortalStyles()
   assert.match(portalCss, /:root:not\(\[data-theme='dark'\]\) \.dtr-intro\.portal-page-header :is\(h2, strong\)/)
   assert.match(portalCss, /:root:not\(\[data-theme='dark'\]\) \.dtr-intro\.portal-page-header :is\(\.eyebrow, p\)/)
   assert.match(portalCss, /:root:not\(\[data-theme='dark'\]\) \.dtr-intro\.portal-page-header > span/)

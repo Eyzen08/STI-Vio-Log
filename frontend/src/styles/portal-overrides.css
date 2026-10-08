@@ -1,0 +1,2127 @@
+/* FINAL THEME CASCADE GUARD — this must remain the last color-bearing block. */
+:root[data-theme='dark'] :is(
+  .management-page-header,.dashboard-card,.table-card,.stat-card,.management-metric,
+  .department-summary-grid > article,.officer-directory > article,.certificate-student-card,
+  .component-health-card,.registration-directory,.duplicate-list-pane,
+  .duplicate-compare-pane,.signature-management,.notification-list,.profile-menu-popover,
+  .messages-workspace,.conversation-pane,.chat-pane,.app-modal,.service-time-assignment-list > article
+) {
+  border-color: var(--border-subtle) !important;
+  background-color: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(
+  .directory-toolbar,.management-filter-bar,.clearance-directory-filters,.duplicate-filters,
+  .report-filter-card .student-form-grid,.report-filter-actions,.audit-filter-card .student-form,
+  .student-record-overview,.record-detail-drawer > section,.drawer-intro,.email-verification-box,
+  .duplicate-source-grid > article,.duplicate-match-banner,.duplicate-safety-note,
+  .conversation-pane-header,.conversation-list,.message-record-note,.chat-composer,.service-time-summary > div,.service-time-live dl div
+) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] :is(.app-modal-header,.app-modal--drawer .app-modal-header) {
+  border-color: var(--border-subtle) !important;
+  background: var(--modal-header-surface) !important;
+}
+
+:root[data-theme='dark'] .app-modal-body,
+:root[data-theme='dark'] .modal-actions {
+  border-color: var(--border-subtle) !important;
+  background: var(--modal-surface) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .app-modal :is(h1,h2,h3,h4,strong,label) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-modal :is(input,select,textarea) { border-color:var(--border-strong) !important; background:var(--control-background) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal-body form > button:not([type='button']):not(.danger-button):last-child { border-color:var(--action-primary-surface) !important; background:var(--action-primary-surface) !important; color:var(--text-on-accent) !important; }
+
+/* Keep every validation and destructive state on the shared danger palette. */
+:root[data-theme='dark'] .error-message {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.field-error,.registration-field-error,.password-requirements .invalid,.danger-text) {
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(input,select,textarea)[aria-invalid='true'] {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(input,select,textarea)[aria-invalid='true']:focus-visible {
+  outline-color:var(--color-danger) !important;
+}
+:root[data-theme='dark'] .account-action-notice--danger {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .danger-button {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .danger-button:hover:not(:disabled),
+:root[data-theme='dark'] .danger-button:active:not(:disabled) {
+  border-color:var(--color-danger) !important;
+  background:var(--color-danger) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] .danger-button:focus-visible {
+  outline-color:var(--color-danger) !important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--color-danger) 35%,transparent) !important;
+}
+
+/* The discard prompt lives in a portal, outside the themed app shell. */
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):not(:disabled) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):hover:not(:disabled) {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive-hover) !important;
+  color:var(--link-hover) !important;
+}
+:root[data-theme='dark'] .app-modal .discard-edits button:not(.danger-button):focus-visible {
+  outline-color:var(--link-color) !important;
+}
+
+:root[data-theme='dark'] .main-panel--messages :is(.messages-workspace,.conversation-pane,.chat-pane,.chat-header,.chat-composer) {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+
+:root[data-theme='dark'] .main-panel--messages :is(.conversation-pane-header,.conversation-list) { background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more) { border-color:var(--border-subtle) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:not(.conversation-load-more):hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .main-panel .conversation-list > button:is(.active,[aria-current='true']) { border-color:var(--link-color) !important; background:var(--surface-selected) !important; }
+:root[data-theme='dark'] .main-panel--messages .chat-history { background:radial-gradient(circle at 1px 1px,rgba(121,194,255,.07) 1px,transparent 0) 0 0/22px 22px,var(--chat-canvas) !important; }
+:root[data-theme='dark'] .message-bubble { border-color:var(--border-subtle) !important; background:var(--message-incoming-surface) !important; color:var(--message-incoming-text) !important; }
+:root[data-theme='dark'] .message-bubble-row.mine .message-bubble { border-color:color-mix(in srgb,var(--message-outgoing-surface) 65%,white) !important; background:var(--message-outgoing-surface) !important; color:var(--message-outgoing-text) !important; }
+:root[data-theme='dark'] .message-bubble footer { color:var(--message-metadata) !important; }
+:root[data-theme='dark'] .message-bubble-row.mine footer { color:rgba(255,255,255,.82) !important; }
+
+:root[data-theme='dark'] .auth-shell .login-page,
+:root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas) !important; }
+:root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle) !important; background:var(--surface-overlay) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary) !important; }
+
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button) { border-color:var(--border-strong) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button):hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
+
+:root[data-theme='dark'] .student-live-clock { background:var(--surface-selected) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .student-live-clock :is(span,small) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .student-live-session dl div { border-color:var(--border-subtle) !important; background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .student-active-session time { color:var(--link-color) !important; }
+:root[data-theme='dark'] :is(.active-attendance-clock,.service-time-live time) { color:var(--link-color) !important; }
+:root[data-theme='dark'] .service-time-live { border-color:var(--link-color) !important; background:var(--surface-selected) !important; }
+
+/* Notifications: prevent legacy hero, row, badge, and unread colors leaking through. */
+:root[data-theme='dark'] .notifications-hero {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-md) !important;
+}
+:root[data-theme='dark'] .notifications-hero :is(h2,strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .notifications-hero :is(.eyebrow,p,span) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .notifications-hero > div:last-child {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .notification-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .notification-list > article:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .notification-list > article.unread { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .notification-heading h4 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .notification-list :is(p,time) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .notification-heading > span {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .notification-indicator { background:var(--text-muted) !important; }
+:root[data-theme='dark'] .notification-list .unread .notification-indicator {
+  background:var(--status-info-text) !important;
+  box-shadow:0 0 0 4px var(--status-info-surface) !important;
+}
+
+/* Clearance Management: keep tab cards and bounded records distinct in dark mode. */
+:root[data-theme='dark'] .clearance-panel-tabs {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button:not([aria-selected='true']) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:var(--shadow-sm) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button:not([aria-selected='true']):hover {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .main-panel .clearance-panel-tabs > button[aria-selected='true'] {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .clearance-panel-tabs button > span { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .clearance-panel-tabs button[aria-selected='true'] > span { background:var(--link-color) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .clearance-panel[data-panel='history'] .table-wrap thead th {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:0 1px var(--border-subtle) !important;
+}
+:root[data-theme='dark'] :is(.clearance-panel-tabs,.certificate-student-list,.signature-directory,.clearance-panel[data-panel='history'] .table-wrap) {
+  scrollbar-color:var(--border-strong) var(--surface-nested);
+}
+
+/* System Monitoring: theme every nested account-control and navigation surface. */
+:root[data-theme='dark'] .system-dashboard .component-health-card > p b { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .system-dashboard .component-health-card .component-remediation {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .monitoring-slide-title { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .main-panel .monitoring-panel-tabs > button:not([aria-selected='true']) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .main-panel .monitoring-panel-tabs > button:not([aria-selected='true']):hover {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .monitoring-slide .table-wrap thead th {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+  box-shadow:0 1px var(--border-subtle) !important;
+}
+:root[data-theme='dark'] :is(.monitoring-panel-tabs,.account-action-results,.monitoring-slide .table-wrap) {
+  scrollbar-color:var(--border-strong) var(--surface-nested);
+}
+:root[data-theme='dark'] :is(.account-directory-panel,.account-action-form) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .account-directory-search {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .account-directory-search svg { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .main-panel .account-action-results > button {
+  border-color:transparent !important;
+  background:transparent !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .main-panel .account-action-results > button:hover {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] .main-panel .account-action-results > button.selected {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  box-shadow:inset .18rem 0 var(--link-color) !important;
+}
+:root[data-theme='dark'] .account-action-results small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .account-result-avatar {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .account-action-results .is-active {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .account-action-results .is-locked {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .selected-account-summary {
+  border:1px solid var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .selected-account-summary div > span { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .selected-account-summary strong { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .selected-account-summary small,
+:root[data-theme='dark'] .account-action-form > label small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .account-action-form > label { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .account-action-restriction {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+:root[data-theme='dark'] .system-dashboard .temporary-credential {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .system-dashboard .temporary-credential :is(span,small) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .system-dashboard .temporary-credential strong { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .system-dashboard .account-action-tabs > button {
+  border:1px solid var(--border-subtle) !important;
+  border-radius:.5rem !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .system-dashboard .account-action-tabs > button[aria-selected='true'] { border-color:var(--link-color) !important; }
+
+/* Portaled forms and drawers must not depend on an .app-shell ancestor. */
+:root[data-theme='dark'] .app-modal :is(.student-form-grid,.account-action-form,.department-officer-create,.registration-pending) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal .account-action-form .student-form-grid {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .app-modal :is(.student-form-grid,.account-action-form,.account-reason-field) label,
+:root[data-theme='dark'] .app-modal .account-reason-field > span { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .app-modal :is(.account-reason-field,.student-form-grid) small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-modal .account-action-notice {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending code {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal :is(input,select,textarea) {
+  border-color:var(--border-strong) !important;
+  background-color:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .app-modal select option { background:var(--control-background) !important; color:var(--text-primary) !important; }
+
+/* Guidance keeps its information palette even under generic paragraph rules. */
+:root[data-theme='dark'] .form-guidance,
+:root[data-theme='dark'] :is(.app-shell,.app-modal) p.form-guidance {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+
+/* :disabled includes controls disabled by a parent fieldset in review drawers. */
+:root[data-theme='dark'] .app-modal :is(input,select,textarea):disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  opacity:1;
+}
+
+/* Wizard steps, modal actions, and disabled controls use intentional dark states. */
+:root[data-theme='dark'] .app-modal .compact-stepper { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .app-modal .compact-stepper button {
+  border:1px solid var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button b {
+  background:var(--surface-nested) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button.active {
+  border-color:var(--link-color) !important;
+  background:var(--surface-selected) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .app-modal .compact-stepper button.active b { background:var(--color-primary) !important; color:var(--text-on-accent) !important; }
+:root[data-theme='dark'] .app-modal .compact-stepper button:disabled,
+:root[data-theme='dark'] .app-modal :is(button,.primary-action,.primary-row-action,.submit-btn):disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .app-modal :is(.registration-review-actions,.wizard-actions) button:not(.danger-button):not(:disabled),
+:root[data-theme='dark'] .record-detail-drawer > button:not(:disabled) {
+  border-color:var(--action-primary-surface) !important;
+  background:var(--action-primary-surface) !important;
+  color:var(--text-on-accent) !important;
+}
+:root[data-theme='dark'] .app-modal :is(.registration-review-actions,.wizard-actions) .secondary-button:not(:disabled) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+
+/* Detail drawers inherit modal semantics for every nested record surface. */
+:root[data-theme='dark'] .record-detail-drawer > header { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .record-detail-drawer :is(h3,h4,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .record-detail-drawer :is(p,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .record-detail-drawer dl { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .record-detail-drawer dl div { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .record-detail-drawer > section { border-color:var(--border-subtle) !important; background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .record-progress { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .record-progress-heading strong { color:var(--link-color) !important; }
+
+/* Shared badges must not retain the pale light-theme pill. */
+:root[data-theme='dark'] .status-badge {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] :is(.status-complete,.status-completed,.status-clear,.status-cleared,.status-qualified,.status-issued,.availability-available) {
+  border-color:var(--status-success-text) !important;
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] :is(.status-active,.status-open,.status-in-progress,.status-pending,.status-needs-service,.attendance-state,.availability-unavailable) {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.status-blocked,.status-revoked) {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.status-invalid-cancel,.status-not-eligible,.status-no-service-required,.status-badge--muted,.readonly-badge) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+}
+
+/* Header account controls and menu states use the same interactive hierarchy. */
+:root[data-theme='dark'] .sidebar .brand {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-sidebar) !important;
+  box-shadow:none !important;
+  margin: 0 0 26px;
+}
+:root[data-theme='dark'] .profile-menu-trigger .account-summary strong,
+:root[data-theme='dark'] .profile-menu-popover header strong,
+:root[data-theme='dark'] :is(.student-directory-table,.officer-directory,.account-action-results,.selected-account-summary,.record-detail-drawer) :is(.student-name,.officer-name,.account-name,h3) {
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .profile-menu-trigger .account-summary small,
+:root[data-theme='dark'] .profile-menu-popover header small,
+:root[data-theme='dark'] :is(.student-directory-table,.officer-directory,.account-action-results,.selected-account-summary,.record-detail-drawer) :is(.student-number,.username,.identifier,small) {
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .main-panel .profile-menu-trigger,
+:root[data-theme='dark'] .main-panel .profile-menu-trigger[aria-expanded='true'] {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .main-panel .profile-menu-trigger:hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .profile-menu-trigger .profile-menu-chevron,
+:root[data-theme='dark'] .profile-menu-trigger[aria-expanded='true'] .profile-menu-chevron {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .profile-menu-popover header { border-color:var(--border-subtle) !important; background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .profile-menu-popover hr { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .profile-menu-popover .profile-logout { color:var(--status-danger-text) !important; }
+
+/* Table and workflow controls retain dark surfaces in every state. */
+:root[data-theme='dark'] :is(.icon-row-action,.row-action-trigger,.inline-actions button,.table-actions button):not(.primary-row-action):not(.danger-button) {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] :is(.icon-row-action,.row-action-trigger,.inline-actions button,.table-actions button):not(.primary-row-action):not(.danger-button):hover:not(:disabled) {
+  border-color:var(--link-color) !important;
+  background:var(--surface-interactive-hover) !important;
+  color:var(--link-hover) !important;
+}
+:root[data-theme='dark'] .main-panel button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+  box-shadow:none !important;
+}
+
+/* Student routes: close legacy light-card leaks on every responsive layout. */
+:root[data-theme='dark'] :is(
+  .page-intro,.violation-card,.service-progress,.violations-empty,.qr-display-card,
+  .qr-guidance > div,.service-assignments,.dtr-card
+) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-md) !important;
+}
+:root[data-theme='dark'] :is(.page-intro,.violation-card,.violation-details,.service-progress,.qr-display-card,.qr-guidance > div) :is(h1,h2,h3,h4,strong,dd) {
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.page-intro,.violation-card,.violation-details,.service-progress,.qr-display-card,.qr-guidance > div) :is(p,dt,small) {
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] :is(.service-progress-heading,.timeline li,.qr-guidance > div) > span {
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .record-count {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary,
+:root[data-theme='dark'] .violations-page .violation-summary:active {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary:hover {
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary[aria-expanded='true'] {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .violations-page .violation-summary-main h3 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .violations-page .violation-summary-main > p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .violations-page .violation-toggle {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .violation-details {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .progress-track { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .timeline li:not(:last-child)::before { background:var(--border-strong) !important; }
+:root[data-theme='dark'] .timeline-marker {
+  border-color:var(--surface-selected) !important;
+  background:var(--color-primary) !important;
+}
+:root[data-theme='dark'] .severity-minor {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .severity-major {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .severity-grave {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .violations-empty > span,
+:root[data-theme='dark'] .profile-readonly-badge {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article {
+  border-color:var(--border-subtle) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article :is(strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.assignment-list,.session-list) > article :is(span,small,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .dtr-filters label { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .dtr-filters input {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+  min-height: var(--filter-height);
+}
+:root[data-theme='dark'] .student-qr-frame {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .qr-student-summary { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .qr-student-summary span,
+:root[data-theme='dark'] .qr-security-note { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .skeleton {
+  background:linear-gradient(90deg,var(--surface-nested) 25%,var(--surface-interactive) 50%,var(--surface-nested) 75%) !important;
+  background-size:200% 100% !important;
+}
+:root[data-theme='dark'] .mobile-bottom-nav {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-overlay) !important;
+}
+:root[data-theme='dark'] .mobile-bottom-nav button:not(.active) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .mobile-bottom-nav button.active,
+:root[data-theme='dark'] .mobile-bottom-nav button.messages-nav-item.active {
+  background:#076dcc !important;
+  color:#ffffff !important;
+}
+
+/* Dashboard standing states must use dark semantic status surfaces on mobile and desktop. */
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) :is(strong,p,span,.offense-indicator) {
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail):has(:is(.offense-red,.offense-critical)) {
+  border-color:var(--status-danger-text) !important;
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail):has(:is(.offense-red,.offense-critical)) :is(strong,p,span,.offense-indicator) {
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] :is(.student-standing-alert,.standing-detail) .offense-dot {
+  border-color:var(--surface-canvas) !important;
+}
+
+/* Student profile: keep hero, section dividers, and read-only footer in one dark palette. */
+:root[data-theme='dark'] .profile-card .profile-hero {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .profile-card .profile-hero :is(.eyebrow,h2) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .profile-card .profile-hero p:last-child { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .profile-card .profile-section { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .profile-card .profile-section-heading h3,
+:root[data-theme='dark'] .profile-card .profile-field dd { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .profile-card :is(.profile-section-heading p,.profile-field dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .profile-card .profile-field .profile-value-missing { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .profile-card .profile-help {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-secondary) !important;
+}
+
+/* Dashboard clearance state must not retain the legacy pale warning panel. */
+:root[data-theme='dark'] .clearance-summary-card .clearance-state {
+  border:1px solid var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state :is(i,strong,span) {
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state--ready {
+  border-color:var(--status-success-text) !important;
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .clearance-summary-card .clearance-state--ready :is(i,strong,span) {
+  color:var(--status-success-text) !important;
+}
+
+/* Required password change is authenticated, so it cannot depend on .auth-shell. */
+.password-change-page .password-change-intro {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  color:#fff;
+  background:#061b31;
+}
+.password-change-page .password-change-intro::before {
+  content:'';
+  position:absolute;
+  z-index:-1;
+  inset:0;
+  background:linear-gradient(180deg,rgba(4,26,57,.2),rgba(3,22,47,.92));
+}
+.password-change-page .login-campus-image {
+  position:absolute;
+  z-index:-2;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 43%;
+  transition:opacity 160ms ease;
+}
+.password-change-page .password-change-intro-content { position:relative; z-index:1; }
+.password-change-page .password-change-intro :is(h2,p,.login-kicker) { color:#fff !important; }
+:root[data-theme='dark'] .password-change-card {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card :is(.auth-card-header h3,.login-form label,.password-requirements strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .password-change-card .auth-card-header p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .password-change-card :is(input,.password-visibility) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card .password-visibility { color:var(--link-color) !important; }
+:root[data-theme='dark'] .password-change-card .password-requirements {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .password-change-card .password-requirements .valid { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .password-change-card .password-requirements .invalid { color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress li { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress .active { color:var(--link-color) !important; }
+:root[data-theme='dark'] .password-change-card .onboarding-progress .complete { color:var(--status-success-text) !important; }
+
+/* Registration and review flows use semantic surfaces, including portaled UI. */
+:root[data-theme='dark'] .student-onboarding :is(input,select,textarea),
+:root[data-theme='dark'] .registration-review-drawer :is(textarea,input,select) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+}
+:root[data-theme='dark'] .student-onboarding .password-requirements {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .student-onboarding .password-requirements .valid { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .student-onboarding .password-requirements .invalid { color:var(--status-danger-text) !important; }
+:root[data-theme='dark'] .app-modal .registration-pending {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending :is(strong,p) { color:var(--status-warning-text) !important; }
+:root[data-theme='dark'] .app-modal .registration-pending button:not(:disabled) {
+  border-color:var(--color-primary) !important;
+  background:var(--color-primary) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] .app-modal .registration-pending button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+}
+:root[data-theme='dark'] .registration-review-list > article,
+:root[data-theme='dark'] .registration-review-drawer dl,
+:root[data-theme='dark'] .registration-review-drawer dl div {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .registration-review-list > article:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .registration-review-drawer > header { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .registration-review-drawer :is(h3,dd,label) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .registration-review-drawer :is(p,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .registration-review-drawer mark {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+/* Clearance variants and nested status panels must stay on dark tokens. */
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-requirements,.clearance-certificate-actions,.clearance-history-card) {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-requirements,.clearance-certificate-actions,.clearance-history-card) :is(h2,h3,h4,strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.clearance-hero,.clearance-certificate-actions,.clearance-history-card) :is(p,span,dt) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .clearance-pending .clearance-status-mark {
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .clearance-cleared .clearance-status-mark,
+:root[data-theme='dark'] .clearance-ready {
+  background:var(--status-success-surface) !important;
+  color:var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .clearance-not-eligible .clearance-status-mark,
+:root[data-theme='dark'] .clearance-requirements ul {
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+:root[data-theme='dark'] .clearance-requirements ul { margin:0; padding:12px 14px 12px 2rem; border-radius:10px; }
+:root[data-theme='dark'] .clearance-record-list > article { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .clearance-empty h4 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }
+
+/* Administrative mobile cards and drawers must override late legacy light surfaces. */
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:nth-child(even) {
+  background:var(--surface-raised) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) td::before { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) td { color:var(--text-primary) !important; }
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:is(:hover,:focus-within),
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:nth-child(even):is(:hover,:focus-within) {
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) tr:is(.selected,[aria-selected='true']) {
+  background:var(--surface-selected) !important;
+}
+:root[data-theme='dark'] :is(.management-record-table,.responsive-record-table,.audit-record-table) .mini-progress,
+:root[data-theme='dark'] .student-directory-table .table-progress > div { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .student-directory-table .table-actions { background:transparent !important; }
+:root[data-theme='dark'] .management-record-table .row-action-trigger {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .management-record-table .row-action-trigger:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .management-record-table .row-action-menu > div {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-overlay) !important;
+  color:var(--text-primary) !important;
+}
+
+/* Mobile management workspaces: compact summaries and complete record cards. */
+@media (max-width:767px) {
+  .certificate-admin { gap:.75rem; margin-bottom:0; }
+  .certificate-admin > .management-page-header { gap:.35rem; margin:0; padding:.15rem 0; }
+  .certificate-admin > .management-page-header h2 { font-size:var(--text-page-title); line-height:1.15; text-wrap:balance; }
+  .certificate-admin > .management-page-header p { display:block; max-width:38rem; font-size:var(--text-base); line-height:1.45; text-wrap:pretty; }
+  .certificate-admin > .management-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); gap:.55rem; margin:0; }
+  .certificate-admin .management-metric { min-width:0; min-height:4.75rem; gap:.65rem; padding:.75rem; }
+  .certificate-admin .management-metric i { width:2.25rem; height:2.25rem; border-radius:.55rem; font-size:var(--text-lg); }
+  .certificate-admin .management-metric strong { font-size:var(--text-metric); }
+  .certificate-admin .management-metric span { font-size:var(--text-xs); overflow-wrap:anywhere; }
+
+  .clearance-panel-tabs { gap:.3rem; padding:.3rem; }
+  .main-panel .clearance-panel-tabs > button { min-height:4rem; flex-direction:column; align-items:center; justify-content:center; gap:.3rem; padding:.45rem .25rem; }
+  .clearance-panel-tabs button > b { font-size:var(--text-base); line-height:1.25; text-align:center; overflow-wrap:anywhere; }
+  .clearance-panel[data-panel='students'] .certificate-student-list,
+  .clearance-panel[data-panel='signatures'] .signature-directory,
+  .clearance-panel[data-panel='history'] .table-wrap { max-height:none; overflow:visible; scrollbar-gutter:auto; }
+  .clearance-panel[data-panel='history'] .table-wrap { width:100%; border:0; border-radius:0; }
+  .clearance-panel[data-panel='history'] .management-record-table { width:100%; min-width:0 !important; display:block; table-layout:auto; background:transparent; }
+  .clearance-panel[data-panel='history'] .management-record-table tbody { width:100%; display:grid; gap:.65rem; padding:0 .8rem .8rem; box-sizing:border-box; }
+  .clearance-panel[data-panel='history'] .management-record-table tr { width:100%; min-width:0; margin:0; box-sizing:border-box; }
+  .clearance-panel[data-panel='history'] .management-record-table td { min-width:0; max-width:100%; overflow-wrap:anywhere; word-break:normal; }
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Certificate'],
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Student'],
+  .clearance-panel[data-panel='history'] .management-record-table td[data-label='Actions'] { grid-column:1 / -1; }
+  .clearance-panel[data-panel='history'] .management-record-table .status-badge { width:fit-content; white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
+  .certificate-admin .certificate-grid > .table-card > .table-header { padding:.85rem .8rem .65rem; }
+  .certificate-admin .clearance-directory-filters { gap:.6rem; padding:0 .8rem .7rem; }
+  .certificate-admin .clearance-directory-filters :is(input,select) { min-height:var(--filter-height); font-size:var(--text-control); }
+  .certificate-admin .clearance-status-legend { gap:.4rem .8rem; padding:0 .8rem .7rem; }
+  .certificate-admin .certificate-student-list { padding:0 .8rem .8rem; }
+
+  .monitoring-slide-scroll { gap:.75rem; padding:0; }
+  .monitoring-slide-scroll > .table-card { padding:.8rem; }
+  .monitoring-slide-scroll > .table-card .table-header { gap:.25rem; }
+  .monitoring-slide-scroll > .table-card .table-header > span { font-size:var(--text-base); }
+  .monitoring-slide .operations-filter { gap:.6rem; margin:.75rem 0; }
+  .monitoring-slide .operations-filter :is(input,select) { min-height:var(--control-height); font-size:var(--text-control); }
+  .main-panel .monitoring-slide .operations-filter > button { width:100%; min-height:2.75rem; }
+  .monitoring-slide :is(.monitoring-slide-scroll > section:nth-of-type(2),.monitoring-slide-scroll > section:nth-of-type(3)) .table-wrap { max-height:none; min-height:0; overflow:visible; }
+
+  .responsive-record-table.system-event-table,
+  .responsive-record-table.system-event-table tbody { display:block; width:100%; }
+  .responsive-record-table.system-event-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); }
+  .responsive-record-table.system-event-table tbody { display:grid; gap:.6rem; padding:0; }
+  .responsive-record-table.system-event-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem 1rem; margin:0; padding:.85rem; border:1px solid var(--color-border); border-radius:.65rem; background:var(--color-surface); box-shadow:var(--shadow-sm); }
+  .responsive-record-table.system-event-table td { min-width:0; display:grid !important; align-content:start; gap:.2rem; padding:0 !important; border:0 !important; color:var(--color-text); overflow-wrap:anywhere; word-break:normal; }
+  .responsive-record-table.system-event-table td::before { content:attr(data-label); color:var(--color-text-secondary); font-size:.65rem; font-weight:600; letter-spacing:.02em; }
+  .responsive-record-table.system-event-table td[data-label='Actor'],
+  .responsive-record-table.system-event-table td[data-label='Account'],
+  .responsive-record-table.system-event-table td[data-label='Target'] { grid-column:1 / -1; }
+  .responsive-record-table.system-event-table td[data-label='Result'] { justify-items:start; }
+  .responsive-record-table.system-event-table .status-badge { width:fit-content; max-width:100%; white-space:nowrap; word-break:keep-all; overflow-wrap:normal; }
+  .responsive-record-table.system-event-table .responsive-record-table-empty { display:block; }
+  .responsive-record-table.system-event-table .responsive-record-table-empty td { display:block !important; }
+  .responsive-record-table.system-event-table .responsive-record-table-empty td::before { content:none; }
+  .responsive-record-table.system-event-table .empty-state { margin:0; padding:.75rem; text-align:center; }
+
+  .responsive-record-table td { overflow-wrap:anywhere; word-break:normal; }
+  .responsive-record-table .status-badge { width:fit-content; max-width:100%; white-space:normal; word-break:keep-all; overflow-wrap:normal; }
+}
+
+@media (max-width:390px) {
+  .certificate-admin > .management-metrics { grid-template-columns:1fr; }
+  .certificate-admin .management-metric { min-height:4.25rem; }
+  .responsive-record-table.system-event-table tr { grid-template-columns:1fr; }
+  .responsive-record-table.system-event-table td[data-label] { grid-column:1; }
+}
+
+/* Duplicate Review loading, list, comparison, and safety states. */
+:root[data-theme='dark'] .duplicate-skeleton span {
+  background:linear-gradient(90deg,var(--surface-interactive),var(--surface-interactive-hover),var(--surface-interactive)) !important;
+  background-size:200% 100% !important;
+}
+:root[data-theme='dark'] .duplicate-skeleton p,
+:root[data-theme='dark'] .duplicate-filters label { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-filters :is(input,select) {
+  border-color:var(--border-strong) !important;
+  background:var(--control-background) !important;
+  color:var(--text-primary) !important;
+  color-scheme:dark !important;
+  min-height: var(--filter-height);
+}
+:root[data-theme='dark'] .duplicate-list > button {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .duplicate-list > button:hover { background:var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .duplicate-list > button.selected { background:var(--surface-selected) !important; }
+:root[data-theme='dark'] .duplicate-list > button small { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-list > button b {
+  background:var(--status-danger-surface) !important;
+  color:var(--status-danger-text) !important;
+}
+:root[data-theme='dark'] .duplicate-match-banner {
+  border-color:var(--status-info-text) !important;
+  background:var(--status-info-surface) !important;
+  color:var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .duplicate-source-grid article { background:var(--surface-nested) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header { background:var(--surface-interactive) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header strong,
+:root[data-theme='dark'] .duplicate-source-grid dd { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .duplicate-source-grid article header span,
+:root[data-theme='dark'] .duplicate-source-grid dt { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .duplicate-source-grid dl div { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .duplicate-source-grid .match-label { color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .duplicate-safety-note {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+/* Guardian Contact is portaled outside route-specific containers. */
+:root[data-theme='dark'] .guardian-contact-panel { background:var(--surface-raised) !important; color:var(--text-primary) !important; }
+:root[data-theme='dark'] .guardian-contact-grid > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .guardian-contact-grid :is(h4,strong) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .guardian-contact-grid p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .guardian-contact-actions a {
+  border-color:var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--link-color) !important;
+}
+:root[data-theme='dark'] .guardian-contact-actions a:hover { background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
+:root[data-theme='dark'] .guardian-contact-form { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .guardian-contact-panel .registration-review-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .guardian-contact-panel :is(.empty-state,.scope-note) { color:var(--text-secondary) !important; }
+
+/* Department Responsibility drawer cards and history. */
+:root[data-theme='dark'] .responsibility-panel :is(h3,h4,strong,dd) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .responsibility-panel :is(p,dt,.responsibility-list > article > div:first-child span) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .responsibility-list > article {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .responsibility-list dl div { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .assignment-history {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .assignment-history summary { color:var(--link-color) !important; }
+:root[data-theme='dark'] .responsibility-panel button:disabled {
+  border-color:var(--border-subtle) !important;
+  background:var(--control-disabled-background) !important;
+  color:var(--text-muted) !important;
+}
+
+@media (max-width:767px) {
+  .password-change-page .password-change-intro { min-height:15.5rem; }
+  .password-change-page .password-change-intro-content { margin:auto 0 0; }
+}
+
+/* QR attendance field qualifiers must not inherit their pale light-mode pills. */
+:root[data-theme='dark'] .record-fields .record-field-label small {
+  border:1px solid var(--border-strong) !important;
+  background:var(--surface-interactive) !important;
+  color:var(--text-secondary) !important;
+}
+:root[data-theme='dark'] .record-fields label:has([name='attendance_outcome']) .record-field-label small {
+  border-color:var(--status-warning-text) !important;
+  background:var(--status-warning-surface) !important;
+  color:var(--status-warning-text) !important;
+}
+
+/* Public legal pages must switch their surfaces together with dark-theme text. */
+:root[data-theme='dark'] .public-policy-page {
+  background:var(--surface-canvas) !important;
+  color:var(--text-primary) !important;
+}
+:root[data-theme='dark'] .public-policy-brand { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-brand span {
+  background:var(--color-accent) !important;
+  color:var(--surface-canvas) !important;
+}
+:root[data-theme='dark'] :is(.public-policy-signin,.public-policy-primary) {
+  background:var(--message-outgoing-surface) !important;
+  color:var(--message-outgoing-text) !important;
+}
+:root[data-theme='dark'] .public-policy-card {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-raised) !important;
+  color:var(--text-primary) !important;
+  box-shadow:var(--shadow-lg) !important;
+}
+:root[data-theme='dark'] .public-policy-intro {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .public-policy-intro :is(.eyebrow,h1) { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-intro > p:not(.eyebrow) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .public-policy-intro small { color:var(--text-muted) !important; }
+:root[data-theme='dark'] .public-policy-sections { background:var(--surface-raised) !important; }
+:root[data-theme='dark'] .public-policy-sections section { border-color:var(--border-subtle) !important; }
+:root[data-theme='dark'] .public-policy-sections h2 { color:var(--text-primary) !important; }
+:root[data-theme='dark'] .public-policy-sections p { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .public-policy-footer {
+  border-color:var(--border-subtle) !important;
+  background:var(--surface-nested) !important;
+}
+:root[data-theme='dark'] .public-policy-footer nav button { color:var(--link-color) !important; }
+
+/* Deliberately light for printing/scanning; all surrounding UI remains themed. */
+:root[data-theme='dark'] :is(.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img) {
+  color-scheme: light;
+  background: #fff !important;
+  color: #172033 !important;
+}
+
+/* Authenticated navigation is deliberately theme-invariant. */
+.portal-page-header {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 1rem;
+  padding: 12px 28px;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text);
+  box-shadow: 0 0.65rem 1.8rem rgba(14, 55, 101, 0.08);
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 115px;
+}
+
+.portal-page-header::before {
+  position: absolute;
+  top: 0;
+  right: clamp(1rem, 3vw, 2.25rem);
+  width: clamp(4rem, 9vw, 7rem);
+  height: 0.24rem;
+  border-radius: 0 0 0.35rem 0.35rem;
+  background: var(--portal-yellow);
+  content: '';
+  pointer-events: none;
+}
+
+.portal-page-header > * { position: relative; min-width: 0; }
+.portal-page-header > :first-child { flex: 1 1 auto; }
+.profile-card > .portal-page-header > .profile-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 4.5rem;
+  align-self: center;
+  font-size: var(--text-xl);
+  line-height: 1;
+}
+.portal-page-header :is(h1, h2) {
+  margin-block: 0.3rem 0.35rem;
+  color: var(--color-text);
+  font-size: var(--text-page-title);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.portal-page-header :is(p, time) {
+  max-width: 68ch;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.portal-page-header > :is(button, .primary-action, .readonly-badge, .status-badge, .scanner-state, time) {
+  flex: 0 0 auto;
+}
+.profile-card > .portal-page-header {
+  width: calc(100% - 1.5rem);
+  margin: 0.75rem;
+}
+.account-summary-card.portal-page-header { margin-bottom: 1rem; padding: 12px 28px; min-height: 115px; }
+
+/* Daily time record uses shared light header card, not legacy navy hero text. */
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(h2, strong) {
+  color: var(--color-text) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(.eyebrow, p) {
+  color: var(--color-text-secondary) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header > span {
+  border-color: var(--color-border);
+  background: var(--surface-interactive);
+  color: var(--color-text);
+}
+
+:root[data-theme='dark'] .portal-page-header {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+  box-shadow: 0 0.75rem 2rem rgba(0, 8, 18, 0.24) !important;
+  padding: 12px 28px;
+  min-height: 115px;
+}
+:root[data-theme='dark'] .portal-page-header :is(h1, h2, strong) { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .portal-page-header :is(p, time, .page-breadcrumb, .eyebrow) { color: var(--text-secondary) !important; }
+
+@media (max-width: 900px) {
+  .portal-page-header { gap: 1rem; padding: 12px 28px; min-height: 115px; }
+  .portal-page-header :is(.department-officer-tabs, .account-summary-card dl) { max-width: 100%; }
+}
+
+@media (max-width: 767px) {
+  .portal-page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.9rem;
+    margin-bottom: 0.85rem;
+    padding: 1.1rem;
+  }
+  .portal-page-header::before { right: 1rem; width: 3.75rem; }
+  .portal-page-header :is(h1, h2) { max-width: none; font-size: var(--text-page-title); }
+  .portal-page-header :is(p, time) { max-width: 100%; margin-bottom: 0; }
+  .portal-page-header > :is(button, .primary-action, .messages-new-button) { width: 100%; min-height: var(--page-action-height); }
+  .portal-page-header > :is(.readonly-badge, .status-badge, .scanner-state, time) { align-self: flex-start; }
+  .portal-page-header .department-officer-tabs { width: 100%; }
+  .profile-card > .portal-page-header { width: calc(100% - 1rem); margin: 0.5rem; }
+  .profile-card > .portal-page-header > .profile-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-basis: 3.5rem;
+    align-self: flex-start;
+    font-size: var(--text-lg);
+  }
+  .profile-card > .portal-page-header .profile-readonly-badge { align-self: flex-start; margin-left: 0; white-space: normal; }
+
+  /* Messages has a higher-specificity legacy row rule. Keep the shared mobile
+     header stacked so the full-width action cannot squeeze the title. */
+  .main-panel--messages .messages-page-heading.portal-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
+  .main-panel--messages .messages-page-heading.portal-page-header h2 { overflow-wrap: normal; word-break: normal; }
+  .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--page-action-height);
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .portal-page-header { padding: 0.95rem; border-radius: 0.8rem; }
+  .portal-page-header .page-breadcrumb { display: none; }
+  .portal-page-header :is(p, .profile-readonly-badge, .readonly-badge) { overflow-wrap: anywhere; }
+}
+
+/* Messages reserves the viewport for reading, with a compact page toolbar.
+   These scoped rules follow the shared portal header and its mobile variants. */
+.main-panel--messages .messages-page-heading.portal-page-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  margin: 0;
+  box-shadow: var(--shadow-sm);
+}
+.main-panel--messages .messages-page-heading.portal-page-header > div { width:auto; flex:1 1 auto; }
+.main-panel--messages .messages-page-heading .page-breadcrumb { display:none; }
+.main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0 0 4px; font-size:var(--text-page-title); line-height:1.2; }
+.main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { margin:0; font-size:var(--text-base); line-height:1.5; }
+.main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width:auto; min-width:0; min-height:var(--page-action-height); flex:0 0 auto; font-size:var(--text-action); white-space:nowrap; }
+@media (max-width:900px) {
+  .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { display:none; }
+  .main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0; font-size:var(--text-page-title); }
+}
+@media (max-width:480px) {
+  .main-panel--messages .messages-page-heading.portal-page-header { gap:12px; padding:12px; }
+  .main-panel--messages .messages-page-heading.portal-page-header h2 { font-size:var(--text-page-title); }
+  .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { padding-inline:12px !important; }
+}
+
+/* Shared password guidance must be themed in every flow, including admin settings. */
+:root[data-theme='dark'] .password-requirements {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-nested) !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+:root[data-theme='dark'] .password-requirements strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .password-requirements .valid { color: var(--status-success-text) !important; }
+:root[data-theme='dark'] .password-requirements .invalid { color: var(--status-danger-text) !important; }
+
+/* The wrapper owns the search surface and focus ring; the field must not inherit
+   the generic dark input background with its higher specificity. */
+:root[data-theme='dark'] .app-shell .main-panel .topbar-search {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--text-secondary) !important;
+  width: 100%;
+  max-width: var(--topbar-search-width);
+  min-height: var(--control-height);
+}
+:root[data-theme='dark'] .app-shell .main-panel .topbar-search:focus-within { border-color: var(--link-color) !important; }
+:root[data-theme='dark'] .app-shell .main-panel .topbar-search input {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+}
+:root[data-theme='dark'] .app-shell .main-panel .topbar-search input::placeholder { color: var(--control-placeholder) !important; }
+
+/* Brand controls keep the original transparent artwork and separate close button. */
+.sidebar .brand-home {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: .4rem;
+  background: transparent;
+  cursor: pointer;
+}
+.sidebar .brand-home:hover { background: rgba(255,255,255,.08); }
+.sidebar .brand-home:focus-visible { outline: 2px solid #ffffff; outline-offset: 3px; }
+.violation-chevron { transition: transform 160ms ease; }
+.violation-summary[aria-expanded='true'] .violation-chevron { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) {
+  .violation-chevron { transition: none !important; }
+}
+
+/* Recent activity inherits pale icon circles and dividers from the legacy
+   dashboard stylesheet unless each nested surface is explicitly themed. */
+:root[data-theme='dark'] .recent-activity-card li { border-color: var(--border-subtle) !important; }
+:root[data-theme='dark'] .recent-activity-card li i {
+  border: 1px solid var(--border-strong);
+  background: var(--status-info-surface) !important;
+  color: var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .recent-activity-card li strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .recent-activity-card li span { color: var(--text-secondary) !important; }
+
+.app-shell:not(.auth-shell) .sidebar,
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
+  border-color: transparent;
+  background: #07345f;
+  box-shadow: 0.25rem 0 1.15rem rgba(4, 36, 76, 0.14);
+}
+
+.sidebar .brand,
+:root[data-theme='dark'] .sidebar .brand {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0 0 26px;
+}
+
+.sidebar .brand-logo {
+  display: block;
+  width: 144px;
+  max-width: 144px;
+  max-height: 56px;
+  margin: auto;
+  object-fit: contain;
+  mix-blend-mode: normal;
+  transform: none;
+}
+
+.sidebar .nav-group-label,
+:root[data-theme='dark'] .sidebar .nav-group-label {
+  color: #d0e6ff;
+}
+
+.sidebar .nav-item,
+.sidebar .nav-item.messages-nav-item,
+:root[data-theme='dark'] .sidebar .nav-item,
+:root[data-theme='dark'] .sidebar .nav-item.messages-nav-item {
+  color: #e8f4ff;
+  min-height: var(--control-height);
+  font-size: var(--text-base);
+}
+
+.sidebar .nav-item:hover:not(.active),
+:root[data-theme='dark'] .sidebar .nav-item:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.sidebar .nav-item.active,
+.sidebar .nav-item.messages-nav-item.active,
+.sidebar .nav-item.active:hover,
+:root[data-theme='dark'] .sidebar .nav-item.active,
+:root[data-theme='dark'] .sidebar .nav-item.messages-nav-item.active,
+:root[data-theme='dark'] .sidebar .nav-item.active:hover {
+  border-color: #1688ee;
+  background: #0878df;
+  color: #ffffff;
+  box-shadow: 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18);
+}
+
+/* Department account views use one connected, measured segmented switch. */
+.main-panel .department-officer-tabs {
+  --tab-indicator-x: 4px;
+  --tab-indicator-width: 0px;
+  position: relative;
+  isolation: isolate;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  gap: 0;
+  padding: 4px;
+  border: 1px solid #bed2e6;
+  border-radius: 12px;
+  background: #eaf2fa;
+  box-shadow: inset 0 1px 2px rgba(23, 52, 91, 0.05);
+}
+
+.main-panel .department-officer-tabs::before {
+  position: absolute;
+  z-index: 0;
+  top: 4px;
+  bottom: 4px;
+  left: 0;
+  width: var(--tab-indicator-width);
+  border: 1px solid #2378c4;
+  border-radius: 8px;
+  background: #0871ce;
+  box-shadow: 0 2px 5px rgba(7, 69, 126, 0.16);
+  transform: translateX(var(--tab-indicator-x));
+  transition: transform 200ms ease, width 200ms ease;
+  content: '';
+  pointer-events: none;
+}
+
+.main-panel .department-officer-tabs button,
+.main-panel .department-officer-tabs button:first-child,
+.main-panel .department-officer-tabs button:last-child {
+  position: relative;
+  z-index: 1;
+  width: auto;
+  min-height: 44px;
+  padding: 8px 16px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #456783 !important;
+  box-shadow: none !important;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.main-panel .department-officer-tabs button:hover:not(:disabled),
+.main-panel .department-officer-tabs button:first-child:hover:not(:disabled),
+.main-panel .department-officer-tabs button:last-child:hover:not(:disabled) {
+  border: 0 !important;
+  background: transparent !important;
+  color: #0a4f8e !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.main-panel .department-officer-tabs button[aria-selected='true'] {
+  border: 0 !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  transform: none;
+}
+
+.main-panel .department-officer-tabs button[aria-selected='true']::after { content: none; }
+.main-panel .department-officer-tabs button:focus-visible { outline: 3px solid rgba(8, 100, 185, 0.3); outline-offset: 1px; }
+.department-tab-panel { min-width: 0; }
+.department-tab-panel:focus-visible { outline: 3px solid rgba(8, 100, 185, 0.24); outline-offset: 4px; }
+.department-officer-create.department-tab-panel { max-width: 64rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
+
+:root[data-theme='dark'] .main-panel .department-officer-tabs { border-color: var(--border-subtle) !important; background: var(--surface-nested) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs::before { border-color: var(--link-color); background: var(--color-primary); box-shadow: 0 2px 5px rgba(0, 8, 18, 0.28); }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button:hover:not(:disabled) { color: var(--link-hover) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs button[aria-selected='true'] { color: var(--text-on-accent) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel { border-color: var(--border-subtle); background: var(--surface-raised); color: var(--text-primary); }
+
+@media (max-width: 600px) {
+  .main-panel .department-officer-tabs { width: 100%; grid-template-columns: minmax(0, 0.8fr) minmax(0, 2.2fr); }
+  .main-panel .department-officer-tabs button,
+  .main-panel .department-officer-tabs button:first-child,
+  .main-panel .department-officer-tabs button:last-child { width: 100%; min-width: 0; padding-inline: 8px !important; font-size: var(--text-base); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .main-panel .department-officer-tabs::before,
+  .main-panel .department-officer-tabs button { transition: none; }
+}
+
+/* Department service cards must not inherit the legacy light hover surface on touch browsers. */
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:hover,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:active,
+:root[data-theme='dark'] .department-service-page .service-assignment-list > article:focus-within {
+  border-color: var(--border-subtle) !important;
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+:root[data-theme='dark'] .department-service-page .service-assignment-heading :is(h4,strong),
+:root[data-theme='dark'] .department-service-page .service-progress-meta strong { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-service-page .service-assignment-list :is(.service-assignment-heading div span,.service-progress-meta > span,article > p) { color: var(--text-secondary) !important; }
+
+/* Shared light page-header cards override the legacy navy department hero text palette. */
+:root:not([data-theme='dark']) .department-welcome.portal-page-header .eyebrow { color: var(--color-text-secondary) !important; }
+:root:not([data-theme='dark']) .department-welcome.portal-page-header p:not(.eyebrow) { color: var(--color-text-secondary) !important; }
+:root[data-theme='dark'] .department-welcome.portal-page-header :is(.eyebrow,p:not(.eyebrow)) { color: var(--text-secondary) !important; }
+
+/* Inline officer form keeps headings and labels readable in dark mode. */
+:root[data-theme='dark'] .department-officer-create.department-tab-panel :is(.section-heading h3,.student-form label) { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-officer-create.department-tab-panel .section-heading p { color: var(--text-secondary) !important; }
+
+/* Align department administration copy and filters with card content. */
+.department-officer-page {
+  --department-content-inset: 1.75rem;
+}
+
+.department-officer-page .department-welcome {
+  box-sizing: border-box;
+  padding-inline: var(--department-content-inset);
+}
+
+.department-officer-page .directory-toolbar {
+  margin-inline: var(--department-content-inset);
+}
+
+@media (max-width: 900px) {
+  .department-officer-page { --department-content-inset: 1rem; }
+}
+
+@media (max-width: 600px) {
+  .department-officer-page { --department-content-inset: 0; }
+}
+
+/* Attendance status stays explicit in both themes; timers are never live regions. */
+:is(.app-shell,.app-modal) .attendance-indicator {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .25rem;
+  margin-block: .25rem;
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+:is(.app-shell,.app-modal) .attendance-indicator-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .3rem .65rem;
+  border-radius: .4rem;
+  background: var(--surface-interactive);
+  color: var(--text-secondary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+:is(.app-shell,.app-modal) .attendance-indicator--in .attendance-indicator-label {
+  background: var(--status-success-surface);
+  color: var(--status-success-text);
+}
+.attendance-indicator-label i { width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+:is(.app-shell,.app-modal) .attendance-indicator > small { color: var(--text-secondary); font-size: var(--text-sm); }
+.student-attendance-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-block: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--border-subtle); border-radius: .65rem; background: var(--surface-raised); }
+.student-attendance-summary > div { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.student-attendance-summary > .student-attendance-countdowns { display: grid; gap: .75rem; }
+.student-attendance-countdowns > div { display: grid; gap: .25rem; }
+.student-attendance-countdowns > div > span { color: var(--text-secondary); font-size: var(--text-sm); }
+.student-attendance-countdowns time { font-size: var(--text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+.attendance-update-error { margin: .5rem 0; padding: .75rem 1rem; border-left: 3px solid var(--status-warning-text); background: var(--status-warning-surface); color: var(--status-warning-text); font-size: var(--text-base); }
+.attendance-global-error { margin-inline: clamp(1rem, 3vw, 2rem); }
+.attendance-roster-toolbar { padding: .5rem 1.25rem 1rem; }
+.attendance-roster-toolbar label { display: grid; gap: .4rem; color: var(--text-secondary); font-size: var(--text-base); }
+.attendance-roster-toolbar input { width: 100%; min-width: 0; min-height: var(--filter-height); }
+.app-shell .attendance-roster-table { width: 100%; min-width: 0; table-layout: fixed; }
+.attendance-roster-table th:first-child { width: 24%; }
+.attendance-roster-table th:nth-child(2) { width: 27%; }
+.attendance-roster-table td { overflow-wrap: anywhere; white-space: normal; }
+.attendance-roster-session { display: grid; gap: .3rem; padding-block: .35rem; }
+.attendance-roster-session + .attendance-roster-session { margin-top: .5rem; padding-top: .75rem; border-top: 1px solid var(--border-subtle); }
+.attendance-roster-countdown { display: grid; gap: .2rem; }
+.attendance-roster-countdown > span { font-size: var(--text-sm); color: var(--text-secondary); }
+.attendance-roster-countdown time, .department-service-countdown time { font-size: var(--text-sm); font-weight: 700; font-variant-numeric: tabular-nums; }
+.student-live-clocks, .department-service-countdown { display: grid; gap: .6rem; min-width: 0; }
+.app-shell .student-live-clock > span { font-size: var(--text-sm); }
+.app-shell .timer-limit-notice { color: var(--status-warning-text); font-size: var(--text-sm); }
+.department-service-countdown > span { color: var(--text-secondary); font-size: var(--text-sm); }
+.attendance-notice-region { position: fixed; top: 5rem; right: 1.5rem; z-index: 110; max-width: min(32rem, calc(100vw - 2rem)); }
+.attendance-notice { display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid var(--border-strong); border-radius: .65rem; background: var(--surface-raised); color: var(--text-primary); box-shadow: var(--shadow-md); }
+.attendance-notice p { margin: .25rem 0; }
+.attendance-notice button { min-height: 44px; flex-shrink: 0; }
+@media (max-width: 767px) {
+  .student-attendance-summary { align-items: flex-start; }
+  .attendance-notice-region { top: 4.5rem; right: 1rem; left: 1rem; max-width: none; }
+  .attendance-notice { flex-wrap: wrap; gap: .5rem; }
+  .attendance-roster-table td[data-label='Active service'] { min-width: 0; }
+}
+
+/* Bright dark-theme accents suit links and progress, but white action labels
+   need a deeper surface. Keep these component states after legacy form rules. */
+:root[data-theme='dark'] .app-shell :is(.primary-action,.primary-row-action,.submit-btn,.login-submit,.clearance-approve-button,.clearance-issue-button):not(:disabled),
+:root[data-theme='dark'] .app-shell :is(.student-form,.login-form,.department-dtr-filters,.mfa-form) > button:not([type='button']):not(.secondary-button):not(.danger-button):not(:disabled),
+:root[data-theme='dark'] .app-shell :is(.qr-card,.qr-summary-card) button:not(:disabled),
+:root[data-theme='dark'] .app-shell .audit-filter-card button:not([type='button']):not(:disabled),
+:root[data-theme='dark'] .app-modal :is(.submit-btn,.recipient-search-row > button):not(:disabled) {
+  border-color: var(--action-primary-surface) !important;
+  background: var(--action-primary-surface) !important;
+  color: var(--text-on-accent) !important;
+}
+:root[data-theme='dark'] .app-shell :is(.primary-action,.primary-row-action,.submit-btn,.login-submit,.clearance-approve-button,.clearance-issue-button):hover:not(:disabled),
+:root[data-theme='dark'] .app-shell :is(.student-form,.login-form,.department-dtr-filters,.mfa-form) > button:not([type='button']):not(.secondary-button):not(.danger-button):hover:not(:disabled),
+:root[data-theme='dark'] .app-shell :is(.qr-card,.qr-summary-card) button:hover:not(:disabled),
+:root[data-theme='dark'] .app-shell .audit-filter-card button:not([type='button']):hover:not(:disabled),
+:root[data-theme='dark'] .app-modal :is(.submit-btn,.recipient-search-row > button):hover:not(:disabled) { background: var(--action-primary-hover) !important; }
+
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .password-visibility:not(:disabled) {
+  border-color: var(--border-strong) !important;
+  background: var(--control-background) !important;
+  color: var(--link-color) !important;
+}
+:root[data-theme='dark'] .app-shell:not(.auth-shell) .password-visibility:hover:not(:disabled) { background: var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .app-shell :is(.portal-avatar,.avatar-choice-check) {
+  background: var(--action-primary-surface) !important;
+  color: var(--text-on-accent) !important;
+}
+:root[data-theme='dark'] .app-shell .avatar-choice-check { border-color: var(--surface-raised) !important; }
+
+:root[data-theme='dark'] .department-summary-grid b { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .department-summary-grid span,
+:root[data-theme='dark'] .clearance-status-legend b,
+:root[data-theme='dark'] .portal-welcome blockquote,
+:root[data-theme='dark'] .conversation-title-row > span,
+:root[data-theme='dark'] .conversation-search-icon,
+:root[data-theme='dark'] .offense-legend,
+:root[data-theme='dark'] .offense-indicator,
+:root[data-theme='dark'] .auth-shell .auth-divider span { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .main-panel .text-button { color: var(--link-color) !important; }
+:root[data-theme='dark'] .main-panel .text-button:hover { color: var(--link-hover) !important; }
+:root[data-theme='dark'] .clearance-panel-tabs button[aria-selected='true'] > span { color: var(--surface-canvas) !important; }
+:root[data-theme='dark'] .main-panel .department-officer-tabs::before,
+:root[data-theme='dark'] .app-modal .compact-stepper button.active b { background: var(--action-primary-surface) !important; }
+
+:root[data-theme='dark'] .main-panel .department-welcome > button:not(:disabled) {
+  border-color: var(--border-strong) !important;
+  background: var(--surface-interactive) !important;
+  color: var(--link-color) !important;
+}
+:root[data-theme='dark'] .main-panel .department-welcome > button:hover:not(:disabled) { background: var(--surface-interactive-hover) !important; }
+:root[data-theme='dark'] .portal-page-header .scanner-state {
+  border-color: var(--status-info-text) !important;
+  background: var(--status-info-surface) !important;
+  color: var(--status-info-text) !important;
+}
+:root[data-theme='dark'] .portal-page-header .scanner-state.active {
+  border-color: var(--status-success-text) !important;
+  background: var(--status-success-surface) !important;
+  color: var(--status-success-text) !important;
+}
+:root[data-theme='dark'] .scanner-state i { background: currentColor; }
+:root[data-theme='dark'] .scanner-state.active i { box-shadow: 0 0 0 5px color-mix(in srgb, var(--status-success-text) 14%, transparent); }
+
+:root[data-theme='dark'] .route-state {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+}
+:root[data-theme='dark'] .route-state :is(h2,.route-state-code) { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .route-state > p { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .skip-link { background: var(--surface-raised); color: var(--link-color); }
+
+/* Outlined fields belong only to the username/password sign-in form. */
+.app-shell.auth-shell .auth-card.login-card:has(> .login-form--outlined) {
+  --auth-floating-label-bg: var(--surface-raised);
+  background: var(--auth-floating-label-bg) !important;
+}
+.app-shell.auth-shell .login-form--outlined { gap: 20px; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field {
+  --auth-outline-color: var(--border-strong);
+  position: relative;
+  display: block;
+  min-width: 0;
+  padding: 0;
+}
+.app-shell.auth-shell .login-form--outlined .login-floating-label {
+  position: absolute;
+  z-index: 1;
+  top: 22px;
+  left: 12px;
+  max-width: calc(100% - 24px);
+  padding: 0 4px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-control);
+  font-weight: 400;
+  line-height: 1;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transform-origin: left center;
+  transition: top 160ms ease, font-size 160ms ease, color 160ms ease;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within > .login-floating-label,
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input:is(:not(:placeholder-shown),:autofill,:-webkit-autofill)) > .login-floating-label {
+  top: 0;
+  font-size: var(--text-xs);
+  background: var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input {
+  display: block;
+  width: 100%;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  padding: 0 16px;
+  border: 1px solid var(--auth-outline-color) !important;
+  border-radius: 4px;
+  background: var(--auth-floating-label-bg) !important;
+  color: var(--text-primary) !important;
+  font-size: var(--text-control);
+  line-height: 1.5;
+  outline: none !important;
+  box-shadow: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:hover:not(:disabled) { border-color: var(--text-secondary) !important; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) { --auth-outline-color: var(--link-color); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) > .login-floating-label { color: var(--link-color); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) {
+  border-color: var(--auth-outline-color) !important;
+  box-shadow: inset 0 0 0 1px var(--auth-outline-color);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']),
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) { --auth-outline-color: var(--status-danger-text); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']) > .login-floating-label,
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) > .login-floating-label { color: var(--status-danger-text); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input[aria-invalid='true']:hover:not(:disabled) { border-color: var(--status-danger-text) !important; }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:is(:autofill,:-webkit-autofill) {
+  -webkit-text-fill-color: var(--text-primary);
+  caret-color: var(--text-primary);
+  box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:is(:autofill,:-webkit-autofill):not(:disabled) {
+  box-shadow: inset 0 0 0 1px var(--auth-outline-color), inset 0 0 0 1000px var(--auth-floating-label-bg);
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled {
+  border-color: var(--border-subtle) !important;
+  color: var(--text-secondary) !important;
+  -webkit-text-fill-color: var(--text-secondary);
+  opacity: 1;
+  box-shadow: none;
+}
+.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled:is(:autofill,:-webkit-autofill) { box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg); }
+.app-shell.auth-shell .login-form--outlined label.login-floating-field .password-input-wrap input { padding-right: 60px; }
+.app-shell.auth-shell .login-form--outlined .password-visibility {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--control-height) !important;
+  min-width: var(--control-height);
+  min-height: var(--control-height);
+  padding: 0;
+  border-radius: 4px;
+  background: transparent !important;
+  color: var(--link-color) !important;
+}
+.app-shell.auth-shell .login-form--outlined .password-visibility:hover:not(:disabled) { background: var(--surface-interactive) !important; }
+.app-shell.auth-shell .login-form--outlined .auth-entry-actions { margin: -12px 0 -8px; }
+.app-shell.auth-shell .login-form--outlined .auth-entry-actions a { font-size: var(--text-base); }
+.app-shell.auth-shell .login-form--outlined .login-submit { width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.auth-shell .login-form--outlined .login-floating-label,
+  .app-shell.auth-shell .login-form--outlined label.login-floating-field input { transition: none !important; }
+}
+@media (forced-colors: active) {
+  .app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) { outline: 2px solid Highlight !important; outline-offset: -2px; }
+}
+
+/* Responsive portal contract. Keep layout sizing together so legacy page styles
+   cannot reintroduce intrinsic overflow or compress short labels into fragments. */
+.app-shell:not(.auth-shell) { --sidebar-width: var(--sidebar-expanded-width); min-width: 0; }
+.app-shell:not(.auth-shell) .main-panel { min-width: 0; max-width: 100%; overflow-x: visible; }
+.app-shell .page-content { width: 100%; min-width: 0; padding: 14px 20px 20px; }
+.app-shell .page-content :where(section,article,form,fieldset,div,label,dl) { min-width: 0; }
+.app-shell :is(.table-card,.form-card,.dashboard-card,.table-wrap,.responsive-table) { min-width: 0; max-width: 100%; }
+.app-shell :is(.table-wrap,.responsive-table) { overflow-x: auto; overscroll-behavior-x: contain; }
+.app-shell :is(th,td) { word-break: normal; overflow-wrap: normal; }
+.app-shell td :is(p,strong,small),
+.app-shell td[data-label]:not([data-label='Record ID']):not([data-label='Assignment']):not([data-label='Status']):not([data-label='Actions']) { overflow-wrap: anywhere; }
+.app-shell :is(.internal-record-id,.status-badge,.primary-row-action,.icon-row-action) { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.app-shell :is(.table-actions,.inline-actions) { flex-wrap: wrap; gap: 8px; }
+.app-shell :is(.table-actions,.inline-actions) > button { flex: 0 0 auto; white-space: nowrap; }
+.app-shell .primary-row-action { min-width: 4.5rem; }
+.app-shell .student-cell > span { min-width: 0; }
+.app-shell .student-cell :is(strong,small) { white-space: normal; }
+.app-shell :is(.management-page-header,.table-header,.dashboard-section-heading,.qr-attendance-header,.clearance-hero) { flex-wrap: wrap; }
+.app-shell .management-metrics { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.app-shell .management-metrics--five { grid-template-columns: repeat(5,minmax(0,1fr)); }
+.app-shell .management-metric { overflow: visible; min-height: 99px; gap: 20px; }
+.app-shell .management-metric > div { min-width: 0; }
+.app-shell :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+.app-shell .directory-toolbar,
+.app-shell .table-card .management-filter-bar { grid-template-columns: minmax(0,1fr) minmax(0,13rem) minmax(0,11rem); }
+.app-shell .directory-toolbar > :is(input,select) { width: 100%; grid-column: auto; min-height: var(--filter-height); }
+.app-shell :is(img,video,canvas) { max-width: 100%; }
+.app-shell .support-scope-grid { grid-template-columns: repeat(auto-fit,minmax(min(13rem,100%),1fr)); }
+.app-shell .active-attendance-toolbar { grid-template-columns: minmax(0,1fr); max-width: 32rem; }
+.app-shell .department-officer-tabs { max-width: 100%; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.app-shell .main-panel .department-officer-tabs button,
+.app-shell .main-panel .department-officer-tabs button:first-child,
+.app-shell .main-panel .department-officer-tabs button:last-child { min-width: 0; white-space: normal; overflow-wrap: normal; }
+
+@media (min-width: 768px) {
+  .app-shell:not(.auth-shell) { grid-template-columns: var(--sidebar-width) minmax(0, 1fr); }
+  .app-shell:not(.auth-shell) .sidebar { width: var(--sidebar-width); height: 100dvh; }
+  .app-shell:not(.auth-shell).sidebar-collapsed { --sidebar-width: 80px; grid-template-columns: var(--sidebar-width) minmax(0,1fr); }
+  .app-shell:not(.auth-shell).sidebar-collapsed .sidebar { width: var(--sidebar-width); }
+  .app-shell .topbar-search { width: 100%; flex: 1 1 20rem; min-width: 0; max-width: var(--topbar-search-width); min-height: var(--control-height); }
+  .app-shell .topbar-title { flex: 1 1 auto; min-width: 0; }
+  .app-shell .account-actions { flex: 0 0 auto; }
+  .app-shell .profile-menu-trigger { min-width: 0; }
+  .app-shell .account-summary { min-width: 0; max-width: 12rem; overflow-wrap: anywhere; }
+  .app-shell .violation-record-table { width: 100%; min-width: 70rem !important; table-layout: fixed; }
+  .violation-col-id { width: 6rem; }
+  .violation-col-student { width: 14rem; }
+  .violation-col-incident { width: 12rem; }
+  .violation-col-classification { width: 8rem; }
+  .violation-col-status { width: 11rem; }
+  .violation-col-actions { width: 9rem; }
+  .app-shell .violation-record-table td[data-label='Offense'] { overflow-wrap: anywhere; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .app-shell :is(.admin-dashboard-grid,.department-overview-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell .management-metrics--five { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .directory-toolbar > input { grid-column: 1 / -1; min-height: var(--filter-height); }
+  .app-shell .department-dtr-filters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .department-dtr-filters > button { grid-column: 1 / -1; }
+  .app-shell .dashboard-quick-actions > div { grid-template-columns: repeat(auto-fit,minmax(min(8rem,100%),1fr)); overflow: visible; }
+}
+
+/* Dialogs are portaled outside app-shell and need their own sizing contract. */
+.app-modal { min-width: 0; display: flex; flex-direction: column; overflow: hidden; max-height: calc(100dvh - 2rem); }
+.app-modal-header { flex: 0 0 auto; min-width: 0; }
+.app-modal-header h2 { min-width: 0; overflow-wrap: anywhere; }
+.app-modal-close { flex: 0 0 44px; width: var(--control-height); min-height: var(--control-height); }
+.app-modal-body { flex: 1 1 auto; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior-y: contain; }
+.app-modal-body :where(div,section,form,fieldset,label,dl) { min-width: 0; }
+.app-modal-body :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+.app-modal--drawer { height: 100dvh; max-height: 100dvh; }
+.app-modal--drawer .app-modal-body { padding-bottom: max(28px,env(safe-area-inset-bottom)); }
+
+@media (max-width: 767px) {
+  .app-shell:not(.auth-shell),
+  .app-shell:not(.auth-shell).sidebar-collapsed { display: block; }
+  .app-shell:not(.auth-shell) .sidebar { width: min(286px,86vw); height: 100dvh; }
+  .app-shell:not(.auth-shell) .main-panel { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .app-shell .page-content { padding: 14px 12px 24px; }
+  .app-shell .management-metrics,
+  .app-shell .management-metrics--five { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell :is(.admin-dashboard-grid,.department-overview-grid,.student-overview-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell :is(.support-decision-summary,.signature-form,.record-fields,.admin-settings-grid) { grid-template-columns: minmax(0,1fr); }
+  .app-shell .topbar { gap: 4px; min-height: var(--topbar-mobile-height); }
+  .app-shell .main-panel--messages .topbar { gap: 4px; min-height: var(--topbar-mobile-height); }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header { flex-direction: column; align-items: stretch; }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
+  .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width: 100%; }
+  .app-shell .main-panel--messages .messages-workspace { grid-template-columns: minmax(0,1fr); }
+  .app-shell .topbar-title { gap: 4px; }
+  .app-shell .mobile-brand { padding: 0 !important; gap: 4px; }
+  .app-shell .mobile-brand img { width: 32px; }
+  .app-shell .mobile-brand span { font-size: var(--text-base); }
+  .app-shell :is(.mobile-menu-button,.notification-button,.theme-toggle,.profile-menu-trigger,.sidebar-close) { width: 44px; min-width: 44px; min-height: 44px; padding: 0 !important; flex-shrink: 0; }
+  .app-shell .profile-menu-trigger { justify-content: center; gap: 0; }
+  .app-shell .profile-menu-trigger > svg { display: none; }
+  .app-shell .sidebar .nav-item { min-height: var(--control-height); font-size: var(--text-base); }
+  .app-shell .mobile-bottom-nav { grid-template-columns: repeat(5,minmax(0,1fr)); }
+  .app-shell .mobile-bottom-nav button { min-height: 44px; }
+  .app-shell :is(.table-actions,.inline-actions) { flex-direction: row; align-items: center; }
+  .app-shell :is(button,input,select,textarea) { min-height: var(--control-height); }
+  .app-shell input:not([type='checkbox']):not([type='radio']),
+  .app-shell :is(select,textarea),
+  .app-modal input:not([type='checkbox']):not([type='radio']),
+  .app-modal :is(select,textarea) { font-size: var(--text-control); }
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .app-shell .directory-toolbar > input { grid-column: 1 / -1; min-height: var(--filter-height); }
+  .app-shell .table-header > span { overflow-wrap: anywhere; }
+  .app-shell .table-wrap:has(> :is(.management-record-table,.responsive-record-table,.audit-record-table)),
+  .app-shell .responsive-table:has(> .responsive-record-table) { overflow: visible; border: 0; border-radius: 0; }
+  .app-shell :is(.table-card,.dashboard-card,.qr-stage-card) :is(table.management-record-table,table.responsive-record-table,table.audit-record-table) {
+    display: block; width: 100%; min-width: 0 !important; table-layout: auto; background: transparent;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) colgroup { display: none; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) thead {
+    position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%);
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tbody { display: grid; gap: 12px; width: 100%; padding: 12px; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tr {
+    display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 16px; width: 100%; margin: 0; padding: 14px;
+    border: 1px solid var(--color-border); border-radius: 10px; background: var(--surface-raised);
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td {
+    display: grid !important; align-content: start; min-width: 0; max-width: 100%; gap: 4px; padding: 0 !important; border: 0 !important;
+    font-size: var(--text-base); line-height: 1.5; overflow-wrap: anywhere;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td::before {
+    content: attr(data-label); color: var(--text-secondary); font-size: .75rem; font-weight: 600;
+  }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) :is(td[data-label='Student'],td[data-label='Student Name'],td[data-label='Offense'],td[data-label='Description'],td[data-label='Actions'],td[data-label='Action'],td[data-label='Supervising officer']) { grid-column: 1 / -1; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) .internal-record-id { display: grid !important; font-size: var(--text-base); }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) .status-badge { width: fit-content; max-width: 100%; white-space: normal; overflow-wrap: normal; word-break: normal; }
+  .app-shell .violation-record-table td[data-label='Status'] { grid-column: 1 / -1; }
+  .app-shell .violation-record-table .status-badge { white-space: nowrap; }
+  .app-shell :is(.table-actions,.inline-actions) button { min-height: 44px; }
+  .app-shell .icon-row-action { width: var(--control-height) !important; min-width: var(--control-height); height: var(--control-height); }
+  .app-modal { max-width: 100%; max-height: calc(100dvh - env(safe-area-inset-top)); }
+  .app-modal--drawer .app-modal-header { padding-top: max(14px,env(safe-area-inset-top)); }
+  .app-modal--drawer .student-form-grid { grid-template-columns: minmax(0,1fr); }
+  .app-modal-body :is(button,input,select,textarea) { min-height: var(--control-height); }
+}
+
+@media (max-width: 599px) {
+  .app-shell .directory-toolbar,
+  .app-shell .table-card .management-filter-bar { grid-template-columns: minmax(0,1fr); }
+  .app-shell .directory-toolbar > input { grid-column: auto; min-height: var(--filter-height); }
+}
+
+@media (max-width: 389px) {
+  .app-shell .mobile-brand img { display: none; }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) tr { grid-template-columns: minmax(0,1fr); }
+  .app-shell :is(.management-record-table,.responsive-record-table,.audit-record-table) td[data-label] { grid-column: 1; }
+  .app-shell .management-metric { gap: 8px; padding: 10px; }
+  .app-shell .management-metric i { width: 32px; height: 32px; }
+}
+
+/* Compact sidebar accordions share the existing portal palette and icons. */
+.app-shell:not(.auth-shell) .sidebar { overflow: hidden; }
+.sidebar .brand { flex-shrink: 0; margin: 0 0 26px; }
+.sidebar .nav { display: flex; flex-direction: column; gap: 4px; min-height: 0; max-height: none; overflow-y: auto; padding: 2px 0 4px; }
+.sidebar .nav-group { display: grid; gap: 2px; margin: 0; }
+.sidebar .nav-item,
+.sidebar .nav-item.messages-nav-item { min-height: var(--control-height); padding: 8px 9px; gap: 6px; font-size: var(--text-base); line-height: 1.4; }
+.sidebar .nav-item-label { min-width: 0; gap: 9px; }
+.sidebar .nav-item-label svg { flex: 0 0 20px; width: 20px; height: 20px; }
+.sidebar .nav-item-label > span { white-space: normal; overflow-wrap: normal; word-break: normal; }
+.sidebar .nav-chevron { flex: 0 0 12px; margin-left: auto; text-align: right; font-size: .875rem; }
+.sidebar .nav-group-children { display: grid; gap: 2px; padding-left: 10px; }
+.sidebar .nav-group-children[hidden] { display: none !important; }
+.sidebar .nav-account-actions { flex-shrink: 0; margin-top: 8px; padding-top: 8px; }
+.sidebar .nav-item.active-section { background: rgba(255,255,255,.1); color: #ffffff; }
+.sidebar .nav-item:is(.active,.active-section)::before { content: ''; position: absolute; inset: 9px auto 9px 0; width: 3px; border-radius: 2px; background: currentColor; pointer-events: none; }
+.sidebar .nav-item:focus-visible { outline: 2px solid #ffffff; outline-offset: -3px; }
+
+.sidebar-tooltip {
+  position: fixed;
+  z-index: 120;
+  visibility: hidden;
+  pointer-events: none;
+  max-width: min(220px, calc(100vw - 16px));
+  padding: .45rem .65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: .45rem;
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: 0 7px 20px rgba(7, 32, 65, .16);
+  font: 600 var(--text-sm)/1.35 var(--font-sans);
+  animation: sidebar-tooltip-in 120ms ease-out both;
+}
+@keyframes sidebar-tooltip-in { from { opacity: 0; transform: translateY(2px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 767px) { .sidebar-tooltip { display: none; } }
+@media (prefers-reduced-motion: reduce) { .sidebar-tooltip { animation: none; } }
+@media (forced-colors: active) { .sidebar-tooltip { border-color: CanvasText; background: Canvas; color: CanvasText; box-shadow: none; } }
+
+@media (min-width: 768px) {
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-chevron { display: none; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label svg { flex-basis: 18px; width: 18px; height: 18px; }
+}
+
+@media (max-width: 767px) {
+  .app-shell:not(.auth-shell) .sidebar .nav-item { min-height: var(--control-height); font-size: var(--text-base); }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label { justify-content: flex-start; gap: 9px; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-item-label > span { display: inline !important; }
+  .app-shell:not(.auth-shell).sidebar-collapsed .nav-pending-badge { position: static; }
+}
+
+/* Discipline dashboard analytics use the existing card and portal palette. */
+.dashboard-analytics { display: grid; gap: var(--page-gap); min-width: 0; }
+.dashboard-analytics-heading { display: block; }
+.dashboard-analytics-heading h2 { margin: 0; color: var(--color-text); font-size: var(--text-page-title); }
+.analytics-workspace { max-width: 1500px; margin: 0 auto; }
+.analytics-workspace .dashboard-analytics-heading h2 { font-size: var(--text-page-title); }
+.dashboard-analytics-heading p { margin: .15rem 0 0; color: var(--color-text-secondary); font-size: var(--text-base); }
+.dashboard-analytics-filters { display: grid; grid-template-columns: minmax(10rem,.7fr) minmax(0,1.5fr) minmax(16rem,1fr); align-items: end; gap: .75rem; padding: 1rem; border: 1px solid var(--color-border); border-radius: .6rem; background: var(--color-surface); }
+.dashboard-analytics-custom { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); grid-column: 1 / -1; grid-row: 2; gap: .75rem; max-width: 32rem; }
+.dashboard-analytics-filters label { display: grid; min-width: 0; gap: .3rem; color: var(--color-text-secondary); font-size: var(--text-xs); font-weight: 600; }
+.dashboard-analytics-filters :is(select,input) { width: 100%; min-width: 0; min-height: 44px; padding: .5rem .75rem; border: 1px solid var(--color-border); border-radius: .45rem; background-color: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--text-control); }
+.dashboard-analytics-export { display: flex; align-items: end; gap: .5rem; }
+.dashboard-analytics-export label { flex: 1; }
+.dashboard-analytics-export button { min-height: 44px; padding: .5rem 1rem; }
+.dashboard-analytics .dashboard-analytics-error { margin: 0; color: var(--status-danger-text,var(--color-danger)) !important; font-size: var(--text-sm); }
+.dashboard-analytics-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; }
+.dashboard-analytics .analytics-card { min-width: 0; padding: 1.25rem; border: 1px solid var(--color-border); border-radius: .6rem; background: var(--color-surface); box-shadow: none; }
+.dashboard-analytics .dashboard-section-heading { margin-bottom: 1rem; }
+.dashboard-analytics .dashboard-section-heading h3 { margin: 0; color: var(--color-text); font-size: 1.125rem; line-height: 1.4; }
+.dashboard-analytics .dashboard-section-heading p { margin: .25rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
+.analytics-card .empty-state { display: grid; place-items: center; min-height: 8rem; margin: 0; text-align: center; }
+.analytics-trend { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: .5rem; }
+.analytics-trend button { display: grid; grid-template-rows: auto 6rem auto; align-items: end; gap: .25rem; min-width: 0; padding: .25rem !important; border: 0 !important; border-radius: .35rem; background: transparent !important; color: var(--color-text); text-align: center; cursor: pointer; }
+.analytics-trend button:is(:hover,:focus-visible,.selected) { background: color-mix(in srgb,var(--color-primary) 9%,var(--color-surface)) !important; }
+.analytics-trend button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+.analytics-trend button strong { font-size: var(--text-base); }
+.analytics-trend button small { overflow: hidden; color: var(--color-text-secondary); font-size: var(--text-xs); text-overflow: ellipsis; white-space: nowrap; }
+.analytics-trend-plot { display: flex; align-items: end; height: 6rem; border-bottom: 1px solid var(--color-border); }
+.analytics-trend-plot i { display: block; width: 100%; min-height: .18rem; border-radius: .25rem .25rem 0 0; background: var(--color-primary); }
+.analytics-trend-detail { margin: .45rem 0 0; color: var(--color-text-secondary); font-size: var(--text-xs); text-align: center; }
+.analytics-bars { display: grid; gap: .55rem; margin: 0; }
+.analytics-bars > div { display: grid; grid-template-columns: minmax(5.5rem,.75fr) minmax(0,1.25fr); align-items: center; gap: .5rem; }
+.analytics-bars dt { overflow-wrap: anywhere; color: var(--color-text-secondary); font-size: var(--text-xs); }
+.analytics-bars dd { display: grid; grid-template-columns: minmax(0,1fr) 3rem; align-items: center; gap: .5rem; min-width: 0; margin: 0; }
+.analytics-bars--service dd { grid-template-columns: minmax(0,1fr) 5rem; }
+.analytics-bars dd strong { color: var(--color-text); font-size: var(--text-xs); text-align: right; font-variant-numeric: tabular-nums; }
+.analytics-bar-track { display: block; flex: 1; height: .55rem; overflow: hidden; border-radius: 1rem; background: color-mix(in srgb,var(--color-primary) 11%,var(--color-surface)); }
+.analytics-bar-track i { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
+.analytics-bars--service .analytics-bar-track i { background: var(--color-primary); }
+.analytics-bars--service > div:nth-child(2) .analytics-bar-track i { background: var(--color-warning,#f2b927); }
+.analytics-card:has(> .analytics-bars) > .analytics-bars { max-height: 15rem; overflow-y: auto; padding-right: .2rem; }
+.analytics-service-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; margin-bottom: .7rem; }
+.analytics-service-summary strong { color: var(--color-text); font-size: var(--text-metric); line-height: 1; }
+.analytics-service-summary span,.analytics-unavailable { color: var(--color-text-secondary); font-size: var(--text-xs); }
+.analytics-unavailable { margin: .7rem 0 0; }
+.analytics-insights { grid-column: 1 / -1; }
+.analytics-insights dl { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .6rem; margin: 0; }
+.analytics-insights dl > div { min-width: 0; padding: .65rem; border: 1px solid var(--color-border); border-radius: .5rem; background: color-mix(in srgb,var(--color-primary) 4%,var(--color-surface)); }
+.analytics-insights dt { color: var(--color-text-secondary); font-size: var(--text-xs); }
+.analytics-insights dd { margin: .3rem 0 0; color: var(--color-text); font-size: var(--text-base); font-weight: 700; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .analytics-insights dl { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 1100px) {
+  .dashboard-analytics-filters { grid-template-columns: minmax(0,.7fr) minmax(0,1.3fr); }
+  .dashboard-analytics-export { grid-column: 1 / -1; }
+  .dashboard-analytics-custom { grid-row: auto; }
+}
+@media (max-width: 767px) {
+  .dashboard-analytics-grid { grid-template-columns: minmax(0,1fr); }
+  .dashboard-analytics-filters { grid-template-columns: repeat(2,minmax(0,1fr)); padding: .75rem; }
+  .dashboard-analytics-filters > label:nth-child(2),.dashboard-analytics-export { grid-column: 1 / -1; }
+  .dashboard-analytics-custom { grid-row: auto; max-width: none; }
+  .dashboard-analytics-filters > label:first-child { grid-column: 1 / -1; }
+  .dashboard-analytics .analytics-card { padding: 1rem; }
+}
+@media (max-width: 420px) { .analytics-insights dl { grid-template-columns: minmax(0,1fr); } }
+
+/* Departments & Officer Accounts: directory and single-page officer form. */
+.department-officer-page { gap: var(--page-gap); width: min(100%,94rem); }
+.department-officer-page .department-welcome.portal-page-header { padding: 0 var(--department-content-inset) 2px; background: transparent; border: 0; box-shadow: none; }
+.department-officer-page .department-welcome .eyebrow { margin: 0 0 8px; color: #526d94 !important; font-size: var(--text-xs); font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
+.department-officer-page .department-welcome h2 { margin: 0 0 7px; color: #081c68; font-size: var(--text-page-title); font-weight: 700; letter-spacing: -.035em; line-height: 1.12; }
+.department-officer-page .department-welcome p:last-child { margin: 0; color: #647fa6; font-size: var(--text-base); }
+.department-officer-page .department-officer-tabs { width: min(100%,34rem); flex: 0 0 auto; box-shadow: none; }
+.department-officer-page .department-officer-tabs button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100% !important; font-weight: 700; font-size: var(--text-base); }
+.department-officer-page .department-officer-tabs button svg { flex-shrink: 0; }
+.department-summary-grid { gap: 14px; }
+.department-summary-grid .department-stat { display: flex; align-items: center; gap: 22px; min-height: 106px; padding: 18px 24px; border: 1px solid #dfebf6; border-radius: 13px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-stat-icon { display: grid; place-items: center; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 50%; background: #e9f4ff; color: #076bd4 !important; font-size: 32px !important; line-height: 1; }
+.department-stat--active .department-stat-icon { background: #e7f8ee; color: #008d42 !important; }
+.department-stat--heads .department-stat-icon { background: #f1ecff; color: #7542dc !important; }
+.department-stat--discipline .department-stat-icon { background: #fff2e7; color: #f47b1c !important; }
+.department-summary-grid .department-stat > div { display: grid; gap: 2px; }
+.department-summary-grid .department-stat b { color: #0869c9; font-size: var(--text-metric); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.department-summary-grid .department-stat div span { color: #6680a6; font-size: var(--text-sm); }
+.department-directory-surface { padding: 16px; border: 1px solid #e0ebf6; border-radius: 14px; background: var(--color-surface); }
+.department-officer-page .directory-toolbar { margin: 0 0 18px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.department-officer-page .directory-toolbar :is(input,select) { min-height: var(--filter-height); padding: 10px 16px; border: 1px solid #d4e4f4; border-radius: 9px; background: var(--color-surface); color: #173b70; font-size: var(--text-control); }
+.department-officer-page .directory-toolbar input { background: #f4f8fc; min-height: var(--filter-height); }
+.department-officer-page .directory-toolbar input::placeholder { color: #8299ba; min-height: var(--filter-height); }
+.department-officer-page .officer-directory { gap: 16px; }
+.department-officer-page .officer-directory > .officer-card { display: flex; flex-direction: column; min-height: 350px; padding: 18px 20px 16px; border: 1px solid #e3edf8; border-radius: 15px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-officer-page .officer-directory > .officer-card::before { display: none; }
+.officer-card-badges { display: flex; flex-wrap: wrap; gap: 7px; min-height: 30px; }
+.officer-card-badges .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid #c6dffc; border-radius: 999px; background: #eaf5ff; color: #0866bf; font-size: var(--text-xs); font-weight: 700; text-transform: none; }
+.officer-card-badges .status-badge::before { width: 9px; height: 9px; border-radius: 50%; background: #0bb783; content: ''; }
+.officer-card-badges .availability-available { border-color: #b5edca; background: #e7f9ed; color: #087139; }
+.officer-card-badges .availability-available::before { background: #0ca63d; }
+.officer-card-badges .availability-unavailable,.officer-card-badges .availability-absent { border-color: #f0d694; background: #fff7e2; color: #825800; }
+.officer-card-badges .availability-unavailable::before,.officer-card-badges .availability-absent::before { background: #e0a21c; }
+.officer-card-badges .status-badge--muted { border-color: #d9e1ea; background: #eef2f6; color: #5c6879; }
+.officer-card-badges .status-badge--muted::before { background: #8998a8; }
+.officer-card-identity { display: flex; align-items: center; gap: 16px; min-height: 95px; padding: 12px 0 15px; }
+.officer-card-identity .portal-avatar { flex: 0 0 64px; width: 64px; height: 64px; background: #0871d5; color: #fff; font-size: var(--text-xl); }
+.officer-card-identity h3 { margin: 0 0 3px; color: #0b315f; font-size: var(--text-section-title); font-weight: 700; }
+.officer-card-identity strong { display: block; color: #113b71; font-size: var(--text-sm); }
+.officer-card-identity p { margin: 5px 0 0 !important; color: #6c86ac; font-size: var(--text-base); }
+.department-officer-page .officer-card dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px 22px; margin: 0 0 16px; padding: 16px 10px; border-top: 1px solid #e4edf7; }
+.department-officer-page .officer-card dt { color: #6b84a6; font-size: var(--text-xs); }
+.department-officer-page .officer-card dd { margin-top: 3px; color: #15396e; font-size: var(--text-sm); }
+.department-officer-page .officer-card .registration-review-actions { display: flex; align-items: stretch; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 10px; border-top: 1px solid #e4edf7; }
+.department-officer-page .officer-card .registration-review-actions > button { flex: 1 1 auto; min-height: var(--control-height); padding: 7px 10px; border-radius: 8px; font-size: var(--text-base); font-weight: 700; white-space: nowrap; }
+.department-officer-page .officer-card .registration-review-actions > button:first-child { border-color: #0871d5; background: #0871d5; color: white; }
+.department-officer-page .officer-card .registration-review-actions > .secondary-button { border-color: #d2e3f5; background: var(--color-surface); color: #0866bf; }
+.department-officer-page .officer-card .registration-review-actions > .danger-button { border-color: #ff9ba4 !important; background: #fffafa; color: #d92339 !important; }
+.department-officer-create.department-tab-panel { width: calc(100% - 2 * var(--department-content-inset)); max-width: none; padding: 30px 34px 18px; border-radius: 15px; box-shadow: 0 5px 18px rgba(20,58,104,.035); }
+.department-officer-create .section-heading { margin: 0 0 24px; }
+.department-officer-create .section-heading h3 { margin: 0 0 4px; color: #0b2869; font-size: var(--text-section-title); font-weight: 700; }
+.department-officer-create .section-heading p { margin: 0; color: #6b83a7; font-size: var(--text-base); }
+.department-officer-create .student-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 20px 26px; }
+.department-officer-create .student-form-grid label { display: grid; align-content: start; gap: 7px; color: #32547f; font-size: var(--text-base); font-weight: 700; }
+.department-officer-create .student-form-grid :is(input,select,textarea) { width: 100%; min-height: var(--control-height); padding: 11px 16px; border: 1px solid #cfe1f4; border-radius: 9px; background: var(--color-surface); color: #142e65; font-size: var(--text-control); }
+.department-officer-create .student-form-grid :is(input,textarea)::placeholder { color: #8ba0c0; }
+.department-officer-create .student-form-grid textarea { min-height: 76px; resize: vertical; }
+.department-officer-create .field-hint { color: var(--text-secondary); font-size: var(--text-xs); font-weight: 400; }
+.department-officer-create .field-error { color: var(--color-danger); font-size: var(--text-xs); font-weight: 600; }
+.department-officer-create .student-form-grid [aria-invalid='true'] { border-color: #d92339; }
+.department-officer-create .officer-create-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 26px; padding-top: 12px; border-top: 1px solid #e3ecf6; }
+.department-officer-create .officer-create-actions button { min-height: 49px; padding: 11px 22px; border-radius: 9px; font-size: var(--text-base); font-weight: 700; }
+.department-officer-create .officer-create-actions button:not(.secondary-button) { border-color: #0871d5; background: #0871d5; color: #fff; }
+.department-skeleton { border-radius: 8px; background: linear-gradient(90deg,#eaf1f8,#f7faff,#eaf1f8); background-size: 200% 100%; animation: department-shimmer 1.5s linear infinite; }
+.department-stat .department-skeleton { display: block; width: 32px; height: 30px; }
+.officer-card-skeleton { min-height: 330px; }
+@keyframes department-shimmer { to { background-position: -200% 0; } }
+@media (max-width: 1100px) { .department-officer-page .department-welcome { flex-wrap: wrap; } .department-officer-page .department-officer-tabs { width: min(100%,34rem); } .department-summary-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 900px) { .department-officer-page .officer-directory { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .department-officer-page { gap: var(--page-gap); } .department-officer-page .department-welcome.portal-page-header { padding-inline: 0; } .department-officer-page .department-welcome h2 { font-size: var(--text-page-title); } .department-summary-grid { grid-template-columns: 1fr; } .department-directory-surface { padding: 12px; } .department-officer-page .directory-toolbar { grid-template-columns: 1fr; } .department-officer-create.department-tab-panel { width: 100%; padding: 22px 18px; } .department-officer-create .student-form-grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .department-skeleton { animation: none; } }
+
+/* Audit events prioritize the affected record and readable outcome. */
+.audit-workspace .audit-filter-card .student-form { padding: 16px 20px; }
+.audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-bottom: 12px; }
+.audit-workspace .audit-filter-card .registration-review-actions { margin-top: 0; padding-top: 0; border-top: 0; }
+.audit-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
+.audit-results-card .table-header .audit-results-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.audit-results-tools > span { white-space: nowrap; color: var(--text-secondary); }
+.audit-results-tools button span { color: inherit !important; }
+.audit-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
+.audit-export-note:empty { padding: 0; }
+.audit-results-card > .error-message { padding: 0 20px 12px; }
+.reports-workspace .report-filter-card .student-form { padding: 16px 20px; gap: 0; }
+.reports-workspace .reports-filter-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding: 0; }
+.reports-workspace .report-pagination { position: static; }
+.reports-workspace .report-filter-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 0; }
+.report-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
+.report-results-card .table-header > button { flex-shrink: 0; }
+.reports-workspace button span { color: inherit !important; }
+.report-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
+.report-export-note:empty { padding: 0; }
+.report-results-card > .error-message { padding: 0 20px 12px; }
+.report-change-note { color: var(--text-secondary); font-size: 13px; }
+.report-applied-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 12px; }
+.report-applied-filters span { padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12px; color: var(--text-secondary); }
+.reports-workspace .report-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
+.reports-workspace .report-record-table { width: 100%; min-width: 1050px; }
+.reports-workspace .report-table-violations { table-layout: fixed; }
+.reports-workspace .report-table-violations th:nth-child(1) { width: 18%; }
+.reports-workspace .report-table-violations th:nth-child(2) { width: 30%; }
+.reports-workspace .report-table-violations th:nth-child(3) { width: 135px; }
+.reports-workspace .report-table-violations th:nth-child(4) { width: 135px; }
+.reports-workspace .report-record-table :is(th,td) { padding: 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.report-record-table strong { display: block; font-weight: 600; }
+.report-student-number { display: block; margin-top: 4px; font-size: 12px; white-space: nowrap; color: var(--text-secondary); }
+.report-cell-incident_date { white-space: nowrap; }
+.report-text, .report-text-preview { margin: 0; white-space: pre-wrap; line-height: 1.6; }
+.report-text-details { margin-top: 10px; }
+.report-text-details summary { width: fit-content; cursor: pointer; color: var(--color-primary); font-size: 12px; font-weight: 600; }
+.report-text-details summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+.report-text-details .report-text { margin-top: 10px; }
+.report-cell-violation_name > .report-text { display: block; margin-top: 5px; }
+@media (max-width: 1100px) { .reports-workspace .reports-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 767px) {
+  .app-shell .reports-workspace .report-record-table { min-width: 0; table-layout: auto; }
+  .app-shell .reports-workspace .report-results-card .table-wrap { overflow: visible; }
+  .app-shell .reports-workspace .report-record-table :is(.report-cell-violation_name,.report-cell-incident_details,.report-cell-notes,.report-cell-remarks,.report-cell-reason) { grid-column: 1 / -1; }
+  .report-date-note { width: 100%; }
+}
+@media (max-width: 450px) { .reports-workspace .reports-filter-grid { grid-template-columns: minmax(0,1fr); } }
+.audit-workspace .audit-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
+.audit-workspace .audit-record-table { width: 100%; min-width: 1080px; table-layout: fixed; }
+.audit-date-col { width: 130px; }
+.audit-actor-col { width: 165px; }
+.audit-action-col { width: 175px; }
+.audit-record-col { width: 25%; }
+.audit-workspace .audit-record-table :is(th,td) { padding: 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.audit-record-table td > :is(strong,span),.audit-record-table small { display: block; }
+.audit-record-table strong { font-weight: 600; }
+.audit-record-table small { margin-top: 4px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.audit-record-table time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.audit-workspace .audit-record-table .status-badge { display: inline-flex; white-space: normal; max-width: 100%; text-align: left; }
+.audit-event-summary { margin: 0; line-height: 1.6; }
+.audit-event-details { margin-top: 10px; }
+.audit-event-details summary { cursor: pointer; color: var(--color-primary); font-weight: 600; font-size: 12px; width: fit-content; }
+.audit-event-details summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; border-radius: 2px; }
+.audit-event-details dl { margin: 10px 0 0; padding: 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); }
+.audit-event-details dl > div { display: grid; grid-template-columns: minmax(100px,1fr) minmax(0,1.5fr); gap: 10px; padding: 5px 0; font-size: 12px; }
+.audit-event-details dt { color: var(--text-secondary); }
+.audit-event-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.audit-active-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 12px; }
+.audit-active-filters span { padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12px; color: var(--text-secondary); }
+@media (max-width: 1100px) {
+  .audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 767px) {
+  .app-shell .audit-workspace .audit-record-table { min-width: 0; table-layout: auto; }
+  .app-shell .audit-workspace .audit-results-card .table-wrap { overflow: visible; }
+  .app-shell .audit-workspace .audit-record-table td[data-label='Record'] { grid-column: 1 / -1; }
+  .audit-workspace .audit-filter-card .student-form { padding: 12px; }
+  .audit-workspace .registration-review-actions { flex-wrap: wrap; }
+  .audit-date-note { width: 100%; }
+  .audit-event-details dl > div { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (max-width: 450px) {
+  .audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: minmax(0,1fr); }
+}
+
+/* Component rules loaded after the original theme layer still need semantic colors. */
+:root[data-theme='dark'] .app-shell .topbar :is(.sidebar-collapse,.topbar-search,.theme-toggle,.notification-button,.profile-menu-trigger,.profile-menu-chevron),
+:root[data-theme='dark'] .app-shell .secondary-button {
+  background:var(--surface-interactive) !important;
+  color:var(--text-primary) !important;
+  border-color:var(--border-strong) !important;
+}
+:root[data-theme='dark'] .app-shell .mobile-bottom-nav button:not(.active) > span { color:var(--text-secondary) !important; }
+:root .app-shell:not(.auth-shell) .sidebar .nav-item.active,
+:root .app-shell:not(.auth-shell) .sidebar .nav-item.active:hover,
+:root .app-shell .mobile-bottom-nav button.active { background:#076dca !important; color:#fff !important; }
+:root[data-theme='dark'] .app-shell .department-empty > button,
+:root[data-theme='dark'] .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button {
+  background:var(--action-primary-surface) !important;
+  border-color:var(--action-primary-surface) !important;
+  color:var(--text-on-accent) !important;
+}
+:root[data-theme='dark'] .app-shell :is(.student-add-button,.department-empty > button):hover:not(:disabled),
+:root[data-theme='dark'] .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button:hover:not(:disabled) { background:var(--action-primary-hover) !important; }
+:root[data-theme='dark'] .department-stat-icon { background:var(--status-info-surface); color:var(--status-info-text) !important; }
+:root[data-theme='dark'] .department-stat--active .department-stat-icon { background:var(--status-success-surface); color:var(--status-success-text) !important; }
+:root[data-theme='dark'] .department-stat--heads .department-stat-icon { background:var(--surface-interactive); color:var(--link-color) !important; }
+:root[data-theme='dark'] .department-stat--discipline .department-stat-icon { background:var(--status-warning-surface); color:var(--status-warning-text) !important; }
+:root[data-theme='dark'] .app-shell .attendance-indicator--out { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-shell progress { background:var(--surface-interactive); accent-color:var(--link-color); }
+:root[data-theme='dark'] .app-shell progress::-webkit-progress-bar { background:var(--surface-interactive); }
+:root[data-theme='dark'] .app-shell progress::-webkit-progress-value { background:var(--link-color); }
+:root[data-theme='dark'] .app-shell progress::-moz-progress-bar { background:var(--link-color); }

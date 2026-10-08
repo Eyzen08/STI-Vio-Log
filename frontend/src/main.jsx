@@ -9,6 +9,7 @@ import { installSearchInputGuard } from './lib/searchControls.js'
 // Load the shared presentation layer as its own cached asset before rendering.
 // This avoids a flash of legacy base styles while keeping each CSS bundle small.
 await import('./styles/portal-system.css')
+await import('./styles/portal-overrides.css')
 await import('./styles/admin-dashboard.css')
 
 installMutationRequestGuard(window)

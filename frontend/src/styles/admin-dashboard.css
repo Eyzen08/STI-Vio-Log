@@ -8,7 +8,7 @@ body:has(.admin-portal) { overflow-x:clip; }
 .admin-portal .sidebar .brand-home { justify-content:center; }
 .admin-portal .sidebar .nav-item { border-radius:8px; color:#fff; font-weight:400; min-height:var(--control-height); font-size:var(--text-base); }
 .admin-portal .sidebar .nav-item-label svg { width:20px; height:20px; flex:0 0 20px; }
-.admin-portal .sidebar .nav-item.active,.admin-portal .sidebar .nav-item.active:hover { background:#087ff0; color:#fff; font-weight:600; box-shadow:none; }
+.admin-portal .sidebar .nav-item.active,.admin-portal .sidebar .nav-item.active:hover { background:#076dca; color:#fff; font-weight:600; box-shadow:none; }
 .admin-portal .sidebar .nav-account-actions { margin-top:auto; padding-top:12px; }
 .admin-portal .topbar { background:var(--dash-surface) !important; border-bottom:1px solid var(--dash-line); box-shadow:none; backdrop-filter:none; min-height:var(--topbar-height); }
 .admin-portal .topbar-search { flex:1 1 20rem; border-radius:8px; background:#eef4fa; width:100%; max-width:var(--topbar-search-width); min-height:var(--control-height); }
@@ -154,7 +154,7 @@ body:has(.admin-portal) { overflow-x:clip; }
 :root[data-theme='dark'] .admin-portal :is(.dashboard-attendance-totals > div,.dashboard-violations-table th) { background:var(--surface-nested) !important; }
 :root[data-theme='dark'] .admin-portal .dashboard-service-progress progress,:root[data-theme='dark'] .admin-portal progress::-webkit-progress-bar { background:var(--surface-interactive); }
 :root[data-theme='dark'] .admin-portal .admin-dashboard .dashboard-quick-actions button { background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
-:root[data-theme='dark'] .admin-portal .sidebar .nav-item.active { background:#087ff0 !important; color:#fff !important; }
+:root[data-theme='dark'] .admin-portal .sidebar .nav-item.active { background:#076dca !important; color:#fff !important; }
 :root[data-theme='dark'] .admin-portal .recent-activity-card .status-badge { color:var(--status-info-text) !important; }
 :root[data-theme='dark'] .admin-portal .recent-activity-card :is(.status-complete,.status-clear) { color:var(--status-success-text) !important; }
 @media (max-width:1279px) {
@@ -197,6 +197,7 @@ body:has(.admin-portal) { overflow-x:clip; }
 :root[data-theme='dark'] .admin-portal .admin-dashboard .dashboard-timed-in { background:var(--status-success-surface) !important; color:var(--status-success-text) !important; }
 :root[data-theme='dark'] .admin-portal .dashboard-session-countdown .timer-limit-notice { color:var(--status-warning-text) !important; }
 :root[data-theme='dark'] .admin-portal .dashboard-quick-actions button:nth-child(3) svg { color:#ba96ff; }
+:root[data-theme='dark'] .admin-portal .dashboard-welcome-date > i { background:var(--status-info-surface); color:var(--status-info-text); }
 :root[data-theme='dark'] .admin-portal .dashboard-attendance-totals i { background:var(--status-success-surface); color:var(--status-success-text); }
 :root[data-theme='dark'] .admin-portal .dashboard-attendance-totals > div:nth-child(2) i { background:var(--surface-interactive); color:#ba96ff; }
 @media (max-width:767px) {

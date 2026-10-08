@@ -1,0 +1,68 @@
+.certificate-admin .clearance-workspace-link { min-height:44px; padding:9px 14px; border:1px solid var(--border-strong); border-radius:8px; background:var(--surface-interactive); color:var(--link-color); font-weight:700; cursor:pointer; }
+.certificate-admin .clearance-workspace-link:hover { background:var(--surface-interactive-hover); color:var(--link-hover); }
+.certificate-admin .clearance-panel-tabs > button { justify-content:center; box-shadow:none; }
+.certificate-admin .clearance-panel-tabs > button[aria-selected='true'] { background:var(--surface-selected); }
+.certificate-admin .certificate-grid { grid-template-columns:minmax(0,1fr); }
+.certificate-admin .table-header { align-items:flex-start; gap:1rem; }
+.certificate-admin .table-header h3 { margin:0; }
+.certificate-admin .table-header > span { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.certificate-admin .clearance-section-help { margin:.45rem 0 0; color:var(--text-secondary); font-size:var(--text-sm); }
+.certificate-admin .clearance-directory-filters label { display:grid; gap:.4rem; color:var(--text-secondary); font-weight:600; }
+.certificate-admin .clearance-directory-filters--queue { grid-template-columns:minmax(0,1fr); }
+.certificate-admin .clearance-record-heading,
+.certificate-admin .certificate-student-card { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,.8fr) minmax(0,1.3fr) minmax(0,.9fr); gap:1.25rem; align-items:center; }
+.certificate-admin .clearance-record-heading { margin:0 1rem; padding:.75rem 1rem; border-block:1px solid var(--border-subtle); background:var(--surface-nested); color:var(--text-secondary); font-weight:700; font-size:var(--text-sm); }
+.certificate-admin .certificate-student-list { grid-template-columns:minmax(0,1fr); gap:0; padding:0 1rem 1rem; }
+.certificate-admin .certificate-student-card { padding:1.1rem 1rem; border:0; border-bottom:1px solid var(--border-subtle); border-radius:0; background:var(--surface-raised); }
+.certificate-admin .certificate-student-card > div { min-width:0; display:grid; gap:.3rem; overflow-wrap:anywhere; }
+.certificate-admin .certificate-student-card strong { color:var(--text-primary); font-size:var(--text-base); }
+.certificate-admin .certificate-student-card :is(span,small) { color:var(--text-secondary); }
+.certificate-admin .certificate-student-card small { font-size:var(--text-sm); line-height:1.5; }
+.certificate-admin .certificate-student-card .clearance-mobile-label { display:none; }
+.certificate-admin .clearance-service-progress strong { font-variant-numeric:tabular-nums; }
+.certificate-admin .clearance-service-progress progress { width:100%; max-width:10rem; height:.4rem; border:0; border-radius:8px; overflow:hidden; background:var(--surface-interactive); accent-color:var(--link-color); }
+.clearance-service-progress progress::-webkit-progress-bar { background:var(--surface-interactive); }
+.clearance-service-progress progress::-webkit-progress-value { background:var(--link-color); border-radius:8px; }
+.clearance-service-progress progress::-moz-progress-bar { background:var(--link-color); }
+.certificate-admin .certificate-student-card .clearance-directory-status { padding:.3rem .55rem; line-height:1.4; font-size:var(--text-sm); text-transform:none; }
+.certificate-admin .certificate-student-list .status-awaiting-clearance { background:var(--status-info-surface) !important; color:var(--status-info-text) !important; }
+.certificate-admin .certificate-student-list .status-qualified { background:var(--status-success-surface) !important; color:var(--status-success-text) !important; }
+.certificate-admin .certificate-student-list .status-needs-service { background:var(--status-warning-surface) !important; color:var(--status-warning-text) !important; }
+.certificate-admin .certificate-student-list .status-blocked { background:var(--status-danger-surface) !important; color:var(--status-danger-text) !important; }
+.certificate-admin .certificate-student-list .status-no-service-required { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+.certificate-admin .certificate-student-list :is(.clearance-approve-button,.clearance-issue-button) { min-height:44px; margin:0; background:var(--action-primary-surface); color:var(--text-on-accent); box-shadow:none; line-height:1.35; }
+.certificate-admin .certificate-student-list :is(.clearance-approve-button,.clearance-issue-button):hover:not(:disabled) { background:var(--action-primary-hover); }
+.certificate-admin .empty-state { padding:2rem 1rem; color:var(--text-secondary); }
+.certificate-admin .empty-state p { margin:.5rem 0 0; }
+.certificate-admin .signature-management { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.5fr); gap:1.25rem; padding-bottom:1rem; }
+.certificate-admin .signature-management > .table-header { grid-column:1 / -1; }
+.certificate-admin .signature-form { grid-template-columns:minmax(0,1fr); align-content:start; padding-inline:1rem; }
+.certificate-admin .signature-directory { grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; padding-right:1rem; align-content:start; }
+.certificate-admin .signature-directory > article { background:var(--surface-nested); color:var(--text-primary); border-color:var(--border-subtle); }
+.certificate-admin .signature-directory img,
+.certificate-admin .signature-form > img,
+.app-modal .signature-preview-grid img,
+.app-modal .signature-picker img { padding:4px; border-radius:4px; background:#fff; }
+:root[data-theme='dark'] .app-modal .signature-picker label { background:var(--surface-nested) !important; color:var(--text-primary) !important; }
+/* The certificate keeps its printable paper surface, so its text must stay dark. */
+:root[data-theme='dark'] .app-modal .certificate-preview :is(h1,h2,h3,h4,p,span,strong,b,small) { color:#172033 !important; }
+@media (max-width:1100px) {
+  .certificate-admin .clearance-record-heading,
+  .certificate-admin .certificate-student-card { grid-template-columns:minmax(0,1fr) minmax(0,.8fr) minmax(0,1.2fr); }
+  .certificate-admin .clearance-record-heading > span:last-child { display:none; }
+  .certificate-admin .clearance-student-action { grid-column:3; }
+  .certificate-admin .signature-management { grid-template-columns:minmax(0,1fr); }
+  .certificate-admin .signature-form { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .certificate-admin .signature-directory { padding-inline:1rem; }
+}
+@media (max-width:767px) {
+  .certificate-admin .clearance-record-heading { display:none; }
+  .certificate-admin .certificate-student-list { gap:.75rem; padding:0 .8rem .8rem; }
+  .certificate-admin .certificate-student-card { grid-template-columns:minmax(0,1fr); gap:.85rem; padding:1rem; border:1px solid var(--border-subtle); border-radius:8px; }
+  .certificate-admin .certificate-student-card .clearance-mobile-label { display:block; color:var(--text-muted); font-size:var(--text-xs); font-weight:600; }
+  .certificate-admin .clearance-student-action { grid-column:auto; padding-top:.6rem; border-top:1px solid var(--border-subtle); }
+  .certificate-admin .clearance-student-action button { width:100%; }
+  .certificate-admin .clearance-panel-tabs > button { min-height:3.5rem; }
+  .certificate-admin .signature-directory,.certificate-admin .signature-form { grid-template-columns:minmax(0,1fr); }
+  .certificate-admin .management-page-header > button { width:100%; }
+}

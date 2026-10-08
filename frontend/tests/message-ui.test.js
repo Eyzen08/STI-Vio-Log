@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -14,7 +15,7 @@ test('message UI helpers expose the required text limit and filters', () => {
 test('mobile messages keep a compact heading and keyboard-safe composer', async () => {
   const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const baseCss = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(app, /activeView === 'Messages' \? ' main-panel--messages' : ''/)
   assert.match(css, /\.messages-page-heading \{ display: flex; flex-direction: row;/)
   assert.match(css, /\.chat-composer \{ position: sticky; bottom: 0;/)
@@ -24,7 +25,7 @@ test('mobile messages keep a compact heading and keyboard-safe composer', async 
 
 test('open mobile threads use the full message workspace without the page heading', async () => {
   const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(component, /messages-page messages-inbox\$\{selected\?' has-open-thread':''\}/)
   assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread\s*\{[^}]*gap:\s*0;/)
   assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread > \.messages-page-heading\s*\{[^}]*display:\s*none;/)
@@ -40,7 +41,7 @@ test('message composer uses the shared professional send icon', async () => {
 })
 
 test('message workspace keeps the composer visible and scrolls both content columns', async () => {
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.main-panel--messages\s*\{[^}]*height:\s*100dvh;[^}]*display:\s*flex;[^}]*overflow:\s*hidden;/s)
   assert.match(css, /\.main-panel--messages > \.page-content\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1 1 auto;[^}]*overflow:\s*hidden;/s)
   assert.match(css, /\.main-panel--messages \.messages-inbox\s*\{[^}]*height:\s*100%;[^}]*display:\s*flex;[^}]*flex-direction:\s*column;/s)

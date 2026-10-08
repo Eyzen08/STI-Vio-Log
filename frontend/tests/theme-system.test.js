@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -8,7 +9,7 @@ const passwordChange = await readFile(new URL('../src/components/PasswordChangeR
 const icon = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
 const foundation = await readFile(new URL('../src/index.css', import.meta.url), 'utf8')
 const appCss = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
-const portal = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+const portal = readPortalStyles()
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
 

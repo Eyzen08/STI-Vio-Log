@@ -1,6 +1,6 @@
 // Run with Playwright available locally or through NODE_PATH (no app dependency).
 import assert from 'node:assert/strict'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
@@ -13,10 +13,24 @@ const student = { id: 1, first_name: 'Maria', last_name: 'Santos', full_name: 'M
 const violation = { id: 1, student_id: 1, student_name: 'Maria Santos', student_number: '2024-001', exact_offense: 'Non-wearing, incomplete, or improper use of school uniform or ID', incident_date: '2026-10-05', severity: 'MINOR', status: 'OPEN', offense_indicator_level: 'MINOR_1' }
 const assignment = { id: 1, assignment_id: 1, violation_id: 1, student_id: 1, student_name: 'Maria Santos', first_name: 'Maria', last_name: 'Santos', student_number: '2024-001', required_hours: 4, remaining_hours: 2, department_name: 'Community Engagement and Student Support Department', status: 'IN_PROGRESS' }
 const payload = { students: [student], student, profile: student, violations: [violation], assignments: [assignment], sessions: [], notifications: [], summary: {}, destinations: [], departments: [], officers: [], accounts: [], records: [], rows: [], entries: [], logs: [], conversations: [], recipients: [], messages: [], violationTypes: [], clearanceRecords: [], corrections: [], results: [], pagination: { page: 1, totalPages: 1, total: 1 } }
+const clearanceFixtures = ['AWAITING_CLEARANCE', 'QUALIFIED', 'BLOCKED', 'NEEDS_SERVICE', 'NO_SERVICE_REQUIRED', 'QUALIFIED', 'AWAITING_CLEARANCE'].map((status, i) => ({
+  ...student, id: i + 1, student_name: ['Maria Santos', 'Rafael Cruz', 'Ana Reyes', 'Luis Tan', 'Bea Lim', 'Paolo Sy', 'Isabel Garcia'][i],
+  student_number: `2024-00${i + 1}`, qualification_status: status, qualification_reason: status === 'BLOCKED' ? 'Has an unresolved violation.' : status === 'AWAITING_CLEARANCE' ? 'Service is complete; final clearance approval is still required.' : 'Community service status verified.',
+  academic_level: 'COLLEGE', assignment_count: status === 'NO_SERVICE_REQUIRED' ? 0 : 1, required_hours: 4, completed_hours: status === 'NEEDS_SERVICE' ? 1 : 4,
+  service_complete: !['NEEDS_SERVICE', 'NO_SERVICE_REQUIRED'].includes(status), certificate_eligible: status === 'QUALIFIED', has_issued_certificate: i === 5,
+  clearance_id: i === 6 ? null : i + 1, academic_year: '2026-2027', semester: '1st Semester',
+}))
+let clearanceStudents = structuredClone(clearanceFixtures)
+let rejectApproval = false
+let rejectDirectory = false
+const approvalBodies = []
+const signature = { id: 1, full_name: 'Juan Dela Cruz', position: 'Discipline Officer', is_active: true, updated_at: '2026-10-08', image_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jY1sAAAAASUVORK5CYII=' }
+const clearanceCertificates = ['ISSUED', 'REVOKED'].map((status, i) => ({ id: i + 1, student_name: 'Paolo Sy', student_number: '2024-006', certificate_number: `STI-2026-00${i + 1}`, version: i + 1, completed_hours: 4, status, email_status: 'SENT' }))
 const server = await createServer({ root, server: { host: '127.0.0.1', port: 0 } })
 let browser
 let user
 const errors = []
+const themeFindings = []
 
 try {
   await server.listen()
@@ -27,7 +41,24 @@ try {
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url())
     if (url.pathname.startsWith('/api/')) {
-      await route.fulfill({ status: url.pathname === '/api/auth/session' && !user ? 401 : 200, contentType: 'application/json', body: JSON.stringify(url.pathname === '/api/auth/session' ? { user } : payload) })
+      let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'local-browser-fixture' } : payload
+      let status = url.pathname === '/api/auth/session' && !user ? 401 : 200
+      if (url.pathname === '/api/clearance/certificates/students') {
+        response = rejectDirectory ? { message: 'Unable to load clearance records.' } : { students: [...clearanceStudents, clearanceStudents[0]].filter(Boolean) }
+        status = rejectDirectory ? 503 : 200
+      }
+      if (url.pathname === '/api/clearance/signatures') response = { signatures: [signature] }
+      if (url.pathname === '/api/clearance/certificates') response = { certificates: clearanceCertificates }
+      if (/\/api\/clearance\/certificates\/students\/\d+\/approve$/.test(url.pathname)) {
+        approvalBodies.push(route.request().postDataJSON())
+        if (rejectApproval) { status = 409; response = { message: 'Student requirements changed. Refresh and review again.' } }
+        else {
+          const id = Number(url.pathname.split('/').at(-2))
+          clearanceStudents = clearanceStudents.map((entry) => entry.id === id ? { ...entry, qualification_status: 'QUALIFIED', qualification_reason: 'Ready for certificate issuance.', certificate_eligible: true } : entry)
+          response = { success: true }
+        }
+      }
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(response) })
     } else if (url.origin === new URL(origin).origin) await route.continue()
     else await route.abort()
   })
@@ -55,6 +86,46 @@ try {
   }
 
   async function check(label, width, authenticated = true) {
+    await page.evaluate(() => Promise.all(document.getAnimations().filter((animation) => animation instanceof CSSTransition).map((animation) => animation.finished.catch(() => {}))))
+    if (process.argv.includes('--theme-audit')) {
+      const findings = await page.evaluate(() => {
+        if (document.documentElement.dataset.theme !== 'dark') return []
+        const rgb = (color) => color.match(/[\d.]+/g)?.map(Number) || [0, 0, 0, 0]
+        const luminance = (channels) => channels.slice(0, 3).map((v) => v / 255).map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0)
+        const findings = []
+        for (const el of document.querySelectorAll('body *')) {
+          const style = getComputedStyle(el)
+          const rect = el.getBoundingClientRect()
+          if (!el.getClientRects().length || rect.width < 2 || rect.height < 2 || style.visibility !== 'visible' || Number(style.opacity) === 0 || el.closest('[aria-hidden="true"],svg,script,style,.sr-only')) continue
+          const ownBackground = rgb(style.backgroundColor)
+          const selector = `${el.parentElement?.className || el.parentElement?.tagName} > ${el.tagName.toLowerCase()}.${String(el.className).trim().replaceAll(' ', '.')}`
+          const paper = el.closest('.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img,.signature-directory img,.signature-form > img,.signature-preview-grid img,.signature-picker img')
+          if (!paper && (ownBackground[3] ?? 1) >= .9 && luminance(ownBackground) > .65 && rect.width * rect.height > 150) findings.push({ selector, issue: 'light surface', background: style.backgroundColor })
+          const text = [...el.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent.trim()).join(' ')
+          if (!text || el.matches('progress') || el.closest(':disabled,[disabled]')) continue
+          const layers = []
+          let layeredImage = false
+          for (let current = el; current; current = current.parentElement) {
+            const currentStyle = getComputedStyle(current)
+            const background = rgb(currentStyle.backgroundColor)
+            if (currentStyle.backgroundImage !== 'none') { layeredImage = true; break }
+            layers.push(background)
+            if ((background[3] ?? 1) === 1) break
+          }
+          if (layeredImage) continue
+          const composite = layers.reverse().reduce((base, color) => base.map((v, i) => color[i] * (color[3] ?? 1) + v * (1 - (color[3] ?? 1))), [255, 255, 255])
+          const foreground = rgb(style.color)
+          const textColor = composite.map((v, i) => foreground[i] * (foreground[3] ?? 1) + v * (1 - (foreground[3] ?? 1)))
+          const values = [luminance(textColor), luminance(composite)].sort((a, b) => b - a)
+          const ratio = (values[0] + .05) / (values[1] + .05)
+          const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700)
+          if (ratio < (large ? 3 : 4.5)) findings.push({ selector, issue: 'text contrast', text: text.slice(0, 70), ratio: Number(ratio.toFixed(2)), color: style.color, background: composite.map(Math.round) })
+        }
+        return findings
+      })
+      themeFindings.push(...findings.map((finding) => ({ page: label, ...finding })))
+      await writeFile(`${output}theme-audit.json`, JSON.stringify(themeFindings, null, 2))
+    }
     const layout = await page.evaluate(() => {
       const css = (selector) => {
         const element = document.querySelector(selector)
@@ -92,7 +163,7 @@ try {
         assert.equal(layout.nav.size, '14px', `${label}: navigation text`)
         assert.ok(layout.nav.height >= 44, `${label}: navigation target`)
       }
-      if (layout.title) assert.equal(layout.title.size, `${width < 768 ? 26 : width < 1280 ? 28 : 32}px`, `${label}: title size`)
+      if (layout.title) assert.equal(layout.title.size, label.includes('/admin/system-monitoring') ? '22px' : `${width < 768 ? 26 : width < 1280 ? 28 : 32}px`, `${label}: title size`)
     }
   }
 
@@ -115,6 +186,82 @@ try {
   }
 
   user = { ...student, role: 'DISCIPLINE_ADMIN' }
+  for (const width of [1920, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    for (const theme of ['light', 'dark']) {
+      clearanceStudents = structuredClone(clearanceFixtures)
+      await open('/admin/awaiting-clearance?panel=history')
+      await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+      await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
+      assert.equal(await page.locator('.certificate-student-card').count(), 2, 'queue excludes blocked, incomplete, unassigned and approved students; duplicate students removed')
+      assert.equal(await page.getByRole('tab').count(), 0, 'queue remains its own page despite a legacy panel query')
+      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search students', exact: true }).fill('garcia')
+      assert.equal(await page.locator('.certificate-student-card').count(), 1)
+      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search students', exact: true }).fill('')
+      await check(`Awaiting Clearance ${theme} ${width}`, width)
+      await page.screenshot({ path: `${output}awaiting-clearance-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
+      await page.locator('.certificate-student-card').filter({ hasText: 'Maria Santos' }).getByRole('button', { name: 'Approve Clearance', exact: true }).click()
+      await page.getByRole('dialog').waitFor()
+      await check(`Clearance approval dialog ${theme} ${width}`, width)
+      await page.getByRole('dialog').getByRole('button', { name: 'Approve Clearance', exact: true }).click()
+      await page.getByRole('dialog').waitFor({ state: 'hidden' })
+      await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
+      assert.equal(await page.locator('.certificate-student-card').count(), 1, 'approved student leaves queue immediately')
+      assert.equal(await page.locator('[name="clearance-student-filter"]').evaluate((el) => document.activeElement === el), true, 'approval restores keyboard focus to search')
+      assert.deepEqual(approvalBodies.at(-1), {}, 'existing clearance uses its own term')
+      await page.getByRole('button', { name: 'Approve Clearance', exact: true }).click()
+      const dialog = page.getByRole('dialog')
+      assert.equal(await dialog.getByRole('button', { name: 'Approve Clearance', exact: true }).isDisabled(), true)
+      await dialog.getByLabel('Academic year').fill('2026-2027')
+      rejectApproval = true
+      await dialog.getByRole('button', { name: 'Approve Clearance', exact: true }).click()
+      await dialog.getByRole('alert').waitFor()
+      await check(`Clearance approval error ${theme} ${width}`, width)
+      assert.equal(await page.locator('.certificate-student-card').count(), 1, 'failed approval does not remove student')
+      rejectApproval = false
+      await dialog.getByRole('button', { name: 'Approve Clearance', exact: true }).click()
+      await dialog.waitFor({ state: 'hidden' })
+      await page.getByText('No students awaiting clearance', { exact: true }).waitFor()
+      assert.deepEqual(approvalBodies.at(-1), { academic_year: '2026-2027', semester: '1st Semester' })
+      await page.getByRole('button', { name: 'Back to Clearance Management' }).click()
+      await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
+      assert.equal(new URL(page.url()).pathname, '/admin/clearance')
+      assert.equal(await page.locator('.certificate-student-card').count(), 7)
+      await check(`Clearance directory ${theme} ${width}`, width)
+      await page.screenshot({ path: `${output}clearance-directory-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
+      await page.locator('.certificate-student-card').filter({ hasText: 'Rafael Cruz' }).getByRole('button', { name: 'Review & Issue Certificate' }).click()
+      await page.getByRole('dialog').waitFor()
+      await check(`Certificate review drawer ${theme} ${width}`, width)
+      assert.equal(await page.getByRole('button', { name: 'Issue, Email & Prepare PDF' }).isDisabled(), true, 'issuance requires an authorized signature')
+      await page.keyboard.press('Escape')
+      await page.getByRole('tab', { name: 'E-Signature Management' }).click()
+      assert.equal(new URL(page.url()).searchParams.get('panel'), 'signatures')
+      await check(`Clearance signatures ${theme} ${width}`, width)
+      await page.getByRole('button', { name: 'Edit', exact: true }).click()
+      await page.getByRole('dialog').waitFor()
+      await check(`Signature edit dialog ${theme} ${width}`, width)
+      await page.keyboard.press('Escape')
+      await page.getByRole('button', { name: 'Deactivate', exact: true }).click()
+      await page.getByRole('dialog').waitFor()
+      await check(`Signature deactivate dialog ${theme} ${width}`, width)
+      await page.keyboard.press('Escape')
+      await page.getByRole('tab', { name: 'Certificate History' }).click()
+      await check(`Clearance history ${theme} ${width}`, width)
+      await page.getByRole('button', { name: 'Revoke', exact: true }).click()
+      await page.getByRole('dialog').waitFor()
+      await check(`Certificate revoke dialog ${theme} ${width}`, width)
+      await page.keyboard.press('Escape')
+      await page.goBack()
+      await page.getByRole('tab', { name: 'E-Signature Management', selected: true }).waitFor()
+      console.log(`PASS clearance: queue, approvals, errors, issuance, signature dialogs, history, Back navigation; ${theme} ${width}px`)
+    }
+  }
+  rejectDirectory = true
+  await open('/admin/awaiting-clearance')
+  await page.getByRole('button', { name: 'Try again' }).waitFor()
+  rejectDirectory = false
+  await page.getByRole('button', { name: 'Try again' }).click()
+  await page.getByText('No students awaiting clearance', { exact: true }).waitFor()
   await page.setViewportSize({ width: 1366, height: 768 })
   for (const path of ['/admin/students', '/admin/community-service', '/admin/qr-scan', '/admin/messages', '/admin/dashboard', '/admin/students']) {
     await open(path)
@@ -160,6 +307,12 @@ try {
     await check(flag, 390, false)
   }
   assert.deepEqual(errors, [], 'Browser runtime errors')
+  if (process.argv.includes('--theme-audit')) {
+    await writeFile(`${output}theme-audit.json`, JSON.stringify(themeFindings, null, 2))
+    const unique = [...new Map(themeFindings.map((finding) => [`${finding.selector}:${finding.issue}:${finding.color || finding.background}`, finding])).values()]
+    console.log(JSON.stringify(unique.slice(0, 40), null, 2))
+    assert.equal(unique.length, 0, `Dark theme: ${unique.length} distinct color leaks/contrast failures; see artifacts/ui-consistency/theme-audit.json`)
+  }
   console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
 } finally {
   await browser?.close()

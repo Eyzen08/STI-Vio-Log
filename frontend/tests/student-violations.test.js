@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
@@ -39,14 +40,14 @@ test('canonical lifecycle values receive student-readable labels', () => {
 })
 
 test('expanded violation summaries retain readable light-surface contrast', async () => {
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.violations-page \.violation-summary\[aria-expanded="true"\][^{]*\{ background: #eaf2ff !important; color: #172033 !important; \}/)
   assert.match(css, /\.violations-page \.violation-summary-main > p \{ color: #40546d; \}/)
 })
 
 test('violation disclosure uses a decorative right-to-down chevron and retains button semantics', async () => {
   const source = await readFile(new URL('../src/components/StudentViolations.jsx', import.meta.url), 'utf8')
-  const css = await readFile(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(source, /aria-expanded=\{expanded\}/)
   assert.match(source, /aria-controls=\{panelId\}/)
   assert.match(source, /setExpandedId\(expanded \? null : violation.id\)/)

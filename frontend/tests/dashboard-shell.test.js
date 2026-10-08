@@ -1,3 +1,4 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -87,7 +88,7 @@ test('management summaries use the shared SVG metric component instead of font g
 })
 
 test('discipline workflows keep filters, long tables, and motion accessible', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /table-card:has\(\.management-table-header\) thead th \{[^}]*position: sticky;[^}]*top: 0;/s)
   assert.match(css, /table-card:has\(\.management-table-header\) tbody tr:focus-within/)
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?thead th \{[\s\S]*?position: static;/)
@@ -95,7 +96,7 @@ test('discipline workflows keep filters, long tables, and motion accessible', ()
 })
 
 test('administration workspaces share compact tabs, dense directories, and responsive comparisons', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.department-officer-page,[\s\S]*?\.admin-settings-page \{[^}]*width: min\(100%, 94rem\);/)
   assert.match(css, /\.main-panel :is\(\.department-officer-tabs, \.review-workspace-tabs\) \{[^}]*border: 1px solid var\(--color-border\);/s)
   assert.match(css, /\.officer-directory,[\s\S]*?\.signature-directory \{[^}]*grid-auto-flow: dense;/)
@@ -103,7 +104,7 @@ test('administration workspaces share compact tabs, dense directories, and respo
 })
 
 test('communication, reporting, dark mode, and accessibility share the final responsive system', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.messages-workspace \{[^}]*grid-template-columns: minmax\(17rem, 0\.7fr\) minmax\(0, 1\.3fr\);/s)
   assert.match(css, /\.message-composer \{[^}]*border-top-color: var\(--color-border\);/s)
   assert.match(css, /\.report-pagination \{[^}]*position: sticky;[^}]*bottom: 0;/s)
@@ -114,7 +115,7 @@ test('communication, reporting, dark mode, and accessibility share the final res
 })
 
 test('desktop shell follows the shared Students proportions', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /@media \(min-width: 1200px\)[\s\S]*?grid-template-columns: var\(--sidebar-width\) minmax\(0, 1fr\);/)
   assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 99px;/s)
   assert.match(css, /\.dashboard-quick-actions button \{[^}]*min-height: var\(--control-height\);/s)
@@ -123,7 +124,7 @@ test('desktop shell follows the shared Students proportions', () => {
 })
 
 test('final portal authority prevents legacy premium rules from overriding the reference shell', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   const authority = css.slice(css.lastIndexOf('Authenticated portal final authority'))
   assert.match(authority, /grid-template-columns: var\(--sidebar-width\) minmax\(0, 1fr\)/)
   assert.match(authority, /\.sidebar \.brand \{[\s\S]*?min-height: 3\.6rem;[\s\S]*?box-shadow: none;/)
@@ -158,7 +159,7 @@ test('mobile shell exposes real branding, scoped directory search, and the syste
 
 test('primary management tables retain mobile labels or an accessible scroll region', () => {
   const service = fs.readFileSync(new URL('../src/components/CommunityServiceManagement.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(service, /tabIndex="0" role="region" aria-label="Community service assignments"/)
   assert.match(service, /<th key=\{label\} scope="col">/)
   const violations = fs.readFileSync(new URL('../src/components/ViolationManagement.jsx', import.meta.url), 'utf8')
@@ -206,7 +207,7 @@ test('violation legend keeps grave classification while the student directory sh
 })
 
 test('desktop sidebar scrolls vertically without hover-created horizontal overflow', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   const appCss = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')
   assert.match(css, /\.sidebar \.nav \{ max-width: 100%; overflow-x: hidden; \}/)
   assert.match(css, /\.sidebar \.nav-item \{[^}]*max-width: 100%;[^}]*box-sizing: border-box;/)
@@ -222,7 +223,7 @@ test('desktop sidebar scrolls vertically without hover-created horizontal overfl
 
 test('sidebar brand presents the official logo as an integrated lockup', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(app, /alt="STI Vio-Log Discipline Office Portal"\s+width="420"\s+height="236"/)
   assert.match(app, /className="brand-favicon" src="\/favicon-32\.png" alt="STI Vio-Log"/)
   assert.match(css, /\.sidebar \.brand\s*\{[^}]*background:\s*linear-gradient\(145deg, #e9f4ff, #d9eaff\);/s)
@@ -245,7 +246,7 @@ test('desktop sidebar toggle lives in the top bar without clipped positioning', 
 })
 
 test('topbar search owns one aligned surface and theme-aware focus ring', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.topbar-search \{[^}]*border: 1px solid transparent;[^}]*border-radius: 0\.45rem;/s)
   assert.match(css, /\.main-panel \.topbar-search input \{[^}]*min-height: 0 !important;[^}]*padding: 0 !important;[^}]*border: 0 !important;[^}]*border-radius: 0 !important;[^}]*background: transparent !important;[^}]*box-shadow: none !important;/s)
   assert.match(css, /\.topbar-search:focus-within \{[^}]*border-color: var\(--link-color\) !important;[^}]*box-shadow: 0 0 0 2px color-mix\(in srgb, var\(--link-color\) 22%, transparent\);/s)
@@ -254,7 +255,7 @@ test('topbar search owns one aligned surface and theme-aware focus ring', () => 
 })
 
 test('segmented navigation uses readable light hover and selected states', () => {
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /\.main-panel :is\(\.review-workspace-tabs,[^}]*button:hover:not\(:disabled\) \{[^}]*background: #edf6ff !important;[^}]*color: #063f7c !important;/s)
   assert.match(css, /button:is\(\.active, \[aria-selected='true'\], \[aria-current='page'\]\) \{[^}]*background: #dceeff !important;[^}]*color: #063b75 !important;/s)
 })
@@ -287,7 +288,7 @@ test('profile menu provides outside, Escape, navigation, and logout close behavi
 test('mobile profile uses the shared avatar in the trigger and opened menu', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   const source = fs.readFileSync(new URL('../src/components/ProfileMenu.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(app, /profile=\{isStudent \? studentProfile : null\}/)
   assert.equal((source.match(/<Avatar className="account-avatar" identity=\{\{ \.\.\.user, \.\.\.profile \}\}/g) || []).length, 2)
   assert.match(css, /\.main-panel \.profile-menu-trigger,[^}]*width: 44px; height: 44px;[^}]*background: transparent !important;[^}]*transform: none !important;/s)
@@ -297,7 +298,7 @@ test('mobile profile uses the shared avatar in the trigger and opened menu', () 
 
 test('mobile header keeps its controls visible and logout forces a clean sign-out', () => {
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const css = fs.readFileSync(new URL('../src/styles/portal-system.css', import.meta.url), 'utf8')
+  const css = readPortalStyles()
   assert.match(css, /@media \(max-width: 767px\)[\s\S]*?\.topbar \{[\s\S]*?background: linear-gradient\([^}]*!important;/)
   assert.match(css, /\.mobile-menu-button \{[^}]*display: grid !important;[^}]*color: #fff !important;/s)
   assert.match(css, /\.notification-button \{[^}]*color: #fff !important;/s)
@@ -314,7 +315,7 @@ test('signature image validation accepts only PNG or JPEG up to 1 MB', () => {
 
 test('clearance renders the validated certificate workspace before legacy state', () => {
   const source = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
-  const directWorkspace = source.indexOf("if (activeView === 'Clearance') return <AdminClearanceCertificates")
+  const directWorkspace = source.indexOf("if (activeView === 'Clearance' || activeView === 'Awaiting Clearance') return <AdminClearanceCertificates")
   const legacyForm = source.indexOf('Clearance Record')
   assert.ok(directWorkspace > -1)
   assert.ok(legacyForm === -1 || directWorkspace < legacyForm)

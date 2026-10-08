@@ -120,7 +120,8 @@
 :root[data-theme='dark'] .clearance-eligible { background:var(--surface-interactive); color:var(--link-color); }
 :root[data-theme='dark'] .student-management-page :is(.directory-service progress,.directory-service progress::-webkit-progress-bar) { background:var(--surface-interactive); }
 :root[data-theme='dark'] .directory-timed-in { color:var(--status-success-text); }
-:root[data-theme='dark'] .admin-portal .student-management-page .student-directory-tabs button[aria-pressed='true'] { background:#007aff !important; color:white !important; }
+:root[data-theme='dark'] .admin-portal .student-management-page .student-directory-tabs button[aria-pressed='true'],
+:root[data-theme='dark'] .admin-portal .student-management-page :is(.student-add-button,.student-directory-footer button[aria-current]) { background:var(--action-primary-surface) !important; color:var(--text-on-accent) !important; }
 :root[data-theme='dark'] .admin-portal .student-management-page .directory-view-button { color:var(--link-color) !important; border-color:var(--link-color) !important; }
 @media (min-width:768px) and (max-width:1399px) {
   .admin-portal .student-management-page .student-directory-table :is(th,td) { padding-inline:8px; }

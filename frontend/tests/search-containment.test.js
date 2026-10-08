@@ -1,12 +1,7 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { isPortalSearchInput, prepareSearchInput } from '../src/lib/searchControls.js'
-
-const testDirectory = path.dirname(fileURLToPath(import.meta.url))
-const read = (file) => fs.readFileSync(path.join(testDirectory, '..', file), 'utf8')
 
 const input = ({ type = 'text', id = '', ariaLabel = '', placeholder = '', name = '' } = {}) => {
   const attributes = new Map([['aria-label', ariaLabel], ['placeholder', placeholder]])
@@ -33,7 +28,7 @@ test('ordinary data-entry inputs are not modified', () => {
 })
 
 test('department tabs share one surface and use a sliding pill for selection', () => {
-  const css = read('src/styles/portal-system.css')
+  const css = readPortalStyles()
   assert.match(css, /department-officer-tabs::before[\s\S]*--tab-indicator-width/)
   assert.match(css, /department-officer-tabs button\[aria-selected='true'\][\s\S]*color: #ffffff/)
   assert.match(css, /department-officer-tabs button\[aria-selected='true'\]::after \{ content: none; \}/)
@@ -41,14 +36,14 @@ test('department tabs share one surface and use a sliding pill for selection', (
 })
 
 test('search and preview containers include explicit shrink and overflow rules', () => {
-  const css = read('src/styles/portal-system.css')
+  const css = readPortalStyles()
   assert.match(css, /conversation-preview[\s\S]*text-overflow: ellipsis/)
   assert.match(css, /directory-toolbar[\s\S]*min-width: 0/)
   assert.match(css, /registration-review-heading[\s\S]*overflow-wrap: anywhere/)
 })
 
 test('dark header search overrides generic input surfaces and keeps a wrapper focus indicator', () => {
-  const css = read('src/styles/portal-system.css')
+  const css = readPortalStyles()
   assert.match(css, /:root\[data-theme='dark'\] \.app-shell \.main-panel \.topbar-search input\s*\{[^}]*background: transparent !important;/s)
   assert.match(css, /:root\[data-theme='dark'\] \.app-shell \.main-panel \.topbar-search:focus-within \{ border-color: var\(--link-color\) !important; \}/)
 })

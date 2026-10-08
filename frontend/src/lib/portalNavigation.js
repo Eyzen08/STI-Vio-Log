@@ -1,7 +1,7 @@
 import { APP_ROUTES, getNavItems } from './routes.js'
 
 const SIDEBAR_GROUPS = [
-  { id: 'discipline', label: 'Discipline', icon: 'violations', views: ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance'] },
+  { id: 'discipline', label: 'Discipline', icon: 'violations', views: ['Violations', 'Active Attendance', 'Community Service', 'QR Scan', 'Clearance', 'Awaiting Clearance'] },
   { id: 'reports', label: 'Reports', icon: 'reports', views: ['Reports', 'Audit Log', 'Analytics & Trends'] },
   { id: 'management', label: 'System & Management', icon: 'settings', views: ['Departments & Officer Accounts', 'Duplicate Review', 'System Dashboard', 'Account Settings'] }
 ]
@@ -40,6 +40,7 @@ const SIDEBAR_TOOLTIPS = {
   'Community Service': 'Manage community service',
   'QR Scan': 'Scan attendance QR code',
   Clearance: 'Manage student clearance',
+  'Awaiting Clearance': 'Approve completed community service',
   Messages: 'View student messages',
   Notifications: 'View your notifications',
   Reports: 'Generate discipline reports',
@@ -68,7 +69,7 @@ export const iconNameForView = (view = '') => ({
   Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', 'My Profile': 'students', 'Assigned Students': 'students',
   'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',
-  'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'My Clearance': 'clearance', Reports: 'reports', 'Analytics & Trends': 'reports',
+  'QR Scan': 'qr', 'My QR': 'qr', Clearance: 'clearance', 'Awaiting Clearance': 'check', 'My Clearance': 'clearance', Reports: 'reports', 'Analytics & Trends': 'reports',
   Messages: 'messages', Notifications: 'bell', 'Audit Log': 'clock', 'Account Settings': 'settings',
   'Departments & Officer Accounts': 'service', 'Non-Compliance': 'violations', 'Follow-up': 'violations'
 }[view] || 'dashboard')

@@ -1,9 +1,10 @@
+import { readPortalStyles } from './helpers/portalStyles.js'
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
-const portal = read('../src/styles/portal-system.css')
+const portal = readPortalStyles()
 
 test('authenticated route headers use the shared page-header class', () => {
   const sources = [

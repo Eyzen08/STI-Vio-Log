@@ -25,6 +25,11 @@ test('each supported role receives its own dashboard and navigation', () => {
 })
 
 test('protected routes permit only their declared roles', () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
+    assert.equal(resolveRoute('/admin/awaiting-clearance', role).status, 'allowed')
+    assert.equal(getNavItems(role).find(({ view }) => view === 'Awaiting Clearance')?.path, '/admin/awaiting-clearance')
+  }
+  for (const role of ['STUDENT', 'DEPARTMENT_HEAD']) assert.equal(resolveRoute('/admin/awaiting-clearance', role).status, 'unauthorized')
   assert.equal(resolveRoute('/system/profile', 'SYSTEM_ADMIN').status, 'not_found')
   assert.equal(resolveRoute('/admin/system-monitoring', 'DISCIPLINE_ADMIN').status, 'allowed')
   assert.equal(resolveRoute('/admin/system-monitoring', 'DISCIPLINE_OFFICE').status, 'unauthorized')
