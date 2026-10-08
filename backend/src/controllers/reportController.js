@@ -1,7 +1,7 @@
 const pool = require('../config/database');
 const { assertAllowedFields } = require('../utils/validators');
 const ExcelJS = require('exceljs');
-const { createReportWorkbook, reportFilename } = require('../services/reportExport');
+const { createReportWorkbook, reportFilename, formatReportSheet } = require('../services/reportExport');
 const { validReportDate, reportStatusOptions } = require('../../../shared/adminReports.mjs');
 const bad = (message) => { const error = new Error(message); error.statusCode = 400; throw error; };
 const validateId = (value) => { if (value !== undefined && (!/^\d+$/.test(String(value)) || Number(value) < 1)) bad('student_id must be a positive integer'); };
@@ -139,12 +139,40 @@ const createAnalyticsWorkbook = (snapshot, generatedAt = new Date()) => {
   const rows = analyticsRows(snapshot, generatedAt);
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'STI Vio-Log'; workbook.created = generatedAt;
+  const tables = [
+    [['Setting', 'Value'], [28, 48]],
+    [['Period start', 'Period end', 'Recorded violations'], [20, 20, 22]],
+    [['Classification', 'Recorded violations'], [28, 22]],
+    [['Metric', 'Value', 'Unit'], [28, 36, 18]],
+    [['Program / Strand', 'Recorded violations'], [48, 22]],
+    [['Insight', 'Value'], [28, 48]]
+  ];
   for (const section of ANALYTICS_SECTIONS) {
-    const sheet = workbook.addWorksheet(section, { views: [{ state: 'frozen', ySplit: 1 }] });
-    sheet.columns = ANALYTICS_HEADERS.map((header, index) => ({ header, width: [26, 32, 14, 14, 60, 16][index] }));
-    rows.filter(row => row[0] === section).forEach(row => sheet.addRow(row));
-    sheet.getRow(1).font = { bold: true };
-    sheet.eachRow(row => { row.alignment = { vertical: 'top', wrapText: true }; });
+    const [headers, widths] = tables[ANALYTICS_SECTIONS.indexOf(section)];
+    const sheet = workbook.addWorksheet(section);
+    widths.forEach((width, index) => { sheet.getColumn(index + 1).width = width; });
+    sheet.addRow([`STI Vio-Log — ${section}`]);
+    sheet.addRow([`Generated: ${rows[3][4]}`]);
+    sheet.addRow([`Filters: ${rows[0][4]}`]);
+    sheet.addRow([`Selected dates: ${snapshot.range.from} – ${snapshot.range.to}`]);
+    for (let row = 1; row <= 4; row++) sheet.mergeCells(row, 1, row, headers.length);
+    sheet.addRow([]); sheet.addRow(headers);
+    rows.filter(row => row[0] === section).forEach(([, metric, from, to, value, unit]) => {
+      if (section === 'Violations Over Time') sheet.addRow([new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`), value]);
+      else if (section === 'Community Service') sheet.addRow([metric, unit === 'percent' ? value / 100 : value, unit]);
+      else if (section === 'Key Insights' && metric === 'Service completion' && value === `${snapshot.analytics.service.completionPercent}%`) sheet.addRow([metric, snapshot.analytics.service.completionPercent / 100]);
+      else sheet.addRow([metric, section === 'Filters' && (metric === 'Date range' || metric === 'Comparison dates') ? `${from} – ${to}` : value]);
+    });
+    formatReportSheet(sheet);
+    if (section === 'Violations Over Time') {
+      sheet.getColumn(1).numFmt = 'yyyy-mm-dd'; sheet.getColumn(2).numFmt = 'yyyy-mm-dd';
+    }
+    if (section === 'Community Service') sheet.eachRow((row, number) => {
+      if (number > 6 && row.getCell(3).value === 'percent') row.getCell(2).numFmt = '0%';
+    });
+    if (section === 'Key Insights') sheet.eachRow((row, number) => {
+      if (number > 6 && typeof row.getCell(2).value === 'number') row.getCell(2).numFmt = '0%';
+    });
   }
   return workbook;
 };

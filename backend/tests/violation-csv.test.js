@@ -36,7 +36,7 @@ test('violations Excel export mirrors the readable generated report layout', asy
   assert.equal(sheet.getCell('C7').value, 'Major Offense - Category A')
   assert.equal(sheet.getCell('E7').value, 'Sep 11, 2026')
   assert.equal(sheet.getCell('F7').value, 'In Progress')
-  assert.equal(sheet.getColumn(7).width, 60)
+  assert.equal(sheet.getColumn(7).width, 48)
   assert.equal(sheet.getCell('G7').alignment.wrapText, true)
   assert.equal(sheet.views[0].state, 'frozen')
   assert.ok(sheet.autoFilter)

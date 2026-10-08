@@ -18,6 +18,7 @@ test('analytics offers both formats and blocks export while data is loading or u
   const render = (props = {}) => renderToStaticMarkup(createElement(DashboardAnalytics, { students: [], violations: [], assignments: [], ...props }))
   assert.match(render(), /Excel \(\.xlsx\)/)
   assert.match(render(), /CSV \(\.csv\)/)
+  assert.match(render(), /dashboard-analytics-heading[\s\S]*?<\/div><\/div><div class="dashboard-analytics-filters"/)
   assert.match(render(), /<button[^>]*data-action-disabled="false"[^>]*>Export<\/button>/)
   for (const props of [{ loading: true }, { error: 'Unavailable' }]) {
     assert.match(render(props), /<button[^>]*disabled=""[^>]*>Export<\/button>/)

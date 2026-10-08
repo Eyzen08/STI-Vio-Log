@@ -40,6 +40,16 @@ test('audit Excel export includes all filtered events with safe readable cells a
   assert.match(sheet.getCell('K7').value, /Required Service Hours: 2 hr → 0 min/);
   assert.doesNotMatch(JSON.stringify(sheet.getSheetValues()), /private|hidden-password/);
   assert.equal(sheet.views[0].ySplit, 6);
+  assert.equal(sheet.views[0].xSplit, 3);
+  assert.equal(sheet.views[0].showGridLines, false);
+  assert.equal(sheet.pageSetup.printArea, 'A1:K37');
+  assert.equal(sheet.pageSetup.printTitlesRow, '6:6');
+  assert.equal(sheet.pageSetup.printTitlesColumn, 'A:C');
+  assert.equal(sheet.pageSetup.fitToPage, false);
+  assert.equal(sheet.getCell('A6').font.name, 'Arial');
+  assert.equal(sheet.getCell('A6').fill.fgColor.argb, 'FF123553');
+  assert.equal(sheet.getCell('B4').alignment.horizontal, 'right');
+  assert.ok(sheet.getRow(7).height > 24);
   assert.ok(sheet.autoFilter);
   assert.equal(sheet.getCell('K7').alignment.wrapText, true);
 });

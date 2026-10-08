@@ -30,13 +30,35 @@ test('analytics downloads preserve all six sections, typed counts, filters, and 
   const workbook = await new ExcelJS.Workbook().xlsx.load(buffer);
   assert.deepEqual(workbook.worksheets.map(sheet => sheet.name), ['Filters', 'Violations Over Time', 'Classification', 'Community Service', 'Department', 'Key Insights']);
   const filters = workbook.getWorksheet('Filters');
-  assert.equal(filters.getCell('E2').value, data.program);
-  assert.match(filters.getCell('E5').value, /2026-10-08.*01:05.*Asia\/Manila/);
-  assert.equal(workbook.getWorksheet('Violations Over Time').getCell('E4').value, 1);
-  assert.equal(workbook.getWorksheet('Classification').getCell('E5').value, 2);
-  assert.equal(workbook.getWorksheet('Community Service').getCell('E5').value, 50);
-  assert.equal(workbook.getWorksheet('Department').getCell('B2').value, data.program);
-  assert.equal(workbook.getWorksheet('Key Insights').getCell('E2').value, '↑ 100% violations vs previous period');
+  const headers = [['Setting', 'Value'], ['Period start', 'Period end', 'Recorded violations'], ['Classification', 'Recorded violations'], ['Metric', 'Value', 'Unit'], ['Program / Strand', 'Recorded violations'], ['Insight', 'Value']];
+  workbook.worksheets.forEach((sheet, index) => {
+    assert.deepEqual(sheet.getRow(6).values.slice(1), headers[index]);
+    assert.equal(sheet.views[0].showGridLines, false);
+    assert.equal(sheet.views[0].ySplit, 6);
+    assert.equal(sheet.pageSetup.orientation, 'landscape');
+    assert.equal(sheet.pageSetup.printTitlesRow, '6:6');
+    assert.ok(sheet.pageSetup.printArea);
+  });
+  assert.equal(filters.getCell('B7').value, data.program);
+  assert.equal(filters.getCell('B7').type, ExcelJS.ValueType.String);
+  assert.match(filters.getCell('B8').value, /2026-10-01.*2026-10-07/);
+  assert.match(filters.getCell('B9').value, /2026-09-01.*2026-09-07/);
+  assert.match(filters.getCell('B10').value, /2026-10-08.*01:05.*Asia\/Manila/);
+  assert.equal(filters.getCell('B11').value, 2);
+  assert.equal(filters.getCell('B12').value, 1);
+  const trend = workbook.getWorksheet('Violations Over Time');
+  assert.equal(trend.getCell('C9').value, 1);
+  assert.equal(trend.getCell('C7').value, 0);
+  assert.equal(trend.getCell('A7').value.toISOString(), '2026-10-01T00:00:00.000Z');
+  assert.equal(workbook.getWorksheet('Classification').getCell('B10').value, 2);
+  const service = workbook.getWorksheet('Community Service');
+  assert.equal(service.getCell('B10').value, .5);
+  assert.equal(service.getCell('B10').numFmt, '0%');
+  assert.equal(service.getCell('B11').value, .5);
+  assert.equal(workbook.getWorksheet('Department').getCell('A7').value, data.program);
+  assert.equal(workbook.getWorksheet('Key Insights').getCell('B7').value, '↑ 100% violations vs previous period');
+  assert.equal(workbook.getWorksheet('Key Insights').getCell('B9').value, .5);
+  assert.equal(workbook.getWorksheet('Key Insights').getCell('B9').numFmt, '0%');
   const csv = reports.analyticsCsv(data, now);
   assert.ok(csv.startsWith('\uFEFFSection,Metric,From,To,Value,Unit\r\n'));
   assert.match(csv, /"'=BSIT, ""José"""/);
@@ -63,7 +85,7 @@ test('analytics export rejects malformed dates, counts, nested records, and spre
   }
 });
 
-test('empty analytics export retains zero counts and unavailable labels', () => {
+test('empty analytics export retains zero counts and unavailable labels', async () => {
   const data = snapshot();
   data.analytics.violationCount = 0;
   data.analytics.previousViolationCount = 0;
@@ -79,6 +101,12 @@ test('empty analytics export retains zero counts and unavailable labels', () => 
   assert.match(csv, /No records for this selection/);
   assert.match(csv, /No assignments/);
   assert.match(csv, /"Total assignments","2026-10-01","2026-10-07","0","assignments"/);
+  const workbook = await new ExcelJS.Workbook().xlsx.load(await reports.createAnalyticsWorkbook(data).xlsx.writeBuffer());
+  assert.equal(workbook.getWorksheet('Department').getCell('A7').value, 'No records for this selection.');
+  assert.equal(workbook.getWorksheet('Department').getCell('B7').value, 0);
+  assert.equal(workbook.getWorksheet('Community Service').getCell('B12').value, 'Overdue data unavailable');
+  assert.equal(workbook.getWorksheet('Community Service').getCell('B13').value, 'No assignments');
+  assert.equal(workbook.getWorksheet('Key Insights').getCell('B9').value, 'No assignments');
 });
 
 test('exports accept actual dashboard snapshots across program filters, periods, and Manila midnight', async () => {

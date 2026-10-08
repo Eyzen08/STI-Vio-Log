@@ -75,15 +75,15 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
   return <section className="dashboard-analytics" aria-labelledby="dashboard-analytics-title">
     <div className="dashboard-analytics-heading">
       <div><h2 id="dashboard-analytics-title">Analytics &amp; Trends</h2><p>Monitor violation patterns, service completion, and student compliance.</p></div>
-      <div className="dashboard-analytics-filters">
-        <label>Date range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="THIS_MONTH">This Month</option><option value="LAST_MONTH">Last Month</option><option value="THIS_YEAR">This Year</option><option value="CUSTOM">Custom</option></select></label>
-        <label>Department / Program<select value={program} onChange={(event) => setProgram(event.target.value)}><option value="ALL">All Departments / Programs</option>{options.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
-        {period === 'CUSTOM' && <div className="dashboard-analytics-custom"><label>From<input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}/></label><label>To<input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)}/></label></div>}
-        <div className="dashboard-analytics-export">
-          <label>Export format<select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)} disabled={exporting}><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select></label>
-          <button type="button" className="primary-action" onClick={exportSnapshot} disabled={exportDisabled} data-action-disabled={Boolean(exportDisabled)} aria-busy={exporting}>{exporting ? 'Exporting…' : 'Export'}</button>
-        </div>
+    </div>
+    <div className="dashboard-analytics-filters" role="group" aria-label="Analytics filters and export">
+      <label>Date range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="THIS_MONTH">This Month</option><option value="LAST_MONTH">Last Month</option><option value="THIS_YEAR">This Year</option><option value="CUSTOM">Custom</option></select></label>
+      <label>Department / Program<select value={program} onChange={(event) => setProgram(event.target.value)}><option value="ALL">All Departments / Programs</option>{options.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
+      <div className="dashboard-analytics-export">
+        <label>Export format<select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)} disabled={exporting}><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select></label>
+        <button type="button" className="primary-action" onClick={exportSnapshot} disabled={exportDisabled} data-action-disabled={Boolean(exportDisabled)} aria-busy={exporting}>{exporting ? 'Exporting…' : 'Export'}</button>
       </div>
+      {period === 'CUSTOM' && <div className="dashboard-analytics-custom"><label>From<input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}/></label><label>To<input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)}/></label></div>}
     </div>
     {period === 'CUSTOM' && !range && <p className="dashboard-analytics-error" role="alert">Choose valid dates with From on or before To. Showing the last valid range.</p>}
     {exportError && <p className="dashboard-analytics-error" role="alert">{exportError}</p>}

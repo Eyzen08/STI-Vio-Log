@@ -47,6 +47,18 @@ test('report workbooks preserve all rows, readable metadata and literal text wit
     assert.equal(sheet.getCell('B7').value,'000123'); assert.equal(sheet.getCell('B7').numFmt,'@');
     assert.doesNotMatch(JSON.stringify(sheet.getSheetValues()),/hidden-avatar|Assignment Id/);
     assert.equal(sheet.views[0].ySplit,6); assert.ok(sheet.autoFilter); assert.equal(sheet.getCell('A7').alignment.wrapText,true);
+    for (const tab of workbook.worksheets) {
+      assert.equal(tab.views[0].showGridLines, false);
+      assert.equal(tab.views[0].xSplit, 2);
+      assert.equal(tab.getCell('A6').font.name, 'Arial');
+      assert.equal(tab.getCell('A6').fill.fgColor.argb, 'FF123553');
+      assert.equal(tab.pageSetup.fitToPage, false);
+      assert.equal(tab.pageSetup.printTitlesRow, '6:6');
+      assert.equal(tab.pageSetup.printTitlesColumn, 'A:B');
+      assert.equal(tab.pageSetup.printArea, `A1:${tab.getColumn(tab.columnCount).letter}${tab.rowCount}`);
+      assert.ok(tab.columns.every(column => column.width <= 48));
+    }
+    assert.equal(sheet.getCell('B4').alignment.horizontal, 'right');
     const values=sheet.getRow(7).values.slice(1);
     if(type==='violations'){assert.ok(values.includes('No ID'));assert.ok(values.includes('Missing ID\nSecond line'));}
     if(type==='clearance'){assert.ok(values.includes('No'));assert.ok(values.includes('Yes'));}
