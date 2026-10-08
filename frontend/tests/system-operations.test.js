@@ -45,14 +45,15 @@ test('security and authentication records expose complete mobile card labels',()
   assert.match(portalStyles,/\.monitoring-slide :is\([^}]+\) \.table-wrap \{[^}]*max-height:none[^}]*overflow:visible/s)
 })
 
-test('every monitoring tab has a visible card boundary',()=>{
-  assert.match(portalStyles,/\.main-panel \.monitoring-panel-tabs > button \{[^}]*border:1px solid #cbdceb[^}]*background:#fff/s)
+test('monitoring tabs use a compact flat boundary',()=>{
+  assert.match(portalStyles,/\.main-panel \.monitoring-panel-tabs > button \{[^}]*min-height:2\.75rem[^}]*border:1px solid var\(--border-subtle\)[^}]*box-shadow:none/s)
   assert.match(portalStyles,/\.monitoring-panel-tabs > button:not\(\[aria-selected='true'\]\) \{[^}]*border-color:var\(--border-strong\) !important[^}]*background:var\(--surface-raised\) !important/s)
 })
 
 test('slide workspace preserves compact summary card styling after nesting',()=>{
   assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card \{/)
-  assert.match(portalStyles,/grid-template-columns:2\.875rem minmax\(0,1fr\)/)
+  assert.match(portalStyles,/grid-template-columns:2\.75rem minmax\(0,1fr\)/)
+  assert.match(portalStyles,/\.stat-card i \{[^}]*width:2\.75rem; height:2\.75rem/s)
   assert.match(portalStyles,/\.monitoring-slide-scroll > \.stats-grid \.stat-card strong \{/)
 })
 
@@ -69,10 +70,25 @@ test('overview dependency cards use an adaptive wrapping grid',()=>{
 })
 
 test('account controls grow naturally while the directory remains bounded',()=>{
-  assert.match(portalStyles,/\[data-panel='accounts'\] \.monitoring-slide-title \{ display:none; \}/)
+  assert.match(portalStyles,/\.monitoring-slide-title \{[^}]*position:absolute/s)
   assert.doesNotMatch(portalStyles,/height:15\.75rem/)
   assert.match(portalStyles,/\[data-panel='accounts'\] \.account-directory-panel \{[^}]*max-height:24rem/s)
   assert.match(portalStyles,/\[data-panel='accounts'\] \.account-action-form textarea \{ min-height:4\.25rem/)
+})
+
+test('account search fills its panel and status badges remain secondary',()=>{
+  assert.match(portalStyles,/\.account-directory-search input \{[^}]*width:100%; min-width:0/s)
+  assert.match(portalStyles,/\.account-action-results b \{[^}]*font-size:var\(--text-xs\)[^}]*text-transform:none/s)
+})
+
+test('recovery credentials use readable dark-theme surfaces and text',()=>{
+  assert.match(portalStyles,/:root\[data-theme='dark'\] \.system-dashboard \.temporary-credential \{[^}]*background:var\(--surface-nested\)[^}]*color:var\(--text-primary\)/s)
+  assert.match(portalStyles,/\.temporary-credential :is\(span,small\) \{ color:var\(--text-secondary\)/)
+})
+
+test('dark dependency latency and remediation retain semantic contrast',()=>{
+  assert.match(portalStyles,/\.component-health-card > p b \{ color:var\(--text-primary\) !important;/)
+  assert.match(portalStyles,/\.component-health-card \.component-remediation \{[^}]*background:var\(--status-warning-surface\)[^}]*color:var\(--status-warning-text\)/s)
 })
 
 test('step-up failures identify the signed-in account and clear mismatched autofill',()=>{
