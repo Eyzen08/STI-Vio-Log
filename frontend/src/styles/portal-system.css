@@ -5264,3 +5264,46 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 @media (max-width: 900px) { .department-officer-page .officer-directory { grid-template-columns: 1fr; } }
 @media (max-width: 600px) { .department-officer-page { gap: var(--page-gap); } .department-officer-page .department-welcome.portal-page-header { padding-inline: 0; } .department-officer-page .department-welcome h2 { font-size: var(--text-page-title); } .department-summary-grid { grid-template-columns: 1fr; } .department-directory-surface { padding: 12px; } .department-officer-page .directory-toolbar { grid-template-columns: 1fr; } .department-officer-create.department-tab-panel { width: 100%; padding: 22px 18px; } .department-officer-create .compact-stepper { gap: 10px; } .department-officer-create .compact-stepper button { gap: 6px; font-size: var(--text-base); } .department-officer-create .compact-stepper button b { width: 32px; height: 32px; } .department-officer-create .student-form-grid { grid-template-columns: 1fr; } .department-officer-create .student-form-grid .department-status-field { grid-column: 1; } }
 @media (prefers-reduced-motion: reduce) { .department-skeleton { animation: none; } }
+
+/* Audit events prioritize the affected record and readable outcome. */
+.audit-workspace .audit-filter-card .student-form { padding: 16px 20px; }
+.audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; margin-bottom: 12px; }
+.audit-workspace .audit-filter-card .registration-review-actions { margin-top: 0; padding-top: 0; border-top: 0; }
+.audit-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
+.audit-workspace .audit-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
+.audit-workspace .audit-record-table { width: 100%; min-width: 1080px; table-layout: fixed; }
+.audit-date-col { width: 130px; }
+.audit-actor-col { width: 165px; }
+.audit-action-col { width: 175px; }
+.audit-record-col { width: 25%; }
+.audit-workspace .audit-record-table :is(th,td) { padding: 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.audit-record-table td > :is(strong,span),.audit-record-table small { display: block; }
+.audit-record-table strong { font-weight: 600; }
+.audit-record-table small { margin-top: 4px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.audit-record-table time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.audit-workspace .audit-record-table .status-badge { display: inline-flex; white-space: normal; max-width: 100%; text-align: left; }
+.audit-event-summary { margin: 0; line-height: 1.6; }
+.audit-event-details { margin-top: 10px; }
+.audit-event-details summary { cursor: pointer; color: var(--color-primary); font-weight: 600; font-size: 12px; width: fit-content; }
+.audit-event-details summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; border-radius: 2px; }
+.audit-event-details dl { margin: 10px 0 0; padding: 12px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); }
+.audit-event-details dl > div { display: grid; grid-template-columns: minmax(100px,1fr) minmax(0,1.5fr); gap: 10px; padding: 5px 0; font-size: 12px; }
+.audit-event-details dt { color: var(--text-secondary); }
+.audit-event-details dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.audit-active-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 20px 12px; }
+.audit-active-filters span { padding: 4px 8px; border: 1px solid var(--color-border); border-radius: 5px; font-size: 12px; color: var(--text-secondary); }
+@media (max-width: 1100px) {
+  .audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 767px) {
+  .app-shell .audit-workspace .audit-record-table { min-width: 0; table-layout: auto; }
+  .app-shell .audit-workspace .audit-results-card .table-wrap { overflow: visible; }
+  .app-shell .audit-workspace .audit-record-table td[data-label='Record'] { grid-column: 1 / -1; }
+  .audit-workspace .audit-filter-card .student-form { padding: 12px; }
+  .audit-workspace .registration-review-actions { flex-wrap: wrap; }
+  .audit-date-note { width: 100%; }
+  .audit-event-details dl > div { grid-template-columns: 1fr; gap: 2px; }
+}
+@media (max-width: 450px) {
+  .audit-workspace .audit-filter-card .student-form-grid { grid-template-columns: minmax(0,1fr); }
+}

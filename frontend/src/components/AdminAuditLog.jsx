@@ -1,44 +1,57 @@
 import { useCallback, useEffect, useState } from 'react'
 import { API_URL } from '../lib/api.js'
-import { auditActorLabel, buildAuditQuery, formatAuditAction } from '../lib/auditLog.js'
-import { formatManilaDateTime } from '../lib/displayFormat.js'
-import ManagementMetric from './ManagementMetric.jsx'
+import { auditActorLabel, auditDetailRows, auditRecordLabel, auditRecordType, auditSummary, buildAuditQuery, formatAuditAction } from '../lib/auditLog.js'
+import { formatDisplayLabel, formatManilaDate, formatManilaTime } from '../lib/displayFormat.js'
 
 const initialFilters = { action: '', table_name: '', from_date: '', to_date: '' }
+
+function AuditRow({ entry }) {
+  const context = entry.record_context || {}
+  const details = auditDetailRows(entry)
+  return <tr>
+    <td data-label="Date"><time dateTime={entry.created_at}>{formatManilaDate(entry.created_at)}<small>{formatManilaTime(entry.created_at)} · Manila</small></time></td>
+    <td data-label="Actor"><strong>{auditActorLabel(entry)}</strong>{entry.actor_name && entry.actor_username && <small>{entry.actor_username}</small>}<small>{formatDisplayLabel(entry.actor_role, entry.user_id ? 'Role not recorded' : 'System')}</small></td>
+    <td data-label="Action"><span className="status-badge">{formatAuditAction(entry.action)}</span>{entry.details?.result && <small>{formatDisplayLabel(entry.details.result)}</small>}</td>
+    <td data-label="Record"><strong>{auditRecordLabel(entry)}</strong>{context.subject_name && <span>{context.subject_name}</span>}{context.subject_identifier && <small>{context.subject_identifier}</small>}{context.department_name && <small>{context.department_name}</small>}{context.violation_label && <small>{context.violation_label}</small>}{context.certificate_number && <small>{context.certificate_number}</small>}</td>
+    <td data-label="Description"><p className="audit-event-summary">{auditSummary(entry)}</p>{details.length > 0 && <details className="audit-event-details"><summary>View details<span className="sr-only"> for event #{entry.id}</span></summary><dl>{details.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></details>}</td>
+  </tr>
+}
 
 function AdminAuditLog({ token }) {
   const [filters, setFilters] = useState(initialFilters)
   const [applied, setApplied] = useState(initialFilters)
   const [page, setPage] = useState(1)
   const [entries, setEntries] = useState([])
+  const [options, setOptions] = useState({ actions: [], record_types: [] })
   const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const load = useCallback(async () => {
+  const load = useCallback(async (signal) => {
     setLoading(true); setError('')
     try {
-      const response = await fetch(`${API_URL}/api/audit-logs?${buildAuditQuery(applied, page)}`, { headers: { Authorization: `Bearer ${token}` } })
+      const response = await fetch(`${API_URL}/api/audit-logs?${buildAuditQuery(applied, page)}`, { signal, headers: { Authorization: `Bearer ${token}` } })
       const data = await response.json().catch(() => null)
       if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to load audit activity.')
+      if (signal?.aborted) return
       setEntries(data.audit_logs || []); setPagination(data.pagination || { page, limit: 25, total: 0 })
-    } catch (loadError) { setEntries([]); setError(loadError.message) } finally { setLoading(false) }
+      setOptions(data.filter_options || { actions: [], record_types: [] })
+    } catch (loadError) { if (!signal?.aborted) { setEntries([]); setError(loadError.message) } } finally { if (!signal?.aborted) setLoading(false) }
   }, [applied, page, token])
-  useEffect(() => { load() }, [load])
+  useEffect(() => { const controller = new AbortController(); load(controller.signal); return () => controller.abort() }, [load])
   const lastPage = Math.max(1, Math.ceil(pagination.total / pagination.limit))
-
-  const activeFilterCount = Object.values(applied).filter(Boolean).length
+  const activeFilters = [applied.action && formatAuditAction(applied.action), applied.table_name && auditRecordType(applied.table_name), applied.from_date && `From ${applied.from_date}`, applied.to_date && `Through ${applied.to_date}`].filter(Boolean)
   return <section className="audit-workspace">
-    <header className="management-page-header portal-page-header"><div><span className="page-breadcrumb">Home / Audit Log</span><h2>Audit Log</h2><p>Review security and account activity without exposing sensitive authentication values.</p></div><span className="readonly-badge">Immutable history</span></header>
-    <section className="management-metrics" aria-label="Audit activity summary"><ManagementMetric icon="monitoring" value={pagination.total} label="Total Events"/><ManagementMetric tone="green" icon="check" value={entries.length} label="Events on Page"/><ManagementMetric tone="orange" icon="reports" value={pagination.page} label="Current Page"/><ManagementMetric tone="purple" icon="search" value={activeFilterCount} label="Active Filters"/></section>
-    <section className="table-card form-card audit-filter-card"><div className="table-header management-table-header"><div><h3>Filter Activity</h3><p>Narrow results by action, record type, or date range.</p></div></div><form className="student-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setApplied(filters) }}><div className="student-form-grid">
-      <label>Action<input value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })} placeholder="ACCOUNT_CREATE" /></label>
-      <label>Record type<input value={filters.table_name} onChange={(event) => setFilters({ ...filters, table_name: event.target.value })} placeholder="users" /></label>
-      <label>From date<input type="date" value={filters.from_date} onChange={(event) => setFilters({ ...filters, from_date: event.target.value })} /></label>
-      <label>To date<input type="date" value={filters.to_date} onChange={(event) => setFilters({ ...filters, to_date: event.target.value })} /></label>
-    </div><div className="registration-review-actions"><button disabled={loading}>Apply filters</button><button type="button" className="secondary-button" onClick={() => { setFilters(initialFilters); setApplied(initialFilters); setPage(1) }} disabled={loading}>Clear</button></div></form></section>
-    {error && <p className="error-message" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>}
-    <section className="table-card audit-results-card"><div className="table-header management-table-header"><div><h3>Recorded Activity</h3><p>Server-recorded security and account events.</p></div><span>Page {pagination.page} of {lastPage}</span></div>
-      {loading ? <p className="empty-state" aria-live="polite">Loading audit activity…</p> : !error && entries.length === 0 ? <p className="empty-state">No audit activity matches these filters.</p> : entries.length > 0 && <div className="table-wrap"><table className="audit-record-table"><thead><tr><th>Date</th><th>Actor</th><th>Action</th><th>Record</th><th>Description</th></tr></thead><tbody>{entries.map((entry) => <tr key={entry.id}><td data-label="Date">{formatManilaDateTime(entry.created_at)}</td><td data-label="Actor">{auditActorLabel(entry)}<br /><small>{entry.actor_role?.replaceAll('_', ' ') || 'SYSTEM'}</small></td><td data-label="Action"><span className="status-badge">{formatAuditAction(entry.action)}</span></td><td data-label="Record">{entry.table_name || '—'}{entry.record_id ? ` #${entry.record_id}` : ''}</td><td data-label="Description">{entry.description || '—'}</td></tr>)}</tbody></table></div>}
+    <header className="management-page-header portal-page-header"><div><span className="page-breadcrumb">Home / Audit Log</span><h2>Audit Log</h2><p>See who changed accounts, discipline records, attendance, and clearance.</p></div><span className="readonly-badge">Immutable history</span></header>
+    <section className="table-card form-card audit-filter-card" aria-label="Filter activity"><form className="student-form" onSubmit={(event) => { event.preventDefault(); setPage(1); setApplied({ ...filters }) }}><div className="student-form-grid">
+      <label>Action<select value={filters.action} onChange={(event) => setFilters({ ...filters, action: event.target.value })}><option value="">All actions</option>{options.actions.map((action) => <option key={action} value={action}>{formatAuditAction(action)}</option>)}</select></label>
+      <label>Record type<select value={filters.table_name} onChange={(event) => setFilters({ ...filters, table_name: event.target.value })}><option value="">All record types</option>{options.record_types.map((type) => <option key={type} value={type}>{auditRecordType(type)}</option>)}</select></label>
+      <label>From date<input type="date" value={filters.from_date} max={filters.to_date || undefined} onChange={(event) => setFilters({ ...filters, from_date: event.target.value })} /></label>
+      <label>To date<input type="date" value={filters.to_date} min={filters.from_date || undefined} onChange={(event) => setFilters({ ...filters, to_date: event.target.value })} /></label>
+    </div><div className="registration-review-actions"><span className="audit-date-note">Dates use Manila time.</span><button disabled={loading}>Apply filters</button><button type="button" className="secondary-button" onClick={() => { setFilters(initialFilters); setApplied(initialFilters); setPage(1) }} disabled={loading}>Clear</button></div></form></section>
+    {error && <p className="error-message" role="alert">{error} <button type="button" onClick={() => load()}>Retry</button></p>}
+    <section className="table-card audit-results-card" aria-busy={loading}><div className="table-header management-table-header"><div><h3>Recorded Activity</h3><p aria-live="polite">{loading ? 'Loading events…' : `${pagination.total} ${activeFilters.length ? 'matching ' : ''}events · ${entries.length ? `${(page - 1) * pagination.limit + 1}–${(page - 1) * pagination.limit + entries.length} shown` : '0 shown'}`}</p></div><span>Page {pagination.page} of {lastPage}</span></div>
+      {activeFilters.length > 0 && <div className="audit-active-filters" aria-label="Active filters">{activeFilters.map((label, index) => <span key={`${index}:${label}`}>{label}</span>)}</div>}
+      {loading ? <p className="empty-state" aria-live="polite">Loading audit activity…</p> : !error && entries.length === 0 ? <p className="empty-state">No audit activity matches these filters.</p> : entries.length > 0 && <div className="table-wrap"><table className="audit-record-table"><colgroup><col className="audit-date-col"/><col className="audit-actor-col"/><col className="audit-action-col"/><col className="audit-record-col"/><col/></colgroup><thead><tr><th scope="col">Date</th><th scope="col">Actor</th><th scope="col">Action</th><th scope="col">Record</th><th scope="col">Description</th></tr></thead><tbody>{entries.map((entry) => <AuditRow key={entry.id} entry={entry}/>)}</tbody></table></div>}
       <div className="registration-review-actions"><button type="button" className="secondary-button" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</button><button type="button" className="secondary-button" disabled={loading || page >= lastPage} onClick={() => setPage((value) => value + 1)}>Next</button></div>
     </section>
   </section>
