@@ -1,5 +1,12 @@
 const isValidEmail = (value) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 
+const officerText = (value) => typeof value === 'string' ? value.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
+const isValidOfficerName = (value) => officerText(value).length <= 100 && /^\p{L}[\p{L}\p{M}]*(?:\.?(?: +|['’\-])\p{L}[\p{L}\p{M}]*)*\.?$/u.test(officerText(value));
+const isValidDepartmentName = (value) => officerText(value).length <= 150 && /^\p{L}[\p{L}\p{M}]*(?:\.?(?: +|['’\-]| *& *)\p{L}[\p{L}\p{M}]*)*\.?$/u.test(officerText(value));
+const isValidOfficerUsername = (value) => officerText(value).length <= 100 && /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(officerText(value));
+const isValidEmployeeNumber = (value) => value == null || typeof value === 'string' && (!officerText(value) || officerText(value).length <= 50 && /^[a-zA-Z0-9]+(?:-[a-zA-Z0-9]+)*$/.test(officerText(value)));
+const isValidOfficerEmail = (value) => value == null || typeof value === 'string' && (!officerText(value) || officerText(value).length <= 255 && isValidEmail(officerText(value)));
+
 const normalizePhone = (value) => {
     if (typeof value !== "string") return null;
     const compact = value.trim().replace(/[\s()-]/g, "");
@@ -42,6 +49,11 @@ const assertAllowedFields = (body, allowedFields) => {
 };
 
 module.exports = {
+    isValidOfficerName,
+    isValidDepartmentName,
+    isValidOfficerUsername,
+    isValidEmployeeNumber,
+    isValidOfficerEmail,
     isValidEmail,
     isValidPhone,
     normalizePhone,

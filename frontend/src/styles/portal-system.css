@@ -5229,7 +5229,8 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .department-officer-create .student-form-grid :is(input,select,textarea) { width: 100%; min-height: var(--control-height); padding: 11px 16px; border: 1px solid #cfe1f4; border-radius: 9px; background: var(--color-surface); color: #142e65; font-size: var(--text-control); }
 .department-officer-create .student-form-grid :is(input,textarea)::placeholder { color: #8ba0c0; }
 .department-officer-create .student-form-grid textarea { min-height: 76px; resize: vertical; }
-.department-officer-create .field-error { color: #b42332; font-size: var(--text-xs); font-weight: 600; }
+.department-officer-create .field-hint { color: var(--text-secondary); font-size: var(--text-xs); font-weight: 400; }
+.department-officer-create .field-error { color: var(--color-danger); font-size: var(--text-xs); font-weight: 600; }
 .department-officer-create .student-form-grid [aria-invalid='true'] { border-color: #d92339; }
 .department-officer-create .officer-create-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 26px; padding-top: 12px; border-top: 1px solid #e3ecf6; }
 .department-officer-create .officer-create-actions button { min-height: 49px; padding: 11px 22px; border-radius: 9px; font-size: var(--text-base); font-weight: 700; }
