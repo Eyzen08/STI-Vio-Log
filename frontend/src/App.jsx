@@ -2129,7 +2129,7 @@ function App() {
           <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
             onAdd={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
             onUpdated={(updated) => setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item))}/>
-          {isStudentFormOpen && <Modal title="Add Student" drawer onClose={() => setIsStudentFormOpen(false)}><div className="drawer-intro"><strong>Create the student account</strong><span>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</span></div>
+          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => setIsStudentFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the student account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
           <section className="drawer-form-card">
             <div className="table-header">
               <h3>
@@ -2143,17 +2143,18 @@ function App() {
 
             <form
               className="student-form"
+              aria-busy={mutationBusy.studentCreate}
               onSubmit={
                 handleStudentSubmit
               }
             >
-              <div className="student-form-grid">
-                <label>
-                  Student Number
-
+              <fieldset disabled={mutationBusy.studentCreate}><legend className="sr-only">Student account details</legend><div className="student-form-grid">
+                <label className="full-width-field"><span id="create-student-student_number-label">Student Number <b aria-hidden="true">*</b></span>
                   <input
                     type="text"
                     name="student_number"
+                    id="create-student-student_number"
+                    aria-labelledby="create-student-student_number-label"
                     value={
                       studentForm.student_number
                     }
@@ -2168,12 +2169,12 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  First Name
-
+                <label><span id="create-student-first_name-label">First Name <b aria-hidden="true">*</b></span>
                   <input
                     type="text"
                     name="first_name"
+                    id="create-student-first_name"
+                    aria-labelledby="create-student-first_name-label"
                     value={
                       studentForm.first_name
                     }
@@ -2185,12 +2186,12 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Last Name
-
+                <label><span id="create-student-last_name-label">Last Name <b aria-hidden="true">*</b></span>
                   <input
                     type="text"
                     name="last_name"
+                    id="create-student-last_name"
+                    aria-labelledby="create-student-last_name-label"
                     value={
                       studentForm.last_name
                     }
@@ -2202,12 +2203,12 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Middle Name
-
+                <label><span id="create-student-middle_name-label">Middle Name <small className="create-field-optional">(optional)</small></span>
                   <input
                     type="text"
                     name="middle_name"
+                    id="create-student-middle_name"
+                    aria-labelledby="create-student-middle_name-label"
                     value={
                       studentForm.middle_name
                     }
@@ -2218,12 +2219,12 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Suffix
-
+                <label><span id="create-student-suffix-label">Suffix <small className="create-field-optional">(optional)</small></span>
                   <input
                     type="text"
                     name="suffix"
+                    id="create-student-suffix"
+                    aria-labelledby="create-student-suffix-label"
                     value={
                       studentForm.suffix
                     }
@@ -2234,11 +2235,12 @@ function App() {
                   />
                 </label>
 
-                <label>
-                  Student Gmail
+                <label className="full-width-field"><span id="create-student-email-label">Student Gmail <b aria-hidden="true">*</b></span>
                   <input
                     type="email"
                     name="email"
+                    id="create-student-email"
+                    aria-labelledby="create-student-email-label"
                     value={studentForm.email}
                     onChange={handleStudentFieldChange}
                     onBlur={() => setStudentForm((current) => ({...current, email: normalizeStudentGmail(current.email)}))}
@@ -2252,7 +2254,7 @@ function App() {
                   <span id="student-gmail-help" className="student-gmail-help">Use personal Gmail (@gmail.com). You can email the temporary password after creating the account.</span>
                 </label>
 
-              </div>
+              </div></fieldset>
 
               {studentFormError && (
                 <p className="error-message" role="alert">
@@ -2261,19 +2263,19 @@ function App() {
               )}
 
               {studentFormSuccess && (
-                <p className="success-message">
+                <p className="success-message" role="status">
                   {studentFormSuccess}
                 </p>
               )}
 
-              <AsyncActionButton
+              <div className="create-record-actions"><button type="button" data-modal-dismiss="true" disabled={mutationBusy.studentCreate}>Cancel</button><AsyncActionButton
                 type="submit"
                 className="submit-btn"
                 busy={mutationBusy.studentCreate}
                 busyLabel="Saving student…"
               >
                 Save Student
-              </AsyncActionButton>
+              </AsyncActionButton></div>
             </form>
           </section></Modal>}
           {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)}/>}
@@ -2304,7 +2306,7 @@ function App() {
       return (
         <>
           <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={setViewingViolation} onEdit={startViolationEdit}/>
-          {isViolationFormOpen && <Modal title="Record Violation" drawer onClose={() => setIsViolationFormOpen(false)}><div className="drawer-intro"><strong>Create an incident record</strong><span>Choose the exact handbook classification and document only verified facts.</span></div>
+          {isViolationFormOpen && <Modal title="Record Violation" className="create-record-drawer" drawer onClose={() => setIsViolationFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="violations" size={24}/></i><div><h3>Create an incident record</h3><p>Choose the exact handbook classification and document only verified facts.</p></div></div>
           <section className="drawer-form-card">
             <div className="table-header">
               <h3>
@@ -2321,18 +2323,20 @@ function App() {
 
             <form
               className="student-form"
+              aria-busy={mutationBusy.violationCreate}
               onSubmit={
                 handleViolationSubmit
               }
             >
-              <div className="student-form-grid">
-                <label>
-                  Student
-
+              <fieldset disabled={mutationBusy.violationCreate}><legend className="sr-only">Incident record details</legend><div className="student-form-grid">
+                <label><span id="create-violation-student_search-label">Student <b aria-hidden="true">*</b></span>
                   <input
                     type="search"
                     name="student_search"
+                    id="create-violation-student_search"
+                    aria-labelledby="create-violation-student_search-label"
                     list="violation-student-options"
+                    aria-describedby="violation-student-help"
                     autoComplete="off"
                     placeholder="Type a student number or name"
                     value={
@@ -2348,14 +2352,14 @@ function App() {
                       <option key={student.id} value={studentOptionLabel(student)} />
                     ))}
                   </datalist>
-                  <span>Search by student number, first name, or last name, then choose the matching result.</span>
+                  <small id="violation-student-help">Search by student number, first name, or last name, then choose the matching result.</small>
                 </label>
 
-                <label>
-                  Handbook classification
-
+                <label><span id="create-violation-violation_type_id-label">Handbook classification <b aria-hidden="true">*</b></span>
                   <select
                     name="violation_type_id"
+                    id="create-violation-violation_type_id"
+                    aria-labelledby="create-violation-violation_type_id-label"
                     value={
                       violationForm.violation_type_id
                     }
@@ -2373,37 +2377,39 @@ function App() {
                   </select>
                 </label>
 
-                <label>
-                  Incident Date
-
+                <label><span id="create-violation-incident_date-label">Incident Date <b aria-hidden="true">*</b></span>
                   <input
                     type="date"
                     name="incident_date"
+                    id="create-violation-incident_date"
+                    aria-labelledby="create-violation-incident_date-label"
                     value={
                       violationForm.incident_date
                     }
                     onChange={
                       handleViolationFieldChange
                     }
+                    required
                   />
                 </label>
 
-                <label>
-                  Incident time
+                <label><span id="create-violation-incident_time-label">Incident time <b aria-hidden="true">*</b></span>
                   <input
                     type="time"
                     name="incident_time"
+                    id="create-violation-incident_time"
+                    aria-labelledby="create-violation-incident_time-label"
                     value={violationForm.incident_time}
                     onChange={handleViolationFieldChange}
                     required
                   />
                 </label>
 
-                <label className="full-width-field">
-                  Specific handbook offense
-
+                <label className="full-width-field"><span id="create-violation-exact_offense-label">Specific handbook offense <b aria-hidden="true">*</b></span>
                   <select
                     name="exact_offense"
+                    id="create-violation-exact_offense"
+                    aria-labelledby="create-violation-exact_offense-label"
                     value={violationForm.exact_offense}
                     onChange={handleViolationFieldChange}
                     disabled={!selectedType || exactOffenses.length === 0}
@@ -2418,11 +2424,11 @@ function App() {
                   </select>
                 </label>
 
-                <label className="full-width-field">
-                  Incident details
-
+                <label className="full-width-field"><span id="create-violation-incident_details-label">Incident details <b aria-hidden="true">*</b></span>
                   <textarea
                     name="incident_details"
+                    id="create-violation-incident_details"
+                    aria-labelledby="create-violation-incident_details-label"
                     value={
                       violationForm.incident_details
                     }
@@ -2440,28 +2446,28 @@ function App() {
                     {' '}Service hours are assigned by authorized staff for this case; the handbook does not prescribe an automatic hour value.
                   </p>
                 )}
-              </div>
+              </div></fieldset>
 
               {violationFormError && (
-                <p className="error-message">
+                <p className="error-message" role="alert">
                   {violationFormError}
                 </p>
               )}
 
               {violationFormSuccess && (
-                <p className="success-message">
+                <p className="success-message" role="status">
                   {violationFormSuccess}
                 </p>
               )}
 
-              <AsyncActionButton
+              <div className="create-record-actions"><button type="button" data-modal-dismiss="true" disabled={mutationBusy.violationCreate}>Cancel</button><AsyncActionButton
                 type="submit"
                 className="submit-btn"
                 busy={mutationBusy.violationCreate}
                 busyLabel="Saving violation…"
               >
                 Save Violation
-              </AsyncActionButton>
+              </AsyncActionButton></div>
             </form>
           </section></Modal>}
 

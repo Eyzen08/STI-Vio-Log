@@ -54,7 +54,7 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
     }
     onSubmit(event)
   }
-  return <><div className="service-assignment-intro"><i><PortalIcon name="registrations" size={32}/></i><div><h3>Create a service assignment</h3><p>Connect an open violation to an accountable department head.</p></div></div>
+  return <><div className="service-assignment-intro create-record-intro"><i><PortalIcon name="registrations" size={24}/></i><div><h3>Create a service assignment</h3><p>Connect an open violation to an accountable department head.</p></div></div>
     <form className="assign-service-form" aria-busy={busy} onInvalidCapture={() => setAttempted(true)} onSubmit={submit}>
       <fieldset disabled={busy}><legend className="sr-only">Service assignment details</legend><div className="assign-service-grid">
         <label><span id="assign-student_search-label">Student <b aria-hidden="true">*</b></span><input type="search" list="community-service-student-options" autoComplete="off" placeholder="Type a student number or name" {...field('student_search', 'assign-student_search-help')} required/><datalist id="community-service-student-options">{students.map(student => <option key={student.id} value={communityServiceStudentLabel(student)}/>)}</datalist><small id="assign-student_search-help">Search by name or student number, then select the matching result.</small>{message('student_search')}</label>
@@ -69,7 +69,7 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
         <label><span id="assign-department_head_id-label">Department Head <b aria-hidden="true">*</b></span><select {...field('department_head_id', 'assign-department_head_id-help')} disabled={!form.department_id} required><option value="">{form.department_id ? 'Select the accountable Department Head' : 'Select a department first'}</option>{heads.map(item => <option key={item.department_head_id} value={item.department_head_id}>{item.first_name} {item.last_name}</option>)}</select><small id="assign-department_head_id-help">{form.department_id && !heads.length ? 'No active Department Head is assigned to this department.' : 'Select the head responsible for supervising this assignment.'}</small>{message('department_head_id')}</label>
       </div></fieldset>
       {error && <p className="error-message" role="alert">{error}</p>}{success && <p className="success-message" role="status">{success}</p>}
-      <div className="assign-service-actions"><button type="button" data-modal-dismiss="true" disabled={busy}>Cancel</button><AsyncActionButton type="submit" busy={busy} busyLabel="Saving assignment…" onClick={() => setAttempted(true)}>Save Assignment</AsyncActionButton></div>
+      <div className="assign-service-actions create-record-actions"><button type="button" data-modal-dismiss="true" disabled={busy}>Cancel</button><AsyncActionButton type="submit" busy={busy} busyLabel="Saving assignment…" onClick={() => setAttempted(true)}>Save Assignment</AsyncActionButton></div>
     </form></>
 }
 
@@ -94,7 +94,7 @@ export default function CommunityServiceManagement({ students=[], assignments=[]
         return <tr key={item.id}><td>#{item.id}</td><td><strong>{[item.first_name,item.last_name].filter(Boolean).join(' ') || 'Student record'}</strong><small>{item.student_number || `Student #${item.student_id}`}</small><AttendanceIndicator sessions={activeSessions.filter(session=>Number(session.assignment_id)===Number(item.id))} ready={attendanceReady} loading={loading}/></td><td>#{item.violation_id}</td><td>{item.department_code||item.department_name||'Historical assignment'}</td><td>{[item.department_head_first_name,item.department_head_last_name].filter(Boolean).join(' ')||'Not recorded'}</td><td>{formatDuration(item.required_hours)}</td><td>{formatDuration(remaining)}</td><td><progress aria-label={`Assignment ${item.id} progress`} value={progress} max="100">{progress}%</progress><small>{progress}%</small></td><td><span className={`service-status service-status-${(item.status||'OPEN').toLowerCase()}`}>{formatDisplayLabel(item.status||'OPEN')}</span></td><td><button type="button" aria-label={`View service assignment ${item.id}`} onClick={()=>onView(item)}>View</button></td></tr>
       })}</tbody></table></div>}
     </section>
-    {formOpen && <Modal title="Assign Community Service" className="assign-service-modal service-workflow-modal" drawer onClose={onCloseForm}><AssignServiceForm {...formProps} students={students} assignments={assignments}/></Modal>}
+    {formOpen && <Modal title="Assign Community Service" className="assign-service-modal service-workflow-modal create-record-drawer" drawer onClose={onCloseForm}><AssignServiceForm {...formProps} students={students} assignments={assignments}/></Modal>}
     {viewingAssignment && <Modal title={`Service assignment #${viewingAssignment.id}`} className="service-assignment-modal service-workflow-modal" drawer onClose={onCloseAssignment}><ServiceAssignmentContent assignment={viewingAssignment} student={students.find(item=>Number(item.id)===Number(viewingAssignment.student_id))}/></Modal>}
   </section>
 }

@@ -14,6 +14,37 @@ const portal = readPortalStyles()
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
 
+test('only the three create drawers opt into matching form layout and busy controls', async () => {
+  for (const [title, mutation] of [['Add Student','studentCreate'],['Record Violation','violationCreate']]) {
+    const start=app.indexOf(`<Modal title="${title}"`)
+    const drawer=app.slice(start,app.indexOf('</Modal>',start))
+    assert.match(drawer,/className="create-record-drawer"/)
+    assert.match(drawer,/className="create-record-intro"/)
+    assert.match(drawer,new RegExp(`<fieldset disabled=\\{mutationBusy\\.${mutation}\\}>`))
+    assert.match(drawer,/className="create-record-actions"/)
+    assert.match(drawer,/data-modal-dismiss="true"/)
+    assert.match(drawer,/role="alert"/)
+  }
+  const service=await readFile(new URL('../src/components/CommunityServiceManagement.jsx',import.meta.url),'utf8')
+  assert.match(service,/className="assign-service-modal service-workflow-modal create-record-drawer"/)
+  assert.equal((app.match(/className="create-record-drawer"/g)||[]).length,2)
+  assert.match(app,/name="incident_date"[\s\S]*?onChange=\{[\s\S]*?handleViolationFieldChange[\s\S]*?required\s*\/>/)
+  assert.match(app,/aria-describedby="violation-student-help"/)
+})
+
+test('shared create drawer styles protect preset contrast from generic button rules', () => {
+  assert.match(portal,/\.app-modal\.app-modal--drawer\.create-record-drawer\s*\{[^}]*width:min\(690px,100vw\)/)
+  assert.match(portal,/\.app-modal\.app-modal--drawer\.create-record-drawer \.assign-service-preset\s*\{[^}]*background:var\(--surface-nested\);[^}]*color:var\(--text-primary\);/)
+  assert.match(portal,/\.app-modal\.app-modal--drawer\.create-record-drawer \.assign-service-preset\[aria-pressed='true'\][^{]*\{[^}]*background:var\(--action-primary-surface\);[^}]*color:var\(--text-on-accent\);/)
+  assert.match(portal,/:root\[data-theme='dark'\] \.app-modal\.app-modal--drawer\.create-record-drawer \.create-record-intro\s*\{[^}]*background:var\(--surface-nested\)/)
+  assert.match(portal,/\.create-record-drawer :is\(\.student-form-grid,\.assign-service-grid\)\s*\{[^}]*background:transparent !important/)
+})
+
+test('modal focus trapping excludes controls disabled through a parent fieldset', async () => {
+  const modal=await readFile(new URL('../src/components/Modal.jsx',import.meta.url),'utf8')
+  assert.match(modal,/filter\(\(element\) => !element\.matches\(':disabled'\) && element\.getClientRects\(\)\.length > 0\)/)
+})
+
 test('assignment labels override shared workflow label grids without affecting other drawers', async () => {
   const css = await readFile(new URL('../src/styles/community-workflow.css', import.meta.url), 'utf8')
   assert.match(css, /\.service-workflow-modal \.assign-service-grid label\s*\{[^}]*display:block;[^}]*margin-top:0;/)

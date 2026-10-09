@@ -34,7 +34,7 @@ function Modal({ title, subtitle, onClose, children, wide = false, drawer = fals
       if (event.key !== 'Tab') return
       const focusable = [...(dialogRef.current?.querySelectorAll(
         'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ) || [])].filter((element) => element.getClientRects().length > 0)
+      ) || [])].filter((element) => !element.matches(':disabled') && element.getClientRects().length > 0)
       if (!focusable?.length) {
         event.preventDefault()
         dialogRef.current?.focus()
