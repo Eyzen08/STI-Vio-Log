@@ -8,7 +8,11 @@ Open `/login`. Do not select a role. Enter either a staff username or a Student 
 
 ### Discipline Office-issued account
 
-When the Discipline Admin or Discipline Officer creates a Student account, staff enter the school-issued Student Number, legal name, optional middle name/suffix, and personal Gmail. The backend generates the private QR value and displays temporary credentials once. Staff can explicitly send the credentials and login link by email or share them securely. Temporary passwords expire after 24 hours; issuing a replacement invalidates the previous password. The student must then complete this locked sequence:
+When the Discipline Admin or Discipline Officer creates a Student account, staff enter the school-issued Student Number, legal name, optional middle name/suffix, and personal Gmail. Select **Review Details** to check the normalized entries; optional blanks appear as **None**. **Back to Edit** preserves the entries. No account is created until **Confirm and Create Account** succeeds.
+
+The backend generates the private QR value and displays temporary credentials once. Staff can explicitly send the credentials and login link by email or share them securely. In this dialog, **Edit Gmail** allows a correction with a required reason. **Save Gmail** replaces the temporary password, invalidates the old password and recovery/session authorizations, and starts a fresh 24-hour expiry. Review the corrected address and select **Send Email** separately; saving never sends mail. Delivery failure preserves the saved credentials for retry. Credentials already sent to a wrong inbox cannot be recalled, but the replaced password stops working. Activated accounts use the existing staff edit or Google recovery workflow.
+
+Temporary passwords expire after 24 hours; issuing a replacement invalidates the previous password. The student must then complete this locked sequence:
 
 1. Sign in with the Student Number and temporary password.
 2. Replace the temporary password.

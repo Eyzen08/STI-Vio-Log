@@ -5,6 +5,7 @@ const {
     getStudentById,
     createStudent,
     sendStudentCredentialsEmail,
+    correctStudentCredentialsGmail,
     updateStudent,
     resetStudentPassword,
     deleteStudent,
@@ -75,6 +76,12 @@ router.post(
     "/:id/credentials-email",
     authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
     sendStudentCredentialsEmail
+);
+
+router.patch(
+    "/:id/credentials-email",
+    authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
+    correctStudentCredentialsGmail
 );
 
 router.post(

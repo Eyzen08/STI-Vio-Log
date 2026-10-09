@@ -156,6 +156,51 @@ const createStudentCredentialsEmailController = ({ db = pool, emailService = cre
 
 const sendStudentCredentialsEmail = createStudentCredentialsEmailController();
 
+const createStudentCredentialsCorrectionController = ({ db = pool } = {}) => async (req, res) => {
+    let client;
+    res.set?.('Cache-Control', 'no-store');
+    try {
+        assertAllowedFields(req.body, ['email', 'reason', 'temporary_password']);
+        const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+        const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
+        const password = req.body.temporary_password;
+        if (!isPositiveId(req.params.id) || !reason || reason.length > 1000 || typeof password !== 'string' || !password || Buffer.byteLength(password, 'utf8') > 72) throw new ApiError(400, 'VALIDATION_ERROR', 'A valid student, correction reason, and current temporary password are required');
+        if (email.length > 255 || !isValidEmail(email) || !email.endsWith('@gmail.com')) throw new ApiError(400, 'INVALID_EMAIL', 'Enter a valid personal Gmail address (@gmail.com)');
+        client = await db.connect();
+        await client.query('BEGIN');
+        const account = (await client.query(`SELECT s.id,s.user_id,s.email,s.onboarding_required,s.onboarding_completed_at,
+            u.username,u.password_hash,u.is_active,u.must_change_password
+            FROM students s JOIN users u ON u.id=s.user_id AND u.role='STUDENT'
+            WHERE s.id=$1 FOR UPDATE OF s,u`, [Number(req.params.id)])).rows[0];
+        if (!account) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Student account not found');
+        if (!account.is_active || !account.must_change_password || !account.onboarding_required || account.onboarding_completed_at) throw new ApiError(409, 'CREDENTIALS_UNAVAILABLE', 'Gmail can only be corrected here before the student changes their temporary password');
+        if (!account.password_hash || !await bcrypt.compare(password, account.password_hash)) throw new ApiError(409, 'CREDENTIALS_REPLACED', 'These credentials were replaced. Close this dialog and issue a new temporary password');
+        if (email === String(account.email || '').trim().toLowerCase()) throw new ApiError(400, 'EMAIL_UNCHANGED', 'Enter a different Gmail address to save a correction');
+        if ((await client.query('SELECT 1 FROM google_identity_links WHERE user_id=$1 AND revoked_at IS NULL LIMIT 1', [account.user_id])).rows.length) throw new ApiError(409, 'GOOGLE_RECOVERY_REQUIRED', 'Use Google account recovery to change a linked Gmail');
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('student-registration-email:' || LOWER($1)))", [email]);
+        if ((await client.query('SELECT 1 FROM students WHERE LOWER(email)=LOWER($1) AND id<>$2 LIMIT 1', [email, account.id])).rows.length) throw new ApiError(409, 'STUDENT_EMAIL_CONFLICT', 'That Gmail address is already assigned to another student');
+        const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
+        const passwordHash = await bcrypt.hash(temporaryPassword, 12);
+        const student = (await client.query(`UPDATE students SET email=$2,pending_google_email=NULL,pending_google_email_verified_at=NULL,
+            updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`, [account.id, email])).rows[0];
+        await client.query(`UPDATE users SET password_hash=$2,temporary_password_expires_at=CURRENT_TIMESTAMP+INTERVAL '24 hours',
+            session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [account.user_id, passwordHash]);
+        await client.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL', [account.user_id]);
+        await client.query('UPDATE auth_otps SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL', [account.user_id]);
+        await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL', [account.user_id]);
+        await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
+            VALUES($1,'STUDENT_CREDENTIALS_GMAIL_CORRECTED','students',$2,$3,$4)`, [req.user.id, account.id, `Corrected student Gmail and replaced temporary credentials: ${reason}`, req.ip || null]);
+        await client.query('COMMIT');
+        return res.json({ success: true, student, account: { username: account.username }, temporary_password: temporaryPassword, password_change_required: true });
+    } catch (error) {
+        if (client) try { await client.query('ROLLBACK'); } catch (_) {}
+        if (client && error.code === 'STUDENT_EMAIL_CONFLICT') await recordSecurityEvent({ actor: req.user, action: 'STUDENT_ACCOUNT_CONFLICT', targetType: 'STUDENT_RECORD', targetId: req.params.id, targetLabel: req.body.email, details: { conflict_type: 'GMAIL' }, reason: 'Gmail already assigned', result: 'DENIED', ipAddress: req.ip, database: client });
+        return sendError(res, error.statusCode || 500, error.statusCode ? error.code : 'INTERNAL_ERROR', error.statusCode ? error.message : 'Unable to correct Gmail. If credentials changed, close this dialog and issue a new temporary password');
+    } finally { if (client) client.release(); }
+};
+
+const correctStudentCredentialsGmail = createStudentCredentialsCorrectionController();
+
 const updateStudent = async (req, res) => {
     let client;
     try {
@@ -486,6 +531,8 @@ module.exports = {
     createStudent,
     createStudentCredentialsEmailController,
     sendStudentCredentialsEmail,
+    createStudentCredentialsCorrectionController,
+    correctStudentCredentialsGmail,
     updateStudent,
     resetStudentPassword,
     deleteStudent,

@@ -49,7 +49,8 @@ import { attendanceTransitions } from './lib/attendanceStatus.js'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 import StudentCredentialsModal from './components/StudentCredentialsModal.jsx'
-import { isValidStudentGmail, normalizeStudentGmail } from './lib/studentAccount.js'
+import { normalizeStudentGmail, reviewStudentAccount } from './lib/studentAccount.js'
+import StudentAccountReview from './components/StudentAccountReview.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
@@ -376,6 +377,7 @@ function App() {
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
   const [isStudentFormOpen, setIsStudentFormOpen] = useState(false)
   const [createdStudentCredentials,setCreatedStudentCredentials]=useState(null)
+  const [studentAccountReview, setStudentAccountReview] = useState(null)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
   const reviewedStudentRequestRef = useRef(0)
@@ -1222,44 +1224,25 @@ function App() {
    * ============================================================
    */
 
-  const handleStudentSubmit = async (event) => {
+  const handleStudentSubmit = (event) => {
     event.preventDefault()
-    return performMutation('studentCreate', async () => {
-
     setStudentFormError('')
     setStudentFormSuccess('')
-
     try {
-      const payload = {
-        ...studentForm,
+      const details = reviewStudentAccount(studentForm)
+      setStudentForm(details)
+      setStudentAccountReview(details)
+    } catch (error) { setStudentFormError(error.message) }
+  }
 
-        student_number:
-          studentForm.student_number.trim(),
-
-        first_name:
-          studentForm.first_name.trim(),
-
-        middle_name:
-          studentForm.middle_name.trim(),
-
-        last_name:
-          studentForm.last_name.trim(),
-
-        suffix:
-          studentForm.suffix.trim(),
-        email: normalizeStudentGmail(studentForm.email)
-      }
-
-      if (
-        !payload.student_number ||
-        !payload.first_name ||
-        !payload.last_name
-      ) {
-        throw new Error(
-          'Student number, first name, and last name are required.'
-        )
-      }
-      if (!isValidStudentGmail(payload.email)) throw new Error('Enter a valid personal Gmail address (@gmail.com).')
+  const confirmStudentAccount = async (event) => {
+    event.preventDefault()
+    if (!studentAccountReview) return
+    const payload = studentAccountReview
+    return performMutation('studentCreate', async () => {
+    setStudentFormError('')
+    setStudentFormSuccess('')
+    try {
       const response =
         await fetch(
           `${API_URL}/api/students`,
@@ -1290,6 +1273,7 @@ function App() {
       )
       setCreatedStudentCredentials({studentId:data.student.id,username:data.account.username,password:data.temporary_password,email:data.student.email})
       setIsStudentFormOpen(false)
+      setStudentAccountReview(null)
 
       setStudentForm({
         student_number: '',
@@ -2195,10 +2179,10 @@ function App() {
       return (
         <>
           <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
-            onAdd={() => { setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
+            onAdd={() => { setStudentAccountReview(null); setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
             onUpdated={(updated) => setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item))}/>
-          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => setIsStudentFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the student account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
-          <section className="drawer-form-card">
+          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => { if (!mutationBusy.studentCreate) { setIsStudentFormOpen(false); setStudentAccountReview(null) } }}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the student account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
+          {studentAccountReview ? <StudentAccountReview details={studentAccountReview} busy={Boolean(mutationBusy.studentCreate)} error={studentFormError} onBack={() => { setStudentAccountReview(null); setStudentFormError(''); requestAnimationFrame(() => document.getElementById('create-student-student_number')?.focus()) }} onConfirm={confirmStudentAccount}/> : <section className="drawer-form-card">
             <div className="table-header">
               <h3>
                 Add student
@@ -2355,11 +2339,11 @@ function App() {
                 busy={mutationBusy.studentCreate}
                 busyLabel="Saving student…"
               >
-                Save Student
+                Review Details
               </AsyncActionButton></div>
             </form>
-          </section></Modal>}
-          {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)}/>}
+          </section>}</Modal>}
+          {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)} onUpdated={(data) => { setCreatedStudentCredentials((current) => ({...current,email:data.student.email,username:data.account.username,password:data.temporary_password})); setStudents((current) => current.map((item) => Number(item.id) === Number(data.student.id) ? {...item,...data.student} : item)) }}/>}
 
           {guardianContactStudent && <Modal title="Guardian Contact" className="student-action-modal guardian-contact-modal" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel key={guardianContactStudent.id} token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
           {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} onClose={() => setServiceTimeStudent(null)} />}

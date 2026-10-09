@@ -204,6 +204,10 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   const head = tokenFor(3);
   const student = tokenFor(4, { claimedRole: 'ADMIN' });
 
+  for (const denied of [undefined, head, student]) assert.equal((await request(baseUrl, '/api/students/40/credentials-email', { token: denied, method: 'PATCH', body: {} })).status, denied ? 403 : 401);
+  for (const allowed of [admin, discipline]) assert.equal((await request(baseUrl, '/api/students/40/credentials-email', { token: allowed, method: 'PATCH', body: {} })).status, 400);
+  assert.equal((await fetch(`${baseUrl}/api/students/40/credentials-email`, { method: 'PATCH', headers: { Cookie: `sti_session=${admin}`, 'Content-Type': 'application/json' }, body: '{}' })).status, 403);
+
   assert.equal((await request(baseUrl, '/api/admin/accounts', { token: discipline })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/accounts', { token: head })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/accounts', { token: student })).status, 403);

@@ -2817,6 +2817,13 @@ th {
 .student-credentials { overflow-wrap: anywhere; }
 .student-credentials-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 .student-credentials-actions button { min-height: 44px; }
+.student-credentials-gmail { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.student-credentials-gmail button { margin-left: auto; }
+.student-credentials-edit { margin: 16px 0; padding: 16px; border: 1px solid currentColor; border-radius: 8px; }
+.student-account-review dl { display: grid; gap: 16px; margin: 24px 0; }
+.student-account-review dl > div { display: grid; gap: 4px; }
+.student-account-review dt { font-size: .875rem; color: var(--color-text-muted); }
+.student-account-review dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 
 .form-guidance {
   padding: var(--space-3) var(--space-4);

@@ -9,7 +9,7 @@
     "test": "node --test tests/*.test.js",
     "test:violation-integration": "node --test tests/violation-workflow.pgtest.js",
     "test:migrations": "node --test --test-concurrency=1 tests/migrations.pgtest.js tests/notification-target-migration.pgtest.js",
-    "test:account-security": "node --test --test-concurrency=1 tests/student-account-security.pgtest.js",
+    "test:account-security": "node --test --test-concurrency=1 tests/student-account-security.pgtest.js tests/student-gmail-correction.pgtest.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js status",
     "bootstrap:admin": "node scripts/bootstrap-administrator.js",
