@@ -76,7 +76,7 @@ export default function ViolationManagement({ violations = [], loading = false, 
               <td data-label="Offense"><span className="violation-offense" title={violation.exact_offense || violation.violation_name}>{violation.exact_offense || violation.violation_name || 'Not recorded'}</span></td>
               <td data-label="Classification"><span className={`violation-classification classification-${severity}`}>{formatDisplayLabel(violation.severity)}</span></td>
               <td data-label="Status"><span className={`violation-status status-${status}`}>{formatDisplayLabel(violation.status)}</span></td>
-              <td data-label="Actions"><div className="violation-actions"><button type="button" aria-label={`View violation ${violation.id}`} onClick={() => onView(violation)}>View</button>{(violation.status === 'OPEN' || role === 'DISCIPLINE_ADMIN') && <button type="button" className="violation-edit-button" aria-label={`Edit violation ${violation.id}`} onClick={() => onEdit(violation)}><PortalIcon name="edit" size={18}/></button>}</div></td>
+              <td data-label="Actions"><div className="violation-actions"><button type="button" aria-label={`View violation ${violation.id}`} onClick={() => onView(violation)}>View</button>{(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-edit-button" aria-label={`Edit violation ${violation.id}`} onClick={() => onEdit(violation)}><PortalIcon name="edit" size={18}/></button>}</div></td>
             </tr>
           })}</tbody>
         </table>

@@ -3,6 +3,16 @@ import assert from 'node:assert/strict'
 
 import { getHomePath, getNavItems, resolveRoute } from '../src/lib/routes.js'
 import { readFile } from 'node:fs/promises'
+import { sidebarNavigationFor } from '../src/lib/portalNavigation.js'
+
+test('office roles have identical routes and sidebar items outside Administration', () => {
+  const adminSidebar = sidebarNavigationFor('DISCIPLINE_ADMIN')
+  const officerSidebar = sidebarNavigationFor('DISCIPLINE_OFFICE')
+  assert.equal(officerSidebar.some(entry => entry.id === 'management'), false)
+  assert.deepEqual(officerSidebar, adminSidebar.filter(entry => entry.id !== 'management'))
+  const managementPaths = adminSidebar.find(entry => entry.id === 'management').items.map(item => item.path)
+  for (const path of managementPaths) assert.equal(resolveRoute(path, 'DISCIPLINE_OFFICE').status, 'unauthorized')
+})
 
 test('each supported role receives its own dashboard and navigation', () => {
   assert.equal(getHomePath('SYSTEM_ADMIN'), '/unauthorized')

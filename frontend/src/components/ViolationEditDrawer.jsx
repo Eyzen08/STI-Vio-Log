@@ -21,7 +21,7 @@ export default function ViolationEditDrawer({ violation, student, types, assignm
   const [focusField, setFocusField] = useState(null)
   const formRef = useRef(null)
   const runAction = useActionLock()
-  const isAdmin = role === 'DISCIPLINE_ADMIN'
+  const canManage = ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)
   const isOpen = violation.status === 'OPEN'
   const assignment = assignments.find((item) => Number(item.violation_id) === Number(violation.id))
   const type = selectedViolationType(types, form.violation_type_id)
@@ -105,7 +105,7 @@ export default function ViolationEditDrawer({ violation, student, types, assignm
           <legend className="sr-only">Community service</legend><h3>Community service</h3>
           <div className="violation-service-edit-grid">
             <label>Required Hours <span className="violation-required" aria-hidden="true">*</span><input type="number" inputMode="decimal" min="0" max="9999.99" step="0.01" {...fieldProps('required_service_hours')} required/>{fieldError('required_service_hours')}</label>
-            <label>Completed Hours <span className="violation-required" aria-hidden="true">*</span><input type="number" inputMode="decimal" min="0" max="9999.99" step="0.01" {...fieldProps('completed_service_hours')} disabled={!isAdmin} required/>{fieldError('completed_service_hours')}{!isAdmin && <small>Only admins can correct credited hours.</small>}</label>
+            <label>Completed Hours <span className="violation-required" aria-hidden="true">*</span><input type="number" inputMode="decimal" min="0" max="9999.99" step="0.01" {...fieldProps('completed_service_hours')} disabled={!canManage} required/>{fieldError('completed_service_hours')}{!canManage && <small>Only authorized office staff can correct credited hours.</small>}</label>
           </div>
           <p className="violation-hours-guidance">Decimal hours: 1.5 = 1 hr 30 min.</p>
           <p className="violation-remaining-line" aria-live="polite">Remaining <strong>{formatDuration(Math.max(0, Number(form.required_service_hours) - Number(form.completed_service_hours)))}</strong></p>
@@ -118,7 +118,7 @@ export default function ViolationEditDrawer({ violation, student, types, assignm
         <ViolationEditHistory violation={violation} history={history} error={historyError}/>
         <footer className="violation-edit-footer">
           {confirmCancel ? <section className="violation-cancel-confirm" role="alert"><h4>Cancel violation #{violation.id}?</h4><p>This removes the case from active obligations and offense counts. The record, attendance, and reason remain in history. Unsaved edits will not be applied.</p><div className="violation-edit-actions"><AsyncActionButton type="button" className="violation-drawer-danger" busy={busy} busyLabel="Cancelling…" onClick={() => submit('INVALID_CANCEL')}>Confirm cancellation</AsyncActionButton><button type="button" className="violation-drawer-secondary" disabled={busy} onClick={() => setConfirmCancel(false)}>Keep violation</button></div></section>
-            : <div className="violation-edit-actions">{(isOpen || isAdmin) && <AsyncActionButton type="submit" className="violation-drawer-primary" busy={busy} busyLabel="Saving…"><PortalIcon name="save"/>{isOpen ? 'Save changes' : 'Reopen to edit'}</AsyncActionButton>}<button type="button" className="violation-drawer-secondary" disabled={busy} data-modal-dismiss>Close</button>{isOpen && isAdmin && <button type="button" className="violation-drawer-danger violation-cancel-button" disabled={busy} onClick={() => { if (validate(true)) setConfirmCancel(true) }}><PortalIcon name="trash"/>Cancel violation</button>}</div>}
+            : <div className="violation-edit-actions">{(isOpen || canManage) && <AsyncActionButton type="submit" className="violation-drawer-primary" busy={busy} busyLabel="Saving…"><PortalIcon name="save"/>{isOpen ? 'Save changes' : 'Reopen to edit'}</AsyncActionButton>}<button type="button" className="violation-drawer-secondary" disabled={busy} data-modal-dismiss>Close</button>{isOpen && canManage && <button type="button" className="violation-drawer-danger violation-cancel-button" disabled={busy} onClick={() => { if (validate(true)) setConfirmCancel(true) }}><PortalIcon name="trash"/>Cancel violation</button>}</div>}
         </footer>
       </form>
     </div>
@@ -133,7 +133,7 @@ export function ViolationEditHistory({ violation, history, error }) {
         {!history.actions?.some((action) => action.action === 'CREATE') && <p>{violation.created_at ? <>Created on {formatManilaDateTime(violation.created_at)}</> : 'Creation time not recorded.'}</p>}
         {history.actions?.map((action) => <article key={action.id}><strong>{formatDisplayLabel(action.action)}</strong><time>{formatManilaDateTime(action.created_at)}</time>{action.from_status && action.to_status && <p>{formatDisplayLabel(action.from_status)} → {formatDisplayLabel(action.to_status)}</p>}{action.reason && <p>{action.reason}</p>}<small>{formatDisplayLabel(action.performed_by_role, 'Staff')}{action.performed_by_user_id != null && ` · User #${action.performed_by_user_id}`}</small></article>)}
       </>}</section>
-      <section className="violation-history-card"><h4>Hour corrections</h4>{error ? <p>Corrections could not be loaded.</p> : !history ? <p role="status">Loading corrections…</p> : !history.hourCorrections?.length ? <p>No completed-hour corrections recorded.</p> : history.hourCorrections.map((item) => <article key={item.id}><strong>{formatDuration(item.previous_completed_hours)} → {formatDuration(item.new_completed_hours)}</strong><time>{formatManilaDateTime(item.created_at)}</time><p>{item.reason}</p>{item.performed_by_user_id != null && <small>Administrator #{item.performed_by_user_id}</small>}</article>)}</section>
+      <section className="violation-history-card"><h4>Hour corrections</h4>{error ? <p>Corrections could not be loaded.</p> : !history ? <p role="status">Loading corrections…</p> : !history.hourCorrections?.length ? <p>No completed-hour corrections recorded.</p> : history.hourCorrections.map((item) => <article key={item.id}><strong>{formatDuration(item.previous_completed_hours)} → {formatDuration(item.new_completed_hours)}</strong><time>{formatManilaDateTime(item.created_at)}</time><p>{item.reason}</p>{item.performed_by_user_id != null && <small>Staff #{item.performed_by_user_id}</small>}</article>)}</section>
     </div>
   </details>
 }

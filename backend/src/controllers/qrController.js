@@ -21,14 +21,14 @@ const validateQrBody = (req) => {
 };
 
 const resolveQr = async (req,res,recording=false) => {
-    if (req.user.role==='DEPARTMENT_HEAD' || (req.user.role==='DISCIPLINE_OFFICE' && req.user.department_id)) {
+    if (req.user.role==='DEPARTMENT_HEAD') {
         let enabled = false;
         await requireAuthorizedDepartment({...req,body:{}},res,()=>{enabled=true;});
         if (!enabled) return null;
     }
     const student = (await pool.query("SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.section,s.year_level,"+avatarSql('s.user_id')+" AS avatar FROM students s JOIN users u ON u.id=s.user_id WHERE s.qr_code=$1 AND u.is_active=TRUE",[req.body.qr_code])).rows[0];
     if (!student) throw new CommunityServiceSessionError('Student not found or inactive',404);
-    const scope = ['DEPARTMENT_HEAD','DISCIPLINE_OFFICE'].includes(req.user.role) ? req.user.department_id : null;
+    const scope = req.user.role==='DEPARTMENT_HEAD' ? req.user.department_id : null;
     // A session in another department also prevents a duplicate Time In.
     const active = (await pool.query(
         "SELECT css.*,css.id AS session_id,a.required_hours,a.completed_hours,a.remaining_hours,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN departments d ON d.id=css.department_id WHERE css.student_id=$1 AND css.time_out IS NULL",[student.id])).rows[0];

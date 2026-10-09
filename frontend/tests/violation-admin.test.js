@@ -29,8 +29,19 @@ test('student search resolves only an exact loaded roster option', () => {
 
 test('violation update sends editable fields and an audit reason only', () => {
   const original = { violation_type_id: 2, incident_date: '2026-08-28', required_service_hours: 3, completed_service_hours: 1, description: 'Original text' }
-  const form = { ...violationEditForm(original), incident_details: ' Updated facts ', required_service_hours: '4.5', completed_service_hours: '2', reason: ' Case review ', status: 'CLEAR', student_id: 99 }
-  assert.deepEqual(buildViolationUpdatePayload(form, original), { violation_type_id: 2, incident_date: '2026-08-28', incident_time: null, description: 'Updated facts', required_service_hours: 4.5, completed_service_hours: 2, reason: 'Case review' })
+  const form = { ...violationEditForm(original), incident_date: '2026-08-29', incident_details: ' Updated facts ', required_service_hours: '4.5', completed_service_hours: '2', reason: ' Case review ', status: 'CLEAR', student_id: 99 }
+  assert.deepEqual(buildViolationUpdatePayload(form, original), { violation_type_id: 2, incident_date: '2026-08-29', incident_time: null, description: 'Updated facts', required_service_hours: 4.5, completed_service_hours: 2, reason: 'Case review' })
+})
+
+test('hour-only saves preserve stored incident dates despite local timestamp serialization', () => {
+  for (const incident_date of ['2026-10-10', '2026-10-09T16:00:00.000Z']) {
+    const original = { violation_type_id: 1, incident_date, required_service_hours: 3, completed_service_hours: 0, description: 'Facts' }
+    const form = { ...violationEditForm(original), completed_service_hours: '1', reason: 'Verified credited time' }
+    const payload = buildViolationUpdatePayload(form, original)
+    assert.equal(Object.hasOwn(payload, 'incident_date'), false)
+    assert.equal(payload.completed_service_hours, 1)
+    assert.equal(buildViolationUpdatePayload({ ...form, incident_date: '2026-10-11' }, original).incident_date, '2026-10-11')
+  }
 })
 
 test('legacy and structured descriptions retain all incident text', () => {

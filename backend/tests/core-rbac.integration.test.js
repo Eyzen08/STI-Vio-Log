@@ -217,6 +217,12 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/admin/departments', { token: discipline })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/departments', { token: head })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/duplicate-review', { token: discipline })).status, 403);
+  for (const path of ['/api/admin/officer-responsibilities', '/api/audit-logs', '/api/system/status', '/api/high-risk-actions', '/api/department-heads', '/api/google-registrations']) {
+    assert.equal((await request(baseUrl, path, { token: discipline })).status, 403, path);
+  }
+  for (const decision of ['approve', 'reject']) {
+    assert.equal((await request(baseUrl, `/api/google-registrations/1/${decision}`, { token: discipline, method: 'POST', body: { reason: 'Reviewed registration' } })).status, 403);
+  }
   assert.equal((await request(baseUrl, '/api/admin/duplicate-review', { token: head })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/duplicate-review', { token: student })).status, 403);
   assert.equal((await request(baseUrl, '/api/admin/students/40/google-link/revoke', { token: discipline, method: 'POST', body: { reason: 'identity confirmed' } })).status, 409);

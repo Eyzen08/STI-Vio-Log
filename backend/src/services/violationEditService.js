@@ -5,6 +5,7 @@ const { transitionViolationWithClient } = require('./violationWorkflowService');
 const { syncClearanceStatusForStudent } = require('../controllers/clearanceController');
 const { recalculateOffenseStatus } = require('./offenseEscalationService');
 const { notifyStudent } = require('./notificationService');
+const { PERMISSIONS, roleHasPermission } = require('../security/permissions');
 
 const editableFields = ['violation_type_id', 'incident_date', 'incident_time', 'description', 'required_service_hours', 'completed_service_hours'];
 const fail = (message, statusCode = 400) => { const error = new Error(message); error.statusCode = statusCode; throw error; };
@@ -70,7 +71,7 @@ const editViolationWithClient = async ({ client, violationId, body, actor, ipAdd
     if (completed > required) fail('Completed hours cannot exceed required hours');
     const hoursChanged = required !== Number(current.required_service_hours) || completed !== Number(current.completed_service_hours);
     const completedChanged = completed !== Number(current.completed_service_hours);
-    if (completedChanged && actor.role !== 'DISCIPLINE_ADMIN') fail('Only admins can correct completed service hours', 403);
+    if (completedChanged && !roleHasPermission(actor.role, PERMISSIONS.DTR_CORRECT)) fail('Only authorized office staff can correct completed service hours', 403);
     if (assignment && hoursChanged) {
         const active = await client.query('SELECT id FROM community_service_sessions WHERE assignment_id = $1 AND time_out IS NULL', [assignment.id]);
         if (active.rows.length) fail('Time out the active attendance session before changing hours', 409);

@@ -76,7 +76,7 @@ async function resetAndSeedTestData() {
   await pool.query(
     `INSERT INTO users (username, password_hash, role) VALUES
       ('admin_test', $1, 'DISCIPLINE_ADMIN'),
-      ('discipline_test', $1, 'DISCIPLINE_ADMIN'),
+      ('discipline_test', $1, 'DISCIPLINE_OFFICE'),
       ('head_test', $1, 'DEPARTMENT_HEAD'),
       ('student_test', $1, 'STUDENT')`,
     [passwordHash]
@@ -257,9 +257,8 @@ test('admin hour corrections create routed assignments and preserve attendance e
   assert.ok(audit.reason);
 });
 
-test('violation edits validate category changes, numeric hours, destinations, and admin-only credit', async () => {
+test('violation edits validate category changes, numeric hours, destinations, and shared office credit', async () => {
   const admin = await login('admin_test');
-  await pool.query("UPDATE users SET role = 'DISCIPLINE_OFFICE' WHERE username = 'discipline_test'");
   const office = await login('discipline_test');
   const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
   const { violation, assignment } = await createServiceViolation(admin, studentId, 3);
@@ -268,7 +267,13 @@ test('violation edits validate category changes, numeric hours, destinations, an
   assert.equal((await edit(admin, violation.id, { incident_date: '2026-02-30' })).status, 400);
   assert.equal((await edit(admin, violation.id, { reason: ' ', description: 'Facts' })).status, 400);
   assert.equal((await edit(admin, violation.id, { reason: 'x'.repeat(1001), description: 'Facts' })).status, 400);
-  assert.equal((await edit(office, violation.id, { completed_service_hours: 1 })).status, 403);
+  const corrected = await edit(office, violation.id, { completed_service_hours: 1 });
+  assert.equal(corrected.status, 200, JSON.stringify(corrected.body));
+  assert.equal(Number(corrected.body.assignment.completed_hours), 1);
+  assert.equal(Number(corrected.body.hourCorrection.performed_by_user_id), Number((await pool.query("SELECT id FROM users WHERE username='discipline_test'")).rows[0].id));
+  const audit = (await pool.query("SELECT actor_role, reason FROM audit_logs WHERE table_name='violations' AND record_id=$1 AND action='UPDATE' ORDER BY id DESC LIMIT 1", [violation.id])).rows[0];
+  assert.equal(audit.actor_role, 'DISCIPLINE_OFFICE');
+  assert.ok(audit.reason);
   assert.equal((await edit(office, violation.id, { required_service_hours: 4 })).status, 200);
   assert.equal((await edit(admin, violation.id, { department_id: 1, department_head_id: 1 })).status, 400);
   const type = (await pool.query("SELECT * FROM violation_types WHERE violation_code = 'HANDBOOK_MAJOR_A'")).rows[0];
@@ -323,6 +328,25 @@ test('hour editing and cancellation are blocked during active attendance without
   assert.equal((await request(`/api/violations/${violation.id}/actions`, { token: admin })).body.hourCorrections.length, 1);
 });
 
+test('Officer QR attendance works outside the profile department with an authorized supervisor', async () => {
+  const admin = await login('admin_test');
+  const office = await login('discipline_test');
+  const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  const profileDepartment = (await pool.query("INSERT INTO departments(department_code,department_name) VALUES('OTHER','Other department') RETURNING id")).rows[0].id;
+  await pool.query("INSERT INTO staff_profiles(user_id,first_name,last_name,department_id) SELECT id,'Test','Officer',$1 FROM users WHERE username='discipline_test'", [profileDepartment]);
+  const { assignment } = await createServiceViolation(admin, studentId, 3);
+  const scan = await request('/api/qr/scan', { token: office, method: 'POST', body: { qr_code: 'QR-TEST' } });
+  assert.equal(scan.status, 200, JSON.stringify(scan.body));
+  assert.equal(Number(scan.body.assignment.id), Number(assignment.id));
+  const opened = await request('/api/qr/time-in', { token: office, method: 'POST', body: { qr_code: 'QR-TEST', session_type: 'FIXED', selected_duration_minutes: 120 } });
+  assert.equal(opened.status, 201, JSON.stringify(opened.body));
+  assert.equal(Number(opened.body.session.department_id), Number(assignment.department_id));
+  await pool.query("UPDATE community_service_sessions SET time_in=time_in-INTERVAL '30 minutes' WHERE id=$1", [opened.body.session.id]);
+  const closed = await request('/api/qr/time-out', { token: office, method: 'POST', body: { qr_code: 'QR-TEST' } });
+  assert.equal(closed.status, 201, JSON.stringify(closed.body));
+  assert.equal(Number(closed.body.session.credited_minutes), 30);
+});
+
 test('fully credited positive hours complete the violation; zero-hour edits remain open', async () => {
   const admin = await login('admin_test');
   const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
@@ -374,9 +398,9 @@ test('violation lifecycle transitions preserve structured history and audit reco
   assert.equal((await act(disciplineToken, clearViolation.id, 'CLEAR', 'Administrative resolution')).body.violation.status, 'CLEAR');
   assert.equal((await act(disciplineToken, clearViolation.id, 'REOPEN', 'Resolution reversed')).body.violation.status, 'OPEN');
 
-  const invalidViolation = await createViolation(adminToken, studentId);
-  assert.equal((await act(adminToken, invalidViolation.id, 'INVALID_CANCEL', 'Duplicate record')).body.violation.status, 'INVALID_CANCEL');
-  assert.equal((await act(adminToken, invalidViolation.id, 'REOPEN', 'Record confirmed valid')).body.violation.status, 'OPEN');
+  const invalidViolation = await createViolation(disciplineToken, studentId);
+  assert.equal((await act(disciplineToken, invalidViolation.id, 'INVALID_CANCEL', 'Duplicate record')).body.violation.status, 'INVALID_CANCEL');
+  assert.equal((await act(disciplineToken, invalidViolation.id, 'REOPEN', 'Record confirmed valid')).body.violation.status, 'OPEN');
 
   const chainedViolation = await createViolation(adminToken, studentId);
   assert.equal((await act(adminToken, chainedViolation.id, 'COMPLETE')).status, 200);

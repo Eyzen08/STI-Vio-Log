@@ -19,6 +19,24 @@ test('discipline officers retain operational duties without administrator permis
   assert.equal(roleHasPermission('DISCIPLINE_OFFICE', PERMISSIONS.SYSTEM_HEALTH_VIEW), false);
 });
 
+test('office roles share every permission except Administration', () => {
+  const administration = new Set([
+    'STAFF_ACCOUNT_MANAGE', 'STUDENT_REGISTRATION_REVIEW', 'DEPARTMENT_MANAGE',
+    'OFFICER_ASSIGNMENT_MANAGE', 'OPERATIONAL_SETTINGS_MANAGE', 'OPERATIONAL_AUDIT_VIEW',
+    'SYSTEM_HEALTH_VIEW', 'SYSTEM_VERSION_VIEW', 'INTEGRATION_STATUS_VIEW',
+    'FAILED_JOBS_VIEW', 'SECURITY_EVENTS_VIEW', 'AUTH_ACTIVITY_VIEW',
+    'TECHNICAL_AUDIT_VIEW', 'SYSTEM_CONFIG_SAFE_MANAGE', 'ACCOUNT_LOCK',
+    'ACCOUNT_RECOVERY_INITIATE', 'MAINTENANCE_TOOLS_USE'
+  ]);
+  const admin = permissionsForRole('DISCIPLINE_ADMIN');
+  assert.deepEqual([...permissionsForRole('DISCIPLINE_OFFICE')].sort(),
+    [...admin].filter(permission => !administration.has(permission)).sort());
+  for (const permission of administration) {
+    assert.equal(admin.has(permission), true, permission);
+    assert.equal(roleHasPermission('DISCIPLINE_OFFICE', permission), false, permission);
+  }
+});
+
 test('department heads can view only department-scoped reports', () => {
   assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.DEPARTMENT_REPORT_VIEW), true);
   assert.equal(roleHasPermission('DEPARTMENT_HEAD', PERMISSIONS.REPORT_VIEW), false);

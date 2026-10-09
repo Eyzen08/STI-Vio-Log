@@ -7,6 +7,17 @@ const { chooseSupervisor } = require('../src/services/communityServiceSessionSer
 
 const response = () => ({ statusCode:200, body:null, status(code){this.statusCode=code;return this}, json(body){this.body=body;return this} })
 
+test('office roles look up supervisors for the requested department while Department Heads remain scoped', async () => {
+  const received = [];
+  const controller = createOfficerResponsibilityController({ service: { available: async input => { received.push(input); return []; } } });
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD']) {
+    const res = response();
+    await controller.available({ user: { role, department_id: 5 }, query: { department_id: '9' } }, res);
+    assert.equal(res.statusCode, 200);
+  }
+  assert.deepEqual(received, [{ departmentId: '9' }, { departmentId: '9' }, { departmentId: 5 }]);
+});
+
 test('officer responsibility routes expose assignment lifecycle operations', () => {
   const routes = router.stack.filter((item)=>item.route).map((item)=>`${Object.keys(item.route.methods)[0].toUpperCase()} ${item.route.path}`)
   assert.deepEqual(routes, ['GET /','POST /permanent','POST /temporary','PATCH /officers/:officerId/availability','PATCH /temporary/:assignmentId'])

@@ -32,19 +32,15 @@ const attendanceContext = async (client, { studentId, departmentId, supervisorId
   [Number(studentId), Number(departmentId), supervisorId ? Number(supervisorId) : null]
 )).rows[0]
 
-const attendanceRecipients = async (client, departmentId) => (await client.query(
+const attendanceRecipients = async (client) => (await client.query(
   `SELECT DISTINCT u.id FROM users u
-   LEFT JOIN officer_department_assignments oda ON oda.officer_user_id=u.id
-     AND oda.department_id=$1 AND oda.status='ACTIVE'
-     AND oda.starts_at<=CURRENT_TIMESTAMP AND (oda.ends_at IS NULL OR oda.ends_at>CURRENT_TIMESTAMP)
-   WHERE u.is_active=TRUE AND (u.role='DISCIPLINE_ADMIN' OR (u.role='DISCIPLINE_OFFICE' AND oda.id IS NOT NULL))`,
-  [Number(departmentId)]
+   WHERE u.is_active=TRUE AND u.role IN ('DISCIPLINE_ADMIN','DISCIPLINE_OFFICE')`
 )).rows.map((row) => Number(row.id))
 
 const notifyAttendanceStaff = async (client, { studentId, departmentId, supervisorId, sessionId, assignmentId, action, status = 'SUCCESS', occurredAt = new Date(), eventSuffix = '' }) => {
   const context = await attendanceContext(client, { studentId, departmentId, supervisorId })
   if (!context) return []
-  const recipients = await attendanceRecipients(client, departmentId)
+  const recipients = await attendanceRecipients(client)
   const studentName = `${context.first_name || ''} ${context.last_name || ''}`.trim()
   const officerName = `${context.officer_first_name || ''} ${context.officer_last_name || ''}`.trim() || 'Not selected'
   const readableAction = String(action || 'ATTENDANCE').replaceAll('_', ' ')

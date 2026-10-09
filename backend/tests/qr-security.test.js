@@ -7,6 +7,29 @@ const { scanQrCode } = require('../src/controllers/qrController');
 
 const response = () => ({ statusCode: 200, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } });
 
+test('office roles authorize stored service departments independently of their profile assignment', async () => {
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
+    const calls = [];
+    const client = { query: async (sql, params) => {
+      calls.push({ sql: String(sql), params });
+      return { rows: [{ department_id: 9, id: 9 }] };
+    } };
+    const req = { user: { id: 12, role, department_id: 5 }, body: { assignment_id: 8 } };
+    const res = response();
+    let allowed = false;
+    await requireAuthorizedDepartment(req, res, () => { allowed = true; }, client);
+    assert.equal(allowed, true, role);
+    assert.equal(req.staffDepartmentId, 9);
+    assert.deepEqual(calls.at(-1).params, [9]);
+    assert.doesNotMatch(calls.at(-1).sql, /officer_department_assignments/);
+
+    const mismatch = response();
+    await requireAuthorizedDepartment({ ...req, body: { assignment_id: 8, department_id: 10 } }, mismatch,
+      () => assert.fail('mismatched department accepted'), client);
+    assert.equal(mismatch.statusCode, 403);
+  }
+});
+
 test('disabled Department Head scanner permission is denied from current database state', async () => {
   const originalQuery = database.query;
   let query;

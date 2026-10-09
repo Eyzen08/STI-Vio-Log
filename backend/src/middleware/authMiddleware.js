@@ -212,7 +212,7 @@ const requireAuthorizedDepartment = async (req, res, next, database = pool) => {
             if (req.body?.department_id && Number(req.body.department_id)!==Number(assignedDepartment)) return res.status(403).json({success:false,message:'Department does not match the service assignment'});
         } catch (error) { return res.status(400).json({success:false,message:'A valid assignment or session ID is required'}); }
     }
-    const scopedOfficer = ["DEPARTMENT_HEAD", "DISCIPLINE_OFFICE"].includes(req.user.role) && req.user.department_id;
+    const scopedOfficer = req.user.role === 'DEPARTMENT_HEAD' && req.user.department_id;
     const departmentId = scopedOfficer
         ? req.user.department_id
         : assignedDepartment || req.body?.department_id;

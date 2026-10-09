@@ -1,6 +1,20 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateEdit, parseHours, validDate } = require('../src/services/violationEditService');
+const { editViolationWithClient, validateEdit, parseHours, validDate } = require('../src/services/violationEditService');
+
+test('both office roles reach the active-session safeguard when correcting credited hours', async () => {
+    for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
+        const client = { query: async sql => {
+            if (sql.startsWith('SELECT * FROM community_service_assignments')) return { rows: [{ id: 8 }] };
+            if (sql.startsWith('SELECT * FROM violations')) return { rows: [{ id: 9, student_id: 3, status: 'OPEN', violation_type_id: 1, required_service_hours: 3, completed_service_hours: 0, description: 'Facts' }] };
+            if (sql.startsWith('SELECT * FROM violation_types')) return { rows: [{ id: 1, is_active: true }] };
+            if (sql.includes('FROM community_service_sessions')) return { rows: [{ id: 10 }] };
+            return { rows: [] };
+        } };
+        await assert.rejects(editViolationWithClient({ client, violationId: 9, body: { completed_service_hours: 1, reason: 'Credit correction' }, actor: { id: 2, role } }),
+            error => error.statusCode === 409 && /Time out/.test(error.message), role);
+    }
+});
 
 test('hour corrections reject blank, coercible nonnumeric, nonfinite, and out-of-precision values', () => {
     for (const value of [null, true, false, [], {}, '', ' ', 'NaN', Infinity, -1, 10000, 0.001]) assert.throws(() => parseHours(value, 'Hours'));

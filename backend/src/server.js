@@ -354,7 +354,7 @@ app.use(
 app.use(
   "/api/google-registrations",
   authenticateToken,
-  authorizeRoles("DISCIPLINE_ADMIN", "DISCIPLINE_OFFICE"),
+  authorizePermissions(PERMISSIONS.STUDENT_REGISTRATION_REVIEW),
   googleRegistrationRoutes
 );
 

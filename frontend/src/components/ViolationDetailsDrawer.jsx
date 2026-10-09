@@ -31,7 +31,7 @@ export function ViolationDetailsContent({ violation, student, role, onEdit, onAd
       </dl>
     </section>
     <div className="violation-quick-actions">
-      {(violation.status === 'OPEN' || role === 'DISCIPLINE_ADMIN') && <button type="button" className="violation-drawer-primary" onClick={onEdit}>{violation.status === 'OPEN' ? 'Edit record' : 'Reopen to edit'}</button>}
+      {(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-drawer-primary" onClick={onEdit}>{violation.status === 'OPEN' ? 'Edit record' : 'Reopen to edit'}</button>}
       <button type="button" className="violation-drawer-secondary" onClick={onAdd} disabled={!canAdd}>Add violation</button>
     </div>
   </div>

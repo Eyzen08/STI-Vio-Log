@@ -20,6 +20,16 @@ before(async () => {
 })
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
+
+test('both office roles can edit closed violations from the shared table and record drawer', () => {
+  const violation = { id: 91, student_id: 1, student_name: 'Test Student', student_number: 'TEST-1', description: 'Facts', severity: 'MINOR', status: 'COMPLETE' }
+  for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
+    const table = render('ViolationManagement', { violations: [violation], filters: { search: '', severity: 'ALL', status: 'ALL' }, role })
+    assert.match(table, /aria-label="Edit violation 91"/, role)
+    const drawer = render('ViolationDetailsContent', { violation, role })
+    assert.match(drawer, /Reopen to edit/, role)
+  }
+})
 const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
@@ -255,7 +265,7 @@ test('violation detail separates structured incident notes and preserves totals 
   assert.match(html, /Major Offense - Category D/)
   assert.match(html, /Edit record/)
   const closed = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_OFFICE', canAdd:false })
-  assert.doesNotMatch(closed, /Edit record|Reopen to edit/)
+  assert.match(closed, /Reopen to edit/)
   assert.match(closed, /disabled=""/)
   const reopened = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_ADMIN', canAdd:true })
   assert.match(reopened, /Reopen to edit/)
@@ -277,7 +287,7 @@ test('audited edit history displays real transitions and credited-hour correctio
   assert.match(html, /Verified duplicate/)
   assert.match(html, /Discipline Administrator · User #7/)
   assert.match(html, /15 min → 1 hr 30 min/)
-  assert.match(html, /Administrator #7/)
+  assert.match(html, /Staff #7/)
   assert.match(html, /Reviewed credited time/)
   assert.doesNotMatch(html, /No completed-hour corrections/)
   const loading = render('ViolationEditHistory', {violation:{}})
@@ -299,7 +309,8 @@ test('violation management keeps six real metrics, seven dated rows, filters and
   assert.match(html, /Showing 1–7 of 12 records/)
   assert.match(html, /October 5, 2026<\/span><small>4:00 PM/)
   assert.match(html, /View violation 12/)
-  assert.doesNotMatch(html, /View violation 5|Edit violation 12/)
+  assert.doesNotMatch(html, /View violation 5/)
+  assert.match(html, /Edit violation 12/)
   assert.match(html, /Edit violation 9/)
   assert.match(html, /value="PENDING">Pending/)
   const admin = render('ViolationManagement', { ...props, role: 'DISCIPLINE_ADMIN' })

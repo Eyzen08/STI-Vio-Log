@@ -2,6 +2,26 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { insertNotification, notifyStudent, notifyAttendanceStaff } = require('../src/services/notificationService');
 
+test('attendance alerts include active office staff without requiring a department assignment', async () => {
+  let recipientSql;
+  const inserts = [];
+  const client = { query: async (sql, params) => {
+    if (sql.includes('CROSS JOIN departments')) return { rows: [{ first_name: 'Test', last_name: 'Student', student_number: '123', department_name: 'Library' }] };
+    if (sql.includes('SELECT DISTINCT u.id')) {
+      recipientSql = sql;
+      return { rows: [{ id: 1 }, { id: 2 }] };
+    }
+    inserts.push(params);
+    return { rows: [{ id: inserts.length }] };
+  } };
+  await notifyAttendanceStaff(client, { studentId: 3, departmentId: 4, sessionId: 5, assignmentId: 6, action: 'TIME_IN' });
+  assert.match(recipientSql, /u\.is_active=TRUE/);
+  assert.match(recipientSql, /u\.role IN \('DISCIPLINE_ADMIN',\s*'DISCIPLINE_OFFICE'\)/);
+  assert.doesNotMatch(recipientSql, /officer_department_assignments/);
+  assert.deepEqual(inserts.map(params => params[0]), [1, 2]);
+  assert.deepEqual(inserts.map(params => params[4]), ['attendance:5:time_in:event:1', 'attendance:5:time_in:event:2']);
+});
+
 test('insertNotification writes a retry-safe event without recipient-controlled data', async () => {
   const calls = [];
   const client = { query: async (sql, params) => {

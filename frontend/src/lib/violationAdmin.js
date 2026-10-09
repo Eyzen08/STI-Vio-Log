@@ -44,7 +44,7 @@ export const violationEditForm = (violation = {}) => ({
 
 export const buildViolationUpdatePayload = (form = {}, original = {}, hasAssignment = true) => ({
   violation_type_id: Number(form.violation_type_id),
-  incident_date: form.incident_date,
+  ...(form.incident_date !== String(original.incident_date || '').slice(0, 10) ? { incident_date: form.incident_date } : {}),
   incident_time: form.incident_time || null,
   description: form.legacy && !form.exact_offense ? String(form.incident_details || '').trim() : buildViolationDescription(form),
   ...(Number(form.required_service_hours) !== Number(original.required_service_hours) ? { required_service_hours: Number(form.required_service_hours) } : {}),
