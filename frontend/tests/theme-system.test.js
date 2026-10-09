@@ -14,13 +14,13 @@ const portal = readPortalStyles()
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
 
-test('admin dark-mode campus framing is centered on desktop and follows login on mobile', async () => {
+test('admin dark-mode campus framing matches light mode on desktop and mobile', async () => {
   const css = await readFile(new URL('../src/styles/admin-dashboard.css', import.meta.url), 'utf8')
   const darkBanner = ":root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome"
   const rules = css.split(darkBanner).slice(1).map((part) => part.slice(0, part.indexOf('}') + 1))
-  assert.ok(rules.some((rule) => /background-image:[^}]*sti-global-city-building-night\.jpg/.test(rule) && /background-position:center,right center !important;/.test(rule) && /background-size:cover,50% auto !important;/.test(rule) && /background-repeat:no-repeat !important;/.test(rule)))
+  assert.ok(rules.some((rule) => /background-image:[^}]*sti-global-city-building-night\.jpg/.test(rule) && /background-position:center,right 35% !important;/.test(rule) && /background-size:cover,50% auto !important;/.test(rule) && /background-repeat:no-repeat !important;/.test(rule)))
   const mobileCss = css.slice(css.indexOf('@media (max-width:767px)'))
-  assert.ok(mobileCss.includes(`${darkBanner} { background-position:center,right 43% !important; background-size:cover,auto 150% !important; }`))
+  assert.ok(mobileCss.includes(`${darkBanner} { background-position:center,right 35% !important; background-size:cover,auto 150% !important; }`))
   assert.match(css, /background-position:center,right 35%;/)
   assert.match(mobileCss, /background-size:cover,auto 150%;/)
 })
