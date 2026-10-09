@@ -12,7 +12,7 @@ export const buildStaffAccountPayload = (form = {}) => ({
 export const accountStatusLabel = (account) => account?.is_active ? 'Active' : 'Inactive'
 export const clearOneTimeSecret = () => null
 
-export const buildGoogleRecoveryPayload = (reason = '') => ({ reason: String(reason).trim() })
+export const buildGoogleRecoveryPayload = (reason = '', email) => ({ reason: String(reason).trim(), ...(email === undefined ? {} : {email: String(email).trim().toLowerCase()}) })
 
 export const buildAccountAssignmentPayload = ({ role, departmentId, reason } = {}) => ({
   role: String(role || '').trim().toUpperCase(),

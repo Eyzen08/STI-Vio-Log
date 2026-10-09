@@ -1,5 +1,6 @@
 const { normalizeAcademic } = require('../utils/studentAcademic');
 const { ApiError } = require('../utils/api');
+const {recordSecurityEvent}=require('./securityEventService');
 const { isValidEmail, isValidPhone, normalizePhone, isValidStudentName } = require('../utils/validators');
 
 const GOOGLE_EMAIL_PURPOSE = 'STUDENT_ONBOARDING_GOOGLE_EMAIL';
@@ -9,7 +10,7 @@ const clean = (value, max) => typeof value === 'string'
   : '';
 
 const onboardingStep = (row) => {
-  if (!row || row.role !== 'STUDENT' || !row.onboarding_required || row.onboarding_completed_at) return 'COMPLETE';
+  if (!row || row.role !== 'STUDENT' || (!row.google_rebind_required && (!row.onboarding_required || row.onboarding_completed_at))) return 'COMPLETE';
   if (row.must_change_password) return 'PASSWORD';
   if (!row.google_linked) return 'GOOGLE';
   return 'PROFILE';
@@ -20,7 +21,7 @@ const onboardingState = (row) => {
   const state = { onboarding_required: step !== 'COMPLETE', onboarding_step: step };
   if (step === 'GOOGLE') {
     state.google_onboarding_stage = row.pending_google_email_verified_at ? 'OAUTH' : row.pending_google_email ? 'OTP' : 'EMAIL';
-    state.onboarding_google_email = row.pending_google_email || null;
+    state.onboarding_google_email = row.email || row.pending_google_email || null;
   }
   return state;
 };
@@ -30,7 +31,7 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
 
   const requireGoogleStage = async (client, userId) => {
     const student = (await client.query(
-      `SELECT s.id,s.pending_google_email,s.pending_google_email_verified_at,s.onboarding_required,s.onboarding_completed_at,
+      `SELECT s.id,s.email,s.google_rebind_required,s.pending_google_email,s.pending_google_email_verified_at,s.onboarding_required,s.onboarding_completed_at,
               u.id user_id,u.role,u.must_change_password,
               EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked
        FROM students s JOIN users u ON u.id=s.user_id
@@ -38,7 +39,7 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
     )).rows[0];
     if (!student) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Student account not found');
     if (student.must_change_password) throw new ApiError(409, 'PASSWORD_CHANGE_REQUIRED', 'Change the temporary password before continuing');
-    if (!student.onboarding_required || student.onboarding_completed_at) throw new ApiError(409, 'ONBOARDING_ALREADY_COMPLETE', 'Student onboarding is already complete');
+    if (!student.google_rebind_required && (!student.onboarding_required || student.onboarding_completed_at)) throw new ApiError(409, 'ONBOARDING_ALREADY_COMPLETE', 'Student onboarding is already complete');
     if (student.google_linked) throw new ApiError(409, 'GOOGLE_ALREADY_LINKED', 'Google account is already linked');
     return student;
   };
@@ -51,9 +52,10 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
     try {
       await client.query('BEGIN');
       const student = await requireGoogleStage(client,userId);
+      if (!normalizedEmail.endsWith('@gmail.com') || normalizedEmail !== String(student.email || '').trim().toLowerCase()) throw new ApiError(409, 'GOOGLE_EMAIL_MISMATCH', 'Use the Gmail recorded by the Discipline Office. Contact the office to correct it');
       await client.query(`UPDATE students SET pending_google_email=$2,pending_google_email_verified_at=NULL,updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [student.id,normalizedEmail]);
       await client.query('COMMIT');
-    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; }
+    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} if(error.code==='GOOGLE_EMAIL_MISMATCH')await recordSecurityEvent({actor:{id:Number(userId),role:'STUDENT'},action:'STUDENT_GOOGLE_LINK_CONFLICT',targetType:'USER_ACCOUNT',targetId:userId,targetLabel:'Student account',details:{conflict_type:'GMAIL'},reason:'Requested Gmail differs from recorded address',result:'DENIED',database:client});throw error; }
     finally { client.release(); }
     await otpService.issue({purpose:GOOGLE_EMAIL_PURPOSE,userId:Number(userId),email:normalizedEmail});
     return {onboarding_required:true,onboarding_step:'GOOGLE',google_onboarding_stage:'OTP',onboarding_google_email:normalizedEmail};
@@ -66,13 +68,14 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
       await client.query('BEGIN');
       const student = await requireGoogleStage(client,userId);
       if (!student.pending_google_email) throw new ApiError(409,'GOOGLE_EMAIL_REQUIRED','Enter a Google account email before verifying a code');
+      if (student.pending_google_email !== String(student.email || '').trim().toLowerCase()) throw new ApiError(409,'GOOGLE_EMAIL_MISMATCH','Request a new code for the Gmail recorded by the Discipline Office');
       await otpService.verify({purpose:GOOGLE_EMAIL_PURPOSE,userId:Number(userId),email:student.pending_google_email,code,client});
       await client.query('UPDATE students SET pending_google_email_verified_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id]);
       await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
         VALUES($1,'STUDENT_GOOGLE_EMAIL_VERIFIED','students',$2,'Student verified the pending Google account email during onboarding',$3)`, [Number(userId),student.id,ipAddress]);
       await client.query('COMMIT');
       return {onboarding_required:true,onboarding_step:'GOOGLE',google_onboarding_stage:'OAUTH',onboarding_google_email:student.pending_google_email};
-    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; }
+    } catch (error) { try { await client.query(error.commitOtpAttempt ? 'COMMIT' : 'ROLLBACK'); } catch (_) {} throw error; }
     finally { client.release(); }
   };
 

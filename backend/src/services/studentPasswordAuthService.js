@@ -136,7 +136,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       );
       await client.query('COMMIT');
     } catch (error) {
-      try { await client.query('ROLLBACK'); } catch (_) {}
+      try { await client.query(error.commitOtpAttempt ? 'COMMIT' : 'ROLLBACK'); } catch (_) {}
       if (error.code === '23505') throw new ApiError(409, 'REGISTRATION_CONFLICT', 'Student Number or email is already registered');
       throw error;
     } finally { client.release(); }
@@ -169,13 +169,17 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
     try {
       await client.query('BEGIN');
       const account = (await client.query(
-        `SELECT u.id,CASE WHEN u.role='DISCIPLINE_ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
+        `SELECT u.id,COALESCE(s.email,ap.email) email,CASE WHEN u.role='DISCIPLINE_ADMIN' THEN 'ADMIN_PASSWORD_RESET' ELSE 'STUDENT_PASSWORD_RESET' END purpose
          FROM users u LEFT JOIN students s ON s.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
          WHERE u.is_active=TRUE AND ((u.role='STUDENT' AND u.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(s.email)=LOWER($1)))
           OR (u.role='DISCIPLINE_ADMIN' AND ap.email_verified=TRUE AND (LOWER(u.username)=LOWER($1) OR LOWER(ap.email)=LOWER($1)))) FOR UPDATE OF u`, [value]
       )).rows[0];
       if (!account) throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
-      await otpService.verify({ purpose: account.purpose || 'STUDENT_PASSWORD_RESET', userId: account.id, code, client });
+      // Read a fresh inbox snapshot after the user lock, including raced recovery.
+      const recoveryTable = account.purpose==='ADMIN_PASSWORD_RESET' ? 'admin_profiles' : 'students';
+      const currentEmail = (await client.query(`SELECT email FROM ${recoveryTable} WHERE user_id=$1 FOR UPDATE`,[account.id])).rows[0]?.email;
+      if (!currentEmail) throw new ApiError(400,'OTP_INVALID_OR_EXPIRED','Verification code is invalid or expired');
+      await otpService.verify({ purpose: account.purpose || 'STUDENT_PASSWORD_RESET', userId: account.id, code, email:currentEmail, client });
       await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL', [account.id]);
       rawToken = randomBytes(32).toString('base64url');
       await client.query(
@@ -186,7 +190,7 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       await client.query('COMMIT');
       return { reset_token: rawToken };
     } catch (error) {
-      try { await client.query('ROLLBACK'); } catch (_) {}
+      try { await client.query(error.commitOtpAttempt ? 'COMMIT' : 'ROLLBACK'); } catch (_) {}
       throw error;
     } finally { client.release(); }
   };
@@ -206,7 +210,8 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
       const user = (await client.query('SELECT password_hash,role FROM users WHERE id=$1 FOR UPDATE', [authorization.user_id])).rows[0];
       if (await comparePassword(newPassword, user.password_hash)) throw new ApiError(409, 'PASSWORD_REUSE', 'New password must be different from the current password');
       const passwordHash = await hashPassword(newPassword);
-      await client.query('UPDATE users SET password_hash=$2,must_change_password=FALSE,session_version=session_version+1,password_changed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [authorization.user_id, passwordHash]);
+      await client.query('UPDATE users SET password_hash=$2,must_change_password=FALSE,temporary_password_expires_at=NULL,session_version=session_version+1,password_changed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [authorization.user_id, passwordHash]);
+      await client.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL',[authorization.user_id]);
       await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [authorization.id]);
       await client.query(
         `INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)

@@ -47,6 +47,9 @@ const authenticateToken = async (req, res, next) => {
                 u.email_verified,
                 u.session_version,
                 u.must_change_password,
+                u.temporary_password_expires_at,
+                s.email,
+                s.google_rebind_required,
                 s.onboarding_required,
                 s.onboarding_completed_at,
                 s.pending_google_email,
@@ -83,6 +86,8 @@ const authenticateToken = async (req, res, next) => {
 
         const account = accountResult.rows[0];
 
+        if (account.role === 'STUDENT' && account.must_change_password && (!account.temporary_password_expires_at || new Date(account.temporary_password_expires_at)<=new Date())) return res.status(401).json({success:false,message:'Temporary credentials expired. Use password recovery or contact the Discipline Office',error:{code:'CREDENTIALS_EXPIRED',message:'Temporary credentials expired'}});
+
         if (account.role === 'STUDENT' && !account.email_verified) {
             return res.status(401).json({ success:false, message:'Student email verification is required' });
         }
@@ -93,7 +98,9 @@ const authenticateToken = async (req, res, next) => {
             role: account.role,
             session_version: Number(account.session_version),
             must_change_password: Boolean(account.must_change_password),
-            onboarding_required: Boolean(account.onboarding_required) && !account.onboarding_completed_at,
+            email: account.email || null,
+            google_rebind_required: Boolean(account.google_rebind_required),
+            onboarding_required: Boolean(account.google_rebind_required) || (Boolean(account.onboarding_required) && !account.onboarding_completed_at),
             onboarding_completed_at: account.onboarding_completed_at || null,
             google_linked: Boolean(account.google_linked),
             pending_google_email: account.pending_google_email || null,

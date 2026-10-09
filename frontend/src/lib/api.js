@@ -1,4 +1,3 @@
-import { buildGoogleLinkPayload } from './googleIdentity.js'
 import { clearSession, csrfToken, saveCsrf } from './session.js'
 
 // Production requests stay on the Vercel origin and are securely proxied to the
@@ -163,12 +162,6 @@ export const googleLogin = (credential) =>
     body: JSON.stringify({ credential })
   })
 
-export const googleLink = (registration) =>
-  apiRequest('/api/auth/google/link', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(buildGoogleLinkPayload(registration))
-  })
 
 export const changePassword = ({ token, currentPassword, newPassword }) =>
   apiRequest('/api/account/password-change', {

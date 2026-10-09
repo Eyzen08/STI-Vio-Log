@@ -16,7 +16,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
       const throttleInput={kind:'password',identifier:username,ip:req.ip};
       if(issueToken===issueSessionToken)await throttles.assertAllowed(throttleInput,database);
       const result=await database.query(
-        `SELECT u.*,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
+        `SELECT u.*,s.email,s.google_rebind_required,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
                 EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked,
                 COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
                 COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name
@@ -29,7 +29,7 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
          AND (u.role<>'STUDENT' OR u.email_verified=TRUE) LIMIT 1`, [username]
       );
       const user=result.rows[0];
-      if(!user||!(await comparePassword(password,user.password_hash))){
+      if(!user||(user.role==='STUDENT'&&user.must_change_password&&(!user.temporary_password_expires_at||new Date(user.temporary_password_expires_at)<=new Date()))||!(await comparePassword(password,user.password_hash))){
         if(issueToken===issueSessionToken)await throttles.failure(throttleInput,database);
         await auditSecurityEvent({actor:user?{id:user.id,username:user.username,role:user.role}:null,action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetId:user?.id,targetLabel:username,details:{authentication_method:'PASSWORD'},reason:'Invalid credentials',result:'DENIED',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
         return res.status(401).json({success:false,message:'Invalid username or password'});
@@ -46,10 +46,11 @@ const createAuthController = ({ database=pool, comparePassword=bcrypt.compare, i
         await challenges.createChallenge({userId:user.id,purpose:enabled?'VERIFY':'ENROLL',res});
         return res.status(202).json({success:true,mfa_required:Boolean(enabled),mfa_enrollment_required:!enabled,user:{username:user.username,role:user.role},server_time_ms:Date.now(),totp_period_seconds:30});
       }
-      const created=await sessions.createSession({userId:user.id,ipAddress:req.ip,userAgent:req.get?.('user-agent'),database});
+      const created=await sessions.createSession({userId:user.id,expectedSessionVersion:user.session_version,ipAddress:req.ip,userAgent:req.get?.('user-agent'),database});
       sessions.setSessionCookies(res,created);
       return res.json({success:true,message:'Login successful',user:publicUser,csrf_token:created.csrf});
     } catch(error) {
+      if(error.code==='INVALID_CREDENTIALS')return res.status(401).json({success:false,message:'Invalid username or password'});
       console.error('Login error:',error);
       await auditSecurityEvent({actor:null,action:'LOGIN_PASSWORD',targetType:'USER_ACCOUNT',targetLabel:typeof req.body?.username==='string'?req.body.username.trim().slice(0,100):null,details:{authentication_method:'PASSWORD',error_code:error.code||'INTERNAL_ERROR'},reason:'Authentication processing failed',result:'FAILED',ipAddress:req.ip,userAgent:req.get?.('user-agent'),requestId:req.requestId,database});
       if(error?.message?.toLowerCase().includes('jwt_secret'))return res.status(500).json({success:false,message:'JWT_SECRET is not configured securely. Set a strong environment secret before launch.'});

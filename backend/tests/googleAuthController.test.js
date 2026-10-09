@@ -4,36 +4,16 @@ const { createGoogleAuthController } = require('../src/controllers/googleAuthCon
 const { ApiError } = require('../src/utils/api');
 
 const response = () => ({ statusCode: 200, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } });
-const registrationBody = { credential: 'id-token', student_number: '02000123456', first_name: 'Test', last_name: 'Student' };
-
-test('Google link controller whitelists and maps the public contract', async () => {
-  let input;
-  const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent(value) { input = value; return { token: 'jwt', user: { id: 4, username: 'student', role: 'STUDENT' } }; } }) });
-  const res = response();
-  await controller.link({ body: registrationBody, ip: '127.0.0.1' }, res);
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.token, 'jwt');
-  assert.deepEqual(input, { credential: 'id-token', studentNumber: '02000123456', firstName: 'Test', lastName: 'Student', ipAddress: '127.0.0.1' });
-});
-
 test('Google auth controllers reject unsupported and incomplete bodies before service creation', async () => {
   let factories = 0;
   const controller = createGoogleAuthController({ serviceFactory: () => { factories += 1; return {}; } });
-  for (const [handler, body] of [[controller.link, { credential: 'x', student_number: '02000123456', first_name: 'A', last_name: 'B', role: 'ADMIN' }], [controller.login, {}]]) {
+  for (const [handler, body] of [[controller.login, { credential: 'x', role: 'ADMIN' }], [controller.login, {}]]) {
     const res = response();
     await handler({ body, ip: null }, res);
     assert.equal(res.statusCode, 400);
     assert.equal(res.body.error.code, 'VALIDATION_ERROR');
   }
   assert.equal(factories, 0);
-});
-
-test('Google link controller preserves account-link failures without creating a pending request', async () => {
-  const controller = createGoogleAuthController({ serviceFactory: () => ({ async linkStudent() { throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', 'Unable to link this student account'); } }) });
-  const res = response();
-  await controller.link({ body: registrationBody, ip: null }, res);
-  assert.equal(res.statusCode, 409);
-  assert.equal(res.body.error.code, 'STUDENT_LINK_UNAVAILABLE');
 });
 
 test('Google login controller preserves stable service errors and hides unexpected failures', async () => {
@@ -46,4 +26,20 @@ test('Google login controller preserves stable service errors and hides unexpect
     assert.equal(res.body.message, expectedMessage);
     assert.equal(JSON.stringify(res.body).includes('database details'), false);
   }
+});
+
+test('public Google controller has no linking handler', () => { assert.equal(createGoogleAuthController().link, undefined); });
+
+test('Google login uses the session created in its transaction without exposing the cookie token', async () => {
+  const controller = createGoogleAuthController({ serviceFactory: () => ({ async loginStudent(input) {
+    assert.equal(input.userAgent, 'test-browser');
+    return { user: { id: 1 }, session: { token: 'private-cookie-token', csrf: 'csrf-token' } };
+  } }) });
+  const res = response(), cookies = [];
+  res.append = (name, value) => cookies.push([name, value]);
+  await controller.login({ body: { credential: 'id-token' }, get: () => 'test-browser' }, res);
+  assert.equal(res.body.success, true);
+  assert.equal(res.body.csrf_token, 'csrf-token');
+  assert.equal(JSON.stringify(res.body).includes('private-cookie-token'), false);
+  assert(cookies.some(([name, value]) => name === 'Set-Cookie' && value.startsWith('sti_session=')));
 });

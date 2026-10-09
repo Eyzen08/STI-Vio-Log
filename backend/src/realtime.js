@@ -12,7 +12,7 @@ const room = {
 };
 
 const authorizationQuery = `SELECT bs.id AS browser_session_id,u.id,u.role,u.must_change_password,
-  s.onboarding_required,s.onboarding_completed_at,COALESCE(dh.department_id,sp.department_id) AS department_id
+  s.google_rebind_required,s.onboarding_required,s.onboarding_completed_at,COALESCE(dh.department_id,sp.department_id) AS department_id
   FROM browser_sessions bs JOIN users u ON u.id=bs.user_id
   LEFT JOIN department_heads dh ON dh.user_id=u.id
   LEFT JOIN staff_profiles sp ON sp.user_id=u.id
@@ -25,7 +25,7 @@ const authorizedDepartment = (account) => ['DEPARTMENT_HEAD', 'DISCIPLINE_OFFICE
   : null;
 
 const normalizedAuthorization = (account) => account && !account.must_change_password
-  && !(account.role === 'STUDENT' && account.onboarding_required && !account.onboarding_completed_at)
+  && !(account.role === 'STUDENT' && (account.google_rebind_required || (account.onboarding_required && !account.onboarding_completed_at)))
   ? { session_id:Number(account.browser_session_id), id:Number(account.id), role:account.role, department_id:authorizedDepartment(account) }
   : null;
 
@@ -73,7 +73,7 @@ const initializeRealtime = (httpServer, allowedOrigins) => {
       const token = sessions.parseCookies(socket.handshake.headers.cookie)[sessions.COOKIE_NAME];
       if (!token) return next(new Error('Authentication required'));
       const account = (await pool.query(
-        `SELECT bs.id AS browser_session_id,u.id,u.role,u.must_change_password,s.onboarding_required,s.onboarding_completed_at,COALESCE(dh.department_id,sp.department_id) AS department_id
+        `SELECT bs.id AS browser_session_id,u.id,u.role,u.must_change_password,s.google_rebind_required,s.onboarding_required,s.onboarding_completed_at,COALESCE(dh.department_id,sp.department_id) AS department_id
          FROM browser_sessions bs JOIN users u ON u.id=bs.user_id
          LEFT JOIN department_heads dh ON dh.user_id=u.id
          LEFT JOIN staff_profiles sp ON sp.user_id=u.id
@@ -86,7 +86,7 @@ const initializeRealtime = (httpServer, allowedOrigins) => {
         return next(new Error('Invalid or expired session'));
       }
       if (account.must_change_password) return next(new Error('Password change required'));
-      if (account.role==='STUDENT' && account.onboarding_required && !account.onboarding_completed_at) return next(new Error('Student onboarding required'));
+      if (account.role==='STUDENT' && (account.google_rebind_required || (account.onboarding_required && !account.onboarding_completed_at))) return next(new Error('Student onboarding required'));
       socket.data.sessionId = Number(account.browser_session_id);
       socket.user = normalizedAuthorization(account);
       return next();

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { API_URL } from '../lib/api.js'
 import { duplicateSummaryTotal, duplicateTypeLabel } from '../lib/duplicateReview.js'
 import ManagementMetric from './ManagementMetric.jsx'
+import { formatManilaDateTime } from '../../../shared/displayFormat.mjs'
 
 const SUMMARY_ITEMS = [
   ['student_number', 'Student number'],
@@ -13,6 +14,7 @@ const SUMMARY_ITEMS = [
 function AdminDuplicateReview({ token, embedded = false }) {
   const [conflicts, setConflicts] = useState([])
   const [summary, setSummary] = useState({})
+  const [rejectedAttempts, setRejectedAttempts] = useState([])
   const [selectedId, setSelectedId] = useState('')
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('ALL')
@@ -29,10 +31,12 @@ function AdminDuplicateReview({ token, embedded = false }) {
       if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to review possible duplicates.')
       setConflicts(data.conflicts || [])
       setSummary(data.summary || {})
+      setRejectedAttempts(data.rejected_attempts || [])
       setSelectedId((current) => current || data.conflicts?.[0]?.id || '')
     } catch (requestError) {
       setConflicts([])
       setSummary({})
+      setRejectedAttempts([])
       setSelectedId('')
       setError(requestError.message)
     } finally {
@@ -77,6 +81,10 @@ function AdminDuplicateReview({ token, embedded = false }) {
         </>}
       </section>
     </div>
+    <section className="table-card" aria-labelledby="rejected-conflicts-title">
+      <div className="table-header management-table-header"><div><h3 id="rejected-conflicts-title">Rejected account conflicts</h3><p>Latest 50 blocked attempts. These attempts did not create duplicate records.</p></div></div>
+      {loading ? <p role="status">Loading rejected attempts…</p> : !error && rejectedAttempts.length === 0 ? <div className="department-empty"><h4>No rejected conflicts recorded</h4></div> : <div className="table-container"><table><thead><tr><th scope="col">When</th><th scope="col">Conflict</th><th scope="col">Account / identifier</th><th scope="col">Reason</th></tr></thead><tbody>{rejectedAttempts.map(attempt=><tr key={attempt.id}><td>{formatManilaDateTime(attempt.occurred_at)}</td><td>{attempt.conflict_type==='GMAIL'?'Gmail':duplicateTypeLabel(attempt.conflict_type)}</td><td>{attempt.target_label || 'Student account'}</td><td>{attempt.reason}</td></tr>)}</tbody></table></div>}
+    </section>
   </section>
 }
 

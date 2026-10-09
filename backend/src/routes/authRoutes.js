@@ -2,7 +2,7 @@ const express = require("express");
 const rateLimit = require("express-rate-limit");
 
 const { loginUser } = require("../controllers/authController");
-const { link, login } = require("../controllers/googleAuthController");
+const { login } = require("../controllers/googleAuthController");
 const { createStudentPasswordAuthController } = require('../controllers/studentPasswordAuthController');
 const sessionController=require('../controllers/sessionController');
 const {authenticateToken}=require('../middleware/authMiddleware');
@@ -39,7 +39,6 @@ const googleAuthLimiter = rateLimit({
     message: { success: false, message: "Too many Google authentication attempts, please try again later", error: { code: "RATE_LIMITED", message: "Too many Google authentication attempts, please try again later" } }
 });
 
-router.post("/auth/google/link", googleAuthLimiter, link);
 router.post("/auth/google/login", googleAuthLimiter, login);
 
 module.exports = router;

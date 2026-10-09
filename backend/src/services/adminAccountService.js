@@ -49,7 +49,7 @@ const createAdminAccountService = ({ pool, otpService } = {}) => {
       await client.query('UPDATE admin_profiles SET email_verified=TRUE,updated_at=CURRENT_TIMESTAMP WHERE user_id=$1', [account.id]);
       await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)VALUES($1,'ADMIN_EMAIL_VERIFY','users',$1,'Administrator recovery email verified',$2)`, [account.id,ipAddress]);
       await client.query('COMMIT');
-    } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; }
+    } catch (error) { try { await client.query(error.commitOtpAttempt ? 'COMMIT' : 'ROLLBACK'); } catch (_) {} throw error; }
     finally { client.release(); }
     return { profile:await getProfile({userId}) };
   };

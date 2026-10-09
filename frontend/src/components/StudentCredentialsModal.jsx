@@ -31,7 +31,7 @@ export default function StudentCredentialsModal({ credentials, token, onClose })
       <p>Student Number (username): <code>{credentials.username}</code></p>
       <p>Temporary password: <code>{credentials.password}</code></p>
       <p>Student Gmail: <strong>{credentials.email}</strong></p>
-      <p>The student must change this password, confirm their Google-account email by OTP, sign in with that same Google account, and complete academic, contact, and guardian information before entering the portal.</p>
+      <p>The password expires after 24 hours. The student must change this password, confirm the recorded Gmail by OTP, sign in with that same Google account, and complete academic, contact, and guardian information before entering the portal.</p>
       <p>Send the email or copy these credentials now. This password will not be shown again after closing.</p>
       {sent && <p className="success-message" role="status">Email sent to {credentials.email}. Ask the student to check their inbox and spam folder.</p>}
       {error && <p className="error-message" role="alert">{error}</p>}

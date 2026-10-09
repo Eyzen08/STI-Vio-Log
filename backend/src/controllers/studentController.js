@@ -7,6 +7,7 @@ const { createEmailService } = require('../services/emailService');
 const { ApiError, sendError } = require('../utils/api');
 const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 const { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } = require('../utils/validators');
+const { recordSecurityEvent } = require('../services/securityEventService');
 
 const getStudents = async (req, res) => {
     try {
@@ -98,7 +99,7 @@ const createStudent = async (req, res) => {
         if ((await client.query('SELECT 1 FROM students WHERE LOWER(email)=LOWER($1) LIMIT 1', [email])).rows.length) throw new ApiError(409, 'STUDENT_EMAIL_CONFLICT', 'That Gmail address is already assigned to another student');
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE) RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
+        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified,temporary_password_expires_at) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE,CURRENT_TIMESTAMP+INTERVAL '24 hours') RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
         const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,qr_code,email,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.qr_code,email]);
         await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
         await client.query('COMMIT');
@@ -106,7 +107,8 @@ const createStudent = async (req, res) => {
         return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true, onboarding_required:true, onboarding_step:'PASSWORD' });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
-        console.error("Create student error:", error);
+        if (client && (error.code==='23505' || error.code==='STUDENT_EMAIL_CONFLICT')) await recordSecurityEvent({actor:req.user,action:'STUDENT_ACCOUNT_CONFLICT',targetType:'STUDENT_RECORD',targetLabel:error.code==='STUDENT_EMAIL_CONFLICT'?req.body.email:req.body.student_number,details:{conflict_type:error.code==='STUDENT_EMAIL_CONFLICT'?'GMAIL':'STUDENT_NUMBER'},reason:error.code==='STUDENT_EMAIL_CONFLICT'?'Gmail already assigned':'Student number already assigned',result:'DENIED',ipAddress:req.ip,requestId:req.requestId,database:client});
+        console.error("Create student error:", error.code || 'INTERNAL_ERROR');
         return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({ success:false, message:error.statusCode ? error.message : error.code === '23505' ? "A student account with that student number already exists" : "Failed to create student" });
     } finally { if (client) client.release(); }
 };
@@ -121,12 +123,13 @@ const createStudentCredentialsEmailController = ({ db = pool, emailService = cre
         await client.query('BEGIN');
         // Keep the current credential and recipient stable until the provider accepts it.
         const student = (await client.query(`SELECT s.id,s.email,s.first_name,s.middle_name,s.last_name,s.suffix,
-            s.onboarding_required,s.onboarding_completed_at,u.username,u.password_hash,u.is_active,u.must_change_password
+            s.onboarding_required,s.onboarding_completed_at,u.username,u.password_hash,u.is_active,u.must_change_password,u.temporary_password_expires_at
             FROM students s JOIN users u ON u.id=s.user_id AND u.role='STUDENT'
             WHERE s.id=$1 FOR UPDATE OF s,u`, [Number(req.params.id)])).rows[0];
         if (!student) throw new ApiError(404, 'STUDENT_NOT_FOUND', 'Student account not found');
         if (!student.is_active || !student.must_change_password || !student.onboarding_required || student.onboarding_completed_at) throw new ApiError(409, 'CREDENTIALS_UNAVAILABLE', 'Temporary credentials can only be emailed before the student changes their password');
         if (!isValidEmail(student.email) || student.email.length > 255 || !student.email.toLowerCase().endsWith('@gmail.com')) throw new ApiError(409, 'STUDENT_EMAIL_REQUIRED', 'A valid personal Gmail address must be saved for this student');
+        if (!student.temporary_password_expires_at || new Date(student.temporary_password_expires_at) <= new Date()) throw new ApiError(409,'CREDENTIALS_EXPIRED','Temporary password expired. Issue a replacement password before sending');
         if (!student.password_hash || !await bcrypt.compare(password, student.password_hash)) throw new ApiError(409, 'CREDENTIALS_REPLACED', 'These temporary credentials are no longer valid. Use the student password-reset action for recovery');
         let deliveryError;
         try {
@@ -171,9 +174,17 @@ const updateStudent = async (req, res) => {
         if (req.body.phone_number && !isValidPhone(req.body.phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
         client = await pool.connect();
         await client.query('BEGIN');
-        const current = (await client.query('SELECT id,user_id,student_number,academic_level,strand,program,section,year_level,first_name,middle_name,last_name,suffix FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
+        const current = (await client.query('SELECT id,user_id,student_number,academic_level,strand,program,section,year_level,first_name,middle_name,last_name,suffix,email,onboarding_required,google_rebind_required FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
         if (!current) { await client.query('ROLLBACK'); return res.status(404).json({success:false,message:'Student not found'}); }
         const changes = {...req.body};
+        const emailChanged = Object.hasOwn(changes,'email') && String(changes.email || '').trim().toLowerCase() !== String(current.email || '').toLowerCase();
+        if (emailChanged) {
+            changes.email = typeof changes.email === 'string' ? changes.email.trim().toLowerCase() : '';
+            if (!isValidEmail(changes.email) || changes.email.length>255 || ((current.onboarding_required || current.google_rebind_required) && !changes.email.endsWith('@gmail.com'))) throw new ApiError(400,'INVALID_EMAIL','Enter a valid personal Gmail address for account activation');
+            if ((await client.query('SELECT 1 FROM google_identity_links WHERE user_id=$1 AND revoked_at IS NULL LIMIT 1',[current.user_id])).rows.length) throw new ApiError(409,'GOOGLE_RECOVERY_REQUIRED','Use Google account recovery to change a linked recovery Gmail');
+            await client.query("SELECT pg_advisory_xact_lock(hashtext('student-registration-email:' || LOWER($1)))",[changes.email]);
+            if ((await client.query('SELECT 1 FROM students WHERE LOWER(email)=LOWER($1) AND id<>$2 LIMIT 1',[changes.email,Number(id)])).rows.length) throw new ApiError(409,'STUDENT_EMAIL_CONFLICT','That Gmail address is already assigned to another student');
+        }
         if (Object.hasOwn(changes,'student_number') && changes.student_number !== current.student_number && !isValidStudentNumber(changes.student_number)) throw new ApiError(400,'VALIDATION_ERROR','Student Number must contain exactly 11 digits');
         for (const field of ['first_name','middle_name','last_name']) {
             if (Object.hasOwn(changes,field) && changes[field] !== current[field]) {
@@ -218,6 +229,13 @@ const updateStudent = async (req, res) => {
         if (req.body.student_number !== undefined && req.body.student_number.trim() !== current.student_number) {
             await client.query('UPDATE users SET username=$2,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [current.user_id, req.body.student_number.trim().toLowerCase()]);
         }
+        if (emailChanged) {
+            await client.query('UPDATE students SET pending_google_email=NULL,pending_google_email_verified_at=NULL WHERE id=$1',[current.id]);
+            await client.query('UPDATE auth_otps SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL',[current.user_id]);
+            await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL',[current.user_id]);
+            await client.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL',[current.user_id]);
+            await client.query("UPDATE users SET temporary_password_expires_at=CURRENT_TIMESTAMP WHERE id=$1 AND must_change_password=TRUE",[current.user_id]);
+        }
         await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address) VALUES($1,'STUDENT_UPDATE','students',$2,$3,$4)`, [req.user.id, current.id, `Updated student information: ${reason}`, req.ip || null]);
         await client.query('COMMIT');
 
@@ -227,7 +245,8 @@ const updateStudent = async (req, res) => {
         });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
-        console.error("Update student error:", error);
+        if (client && (error.code==='23505' || error.code==='STUDENT_EMAIL_CONFLICT')) await recordSecurityEvent({actor:req.user,action:'STUDENT_ACCOUNT_CONFLICT',targetType:'STUDENT_RECORD',targetId:req.params.id,targetLabel:error.code==='STUDENT_EMAIL_CONFLICT'?req.body.email:req.body.student_number,details:{conflict_type:error.code==='STUDENT_EMAIL_CONFLICT'?'GMAIL':'STUDENT_NUMBER'},reason:error.code==='STUDENT_EMAIL_CONFLICT'?'Gmail already assigned':'Student number already assigned',result:'DENIED',ipAddress:req.ip,requestId:req.requestId,database:client});
+        console.error("Update student error:", error.code || 'INTERNAL_ERROR');
 
         return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({
             success: false,
@@ -251,7 +270,9 @@ const resetStudentPassword = async (req, res) => {
         }
         const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
         const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-        await client.query(`UPDATE users SET password_hash=$2,is_active=TRUE,deactivated_at=NULL,deactivated_by=NULL,must_change_password=TRUE,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [account.id, passwordHash]);
+        await client.query(`UPDATE users SET password_hash=$2,is_active=TRUE,deactivated_at=NULL,deactivated_by=NULL,must_change_password=TRUE,temporary_password_expires_at=CURRENT_TIMESTAMP+INTERVAL '24 hours',session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1`, [account.id, passwordHash]);
+        await client.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL', [account.id]);
+        await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL',[account.id]);
         await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address) VALUES($1,'STUDENT_PASSWORD_RESET','users',$2,$3,$4)`, [req.user.id, account.id, `Issued student temporary password: ${reason}`, req.ip || null]);
         await client.query('COMMIT');
         return res.json({ success:true, message:'Temporary password generated', account:{ username:account.username }, temporary_password:temporaryPassword });

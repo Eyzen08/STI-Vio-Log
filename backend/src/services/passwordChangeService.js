@@ -14,7 +14,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      const user = (await client.query(`SELECT ${avatarSql('u.id')} AS avatar,u.id,u.username,u.role,u.password_hash,u.session_version,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
+      const user = (await client.query(`SELECT ${avatarSql('u.id')} AS avatar,u.id,u.username,u.role,u.password_hash,u.session_version,u.must_change_password,u.temporary_password_expires_at,s.email,s.google_rebind_required,s.onboarding_required,s.onboarding_completed_at,s.pending_google_email,s.pending_google_email_verified_at,
         EXISTS(SELECT 1 FROM google_identity_links gil WHERE gil.user_id=u.id AND gil.revoked_at IS NULL) google_linked,
         COALESCE(s.first_name,dh.first_name,sp.first_name,ap.first_name) AS first_name,
         COALESCE(s.last_name,dh.last_name,sp.last_name,ap.last_name) AS last_name
@@ -22,10 +22,11 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
         LEFT JOIN staff_profiles sp ON sp.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
         WHERE u.id=$1 AND u.is_active=TRUE FOR UPDATE OF u`, [Number(userId)])).rows[0];
       if (!user || !(await comparePassword(currentPassword,user.password_hash))) throw new ApiError(401,'INVALID_CREDENTIALS','Current password is incorrect');
+      if (user.role==='STUDENT' && user.must_change_password && (!user.temporary_password_expires_at || new Date(user.temporary_password_expires_at)<=new Date())) throw new ApiError(409,'CREDENTIALS_EXPIRED','Temporary password expired. Request password recovery or contact the Discipline Office');
       if (await comparePassword(newPassword,user.password_hash)) throw new ApiError(409,'PASSWORD_REUSE','New password must be different from the current password');
       const passwordHash = await hashPassword(newPassword);
       const updated = (await client.query(
-        `UPDATE users SET password_hash=$2, must_change_password=FALSE, password_changed_at=CURRENT_TIMESTAMP,
+        `UPDATE users SET password_hash=$2, must_change_password=FALSE, temporary_password_expires_at=NULL, password_changed_at=CURRENT_TIMESTAMP,
          session_version=session_version+1, updated_at=CURRENT_TIMESTAMP WHERE id=$1
          RETURNING id,username,role,session_version,must_change_password`, [user.id,passwordHash]
       )).rows[0];
@@ -35,7 +36,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
       );
       await client.query('COMMIT');
       const firstName=user.first_name||null,lastName=user.last_name||null;
-      return { token:issueToken(updated), user:{avatar:user.avatar,id:Number(updated.id),username:updated.username,role:updated.role,first_name:firstName,last_name:lastName,full_name:[firstName,lastName].filter(Boolean).join(' ')||null,password_change_required:false,...onboardingState({...user,...updated,must_change_password:false})} };
+      return { token:issueToken(updated), session_version:Number(updated.session_version), user:{avatar:user.avatar,id:Number(updated.id),username:updated.username,role:updated.role,first_name:firstName,last_name:lastName,full_name:[firstName,lastName].filter(Boolean).join(' ')||null,password_change_required:false,...onboardingState({...user,...updated,must_change_password:false})} };
     } catch(error) { try{await client.query('ROLLBACK');}catch(_){} throw error; }
     finally{client.release();}
   };

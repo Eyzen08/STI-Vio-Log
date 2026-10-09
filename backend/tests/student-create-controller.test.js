@@ -4,6 +4,16 @@ const pool=require('../src/config/database');
 const {createStudent,updateStudent,resetStudentPassword}=require('../src/controllers/studentController');
 const response=()=>({statusCode:200,body:null,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
 
+test('email edits recheck active Google links after locking the student record',async()=>{
+  const previousConnect=pool.connect;const queries=[];
+  pool.connect=async()=>({query:async(sql)=>{queries.push(sql);if(sql.startsWith('SELECT id,user_id'))return{rows:[{id:55,user_id:44,email:'old@gmail.com',onboarding_required:true,google_linked:false}]};if(sql.startsWith('SELECT 1 FROM google_identity_links'))return{rows:[{exists:1}]};return{rows:[]}},release(){}});
+  try{
+    const res=response();await updateStudent({user:{id:1},params:{id:'55'},body:{email:'new@gmail.com',reason:'Correct Gmail'}},res);
+    assert.equal(res.statusCode,409);assert.match(res.body.message,/Google account recovery/);
+    assert.equal(queries.some(sql=>sql.includes('UPDATE students')),false);
+  }finally{pool.connect=previousConnect}
+});
+
 test('student creation rejects malformed identity fields before database access', async()=>{
   const originalConnect=pool.connect;
   pool.connect=async()=>{throw new Error('Invalid identity must not reach the database')};

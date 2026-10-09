@@ -46,8 +46,10 @@ const createSystemAccountSecurityService = ({ pool, hashPassword=(value)=>bcrypt
       if(!target) throw new ApiError(404,'ACCOUNT_NOT_FOUND','Account not found');
       if(expectedVersion!=null&&String(target.session_version)!==String(expectedVersion)) throw new ApiError(409,'TARGET_CHANGED','The target account changed after password confirmation');
       const account=(await client.query(`UPDATE users SET password_hash=$2,is_active=TRUE,deactivated_at=NULL,deactivated_by=NULL,
-        must_change_password=TRUE,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1
+        must_change_password=TRUE,temporary_password_expires_at=CASE WHEN role='STUDENT' THEN CURRENT_TIMESTAMP+INTERVAL '24 hours' ELSE NULL END,session_version=session_version+1,updated_at=CURRENT_TIMESTAMP WHERE id=$1
         RETURNING id,username,role,is_active,must_change_password,session_version`,[target.id,passwordHash])).rows[0];
+      await client.query('UPDATE browser_sessions SET revoked_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND revoked_at IS NULL',[target.id]);
+      await client.query('UPDATE password_reset_authorizations SET used_at=CURRENT_TIMESTAMP WHERE user_id=$1 AND used_at IS NULL',[target.id]);
       await client.query("INSERT INTO audit_logs(user_id,action,table_name,record_id,description)VALUES($1,'ACCOUNT_RECOVERY_INITIATED','users',$2,$3)",[Number(actorId),target.id,`Initiated controlled account recovery: ${why}`]);
       await client.query('COMMIT');
       return { account:{...account,id:Number(account.id),session_version:Number(account.session_version)}, temporary_password:temporaryPassword };

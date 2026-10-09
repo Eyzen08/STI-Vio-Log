@@ -88,7 +88,7 @@ const createEmailService = ({ env = process.env, transport, fetchImpl = global.f
   const sendStudentCredentials = async ({ to, studentName, studentNumber, temporaryPassword }) => {
     const loginUrl = new URL('/login', parseOrigins(env.FRONTEND_URL)[0] || 'http://localhost:5173').href;
     const subject = 'Your STI Vio-Log student account';
-    const text = `Good day ${studentName},\n\nYour STI Vio-Log student account has been created.\n\nStudent Number (username): ${studentNumber}\nTemporary password: ${temporaryPassword}\nSign in: ${loginUrl}\n\nOn your first sign-in, change this temporary password, verify your Google-account email using the verification code, sign in with that same Google account, and complete your academic, contact, and guardian information.\n\nKeep these credentials private. Do not share this password.`;
+    const text = `Good day ${studentName},\n\nYour STI Vio-Log student account has been created.\n\nStudent Number (username): ${studentNumber}\nTemporary password: ${temporaryPassword}\nSign in: ${loginUrl}\nThis temporary password expires 24 hours after issuance.\n\nOn your first sign-in, change this temporary password, verify the Gmail recorded by the Discipline Office using the verification code, sign in with that same Google account, and complete your academic, contact, and guardian information.\n\nKeep these credentials private. Do not share this password.`;
     try {
       if (useBrevo) {
         if (typeof fetchImpl !== 'function') throw new Error('HTTPS email client is unavailable');

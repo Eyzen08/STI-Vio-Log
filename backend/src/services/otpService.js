@@ -68,7 +68,8 @@ const createOtpService = ({ pool, sendOtp, now = () => new Date(), generateOtp =
     const valid = crypto.timingSafeEqual(Buffer.from(row.otp_hash), Buffer.from(hash(code)));
     if (!valid) {
       await client.query('UPDATE auth_otps SET attempt_count=attempt_count+1 WHERE id=$1', [row.id]);
-      throw new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired');
+      // Callers commit only this failed attempt, before any identity changes.
+      throw Object.assign(new ApiError(400, 'OTP_INVALID_OR_EXPIRED', 'Verification code is invalid or expired'), { commitOtpAttempt: true });
     }
     await client.query('UPDATE auth_otps SET used_at=CURRENT_TIMESTAMP WHERE id=$1', [row.id]);
     return row;

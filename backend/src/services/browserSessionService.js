@@ -2,6 +2,7 @@ const { avatarMetadata } = require('./avatarService');
 const crypto = require('node:crypto');
 const pool = require('../config/database');
 const { onboardingState } = require('./studentOnboardingService');
+const { ApiError } = require('../utils/api');
 
 const COOKIE_NAME = 'sti_session';
 const PREAUTH_COOKIE = 'sti_preauth';
@@ -22,13 +23,20 @@ const appendCookie = (res, name, value, options={}) => {
 const clearCookie=(res,name)=>appendCookie(res,name,'',{...cookieOptions(0),maxAge:0});
 const publicUser=(row)=>({id:Number(row.id),avatar:row.avatar||avatarMetadata(row),username:row.username,role:row.role,first_name:row.first_name||null,last_name:row.last_name||null,full_name:[row.first_name,row.last_name].filter(Boolean).join(' ')||null,password_change_required:Boolean(row.must_change_password),...onboardingState(row)});
 
-const createSession = async ({userId,ipAddress,userAgent,database=pool}) => {
+const createSession = async ({userId,ipAddress,userAgent,expectedSessionVersion=null,database=pool}) => {
   const token=randomToken(),csrf=randomToken();
   const privileged=(await database.query('SELECT role FROM users WHERE id=$1',[Number(userId)])).rows[0]?.role;
   const idleMinutes=privileged==='DISCIPLINE_ADMIN'?30:120;
-  const result=await database.query(`INSERT INTO browser_sessions(user_id,token_hash,csrf_hash,idle_expires_at,absolute_expires_at,ip_address,user_agent)
-    VALUES($1,$2,$3,CURRENT_TIMESTAMP+($4||' minutes')::interval,CURRENT_TIMESTAMP+INTERVAL '8 hours',$5,$6) RETURNING absolute_expires_at`,
-    [Number(userId),hash(token),hash(csrf,process.env.CSRF_SIGNING_KEY),idleMinutes,ipAddress||null,String(userAgent||'').slice(0,500)||null]);
+  // Lock and insert together so recovery cannot revoke sessions before a stale login inserts one.
+  const result=await database.query(`WITH eligible AS (
+      SELECT id FROM users WHERE id=$1 AND is_active=TRUE
+        AND ($7::integer IS NULL OR session_version=$7)
+        AND (role<>'STUDENT' OR must_change_password=FALSE OR temporary_password_expires_at>CURRENT_TIMESTAMP)
+      FOR UPDATE
+    ) INSERT INTO browser_sessions(user_id,token_hash,csrf_hash,idle_expires_at,absolute_expires_at,ip_address,user_agent)
+    SELECT id,$2,$3,CURRENT_TIMESTAMP+($4||' minutes')::interval,CURRENT_TIMESTAMP+INTERVAL '8 hours',$5,$6 FROM eligible RETURNING absolute_expires_at`,
+    [Number(userId),hash(token),hash(csrf,process.env.CSRF_SIGNING_KEY),idleMinutes,ipAddress||null,String(userAgent||'').slice(0,500)||null,expectedSessionVersion]);
+  if(!result.rows[0])throw new ApiError(401,'INVALID_CREDENTIALS','Invalid username or password');
   return {token,csrf,expiresAt:result.rows[0].absolute_expires_at};
 };
 const setSessionCookies=(res,created)=>{appendCookie(res,COOKIE_NAME,created.token,cookieOptions(8*60*60*1000));appendCookie(res,CSRF_COOKIE,created.csrf,{...cookieOptions(8*60*60*1000),httpOnly:false});clearCookie(res,PREAUTH_COOKIE);};

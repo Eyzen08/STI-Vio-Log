@@ -9,13 +9,13 @@ const sessions=require('../services/browserSessionService');
 const { createGoogleIdentityVerifier }=require('../services/googleIdentityVerifier');
 const { createGoogleIdentityService }=require('../services/googleIdentityService');
 const { createStudentOnboardingService }=require('../services/studentOnboardingService');
-const createAccountController = ({ service=createPasswordChangeService({pool,issueToken:()=>null}) }={}) => ({
+const createAccountController = ({ service=createPasswordChangeService({pool,issueToken:()=>null}), sessions:sessionService=sessions }={}) => ({
   passwordChange: async (req,res) => { try {
     assertAllowedFields(req.body,['current_password','new_password']);
     if (typeof req.body?.current_password !== 'string' || typeof req.body?.new_password !== 'string') return sendError(res,400,'VALIDATION_ERROR','current_password and new_password are required');
     const result=await service.change({userId:req.user.id,currentPassword:req.body.current_password,newPassword:req.body.new_password,ipAddress:req.ip||null});
-    await sessions.revokeUserSessions(req.user.id);
-    const created=await sessions.createSession({userId:req.user.id,ipAddress:req.ip,userAgent:req.get('user-agent')});sessions.setSessionCookies(res,created);
+    await sessionService.revokeUserSessions(req.user.id);
+    const created=await sessionService.createSession({userId:req.user.id,expectedSessionVersion:result.session_version,ipAddress:req.ip,userAgent:req.get('user-agent')});sessionService.setSessionCookies(res,created);
     return res.json({success:true,message:'Password changed successfully',user:result.user,csrf_token:created.csrf});
   } catch(error) { return sendError(res,error.statusCode||500,error.code||'INTERNAL_ERROR',error.statusCode?error.message:'Password change failed'); } }
 });

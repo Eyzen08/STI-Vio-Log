@@ -8,12 +8,12 @@ Open `/login`. Do not select a role. Enter either a staff username or a Student 
 
 ### Discipline Office-issued account
 
-When the Discipline Admin or Discipline Officer creates a Student account, staff enter only the school-issued Student Number and the student's legal name. The backend generates the private QR value and the temporary credentials are displayed once. The student must then complete this locked sequence:
+When the Discipline Admin or Discipline Officer creates a Student account, staff enter the school-issued Student Number, legal name, optional middle name/suffix, and personal Gmail. The backend generates the private QR value and displays temporary credentials once. Staff can explicitly send the credentials and login link by email or share them securely. Temporary passwords expire after 24 hours; issuing a replacement invalidates the previous password. The student must then complete this locked sequence:
 
 1. Sign in with the Student Number and temporary password.
 2. Replace the temporary password.
-3. Enter a Google-account email and confirm the six-digit code sent to that inbox.
-4. Sign in with Google using the exact confirmed address. Personal Gmail and school-managed Google accounts are accepted.
+3. Confirm the six-digit code sent to the personal Gmail recorded by staff. The address is read-only; corrections require Discipline Office assistance.
+4. Sign in with Google using that exact confirmed personal Gmail. Google proves ownership of its identity separately from Vio-Log’s emailed code.
 5. Select College or Senior High School. College requires program and year 1-4; SHS requires ABM or STEM and Grade 11 or 12. Enter section, the student's phone number, and the primary guardian's name, relationship, and phone number.
 6. Continue to the portal.
 
@@ -38,9 +38,21 @@ The account is not created or activated before successful email verification. A 
 4. Enter the code delivered to the account's registered email.
 5. Create a new compliant password.
 
-The reset code and reset authorization are single-use and expire. A successful reset invalidates existing sessions.
+The reset code expires after ten minutes and allows five failed attempts, including attempts in failed transactions. Resends have a sixty-second cooldown. The reset authorization is single-use and expires after fifteen minutes. A successful reset invalidates existing sessions.
 
-For Discipline Office-issued accounts, recovery becomes available after mandatory Google binding. Codes are sent to the verified email supplied by Google.
+For Discipline Office-issued accounts, recovery codes are sent to the recorded personal Gmail. Unknown Google accounts must first use their issued Student Number and temporary password; public Google linking and public sign-up are unavailable.
+
+## Staff-assisted Google recovery
+
+Staff must check the student’s identity against school records, enter the replacement personal Gmail (or retain the existing Gmail), and record a reason. Recovery revokes the old Google link, browser sessions, outstanding OTPs, and reset authorizations. The student signs in with local credentials, verifies the recorded Gmail, and binds its Google identity before portal access resumes. Academic and disciplinary records remain attached. A recovered legacy account returns directly to the portal after binding without repeating the profile form.
+
+Duplicate Review separately shows stored duplicates and the latest 50 rejected Student Number, Gmail, or Google identity conflicts. It never displays passwords, verification codes, or Google tokens.
+
+## Rollout and verification
+
+Apply migration `048_student_account_activation_security.sql` before deploying the updated backend. Existing student temporary credentials receive a fresh 24-hour window on upgrade; legacy students are not forced through onboarding.
+
+Run `npm test` in both projects, and `npm run lint` / `npm run build` in the frontend. Against a disposable PostgreSQL database, set `TEST_DATABASE_URL` and run `npm run test:migrations` and `npm run test:account-security` in the backend. The test database must differ from the runtime database.
 
 ## Staff and Department Accounts
 

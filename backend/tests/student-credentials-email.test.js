@@ -5,7 +5,7 @@ const { createStudentCredentialsEmailController } = require('../src/controllers/
 
 const password = 'Current-test-password!Aa1';
 const passwordHash = bcrypt.hashSync(password, 4);
-const account = { id:55, username:'02000123456', email:'student@gmail.com', first_name:'Test', last_name:'Student', password_hash:passwordHash, is_active:true, must_change_password:true, onboarding_required:true, onboarding_completed_at:null };
+const account = { id:55, username:'02000123456', email:'student@gmail.com', first_name:'Test', last_name:'Student', password_hash:passwordHash, is_active:true, must_change_password:true, temporary_password_expires_at:new Date(Date.now()+86400000), onboarding_required:true, onboarding_completed_at:null };
 const response = () => ({ statusCode:200, body:null, headers:{}, set(key,value){this.headers[key]=value}, status(code){this.statusCode=code;return this}, json(body){this.body=body;return this} });
 
 const setup = ({ row=account, fail=false } = {}) => {

@@ -43,27 +43,6 @@ export const googleButtonConfiguration = ({ width, onClick }) => ({
   click_listener: onClick
 })
 
-export const buildGoogleLinkPayload = ({ credential, studentNumber, firstName, lastName }) => ({
-  credential,
-  student_number: studentNumber.trim(),
-  first_name: firstName.trim(),
-  last_name: lastName.trim()
-})
-
-export const validateGoogleStudentLink = ({ studentNumber, firstName, lastName }) => {
-  if ([firstName, lastName].some((value) => typeof value !== 'string' || !value.trim())) {
-    return 'Enter the student number, first name, and last name on the existing school record.'
-  }
-  if (!/^\d{11}$/.test(String(studentNumber || '').trim())) {
-    return 'Student Number must contain exactly 11 digits.'
-  }
-  return ''
-}
-
-export const googleStudentLinkErrorMessage = (error) => error?.code === 'STUDENT_LINK_UNAVAILABLE'
-  ? 'No matching active student account was found. Ask the Discipline Office to create or correct the account before linking Google.'
-  : error?.message || 'The Google account could not be linked.'
-
 export const loadGoogleIdentityServices = ({
   windowObject = window,
   documentObject = document

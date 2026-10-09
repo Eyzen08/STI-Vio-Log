@@ -68,6 +68,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "048_student_account_activation_security.sql");
         assert.equal(first.applied.pop(), "047_notification_record_targets.sql");
         assert.equal(first.applied.pop(), "046_service_session_duration.sql");
         assert.equal(first.applied.pop(), "045_service_hour_corrections.sql");
@@ -194,11 +195,12 @@ test("fresh migration chain is complete and idempotent", async () => {
         );
         const identityService = createGoogleIdentityService({
             pool,
-            verifyIdentity: async () => ({ subject: "service-google-subject", email: "student@example.test" }),
+            verifyIdentity: async () => ({ subject: "service-google-subject", email: "student@gmail.com", emailVerified:true }),
             issueToken: (user) => `test-session-${user.id}`
         });
-        const linked = await identityService.linkStudent({ credential: "mocked-token", studentNumber: "02000999999", firstName: " MARÍA  ANA ", lastName: "de león", phoneNumber: "09171234567", program: "BSIT", section: "A103", yearLevel: 3, guardianName: "Maria de Leon", guardianRelationship: "Mother", guardianPhoneNumber: "09181234567", ipAddress: "127.0.0.1" });
-        assert.equal(linked.token, `test-session-${serviceUser.id}`);
+        await pool.query("UPDATE students SET email='student@gmail.com',onboarding_required=TRUE,pending_google_email='student@gmail.com',pending_google_email_verified_at=CURRENT_TIMESTAMP WHERE user_id=$1",[serviceUser.id]);
+        const linked=await identityService.linkAuthenticatedStudent({userId:serviceUser.id,credential:'mocked-token',ipAddress:'127.0.0.1'});
+        assert.equal(linked.user.id,Number(serviceUser.id));
         const loggedIn = await identityService.loginStudent({ credential: "mocked-token", ipAddress: "127.0.0.1" });
         assert.equal(loggedIn.user.id, Number(serviceUser.id));
         assert.equal((await pool.query("SELECT COUNT(*)::int AS count FROM audit_logs WHERE user_id = $1 AND action IN ('GOOGLE_LINK', 'GOOGLE_LOGIN')", [serviceUser.id])).rows[0].count, 2);
@@ -246,6 +248,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "048_student_account_activation_security.sql");
         assert.equal(legacyResult.applied.pop(), "047_notification_record_targets.sql");
         assert.equal(legacyResult.applied.pop(), "046_service_session_duration.sql");
         assert.equal(legacyResult.applied.pop(), "045_service_hour_corrections.sql");

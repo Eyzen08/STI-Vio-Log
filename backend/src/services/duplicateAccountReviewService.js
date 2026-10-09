@@ -19,7 +19,7 @@ const groupCandidates = (rows, type, { hidden = false } = {}) => {
 const createDuplicateAccountReviewService = ({ pool } = {}) => {
   if (!pool?.query) throw new TypeError('Duplicate review dependencies are required');
   const list = async () => {
-    const [studentNumbers, employeeNumbers, usernames, googleIdentities] = await Promise.all([
+    const [studentNumbers, employeeNumbers, usernames, googleIdentities, rejectedAttempts] = await Promise.all([
       pool.query(`SELECT s.student_number AS match_key,'STUDENT' source,s.id record_id,s.student_number display FROM students s
         JOIN users u ON u.id=s.user_id AND u.is_active=TRUE`),
       pool.query(`SELECT sp.employee_number AS match_key,'STAFF' source,sp.id record_id,CONCAT(sp.first_name,' ',sp.last_name) display FROM staff_profiles sp
@@ -28,7 +28,12 @@ const createDuplicateAccountReviewService = ({ pool } = {}) => {
         JOIN users u ON u.id=dh.user_id AND u.is_active=TRUE WHERE dh.employee_number IS NOT NULL`),
       pool.query(`SELECT username AS match_key,'USER' source,id record_id,username display FROM users WHERE is_active=TRUE`),
       pool.query(`SELECT gil.google_subject AS match_key,'GOOGLE_LINK' source,gil.id record_id,'Linked account' display FROM google_identity_links gil
-        JOIN users u ON u.id=gil.user_id AND u.is_active=TRUE WHERE gil.revoked_at IS NULL`)
+        JOIN users u ON u.id=gil.user_id AND u.is_active=TRUE WHERE gil.revoked_at IS NULL`),
+      pool.query(`SELECT id,actor_readable_name,actor_role,target_label,reason,occurred_at,
+          safe_details->>'conflict_type' AS conflict_type
+        FROM administrative_security_events
+        WHERE action IN ('STUDENT_ACCOUNT_CONFLICT','STUDENT_GOOGLE_LINK_CONFLICT') AND result='DENIED'
+        ORDER BY occurred_at DESC,id DESC LIMIT 50`)
     ]);
     const conflicts = [
       ...groupCandidates(studentNumbers.rows, 'STUDENT_NUMBER'),
@@ -36,7 +41,7 @@ const createDuplicateAccountReviewService = ({ pool } = {}) => {
       ...groupCandidates(usernames.rows, 'USERNAME'),
       ...groupCandidates(googleIdentities.rows, 'GOOGLE_IDENTITY', { hidden: true })
     ];
-    return { conflicts, summary: { total: conflicts.length, student_number: conflicts.filter((item) => item.type === 'STUDENT_NUMBER').length, employee_number: conflicts.filter((item) => item.type === 'EMPLOYEE_NUMBER').length, username: conflicts.filter((item) => item.type === 'USERNAME').length, google_identity: conflicts.filter((item) => item.type === 'GOOGLE_IDENTITY').length } };
+    return { conflicts, rejected_attempts:rejectedAttempts.rows, summary: { total: conflicts.length, student_number: conflicts.filter((item) => item.type === 'STUDENT_NUMBER').length, employee_number: conflicts.filter((item) => item.type === 'EMPLOYEE_NUMBER').length, username: conflicts.filter((item) => item.type === 'USERNAME').length, google_identity: conflicts.filter((item) => item.type === 'GOOGLE_IDENTITY').length } };
   };
   return { list };
 };
