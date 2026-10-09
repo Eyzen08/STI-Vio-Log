@@ -1,4 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { API_URL } from '../lib/api.js'
+import RecordTargetFocus from './RecordTargetFocus.jsx'
 import Modal from './Modal.jsx'
 import Avatar from './Avatar.jsx'
 import PortalIcon from './PortalIcon.jsx'
@@ -7,10 +9,44 @@ import AttendanceIndicator from './AttendanceIndicator.jsx'
 import AsyncActionButton from './AsyncActionButton.jsx'
 import { communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, normalizedRequiredMinutes, serviceDepartmentOptions } from '../lib/communityServiceAdmin.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
-import { formatDisplayLabel, formatDuration } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import '../styles/community-workflow.css'
 
-export function ServiceAssignmentContent({ assignment, student }) {
+function ServiceSessionDetails({ assignmentId, sessionId, token }) {
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  useEffect(() => {
+    if (!sessionId || !token) return
+    const controller = new AbortController()
+    setLoading(true)
+    setError(false)
+    fetch(`${API_URL}/api/community-service/${assignmentId}/sessions`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok) throw new Error('Attendance unavailable')
+        if (!controller.signal.aborted) setSession((data.sessions || []).find((item) => String(item.id) === sessionId) || null)
+      })
+      .catch(() => { if (!controller.signal.aborted) setError(true) })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false) })
+    return () => controller.abort()
+  }, [assignmentId, sessionId, token])
+  if (!sessionId) return null
+  return <>
+    <RecordTargetFocus id={`service-session-${sessionId}`} loading={loading} error={error} />
+    {loading ? <p role="status">Loading attendance session…</p> : session && <section className="service-detail-card" id={`service-session-${session.id}`} tabIndex={-1}>
+      <h3>Attendance session #{session.id}</h3>
+      <dl>{[
+        ['Time in', formatManilaDateTime(session.time_in)], ['Time out', session.time_out ? formatManilaDateTime(session.time_out) : 'Pending'],
+        ['Worked', formatDuration(Number(session.worked_minutes || 0) / 60)], ['Credited', session.credited_minutes == null ? 'Pending' : formatDuration(Number(session.credited_minutes) / 60)],
+        ['Status', formatDisplayLabel(session.status)], ['Attendance outcome', formatDisplayLabel(session.attendance_outcome)],
+        ['Recorded by', session.time_out_recorder_name || session.time_in_recorder_name || 'Not recorded'], ['Notes', session.result_notes || session.notes || '—']
+      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    </section>}
+  </>
+}
+
+export function ServiceAssignmentContent({ assignment, student, token, targetSessionId }) {
   const required = Number(assignment.required_hours || 0)
   const remaining = Number(assignment.remaining_hours ?? required)
   const completed = Math.max(0, required - remaining)
@@ -25,6 +61,7 @@ export function ServiceAssignmentContent({ assignment, student }) {
       ['Required time', formatDuration(required)], ['Completed time', formatDuration(completed)], ['Remaining time', formatDuration(remaining)]
     ].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
     <section className="service-detail-card"><div className="service-section-heading service-heading-green"><i><PortalIcon name="clock" size={30}/></i><div><h3>Service progress</h3><p>Completed time against the required time.</p></div></div><div className="service-detail-progress"><progress aria-label="Completed service progress" max="100" value={progress}>{progress}%</progress><strong>{progress}%</strong></div></section>
+    <ServiceSessionDetails key={`${assignment.id}:${targetSessionId || ''}`} assignmentId={assignment.id} sessionId={targetSessionId} token={token} />
   </div>
 }
 
@@ -73,7 +110,7 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
     </form></>
 }
 
-export default function CommunityServiceManagement({ students=[], assignments=[], activeSessions=[], attendanceReady, loading, filters, onFiltersChange, pendingResults, onAssign, formOpen, onCloseForm, formProps, viewingAssignment, onView, onCloseAssignment }) {
+export default function CommunityServiceManagement({ students=[], assignments=[], activeSessions=[], attendanceReady, loading, filters, onFiltersChange, pendingResults, onAssign, formOpen, onCloseForm, formProps, viewingAssignment, onView, onCloseAssignment, token, targetSessionId }) {
   const active = assignments.filter(item => !['COMPLETED','CLEARED'].includes(String(item.status).toUpperCase()))
   const timedIn = new Set(activeSessions.filter(isActiveServiceSession).map(item => item.student_id)).size
   const departmentOptions = serviceDepartmentOptions(formProps.destinations)
@@ -95,6 +132,6 @@ export default function CommunityServiceManagement({ students=[], assignments=[]
       })}</tbody></table></div>}
     </section>
     {formOpen && <Modal title="Assign Community Service" className="assign-service-modal service-workflow-modal create-record-drawer" drawer onClose={onCloseForm}><AssignServiceForm {...formProps} students={students} assignments={assignments}/></Modal>}
-    {viewingAssignment && <Modal title={`Service assignment #${viewingAssignment.id}`} className="service-assignment-modal service-workflow-modal" drawer onClose={onCloseAssignment}><ServiceAssignmentContent assignment={viewingAssignment} student={students.find(item=>Number(item.id)===Number(viewingAssignment.student_id))}/></Modal>}
+    {viewingAssignment && <Modal title={`Service assignment #${viewingAssignment.id}`} className="service-assignment-modal service-workflow-modal" drawer onClose={onCloseAssignment}><ServiceAssignmentContent token={token} targetSessionId={targetSessionId} assignment={viewingAssignment} student={students.find(item=>Number(item.id)===Number(viewingAssignment.student_id))}/></Modal>}
   </section>
 }

@@ -233,6 +233,8 @@ const createCommunityServiceAssignment = async (req, res) => {
             title: 'Community service assigned',
             message: `${required} required hour${required === 1 ? '' : 's'} assigned at ${destination.department_code} under ${destination.first_name} ${destination.last_name}.`,
             type: 'SERVICE_ASSIGNED',
+            category: 'COMMUNITY_SERVICE', resourceType: 'community_service_assignments', resourceId: assignment.id,
+            linkPath: `/student/community-service?assignment_id=${assignment.id}`, metadata: { assignment_id: assignment.id, student_id: Number(student_id) },
             eventKey: `service:${assignment.id}:assigned:student`
         });
         await insertNotification(client, {
@@ -240,6 +242,8 @@ const createCommunityServiceAssignment = async (req, res) => {
             title: 'New student service assignment',
             message: `A student community-service assignment was routed to ${destination.department_code}.`,
             type: 'SERVICE_ASSIGNED',
+            category: 'COMMUNITY_SERVICE', resourceType: 'community_service_assignments', resourceId: assignment.id,
+            linkPath: `/department/community-service?assignment_id=${assignment.id}`, metadata: { assignment_id: assignment.id, student_id: Number(student_id) },
             eventKey: `service:${assignment.id}:assigned:head`
         });
 

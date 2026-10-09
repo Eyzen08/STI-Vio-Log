@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { notificationTarget } from '../lib/studentNotifications.js'
+import RecordTargetFocus from './RecordTargetFocus.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import { normalizeViolation, statusLabel } from '../lib/studentViolations.js'
 import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
@@ -33,8 +35,9 @@ function ServiceProgress({ violation }) {
   )
 }
 
-function StudentViolations({ violations, loading, error }) {
-  const [expandedId, setExpandedId] = useState(null)
+function StudentViolations({ violations, loading, error, searchParams = '', onCloseTarget, onOpenTarget }) {
+  const target = notificationTarget(searchParams)
+  const [expandedId, setExpandedId] = useState(target.invalid ? null : target.violationId || null)
   const records = violations.map(normalizeViolation)
 
   if (loading) {
@@ -48,6 +51,7 @@ function StudentViolations({ violations, loading, error }) {
 
   return (
     <section className="student-page violations-page" aria-labelledby="violations-title">
+      <RecordTargetFocus id={!target.invalid && target.violationId ? `violation-record-${target.violationId}` : null} loading={loading} error={error} />
       <header className="page-intro portal-page-header">
         <div>
           <h2 id="violations-title">My Violations</h2>
@@ -67,20 +71,24 @@ function StudentViolations({ violations, loading, error }) {
       ) : (
         <div className="violation-list">
           {records.map((violation) => {
-            const expanded = expandedId === violation.id
+            const expanded = String(expandedId) === String(violation.id)
             const panelId = `violation-details-${violation.id}`
             const parsed = parseViolationDescription(violation.description || '')
             const offense = violation.exact_offense || parsed.exact_offense || violation.violation_name
             const notes = violation.incident_details || parsed.incident_details
             const distinctNotes = notes?.trim() && notes.trim().toLowerCase() !== offense.trim().toLowerCase() ? notes : ''
             return (
-              <article className="violation-card" key={violation.id}>
+              <article className="violation-card" key={violation.id} id={`violation-record-${violation.id}`} tabIndex={-1}>
                 <button
                   className="violation-summary"
                   type="button"
                   aria-expanded={expanded}
                   aria-controls={panelId}
-                  onClick={() => setExpandedId(expanded ? null : violation.id)}
+                  onClick={() => {
+                    setExpandedId(expanded ? null : violation.id)
+                    if (expanded && target.violationId === String(violation.id)) onCloseTarget?.()
+                    else if (!expanded) onOpenTarget?.(violation.id)
+                  }}
                 >
                   <div className="violation-summary-main">
                     <div className="violation-badges">

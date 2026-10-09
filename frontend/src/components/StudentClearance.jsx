@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { notificationTarget } from '../lib/studentNotifications.js'
+import RecordTargetFocus from './RecordTargetFocus.jsx'
 import { API_URL } from '../lib/api.js'
 import { clearanceBlockers, clearanceLabel, summarizeClearance } from '../lib/studentClearance.js'
 import { formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
@@ -6,7 +8,8 @@ import '../styles/student-portal.css'
 
 const displayDate = (value) => formatManilaDateTime(value, '—')
 
-function StudentClearance({ eligibility, records = [], loading, error, certificate, onLoadCertificate, token, onNavigate }) {
+function StudentClearance({ eligibility, records = [], loading, error, certificate, onLoadCertificate, token, onNavigate, searchParams = '' }) {
+  const target = notificationTarget(searchParams)
   const summary = summarizeClearance({ eligibility, records })
   const blockers = clearanceBlockers(summary)
   const [issuedCertificates, setIssuedCertificates] = useState([])
@@ -37,6 +40,7 @@ function StudentClearance({ eligibility, records = [], loading, error, certifica
 
   return (
     <section className="student-page clearance-page" aria-labelledby="clearance-title">
+      <RecordTargetFocus id={target.invalid ? null : target.certificateId ? `certificate-record-${target.certificateId}` : target.clearanceId ? `clearance-record-${target.clearanceId}` : null} loading={loading || (Boolean(target.certificateId) && certificatesLoading)} error={error || (Boolean(target.certificateId) && certificateHistoryError)} />
       <section className="student-section student-eligibility">
       <header className={`student-clearance-status clearance-${summary.status.toLowerCase().replaceAll('_', '-')}`}>
         <div>
@@ -77,7 +81,7 @@ function StudentClearance({ eligibility, records = [], loading, error, certifica
 
       <section className="student-section clearance-history-card"><div className="student-section-heading"><h3>Issued certificates</h3><span>{certificatesLoading ? '…' : `${issuedCertificates.length} records`}</span></div>
         {certificateHistoryError && <p className="error-message" role="alert">{certificateHistoryError}</p>}
-        {certificatesLoading ? <p role="status">Loading certificates…</p> : !certificateHistoryError && issuedCertificates.length === 0 ? <p className="student-empty">No certificate issued yet. The Discipline Office will issue one after final approval.</p> : <div className="clearance-record-list">{issuedCertificates.map((entry) => <article key={entry.id}><div><strong>{entry.certificate_number}</strong><span>Version {entry.version}</span></div><span className={`status-badge status-${entry.status.toLowerCase()}`}>{entry.status}</span><dl><div><dt>Issued</dt><dd>{displayDate(entry.issue_date)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(entry.completed_hours)}</dd></div></dl><button type="button" onClick={() => download(entry)}>Download PDF</button></article>)}</div>}
+        {certificatesLoading ? <p role="status">Loading certificates…</p> : !certificateHistoryError && issuedCertificates.length === 0 ? <p className="student-empty">No certificate issued yet. The Discipline Office will issue one after final approval.</p> : <div className="clearance-record-list">{issuedCertificates.map((entry) => <article key={entry.id} id={`certificate-record-${entry.id}`} tabIndex={-1}><div><strong>{entry.certificate_number}</strong><span>Version {entry.version}</span></div><span className={`status-badge status-${entry.status.toLowerCase()}`}>{entry.status}</span><dl><div><dt>Issued</dt><dd>{displayDate(entry.issue_date)}</dd></div><div><dt>Completed service</dt><dd>{formatDuration(entry.completed_hours)}</dd></div></dl><button type="button" onClick={() => download(entry)}>Download PDF</button></article>)}</div>}
       </section>
 
       <section className="student-section clearance-history-card">
@@ -85,7 +89,7 @@ function StudentClearance({ eligibility, records = [], loading, error, certifica
         {records.length === 0 ? (
           <p className="student-empty">No clearance records yet.</p>
         ) : (
-          <div className="clearance-record-list">{records.map((record) => <article key={record.id}>
+          <div className="clearance-record-list">{records.map((record) => <article key={record.id} id={`clearance-record-${record.id}`} tabIndex={-1}>
             <div><strong>{record.academic_year}</strong><span>{record.semester}</span></div>
             <span className={`status-badge status-${record.status.toLowerCase().replaceAll('_', '-')}`}>{clearanceLabel(record.status)}</span>
             <dl><div><dt>Approved</dt><dd>{record.cleared_at ? displayDate(record.cleared_at) : '—'}</dd></div><div><dt>Remarks</dt><dd>{record.remarks || 'No remarks'}</dd></div></dl>

@@ -1,7 +1,9 @@
 import { academicProgram, isSeniorHigh } from '../lib/studentAcademic.js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { notificationTarget } from '../lib/studentNotifications.js'
+import RecordTargetFocus from './RecordTargetFocus.jsx'
 import { API_URL } from '../lib/api.js'
-import { formatDuration, formatManilaDate } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatDuration, formatManilaDate } from '../lib/displayFormat.js'
 import { formatProgramName } from '../lib/programNames.js'
 import ProgramSelect from './ProgramSelect.jsx'
 import { readableOfficerName, readSignatureFile } from '../lib/signatureImage.js'
@@ -35,7 +37,11 @@ const clearancePanelFromLocation = () => {
   return clearancePanelIds.has(requested) ? requested : 'students'
 }
 
-function AdminClearanceCertificates({ token, awaitingOnly = false, onNavigate }) {
+function AdminClearanceCertificates({ token, awaitingOnly = false, onNavigate, searchParams = '' }) {
+  const target = notificationTarget(searchParams)
+  const [targetClearance, setTargetClearance] = useState(null)
+  const [targetLoading, setTargetLoading] = useState(Boolean(target.clearanceId))
+  const [targetError, setTargetError] = useState(false)
   const [students, setStudents] = useState([])
   const [studentSearch, setStudentSearch] = useState('')
   const [studentStatus, setStudentStatus] = useState('ALL')
@@ -76,6 +82,19 @@ function AdminClearanceCertificates({ token, awaitingOnly = false, onNavigate })
     } catch (requestError) { setError(requestError.message) } finally { setLoading(false) }
   }, [token, awaitingOnly])
   useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (target.invalid || !target.clearanceId) return
+    const controller = new AbortController()
+    fetch(`${API_URL}/api/clearance/${target.clearanceId}`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok || !data.clearanceRecord) throw new Error('Clearance unavailable')
+        if (!controller.signal.aborted) setTargetClearance(data.clearanceRecord)
+      })
+      .catch(() => { if (!controller.signal.aborted) setTargetError(true) })
+      .finally(() => { if (!controller.signal.aborted) setTargetLoading(false) })
+    return () => controller.abort()
+  }, [target.invalid, target.clearanceId, token])
   useEffect(() => {
     const url = new URL(window.location.href)
     if (awaitingOnly) return
@@ -178,6 +197,12 @@ function AdminClearanceCertificates({ token, awaitingOnly = false, onNavigate })
   }
 
   return <section className="certificate-admin" aria-labelledby="certificate-management-title">
+    <RecordTargetFocus id={target.invalid ? null : target.certificateId ? `certificate-record-${target.certificateId}` : target.clearanceId ? `clearance-record-${target.clearanceId}` : null} loading={loading || targetLoading} error={error || targetError} />
+    {targetClearance && <section className="table-card" id={`clearance-record-${targetClearance.id}`} tabIndex={-1}>
+      <h3>Clearance record #{targetClearance.id}</h3>
+      <p>{targetClearance.first_name} {targetClearance.last_name} · {targetClearance.student_number}</p>
+      <dl>{[['Academic year', targetClearance.academic_year], ['Semester', targetClearance.semester], ['Status', formatDisplayLabel(targetClearance.status)], ['Approved', formatManilaDate(targetClearance.cleared_at, '—')], ['Remarks', targetClearance.remarks || '—']].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+    </section>}
     <header className="management-page-header portal-page-header"><div><span className="page-breadcrumb">Home / Clearance{awaitingOnly ? ' / Awaiting Clearance' : ''}</span><h2 id="certificate-management-title">{awaitingOnly ? 'Awaiting Clearance' : 'Clearance Management'}</h2><p>{awaitingOnly ? 'These students have completed community service and have no unresolved violations. Review and approve their clearance.' : 'Check service progress, approve completed service, then issue a certificate.'}</p></div><button type="button" className="clearance-workspace-link" onClick={() => onNavigate(awaitingOnly ? '/admin/clearance' : '/admin/awaiting-clearance')}>{awaitingOnly ? 'Back to Clearance Management' : `Awaiting Clearance (${awaitingStudents.length})`}</button></header>
     {!awaitingOnly && <section className="management-metrics" aria-label="Clearance certificate summary">
       <ManagementMetric tone="orange" icon="clock" value={awaitingStudents.length} label="Awaiting Clearance"/>
@@ -217,7 +242,7 @@ function AdminClearanceCertificates({ token, awaitingOnly = false, onNavigate })
     </section>
     </section>}
     {!awaitingOnly && activePanel === 'history' && <section className="clearance-panel" role="tabpanel" id="clearance-panel-history" aria-labelledby="clearance-tab-history" data-panel="history">
-    <section className="table-card"><div className="table-header"><h3>Issued Certificate History</h3><span>{certificates.length} records</span></div>{certificates.length ? <div className="table-wrap"><table className="management-record-table"><thead><tr><th>Certificate</th><th>Student</th><th>Completed service</th><th>Status</th><th>Email</th><th>Actions</th></tr></thead><tbody>{certificates.map((entry) => <tr key={entry.id}><td data-label="Certificate">{entry.certificate_number}<br/><small>Version {entry.version}</small></td><td data-label="Student">{entry.student_name}<br/><small>{entry.student_number}</small></td><td data-label="Completed service">{formatDuration(entry.completed_hours)}</td><td data-label="Status"><span className={`status-badge ${entry.status === 'ISSUED' ? 'status-completed' : 'status-revoked'}`}>{entry.status}</span></td><td data-label="Email">{entry.email_status}</td><td data-label="Actions"><div className="inline-actions"><button type="button" onClick={() => downloadPdf(`/api/clearance/certificates/${entry.id}/pdf`, token, `${entry.certificate_number}.pdf`)}>Download</button>{entry.status === 'ISSUED' && <><button type="button" onClick={() => jsonRequest(`/api/clearance/certificates/${entry.id}/email`, token, { method: 'POST', body: '{}' }).then(load).catch((e) => setError(e.message))}>Email</button><button className="danger-button" type="button" onClick={() => { setRevoking(entry); setRevokeReason(''); setRevokeError('') }}>Revoke</button></>}</div></td></tr>)}</tbody></table></div> : <p className="empty-state">No clearance certificates have been issued.</p>}</section>
+    <section className="table-card"><div className="table-header"><h3>Issued Certificate History</h3><span>{certificates.length} records</span></div>{certificates.length ? <div className="table-wrap"><table className="management-record-table"><thead><tr><th>Certificate</th><th>Student</th><th>Completed service</th><th>Status</th><th>Email</th><th>Actions</th></tr></thead><tbody>{certificates.map((entry) => <tr key={entry.id} id={`certificate-record-${entry.id}`} tabIndex={-1}><td data-label="Certificate">{entry.certificate_number}<br/><small>Version {entry.version}</small></td><td data-label="Student">{entry.student_name}<br/><small>{entry.student_number}</small></td><td data-label="Completed service">{formatDuration(entry.completed_hours)}</td><td data-label="Status"><span className={`status-badge ${entry.status === 'ISSUED' ? 'status-completed' : 'status-revoked'}`}>{entry.status}</span></td><td data-label="Email">{entry.email_status}</td><td data-label="Actions"><div className="inline-actions"><button type="button" onClick={() => downloadPdf(`/api/clearance/certificates/${entry.id}/pdf`, token, `${entry.certificate_number}.pdf`)}>Download</button>{entry.status === 'ISSUED' && <><button type="button" onClick={() => jsonRequest(`/api/clearance/certificates/${entry.id}/email`, token, { method: 'POST', body: '{}' }).then(load).catch((e) => setError(e.message))}>Email</button><button className="danger-button" type="button" onClick={() => { setRevoking(entry); setRevokeReason(''); setRevokeError('') }}>Revoke</button></>}</div></td></tr>)}</tbody></table></div> : <p className="empty-state">No clearance certificates have been issued.</p>}</section>
     </section>}
     </div>
     {editing && <Modal title="Edit E-Signature" dirty={editForm.full_name !== editing.full_name || editForm.position !== editing.position || Boolean(editForm.image_data_url)} onClose={() => !busy && setEditing(null)}><form className="signature-edit-form" onSubmit={saveSignatureEdit} noValidate><p className="modal-help">Update the officer details and optionally replace the current signature image.</p>{editErrors.form && <p className="error-message" role="alert">{editErrors.form}</p>}<label>Officer Full Name<input value={editForm.full_name} aria-invalid={Boolean(editErrors.full_name)} onChange={(event) => setEditForm({ ...editForm, full_name: event.target.value })} />{editErrors.full_name && <small className="field-error">{editErrors.full_name}</small>}</label><label>Position/Role<input value={editForm.position} aria-invalid={Boolean(editErrors.position)} onChange={(event) => setEditForm({ ...editForm, position: event.target.value })} />{editErrors.position && <small className="field-error">{editErrors.position}</small>}</label><div className="signature-preview-grid"><figure><figcaption>Current signature</figcaption><img src={editing.image_data_url} alt={`Current signature of ${readableOfficerName(editing.full_name)}`} /></figure><figure><figcaption>Replacement preview</figcaption>{editForm.image_data_url ? <img src={editForm.image_data_url} alt="Replacement signature preview" /> : <span>Current image will be kept</span>}</figure></div><label>Signature Image <small>Optional · PNG/JPEG · max 1 MB</small><input type="file" accept="image/png,image/jpeg" onChange={readEditSignature} />{editErrors.image && <small className="field-error">{editErrors.image}</small>}</label><footer className="modal-actions"><button type="button" disabled={busy} data-modal-dismiss>Cancel</button><button className="submit-btn" disabled={busy}>{busy ? 'Saving changes…' : 'Save Changes'}</button></footer></form></Modal>}

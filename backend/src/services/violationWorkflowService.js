@@ -249,6 +249,8 @@ const transitionViolationWithClient = async ({
         await notifyStudent(client, current.student_id, {
             title: action === 'REOPEN' ? 'Violation reopened' : 'Violation cancelled',
             message: `Violation #${current.id} was ${action === 'REOPEN' ? 'reopened for review' : 'cancelled and retained in your history'}.`,
+            category: 'VIOLATIONS', resourceType: 'violations', resourceId: current.id,
+            linkPath: `/student/violations?violation_id=${current.id}`, metadata: { student_id: current.student_id },
             type: `VIOLATION_${action}`, eventKey: `violation-action:${history.id}`
         });
     }

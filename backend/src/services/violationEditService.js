@@ -130,6 +130,8 @@ const editViolationWithClient = async ({ client, violationId, body, actor, ipAdd
     );
     await notifyStudent(client, current.student_id, {
         title: 'Violation record updated', message: `Violation #${current.id} was corrected. Review your violation and service details.`, type: 'VIOLATION_UPDATED',
+        category: 'VIOLATIONS', resourceType: 'violations', resourceId: current.id,
+        linkPath: `/student/violations?violation_id=${current.id}`, metadata: { student_id: current.student_id },
         eventKey: `violation:${current.id}:updated:${require('node:crypto').randomUUID()}`
     });
     return { violation: { ...violation, violation_code: type.violation_code, violation_name: type.violation_name,

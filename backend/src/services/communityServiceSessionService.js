@@ -207,9 +207,11 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
             title: 'Community service time-in recorded',
             message: `Time-in was recorded for assignment #${assignment.id}.`,
             type: 'SERVICE_TIME_IN',
+            category: 'COMMUNITY_SERVICE', resourceType: 'community_service_sessions', resourceId: session.id,
+            linkPath: `/student/community-service?assignment_id=${assignment.id}&session_id=${session.id}`, metadata: { assignment_id: assignment.id },
             eventKey: `service-session:${session.id}:time-in`
         });
-        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, action:'TIME_IN', occurredAt:session.time_in });
+        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, assignmentId:assignment.id, action:'TIME_IN', occurredAt:session.time_in });
         await client.query("COMMIT");
         return { assignment, attendance, session: { ...session, ...sessionTiming(session, assignment, completedToday, now) }, allowance, supervising_officer: supervisor, scanLog };
     } catch (error) {
@@ -358,9 +360,11 @@ const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, depar
             title: assignmentStatus === 'COMPLETED' ? 'Community service completed' : 'Community service time-out recorded',
             message: `${creditedMinutes} service minute${creditedMinutes === 1 ? '' : 's'} credited at department time-out.`,
             type: assignmentStatus === 'COMPLETED' ? 'SERVICE_COMPLETED' : 'SERVICE_TIME_OUT',
+            category: 'COMMUNITY_SERVICE', resourceType: 'community_service_sessions', resourceId: session.id,
+            linkPath: `/student/community-service?assignment_id=${assignment.id}&session_id=${session.id}`, metadata: { assignment_id: assignment.id },
             eventKey: `service-session:${session.id}:time-out`
         });
-        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, action:'TIME_OUT', occurredAt:completedSession.time_out });
+        await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, assignmentId:assignment.id, action:'TIME_OUT', occurredAt:completedSession.time_out });
         await client.query("COMMIT");
         return { assignment: updatedAssignment, assignment_status: assignmentStatus, attendance_outcome: normalizedOutcome, attendance, session: { ...completedSession, attendance_outcome: normalizedOutcome }, supervising_officer: supervisor, violation, clearanceSync, scanLog };
     } catch (error) {
@@ -385,7 +389,7 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
         if(normalizedDecision==='REJECT'){
             const rejected=(await client.query(`UPDATE community_service_sessions SET review_status='REJECTED',reviewed_by_user_id=$2,reviewed_at=CURRENT_TIMESTAMP,review_notes=$3,updated_at=CURRENT_TIMESTAMP WHERE id=$1 RETURNING *`,[session.id,actor.id,String(reviewNotes).trim()])).rows[0];
             await insertAudit({client,actor,action:'SERVICE_RESULT_REJECT',sessionId:session.id,assignmentId:session.assignment_id,description:{reason:String(reviewNotes).trim()},ipAddress});
-            await notifyStudent(client,session.student_id,{title:'Community service result needs follow-up',message:'The Discipline Office did not credit the submitted service session. Contact the Discipline Office for guidance.',type:'SERVICE_RESULT_REJECTED',eventKey:`service-session:${session.id}:rejected`});
+            await notifyStudent(client,session.student_id,{title:'Community service result needs follow-up',message:'The Discipline Office did not credit the submitted service session. Contact the Discipline Office for guidance.',type:'SERVICE_RESULT_REJECTED',eventKey:`service-session:${session.id}:rejected`,category:'COMMUNITY_SERVICE',resourceType:'community_service_sessions',resourceId:session.id,linkPath:`/student/community-service?assignment_id=${session.assignment_id}&session_id=${session.id}`,metadata:{assignment_id:session.assignment_id}});
             await client.query('COMMIT');return{session:rejected};
         }
         if (session.violation_status !== 'OPEN' || !['OPEN', 'IN_PROGRESS', 'COMPLETED'].includes(session.assignment_status)) throw new CommunityServiceSessionError('Reopen the violation before approving service credit', 409);
@@ -404,7 +408,7 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
         let violation=(await client.query('UPDATE violations SET completed_service_hours=$1,updated_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *',[newMinutes/60,session.violation_id])).rows[0],clearanceSync=null;
         if(status==='COMPLETED'&&violation.status==='OPEN'){const transition=await transitionViolationWithClient({client,violationId:session.violation_id,action:'COMPLETE',reason:null,actor,ipAddress});violation=transition.violation;clearanceSync=transition.clearanceSync;}
         await insertAudit({client,actor,action:'SERVICE_RESULT_APPROVE',sessionId:session.id,assignmentId:session.assignment_id,description:{worked_minutes:Number(session.worked_minutes),credited_minutes:creditedMinutes},ipAddress});
-        await notifyStudent(client,session.student_id,{title:status==='COMPLETED'?'Community service completed':'Community service result approved',message:`${creditedMinutes} service minute${creditedMinutes===1?'':'s'} approved by the Discipline Office.`,type:status==='COMPLETED'?'SERVICE_COMPLETED':'SERVICE_RESULT_APPROVED',eventKey:`service-session:${session.id}:approved`});
+        await notifyStudent(client,session.student_id,{title:status==='COMPLETED'?'Community service completed':'Community service result approved',message:`${creditedMinutes} service minute${creditedMinutes===1?'':'s'} approved by the Discipline Office.`,type:status==='COMPLETED'?'SERVICE_COMPLETED':'SERVICE_RESULT_APPROVED',eventKey:`service-session:${session.id}:approved`,category:'COMMUNITY_SERVICE',resourceType:'community_service_sessions',resourceId:session.id,linkPath:`/student/community-service?assignment_id=${session.assignment_id}&session_id=${session.id}`,metadata:{assignment_id:session.assignment_id}});
         await client.query('COMMIT');return{session:approved,assignment,violation,clearanceSync};
     }catch(error){try{await client.query('ROLLBACK')}catch(_){}throw error}finally{client.release()}
 };

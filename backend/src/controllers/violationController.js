@@ -265,6 +265,8 @@ const createViolation = async (req, res) => {
             title: 'New violation recorded',
             message: `Violation #${violation.id} was added to your disciplinary record. Review the details in My Violations.`,
             type: 'VIOLATION_CREATED',
+            category: 'VIOLATIONS', resourceType: 'violations', resourceId: violation.id,
+            linkPath: `/student/violations?violation_id=${violation.id}`, metadata: { student_id: violation.student_id },
             eventKey: `violation:${violation.id}:created`
         });
 

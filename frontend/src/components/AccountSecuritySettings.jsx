@@ -1,3 +1,4 @@
+import RecordTargetFocus from './RecordTargetFocus.jsx'
 import AvatarSettings from './AvatarSettings.jsx'
 import { useState } from 'react'
 import { formatDisplayLabel } from '../lib/displayFormat.js'
@@ -6,7 +7,7 @@ import { passwordIsStrong } from '../lib/passwordPolicy.js'
 import PasswordField from './PasswordField.jsx'
 import PasswordRequirements from './PasswordRequirements.jsx'
 
-export default function AccountSecuritySettings({ token, user, onSession, onAvatarChange }) {
+export default function AccountSecuritySettings({ token, user, onSession, onAvatarChange, searchParams = '' }) {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -26,7 +27,7 @@ export default function AccountSecuritySettings({ token, user, onSession, onAvat
   return <div className="account-settings-page">
     <section className="table-card account-summary-card portal-page-header"><div><p className="eyebrow">Account Identity</p><h2>{user.username}</h2><p>Your identifier is managed by the school. Contact the Discipline Office if it is incorrect.</p></div><dl><div><dt>Role</dt><dd>{formatDisplayLabel(user.role)}</dd></div><div><dt>Session Security</dt><dd>Changing your password signs out other sessions.</dd></div></dl></section>
     <AvatarSettings user={user} onAvatarChange={onAvatarChange} />
-    <section className="table-card form-card"><div className="table-header"><div><h3>Change Password</h3><span>Use a unique password you do not use elsewhere.</span></div></div><form className="login-form account-password-form" onSubmit={submit}>
+    <RecordTargetFocus id={new URLSearchParams(searchParams).get('section') === 'security' ? 'account-security' : null} /><section className="table-card form-card" id="account-security" tabIndex={-1}><div className="table-header"><div><h3>Change Password</h3><span>Use a unique password you do not use elsewhere.</span></div></div><form className="login-form account-password-form" onSubmit={submit}>
       <PasswordField id="settings-current-password" label="Current password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} disabled={busy} autoComplete="current-password" />
       <PasswordField id="settings-new-password" label="New password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} disabled={busy} />
       <PasswordRequirements password={form.newPassword} />

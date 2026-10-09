@@ -54,6 +54,7 @@ const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
 import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
+import { notificationDestination, notificationTarget, withoutNotificationTarget } from './lib/studentNotifications.js'
 import useDepartmentAttendance from './lib/useDepartmentAttendance.js'
 import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
 import stiVioLogLogo from './assets/sti-logo-web.png'
@@ -141,7 +142,12 @@ function App() {
     password: ''
   })
 
-  const [routePath, setRoutePath] = useState(() => window.location.pathname)
+  const [routeLocation, setRouteLocation] = useState(() => `${window.location.pathname}${window.location.search}${window.location.hash}`)
+  const routeUrl = new URL(routeLocation, window.location.origin)
+  const routePath = routeUrl.pathname
+  const routeSearch = routeUrl.search
+  const recordTarget = notificationTarget(routeSearch)
+  const [recordTargetError, setRecordTargetError] = useState(null)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [isDesktopNavigation, setIsDesktopNavigation] = useState(() => window.matchMedia('(min-width: 768px)').matches)
@@ -170,7 +176,7 @@ function App() {
     setSessionRestoreError(false)
     setSessionRestoring(false)
     window.history.replaceState({}, '', '/login')
-    setRoutePath('/login')
+    setRouteLocation('/login')
   }
 
   const toggleTheme = useCallback(() => {
@@ -372,6 +378,7 @@ function App() {
   const [createdStudentCredentials,setCreatedStudentCredentials]=useState(null)
   const [studentRosterSearch, setStudentRosterSearch] = useState('')
   const [reviewedStudent, setReviewedStudent] = useState(null)
+  const reviewedStudentRequestRef = useRef(0)
   const [reviewedStudentViolations, setReviewedStudentViolations] = useState([])
   const [reviewedStudentPage, setReviewedStudentPage] = useState(1)
   const [reviewedStudentHasMore, setReviewedStudentHasMore] = useState(false)
@@ -660,10 +667,13 @@ function App() {
   const navigateTo = (path, { replace = false } = {}) => {
     hideSidebarTooltip()
     window.history[replace ? 'replaceState' : 'pushState']({}, '', path)
-    setRoutePath(path)
-    setOpenSidebarGroup(sidebarGroupForPath(sidebarEntries, path))
+    setRouteLocation(`${window.location.pathname}${window.location.search}${window.location.hash}`)
+    setOpenSidebarGroup(sidebarGroupForPath(sidebarEntries, window.location.pathname))
     window.scrollTo({ top: 0, behavior: 'instant' })
   }
+
+  const closeRecordTarget = () => navigateTo(withoutNotificationTarget(routeLocation), { replace: true })
+  const openNotification = (notification) => navigateTo(notificationDestination(notification, userRole))
 
   const goToDashboard = async () => {
     if (isQrScanning) await stopQrScanner()
@@ -677,7 +687,7 @@ function App() {
   }
 
   useEffect(() => {
-    const handlePopState = () => setRoutePath(window.location.pathname)
+    const handlePopState = () => setRouteLocation(`${window.location.pathname}${window.location.search}${window.location.hash}`)
     window.addEventListener('popstate', handlePopState)
     return () => window.removeEventListener('popstate', handlePopState)
   }, [])
@@ -1019,7 +1029,8 @@ function App() {
     setIsViolationFormOpen(true)
   }
 
-  const loadReviewedStudentHistory = async (student, page = 1, append = false) => {
+  const loadReviewedStudentHistory = async (student, page = 1, append = false, signal) => {
+    const requestId = ++reviewedStudentRequestRef.current
     setReviewedStudent(student)
     if (!append) {
       setReviewedStudentViolations([])
@@ -1028,20 +1039,63 @@ function App() {
     setReviewedStudentLoading(true)
     setReviewedStudentError('')
     try {
-      const response = await fetch(`${API_URL}/api/violations/student/${student.id}?page=${page}&limit=25`, {headers:{Authorization:`Bearer ${token}`}})
+      const response = await fetch(`${API_URL}/api/violations/student/${student.id}?page=${page}&limit=25`, {headers:{Authorization:`Bearer ${token}`},signal})
       const data = await response.json().catch(() => null)
+      if (signal?.aborted || requestId !== reviewedStudentRequestRef.current) return
       if (!response.ok || data?.success === false) throw new Error(data?.message || 'Unable to load student violation history.')
       setReviewedStudentViolations((current) => append ? [...current, ...(data.violations || [])] : (data.violations || []))
       setReviewedStudentPage(page)
       setReviewedStudentHasMore(Boolean(data.pagination?.hasMore))
       setReviewedStudentSummary(data.summary || null)
     } catch (error) {
+      if (signal?.aborted || requestId !== reviewedStudentRequestRef.current) return
       setReviewedStudentError(error.message)
       if (!append) setReviewedStudentViolations([])
     } finally {
-      setReviewedStudentLoading(false)
+      if (!signal?.aborted && requestId === reviewedStudentRequestRef.current) setReviewedStudentLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (!isAdmin || !token || dashboardLoading || recordTarget.invalid) return
+    const { violationId, assignmentId, studentId, sessionId } = recordTarget
+    const kind = routePath === '/admin/violations' && violationId ? 'violation'
+      : routePath === '/admin/community-service' && (assignmentId || sessionId) ? 'assignment'
+      : routePath === '/admin/students' && studentId ? 'student' : null
+    if (!kind) return
+    const controller = new AbortController()
+    setRecordTargetError(null)
+    setViewingViolation(null)
+    setViewingServiceAssignment(null)
+    setReviewedStudent(null)
+    const open = async () => {
+      const id = kind === 'violation' ? violationId : kind === 'assignment' ? assignmentId : studentId
+      if (!id) throw new Error('The requested record is unavailable or you no longer have access to it.')
+      const records = kind === 'violation' ? violations : kind === 'assignment' ? communityServiceAssignments : students
+      let record = records.find((item) => String(item.id) === id)
+      if (!record) {
+        const endpoint = kind === 'violation' ? 'violations' : kind === 'assignment' ? 'community-service' : 'students'
+        const response = await fetch(`${API_URL}/api/${endpoint}/${id}`, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+        const data = await response.json()
+        if (!response.ok) throw new Error('The requested record is unavailable or you no longer have access to it.')
+        record = data[kind]
+      }
+      if (controller.signal.aborted) return
+      if (!record) throw new Error('The requested record is unavailable or you no longer have access to it.')
+      if (kind === 'violation') setViewingViolation(record)
+      else if (kind === 'assignment') setViewingServiceAssignment(record)
+      else await loadReviewedStudentHistory(record, 1, false, controller.signal)
+    }
+    open().catch(() => {
+      if (!controller.signal.aborted) setRecordTargetError(routeLocation)
+    })
+    return () => {
+      controller.abort()
+      if (kind === 'violation') setViewingViolation(null)
+      else if (kind === 'assignment') setViewingServiceAssignment(null)
+      else { reviewedStudentRequestRef.current += 1; setReviewedStudent(null) }
+    }
+  }, [routeLocation, routePath, isAdmin, token, dashboardLoading, violations, communityServiceAssignments, students])
 
   const handleViolationChanged = (data, action) => {
     setViolations((current) => current.map((item) => Number(item.id) === Number(data.violation.id) ? { ...item, ...data.violation } : item))
@@ -1883,7 +1937,7 @@ function App() {
     }
 
     if (activeView === 'Messages') {
-      return <MessagesPage token={token} role={userRole} students={students} currentUser={user} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
+      return <MessagesPage key={routeLocation} searchParams={routeSearch} onCloseTarget={closeRecordTarget} onOpenTarget={(id) => navigateTo(`${routePath}?conversation_id=${id}`)} token={token} role={userRole} students={students} currentUser={user} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
     }
 
     if (activeView === 'Profile' && !isStudent) {
@@ -1899,8 +1953,8 @@ function App() {
     }
 
     if (activeView === 'Account Settings') {
-      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
-      return <AccountSecuritySettings token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
+      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
+      return <AccountSecuritySettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
     }
 
     /*
@@ -1912,7 +1966,7 @@ function App() {
     if (isStudent) {
       if (activeView === 'My Service') {
         return (
-          <StudentCommunityService
+          <StudentCommunityService key={routeSearch} searchParams={routeSearch}
             dtr={studentDtr}
             liveDtr={studentLiveDtr}
             loading={dashboardLoading || studentDtrLoading}
@@ -1963,7 +2017,7 @@ function App() {
         activeView === 'My Violations'
       ) {
         return (
-          <StudentViolations
+          <StudentViolations key={routeSearch} searchParams={routeSearch} onCloseTarget={closeRecordTarget} onOpenTarget={(id) => navigateTo(`/student/violations?violation_id=${id}`)}
             violations={violations}
             loading={dashboardLoading}
             error={dashboardError}
@@ -1979,7 +2033,7 @@ function App() {
 
       if (activeView === 'My Clearance') {
         return (
-          <StudentClearance
+          <StudentClearance key={routeSearch} searchParams={routeSearch}
             eligibility={clearanceEligibility}
             records={clearanceRecords}
             loading={dashboardLoading}
@@ -1993,7 +2047,7 @@ function App() {
       }
 
       if (activeView === 'Notifications') {
-        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} actionBusy={mutationBusy} audience="STUDENT" />
+        return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onOpen={openNotification} actionBusy={mutationBusy} audience="STUDENT" />
       }
 
       /*
@@ -2068,7 +2122,7 @@ function App() {
 
     if (isDepartmentHead && activeView === 'Community Service') {
       return (
-        <DepartmentCommunityService
+        <DepartmentCommunityService key={routeSearch} searchParams={routeSearch} onCloseTarget={closeRecordTarget} onOpenTarget={(id) => navigateTo(`/department/community-service?assignment_id=${id}`)}
           assignments={communityServiceAssignments}
           loading={dashboardLoading}
           error={dashboardError}
@@ -2084,7 +2138,7 @@ function App() {
     }
 
     if (activeView === 'Notifications') {
-      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onNavigate={navigateTo} actionBusy={mutationBusy} audience={isStudent ? 'STUDENT' : 'STAFF'} />
+      return <StudentNotifications notifications={studentNotifications} loading={dashboardLoading} error={notificationActionError || dashboardError} onMarkRead={markNotificationRead} onAcknowledge={acknowledgeNotification} onMarkAll={markAllNotificationsRead} onOpen={openNotification} actionBusy={mutationBusy} audience={isStudent ? 'STUDENT' : 'STAFF'} />
     }
 
     if (activeView === 'Dashboard') {
@@ -2312,7 +2366,7 @@ function App() {
 
           {reviewedStudent && <StudentRecordDrawer key={reviewedStudent.id} student={reviewedStudent} violations={reviewedStudentViolations} summary={reviewedStudentSummary} loading={reviewedStudentLoading} error={reviewedStudentError} hasMore={reviewedStudentHasMore}
             onLoadMore={() => loadReviewedStudentHistory(reviewedStudent, reviewedStudentPage + 1, true)} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token}
-            onClose={() => setReviewedStudent(null)} onViewCase={(violation) => { setReviewedStudent(null); navigateTo('/admin/violations'); setViewingViolation(violation) }} onAddViolation={addViolationForStudent}
+            onClose={() => { setReviewedStudent(null); closeRecordTarget() }} onViewCase={(violation) => { setReviewedStudent(null); navigateTo('/admin/violations'); setViewingViolation(violation) }} onAddViolation={addViolationForStudent}
             onPhotoUpdated={(updated) => { setReviewedStudent(updated); setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? { ...item, avatar: updated.avatar } : item)) }}/>
           }
         </>
@@ -2332,7 +2386,7 @@ function App() {
       const exactOffenses = offensesForType(selectedType)
       return (
         <>
-          <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={setViewingViolation} onEdit={startViolationEdit}/>
+          <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={(violation) => navigateTo(`/admin/violations?violation_id=${violation.id}`)} onEdit={startViolationEdit}/>
           {isViolationFormOpen && <Modal title="Record Violation" className="create-record-drawer" drawer onClose={() => setIsViolationFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="violations" size={24}/></i><div><h3>Create an incident record</h3><p>Choose the exact handbook classification and document only verified facts.</p></div></div>
           <section className="drawer-form-card">
             <div className="table-header">
@@ -2501,7 +2555,7 @@ function App() {
 
           {editingViolation && <ViolationEditDrawer key={editingViolation.id + ':' + editingViolation.status} violation={editingViolation} student={students.find((item) => Number(item.id) === Number(editingViolation.student_id))} types={violationTypes} assignments={communityServiceAssignments} destinations={communityServiceDestinations} role={userRole} token={token} onClose={() => setEditingViolation(null)} onChanged={handleViolationChanged}/>}
 
-          {viewingViolation && <ViolationDetailsDrawer violation={viewingViolation} student={students.find((item) => Number(item.id) === Number(viewingViolation.student_id))} role={userRole} onClose={() => setViewingViolation(null)} onEdit={() => { const violation = viewingViolation; setViewingViolation(null); startViolationEdit(violation) }} canAdd={students.some((item) => Number(item.id) === Number(viewingViolation.student_id))} onAdd={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }}/>}
+          {viewingViolation && <ViolationDetailsDrawer violation={viewingViolation} student={students.find((item) => Number(item.id) === Number(viewingViolation.student_id))} role={userRole} onClose={() => { setViewingViolation(null); closeRecordTarget() }} onEdit={() => { const violation = viewingViolation; setViewingViolation(null); closeRecordTarget(); startViolationEdit(violation) }} canAdd={students.some((item) => Number(item.id) === Number(viewingViolation.student_id))} onAdd={() => { const student = students.find((item) => Number(item.id) === Number(viewingViolation.student_id)); if (student) addViolationForStudent(student) }}/>}
 
         </>
       )
@@ -2523,7 +2577,7 @@ function App() {
         formProps={{ form:communityServiceForm, violations, destinations:communityServiceDestinations,
           busy:mutationBusy.serviceCreate, error:communityServiceFormError, success:communityServiceFormSuccess,
           onFieldChange:handleCommunityServiceFieldChange, onSubmit:handleCommunityServiceSubmit }}
-        viewingAssignment={viewingServiceAssignment} onView={setViewingServiceAssignment} onCloseAssignment={() => setViewingServiceAssignment(null)}/>
+        token={token} targetSessionId={recordTarget.sessionId} viewingAssignment={viewingServiceAssignment} onView={(assignment) => navigateTo(`/admin/community-service?assignment_id=${assignment.id}`)} onCloseAssignment={() => { setViewingServiceAssignment(null); closeRecordTarget() }}/>
     }
     if (activeView === 'QR Scan') {
       return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr} inputSource={qrInputSource}
@@ -2540,7 +2594,7 @@ function App() {
      * ==========================================================
      */
 
-    if (activeView === 'Clearance' || activeView === 'Awaiting Clearance') return <AdminClearanceCertificates key={activeView} token={token} awaitingOnly={activeView === 'Awaiting Clearance'} onNavigate={navigateTo} />
+    if (activeView === 'Clearance' || activeView === 'Awaiting Clearance') return <AdminClearanceCertificates key={`${activeView}:${routeSearch}`} searchParams={routeSearch} token={token} awaitingOnly={activeView === 'Awaiting Clearance'} onNavigate={navigateTo} />
 
     /*
      * ==========================================================
@@ -2733,7 +2787,7 @@ function App() {
         {isLoggedIn && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
           {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss attendance notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
         </div>}
-        <div className="page-content"><RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
+        <div className="page-content">{isLoggedIn && (recordTarget.invalid || routeUrl.searchParams.get('record_unavailable') === '1' || recordTargetError === routeLocation) && <p className="error-message" role="alert">The specific notification record is unavailable or you no longer have access to it.</p>}<RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
         {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
       {logoutConfirmation&&<Modal title="Confirm logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging out…':'Logout'}</button></footer></div></Modal>}

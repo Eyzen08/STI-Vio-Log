@@ -41,7 +41,7 @@ const attendanceRecipients = async (client, departmentId) => (await client.query
   [Number(departmentId)]
 )).rows.map((row) => Number(row.id))
 
-const notifyAttendanceStaff = async (client, { studentId, departmentId, supervisorId, sessionId, action, status = 'SUCCESS', occurredAt = new Date(), eventSuffix = '' }) => {
+const notifyAttendanceStaff = async (client, { studentId, departmentId, supervisorId, sessionId, assignmentId, action, status = 'SUCCESS', occurredAt = new Date(), eventSuffix = '' }) => {
   const context = await attendanceContext(client, { studentId, departmentId, supervisorId })
   if (!context) return []
   const recipients = await attendanceRecipients(client, departmentId)
@@ -55,9 +55,9 @@ const notifyAttendanceStaff = async (client, { studentId, departmentId, supervis
       userId, title: `Attendance ${readableAction.toLowerCase()}`, message,
       type: `ATTENDANCE_${String(action).toUpperCase()}`,
       eventKey: `attendance:${sessionId || 'attempt'}:${String(action).toLowerCase()}:${eventSuffix || 'event'}:${userId}`,
-      category: 'ATTENDANCE', resourceType: 'community_service_sessions', resourceId: sessionId || null,
-      linkPath: '/admin/community-service',
-      metadata: { student_id: Number(studentId), department_id: Number(departmentId), supervising_officer_user_id: supervisorId ? Number(supervisorId) : null, status }
+      category: 'ATTENDANCE', resourceType: sessionId ? 'community_service_sessions' : 'students', resourceId: sessionId || Number(studentId),
+      linkPath: sessionId ? `/admin/community-service?assignment_id=${assignmentId}&session_id=${sessionId}` : `/admin/students?student_id=${studentId}`,
+      metadata: { student_id: Number(studentId), assignment_id: assignmentId ? Number(assignmentId) : null, department_id: Number(departmentId), supervising_officer_user_id: supervisorId ? Number(supervisorId) : null, status }
     })
     if (row) records.push({ user_id: userId, ...row })
   }
@@ -71,7 +71,7 @@ const notifyAttendanceFailure = async (client, { studentId, departmentId, superv
 
 const createOverdueAttendanceNotifications = async (client, thresholdHours = 8) => {
   const sessions = (await client.query(
-    `SELECT css.id,css.time_in,css.department_id,css.supervising_officer_user_id,a.student_id
+    `SELECT css.id,css.assignment_id,css.time_in,css.department_id,css.supervising_officer_user_id,a.student_id
      FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id
      WHERE css.time_out IS NULL AND css.status='ACTIVE'
        AND css.time_in<=CURRENT_TIMESTAMP-($1::text||' hours')::interval`,
@@ -79,7 +79,7 @@ const createOverdueAttendanceNotifications = async (client, thresholdHours = 8) 
   )).rows
   for (const session of sessions) await notifyAttendanceStaff(client, {
     studentId: session.student_id, departmentId: session.department_id,
-    supervisorId: session.supervising_officer_user_id, sessionId: session.id,
+    supervisorId: session.supervising_officer_user_id, sessionId: session.id, assignmentId: session.assignment_id,
     action: 'MISSING_TIME_OUT', status: `ACTIVE OVER ${thresholdHours} HOURS`, occurredAt: session.time_in, eventSuffix: 'overdue'
   })
   return sessions.length
