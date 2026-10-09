@@ -134,6 +134,19 @@ test('assignment duration accepts minutes alone and shows the normalized total w
   }
 })
 
+test('48-hour shortcut is a non-submit action whose selection follows editable duration fields', () => {
+  for (const [hours, minutes, selected] of [['','',false],[48,0,true],[48,'',true],[24,30,false],[48,1,false],[48,-1,false]]) {
+    const html=render('AssignServiceForm',{form:{required_hours:hours,required_minutes:minutes},busy:true})
+    const button=html.match(/<button[^>]*>Use 48 hours<\/button>/)?.[0]
+    assert.ok(button, '48-hour shortcut is rendered')
+    assert.match(button,/type="button"/)
+    assert.match(button,new RegExp(`aria-pressed="${selected}"`))
+    assert.ok(html.indexOf(button)<html.indexOf('</fieldset>'), 'shortcut inherits the saving lock')
+    assert.match(html,/<fieldset disabled=""/)
+    assert.doesNotMatch(html.match(/<input[^>]*name="required_hours"[^>]*>/)[0],/readonly/)
+  }
+})
+
 test('assignment form explains unavailable choices and locks fields and actions while saving', () => {
   const form={student_id:1,student_search:'Ana Reyes - TEST-1',violation_id:'',required_hours:1,department_id:3,department_head_id:''}
   const empty=render('AssignServiceForm',{form})

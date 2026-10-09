@@ -79,6 +79,8 @@
 .assign-service-form [aria-invalid='true'] { border-color:#d4243d; }
 .assign-service-duration { grid-column:1 / -1; }
 .assign-service-duration legend { padding:0; color:var(--service-ink); font-size:var(--text-base); line-height:22px; font-weight:600; }
+.assign-service-preset { min-height:var(--control-height); margin-top:12px; padding:8px 16px; border:1px solid var(--service-line); border-radius:9px; background:var(--service-soft); color:var(--service-ink); font:inherit; font-weight:600; cursor:pointer; }
+.assign-service-preset[aria-pressed='true'] { border-color:var(--action-primary-surface); background:var(--action-primary-surface); color:var(--text-on-accent); }
 .assign-service-duration-inputs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-top:12px; }
 .assign-service-duration-inputs label { font-size:var(--text-sm); color:var(--service-muted); }
 .service-workflow-modal .assign-service-total { margin-top:12px; padding:12px 16px; border:1px solid var(--service-line); border-radius:9px; background:var(--service-soft); color:var(--service-muted); font-size:var(--text-sm); }
