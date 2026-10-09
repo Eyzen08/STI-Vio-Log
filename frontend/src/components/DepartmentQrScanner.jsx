@@ -24,7 +24,7 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
   const available=Number(allowance.available_minutes||0)
   const remainingMinutes=Math.round(progress.remaining*60*1e6)/1e6
   const hasAllRemaining=remainingMinutes>0&&remainingMinutes<480
-  const remainingDisabledReason=Number(allowance.daily_remaining_minutes)<remainingMinutes?'Exceeds today’s remaining allowance.':'Cannot finish before Manila midnight.'
+  const remainingDisabledReason=Number(allowance.daily_remaining_minutes)<remainingMinutes?'Exceeds today’s remaining allowance.':'Cannot finish before midnight.'
   const officers=result?.available_officers||[]
   const noOfficer=verified&&officers.length===0
   const selected=form.session_type==='OPEN_TIME'?null:Number(form.selected_duration_minutes)
@@ -65,7 +65,7 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
         <dl className="service-confirm-details"><div><dt>Time In</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div><div><dt>{session.session_type==='FIXED'?'Expected completion':'Credit stops at'}</dt><dd>{formatManilaTime(session.session_type==='FIXED'?session.expected_completion_at:session.credit_cutoff_at)}</dd></div><div><dt>Available service time</dt><dd>{formatLiveServiceTime(timing.creditRemainingSeconds)}</dd></div><div><dt>Projected total / remaining</dt><dd>{formatServiceMinutes(progress.completed*60+projectedMinutes)} / {formatServiceMinutes(Math.max(0,progress.remaining*60-projectedMinutes))}</dd></div></dl>
         <p className="field-help">Current session time is credited only after Time Out is saved.</p><div className="service-confirm-actions"><button type="button" className="secondary-button" onClick={()=>setStudentOpen(true)}>View Student</button><button type="button" className={'time-out-button'+(timing.targetCompleted||timing.limitReached?' service-target-ready':'')} onClick={()=>setTimeOutOpen(true)} disabled={isSubmitting}>Time Out</button></div>
       </div>:<>
-        {result.assignment&&(available>0||hasAllRemaining)?<><div className="service-duration-heading"><h4>How long will the student serve today?</h4><p>Minimum 2 hours, except final remainder · Maximum 8 credited hours per Manila calendar day</p></div>
+        {result.assignment&&(available>0||hasAllRemaining)?<><div className="service-duration-heading"><h4>How long will the student serve today?</h4><p>Minimum 2 hours, except final remainder · Maximum 8 credited hours per calendar day</p></div>
           {available<=0&&<p className="service-timer-warning">{Number(allowance.daily_remaining_minutes)===0?'Daily Community Service Limit Reached. New service can begin tomorrow.':'No creditable service time remains.'}</p>}
           {available>0&&available<120&&<p className="service-timer-warning">Only {formatServiceMinutes(available)} is available before the requirement, daily allowance, or midnight cutoff. A final-remainder session is allowed.</p>}
           <div className="service-duration-grid">{[120,180,240,300,360,420,480].map(minutes=>preset(minutes,minutes/60+' Hours',minutes===120?'Minimum':minutes===480?'Maximum':null))}

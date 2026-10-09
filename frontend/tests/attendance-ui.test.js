@@ -214,7 +214,7 @@ test('QR All remaining uses the exact balance and respects daily and midnight al
     assert.doesNotMatch(html,/aria-pressed="true"/)
     assert.match(html,/disabled="">Confirm Time In/)
   }
-  for (const [available,daily,reason] of [[300,300,"today’s remaining allowance"],[30,480,'Manila midnight'],[0,0,'Daily Community Service Limit Reached']]) {
+  for (const [available,daily,reason] of [[300,300,"today’s remaining allowance"],[30,480,'midnight'],[0,0,'Daily Community Service Limit Reached']]) {
     const html=scan(390,available,390,daily)
     assert.match(html,/disabled=""[^>]*><strong>All remaining<\/strong><small>6 hrs 30 min<\/small>/)
     assert.match(html,new RegExp(reason))

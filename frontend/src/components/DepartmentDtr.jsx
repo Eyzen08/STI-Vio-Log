@@ -25,7 +25,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
           <h2>Daily Time Record</h2>
           <p>Review community-service attendance recorded by your assigned department.</p>
         </div>
-        <span>Manila service dates</span>
+        <span>Service dates</span>
       </section>
 
       <form className="department-dtr-filters" onSubmit={submit} aria-label="Filter department DTR">

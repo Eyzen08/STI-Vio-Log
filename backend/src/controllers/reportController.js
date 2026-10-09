@@ -107,7 +107,7 @@ const analyticsRows = (snapshot, generatedAt = new Date()) => {
   const { range, program, analytics, insights } = validateAnalyticsSnapshot(snapshot);
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(generatedAt);
   const part = type => parts.find(item => item.type === type).value;
-  const stamp = `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}:${part('second')} (Asia/Manila)`;
+  const stamp = `${part('year')}-${part('month')}-${part('day')} ${part('hour')}:${part('minute')}:${part('second')}`;
   const row = (section, metric, value, unit = '', from = range.from, to = range.to) => [section, metric, from, to, value, unit];
   const { service } = analytics;
   return [

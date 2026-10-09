@@ -29,6 +29,7 @@ test('audit Excel export includes all filtered events with safe readable cells a
   const sheet = workbook.getWorksheet('Audit Log');
   assert.equal(sheet.getCell('B4').value, 31);
   assert.match(sheet.getCell('A2').value, /Oct 8, 2026.*12:30 AM/);
+  assert.doesNotMatch(JSON.stringify(sheet.getSheetValues()), /\b(?:Manila|Asia)\b/i);
   assert.match(sheet.getCell('A3').value, /Time Out Credited.*2026-10-08/);
   assert.equal(sheet.getRow(37).getCell(1).value, '70');
   assert.equal(sheet.getCell('C7').value, '=HYPERLINK("bad")');

@@ -1,5 +1,5 @@
 /* Shared reference styling for read-only and audited violation drawers. */
-.app-modal:is(.violation-details-modal,.violation-edit-modal) { --case-ink:#102e60; --case-muted:#55709a; --case-line:#d7e7f7; --case-surface:#fff; --case-soft:#f6f9fc; height:100dvh; max-height:100dvh; border:1px solid var(--case-line); border-radius:14px 0 0 14px; background:var(--case-surface); color:var(--case-ink); font-family:var(--font-sans); box-shadow:-12px 0 35px rgb(15 40 70 / 12%); }
+.app-modal:is(.violation-details-modal,.violation-edit-modal) { --case-ink:#102e60; --case-muted:#55709a; --case-line:#d7e7f7; --case-surface:#fff; --case-soft:#f6f9fc; height:100dvh; max-height:100dvh; border:1px solid var(--case-line); border-radius:14px 0 0 14px; background:var(--case-surface); color:var(--case-ink); font-family:var(--font-sans); box-shadow:var(--decorative-shadow, -12px 0 35px rgb(15 40 70 / 12%)); }
 .app-modal.violation-details-modal { width:min(720px,100vw); }
 .app-modal.violation-edit-modal { width:min(760px,100vw); }
 .app-modal-backdrop:has(> :is(.violation-details-modal,.violation-edit-modal)) { justify-content:flex-end; padding:0; background:rgb(8 30 52 / 43%); backdrop-filter:blur(3px); }

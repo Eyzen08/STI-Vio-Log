@@ -22,7 +22,7 @@ body:has(.admin-portal) { overflow-x:clip; }
 
 /* Keep dashboard presentation local; shared role pages retain their existing layout. */
 .admin-portal .admin-dashboard { max-width:none; gap:var(--page-gap); color:var(--dash-ink); }
-.admin-portal .admin-dashboard :is(.dashboard-card,.stat-card,.portal-welcome) { margin:0; border:1px solid var(--dash-line); border-radius:12px; background-color:var(--dash-surface); box-shadow:0 2px 8px rgba(15,55,90,.04); }
+.admin-portal .admin-dashboard :is(.dashboard-card,.stat-card,.portal-welcome) { margin:0; border:1px solid var(--dash-line); border-radius:12px; background-color:var(--dash-surface); box-shadow:var(--decorative-shadow, 0 2px 8px rgba(15,55,90,.04)); }
 .admin-portal .admin-dashboard .dashboard-heading { position:relative; }
 .admin-portal .admin-dashboard .portal-welcome::before { display:none; }
 .admin-portal .admin-dashboard .portal-welcome { min-height:138px; padding:22px; display:flex; align-items:center; justify-content:space-between; gap:16px; overflow:hidden; background-image:linear-gradient(to right,var(--dash-surface) 0%,var(--dash-surface) 45%,color-mix(in srgb,var(--dash-surface) 88%,transparent) 65%,color-mix(in srgb,var(--dash-surface) 35%,transparent) 100%),var(--campus-image); background-size:cover,50% auto; background-position:center,right 35%; background-repeat:no-repeat; }

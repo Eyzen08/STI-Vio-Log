@@ -1,4 +1,4 @@
-.app-modal.app-modal--drawer.student-action-modal { width:min(590px,100vw); height:100dvh; max-height:100dvh; border:1px solid #dce8f3; border-radius:16px 0 0 16px; background:#fff; font-family:var(--font-sans); box-shadow:-12px 0 40px rgb(10 35 65 / 12%); }
+.app-modal.app-modal--drawer.student-action-modal { width:min(590px,100vw); height:100dvh; max-height:100dvh; border:1px solid #dce8f3; border-radius:16px 0 0 16px; background:#fff; font-family:var(--font-sans); box-shadow:var(--decorative-shadow, -12px 0 40px rgb(10 35 65 / 12%)); }
 .app-modal-backdrop:has(> .student-action-modal) { justify-content:flex-end; padding:0; background:rgb(8 29 51 / 42%); backdrop-filter:blur(3px); }
 .student-action-modal > .app-modal-header { min-height:76px; padding:12px 20px; gap:16px; border-bottom:1px solid #dce8f3; background:#fff; }
 .student-action-modal > .app-modal-header h2 { margin:0; color:#102a56; font-size:var(--text-section-title); line-height:1.2; font-weight:700; letter-spacing:-.02em; }

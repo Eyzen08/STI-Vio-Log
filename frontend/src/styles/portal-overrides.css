@@ -1014,7 +1014,7 @@
   border-radius: 1rem;
   background: var(--color-surface, #fff);
   color: var(--color-text);
-  box-shadow: 0 0.65rem 1.8rem rgba(14, 55, 101, 0.08);
+  box-shadow: var(--decorative-shadow, 0 0.65rem 1.8rem rgba(14, 55, 101, 0.08));
   box-sizing: border-box;
   overflow: hidden;
   min-height: 115px;
@@ -1082,7 +1082,7 @@
   border-color: var(--border-subtle) !important;
   background: var(--surface-raised) !important;
   color: var(--text-primary) !important;
-  box-shadow: 0 0.75rem 2rem rgba(0, 8, 18, 0.24) !important;
+  box-shadow: var(--decorative-shadow, 0 0.75rem 2rem rgba(0, 8, 18, 0.24)) !important;
   padding: 12px 28px;
   min-height: 115px;
 }
@@ -1232,7 +1232,7 @@
 :root[data-theme='dark'] .app-shell:not(.auth-shell) .sidebar {
   border-color: transparent;
   background: #07345f;
-  box-shadow: 0.25rem 0 1.15rem rgba(4, 36, 76, 0.14);
+  box-shadow: var(--decorative-shadow, 0.25rem 0 1.15rem rgba(4, 36, 76, 0.14));
 }
 
 .sidebar .brand,
@@ -1283,7 +1283,7 @@
   border-color: #1688ee;
   background: #0878df;
   color: #ffffff;
-  box-shadow: 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18);
+  box-shadow: var(--decorative-shadow, 0 0.25rem 0.8rem rgba(0, 37, 83, 0.18));
 }
 
 /* Department account views use one connected, measured segmented switch. */
@@ -1299,7 +1299,7 @@
   border: 1px solid #bed2e6;
   border-radius: 12px;
   background: #eaf2fa;
-  box-shadow: inset 0 1px 2px rgba(23, 52, 91, 0.05);
+  box-shadow: var(--decorative-shadow, inset 0 1px 2px rgba(23, 52, 91, 0.05));
 }
 
 .main-panel .department-officer-tabs::before {
@@ -1312,7 +1312,7 @@
   border: 1px solid #2378c4;
   border-radius: 8px;
   background: #0871ce;
-  box-shadow: 0 2px 5px rgba(7, 69, 126, 0.16);
+  box-shadow: var(--decorative-shadow, 0 2px 5px rgba(7, 69, 126, 0.16));
   transform: translateX(var(--tab-indicator-x));
   transition: transform 200ms ease, width 200ms ease;
   content: '';
@@ -1361,7 +1361,7 @@
 .department-officer-create.department-tab-panel { max-width: 64rem; padding: clamp(1rem, 2vw, 1.5rem); border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
 
 :root[data-theme='dark'] .main-panel .department-officer-tabs { border-color: var(--border-subtle) !important; background: var(--surface-nested) !important; }
-:root[data-theme='dark'] .main-panel .department-officer-tabs::before { border-color: var(--link-color); background: var(--color-primary); box-shadow: 0 2px 5px rgba(0, 8, 18, 0.28); }
+:root[data-theme='dark'] .main-panel .department-officer-tabs::before { border-color: var(--link-color); background: var(--color-primary); box-shadow: var(--decorative-shadow, 0 2px 5px rgba(0, 8, 18, 0.28)); }
 :root[data-theme='dark'] .main-panel .department-officer-tabs button { color: var(--text-secondary) !important; }
 :root[data-theme='dark'] .main-panel .department-officer-tabs button:hover:not(:disabled) { color: var(--link-hover) !important; }
 :root[data-theme='dark'] .main-panel .department-officer-tabs button[aria-selected='true'] { color: var(--text-on-accent) !important; }
@@ -1854,7 +1854,7 @@
   border-radius: .45rem;
   background: var(--surface-raised);
   color: var(--text-primary);
-  box-shadow: 0 7px 20px rgba(7, 32, 65, .16);
+  box-shadow: var(--decorative-shadow, 0 7px 20px rgba(7, 32, 65, .16));
   font: 600 var(--text-sm)/1.35 var(--font-sans);
   animation: sidebar-tooltip-in 120ms ease-out both;
 }
@@ -1952,7 +1952,7 @@
 .department-officer-page .department-officer-tabs button { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100% !important; font-weight: 700; font-size: var(--text-base); }
 .department-officer-page .department-officer-tabs button svg { flex-shrink: 0; }
 .department-summary-grid { gap: 14px; }
-.department-summary-grid .department-stat { display: flex; align-items: center; gap: 22px; min-height: 106px; padding: 18px 24px; border: 1px solid #dfebf6; border-radius: 13px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-summary-grid .department-stat { display: flex; align-items: center; gap: 22px; min-height: 106px; padding: 18px 24px; border: 1px solid #dfebf6; border-radius: 13px; background: var(--color-surface); box-shadow: var(--decorative-shadow, 0 4px 14px rgba(26,69,114,.035)); }
 .department-stat-icon { display: grid; place-items: center; flex: 0 0 60px; width: 60px; height: 60px; border-radius: 50%; background: #e9f4ff; color: #076bd4 !important; font-size: 32px !important; line-height: 1; }
 .department-stat--active .department-stat-icon { background: #e7f8ee; color: #008d42 !important; }
 .department-stat--heads .department-stat-icon { background: #f1ecff; color: #7542dc !important; }
@@ -1966,7 +1966,7 @@
 .department-officer-page .directory-toolbar input { background: #f4f8fc; min-height: var(--filter-height); }
 .department-officer-page .directory-toolbar input::placeholder { color: #8299ba; min-height: var(--filter-height); }
 .department-officer-page .officer-directory { gap: 16px; }
-.department-officer-page .officer-directory > .officer-card { display: flex; flex-direction: column; min-height: 350px; padding: 18px 20px 16px; border: 1px solid #e3edf8; border-radius: 15px; background: var(--color-surface); box-shadow: 0 4px 14px rgba(26,69,114,.035); }
+.department-officer-page .officer-directory > .officer-card { display: flex; flex-direction: column; min-height: 350px; padding: 18px 20px 16px; border: 1px solid #e3edf8; border-radius: 15px; background: var(--color-surface); box-shadow: var(--decorative-shadow, 0 4px 14px rgba(26,69,114,.035)); }
 .department-officer-page .officer-directory > .officer-card::before { display: none; }
 .officer-card-badges { display: flex; flex-wrap: wrap; gap: 7px; min-height: 30px; }
 .officer-card-badges .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border: 1px solid #c6dffc; border-radius: 999px; background: #eaf5ff; color: #0866bf; font-size: var(--text-xs); font-weight: 700; text-transform: none; }
@@ -1990,7 +1990,7 @@
 .department-officer-page .officer-card .registration-review-actions > button:first-child { border-color: #0871d5; background: #0871d5; color: white; }
 .department-officer-page .officer-card .registration-review-actions > .secondary-button { border-color: #d2e3f5; background: var(--color-surface); color: #0866bf; }
 .department-officer-page .officer-card .registration-review-actions > .danger-button { border-color: #ff9ba4 !important; background: #fffafa; color: #d92339 !important; }
-.department-officer-create.department-tab-panel { width: calc(100% - 2 * var(--department-content-inset)); max-width: none; padding: 30px 34px 18px; border-radius: 15px; box-shadow: 0 5px 18px rgba(20,58,104,.035); }
+.department-officer-create.department-tab-panel { width: calc(100% - 2 * var(--department-content-inset)); max-width: none; padding: 30px 34px 18px; border-radius: 15px; box-shadow: var(--decorative-shadow, 0 5px 18px rgba(20,58,104,.035)); }
 .department-officer-create .section-heading { margin: 0 0 24px; }
 .department-officer-create .section-heading h3 { margin: 0 0 4px; color: #0b2869; font-size: var(--text-section-title); font-weight: 700; }
 .department-officer-create .section-heading p { margin: 0; color: #6b83a7; font-size: var(--text-base); }
@@ -2176,4 +2176,30 @@
   .app-modal.app-modal--drawer.create-record-drawer :is(.student-form-grid,.assign-service-grid,.assign-service-duration-inputs) { grid-template-columns:minmax(0,1fr); }
   .app-modal.app-modal--drawer.create-record-drawer .create-record-actions { flex-direction:column-reverse; }
   .app-modal.app-modal--drawer.create-record-drawer .create-record-actions button { width:100%; }
+}
+
+/* Flat dark-mode controls share their parent surface instead of adding strips. */
+:root[data-theme='dark'] .sidebar .nav-item.messages-nav-item.active { box-shadow:inset 3px 0 var(--color-accent); }
+:root[data-theme='dark'] .main-panel :is(.review-workspace-tabs,.conversation-tabs,.segmented-control) button:is(.active,[aria-selected='true'],[aria-current='page']) {
+  box-shadow:inset 0 0 0 1px var(--border-strong) !important;
+}
+:root[data-theme='dark'] :is(
+  .directory-toolbar,.management-filter-bar,.clearance-directory-filters,.duplicate-filters,
+  .report-filter-card .student-form-grid,.report-filter-actions,.audit-filter-card .student-form,
+  .noncompliance-toolbar,.student-roster-tools,.department-dtr-filters
+) { background:transparent !important; }
+:root[data-theme='dark'] .app-shell :is(
+  .student-directory-search input,.topbar-search input,.violation-search input,
+  .conversation-search input,.directory-search input
+) { background:transparent !important; }
+:root[data-theme='dark'] .app-shell .topbar :is(.theme-toggle,.notification-button,.sidebar-collapse,.profile-menu-trigger) {
+  background:transparent !important;
+  box-shadow:none !important;
+}
+:root[data-theme='dark'] .app-shell .topbar :is(.theme-toggle,.notification-button,.sidebar-collapse,.profile-menu-trigger):hover:not(:disabled) {
+  background:var(--surface-interactive-hover) !important;
+}
+:root[data-theme='dark'] :is(button,a,input,select,textarea,[tabindex]):focus-visible {
+  outline:2px solid var(--link-color);
+  outline-offset:2px;
 }

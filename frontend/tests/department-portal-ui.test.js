@@ -51,7 +51,8 @@ test('department service renders shared active attendance and frozen timer once'
 
 test('department attendance preserves aggregate facts and collapses corrections', () => {
   const html=render('DepartmentDtr',{report})
-  assert.match(html,/Manila service dates/)
+  assert.match(html,/Service dates/)
+  assert.doesNotMatch(html,/\b(?:Manila|Asia)\b/i)
   assert.match(html,/<details[^>]*><summary>Hour corrections<\/summary>/)
   for (const fact of ['02000','Left Early','1h 30m','2h']) assert.ok(html.includes(fact))
   assert.doesNotMatch(html,/UTC reporting/)

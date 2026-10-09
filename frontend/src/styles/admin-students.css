@@ -1,7 +1,7 @@
 /* Student directory proportions follow the supplied reference. */
 .admin-portal .student-management-page { display:grid; gap:var(--page-gap); min-width:0; color:var(--dash-ink); font-family:var(--font-sans); }
 .student-management-page :is(button,input,select) { font-family:inherit; }
-.admin-portal .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card) { border:1px solid var(--dash-line); border-radius:13px; background:var(--dash-surface); box-shadow:0 2px 8px rgb(15 55 90 / 3%); }
+.admin-portal .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card) { border:1px solid var(--dash-line); border-radius:13px; background:var(--dash-surface); box-shadow:var(--decorative-shadow, 0 2px 8px rgb(15 55 90 / 3%)); }
 .admin-portal .student-management-page .student-management-header { display:flex; align-items:center; justify-content:space-between; min-height:115px; gap:20px; padding:12px 28px; margin:0; }
 .student-breadcrumb { display:flex; gap:9px; margin:0; padding:0; min-height:0; color:#8098b6; font-size:var(--text-sm); line-height:18px; font-weight:600; letter-spacing:.06em; }
 .student-management-header::before,.student-management-header::after { display:none; }
@@ -10,7 +10,7 @@
 .student-breadcrumb a:hover { text-decoration:underline; }
 .admin-portal .student-management-page h2 { margin:5px 0 4px; color:var(--dash-ink); font-size:var(--text-page-title); font-weight:700; line-height:1.15; letter-spacing:-.035em; }
 .admin-portal .student-management-page p { margin:0; color:var(--dash-muted); font-size:var(--text-base); line-height:1.5; }
-.admin-portal .student-management-page .student-add-button { display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; min-height:var(--page-action-height); min-width:172px; padding:10px 20px; border:1px solid #007aff; border-radius:8px; background:#007aff; color:#fff; font-size:var(--text-action); font-weight:600; box-shadow:0 7px 16px rgb(0 122 255 / 12%); }
+.admin-portal .student-management-page .student-add-button { display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; min-height:var(--page-action-height); min-width:172px; padding:10px 20px; border:1px solid #007aff; border-radius:8px; background:#007aff; color:#fff; font-size:var(--text-action); font-weight:600; box-shadow:var(--decorative-shadow, 0 7px 16px rgb(0 122 255 / 12%)); }
 .student-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
 .admin-portal .student-management-page .student-summary-card { display:flex; align-items:center; gap:20px; min-width:0; min-height:99px; padding:16px 17px; text-align:left; color:var(--dash-ink); }
 .student-summary-card > i { display:grid; place-items:center; flex:0 0 60px; height:60px; border-radius:10px; background:#e7f2ff; color:#007aff; width:60px; }
@@ -43,7 +43,7 @@
 .admin-portal .student-management-page .student-directory-select:hover:not(:disabled) { border-color:var(--link-color); background:var(--surface-interactive); box-shadow:none; transform:none; }
 .admin-portal .student-management-page .student-directory-select:is(:focus-visible,[aria-expanded='true']) { border-color:var(--link-color); outline:2px solid var(--link-color); outline-offset:2px; box-shadow:none; }
 .admin-portal .student-management-page .student-directory-select:disabled { background:var(--control-disabled-background); color:var(--text-muted); cursor:not-allowed; opacity:.65; }
-.student-directory-select-menu { position:fixed; z-index:1300; box-sizing:border-box; overflow-y:auto; overscroll-behavior:contain; padding:5px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--control-background); color:var(--text-primary); box-shadow:0 8px 24px rgb(15 55 90 / 14%); font-family:var(--font-sans); }
+.student-directory-select-menu { position:fixed; z-index:1300; box-sizing:border-box; overflow-y:auto; overscroll-behavior:contain; padding:5px; border:1px solid var(--border-subtle); border-radius:10px; background:var(--control-background); color:var(--text-primary); box-shadow:var(--decorative-shadow, 0 8px 24px rgb(15 55 90 / 14%)); font-family:var(--font-sans); }
 .student-directory-select-option { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; box-sizing:border-box; padding:9px 10px; border-radius:6px; font-size:var(--text-control); line-height:1.4; cursor:pointer; }
 .student-directory-select-option > span { min-width:0; overflow-wrap:anywhere; }
 .student-directory-select-option > svg { flex-shrink:0; color:var(--link-color); }
@@ -107,7 +107,7 @@
 .student-directory-empty strong { display:block; font-size:var(--text-lg); margin-bottom:12px; }
 .admin-portal .student-directory-empty button { background:#007aff; color:white; }
 .student-management-page :is(button,a,select):focus-visible,.student-directory-table-wrap:focus-visible { outline:2px solid #007aff; outline-offset:3px; }
-.student-account-menu { position:fixed; z-index:1300; display:grid; width:230px; max-height:calc(100dvh - 16px); overflow-y:auto; padding:5px; border:1px solid var(--border-subtle,#dce8f3); border-radius:9px; background:var(--surface-overlay,#fff); color:var(--text-primary,#102a56); box-shadow:0 12px 32px rgb(10 43 80 / 16%); }
+.student-account-menu { position:fixed; z-index:1300; display:grid; width:230px; max-height:calc(100dvh - 16px); overflow-y:auto; padding:5px; border:1px solid var(--border-subtle,#dce8f3); border-radius:9px; background:var(--surface-overlay,#fff); color:var(--text-primary,#102a56); box-shadow:var(--decorative-shadow, 0 12px 32px rgb(10 43 80 / 16%)); }
 .student-account-menu button { display:flex; align-items:center; gap:9px; min-height:44px; padding:9px 12px; border:0; border-radius:5px; background:transparent; color:inherit; text-align:left; font:inherit; font-size:var(--text-base); cursor:pointer; }
 .student-account-menu button:hover,.student-account-menu button:focus-visible { background:var(--surface-interactive-hover,#eef5fb); outline:2px solid #007aff; outline-offset:-2px; }
 .student-account-menu .danger-text { color:var(--status-danger-text,#c92136); }

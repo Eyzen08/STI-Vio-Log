@@ -43,7 +43,7 @@ const createReportWorkbook = (type, payload, filters = {}, generatedAt = new Dat
     const columns = reportColumns(schema);
     const sheet = workbook.addWorksheet(name);
     columns.forEach(({width},index) => {sheet.getColumn(index+1).width=Math.min(48,width);});
-    sheet.addRow([name]); sheet.addRow([`Generated: ${formatManilaDateTime(generatedAt)} · Asia/Manila`]);
+    sheet.addRow([name]); sheet.addRow([`Generated: ${formatManilaDateTime(generatedAt)}`]);
     sheet.addRow([`Filters: ${filterLabels.join(' · ') || 'All records'}`]);
     for(let row=1;row<=3;row++)sheet.mergeCells(row,1,row,columns.length);
     sheet.addRow(['Records',rows.length]);sheet.addRow([]);sheet.addRow(columns.map(column=>column.label));

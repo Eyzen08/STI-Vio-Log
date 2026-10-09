@@ -41,7 +41,8 @@ test('report workbooks preserve all rows, readable metadata and literal text wit
     const workbook=await new ExcelJS.Workbook().xlsx.load(await reports.createReportWorkbook(type,payload,{student_id:'2'},new Date('2026-10-07T16:30:00Z')).xlsx.writeBuffer());
     const sheet=workbook.worksheets[0];
     assert.equal(sheet.getCell('B4').value,61); assert.equal(sheet.rowCount,67);
-    assert.match(sheet.getCell('A2').value,/Oct 8, 2026.*12:30 AM.*Manila/);
+    assert.match(sheet.getCell('A2').value,/Oct 8, 2026.*12:30 AM/);
+    assert.doesNotMatch(JSON.stringify(workbook.worksheets.map(tab=>tab.getSheetValues())),/\b(?:Manila|Asia)\b/i);
     assert.match(sheet.getCell('A3').value,/Student.*2/);
     assert.equal(sheet.getCell('A7').value,'=Maria Santos'); assert.equal(sheet.getCell('A7').type,ExcelJS.ValueType.String);
     assert.equal(sheet.getCell('B7').value,'000123'); assert.equal(sheet.getCell('B7').numFmt,'@');

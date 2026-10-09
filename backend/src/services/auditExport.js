@@ -8,12 +8,12 @@ const createAuditWorkbook = (entries, filters = {}, generatedAt = new Date()) =>
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'STI Vio-Log'; workbook.created = generatedAt;
   const sheet = workbook.addWorksheet('Audit Log');
-  const headers = ['Event ID', 'Date/Time (Manila)', 'Actor', 'Role', 'Action', 'Record', 'Affected Person', 'Student Number/Username', 'Department', 'Description', 'Details'];
+  const headers = ['Event ID', 'Date/Time', 'Actor', 'Role', 'Action', 'Record', 'Affected Person', 'Student Number/Username', 'Department', 'Description', 'Details'];
   const widths = [12, 24, 24, 20, 24, 36, 24, 24, 24, 48, 48];
   widths.forEach((width, index) => { sheet.getColumn(index + 1).width = width; });
   const filterLabels = [filters.action && `Action: ${formatAuditAction(filters.action)}`, filters.table_name && `Record type: ${auditRecordType(filters.table_name)}`, filters.user_id && `Actor: User #${filters.user_id}`, filters.from_date && `From: ${filters.from_date}`, filters.to_date && `Through: ${filters.to_date}`].filter(Boolean);
   sheet.addRow(['STI Vio-Log — Audit Log']); sheet.mergeCells('A1:K1');
-  sheet.addRow([`Generated: ${formatManilaDateTime(generatedAt)} · Asia/Manila`]); sheet.mergeCells('A2:K2');
+  sheet.addRow([`Generated: ${formatManilaDateTime(generatedAt)}`]); sheet.mergeCells('A2:K2');
   sheet.addRow([`Filters: ${filterLabels.join(' · ') || 'All activities'}`]); sheet.mergeCells('A3:K3');
   sheet.addRow(['Events', entries.length]);
   sheet.addRow([]); sheet.addRow(headers);

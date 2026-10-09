@@ -43,7 +43,8 @@ test('analytics downloads preserve all six sections, typed counts, filters, and 
   assert.equal(filters.getCell('B7').type, ExcelJS.ValueType.String);
   assert.match(filters.getCell('B8').value, /2026-10-01.*2026-10-07/);
   assert.match(filters.getCell('B9').value, /2026-09-01.*2026-09-07/);
-  assert.match(filters.getCell('B10').value, /2026-10-08.*01:05.*Asia\/Manila/);
+  assert.match(filters.getCell('B10').value, /2026-10-08.*01:05/);
+  assert.doesNotMatch(JSON.stringify(workbook.worksheets.map(tab=>tab.getSheetValues())), /\b(?:Manila|Asia)\b/i);
   assert.equal(filters.getCell('B11').value, 2);
   assert.equal(filters.getCell('B12').value, 1);
   const trend = workbook.getWorksheet('Violations Over Time');

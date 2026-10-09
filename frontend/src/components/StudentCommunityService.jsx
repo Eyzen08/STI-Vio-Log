@@ -37,7 +37,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, atten
 
   return <section className="student-page student-service-page" aria-labelledby="service-title">
     <RecordTargetFocus id={target.invalid ? null : target.sessionId ? `service-session-${target.sessionId}` : target.assignmentId ? `service-assignment-${target.assignmentId}` : null} loading={loading} error={error} />
-    <header className="portal-page-header student-page-heading"><div><h2 id="service-title">My service &amp; attendance</h2><p>Track credited hours and attendance in Manila time.</p></div>{onNavigate && <button className="student-primary-button" type="button" onClick={()=>onNavigate('/student/qr')}>My QR code</button>}</header>
+    <header className="portal-page-header student-page-heading"><div><h2 id="service-title">My service &amp; attendance</h2><p>Track credited hours and attendance.</p></div>{onNavigate && <button className="student-primary-button" type="button" onClick={()=>onNavigate('/student/qr')}>My QR code</button>}</header>
     {(error || filterError) && <p className="error-message" role="alert">{filterError || error}</p>}
     <StudentAttendancePanel sessions={liveDtr?.sessions || []} ready={Array.isArray(liveDtr?.sessions)} loading={loading} error={attendanceError}/>
     <section className="student-section" aria-label="Community-service summary"><dl className="student-totals"><div><dt>Required</dt><dd>{formatMinutes(summary.requiredMinutes)}</dd></div><div><dt>Credited</dt><dd>{formatMinutes(summary.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd><strong>{formatMinutes(summary.remainingMinutes)}</strong></dd></div></dl></section>

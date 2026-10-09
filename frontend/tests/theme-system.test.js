@@ -14,6 +14,16 @@ const portal = readPortalStyles()
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
 
+test('dark surfaces disable decorative elevation while retaining focus rings', () => {
+  const dark = foundation.slice(foundation.indexOf(":root[data-theme='dark']"))
+  for (const token of ['--shadow-sm', '--shadow-md', '--shadow-lg', '--decorative-shadow']) assert.match(dark, new RegExp(`${token}:\\s*none;`))
+  assert.match(dark, /--focus-ring:\s*0 0 0 3px/)
+  const flat = portal.slice(portal.indexOf('Flat dark-mode controls'))
+  for (const selector of ['.report-filter-actions', '.clearance-directory-filters', '.student-directory-search input', '.topbar-search input', '.theme-toggle', '.notification-button']) assert.ok(flat.includes(selector), selector)
+  assert.match(flat, /background:transparent !important/)
+  assert.match(flat, /:focus-visible[^}]*outline:2px solid var\(--link-color\)/s)
+})
+
 test('only the three create drawers opt into matching form layout and busy controls', async () => {
   for (const [title, mutation] of [['Add Student','studentCreate'],['Record Violation','violationCreate']]) {
     const start=app.indexOf(`<Modal title="${title}"`)

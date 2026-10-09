@@ -18,6 +18,7 @@ test('Reports starts with an unavailable export and presents relevant controls f
   const initial=renderToStaticMarkup(createElement(Reports,{token:'test',students:[]}))
   assert.match(initial,/<button[^>]*disabled=""[^>]*>[\s\S]*?Export Excel/)
   assert.doesNotMatch(initial,/>Student ID</)
+  assert.doesNotMatch(initial,/\b(?:Manila|Asia)\b/i)
   for(const type of ['violations','community-service','dtr','non-compliance','parent-contacts','clearance','good-standing']) {
     const html=renderToStaticMarkup(createElement(ReportFilters,{type,filters:{},students:[],studentSearch:'',onFilter:()=>{},onStudent:()=>{},onType:()=>{}}))
     assert.match(html,/Report type/)

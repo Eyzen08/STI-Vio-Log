@@ -9,7 +9,7 @@
 .admin-portal .violation-record-button { display:flex; align-items:center; justify-content:center; flex-shrink:0; gap:14px; min-height:var(--page-action-height); padding:12px 25px; border:1px solid #0067da; border-radius:10px; background:#0068df; color:#fff; font-size:var(--text-action); font-weight:700; box-shadow:none; }
 .violation-record-button > span { font-size:var(--text-action); line-height:1; font-weight:400; }
 .violation-summary-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
-.admin-portal .violation-summary-grid .management-metric { min-height:99px; gap:20px; padding:16px 17px; border:1px solid var(--vio-line); border-radius:14px; background:var(--vio-surface); box-shadow:0 3px 12px rgb(20 54 90 / 3%); }
+.admin-portal .violation-summary-grid .management-metric { min-height:99px; gap:20px; padding:16px 17px; border:1px solid var(--vio-line); border-radius:14px; background:var(--vio-surface); box-shadow:var(--decorative-shadow, 0 3px 12px rgb(20 54 90 / 3%)); }
 .violation-summary-grid .management-metric i { width:60px; height:60px; border-radius:14px; flex:0 0 60px; }
 .violation-summary-grid .management-metric svg { width:26px; height:26px; }
 .violation-summary-grid .management-metric > div { gap:8px; min-width:0; }
