@@ -45,6 +45,22 @@ export default function ViolationManagement({ violations = [], loading = false, 
         <select aria-label="Filter violation classification" value={filters.severity} onChange={(event) => changeFilters({ ...filters, severity: event.target.value })}><option value="ALL">All classifications</option>{['MINOR', 'MAJOR', 'GRAVE'].map((severity) => <option key={severity} value={severity}>{formatDisplayLabel(severity)}</option>)}</select>
         <select aria-label="Filter violation status" value={filters.status} onChange={(event) => changeFilters({ ...filters, status: event.target.value })}><option value="ALL">All statuses</option>{statuses.map((status) => <option key={status} value={status}>{formatDisplayLabel(status)}</option>)}</select>
       </div>
+      <section className="violation-legends" aria-label="Violation color legends">
+        <div className="violation-legend-row" role="group" aria-label="Classification legend">
+          <strong>Classification:</strong>
+          <span className="violation-classification classification-minor">Minor</span>
+          <span className="violation-classification classification-major">Major</span>
+          <span className="violation-classification classification-grave">Grave</span>
+        </div>
+        <div className="violation-legend-row" role="group" aria-label="Student indicator legend">
+          <strong>Student indicators:</strong>
+          <OffenseIndicator level="NEUTRAL"/>
+          <OffenseIndicator level="MINOR_1" label="1 minor"/>
+          <OffenseIndicator level="MINOR_2" label="2 minors"/>
+          <OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
+          <OffenseIndicator level="GRAVE" label="Grave"/>
+        </div>
+      </section>
       <div className="violation-table-wrap" role="region" aria-label="Violation records" tabIndex={0}>
         <table className="violation-table">
           <colgroup><col style={{ width:'6.5%' }}/><col style={{ width:'21%' }}/><col style={{ width:'15%' }}/><col/><col style={{ width:'10.5%' }}/><col style={{ width:170 }}/><col style={{ width:180 }}/></colgroup>

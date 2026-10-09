@@ -21,6 +21,10 @@
 .violation-records-heading p { margin-top:3px; color:var(--vio-muted); font-size:var(--text-base); line-height:1.5; }
 .violation-records-heading > span { flex-shrink:0; color:var(--vio-muted); font-size:var(--text-base); font-weight:600; }
 .violation-toolbar { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,1.08fr) minmax(0,1fr); gap:12px; margin:0 20px 18px; }
+.violation-legends { display:grid; gap:12px; margin:0 20px 18px; padding:12px 14px; border:1px solid var(--vio-line); border-radius:9px; background:var(--vio-soft); color:var(--vio-muted); font-size:var(--text-sm); }
+.violation-legend-row { display:flex; align-items:center; flex-wrap:wrap; gap:8px 14px; }
+.violation-legend-row > strong { color:var(--vio-ink); }
+.violation-legends .offense-indicator { color:var(--vio-muted); }
 .violation-search { display:flex; align-items:center; min-width:0; padding:0 18px; gap:12px; border:1px solid #cbdff3; border-radius:9px; background:var(--vio-soft); color:var(--vio-muted); }
 .violation-search svg { flex-shrink:0; }
 .admin-portal .violation-search input { width:100%; height:var(--control-height); min-width:0; padding:0; border:0; border-radius:0; background:transparent; color:var(--vio-ink); font-size:var(--text-control); box-shadow:none; }
@@ -87,6 +91,8 @@
   .violation-records-heading > span { font-size:var(--text-sm); }
   .violation-records-heading p { font-size:var(--text-base); }
   .violation-toolbar { grid-template-columns:minmax(0,1fr); margin:0 14px 16px; gap:9px; }
+  .violation-legends { margin:0 14px 16px; }
+  .violation-legend-row > strong { flex-basis:100%; }
   .violation-toolbar :is(input,select) { font-size:var(--text-control) !important; min-height:var(--filter-height); }
   .admin-portal .violation-table { min-width:0; table-layout:auto; }
   .violation-table :is(colgroup,thead) { display:none; }

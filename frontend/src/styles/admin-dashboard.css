@@ -127,7 +127,8 @@ body:has(.admin-portal) { overflow-x:clip; }
 :root[data-theme='dark'] .admin-portal .admin-dashboard :is(.dashboard-card,.stat-card,.portal-welcome) { background-color:var(--dash-surface) !important; border-color:var(--dash-line) !important; }
 :root[data-theme='dark'] .admin-portal .admin-dashboard :is(h2,h3,.stat-card strong,.stat-card span,.dashboard-student strong) { color:var(--dash-ink) !important; }
 :root[data-theme='dark'] .admin-portal .sidebar .nav-item.active { background:#076dca !important; color:#fff !important; }
-:root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-image:linear-gradient(to right,var(--dash-surface) 0%,var(--dash-surface) 45%,color-mix(in srgb,var(--dash-surface) 88%,transparent) 65%,color-mix(in srgb,var(--dash-surface) 35%,transparent) 100%),url('../assets/sti-global-city-building-night.jpg') !important; }
+/* The shared dark header background shorthand resets the image framing. */
+:root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-image:linear-gradient(to right,var(--dash-surface) 0%,var(--dash-surface) 45%,color-mix(in srgb,var(--dash-surface) 88%,transparent) 65%,color-mix(in srgb,var(--dash-surface) 35%,transparent) 100%),url('../assets/sti-global-city-building-night.jpg') !important; background-position:center,right center !important; background-size:cover,50% auto !important; background-repeat:no-repeat !important; }
 @media (max-width:1279px) {
   .admin-portal .admin-dashboard .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .admin-portal .admin-dashboard-grid { grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:'attendance attendance' 'service service' 'violations violations' 'offense actions'; }
@@ -140,6 +141,7 @@ body:has(.admin-portal) { overflow-x:clip; }
   .admin-portal .profile-menu-chevron { display:none; }
   .admin-portal .page-content { padding:14px 12px 24px; }
   .admin-portal .admin-dashboard .portal-welcome { min-height:130px; padding:16px; display:grid; gap:10px; background-size:cover,auto 150%; }
+  :root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome { background-position:center,right 43% !important; background-size:cover,auto 150% !important; }
   .admin-portal .admin-dashboard .portal-welcome > div:first-child { max-width:none; }
   .admin-portal .admin-dashboard .dashboard-welcome-date { justify-self:start; padding:4px 0; }
   .admin-portal .admin-dashboard .dashboard-primary-actions { position:static; display:grid; gap:8px; margin-top:10px; }

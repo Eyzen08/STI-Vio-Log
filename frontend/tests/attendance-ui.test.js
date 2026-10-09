@@ -24,6 +24,33 @@ const start = Date.parse('2026-10-05T01:00:00Z')
 const active = { id: 11, session_id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE',
   time_in: new Date(start).toISOString(), time_out: null, timer_limit_seconds: 3600, department_name: 'Library' }
 
+test('violation color legends remain visible with records, loading, empty and filtered results', () => {
+  const violation = { id: 1, student_name: 'Ana Reyes', student_number: 'TEST-1', exact_offense: 'Recorded offense', severity: 'MINOR', status: 'OPEN', offense_indicator_level: 'MINOR_1' }
+  const filters = { search: '', severity: 'ALL', status: 'ALL' }
+  for (const [props, message] of [
+    [{ violations: [violation] }, 'Ana Reyes'],
+    [{ violations: [], loading: true }, 'Loading violation records…'],
+    [{ violations: [] }, 'No violation records yet.'],
+    [{ violations: [violation], filters: { ...filters, search: 'no match' } }, 'No violations match the selected filters.']
+  ]) {
+    const html = render('ViolationManagement', { filters, ...props })
+    assert.ok(html.includes(message))
+    const legendStart = html.indexOf('aria-label="Violation color legends"')
+    const tableStart = html.indexOf('class="violation-table-wrap"')
+    assert.ok(legendStart > html.indexOf('aria-label="Filter violation status"') && legendStart < tableStart)
+    const legends = html.slice(legendStart, tableStart)
+    assert.match(legends, /aria-label="Classification legend"/)
+    assert.match(legends, /aria-label="Student indicator legend"/)
+    for (const [severity, label] of [['minor', 'Minor'], ['major', 'Major'], ['grave', 'Grave']]) {
+      assert.ok(legends.includes(`class="violation-classification classification-${severity}">${label}</span>`))
+    }
+    for (const [tone, label] of [['neutral', 'No qualifying offenses'], ['yellow', '1 minor'], ['orange', '2 minors'], ['red', 'Major-level'], ['critical', 'Grave']]) {
+      assert.ok(legends.includes(`class="offense-indicator offense-${tone}" title="${label}" aria-label="${label}"`))
+      assert.ok(legends.includes(`<span>${label}</span>`))
+    }
+  }
+})
+
 test('student overview renders each timer and service total once with three recent records', () => {
   const html = render('StudentDashboard', { dtr:{sessions:[active]}, assignments:[{required_hours:6,remaining_hours:5.25,status:'IN_PROGRESS'}],
     violations:Array.from({length:5},(_,id)=>({id,status:'OPEN',exact_offense:`Offense ${id}`,severity:'GRAVE',required_service_hours:2})) })
