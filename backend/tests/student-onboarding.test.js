@@ -6,6 +6,11 @@ const {createStudentOnboardingController}=require('../src/controllers/accountCon
 
 const fakePool=(handler)=>{const calls=[];const client={async query(sql,params=[]){calls.push({sql:String(sql),params});return handler(String(sql),params)},release(){}};return{calls,pool:{connect:async()=>client}}};
 
+test('onboarding rejects malformed guardian names before database access',async()=>{
+  const service=createStudentOnboardingService({pool:{connect:async()=>{throw Error('Invalid guardian must not access records')}}});
+  for(const guardianName of ['123','---','Maria@',{},'A'.repeat(201)]) await assert.rejects(service.completeProfile({userId:8,guardianName}),error=>error.code==='VALIDATION_ERROR');
+});
+
 test('onboarding state advances through password, Google, profile, and completion',()=>{
   const base={role:'STUDENT',onboarding_required:true,onboarding_completed_at:null};
   assert.deepEqual(onboardingState({...base,must_change_password:true,google_linked:false}),{onboarding_required:true,onboarding_step:'PASSWORD'});

@@ -9,7 +9,7 @@ import {
   readGoogleCredential,
   validateGoogleStudentLink
 } from '../lib/googleIdentity.js'
-import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from '../lib/inputNormalization.js'
+import { normalizePersonName, normalizeNameSpacing, digitsOnly, STUDENT_NUMBER_PATTERN, STUDENT_NAME_PATTERN } from '../lib/inputNormalization.js'
 
 const emptyLinkForm = { studentNumber: '', firstName: '', lastName: '' }
 
@@ -154,20 +154,24 @@ function GoogleStudentAccess({ clientId, onSession }) {
             Student number
             <input id="google-student-number" name="studentNumber" value={linkForm.studentNumber}
               onChange={(event) => setLinkForm({ ...linkForm, studentNumber: digitsOnly(event.target.value) })}
-              placeholder="Enter your school-issued Student Number" autoComplete="off"
+              placeholder="02000123456" aria-describedby="google-student-number-help" autoComplete="off"
               inputMode="numeric" pattern={STUDENT_NUMBER_PATTERN} maxLength={11} disabled={isBusy} required autoFocus />
+            <small id="google-student-number-help">Enter your 11-digit Student Number.</small>
           </label>
           <label htmlFor="google-first-name">
             First name
             <input id="google-first-name" name="firstName" value={linkForm.firstName}
-              onChange={(event) => setLinkForm({ ...linkForm, firstName: capitalizeWords(event.target.value) })}
-              placeholder="Example: Jose Pedro" autoComplete="given-name" disabled={isBusy} required />
+              onChange={(event) => setLinkForm({ ...linkForm, firstName: normalizePersonName(event.target.value) })}
+              onBlur={(event) => setLinkForm(current => ({...current,firstName:normalizeNameSpacing(event.target.value)}))}
+              placeholder="Juan" pattern={STUDENT_NAME_PATTERN} maxLength={150} aria-describedby="google-student-name-help" autoComplete="given-name" disabled={isBusy} required />
+            <small id="google-student-name-help">Letters, spaces, apostrophes, hyphens, and periods only.</small>
           </label>
           <label htmlFor="google-last-name">
             Last name
             <input id="google-last-name" name="lastName" value={linkForm.lastName}
-              onChange={(event) => setLinkForm({ ...linkForm, lastName: capitalizeWords(event.target.value) })}
-              placeholder="Example: Reyes" autoComplete="family-name" disabled={isBusy} required />
+              onChange={(event) => setLinkForm({ ...linkForm, lastName: normalizePersonName(event.target.value) })}
+              onBlur={(event) => setLinkForm(current => ({...current,lastName:normalizeNameSpacing(event.target.value)}))}
+              placeholder="Dela Cruz" pattern={STUDENT_NAME_PATTERN} maxLength={150} aria-describedby="google-student-name-help" autoComplete="family-name" disabled={isBusy} required />
           </label>
           <div className="google-link-actions">
             <button type="submit" disabled={isBusy}>{isBusy ? 'Linking…' : 'Link and sign in'}</button>

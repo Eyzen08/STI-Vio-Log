@@ -29,7 +29,8 @@ test('only the three create drawers opt into matching form layout and busy contr
   assert.match(service,/className="assign-service-modal service-workflow-modal create-record-drawer"/)
   assert.equal((app.match(/className="create-record-drawer"/g)||[]).length,2)
   assert.match(app,/name="incident_date"[\s\S]*?onChange=\{[\s\S]*?handleViolationFieldChange[\s\S]*?required\s*\/>/)
-  assert.match(app,/aria-describedby="violation-student-help"/)
+  assert.match(app,/aria-describedby=\{`violation-student-help\$\{/)
+  assert.match(app,/id="create-violation-error"/)
 })
 
 test('shared create drawer styles protect preset contrast from generic button rules', () => {

@@ -6,6 +6,7 @@ const crypto = require('node:crypto');
 const { createEmailService } = require('../services/emailService');
 const { ApiError, sendError } = require('../utils/api');
 const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
+const { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } = require('../utils/validators');
 
 const getStudents = async (req, res) => {
     try {
@@ -87,7 +88,10 @@ const createStudent = async (req, res) => {
         if (email.length > 255 || !isValidEmail(email) || !email.endsWith('@gmail.com')) return res.status(400).json({ success:false, message:'Enter a valid personal Gmail address (@gmail.com)' });
         if (!student_number || !first_name || !last_name) return res.status(400).json({ success: false, message: "student_number, first_name, and last_name are required" });
         if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
+        if (!isValidStudentName(first_name) || !isValidStudentName(last_name) || !isValidStudentName(middle_name, {optional:true})) return res.status(400).json({success:false,message:'Names must contain letters and may include spaces, apostrophes, hyphens, and periods (maximum 150 characters)'});
+        if (!isValidStudentSuffix(suffix)) return res.status(400).json({success:false,message:'Select a valid suffix or None'});
         const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), qr_code:`STI-${crypto.randomUUID()}` };
+        for (const field of ['first_name','middle_name','last_name']) payload[field] = normalizeNameSpacing(payload[field]);
         client = await pool.connect();
         await client.query('BEGIN');
         await client.query("SELECT pg_advisory_xact_lock(hashtext('student-registration-email:' || LOWER($1)))", [email]);
@@ -161,18 +165,23 @@ const updateStudent = async (req, res) => {
         assertAllowedFields(req.body, allowedFields);
         const reason = sanitizeString(req.body.reason);
         if (!reason || reason.length > 1000) return res.status(400).json({ success: false, message: "A reason of at most 1000 characters is required" });
-        if (req.body.student_number !== undefined && !isValidStudentNumber(req.body.student_number)) {
-            return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
-        }
         if (req.body.first_name !== undefined && !sanitizeString(req.body.first_name)) return res.status(400).json({ success:false, message:'First name is required' });
         if (req.body.last_name !== undefined && !sanitizeString(req.body.last_name)) return res.status(400).json({ success:false, message:'Last name is required' });
         if (req.body.email && !isValidEmail(req.body.email)) return res.status(400).json({ success: false, message: "Invalid email format" });
         if (req.body.phone_number && !isValidPhone(req.body.phone_number)) return res.status(400).json({ success: false, message: "Invalid phone number format" });
         client = await pool.connect();
         await client.query('BEGIN');
-        const current = (await client.query('SELECT id,user_id,student_number,academic_level,strand,program,section,year_level FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
+        const current = (await client.query('SELECT id,user_id,student_number,academic_level,strand,program,section,year_level,first_name,middle_name,last_name,suffix FROM students WHERE id=$1 FOR UPDATE', [id])).rows[0];
         if (!current) { await client.query('ROLLBACK'); return res.status(404).json({success:false,message:'Student not found'}); }
         const changes = {...req.body};
+        if (Object.hasOwn(changes,'student_number') && changes.student_number !== current.student_number && !isValidStudentNumber(changes.student_number)) throw new ApiError(400,'VALIDATION_ERROR','Student Number must contain exactly 11 digits');
+        for (const field of ['first_name','middle_name','last_name']) {
+            if (Object.hasOwn(changes,field) && changes[field] !== current[field]) {
+                if (!isValidStudentName(changes[field], {optional:field === 'middle_name'})) throw new ApiError(400,'VALIDATION_ERROR','Names must contain letters and may include spaces, apostrophes, hyphens, and periods (maximum 150 characters)');
+                changes[field] = normalizeNameSpacing(changes[field]);
+            }
+        }
+        if (Object.hasOwn(changes,'suffix') && changes.suffix !== current.suffix && !isValidStudentSuffix(changes.suffix)) throw new ApiError(400,'VALIDATION_ERROR','Select a valid suffix or None');
         const academicFields = ['academic_level','strand','program','section','year_level'];
         const academicChanged = academicFields.some(field => Object.hasOwn(changes,field) && String(changes[field] ?? '') !== String(current[field] ?? ''));
         if (academicChanged) {

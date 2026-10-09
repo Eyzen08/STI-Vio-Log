@@ -60,12 +60,12 @@ import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
-import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent } from './lib/communityServiceAdmin.js'
+import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent, communityServiceStudentLabel } from './lib/communityServiceAdmin.js'
 import { connectRealtime } from './lib/realtime.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
-import { capitalizeWords, digitsOnly, STUDENT_NUMBER_PATTERN } from './lib/inputNormalization.js'
+import { digitsOnly, STUDENT_NUMBER_PATTERN, STUDENT_NAME_PATTERN, STUDENT_SUFFIXES, normalizePersonName, normalizeNameSpacing, normalizeStudentSearch, emailWithoutSpaces, wholeNumberInput } from './lib/inputNormalization.js'
 import './App.css'
 import './styles/student-portal.css'
 
@@ -1083,10 +1083,12 @@ function App() {
         : name === 'student_number'
           ? digitsOnly(value)
           : ['first_name','middle_name','last_name','suffix'].includes(name)
-            ? capitalizeWords(value)
-            : value
+            ? normalizePersonName(value)
+            : name === 'email' ? emailWithoutSpaces(value) : value
     }))
   }
+
+  const handleStudentNameBlur = ({target:{name,value}}) => setStudentForm(current => ({...current,[name]:normalizeNameSpacing(value)}))
 
   /*
    * ============================================================
@@ -1098,10 +1100,12 @@ function App() {
     const { name, value } = event.target
 
     if (name === 'student_search') {
+      const search = normalizeStudentSearch(value, students.map(studentOptionLabel))
+      setViolationFormError('')
       setViolationForm((current) => ({
         ...current,
-        student_search: value,
-        student_id: studentIdFromSearch(students, value)
+        student_search: search,
+        student_id: studentIdFromSearch(students, search)
       }))
       return
     }
@@ -1125,15 +1129,20 @@ function App() {
     const { name, value } = event.target
 
     if (name === 'student_search') {
+      const search = normalizeStudentSearch(value, students.map(communityServiceStudentLabel))
       setCommunityServiceForm((current) => ({
         ...current,
-        student_search: value,
-        student_id: resolveCommunityServiceStudent(students, value),
+        student_search: search,
+        student_id: resolveCommunityServiceStudent(students, search),
         violation_id: ''
       }))
       return
     }
 
+    if (name === 'required_hours' || name === 'required_minutes') {
+      setCommunityServiceForm(current => ({...current, [name]:wholeNumberInput(value, current[name])}))
+      return
+    }
     if (name === 'department_id') {
       setCommunityServiceForm((current) => ({ ...current, department_id: Number(value) || '', department_head_id: '' }))
       return
@@ -1262,6 +1271,11 @@ function App() {
 
   const handleViolationSubmit = async (event) => {
     event.preventDefault()
+    if (!violationForm.student_id) {
+      setViolationFormError('Select a matching student from the results.')
+      event.currentTarget.elements.namedItem('student_search')?.focus()
+      return
+    }
     return performMutation('violationCreate', async () => {
 
     setViolationFormError('')
@@ -2161,12 +2175,14 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="School-issued Student Number"
+                    placeholder="02000123456"
+                    aria-describedby="create-student-number-help"
                     inputMode="numeric"
                     pattern={STUDENT_NUMBER_PATTERN}
                     maxLength={11}
                     required
                   />
+                  <small id="create-student-number-help">Enter your 11-digit Student Number.</small>
                 </label>
 
                 <label><span id="create-student-first_name-label">First Name <b aria-hidden="true">*</b></span>
@@ -2182,8 +2198,13 @@ function App() {
                       handleStudentFieldChange
                     }
                     placeholder="Juan"
+                    pattern={STUDENT_NAME_PATTERN}
+                    maxLength={150}
+                    onBlur={handleStudentNameBlur}
+                    aria-describedby="create-student-name-help"
                     required
                   />
+                  <small id="create-student-name-help">Letters, spaces, apostrophes, hyphens, and periods only.</small>
                 </label>
 
                 <label><span id="create-student-last_name-label">Last Name <b aria-hidden="true">*</b></span>
@@ -2199,6 +2220,10 @@ function App() {
                       handleStudentFieldChange
                     }
                     placeholder="Dela Cruz"
+                    pattern={STUDENT_NAME_PATTERN}
+                    maxLength={150}
+                    onBlur={handleStudentNameBlur}
+                    aria-describedby="create-student-name-help"
                     required
                   />
                 </label>
@@ -2215,13 +2240,16 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="Optional"
+                    placeholder="Santos"
+                    pattern={STUDENT_NAME_PATTERN}
+                    maxLength={150}
+                    onBlur={handleStudentNameBlur}
+                    aria-describedby="create-student-name-help"
                   />
                 </label>
 
                 <label><span id="create-student-suffix-label">Suffix <small className="create-field-optional">(optional)</small></span>
-                  <input
-                    type="text"
+                  <select
                     name="suffix"
                     id="create-student-suffix"
                     aria-labelledby="create-student-suffix-label"
@@ -2231,8 +2259,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="Optional"
-                  />
+                  ><option value="">None</option>{STUDENT_SUFFIXES.map(suffix => <option key={suffix} value={suffix}>{suffix}</option>)}</select>
                 </label>
 
                 <label className="full-width-field"><span id="create-student-email-label">Student Gmail <b aria-hidden="true">*</b></span>
@@ -2244,7 +2271,7 @@ function App() {
                     value={studentForm.email}
                     onChange={handleStudentFieldChange}
                     onBlur={() => setStudentForm((current) => ({...current, email: normalizeStudentGmail(current.email)}))}
-                    placeholder="student@gmail.com"
+                    placeholder="juan.delacruz@gmail.com"
                     autoComplete="email"
                     pattern="[^ @]+@[gG][mM][aA][iI][lL][.][cC][oO][mM]"
                     maxLength={255}
@@ -2336,9 +2363,10 @@ function App() {
                     id="create-violation-student_search"
                     aria-labelledby="create-violation-student_search-label"
                     list="violation-student-options"
-                    aria-describedby="violation-student-help"
+                    aria-invalid={Boolean(violationFormError && !violationForm.student_id)}
+                    aria-describedby={`violation-student-help${violationFormError && !violationForm.student_id ? ' create-violation-error' : ''}`}
                     autoComplete="off"
-                    placeholder="Type a student number or name"
+                    placeholder="02000123456 or Juan Dela Cruz"
                     value={
                       violationForm.student_search
                     }
@@ -2449,7 +2477,7 @@ function App() {
               </div></fieldset>
 
               {violationFormError && (
-                <p className="error-message" role="alert">
+                <p className="error-message" role="alert" id="create-violation-error">
                   {violationFormError}
                 </p>
               )}

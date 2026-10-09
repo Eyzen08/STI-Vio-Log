@@ -6,6 +6,12 @@ const { STUDENT_NUMBER_PATTERN, EMAIL_PATTERN, REGISTRATION_TTL_HOURS, normalize
 const { createStudentPasswordAuthService } = require('../src/services/studentPasswordAuthService');
 const { createStudentPasswordAuthController } = require('../src/controllers/studentPasswordAuthController');
 
+test('registration rejects malformed names and unsupported suffixes before database access', async()=>{
+  const service=createStudentPasswordAuthService({pool:{connect:async()=>{throw Error('Invalid registration must not access records')}},otpService:{}});
+  const base={firstName:'Juan',lastName:'Reyes',guardianName:'Maria Reyes'};
+  for(const [field,value] of [['firstName','Juan3'],['middleName','---'],['lastName','@Reyes'],['suffix','XI'],['guardianName','123']]) await assert.rejects(service.register({...base,[field]:value}),error=>error.code==='VALIDATION_ERROR');
+});
+
 const setResetSigningKey = (t) => {
   const previous = process.env.OTP_HASH_KEY;
   process.env.OTP_HASH_KEY = 'test-only-reset-signing-key'.repeat(2);

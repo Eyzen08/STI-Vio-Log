@@ -129,6 +129,9 @@ test('assignment duration accepts minutes alone and shows the normalized total w
     for (const name of ['required_hours','required_minutes']) {
       const input=html.match(new RegExp(`<input[^>]*name="${name}"[^>]*>`))[0]
       assert.match(input,/aria-describedby="assign-duration-help"/)
+      assert.match(input,/type="text"/)
+      assert.match(input,/inputMode="numeric"/i)
+      assert.match(input,/pattern="\[0-9\]\+"/)
     }
     assert.match(html,/type="button"[^>]*data-modal-dismiss="true"[^>]*>Cancel/)
   }

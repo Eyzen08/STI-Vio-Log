@@ -1,6 +1,6 @@
 const { normalizeAcademic } = require('../utils/studentAcademic');
 const { ApiError } = require('../utils/api');
-const { isValidEmail, isValidPhone, normalizePhone } = require('../utils/validators');
+const { isValidEmail, isValidPhone, normalizePhone, isValidStudentName } = require('../utils/validators');
 
 const GOOGLE_EMAIL_PURPOSE = 'STUDENT_ONBOARDING_GOOGLE_EMAIL';
 
@@ -77,6 +77,7 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
   };
 
   const completeProfile = async ({ userId, academicLevel, strand, program, section, yearLevel, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
+    if (!isValidStudentName(guardianName,{maxLength:200})) throw new ApiError(400,'VALIDATION_ERROR','Enter a valid guardian name using letters, spaces, apostrophes, hyphens, and periods');
     const values = {
       academicLevel: academicLevel === undefined ? 'COLLEGE' : clean(academicLevel, 30).toUpperCase(),
       program: clean(program, 150).toUpperCase(), section: clean(section, 100), yearLevel: Number(yearLevel),

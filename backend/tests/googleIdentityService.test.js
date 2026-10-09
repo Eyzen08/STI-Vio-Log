@@ -6,6 +6,11 @@ const account = { id: 44, username: 'student44', role: 'STUDENT', first_name: 'M
 const identity = Object.freeze({ subject: 'google-sub-44', email: 'student@example.test', emailVerified: true });
 const profile = { phoneNumber: '09171234567', program: 'BSIT', section: 'A103', yearLevel: 3, guardianName: 'Maria Student', guardianRelationship: 'Mother', guardianPhoneNumber: '09181234567' };
 
+test('Google linking rejects malformed names with the existing generic failure', async () => {
+  const service=createGoogleIdentityService({pool:{connect:async()=>{throw Error('Invalid names must not access records')}},verifyIdentity:async()=>identity,issueToken:()=>null});
+  for(const firstName of ['---','Ana123','@Ana',{}]) await assert.rejects(service.linkStudent({credential:'synthetic',studentNumber:'02000123456',firstName,lastName:'Reyes'}),error=>error.code==='STUDENT_LINK_UNAVAILABLE'&&error.message===LINK_FAILURE);
+});
+
 const fakeDatabase = (handler) => {
   const calls = [];
   const client = { async query(sql, params = []) { calls.push({ scope: 'client', sql: String(sql), params }); return handler(String(sql), params); }, release() { calls.push({ scope: 'client', sql: 'RELEASE', params: [] }); } };

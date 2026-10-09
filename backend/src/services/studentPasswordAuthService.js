@@ -4,7 +4,7 @@ const crypto = require('node:crypto');
 const { ApiError } = require('../utils/api');
 const { passwordIsStrong } = require('./passwordPolicy');
 const { hashSecret } = require('./otpService');
-const { isValidPhone } = require('../utils/validators');
+const { isValidPhone, isValidStudentName, isValidStudentSuffix } = require('../utils/validators');
 
 const STUDENT_NUMBER_PATTERN = /^\d{11}$/;
 const REGISTRATION_TTL_HOURS = 24;
@@ -30,6 +30,8 @@ const createStudentPasswordAuthService = ({ pool, otpService, hashPassword = (va
   if (!pool?.connect || !otpService) throw new TypeError('Student authentication dependencies are required');
 
   const validateRegistration = ({ firstName, middleName, lastName, suffix, studentNumber, email, phoneNumber, academicLevel, strand, program, section, yearLevel, guardianName, guardianRelationship, guardianPhoneNumber, password, confirmPassword }) => {
+    if (!isValidStudentName(firstName) || !isValidStudentName(lastName) || !isValidStudentName(middleName,{optional:true}) || !isValidStudentName(guardianName,{maxLength:200})) throw new ApiError(400,'VALIDATION_ERROR','Enter valid student and guardian names using letters and name punctuation');
+    if (!isValidStudentSuffix(suffix)) throw new ApiError(400,'VALIDATION_ERROR','Select a valid suffix or None');
     const values = {
       firstName: clean(firstName, 150), middleName: clean(middleName, 150), lastName: clean(lastName, 150), suffix: clean(suffix, 50),
       studentNumber: clean(studentNumber, 50),

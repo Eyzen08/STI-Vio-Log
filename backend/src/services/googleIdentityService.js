@@ -1,6 +1,6 @@
 const { avatarSql, avatarMetadata } = require('./avatarService');
 const { ApiError } = require('../utils/api');
-const { isValidStudentNumber } = require('../utils/validators');
+const { isValidStudentNumber, isValidStudentName } = require('../utils/validators');
 const { issueSessionToken } = require('./sessionTokenService');
 const { onboardingState } = require('./studentOnboardingService');
 
@@ -38,7 +38,7 @@ const createGoogleIdentityService = ({ pool, verifyIdentity, issueToken = issueS
 
   const linkStudent = async ({ credential, studentNumber, firstName, lastName, ipAddress = null }) => {
     const identity = await verifyIdentity(credential);
-    if (!isValidStudentNumber(studentNumber) || !normalizeName(firstName) || !normalizeName(lastName)) {
+    if (!isValidStudentNumber(studentNumber) || !isValidStudentName(firstName) || !isValidStudentName(lastName)) {
       throw new ApiError(409, 'STUDENT_LINK_UNAVAILABLE', LINK_FAILURE);
     }
     const client = await pool.connect();

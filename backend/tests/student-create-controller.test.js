@@ -4,6 +4,34 @@ const pool=require('../src/config/database');
 const {createStudent,updateStudent,resetStudentPassword}=require('../src/controllers/studentController');
 const response=()=>({statusCode:200,body:null,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
 
+test('student creation rejects malformed identity fields before database access', async()=>{
+  const originalConnect=pool.connect;
+  pool.connect=async()=>{throw new Error('Invalid identity must not reach the database')};
+  try {
+    for(const [field,value] of [['first_name','Juan123'],['first_name','---'],['last_name','$Reyes'],['middle_name','123'],['suffix','@'],['suffix','XI']]) {
+      const res=response();
+      await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Juan',last_name:'Reyes',email:'juan@gmail.com',[field]:value}},res);
+      assert.equal(res.statusCode,400,field);
+    }
+  } finally {pool.connect=originalConnect}
+});
+
+test('student edits preserve unchanged legacy identities and reject invalid changed fields',async()=>{
+  const originalConnect=pool.connect;
+  const original={id:55,user_id:44,student_number:'LEGACY-1',first_name:'Legacy123',middle_name:'',last_name:'Reyes',suffix:'Legacy suffix'};
+  const writes=[];
+  pool.connect=async()=>({query:async(sql,params)=>{if(String(sql).startsWith('SELECT id,user_id'))return{rows:[original]};if(String(sql).includes('UPDATE students')){writes.push(params);return{rows:[original]}};return{rows:[]}},release(){}});
+  try {
+    const preserved=response();
+    await updateStudent({user:{id:1},params:{id:'55'},body:{student_number:original.student_number,first_name:original.first_name,suffix:original.suffix,reason:'Unrelated correction'}},preserved);
+    assert.equal(preserved.statusCode,200);
+    for(const [field,value] of [['student_number','NEW-ID'],['first_name','New123'],['middle_name','---'],['suffix','XI']]) {
+      const rejected=response();await updateStudent({user:{id:1},params:{id:'55'},body:{[field]:value,reason:'Identity correction'}},rejected);assert.equal(rejected.statusCode,400,field);
+    }
+    assert.equal(writes.length,1);
+  } finally {pool.connect=originalConnect}
+});
+
 test('student creation rejects profile and ownership fields',async()=>{for(const field of ['user_id','phone_number','program','section','year_level','qr_code','profile_image']){const res=response();await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Test',last_name:'Student',email:'student@gmail.com',[field]:'unsupported'}},res);assert.equal(res.statusCode,400,field)}});
 
 test('student number, legal name, and Gmail create an account without automatically emailing it',async()=>{

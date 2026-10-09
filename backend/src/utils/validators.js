@@ -1,4 +1,5 @@
 const isValidEmail = (value) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } = require('../../../shared/studentIdentity.mjs');
 
 const officerText = (value) => typeof value === 'string' ? value.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
 const isValidOfficerName = (value) => officerText(value).length <= 100 && /^\p{L}[\p{L}\p{M}]*(?:\.?(?: +|['’\-])\p{L}[\p{L}\p{M}]*)*\.?$/u.test(officerText(value));
@@ -49,6 +50,9 @@ const assertAllowedFields = (body, allowedFields) => {
 };
 
 module.exports = {
+    isValidStudentName,
+    isValidStudentSuffix,
+    normalizeNameSpacing,
     isValidOfficerName,
     isValidDepartmentName,
     isValidOfficerUsername,
