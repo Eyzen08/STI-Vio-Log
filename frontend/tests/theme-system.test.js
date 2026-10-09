@@ -14,6 +14,12 @@ const portal = readPortalStyles()
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const bootstrap = await readFile(new URL('../public/theme-bootstrap.js', import.meta.url), 'utf8')
 
+test('assignment labels override shared workflow label grids without affecting other drawers', async () => {
+  const css = await readFile(new URL('../src/styles/community-workflow.css', import.meta.url), 'utf8')
+  assert.match(css, /\.service-workflow-modal \.assign-service-grid label\s*\{[^}]*display:block;[^}]*margin-top:0;/)
+  assert.match(css, /\.app-modal \.assign-service-actions button\s*\{[^}]*background:var\(--action-primary-surface\);[^}]*color:var\(--text-on-accent\);/)
+})
+
 test('admin dark-mode campus framing matches light mode on desktop and mobile', async () => {
   const css = await readFile(new URL('../src/styles/admin-dashboard.css', import.meta.url), 'utf8')
   const darkBanner = ":root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome"

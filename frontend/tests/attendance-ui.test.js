@@ -120,6 +120,37 @@ test('community workflow keeps assignment filters, actual attendance, eligible c
   assert.match(form,/value="4" selected/); assert.doesNotMatch(form,/value="5"|value="6"|value="10"/)
 })
 
+test('assignment duration accepts minutes alone and shows the normalized total with shared help', () => {
+  for (const [hours, minutes, total] of [[0,30,'30 min'],[1,90,'2 hr 30 min'],['','','0 min']]) {
+    const html=render('AssignServiceForm',{form:{required_hours:hours,required_minutes:minutes}})
+    assert.match(html,/Required service time/)
+    assert.match(html,/Enter hours, minutes, or both/)
+    assert.match(html,new RegExp(`Total required time: <strong>${total}</strong>`))
+    for (const name of ['required_hours','required_minutes']) {
+      const input=html.match(new RegExp(`<input[^>]*name="${name}"[^>]*>`))[0]
+      assert.match(input,/aria-describedby="assign-duration-help"/)
+    }
+    assert.match(html,/type="button"[^>]*data-modal-dismiss="true"[^>]*>Cancel/)
+  }
+})
+
+test('assignment form explains unavailable choices and locks fields and actions while saving', () => {
+  const form={student_id:1,student_search:'Ana Reyes - TEST-1',violation_id:'',required_hours:1,department_id:3,department_head_id:''}
+  const empty=render('AssignServiceForm',{form})
+  assert.match(empty,/No open violations are available for this student/)
+  assert.match(empty,/No service departments with an active Department Head are available/)
+  assert.match(empty,/No active Department Head is assigned to this department/)
+  assert.match(empty,/aria-describedby="assign-violation_id-help"/)
+  assert.match(empty,/aria-describedby="assign-department_head_id-help"/)
+  assert.match(empty,/aria-labelledby="assign-department_id-label"/)
+  const busy=render('AssignServiceForm',{form,busy:true,error:'Assignment unavailable'})
+  assert.match(busy,/<fieldset disabled=""/)
+  assert.match(busy,/data-modal-dismiss="true" disabled=""/)
+  assert.match(busy,/Saving assignment…/)
+  assert.match(busy,/role="alert">Assignment unavailable/)
+  assert.match(busy,/value="Ana Reyes - TEST-1"/)
+})
+
 test('QR workflow shows automatic department, duration limits and active session without another Time In', () => {
   const form={qr_code:'test-code',supervising_officer_id:9,notes:'',session_type:'FIXED',selected_duration_minutes:120}
   const result={action:'scan',server_time:new Date(start).toISOString(),student:{first_name:'Ana',last_name:'Reyes',student_number:'02000',program:'BSIT'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},allowance:{available_minutes:300,completed_today_minutes:180,daily_remaining_minutes:300,day_ends_at:'2026-10-05T16:00:00Z'},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}

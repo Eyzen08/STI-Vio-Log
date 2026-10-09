@@ -33,27 +33,41 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
   const eligible = eligibleServiceViolations(violations, assignments, form.student_id)
   const departments = serviceDepartmentOptions(destinations)
   const heads = headsForDepartment(destinations, form.department_id)
-  const errors = attempted ? {
+  const requiredMinutes = normalizedRequiredMinutes(form)
+  const validationErrors = {
     student_search: !form.student_id && 'Select a matching student from the results.',
     violation_id: !eligible.some(item => Number(item.id) === Number(form.violation_id)) && 'Select an available open violation.',
-    required_hours: !normalizedRequiredMinutes(form) && 'Enter required hours or minutes.',
+    required_hours: !(Number.isFinite(requiredMinutes) && requiredMinutes > 0) && 'Enter a total service time greater than zero.',
     department_id: !form.department_id && 'Select a service department.',
     department_head_id: !heads.some(item => Number(item.department_head_id) === Number(form.department_head_id)) && 'Select the accountable Department Head.'
-  } : {}
-  const field = (name) => ({ name, id:`assign-${name}`, value:form[name], onChange:onFieldChange, 'aria-invalid':Boolean(errors[name]), 'aria-describedby':errors[name] ? `assign-${name}-error` : undefined })
+  }
+  const errors = attempted ? validationErrors : {}
+  const field = (name, help, errorName = name) => ({ name, id:`assign-${name}`, 'aria-labelledby':`assign-${name}-label`, value:form[name] ?? '', onChange:onFieldChange, 'aria-invalid':Boolean(errors[errorName]), 'aria-describedby':[help, errors[errorName] && `assign-${errorName}-error`].filter(Boolean).join(' ') || undefined })
   const message = name => errors[name] && <span className="service-field-error" id={`assign-${name}-error`}>{errors[name]}</span>
+  const submit = event => {
+    setAttempted(true)
+    const invalidField = Object.keys(validationErrors).find(name => validationErrors[name])
+    if (invalidField) {
+      event.preventDefault()
+      event.currentTarget.elements.namedItem(invalidField)?.focus()
+      return
+    }
+    onSubmit(event)
+  }
   return <><div className="service-assignment-intro"><i><PortalIcon name="registrations" size={32}/></i><div><h3>Create a service assignment</h3><p>Connect an open violation to an accountable department head.</p></div></div>
-    <form className="assign-service-form" aria-busy={busy} onSubmit={event => { setAttempted(true); if (!form.student_id || !eligible.some(item => Number(item.id) === Number(form.violation_id)) || !normalizedRequiredMinutes(form) || !form.department_id || !heads.some(item => Number(item.department_head_id) === Number(form.department_head_id))) { event.preventDefault(); return } onSubmit(event) }}>
+    <form className="assign-service-form" aria-busy={busy} onInvalidCapture={() => setAttempted(true)} onSubmit={submit}>
       <fieldset disabled={busy}><legend className="sr-only">Service assignment details</legend><div className="assign-service-grid">
-        <label>Student <b aria-hidden="true">*</b><input type="search" list="community-service-student-options" autoComplete="off" placeholder="Type a student number or name" {...field('student_search')} required/><datalist id="community-service-student-options">{students.map(student => <option key={student.id} value={communityServiceStudentLabel(student)}/>)}</datalist><small>Search by student number, first name, or last name, then select the matching result.</small>{message('student_search')}</label>
-        <label>Open violation <b aria-hidden="true">*</b><select {...field('violation_id')} disabled={!form.student_id} required><option value="">{form.student_id ? 'Select an open violation' : 'Select a student first'}</option>{eligible.map(item => <option key={item.id} value={item.id}>{communityServiceViolationLabel(item)}</option>)}</select>{form.student_id && !eligible.length ? <small>No open violations are available for this student.</small> : null}{message('violation_id')}</label>
-        <label>Required hours <b aria-hidden="true">*</b><input type="number" min="0" step="1" {...field('required_hours')}/>{message('required_hours')}</label>
-        <label>Required minutes<input type="number" inputMode="numeric" min="0" step="1" {...field('required_minutes')}/><small>Values of 60 or more are automatically converted to hours.</small></label>
-        <label>Service department type <b aria-hidden="true">*</b><select {...field('department_id')} required><option value="">Select a department type</option>{departments.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{message('department_id')}</label>
-        <label>Department Head <b aria-hidden="true">*</b><select {...field('department_head_id')} disabled={!form.department_id} required><option value="">{form.department_id ? 'Select the accountable Department Head' : 'Select a department first'}</option>{heads.map(item => <option key={item.department_head_id} value={item.department_head_id}>{item.first_name} {item.last_name}</option>)}</select>{form.department_id && !heads.length ? <small>No active Department Head is assigned to this department.</small> : null}{message('department_head_id')}</label>
+        <label><span id="assign-student_search-label">Student <b aria-hidden="true">*</b></span><input type="search" list="community-service-student-options" autoComplete="off" placeholder="Type a student number or name" {...field('student_search', 'assign-student_search-help')} required/><datalist id="community-service-student-options">{students.map(student => <option key={student.id} value={communityServiceStudentLabel(student)}/>)}</datalist><small id="assign-student_search-help">Search by name or student number, then select the matching result.</small>{message('student_search')}</label>
+        <label><span id="assign-violation_id-label">Open violation <b aria-hidden="true">*</b></span><select {...field('violation_id', 'assign-violation_id-help')} disabled={!form.student_id} required><option value="">{form.student_id ? 'Select an open violation' : 'Select a student first'}</option>{eligible.map(item => <option key={item.id} value={item.id}>{communityServiceViolationLabel(item)}</option>)}</select><small id="assign-violation_id-help">{form.student_id && !eligible.length ? 'No open violations are available for this student.' : 'Only open violations without a service assignment are listed.'}</small>{message('violation_id')}</label>
+        <fieldset className="assign-service-duration"><legend>Required service time <b aria-hidden="true">*</b></legend><div className="assign-service-duration-inputs">
+          <label><span id="assign-required_hours-label">Hours</span><input type="number" inputMode="numeric" min="0" step="1" placeholder="0" {...field('required_hours', 'assign-duration-help')}/></label>
+          <label><span id="assign-required_minutes-label">Minutes</span><input type="number" inputMode="numeric" min="0" step="1" placeholder="0" {...field('required_minutes', 'assign-duration-help', 'required_hours')}/></label>
+        </div><small id="assign-duration-help">Enter hours, minutes, or both. Minutes of 60 or more are converted to hours.</small>{message('required_hours')}<p className="assign-service-total" role="status">Total required time: <strong>{formatDuration(Number.isFinite(requiredMinutes) ? requiredMinutes / 60 : 0)}</strong></p></fieldset>
+        <label><span id="assign-department_id-label">Service department type <b aria-hidden="true">*</b></span><select {...field('department_id', !departments.length ? 'assign-department_id-help' : undefined)} required><option value="">Select a department type</option>{departments.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select>{!departments.length && <small id="assign-department_id-help">No service departments with an active Department Head are available.</small>}{message('department_id')}</label>
+        <label><span id="assign-department_head_id-label">Department Head <b aria-hidden="true">*</b></span><select {...field('department_head_id', 'assign-department_head_id-help')} disabled={!form.department_id} required><option value="">{form.department_id ? 'Select the accountable Department Head' : 'Select a department first'}</option>{heads.map(item => <option key={item.department_head_id} value={item.department_head_id}>{item.first_name} {item.last_name}</option>)}</select><small id="assign-department_head_id-help">{form.department_id && !heads.length ? 'No active Department Head is assigned to this department.' : 'Select the head responsible for supervising this assignment.'}</small>{message('department_head_id')}</label>
       </div></fieldset>
       {error && <p className="error-message" role="alert">{error}</p>}{success && <p className="success-message" role="status">{success}</p>}
-      <AsyncActionButton type="submit" busy={busy} busyLabel="Saving assignment…" onClick={() => setAttempted(true)}>Save Assignment</AsyncActionButton>
+      <div className="assign-service-actions"><button type="button" data-modal-dismiss="true" disabled={busy}>Cancel</button><AsyncActionButton type="submit" busy={busy} busyLabel="Saving assignment…" onClick={() => setAttempted(true)}>Save Assignment</AsyncActionButton></div>
     </form></>
 }
 
