@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { buildStudentDirectory, filterStudentDirectory } from '../lib/adminStudentReview.js'
+import { STRANDS, yearOptions } from '../lib/studentAcademic.js'
 import { formatDuration } from '../lib/displayFormat.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import Avatar from './Avatar.jsx'
@@ -11,6 +12,7 @@ import '../styles/admin-students.css'
 const clearanceLabels = { NOT_CLEARED: 'Not Cleared', ELIGIBLE: 'Eligible', CLEARED: 'Cleared' }
 const tabs = [['all', 'All Students'], ['violations', 'With Violations'], ['service', 'Community Service'], ['cleared', 'Cleared']]
 const pageSize = 5
+const yearFilters = [{value:'',label:'All Years'}, ...yearOptions('COLLEGE').map(([,label])=>({value:label,label})), {value:'SENIOR_HIGH_SCHOOL',label:'Senior High School'}, ...yearOptions('SENIOR_HIGH_SCHOOL').map(([,label])=>({value:label,label}))]
 
 export default function StudentManagement({ students = [], violations = [], assignments = [], clearances = [], activeSessions = [], attendanceReady = true, loading = false, query = '', onQueryChange, token, onAdd, onView, onServiceTime, onGuardianContact, onUpdated }) {
   const [filters, setFilters] = useState({ program: '', year: '', status: '', tab: 'all', severity: '', attendance: '' })
@@ -48,8 +50,8 @@ export default function StudentManagement({ students = [], violations = [], assi
       <header className="student-directory-heading"><div><h3 id="student-directory-title">Student Directory</h3><p>Search and manage student records.</p></div><span>{loading ? 'Loading…' : `${visible.length} student${visible.length === 1 ? '' : 's'}`}</span></header>
       <div className="student-directory-toolbar">
         <label className="student-directory-search"><span className="sr-only">Search students</span><PortalIcon name="search" size={22}/><input type="search" name="student-directory-filter" autoComplete="off" value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder="Search student number, name, or program..."/></label>
-        <StudentDirectorySelect label="Program" value={filters.program} onChange={(value) => setFilter('program', value)} options={[{ value: '', label: 'All Programs' }, ...options('programLabel').map((value) => ({ value, label: value }))]}/>
-        <StudentDirectorySelect label="Year Level" value={filters.year} onChange={(value) => setFilter('year', value)} options={[{ value: '', label: 'All Years' }, ...options('yearLabel').map((value) => ({ value, label: value }))]}/>
+        <StudentDirectorySelect label="Program" value={filters.program} onChange={(value) => setFilter('program', value)} options={[{ value: '', label: 'All Programs' }, ...[...new Set([...STRANDS.map(([code]) => code), ...options('programLabel')])].sort((a,b)=>a.localeCompare(b)).map((value) => ({ value, label: value }))]}/>
+        <StudentDirectorySelect label="Year Level" value={filters.year} onChange={(value) => setFilter('year', value)} options={[...yearFilters, ...options('yearLabel').filter((value) => !yearFilters.some((option) => option.label === value)).map((value) => ({ value, label: value }))]}/>
         <StudentDirectorySelect label="Status" value={filters.status} onChange={(value) => setFilter('status', value)} options={[{ value: '', label: 'All Statuses' }, ...Object.entries(clearanceLabels).map(([value, label]) => ({ value, label }))]}/>
         <button type="button" className="student-filter-toggle" aria-expanded={filtersOpen} aria-controls="student-extra-filters" onClick={() => setFiltersOpen(!filtersOpen)}><PortalIcon name="filter" size={22}/>Filters{(filters.severity || filters.attendance) && <span className="student-filter-count">{Number(Boolean(filters.severity)) + Number(Boolean(filters.attendance))}</span>}</button>
       </div>

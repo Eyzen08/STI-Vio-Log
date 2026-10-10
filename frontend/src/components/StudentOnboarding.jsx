@@ -1,4 +1,4 @@
-import { STRANDS } from '../lib/studentAcademic.js'
+import { STRANDS, yearOptions } from '../lib/studentAcademic.js'
 import { useEffect, useRef, useState } from 'react'
 import { completeStudentOnboarding, linkStudentGoogle, requestStudentGoogleEmail, verifyStudentGoogleEmail } from '../lib/api.js'
 import { googleButtonConfiguration, googleIdentityConfiguration, isGoogleClientConfigured, loadGoogleIdentityServices, readGoogleCredential } from '../lib/googleIdentity.js'
@@ -14,7 +14,7 @@ const emptyProfile={academicLevel:'COLLEGE',strand:'',program:'',section:'',year
 export default function StudentOnboarding({user,clientId,onSession,onLogout}) {
   const email=user?.onboarding_google_email||'',step=user?.onboarding_step||'GOOGLE',googleStage=user?.google_onboarding_stage||'EMAIL',buttonRef=useRef(null),callbackRef=useRef(null)
   const [form,setForm]=useState(emptyProfile),[code,setCode]=useState(''),[cooldown,setCooldown]=useState(0),[busy,setBusy]=useState(false),[error,setError]=useState('')
-  const yearLevelOptions=form.academicLevel==='COLLEGE'?[[1,'1st Level'],[2,'2nd Level'],[3,'3rd Level'],[4,'4th Level']]:[[11,'Grade 11'],[12,'Grade 12']]
+  const yearLevelOptions=yearOptions(form.academicLevel)
   callbackRef.current=async(response)=>{const credential=readGoogleCredential(response);if(!credential)return setError('Google did not return a valid sign-in response. Try again.');setBusy(true);setError('');try{const data=await linkStudentGoogle(credential);onSession(data)}catch(e){setError(e.message)}finally{setBusy(false)}}
   useEffect(()=>{if(step!=='GOOGLE'||googleStage!=='OAUTH'||!isGoogleClientConfigured(clientId))return undefined;let active=true,node=buttonRef.current;loadGoogleIdentityServices().then((google)=>{if(!active||!node)return;node.replaceChildren();google.initialize(googleIdentityConfiguration({clientId,callback:(response)=>callbackRef.current?.(response)}));google.renderButton(node,googleButtonConfiguration({width:node.clientWidth}))}).catch((e)=>active&&setError(e.message));return()=>{active=false;if(node)node.replaceChildren()}},[clientId,step,googleStage])
   useEffect(()=>{if(!cooldown)return undefined;const timer=window.setInterval(()=>setCooldown((value)=>Math.max(0,value-1)),1000);return()=>window.clearInterval(timer)},[cooldown])

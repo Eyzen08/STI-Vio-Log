@@ -9,6 +9,8 @@ test('report presentation preserves student numbers and formats durations and st
   assert.equal(reportCell('credited_minutes', 90), '1 hr 30 min')
   assert.equal(reportCell('assignment_status', 'IN_PROGRESS'), 'In Progress')
   assert.equal(reportCell('remaining_hours', null), 'Not recorded')
+  assert.equal(reportCell('year_level',1,{academic_level:'COLLEGE'}),'1st Year')
+  assert.equal(reportCell('year_level',12,{academic_level:'SENIOR_HIGH_SCHOOL'}),'Grade 12')
 })
 test('display exports share readable duration cells', () => {
   const rows = presentedReportRows([{ student_name: '=SUM(1)', remaining_hours: 0.5 }])

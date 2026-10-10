@@ -18,12 +18,27 @@ test('directory filters use real standing, aggregate service and preserve repeat
   assert.equal(rows[0].severity, 'Major-level')
   assert.deepEqual(rows[0].service, { required: 6, remaining: 4, completed: 2, percent: 33 })
   assert.deepEqual(rows.map((row) => row.clearance), ['NOT_CLEARED', 'CLEARED', 'ELIGIBLE', 'NOT_CLEARED'])
-  assert.deepEqual(filterStudentDirectory(rows, { query: 'Juan Dela Cruz', program: 'BSIT', year: 'Year 2', status: 'NOT_CLEARED', tab: 'violations', severity: 'major', attendance: 'timed-in' }).map((row) => row.id), [1])
+  assert.deepEqual(filterStudentDirectory(rows, { query: 'Juan Dela Cruz', program: 'BSIT', year: '2nd Year', status: 'NOT_CLEARED', tab: 'violations', severity: 'major', attendance: 'timed-in' }).map((row) => row.id), [1])
   assert.equal(filterStudentDirectory(rows, { program: 'BSIT', status: 'CLEARED' }).length, 0)
   assert.deepEqual(filterStudentDirectory(rows, { tab: 'cleared' }).map((row) => row.id), [2])
   assert.deepEqual(filterStudentDirectory(rows, { tab: 'service' }).map((row) => row.id), [1, 4])
   assert.deepEqual(filterStudentDirectory(rows, { query: 'stem', year: 'Grade 11' }).map((row) => row.id), [3])
+  assert.deepEqual(filterStudentDirectory(rows, { year: 'SENIOR_HIGH_SCHOOL' }).map((row) => row.id), [3])
+  assert.deepEqual(filterStudentDirectory(rows, { program: 'STEM', year: 'SENIOR_HIGH_SCHOOL' }).map((row) => row.id), [3])
+  assert.deepEqual(filterStudentDirectory(rows, {}).map((row) => row.id), [1,2,3,4])
   assert.equal(rows[2].service.required, 0)
+})
+
+test('senior high selection includes both grades and inferred legacy records', () => {
+  const rows = buildStudentDirectory([
+    {id:1, academic_level:'COLLEGE', program:'BSIT', year_level:1},
+    {id:2, academic_level:'SENIOR_HIGH_SCHOOL', strand:'STEM', year_level:11},
+    {id:3, strand:'ABM', year_level:12}
+  ])
+  assert.deepEqual(filterStudentDirectory(rows, {year:'SENIOR_HIGH_SCHOOL'}).map(({id})=>id), [2,3])
+  assert.deepEqual(filterStudentDirectory(rows, {year:'Grade 11'}).map(({id})=>id), [2])
+  assert.deepEqual(filterStudentDirectory(rows, {year:'Grade 12',program:'ABM'}).map(({id})=>id), [3])
+  assert.deepEqual(filterStudentDirectory(rows, {year:'SENIOR_HIGH_SCHOOL',query:'stem'}).map(({id})=>id), [2])
 })
 test('admin student search matches number, name, program, or section',()=>{assert.deepEqual(filterAdminStudents(students,'dela').map(x=>x.id),[1]);assert.deepEqual(filterAdminStudents(students,'A103').map(x=>x.id),[1]);assert.equal(filterAdminStudents(students,'020009').length,1)})
 test('student condition summarizes only that students violation history',()=>{assert.deepEqual(summarizeStudentCondition(1,[{student_id:1,status:'OPEN',required_service_hours:4,completed_service_hours:1},{student_id:1,status:'COMPLETE',required_service_hours:2,completed_service_hours:2},{student_id:2,status:'OPEN',required_service_hours:9}]),{records:[{student_id:1,status:'OPEN',required_service_hours:4,completed_service_hours:1},{student_id:1,status:'COMPLETE',required_service_hours:2,completed_service_hours:2}],total:2,open:1,resolved:1,requiredHours:4,remainingHours:3,condition:'Requires action'})})

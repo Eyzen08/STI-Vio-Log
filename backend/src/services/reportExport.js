@@ -49,7 +49,7 @@ const createReportWorkbook = (type, payload, filters = {}, generatedAt = new Dat
     sheet.addRow(['Records',rows.length]);sheet.addRow([]);sheet.addRow(columns.map(column=>column.label));
     for(const source of rows){
       const values=reportValues(schema,source);
-      sheet.addRow(columns.map(({key})=>typeof values[key]==='number'&&!/(hours|minutes)$/.test(key)?values[key]:reportCell(key,values[key],source)));
+      sheet.addRow(columns.map(({key})=>typeof values[key]==='number'&&key!=='year_level'&&!/(hours|minutes)$/.test(key)?values[key]:reportCell(key,values[key],source)));
     }
     formatReportSheet(sheet, 2);
     sheet.getColumn(2).numFmt='@';

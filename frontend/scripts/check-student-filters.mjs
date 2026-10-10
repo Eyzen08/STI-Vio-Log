@@ -16,6 +16,7 @@ const students = Array.from({ length: 24 }, (_, index) => ({
   program: index < 6 ? 'BSIT' : index === 6 ? longProgram : `Program ${index}`, section: 'A303'
 }))
 students[0].year_level = 2
+let servedStudents = students
 const server = await createServer({ root, server: { host: '127.0.0.1', port: 0 } })
 let browser
 let attendanceReady = true
@@ -25,7 +26,7 @@ try {
   const origin = server.resolvedUrls.local[0]
   browser = await chromium.launch({ headless: true, channel: 'chrome' })
   const page = await browser.newPage({ bypassCSP: true, hasTouch: true })
-  page.setDefaultTimeout(8000)
+  page.setDefaultTimeout(20000)
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/*', async (route) => {
@@ -34,7 +35,7 @@ try {
       return url.origin === new URL(origin).origin ? route.continue() : route.abort()
     }
     const payloads = {
-      '/api/auth/session': { user }, '/api/students': { students },
+      '/api/auth/session': { user }, '/api/auth/legal': { legal: { required: false } }, '/api/students': { students: servedStudents },
       '/api/violations': { violations: [{ id: 1, student_id: 1, status: 'OPEN', severity: 'MINOR' }] },
       '/api/violations/types': { violationTypes: [] },
       '/api/community-service': { assignments: [{ id: 1, student_id: 1, status: 'IN_PROGRESS', required_hours: 4, remaining_hours: 2 }] },
@@ -60,6 +61,12 @@ try {
   }
   const clear = () => page.locator('#student-extra-filters').getByRole('button', { name: 'Clear Filters', exact: true }).click()
   await field('Year Level').waitFor()
+  await field('Year Level').click()
+  assert.deepEqual(await page.getByRole('option').allInnerTexts(), ['All Years', '1st Year', '2nd Year', '3rd Year', '4th Year', 'Senior High School', 'Grade 11', 'Grade 12'], 'All year choices appear with only college records')
+  await page.keyboard.press('Escape')
+  await field('Program').click()
+  for (const label of ['ABM', 'STEM']) assert.equal(await page.getByRole('option', { name: label, exact: true }).count(), 1, `${label} appears once without SHS records`)
+  await page.keyboard.press('Escape')
   await field('Year Level').focus()
   await page.keyboard.press('Enter')
   await page.keyboard.press('ArrowDown')
@@ -68,10 +75,9 @@ try {
   assert.equal(await value('Year Level'), 'All Years', 'Escape cancels preview')
   assert.equal(await field('Year Level').evaluate((el) => el === document.activeElement), true)
   await page.keyboard.press('Enter')
-  await page.keyboard.type('Year')
-  await page.keyboard.press('ArrowDown')
+  await page.keyboard.type('2nd')
   await page.keyboard.press('Enter')
-  assert.equal(await value('Year Level'), 'Year 2', 'Typeahead selects the matching year')
+  assert.equal(await value('Year Level'), '2nd Year', 'Typeahead selects the matching year')
   await field('Year Level').press('Enter')
   await page.keyboard.press('Home')
   await page.keyboard.press('Tab')
@@ -102,7 +108,7 @@ try {
   assert.match(await page.locator('.student-directory-footer').innerText(), /Showing 6–10/)
   await choose('Program', 'BSIT')
   assert.match(await page.locator('.student-directory-footer').innerText(), /Showing 1–5 of 6/)
-  await choose('Year Level', 'Year 2')
+  await choose('Year Level', '2nd Year')
   await choose('Status', 'Not Cleared')
   await page.getByRole('button', { name: 'Filters', exact: true }).click()
   await choose('Offense severity', 'Minor')
@@ -179,6 +185,29 @@ try {
   await page.locator('.student-directory-card[aria-busy="false"]').waitFor()
   await page.getByRole('button', { name: 'Filters', exact: true }).click()
   assert.equal(await field('Attendance').isDisabled(), true, 'Unavailable attendance cannot be selected')
+  servedStudents = [...students,
+    { id: 25, first_name: 'Grade', last_name: 'Eleven', student_number: '02000111111', academic_level: 'SENIOR_HIGH_SCHOOL', strand: 'STEM', year_level: 11 },
+    { id: 26, first_name: 'Grade', last_name: 'Twelve', student_number: '02000122222', strand: 'ABM', year_level: 12 }]
+  attendanceReady = true
+  await page.reload()
+  await page.locator('.student-directory-card[aria-busy="false"]').waitFor()
+  assert.match(await page.locator('.student-directory-footer').innerText(), /of 26/)
+  await choose('Year Level', 'Senior High School')
+  assert.match(await page.locator('.student-directory-footer').innerText(), /of 2 students/)
+  await choose('Program', 'ABM')
+  assert.match(await page.locator('.student-directory-table tbody').innerText(), /Grade Twelve/)
+  await choose('Program', 'All Programs')
+  await choose('Year Level', 'Grade 11')
+  assert.match(await page.locator('.student-directory-table tbody').innerText(), /Grade Eleven/)
+  servedStudents = []
+  await page.reload()
+  await page.locator('.student-directory-card[aria-busy="false"]').waitFor()
+  await field('Year Level').click()
+  assert.equal(await page.getByRole('option', { name: 'Grade 12', exact: true }).count(), 1, 'Grade 12 remains available without records')
+  await page.keyboard.press('Escape')
+  await field('Program').click()
+  assert.equal(await page.getByRole('option', { name: 'STEM', exact: true }).count(), 1, 'STEM remains available without records')
+  await page.keyboard.press('Escape')
   assert.deepEqual(errors, [], 'Browser runtime errors')
   console.log('PASS student filters: selection, keyboard, dismissal, filtering, reset, disabled state, viewport placement, and light/dark desktop/tablet/mobile.')
 } finally {

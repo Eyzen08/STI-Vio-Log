@@ -33,6 +33,18 @@ test('all seven report types expose Excel downloads alongside their existing JSO
   }
 });
 
+test('Excel year cells match report preview labels for college and senior high', async () => {
+  for (const [academic_level, year_level, expected] of [['COLLEGE', 2, '2nd Year'], ['SENIOR_HIGH_SCHOOL', 11, 'Grade 11']]) {
+    const workbook = require('../src/services/reportExport').createReportWorkbook('good-standing', {
+      data: [{first_name:'Alex', last_name:'Santos', student_number:'02000123456', academic_level, strand:'STEM', program:'BSIT', year_level}]
+    });
+    const sheet = await new ExcelJS.Workbook().xlsx.load(await workbook.xlsx.writeBuffer());
+    const report = sheet.worksheets[0];
+    const column = report.getRow(6).values.indexOf('Year / Grade level');
+    assert.equal(report.getRow(7).getCell(column).value, expected);
+  }
+});
+
 test('report workbooks preserve all rows, readable metadata and literal text without internal fields', async () => {
   assert.equal(typeof reports.createReportWorkbook, 'function');
   const row = {first_name:'=Maria',last_name:'Santos',student_number:'000123',avatar:{data:'hidden-avatar'},assignment_id:42,department_name:'Library',violation_name:'Minor Offense',description:'Handbook offense: No ID\nIncident details: Missing ID\nSecond line',incident_date:'2026-10-08',status:'OPEN',remaining_hours:0,has_active_violation:false,has_pending_service:true,total_credited_minutes:0,total_worked_minutes:90,manual_adjustment_hours:-0.5,program:'BSIT',academic_level:'COLLEGE',year_level:1};

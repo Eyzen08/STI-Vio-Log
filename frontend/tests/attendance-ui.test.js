@@ -9,7 +9,7 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'StudentProfile', 'StudentViolations', 'StudentQr', 'StudentClearance', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'StudentProfile', 'StudentViolations', 'StudentQr', 'StudentClearance', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'StudentAcademicFields', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
   components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
@@ -20,6 +20,11 @@ before(async () => {
 })
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
+
+test('legacy college year stays selectable with its ordinal label', () => {
+  const html = render('StudentAcademicFields', { value: { academic_level: 'COLLEGE', program: 'BSIT', year_level: 5 }, onChange() {}, legacy: true })
+  assert.match(html, /<option value="5" selected="">5th Year<\/option>/)
+})
 
 test('both office roles can edit closed violations from the shared table and record drawer', () => {
   const violation = { id: 91, student_id: 1, student_name: 'Test Student', student_number: 'TEST-1', description: 'Facts', severity: 'MINOR', status: 'COMPLETE' }

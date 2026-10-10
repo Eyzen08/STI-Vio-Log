@@ -1,4 +1,4 @@
-import { academicProgram, academicYear } from './studentAcademic.js'
+import { academicLevel, academicProgram, academicYear } from './studentAcademic.js'
 import { serviceProgress } from './serviceProgress.js'
 
 const text = (value) => String(value || '').toLocaleLowerCase()
@@ -36,7 +36,7 @@ export const buildStudentDirectory = (students = [], violations = [], assignment
 })
 
 export const filterStudentDirectory = (rows, { query = '', program = '', year = '', status = '', tab = 'all', severity = '', attendance = '' } = {}) => filterAdminStudents(rows, query).filter((row) =>
-  (!program || row.programLabel === program) && (!year || row.yearLabel === year) && (!status || row.clearance === status) &&
+  (!program || row.programLabel === program) && (!year || (year === 'SENIOR_HIGH_SCHOOL' ? academicLevel(row) === year : row.yearLabel === year)) && (!status || row.clearance === status) &&
   (tab !== 'violations' || row.condition.total > 0) && (tab !== 'service' || row.inService) && (tab !== 'cleared' || row.clearance === 'CLEARED') &&
   (!severity || row.tone === severity) && (!attendance || row.timedIn))
 
