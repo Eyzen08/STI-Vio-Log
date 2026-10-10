@@ -7,6 +7,8 @@ export const ROLE_GROUPS = {
 export const PUBLIC_ROUTES = ['/login','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
 
 export const APP_ROUTES = [
+  { path: '/account/password-change', label: 'Create New Password', view: 'Password Change', roles: [...ROLE_GROUPS.administration, ...ROLE_GROUPS.department, ...ROLE_GROUPS.student], navigation: false },
+  { path: '/student/onboarding', label: 'Student Account Setup', view: 'Student Onboarding', roles: ROLE_GROUPS.student, navigation: false },
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
   { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/profile', label: 'Profile', view: 'Profile', roles: ROLE_GROUPS.administration, navigation: false },
@@ -55,6 +57,16 @@ const HOME_PATHS = {
 }
 
 export const getHomePath = (role) => HOME_PATHS[role] || '/unauthorized'
+
+export const accountSetupRedirect = (path, user, showCompletion = false) => {
+  if (path === '/privacy' || path === '/terms') return null
+  if (!user) return ['/account/password-change', '/student/onboarding'].includes(path) ? '/login' : null
+  const required = user.password_change_required ? '/account/password-change'
+    : user.role === 'STUDENT' && user.onboarding_required ? '/student/onboarding' : null
+  if (required) return path === required ? null : required
+  if (path === '/account/password-change' || path === '/student/onboarding' && !showCompletion) return getHomePath(user.role)
+  return null
+}
 
 export const getNavItems = (role) =>
   APP_ROUTES.filter((route) => route.roles.includes(role) && route.navigation !== false)

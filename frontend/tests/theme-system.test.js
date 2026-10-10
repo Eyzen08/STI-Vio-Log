@@ -99,7 +99,7 @@ test('appearance preference defaults to the light reference, persists, and updat
 })
 
 test('theme controls remain named and available in both public and portal shells', () => {
-  assert.equal((app.match(/aria-label=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 2)
+  assert.equal((app.match(/aria-label=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 3)
   assert.match(app, /aria-pressed=\{theme === 'dark'\}/)
   assert.equal((app.match(/title=\{`Switch to \$\{theme === 'dark' \? 'light' : 'dark'\} mode`\}/g) || []).length, 2)
   assert.doesNotMatch(app, /theme-toggle-label/)
@@ -273,14 +273,13 @@ test('dark recent activity uses themed icons, dividers, and text', () => {
   assert.match(guard, /\.recent-activity-card li span\s*\{[^}]*color:\s*var\(--text-secondary\) !important;/s)
 })
 
-test('required password change uses responsive theme-specific campus imagery', () => {
-  assert.match(passwordChange, /sti-global-city-building-web\.jpg/)
-  assert.match(passwordChange, /sti-global-city-building-night\.jpg/)
-  assert.match(passwordChange, /password-change-page/)
-  assert.match(passwordChange, /login-campus-image--day/)
-  assert.match(passwordChange, /login-campus-image--night/)
-  assert.match(portal, /\.password-change-page \.login-campus-image\s*\{[^}]*object-fit:cover/s)
-  assert.match(portal, /@media \(max-width:767px\)[\s\S]*\.password-change-page \.password-change-intro/)
+test('required password change uses the compact shared setup frame and semantic themes', async () => {
+  const setup = await readFile(new URL('../src/styles/account-setup.css',import.meta.url),'utf8')
+  assert.match(passwordChange, /AccountSetupFrame/)
+  assert.doesNotMatch(passwordChange, /login-campus-image/)
+  assert.match(setup, /\.account-setup-card[^}]*background:var\(--surface-raised\)/s)
+  assert.match(setup, /\.account-setup-heading h1[^}]*color:var\(--text-primary\)/s)
+  assert.match(setup, /@media\(max-width:600px\)/)
 })
 
 test('dark registration credentials and review surfaces use semantic tokens', () => {

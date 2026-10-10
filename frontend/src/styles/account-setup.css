@@ -1,0 +1,114 @@
+/* Account setup keeps the current task above portal navigation and decoration. */
+.app-shell.setup-shell { display:block; min-height:100dvh; padding:0; background:var(--surface-nested); }
+.setup-shell .main-panel { display:block; width:100%; min-width:0; padding:0; margin:0; }
+.setup-shell .page-content { width:100%; max-width:760px; margin:0 auto; padding:16px 24px 40px; }
+.setup-brand { display:flex; align-items:center; justify-content:space-between; gap:16px; max-width:760px; margin:auto; padding:24px; }
+.setup-brand>div { display:flex; align-items:center; gap:12px; min-width:0; }
+.setup-brand img { width:64px; height:36px; object-fit:contain; }
+.setup-brand span { color:var(--text-primary); font-size:18px; font-weight:700; line-height:1.3; }
+.setup-brand small { display:block; margin-top:3px; color:var(--text-secondary); font-size:13px; font-weight:400; }
+.setup-brand .theme-toggle { width:44px; height:44px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-raised); color:var(--text-primary); }
+.account-setup-card,.setup-shell .legal-acknowledgment { width:100%; margin:0; padding:32px; border:1px solid var(--border-subtle); border-top:4px solid var(--color-primary); border-radius:12px; background:var(--surface-raised); color:var(--text-primary); box-shadow:var(--shadow-sm); }
+.account-setup-heading { margin-bottom:24px; }
+.account-setup-heading h1,.setup-shell .legal-acknowledgment h1 { margin:0 0 10px; color:var(--text-primary); font-size:28px; line-height:1.2; font-weight:700; letter-spacing:-.025em; text-wrap:balance; }
+.account-setup-heading p { max-width:58ch; margin:0; color:var(--text-secondary); font-size:15px; line-height:1.6; }
+.account-setup-heading h1:focus,.setup-shell .legal-acknowledgment h1:focus { outline:none; }
+.onboarding-progress { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:0 0 28px; padding:0 0 24px; border-bottom:1px solid var(--border-subtle); list-style:none; }
+.onboarding-progress li { display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; color:var(--text-muted); font-size:12px; line-height:1.25; text-align:center; }
+.onboarding-progress li b { font-weight:500; }
+.onboarding-progress li span { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--border-subtle); border-radius:50%; background:var(--surface-nested); color:var(--text-secondary); font-size:13px; font-weight:700; }
+.onboarding-progress .active { color:var(--link-color); }
+.onboarding-progress .active b { font-weight:700; }
+.onboarding-progress .active span { border-color:var(--color-primary); background:var(--color-primary); color:#fff; }
+.onboarding-progress .complete { color:var(--status-success-text); }
+.onboarding-progress .complete span { border-color:var(--status-success-text); background:var(--status-success-surface); color:var(--status-success-text); }
+.setup-form,.setup-google-stage { display:grid; gap:18px; min-width:0; margin:0; }
+.account-setup-card .setup-form label { display:grid; gap:8px; min-width:0; color:var(--text-primary); font-size:14px; font-weight:600; line-height:1.4; }
+.account-setup-card .setup-form :is(input:not([type=radio]),select) { width:100%; min-width:0; height:48px; min-height:48px; padding:11px 12px; border:1px solid var(--border-strong); border-radius:6px; background:var(--control-background); color:var(--text-primary); font-family:inherit; font-size:16px; box-sizing:border-box; }
+.account-setup-card .setup-form select { padding-right:32px; text-overflow:ellipsis; }
+.account-setup-card .setup-form :is(input,select):focus-visible { outline:2px solid var(--color-primary); outline-offset:2px; }
+.account-setup-card .setup-form input[readonly] { background:var(--surface-nested); color:var(--text-secondary); }
+.account-setup-card .setup-form input[aria-invalid=true] { border-color:var(--status-danger-text); }
+.account-setup-card .setup-form :is(input,select):disabled { opacity:.7; }
+.account-setup-card .setup-form input::placeholder { color:var(--text-muted); opacity:1; }
+.account-setup-card .setup-form .password-input-wrap { position:relative; display:block; }
+.account-setup-card .setup-form .password-input-wrap input { padding-right:52px; }
+.account-setup-card .setup-form .password-visibility { position:absolute; display:grid; place-items:center; top:2px; right:2px; width:44px; height:44px; min-height:44px; padding:0; border:0; background:transparent; color:var(--text-secondary); }
+.account-setup-card button:not(.password-visibility),.setup-shell .legal-acknowledgment button { min-height:46px; max-width:100%; font-size:15px; line-height:1.35; white-space:normal; border-radius:6px; }
+.account-setup-card .setup-form>button,.setup-complete>button { width:100%; }
+.account-setup-card button[type=submit],.setup-complete>button { background:var(--action-primary-surface); color:var(--text-on-accent); }
+.account-setup-card .text-button { border:0; background:transparent; color:var(--link-color); text-decoration:underline; text-underline-offset:3px; }
+.setup-substep { margin:0; color:var(--text-secondary); font-size:13px; line-height:1.5; }
+.account-setup-card .setup-field-note,.onboarding-contact-fields small { margin:0; color:var(--text-secondary); font-size:13px; font-weight:400; line-height:1.6; }
+.account-setup-card .setup-field-note--error { color:var(--status-danger-text); }
+.account-setup-card .setup-field-note--success { color:var(--status-success-text); }
+.account-setup-card .error-message { margin:0; }
+.account-setup-card .error-message:focus-visible { outline:2px solid var(--status-danger-text); outline-offset:3px; }
+.setup-email-summary { display:grid; gap:5px; margin:0; padding:14px 16px; border-left:3px solid var(--color-primary); border-radius:4px; background:var(--surface-nested); color:var(--text-secondary); font-size:14px; }
+.setup-email-summary strong { color:var(--text-primary); font-size:16px; overflow-wrap:anywhere; }
+.setup-email-summary--verified { border-color:var(--status-success-text); }
+.setup-email-summary--verified span { color:var(--status-success-text); }
+.setup-google-stage .google-button { width:100%; max-width:360px; min-height:44px; }
+.account-setup-card .password-requirements { padding:14px 16px; border:0; border-radius:6px; background:var(--surface-nested); color:var(--text-primary); }
+.account-setup-card .password-requirements ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 12px; }
+.account-setup-card .password-requirements li { font-size:13px; line-height:1.5; }
+.account-setup-card .password-requirements .invalid { color:var(--text-secondary); }
+.account-setup-card .password-requirements .valid { color:var(--status-success-text); }
+.onboarding-fieldset { min-width:0; margin:0; padding:0; border:0; }
+.onboarding-academic-fields,.onboarding-contact-fields { display:grid; gap:18px; min-width:0; }
+.onboarding-academic-level { display:grid; gap:8px; color:var(--text-primary); font-size:14px; font-weight:600; }
+.onboarding-academic-toggle { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:4px; padding:4px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-nested); }
+.account-setup-card .onboarding-academic-toggle label { position:relative; display:grid; place-items:center; min-height:44px; padding:8px; border:1px solid transparent; border-radius:5px; font-size:14px; text-align:center; cursor:pointer; }
+.account-setup-card .onboarding-academic-toggle label.active { border-color:var(--border-strong); background:var(--surface-raised); color:var(--link-color); }
+.onboarding-academic-toggle label:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }
+.onboarding-academic-toggle input { position:absolute; width:1px; height:1px; opacity:0; }
+.onboarding-academic-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; min-width:0; }
+.setup-field-divider { padding-top:20px; border-top:1px solid var(--border-subtle); }
+.setup-field-divider h2 { margin:0 0 5px; color:var(--text-primary); font-size:18px; }
+.setup-field-divider p { margin:0; color:var(--text-secondary); font-size:13px; }
+.setup-actions { display:flex; gap:12px; }
+.setup-actions>button:last-child { flex:1; }
+.account-setup-footer { display:grid; gap:8px; margin-top:28px; padding-top:20px; border-top:1px solid var(--border-subtle); }
+.account-setup-footer>p { margin:0; color:var(--text-secondary); font-size:13px; }
+.account-setup-footer>div { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+.account-setup-footer .account-policy-links { padding:0; border:0; gap:16px; font-size:12px; }
+.account-setup-footer .account-policy-links a { display:flex; align-items:center; min-height:44px; }
+.account-setup-footer button { padding:8px 0; font-size:13px!important; }
+.setup-complete { display:grid; justify-items:start; gap:20px; }
+.setup-success-mark { display:grid; place-items:center; width:56px; height:56px; border:1px solid var(--status-success-text); border-radius:50%; background:var(--status-success-surface); color:var(--status-success-text); font-size:28px; }
+.setup-complete ul { display:grid; gap:12px; margin:0; padding:0; list-style:none; color:var(--text-primary); font-size:15px; }
+.setup-complete li::before { content:'✓'; margin-right:12px; color:var(--status-success-text); }
+.login-first-signin-note { margin:0 0 20px; padding:12px 14px; border-left:3px solid var(--color-primary); background:var(--surface-nested); color:var(--text-secondary); font-size:13px; line-height:1.6; }
+.student-credentials .credential-details { display:grid; gap:12px; margin:18px 0; text-align:left; }
+:root .app-modal .registration-pending.student-credentials { padding:0; border:0; background:var(--surface-raised)!important; color:var(--text-primary)!important; text-align:left; }
+:root .app-modal .registration-pending.student-credentials>strong { color:var(--status-success-text)!important; }
+:root .app-modal .registration-pending.student-credentials p:not(.error-message):not(.success-message):not(.credential-expiry),:root .app-modal .registration-pending.student-credentials .student-credentials-gmail strong { color:var(--text-secondary)!important; }
+:root .app-modal .registration-pending.student-credentials .credential-details code { padding:0; border:0; background:transparent; color:var(--text-primary)!important; }
+:root .app-modal .registration-pending.student-credentials button.secondary-button:not(:disabled) { background:var(--surface-raised)!important; color:var(--link-color)!important; border:1px solid var(--border-strong)!important; }
+:root .app-modal .registration-pending.student-credentials .student-credentials-actions button:not(.secondary-button):not(:disabled) { background:var(--action-primary-surface)!important; color:var(--text-on-accent)!important; }
+.credential-details>div { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px 12px; padding:14px; border:1px solid var(--border-subtle); border-radius:6px; background:var(--surface-nested); }
+.credential-details dt { grid-column:1/-1; color:var(--text-secondary); font-size:13px; }
+.credential-details dd { min-width:0; margin:0; color:var(--text-primary); overflow-wrap:anywhere; }
+.credential-details code { display:block; padding:0; background:transparent; color:var(--text-primary); font-size:16px; overflow-wrap:anywhere; user-select:all; }
+.credential-details button { min-width:64px; min-height:44px; padding:8px 12px; }
+.student-credentials .credential-expiry { padding:10px 14px; border-radius:6px; background:var(--status-warning-surface); color:var(--status-warning-text); font-size:13px; text-align:left; }
+.credential-steps { display:grid; gap:8px; margin:16px 0; padding-left:22px; color:var(--text-secondary); text-align:left; font-size:14px; line-height:1.5; }
+.student-credentials .student-credentials-gmail { display:grid; gap:8px; padding:14px; border:1px solid var(--border-subtle); border-radius:6px; text-align:left; overflow-wrap:anywhere; }
+.student-credentials-gmail .secondary-button { justify-self:start; min-height:44px; }
+@media(min-width:600px) {
+  .onboarding-academic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .onboarding-program-field,.onboarding-section-field { grid-column:1/-1; }
+}
+@media(max-width:600px) {
+  .setup-brand { padding:16px; }
+  .setup-shell .page-content { padding:0 12px max(24px,env(safe-area-inset-bottom)); }
+  .account-setup-card,.setup-shell .legal-acknowledgment { padding:24px 18px; border-radius:10px; }
+  .account-setup-heading h1,.setup-shell .legal-acknowledgment h1 { font-size:24px; }
+  .onboarding-progress { gap:4px; padding-bottom:20px; margin-bottom:24px; }
+  .onboarding-progress li { font-size:11px; }
+  .account-setup-card .password-requirements ul { grid-template-columns:1fr; }
+  .auth-shell .login-intro { height:auto; min-height:0; flex-basis:auto; padding:18px 24px; background:var(--surface-raised); }
+  .auth-shell .login-intro::before,.auth-shell .login-campus-image,.auth-shell .login-intro-content,.auth-shell .login-assurance { display:none; }
+  .auth-shell .login-brand-mark { width:112px; margin:0; }
+  .auth-shell .login-brand-mark img { max-height:64px; object-fit:contain; }
+}

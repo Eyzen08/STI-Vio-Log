@@ -1,20 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { changePassword } from '../lib/api.js'
 import { passwordIsStrong } from '../lib/passwordPolicy.js'
+import AccountSetupFrame from './AccountSetupFrame.jsx'
 import PasswordField from './PasswordField.jsx'
 import PasswordRequirements from './PasswordRequirements.jsx'
-import OnboardingProgress from './OnboardingProgress.jsx'
-import buildingImage from '../assets/sti-global-city-building-web.jpg'
-import buildingNightImage from '../assets/sti-global-city-building-night.jpg'
 
-export default function PasswordChangeRequired({token,user,onSession,onLogout}) {
+export default function PasswordChangeRequired({token,user,onSession,onLogout,onOpenPolicy}) {
   const [form,setForm]=useState({currentPassword:'',newPassword:'',confirmPassword:''})
   const [error,setError]=useState('')
   const [busy,setBusy]=useState(false)
-  const submit=async(event)=>{event.preventDefault();setError('');if(!passwordIsStrong(form.newPassword))return setError('Complete all password requirements.');if(form.newPassword!==form.confirmPassword)return setError('New password confirmation does not match.');setBusy(true);try{const session=await changePassword({token,currentPassword:form.currentPassword,newPassword:form.newPassword});setForm({currentPassword:'',newPassword:'',confirmPassword:''});onSession(session)}catch(e){setError(e.message)}finally{setBusy(false)}}
-  return <section className="login-page password-change-page" aria-labelledby="password-change-title"><div className="login-intro password-change-intro"><img className="login-campus-image login-campus-image--day" src={buildingImage} alt="STI Global City campus building" width="1200" height="825" fetchPriority="high"/><img className="login-campus-image login-campus-image--night" src={buildingNightImage} alt="" width="1200" height="825" aria-hidden="true"/><div className="login-intro-content password-change-intro-content"><span className="login-kicker">Account security</span><h2>Protect your school account.</h2><p>Your temporary password must be replaced before you can access portal records.</p></div></div><div className="login-card auth-card password-change-card">{user?.onboarding_required&&<OnboardingProgress current="PASSWORD"/>}<div className="card-header auth-card-header"><div><span className="badge">Required action</span><h3 id="password-change-title">Create a new password</h3><p>Use at least 8 characters with an uppercase letter, number, and symbol.</p></div></div><form className="login-form" onSubmit={submit}>
-    <PasswordField id="current-password" label="Current or temporary password" value={form.currentPassword} onChange={e=>setForm({...form,currentPassword:e.target.value})} disabled={busy} autoComplete="current-password" autoFocus/>
-    <PasswordField id="new-password" label="New password" value={form.newPassword} onChange={e=>setForm({...form,newPassword:e.target.value})} disabled={busy}/><PasswordRequirements password={form.newPassword}/>
-    <PasswordField id="confirm-new-password" label="Confirm new password" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} disabled={busy}/>
-    {error&&<p className="error-message" role="alert">{error}</p>}<button disabled={busy}>{busy?'Changing password…':'Change password and continue'}</button><button type="button" className="secondary-button" onClick={onLogout} disabled={busy}>Sign out</button></form></div></section>
+  const heading=useRef(null), errorRef=useRef(null), acting=useRef(false)
+  const mismatch=Boolean(form.confirmPassword && form.newPassword!==form.confirmPassword)
+  useEffect(()=>{heading.current?.focus()},[])
+  useEffect(()=>{if(error)errorRef.current?.focus()},[error])
+  const submit=async(event)=>{
+    event.preventDefault()
+    if(acting.current)return
+    setError('')
+    if(!passwordIsStrong(form.newPassword))return setError('Complete all password requirements below.')
+    if(form.newPassword!==form.confirmPassword)return setError('Enter the same new password in both fields.')
+    acting.current=true
+    setBusy(true)
+    try {
+      const session=await changePassword({token,currentPassword:form.currentPassword,newPassword:form.newPassword})
+      setForm({currentPassword:'',newPassword:'',confirmPassword:''})
+      onSession(session)
+    }catch(e){setError(e.message)}finally{acting.current=false;setBusy(false)}
+  }
+  return <AccountSetupFrame current={user?.onboarding_required?'PASSWORD':undefined} title="Create your own password" description="Enter the temporary password from the Discipline Office, then choose a new password to keep your account secure." headingRef={heading} busy={busy} onLogout={onLogout} onOpenPolicy={onOpenPolicy}>
+    <form className="login-form setup-form" onSubmit={submit} aria-busy={busy}>
+      <PasswordField id="current-password" label="Current or temporary password" value={form.currentPassword} onChange={e=>setForm({...form,currentPassword:e.target.value})} disabled={busy} autoComplete="current-password"/>
+      <PasswordField id="new-password" label="New password" value={form.newPassword} onChange={e=>setForm({...form,newPassword:e.target.value})} disabled={busy} describedBy="setup-password-requirements"/>
+      <div id="setup-password-requirements"><PasswordRequirements password={form.newPassword}/></div>
+      <PasswordField id="confirm-new-password" label="Confirm new password" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} disabled={busy} invalid={mismatch} describedBy={form.confirmPassword?'password-match':undefined}/>
+      {form.confirmPassword&&<p id="password-match" className={`setup-field-note ${mismatch?'setup-field-note--error':'setup-field-note--success'}`} role="status">{mismatch?'Passwords do not match yet.':'Passwords match.'}</p>}
+      {error&&<p className="error-message" ref={errorRef} tabIndex="-1" role="alert">{error}</p>}
+      <button type="submit" disabled={busy}>{busy?'Saving password…':'Save password and continue'}</button>
+    </form>
+  </AccountSetupFrame>
 }

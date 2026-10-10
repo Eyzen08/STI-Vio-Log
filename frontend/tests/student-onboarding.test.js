@@ -6,12 +6,12 @@ const app=readFileSync(new URL('../src/App.jsx',import.meta.url),'utf8')
 const onboarding=readFileSync(new URL('../src/components/StudentOnboarding.jsx',import.meta.url),'utf8')
 const progress=readFileSync(new URL('../src/components/OnboardingProgress.jsx',import.meta.url),'utf8')
 const api=readFileSync(new URL('../src/lib/api.js',import.meta.url),'utf8')
-const css=readFileSync(new URL('../src/App.css',import.meta.url),'utf8')
+const css=readFileSync(new URL('../src/styles/account-setup.css',import.meta.url),'utf8')
 
 test('mandatory Student onboarding renders before portal content and resumes by session state',()=>{
-  assert.match(app,/user\?\.role==='STUDENT' && user\?\.onboarding_required/)
-  assert.match(app,/data\.user\.onboarding_required \? '\/student\/onboarding'/)
-  assert.match(progress,/Password.*Google account.*Contact information.*Portal/s)
+  assert.match(app,/user\?\.role==='STUDENT' && \(user\?\.onboarding_required \|\| showOnboardingComplete\)/)
+  assert.match(app,/data\.user\.onboarding_required \|\| onboardingComplete \? '\/student\/onboarding'/)
+  assert.match(progress,/Password.*Google.*Student details.*Ready/s)
 });
 
 test('onboarding binds Google first and submits only student-controlled academic and contact fields',()=>{
@@ -19,7 +19,8 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.match(api,/student-onboarding\/google-link/)
   assert.match(api,/student-onboarding\/google-email\/request/)
   assert.match(api,/student-onboarding\/google-email\/verify/)
-  assert.match(onboarding,/value=\{email\} readOnly/)
+  assert.match(onboarding,/Google account email<\/span><strong>\{email/)
+  assert.doesNotMatch(onboarding,/type="email"/)
   assert.match(onboarding,/Gmail recorded by the Discipline Office/);assert.doesNotMatch(onboarding,/Use another email/)
   assert.match(onboarding,/Email.*Verification code.*Google sign-in/s)
   assert.match(onboarding,/<OtpInput id="google-email-code"/)
@@ -38,18 +39,19 @@ test('Discipline Office creation collects identity and Gmail and leaves QR gener
 });
 
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{
-  assert.match(onboarding,/aria-label="Student account setup progress"|OnboardingProgress/)
+  assert.match(progress,/aria-label="Student account setup progress"/)
   assert.match(css,/@media\(max-width:600px\).*\.onboarding-progress/s)
-  assert.match(css,/:root\[data-theme='dark'\] \.student-onboarding/)
+  assert.match(css,/var\(--surface-raised\)/)
+  assert.match(css,/var\(--text-primary\)/)
 });
 
 test('academic onboarding switches levels and keeps mode-specific fields and year ranges',()=>{
   assert.match(onboarding,/role="radiogroup" aria-labelledby="onboarding-academic-level-label"/)
   assert.match(onboarding,/form\.academicLevel==='COLLEGE'&&<label className="onboarding-program-field">Program/)
   assert.match(onboarding,/\.\.\.\(form\.academicLevel==='SENIOR_HIGH_SCHOOL'\?\{academic_level:form\.academicLevel\}:\{\}\)/)
-  assert.match(onboarding,/yearLevel:''\}\)\);setError\(''\)/)
+  assert.match(onboarding,/academicLevel,strand:'',program:'',yearLevel:''/)
   assert.match(onboarding,/yearOptions\(form\.academicLevel\)/)
   assert.match(onboarding,/<select value=\{form\.yearLevel\}/)
-  assert.match(css,/\.onboarding-academic-grid\{display:grid;grid-template-columns:minmax\(0,1fr\)/)
-  assert.match(css,/@media\(min-width:900px\)\{\.onboarding-academic-grid\{grid-template-columns:minmax\(0,1\.15fr\) minmax\(0,\.85fr\)\}\}/)
+  assert.match(css,/\.onboarding-academic-grid \{ display:grid; grid-template-columns:minmax\(0,1fr\)/)
+  assert.match(css,/@media\(min-width:600px\).*\.onboarding-academic-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s)
 });

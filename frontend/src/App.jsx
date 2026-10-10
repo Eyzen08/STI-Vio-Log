@@ -54,7 +54,7 @@ import StudentAccountReview from './components/StudentAccountReview.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
-import { getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
+import { accountSetupRedirect, getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { notificationDestination, notificationTarget, withoutNotificationTarget } from './lib/studentNotifications.js'
 import useDepartmentAttendance from './lib/useDepartmentAttendance.js'
 import { buildViolationPayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel } from './lib/violationAdmin.js'
@@ -78,6 +78,7 @@ const TermsAcknowledgment = lazy(() => import('./components/TermsAcknowledgment.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
 const EMPTY_MFA_DRAFT = { code:'', recovery:false }
+const EMPTY_ONBOARDING_DRAFT = { screen:'ACADEMIC', profile:{academicLevel:'COLLEGE',strand:'',program:'',section:'',yearLevel:'',phoneNumber:'',guardianName:'',guardianRelationship:'',guardianPhoneNumber:''} }
 const EMPTY_QR_SERVICE_DRAFT = {
   department_id: '', assignment_id: '', supervising_officer_id: '', notes: '',
   attendance_outcome: '', session_type: '', selected_duration_minutes: null
@@ -166,6 +167,8 @@ function App() {
   const [mfaState,setMfaState]=useState(null)
   const [mfaDraft,setMfaDraft]=useState(EMPTY_MFA_DRAFT)
   const [authDraft,setAuthDraft]=useState(EMPTY_AUTH_DRAFT)
+  const [onboardingDraft,setOnboardingDraft]=useState(EMPTY_ONBOARDING_DRAFT)
+  const [showOnboardingComplete,setShowOnboardingComplete]=useState(false)
   const [authReturnPath,setAuthReturnPath]=useState('/login')
   const [logoutConfirmation,setLogoutConfirmation]=useState(false)
   const [logoutBusy,setLogoutBusy]=useState(false)
@@ -174,6 +177,8 @@ function App() {
   const [user, setUser] = useState(null)
   const legal = useLegalPolicy(user?.id, user?.password_change_required)
   const portalReady = Boolean(token && user && legal.ready && !user.password_change_required && !user.onboarding_required)
+  const setupActive = Boolean(user && (user.password_change_required || !legal.ready || user.onboarding_required || showOnboardingComplete))
+  const portalChrome = portalReady && !showOnboardingComplete
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
   const [sessionRestoreError, setSessionRestoreError] = useState(false)
   const [sessionRestoreAttempt, setSessionRestoreAttempt] = useState(0)
@@ -593,8 +598,9 @@ function App() {
   const activeView = routeResolution.status === 'allowed' ? routeResolution.route.view : ''
 
   useEffect(() => {
-    applyPageMetadata(metadataForRoute(routePath, routeResolution.route?.label))
-  }, [routePath, routeResolution.route?.label])
+    const label = user && !user.password_change_required && !legal.ready && !['/privacy','/terms'].includes(routePath) ? 'Terms of Use' : routeResolution.route?.label
+    applyPageMetadata(metadataForRoute(routePath, label))
+  }, [routePath, routeResolution.route?.label, user, legal.ready])
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined
@@ -716,8 +722,12 @@ function App() {
       return
     }
 
-    if (user?.password_change_required) {
-      if (routePath !== '/account/password-change') navigateTo('/account/password-change', { replace: true })
+    const setupRedirect = accountSetupRedirect(routePath, user, showOnboardingComplete)
+    if (setupRedirect) {
+      navigateTo(setupRedirect, { replace: true })
+      return
+    }
+    if (user?.password_change_required || user?.onboarding_required || showOnboardingComplete) {
       return
     }
 
@@ -729,7 +739,7 @@ function App() {
     if (routeResolution.status === 'allowed' && routeResolution.redirectTo) {
       navigateTo(routeResolution.redirectTo, { replace: true })
     }
-  }, [isLoggedIn, routePath, routeResolution.redirectTo, routeResolution.route, routeResolution.status, sessionRestoring, user, userRole])
+  }, [isLoggedIn, routePath, routeResolution.redirectTo, routeResolution.route, routeResolution.status, sessionRestoring, user, userRole, showOnboardingComplete])
 
   /*
    * ============================================================
@@ -1809,17 +1819,19 @@ function App() {
     setStudentProfile((current) => current ? { ...current, avatar } : current)
   }
 
-  const acceptSession = (data) => {
-    legal.retry()
+  const acceptSession = (data, { onboardingComplete = false } = {}) => {
+    if (user?.id !== data.user.id || user?.password_change_required !== data.user.password_change_required) legal.retry()
     saveSession(data)
     setToken('cookie-session')
     setUser(data.user)
     setMfaState(null)
     setMfaDraft(EMPTY_MFA_DRAFT)
     setAuthDraft(EMPTY_AUTH_DRAFT)
+    setShowOnboardingComplete(onboardingComplete)
+    if (onboardingComplete || user?.id !== data.user.id) setOnboardingDraft(EMPTY_ONBOARDING_DRAFT)
     setError('')
     setForm({ username: '', password: '' })
-    navigateTo(data.user.password_change_required ? '/account/password-change' : data.user.onboarding_required ? '/student/onboarding' : getHomePath(data.user.role), { replace: true })
+    navigateTo(data.user.password_change_required ? '/account/password-change' : data.user.onboarding_required || onboardingComplete ? '/student/onboarding' : getHomePath(data.user.role), { replace: true })
   }
 
   const handleMfaSubmit=async({code,recovery})=>{setIsSubmitting(true);setError('');try{const path=mfaState.mode==='enroll'?'/api/auth/mfa/setup/confirm':recovery?'/api/auth/mfa/recovery':'/api/auth/mfa/verify';const body=mfaState.mode==='enroll'||!recovery?{code}:{recovery_code:code};const data=await apiRequest(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});if(data.recovery_codes){saveSession(data);setMfaState({mode:'complete',recoveryCodes:data.recovery_codes,pendingSession:data})}else acceptSession(data)}catch(e){setError(e.message)}finally{setIsSubmitting(false)}}
@@ -1854,6 +1866,8 @@ function App() {
     setMfaState(null)
     setMfaDraft(EMPTY_MFA_DRAFT)
     setAuthDraft(EMPTY_AUTH_DRAFT)
+    setOnboardingDraft(EMPTY_ONBOARDING_DRAFT)
+    setShowOnboardingComplete(false)
     setLogoutConfirmation(false)
 
     /*
@@ -1883,7 +1897,7 @@ function App() {
      */
 
     if (routePath === '/privacy' || routePath === '/terms') {
-      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} policies={legal.status?.documents} returnPath={policyReturnPath(routeSearch, isLoggedIn ? getHomePath(userRole) : authReturnPath)} />
+      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} policies={legal.status?.documents} returnPath={policyReturnPath(routeSearch, isLoggedIn ? user?.password_change_required ? '/account/password-change' : user?.onboarding_required || showOnboardingComplete ? '/student/onboarding' : getHomePath(userRole) : authReturnPath)} />
     }
 
     if (sessionRestoring) {
@@ -1921,15 +1935,15 @@ function App() {
     }
 
     if (user?.password_change_required) {
-      return <PasswordChangeRequired token={token} user={user} onSession={acceptSession} onLogout={requestLogout} />
+      return <PasswordChangeRequired token={token} user={user} onSession={acceptSession} onLogout={requestLogout} onOpenPolicy={openPolicy} />
     }
 
     if (!legal.ready) {
       return <TermsAcknowledgment status={legal.status} error={legal.error} onStatus={legal.updateStatus} onRetry={legal.retry} onOpenPolicy={openPolicy} onLogout={requestLogout}/>
     }
 
-    if (user?.role==='STUDENT' && user?.onboarding_required) {
-      return <StudentOnboarding user={user} clientId={GOOGLE_CLIENT_ID} onSession={acceptSession} onLogout={requestLogout}/>
+    if (user?.role==='STUDENT' && (user?.onboarding_required || showOnboardingComplete)) {
+      return <StudentOnboarding user={user} clientId={GOOGLE_CLIENT_ID} draft={onboardingDraft} onDraftChange={setOnboardingDraft} onSession={acceptSession} onLogout={requestLogout} onOpenPolicy={openPolicy} complete={showOnboardingComplete} onEnterPortal={()=>{setShowOnboardingComplete(false);navigateTo(getHomePath(userRole), {replace:true})}}/>
     }
 
     if (userRole === 'DISCIPLINE_ADMIN' && activeView === 'System Dashboard') {
@@ -2643,9 +2657,9 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${isLoggedIn && isAdmin ? ' admin-portal' : ''}${isLoggedIn && isStudent ? ' student-portal' : ''}${isLoggedIn && isDepartmentHead ? ' department-portal' : ''}${isLoggedIn && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${setupActive ? ' setup-shell' : ''}${portalChrome && isAdmin ? ' admin-portal' : ''}${portalChrome && isStudent ? ' student-portal' : ''}${portalChrome && isDepartmentHead ? ' department-portal' : ''}${portalChrome && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to main content</a>
-      {isLoggedIn && isMobileNavOpen && (
+      {portalChrome && isMobileNavOpen && (
         <button
           className="sidebar-backdrop"
           type="button"
@@ -2654,7 +2668,7 @@ function App() {
         />
       )}
 
-      {isLoggedIn && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
+      {portalChrome && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
         <div className="brand">
           <button className="brand-home" type="button" onClick={goToDashboard} aria-label="Go to dashboard">
             <img
@@ -2719,10 +2733,11 @@ function App() {
         </div>
       </aside>}
 
-      {sidebarTooltip && isLoggedIn && isDesktopNavigation && <SidebarTooltip anchor={sidebarTooltip.anchor} text={sidebarTooltip.text} />}
+      {sidebarTooltip && portalChrome && isDesktopNavigation && <SidebarTooltip anchor={sidebarTooltip.anchor} text={sidebarTooltip.text} />}
 
       <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">
-        {isLoggedIn && <header className="topbar">
+        {setupActive && <header className="setup-brand"><div><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="64" height="36"/><span>STI Vio-Log<small>Account setup</small></span></div><button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'} onClick={toggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'}/></button></header>}
+        {portalChrome && <header className="topbar">
           <div className="topbar-title">
             <button
               className="sidebar-collapse"
@@ -2783,12 +2798,12 @@ function App() {
           onClick={toggleTheme}
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>}
 
-        {isLoggedIn && (isStudent || isAdmin) && attendanceError && !['Dashboard', 'My Service', 'Active Attendance'].includes(activeView) && <p className="attendance-update-error attendance-global-error">{attendanceError}</p>}
-        {isLoggedIn && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
+        {portalChrome && (isStudent || isAdmin) && attendanceError && !['Dashboard', 'My Service', 'Active Attendance'].includes(activeView) && <p className="attendance-update-error attendance-global-error">{attendanceError}</p>}
+        {portalChrome && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
           {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss attendance notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
         </div>}
-        <div className="page-content">{isLoggedIn && (recordTarget.invalid || routeUrl.searchParams.get('record_unavailable') === '1' || recordTargetError === routeLocation) && <p className="error-message" role="alert">The specific notification record is unavailable or you no longer have access to it.</p>}<RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
-        {isLoggedIn && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
+        <div className="page-content">{portalChrome && (recordTarget.invalid || routeUrl.searchParams.get('record_unavailable') === '1' || recordTargetError === routeLocation) && <p className="error-message" role="alert">The specific notification record is unavailable or you no longer have access to it.</p>}<RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
+        {portalChrome && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
       {logoutConfirmation&&<Modal title="Confirm logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging out…':'Logout'}</button></footer></div></Modal>}
     </div>
