@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { Fragment, useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PortalIcon from './PortalIcon.jsx'
 
@@ -26,7 +26,7 @@ export default function StudentDirectorySelect({ label, value, options, onChange
     if (disabled || !options.length) return
     const rect = triggerRef.current.getBoundingClientRect()
     anchorRef.current = rect
-    const desiredHeight = Math.min(288, options.length * 44 + 12)
+    const desiredHeight = Math.min(288, options.length * 44 + 12 + (options.some((option) => option.section) ? 32 : 0))
     const below = Math.max(0, window.innerHeight - rect.bottom - 14)
     const above = Math.max(0, rect.top - 14)
     const upward = below < desiredHeight && above > below
@@ -67,7 +67,7 @@ export default function StudentDirectorySelect({ label, value, options, onChange
   useEffect(() => {
     if (!open) return
     const popup = popupRef.current
-    const option = popup?.children[active]
+    const option = popup?.querySelector(`[data-option-index="${active}"]`)
     if (!option) return
     const top = option.offsetTop
     const bottom = top + option.offsetHeight
@@ -118,11 +118,13 @@ export default function StudentDirectorySelect({ label, value, options, onChange
     </button>
     {open && createPortal(<div ref={popupRef} id={`${id}-listbox`} role="listbox" aria-labelledby={`${id}-label`} className="student-directory-select-menu" style={position}
       onPointerDown={(event) => event.preventDefault()}>
-      {options.map((option, index) => <div id={`${id}-option-${index}`} role="option" key={option.value}
-        aria-selected={option.value === value} data-active={index === active} className="student-directory-select-option"
+      {options.map((option, index) => <Fragment key={option.value}>
+        {option.section && option.section !== options[index - 1]?.section && <div id={`${id}-section`} role="presentation" className="student-directory-select-section">{option.section}</div>}
+        <div id={`${id}-option-${index}`} role="option" aria-describedby={option.section ? `${id}-section` : undefined}
+        aria-selected={option.value === value} data-active={index === active} data-option-index={index} className="student-directory-select-option"
         onPointerMove={() => setActiveIndex(index)} onClick={() => { onChange(option.value); close(); triggerRef.current?.focus() }}>
         <span>{option.label}</span>{option.value === value && <PortalIcon name="check" size={17}/>}
-      </div>)}
+      </div></Fragment>)}
     </div>, document.body)}
   </>
 }
