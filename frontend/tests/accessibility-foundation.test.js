@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { publishedPolicies } from '../../shared/legalPolicies.mjs'
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const policy = await readFile(new URL('../src/components/PublicPolicyPage.jsx', import.meta.url), 'utf8')
@@ -14,6 +15,6 @@ test('application shell provides a keyboard skip link and focusable main landmar
 
 test('public policy avoids nested main landmarks and discloses storage behavior', () => {
   assert.doesNotMatch(policy, /<main/)
-  assert.match(policy, /Cookies, local storage, and analytics/)
-  assert.match(policy, /does not currently use advertising cookies/)
+  assert.match(publishedPolicies.privacy.sections.flat().join(' '), /Cookies, browser storage, and analytics/)
+  assert.match(publishedPolicies.privacy.sections.flat().join(' '), /secure, HTTP-only session cookie/)
 })

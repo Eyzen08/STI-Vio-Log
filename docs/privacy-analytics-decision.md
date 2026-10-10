@@ -4,7 +4,9 @@
 
 STI Vio-Log does not enable third-party behavioral analytics, advertising trackers, or nonessential cookies. The portal handles student and disciplinary information, so collecting additional user-level browsing data would add privacy risk without a defined operational need.
 
-The frontend uses browser local storage only for the authenticated session. This is described in the public Privacy Policy. Because no optional cookies or tracking technologies are currently enabled, a cookie-consent banner would be misleading and has intentionally not been added.
+Authentication uses an HTTP-only secure cookie in production, with essential cookies for CSRF protection and MFA challenges. Local storage contains limited account display information and display preferences; session storage contains request-protection and temporary portal state. Authentication credentials are not kept in local storage. These uses are described in the public Privacy Notice. No optional cookie-consent banner is needed for this release.
+
+The October 10, 2026 technical release removes Vercel Analytics loading, correcting the mismatch between the previous notice and the frontend. Mandatory Terms acknowledgment remains disabled pending administration and DPO approval. Expanded legal copy is held in [the internal review draft](privacy-terms-review.md).
 
 ## Operational measurement
 
@@ -16,7 +18,7 @@ The school must first approve a written measurement purpose, event list, retenti
 
 - collect only aggregate events needed for that approved purpose;
 - exclude all student and disciplinary identifiers;
-- update the Privacy Policy;
+- update the Privacy Notice;
 - add consent controls before loading any optional tracker when required;
 - honor consent withdrawal and browser privacy signals where applicable; and
 - complete a production network inspection confirming that no unapproved data is sent.

@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { room, loadSocketAuthorization, synchronizeSocketAuthorization, isAllowedRealtimeRequest } = require('../src/realtime');
+const legalPolicies = require('../src/services/legalPolicyService');
 
 test('same-origin polling handshakes require approved Referer and browser fetch metadata', () => {
   const allowedOrigins = ['https://app.example.edu'];
@@ -29,6 +30,20 @@ test('realtime rooms isolate users, roles, and departments', () => {
   assert.equal(room.role('DISCIPLINE_OFFICE'), 'role:DISCIPLINE_OFFICE');
   assert.equal(room.department(7), 'department:7');
   assert.notEqual(room.department(7), room.department(8));
+});
+
+test('realtime authorization refuses pending Terms acknowledgment and disconnects existing sockets', async () => {
+  const createService = legalPolicies.createLegalPolicyService;
+  const database = { async query() { return { rows: [{ browser_session_id: 11, id: 7, role: 'STUDENT', must_change_password: false }] }; } };
+  try {
+    legalPolicies.createLegalPolicyService = () => ({ status: async () => ({ required: true }) });
+    assert.equal(await loadSocketAuthorization(11, database), null);
+    const socket = { data: { sessionId: 11 }, user: { id: 7 }, disconnect() { this.disconnected = true; } };
+    await synchronizeSocketAuthorization(socket, database);
+    assert.equal(socket.disconnected, true);
+    const source = fs.readFileSync(path.join(__dirname, '../src/realtime.js'), 'utf8');
+    assert.match(source, /legalPolicies\.status\(account\.id\)/);
+  } finally { legalPolicies.createLegalPolicyService = createService; }
 });
 
 test('socket authentication revalidates the opaque session and account state', () => {

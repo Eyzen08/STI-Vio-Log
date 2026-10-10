@@ -1,0 +1,26 @@
+.legal-document-versions { display: flex; flex-wrap: wrap; gap: 16px 28px; margin: 20px 0; }
+.legal-document-versions div { min-width: 120px; }
+.legal-document-versions dt { margin-bottom: 4px; color: #586675; font-size: 12px; }
+.legal-document-versions dd { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+.policy-contents { display: grid; gap: 8px; margin-top: 24px; }
+.policy-contents a, .account-policy-links a, .public-policy-footer nav a { color: #0759b8; text-decoration: underline; text-underline-offset: 3px; }
+.account-policy-links { display: flex; flex-wrap: wrap; gap: 16px 24px; padding: 20px 0; border-top: 1px solid #d7e2ee; }
+.legal-acknowledgment { width: min(680px, 100%); margin: 48px auto; padding: 24px; }
+.legal-acknowledgment h1 { margin: 12px 0; font-size: 28px; letter-spacing: 0; }
+.legal-acknowledgment p { line-height: 1.65; }
+.legal-acknowledgment-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-top: 24px; }
+.legal-acknowledgment-actions button { min-height: 44px; max-width: 100%; white-space: normal; }
+.public-policy-card { border-radius: 8px; box-shadow: none; }
+.public-policy-header { padding-right: 64px; }
+.public-policy-intro { background: transparent; }
+.public-policy-intro h1, .public-policy-intro .eyebrow { letter-spacing: 0; }
+.public-policy-footer nav { flex-wrap: wrap; }
+.public-policy-sections section { scroll-margin-top: 24px; }
+.public-policy-sections p { overflow-wrap: anywhere; }
+[data-theme="dark"] .account-policy-links a, [data-theme="dark"] .policy-contents a, [data-theme="dark"] .public-policy-footer nav a { color: #8cc8ff; }
+[data-theme="dark"] .legal-document-versions dt { color: #b8c4cf; }
+@media (max-width: 600px) {
+  .public-policy-header { padding-right: 56px; }
+  .legal-acknowledgment { margin: 12px auto; padding: 20px; }
+  .legal-acknowledgment-actions { align-items: stretch; flex-direction: column; }
+}

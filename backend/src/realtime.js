@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const pool = require('./config/database');
 const sessions = require('./services/browserSessionService');
+const legalPolicies = require('./services/legalPolicyService');
 
 let io = null;
 let authorizationRefreshTimer = null;
@@ -29,7 +30,11 @@ const normalizedAuthorization = (account) => account && !account.must_change_pas
   ? { session_id:Number(account.browser_session_id), id:Number(account.id), role:account.role, department_id:authorizedDepartment(account) }
   : null;
 
-const loadSocketAuthorization = async (sessionId, database = pool) => normalizedAuthorization((await database.query(authorizationQuery, [Number(sessionId)])).rows[0]);
+const loadSocketAuthorization = async (sessionId, database = pool) => {
+  const user = normalizedAuthorization((await database.query(authorizationQuery, [Number(sessionId)])).rows[0]);
+  if (!user || (await legalPolicies.createLegalPolicyService({ database }).status(user.id)).required) return null;
+  return user;
+};
 
 const authorizationRooms = (user) => [room.user(user.id), room.role(user.role), ...(user.department_id ? [room.department(user.department_id)] : [])];
 
@@ -86,6 +91,7 @@ const initializeRealtime = (httpServer, allowedOrigins) => {
         return next(new Error('Invalid or expired session'));
       }
       if (account.must_change_password) return next(new Error('Password change required'));
+      if ((await legalPolicies.status(account.id)).required) return next(new Error('Terms acknowledgment required'));
       if (account.role==='STUDENT' && (account.google_rebind_required || (account.onboarding_required && !account.onboarding_completed_at))) return next(new Error('Student onboarding required'));
       socket.data.sessionId = Number(account.browser_session_id);
       socket.user = normalizedAuthorization(account);

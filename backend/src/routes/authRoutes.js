@@ -5,6 +5,7 @@ const { loginUser } = require("../controllers/authController");
 const { login } = require("../controllers/googleAuthController");
 const { createStudentPasswordAuthController } = require('../controllers/studentPasswordAuthController');
 const sessionController=require('../controllers/sessionController');
+const legalPolicyController = require('../controllers/legalPolicyController');
 const {authenticateToken}=require('../middleware/authMiddleware');
 
 const router = express.Router();
@@ -21,6 +22,8 @@ const studentAuth = createStudentPasswordAuthController();
 
 router.post("/login", sensitiveAuthLimiter, loginUser);
 router.get('/auth/session',authenticateToken,sessionController.me);
+router.get('/auth/legal',authenticateToken,legalPolicyController.status);
+router.post('/auth/legal/acknowledge',authenticateToken,legalPolicyController.acknowledge);
 router.get('/auth/csrf',authenticateToken,sessionController.csrf);
 router.post('/auth/logout',authenticateToken,sessionController.logout);
 router.post('/auth/mfa/setup/start',sensitiveAuthLimiter,sessionController.setupStart);

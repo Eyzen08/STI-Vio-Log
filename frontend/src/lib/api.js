@@ -67,7 +67,14 @@ export const installMutationRequestGuard = (target = globalThis) => {
     const pathname = apiPath(url, target)
     const publicAuth = isPublicAuthPath(pathname)
     const protectedApi = pathname.startsWith('/api/')
-    const handleProtectedResponse = (response) => {
+    const handleProtectedResponse = async (response) => {
+      if (response.status === 403 && protectedApi) {
+        const body = await response.clone().json().catch(() => null)
+        if (body?.error?.code === 'TERMS_ACKNOWLEDGMENT_REQUIRED') {
+          const EventConstructor = target.CustomEvent || globalThis.CustomEvent
+          if (target.dispatchEvent && EventConstructor) target.dispatchEvent(new EventConstructor('sti:terms-required'))
+        }
+      }
       if (response.status !== 401 || !protectedApi || publicAuth || sessionExpiryHandled) return response
       sessionExpiryHandled = true
       clearSession()

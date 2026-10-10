@@ -53,7 +53,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         </>}
         <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
         <nav className="auth-legal-links" aria-label="Legal information">
-          <a href="/privacy" onClick={(event)=>{event.preventDefault();onOpenPolicy('/privacy',routePath)}}>Privacy Policy</a>
+          <a href="/privacy" onClick={(event)=>{event.preventDefault();onOpenPolicy('/privacy',routePath)}}>Privacy Notice</a>
           <span aria-hidden="true">&bull;</span>
           <a href="/terms" onClick={(event)=>{event.preventDefault();onOpenPolicy('/terms',routePath)}}>Terms of Use</a>
         </nav>

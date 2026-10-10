@@ -70,6 +70,10 @@ import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
 import { digitsOnly, STUDENT_NUMBER_PATTERN, STUDENT_NAME_PATTERN, STUDENT_SUFFIXES, normalizePersonName, normalizeNameSpacing, normalizeStudentSearch, emailWithoutSpaces, wholeNumberInput } from './lib/inputNormalization.js'
 import './App.css'
 import './styles/student-portal.css'
+import './styles/legal-policy.css'
+import useLegalPolicy from './lib/useLegalPolicy.js'
+import { policyReturnPath } from './lib/legalPolicy.js'
+const TermsAcknowledgment = lazy(() => import('./components/TermsAcknowledgment.jsx'))
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 const EMPTY_AUTH_DRAFT = { identifier:'', code:'', resetToken:'', newPassword:'', confirmPassword:'', message:'' }
@@ -168,6 +172,8 @@ function App() {
 
   const [token, setToken] = useState('')
   const [user, setUser] = useState(null)
+  const legal = useLegalPolicy(user?.id, user?.password_change_required)
+  const portalReady = Boolean(token && user && legal.ready && !user.password_change_required && !user.onboarding_required)
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
   const [sessionRestoreError, setSessionRestoreError] = useState(false)
   const [sessionRestoreAttempt, setSessionRestoreAttempt] = useState(0)
@@ -278,14 +284,16 @@ function App() {
   const refreshPendingActions = useCallback(() => setPendingRefreshKey((value) => value + 1), [])
 
   useEffect(() => {
-    if (!token || user?.password_change_required || user?.onboarding_required) {
+    if (!portalReady) {
       setRealtimeSocket(null)
       return undefined
     }
     const socket = connectRealtime()
+    const handleLegalError = (error) => { if (error.message === 'Terms acknowledgment required') window.dispatchEvent(new CustomEvent('sti:terms-required')) }
+    socket.on('connect_error', handleLegalError)
     setRealtimeSocket(socket)
     return () => { socket.disconnect() }
-  }, [token, user?.password_change_required, user?.onboarding_required])
+  }, [portalReady])
 
   useEffect(() => {
     const expireSession = () => {
@@ -540,7 +548,7 @@ function App() {
     userRole === 'STUDENT'
 
   const refreshDepartment = useCallback(() => setDashboardRefreshKey(key => key + 1), [])
-  const department = useDepartmentAttendance({token, userId:user?.id, enabled:isLoggedIn && isDepartmentHead, realtimeSocket, refreshKey:dashboardRefreshKey, onChanged:refreshDepartment})
+  const department = useDepartmentAttendance({token, userId:user?.id, enabled:portalReady && isDepartmentHead, realtimeSocket, refreshKey:dashboardRefreshKey, onChanged:refreshDepartment})
   const departmentDashboardAccountRef = useRef(null)
 
   useEffect(() => {
@@ -599,7 +607,7 @@ function App() {
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
   useEffect(() => {
-    if (!isLoggedIn || !token) {
+    if (!portalReady) {
       setUnreadMessages(0)
       return undefined
     }
@@ -620,10 +628,10 @@ function App() {
     realtimeSocket?.on('messages:changed', handleMessageChange)
     const interval = window.setInterval(refresh, 30000)
     return () => { controller.abort(); window.clearInterval(interval); realtimeSocket?.off('messages:changed', handleMessageChange) }
-  }, [isLoggedIn, token, realtimeSocket])
+  }, [portalReady, token, realtimeSocket])
 
   useEffect(() => {
-    if (!token || !userRole) {
+    if (!portalReady || !userRole) {
       setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
       return undefined
     }
@@ -657,7 +665,7 @@ function App() {
     refresh()
     const interval = window.setInterval(refresh, 30000)
     return () => { controller.abort(); window.clearInterval(interval) }
-  }, [token, userRole, pendingRefreshKey])
+  }, [portalReady, token, userRole, pendingRefreshKey])
 
   const badgeForNavigationItem = (item) => {
     if (item.view === 'Messages') return { count: unreadMessages, label: 'unread messages' }
@@ -684,8 +692,9 @@ function App() {
   }
 
   const openPolicy = (path, originPath) => {
-    setAuthReturnPath(originPath || '/login')
-    navigateTo(path)
+    const returnPath = originPath || routeLocation
+    setAuthReturnPath(returnPath)
+    navigateTo(`${path}?return=${encodeURIComponent(returnPath)}`)
   }
 
   useEffect(() => {
@@ -696,6 +705,7 @@ function App() {
 
   useEffect(() => {
     if (sessionRestoring) return
+    if (routePath === '/privacy' || routePath === '/terms') return
     if (!isLoggedIn) {
       if (routePath === '/register' || routePath === '/verify-email') {
         setError('Student accounts are created by the Discipline Office. Please sign in or contact an authorized officer.')
@@ -728,7 +738,7 @@ function App() {
    */
 
   useEffect(() => {
-    if (!isLoggedIn || !token || !userRole) {
+    if (!portalReady || !userRole) {
       departmentDashboardAccountRef.current = null
       setStudents([])
       setViolations([])
@@ -934,6 +944,7 @@ function App() {
     loadDashboardData()
     return () => { current = false }
   }, [
+    portalReady,
     isLoggedIn,
     token,
     userRole,
@@ -969,7 +980,7 @@ function App() {
   }, [token])
 
   const refreshStudentLiveDtr = useCallback(async () => {
-    if (!token || !isStudent || studentLiveRefreshRef.current) return
+    if (!portalReady || !isStudent || studentLiveRefreshRef.current) return
     studentLiveRefreshRef.current = true
     const requestedAt = Date.now()
     try {
@@ -982,10 +993,10 @@ function App() {
     } finally {
       studentLiveRefreshRef.current = false
     }
-  }, [isStudent, token, acceptStudentAttendance])
+  }, [portalReady, isStudent, token, acceptStudentAttendance])
 
   const refreshAdminAttendance = useCallback(async () => {
-    if (!token || !isAdmin || adminAttendanceRefreshRef.current) return
+    if (!portalReady || !isAdmin || adminAttendanceRefreshRef.current) return
     adminAttendanceRefreshRef.current = true
     const requestedAt = Date.now()
     try {
@@ -998,10 +1009,10 @@ function App() {
     } finally {
       adminAttendanceRefreshRef.current = false
     }
-  }, [isAdmin, token, acceptAdminAttendance])
+  }, [portalReady, isAdmin, token, acceptAdminAttendance])
 
   useEffect(() => {
-    if (!token || (!isStudent && !isAdmin)) return undefined
+    if (!portalReady || (!isStudent && !isAdmin)) return undefined
     const refreshLiveAttendance = () => {
       if (isStudent) refreshStudentLiveDtr()
       if (isAdmin) refreshAdminAttendance()
@@ -1019,7 +1030,7 @@ function App() {
       realtimeSocket?.off('community-service:changed', refreshLiveAttendance)
       realtimeSocket?.off('connect', refreshLiveAttendance)
     }
-  }, [isAdmin, isStudent, token, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
+  }, [portalReady, isAdmin, isStudent, token, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
 
   const startViolationEdit = (violation) => setEditingViolation(violation)
   const addViolationForStudent = (student) => {
@@ -1059,7 +1070,7 @@ function App() {
   }
 
   useEffect(() => {
-    if (!isAdmin || !token || dashboardLoading || recordTarget.invalid) return
+    if (!portalReady || !isAdmin || dashboardLoading || recordTarget.invalid) return
     const { violationId, assignmentId, studentId, sessionId } = recordTarget
     const kind = routePath === '/admin/violations' && violationId ? 'violation'
       : routePath === '/admin/community-service' && (assignmentId || sessionId) ? 'assignment'
@@ -1097,7 +1108,7 @@ function App() {
       else if (kind === 'assignment') setViewingServiceAssignment(null)
       else { reviewedStudentRequestRef.current += 1; setReviewedStudent(null) }
     }
-  }, [routeLocation, routePath, isAdmin, token, dashboardLoading, violations, communityServiceAssignments, students])
+  }, [portalReady, routeLocation, routePath, isAdmin, token, dashboardLoading, violations, communityServiceAssignments, students])
 
   const handleViolationChanged = (data, action) => {
     setViolations((current) => current.map((item) => Number(item.id) === Number(data.violation.id) ? { ...item, ...data.violation } : item))
@@ -1718,7 +1729,7 @@ function App() {
   qrActionRef.current=handleQrAction
 
   useEffect(()=>{
-    if(activeView!=='QR Scan'||!token||!user?.id) return undefined
+    if(!portalReady||activeView!=='QR Scan'||!token||!user?.id) return undefined
     const saved=verifiedQrRef.current||(!qrFormRef.current.qr_code&&sessionStorage.getItem('service-attendance-qr:'+user.id))
     if(saved) qrActionRef.current('scan',saved,{quiet:true})
     const refresh=()=>{
@@ -1731,7 +1742,7 @@ function App() {
     realtimeSocket?.on('community-service:changed',refresh)
     realtimeSocket?.on('connect',refresh)
     return ()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',refresh);realtimeSocket?.off('connect',refresh)}
-  },[activeView,token,user?.id,realtimeSocket])
+  },[portalReady,activeView,token,user?.id,realtimeSocket])
 
   /*
    * ============================================================
@@ -1799,6 +1810,7 @@ function App() {
   }
 
   const acceptSession = (data) => {
+    legal.retry()
     saveSession(data)
     setToken('cookie-session')
     setUser(data.user)
@@ -1870,12 +1882,12 @@ function App() {
      * ==========================================================
      */
 
-    if (sessionRestoring) {
-      return <SessionRestoringScreen error={sessionRestoreError} onRetry={() => { setSessionRestoreError(false); setSessionRestoreAttempt((attempt) => attempt + 1) }} onSignOut={signOutFailedRestoration} />
+    if (routePath === '/privacy' || routePath === '/terms') {
+      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} policies={legal.status?.documents} returnPath={policyReturnPath(routeSearch, isLoggedIn ? getHomePath(userRole) : authReturnPath)} />
     }
 
-    if (routePath === '/privacy' || routePath === '/terms') {
-      return <PublicPolicyPage type={routePath.slice(1)} onNavigate={navigateTo} returnPath={authReturnPath} />
+    if (sessionRestoring) {
+      return <SessionRestoringScreen error={sessionRestoreError} onRetry={() => { setSessionRestoreError(false); setSessionRestoreAttempt((attempt) => attempt + 1) }} onSignOut={signOutFailedRestoration} />
     }
 
     if (!isLoggedIn && routeResolution.status === 'not_found') {
@@ -1912,6 +1924,10 @@ function App() {
       return <PasswordChangeRequired token={token} user={user} onSession={acceptSession} onLogout={requestLogout} />
     }
 
+    if (!legal.ready) {
+      return <TermsAcknowledgment status={legal.status} error={legal.error} onStatus={legal.updateStatus} onRetry={legal.retry} onOpenPolicy={openPolicy} onLogout={requestLogout}/>
+    }
+
     if (user?.role==='STUDENT' && user?.onboarding_required) {
       return <StudentOnboarding user={user} clientId={GOOGLE_CLIENT_ID} onSession={acceptSession} onLogout={requestLogout}/>
     }
@@ -1937,8 +1953,8 @@ function App() {
     }
 
     if (activeView === 'Account Settings') {
-      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
-      return <AccountSecuritySettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} />
+      if (userRole === 'DISCIPLINE_ADMIN') return <AdminAccountSettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} onOpenPolicy={openPolicy} />
+      return <AccountSecuritySettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} onOpenPolicy={openPolicy} />
     }
 
     /*

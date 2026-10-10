@@ -8,7 +8,7 @@ const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 test('public routes receive specific searchable metadata', () => {
   assert.equal(metadataForRoute('/').title, 'STI Vio-Log | STI Global City')
   assert.equal(metadataForRoute('/').robots, 'index, follow')
-  assert.equal(metadataForRoute('/privacy').title, 'Privacy Policy | STI Vio-Log')
+  assert.equal(metadataForRoute('/privacy').title, 'Privacy Notice | STI Vio-Log')
   assert.equal(metadataForRoute('/terms').robots, 'index, follow')
   assert.match(metadataForRoute('/login').description, /secure STI Vio-Log portal/)
 })

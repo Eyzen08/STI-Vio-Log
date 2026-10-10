@@ -34,7 +34,7 @@ const checkDatabaseSecurity = async (database = pool) => {
      WHERE table_schema=$1 AND table_name=ANY($2::text[]) AND grantee='sti_vio_log_runtime'
        AND ((table_name='schema_migrations' AND privilege_type<>'SELECT')
          OR (table_name<>'schema_migrations' AND privilege_type IN ('UPDATE','DELETE','TRUNCATE','REFERENCES','TRIGGER')))`,
-    [schema, ['audit_logs', 'administrative_security_events', 'schema_migrations']]
+    [schema, ['audit_logs', 'administrative_security_events', 'schema_migrations', 'terms_acknowledgments']]
   )).rows[0];
   const result = { runtime_role:runtimeIdentity?.rolname || null, runtime_role_member:Boolean(runtimeIdentity?.runtime_member),
     runtime_privileged:Boolean(runtimeIdentity?.rolsuper || runtimeIdentity?.rolbypassrls || runtimeIdentity?.rolcreatedb || runtimeIdentity?.rolcreaterole),

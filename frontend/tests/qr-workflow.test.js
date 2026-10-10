@@ -58,10 +58,10 @@ test('background refresh skips an in-flight verification instead of duplicating 
 })
 
 test('polling verifies saved sessions but leaves unverified manual input alone',()=>{
-  const block=source.slice(source.indexOf('  useEffect(()=>{\n    if(activeView'),source.indexOf("  },[activeView,token,user?.id,realtimeSocket])"))+'  })'
+  const block=source.slice(source.indexOf('  useEffect(()=>{\n    if(!portalReady||activeView'),source.indexOf("  },[portalReady,activeView,token,user?.id,realtimeSocket])"))+'  })'
   const calls=[]
   let refresh
-  const context={activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{getItem(){return 'previous'}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
+  const context={portalReady:true,activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{getItem(){return 'previous'}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
   runInNewContext(block,context)
   refresh()
   assert.equal(calls.length,0)

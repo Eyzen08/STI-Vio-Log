@@ -81,7 +81,15 @@ After deployment verify:
 
 For the realtime transport release, sign in with test accounts and filter the browser Network panel for `/socket.io/`. Confirm polling requests succeed and no WebSocket requests are attempted; a pending long-polling GET while waiting for events is normal. In two authenticated test sessions, confirm messages and attendance changes update automatically, a temporary offline interruption reconnects after network restoration, and logout stops the connection. If polling fails, inspect its response and Render logs for proxy, Origin, or session errors before declaring the release verified. Clear the Console before checking so historical WebSocket failures are excluded.
 
-Verify a fresh MFA code completes login and an invalid code shows the expected authentication error. Invalid codes and expired MFA challenges should continue returning HTTP 401. Vercel Analytics remains enabled; `ERR_BLOCKED_BY_CLIENT` for its script in browsers with privacy extensions is harmless and is not a realtime failure.
+Verify a fresh MFA code completes login and an invalid code shows the expected authentication error. Invalid codes and expired MFA challenges should continue returning HTTP 401. Vercel Analytics loading is disabled; production network inspection must show no analytics script or collection requests.
+
+## Privacy Notice and Terms technical release
+
+Apply migration `050_terms_acknowledgments.sql` through the controlled migration process before deploying this backend release. The shared policy manifest keeps `enforcementEnabled: false`; the public pages contain factual corrections, while expanded legal wording stays in `docs/privacy-terms-review.md`. Confirm password, Google, MFA and restored sessions still reach the portal without acknowledgment. Check policy links from login and account settings, preserved return locations, visible versions and revision dates, and the absence of analytics requests.
+
+After authorized administration and DPO approval, add immutable approved policy snapshots, update the shared published document imports, and enable enforcement in a reviewed release. Increment `acknowledgmentVersion` only when a material Terms update requires renewed acknowledgment. A notice update or editorial revision alone must not reset acknowledgment. The API derives user identity, hashes and timestamps; the Privacy Notice version records the notice offered, not consent or proof of reading. Confirm the owner-approved retention and minors procedures before activation. Keep runtime acknowledgment records read/insert-only and unexposed to Supabase public API roles.
+
+For rollback, set enforcement false and redeploy the application. Preserve the acknowledgment table and migration history; owner-controlled retention or erasure must follow the institution's approved procedure.
 
 ## Rollback and rotation
 

@@ -6,8 +6,9 @@ import { changePassword } from '../lib/api.js'
 import { passwordIsStrong } from '../lib/passwordPolicy.js'
 import PasswordField from './PasswordField.jsx'
 import PasswordRequirements from './PasswordRequirements.jsx'
+import PolicyLinks from './PolicyLinks.jsx'
 
-export default function AccountSecuritySettings({ token, user, onSession, onAvatarChange, searchParams = '' }) {
+export default function AccountSecuritySettings({ token, user, onSession, onAvatarChange, onOpenPolicy, searchParams = '' }) {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -35,5 +36,6 @@ export default function AccountSecuritySettings({ token, user, onSession, onAvat
       {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
       <button disabled={busy}>{busy ? 'Changing password…' : 'Change password'}</button>
     </form></section>
+    <PolicyLinks onOpenPolicy={onOpenPolicy}/>
   </div>
 }

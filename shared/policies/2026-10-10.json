@@ -1,0 +1,23 @@
+{
+  "privacy": {
+    "version": "2026-10-10",
+    "effectiveDate": "2026-09-10",
+    "revisedDate": "2026-10-10",
+    "eyebrow": "Privacy and data protection",
+    "title": "Privacy Notice",
+    "summary": "How STI Vio-Log handles account, discipline, community service, and clearance information.",
+    "resources": [
+      { "label": "STI Data Privacy Policy", "url": "https://www.sti.edu/sti_dataprivacy.asp" },
+      { "label": "STI Data Protection Officer: dpo@sti.edu", "url": "mailto:dpo@sti.edu" }
+    ],
+    "sections": [
+      ["Information handled by the portal", "STI Vio-Log processes information needed to operate the school discipline and community service process. This may include account details, student number, school profile, guardian contact information, violation records, attendance and service records, clearance status, messages, and security or audit events."],
+      ["Why information is used", "Information is used to authenticate users, administer student discipline, coordinate assigned community service, determine clearance eligibility, communicate with authorized users, protect the portal, and maintain accountable school records."],
+      ["Who can access information", "Access is limited according to assigned roles. Students can review information made available to their own account. Authorized Discipline Office personnel, designated department personnel, and approved system support administrators can access only the information and functions required for their responsibilities."],
+      ["Retention and protection", "Records are retained according to applicable STI Global City policies and legitimate administrative requirements. The portal uses access controls, audit records, encrypted connections in production, and other safeguards intended to prevent unauthorized access or alteration."],
+      ["Cookies, browser storage, and analytics", "Authentication uses a secure, HTTP-only session cookie in production. Essential cookies also support request protection and multi-factor authentication. Local storage holds limited account display information and display preferences; session storage holds request-protection and temporary portal state, including attendance scanner state. Authentication credentials are not stored in local storage. The portal does not load Vercel Analytics, advertising trackers, or third-party behavioral analytics. If optional analytics or nonessential cookies are introduced, this notice and the appropriate consent controls must be updated before they are enabled."],
+      ["Your responsibilities and choices", "Keep your credentials private, sign out on shared devices, and report suspected account misuse promptly. Requests to review or correct personal information should be directed to the Discipline Office so identity and authority can be verified."],
+      ["Questions or concerns", "For privacy questions, record corrections, or account concerns, contact the STI Global City Discipline Office through an official school communication channel. STI's published institutional Data Privacy Policy also provides its Data Protection Officer's contact details. Do not send passwords or other authentication secrets."]
+    ]
+  }
+}

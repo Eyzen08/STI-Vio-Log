@@ -3,7 +3,7 @@ const PUBLIC_METADATA = {
   '/forgot-password': ['Forgot Password', 'Request secure recovery for your STI Vio-Log account.'],
   '/reset-password/verify': ['Verify Recovery Code', 'Verify your STI Vio-Log password recovery request.'],
   '/reset-password/new': ['Set New Password', 'Choose a new password for your STI Vio-Log account.'],
-  '/privacy': ['Privacy Policy', 'Learn how STI Vio-Log handles school account and student record information.'],
+  '/privacy': ['Privacy Notice', 'Learn how STI Vio-Log handles school account and student record information.'],
   '/terms': ['Terms of Use', 'Review the acceptable-use terms for the STI Vio-Log school portal.'],
 }
 

@@ -1,17 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
+import { publishedPolicies } from '../../shared/legalPolicies.mjs'
 
 const policySource = await readFile(new URL('../src/components/PublicPolicyPage.jsx', import.meta.url), 'utf8')
 const robotsSource = await readFile(new URL('../public/robots.txt', import.meta.url), 'utf8')
 const sitemapSource = await readFile(new URL('../public/sitemap.xml', import.meta.url), 'utf8')
 
 test('public legal pages cover privacy, authorized access, and contact guidance', () => {
-  assert.match(policySource, /Privacy Policy/)
+  assert.match(policySource, /Privacy Notice/)
   assert.match(policySource, /Terms of Use/)
-  assert.match(policySource, /Who can access information/)
-  assert.match(policySource, /Account security/)
-  assert.match(policySource, /Discipline Office/)
+  const content = JSON.stringify(publishedPolicies)
+  assert.match(content, /Who can access information/)
+  assert.match(content, /Account security/)
+  assert.match(content, /Discipline Office/)
+  assert.match(content, /https:\/\/www.sti.edu\/sti_dataprivacy.asp/)
 })
 
 test('crawler files expose public information without advertising protected areas', () => {

@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.jsx'
 import { installMutationRequestGuard } from './lib/api.js'
@@ -29,6 +28,5 @@ window.setTimeout(() => sessionStorage.removeItem('sti_vio_log_chunk_reload'), 1
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />
-    <Analytics />
   </StrictMode>,
 )

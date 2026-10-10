@@ -8,6 +8,14 @@ All protected endpoints use the opaque `sti_session` HttpOnly cookie. Browser re
 
 Standard statuses are 400 validation/business rules, 401 authentication, 403 authorization, 404 missing or non-visible resources, 409 concurrency/database conflicts, and 500 unexpected failures. Student self-service never accepts an ownership identifier; it derives ownership from the authenticated account. Private resources outside that ownership are treated as not visible (404) unless access is rejected at the role boundary (403).
 
+## Terms acknowledgment and Privacy Notice
+
+`GET /api/auth/legal` returns `{ success: true, legal }` for the authenticated account. `legal` contains `enforcement_enabled`, `required`, `acknowledgment_version`, `terms_version`, `privacy_notice_version`, `acknowledged_at` (nullable server timestamp), and the published `documents`. Enforcement is disabled in this technical release, so `required` is false and no acknowledgment is needed for ordinary access.
+
+`POST /api/auth/legal/acknowledge` requires the session cookie and CSRF header. Its body contains only `acknowledgment_version`, `terms_version`, and `privacy_notice_version`, matching the displayed status. The account, content hashes and timestamp are server-derived. Unknown fields are rejected (400); disabled enforcement returns 409 `LEGAL_ACKNOWLEDGMENT_DISABLED`; stale versions return 409 `LEGAL_POLICY_CHANGED`, requiring a status refresh. Successful writes return the same status envelope. Duplicate submissions for an account/acknowledgment version are idempotent and retain the original timestamp.
+
+When approved enforcement is enabled, protected APIs return 403 `TERMS_ACKNOWLEDGMENT_REQUIRED` until the server finds the required version. Session restoration, CSRF refresh, forced password change, legal endpoints and logout remain available. Password-change requirements take precedence. Realtime handshakes and existing socket authorization also check acknowledgment. The frontend delays protected requests until status resolves. The recorded Privacy Notice version identifies the notice offered, not consent or proof of reading. Only an approved material Terms update increments the required acknowledgment version.
+
 ## Authenticated real-time refresh events
 
 Socket.IO connects with the same opaque cookie session and `withCredentials: true`; no token is placed in the handshake payload. The server revalidates the active account, session version, forced-password-change state, role, and Department Account assignment before joining private rooms.
