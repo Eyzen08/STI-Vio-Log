@@ -1,5 +1,8 @@
 # STI Vio-Log Security Remediation Plan
 
+> **Historical remediation plan — reviewed October 10, 2026.** Check each task against current source before implementing: runtime pins are now Node 24/npm 11; Vercel proxy/CSP configuration is `frontend/vercel.mjs`, not the former JSON descriptor; socket reauthorization and bounded signature/avatar parsing now exist. Remaining production/session/image/backup verification is tracked in [the current audit](../AUDIT-REPORT.md). Historical unchecked work is not automatically absent code.
+
+
 This plan corresponds to the source-only audit dated 2026-09-24. P1 tasks are required before real student data or school handover. No source change should be treated as verified until its negative and positive regression cases run in an isolated environment.
 
 ## P0 — Block Deployment
@@ -70,7 +73,7 @@ No independently confirmed critical/high vulnerability was established. Deployme
 
 ### P1-7 — Protect backups and remove plaintext operational copies
 
-- Affected: `backend/scripts/backup.js`, `docs/DATABASE-BACKUP-RECOVERY.md`, operator storage. A local ignored `sti_vio_log_backup.sql` was observed but not opened.
+- Affected: `backend/scripts/backup.js`, `docs/DATABASE-BACKUP-RECOVERY.md`, operator storage. Specific local backup observations are retained privately; contents were not opened.
 - Change: prohibit plaintext SQL dumps in repository/OneDrive workspaces; use encrypted destination, restricted ACL, retention policy, integrity check, and isolated restore drill.
 - Expected behavior: backups are encrypted at rest, access logged/restricted, and restorability demonstrated.
 - Tests: restore a non-production backup into an isolated DB and verify integrity/access denial.

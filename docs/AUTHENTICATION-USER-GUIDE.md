@@ -60,7 +60,7 @@ Run `npm test` in both projects, and `npm run lint` / `npm run build` in the fro
 
 ## Staff and Department Accounts
 
-Only an ADMIN can create DISCIPLINE_OFFICE and DEPARTMENT_HEAD accounts. The generated temporary password is shown once to the ADMIN. On first login, the staff member must change it before any business API or portal page becomes available.
+Only DISCIPLINE_ADMIN can create DISCIPLINE_OFFICE and DEPARTMENT_HEAD accounts. The generated temporary password is shown once to that administrator. On first login, the staff member must change it before any business API or portal page becomes available.
 
 ## Password requirements
 
@@ -73,9 +73,9 @@ Use the accessible eye button beside a password field to show or hide its value.
 
 ## Email setup
 
-For production, configure the Brevo HTTPS API with `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME`. The sender email must be verified in Brevo. `EMAIL_TIMEOUT_MS` defaults to 10000 milliseconds. Brevo is preferred automatically when configured.
+For production, configure the Brevo HTTPS API with `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, and optionally `BREVO_SENDER_NAME`. The sender email must be verified in Brevo. `EMAIL_TIMEOUT_MS` defaults to 10000 milliseconds. Brevo is selected when configured; a failed Brevo request does not automatically retry through SMTP. Sender metadata was observed in the October 10 audit, but actual delivery and Render variable presence remain unverified.
 
-SMTP remains an optional fallback for local development or paid hosts through `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM`; `SMTP_TIMEOUT_MS` defaults to 10000 milliseconds. Free Render services block outbound SMTP ports, so production on Render Free must use the Brevo HTTPS configuration. Keep all real keys and credentials only in the deployment environment; never commit them.
+SMTP remains an alternative configuration for local development or suitable paid hosts through `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, and `MAIL_FROM`; `SMTP_TIMEOUT_MS` defaults to 10000 milliseconds. [Render Free documentation](https://render.com/docs/free) confirms outbound ports 25, 465 and 587 are blocked, so this project's Free deployment should use Brevo HTTPS. Keep all real keys and credentials only in the deployment environment; never commit them.
 
 
 ## College and Senior High School support

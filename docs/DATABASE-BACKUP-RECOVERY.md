@@ -1,8 +1,11 @@
 # Encrypted database backup and recovery
 
+> **Audit evidence, October 10, 2026.** Encrypted script unit tests passed; production backup creation/restoration was not executed. Local backup provenance, storage and encryption status require authorized owner review. Specific local observations are retained privately; backup contents were not read. Follow the secure migration/disposal procedure below.
+
+
 ## Policy
 
-Supabase automated backups and point-in-time recovery are the primary production controls. Manual copies must be AES-256-GCM authenticated archives, restricted to named administrators, and stored outside the repository, OneDrive, Vercel artifacts, chat, email, and public shares. Retain daily copies for 14 days, weekly copies for 8 weeks, and monthly copies for 12 months unless the school policy requires otherwise.
+Provider automated backups and point-in-time recovery are recommended production controls; their availability, activation, retention and successful restoration on the matched Supabase project were **not verified** in this audit. Do not assume they exist from the provider name. Manual copies must be AES-256-GCM authenticated archives, restricted to named administrators, and stored outside the repository, OneDrive, Vercel artifacts, chat, email, and public shares. A proposed schedule is daily copies for 14 days, weekly copies for 8 weeks and monthly copies for 12 months; it is **not an approved school policy**. Obtain an authorized retention/recovery decision before adopting it.
 
 ## Required settings
 
@@ -37,7 +40,7 @@ Only then remove the plaintext originals and empty the applicable recycle bin/sy
 
 ## Restore drill
 
-Never restore over production. Decrypt only on a restricted workstation into a temporary path, restore with `pg_restore --exit-on-error --no-owner --no-privileges`, run migrations/status and role-based smoke tests, compare recorded counts, and destroy the isolated restore database afterward. Perform a full drill quarterly and before risky production migrations.
+Never restore over production. Decrypt only on a restricted workstation into a temporary path, restore with `pg_restore --exit-on-error --no-owner --no-privileges`, run migrations/status and role-based smoke tests, compare recorded counts, and destroy the isolated restore database afterward. Recommended: a full drill quarterly and before risky production migrations; no completed drill or approved cadence was found. Archive authentication/listing is not a successful restore.
 
 ## Incident recovery
 

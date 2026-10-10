@@ -1,5 +1,8 @@
 # Community service attendance implementation
 
+> **October 10, 2026 audit addendum.** The execution/browser results below are historical release evidence, not checks repeated in this audit. Migration 046 and later files through 050 were observed applied on the matched database; both hosting providers showed the audited commit. Current results: 334 backend, 438 frontend unit tests passed; the all-database run passed 48/49 with an unrelated stale academic migration assertion. Production health/CORS boundaries passed; authenticated attendance and physical cameras remain unverified here. See [testing](TESTING.md).
+
+
 Approved plan: scan, automatic verification, duration selection, server-authoritative Time In/Out, shared timers and auditable credit.
 
 - Decisions: assignment department; final remainder allowed; Asia/Manila midnight stops credit until staff closes the session.

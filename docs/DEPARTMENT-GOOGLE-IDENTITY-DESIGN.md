@@ -1,5 +1,8 @@
 # Department officer Google registration design
 
+> **Historical design — reviewed October 10, 2026.** Preserve these decisions as design history, not current instructions or approved requirements. Current authentication uses opaque cookies and four active roles; public student registration/linking and all department Google HTTP workflows are retired. JWT/local-storage, legacy ADMIN, enrollment-gated signup and old identity uniqueness descriptions below are superseded. Use [authentication](AUTHENTICATION-USER-GUIDE.md), [RBAC](api/RBAC.md) and [traceability](FEATURE_TRACEABILITY.md) for current behavior. External institutional approval was not found.
+
+
 ## Decision
 
 Department access belongs to an individually identified officer, never to a shared account named after a location such as Library or School Guard. A department officer may register with Google, but registration creates only a pending request. Only an authenticated `ADMIN` may approve the officer, choose or confirm the official department, and grant the `DEPARTMENT_HEAD` role.

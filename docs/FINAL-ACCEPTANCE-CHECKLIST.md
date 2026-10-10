@@ -1,5 +1,8 @@
 # Final Acceptance Checklist
 
+> **Acceptance remains pending.** Reviewed October 10, 2026; boxes below are manual acceptance tasks and were not marked passed by this audit. [Testing](TESTING.md) records actual automated/read-only checks. Sections concerning historical registrations apply only to isolated legacy fixtures; new accounts use staff issuance. Provider backup/restore, OAuth, mail delivery and physical camera results remain unavailable.
+
+
 Run this checklist on a dedicated test student and test violation. Do not use a real disciplinary record. Record the date, tester, device, and pass/fail result for every section.
 
 ## 1. Prepare controlled test identities
@@ -38,7 +41,7 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 - [ ] Department B tries the same QR and assignment; the action is rejected without revealing private assignment details.
 - [ ] Department A opens Service Results and confirms the active student and live elapsed timer are visible.
 - [ ] With Service Results open on a second device, record Time-In/Time-Out and confirm the list refreshes immediately; briefly disable networking and confirm polling recovers after reconnection.
-- [ ] Department A records Time-Out and a service condition from the live monitor or QR scanner.
+- [ ] Department A confirms Time-Out from the live monitor or scanner; verify the server-derived outcome and optional note.
 - [ ] Confirm worked minutes are non-negative, derived from server timestamps, and immediately credited up to the remaining requirement without Discipline Office approval.
 - [ ] Test camera denial and manual QR entry; both must show usable instructions without a blank screen.
 
@@ -55,7 +58,7 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 
 ## 6. Security and recovery
 
-- [ ] Verify Admin-only account deletion/recovery actions are unavailable to other roles.
+- [ ] Verify administrator-only system lock/recovery boundaries. Separately review `DELETE /api/students/:id`: both operational staff roles can invoke this physical-delete route; approve retention/error behavior before exposing it in handover.
 - [ ] Revoke a student's Google link; confirm the old Google identity can no longer log in and the preserved student record is not deleted.
 - [ ] Reset a student or Department Account password; confirm the prior password/session fails and a forced password change is required.
 - [ ] Change a staff role or department; confirm old permissions disappear immediately.
@@ -85,15 +88,15 @@ Release only when every applicable item passes, failures are documented and corr
 - [ ] DISCIPLINE_ADMIN, DISCIPLINE_OFFICE, DEPARTMENT_HEAD, and STUDENT reach only their authorized dashboard.
 - [ ] DISCIPLINE_ADMIN can open both the operational dashboard and `/admin/system-monitoring` without another verification prompt.
 - [ ] Account lock and recovery require a single-use password confirmation bound to the selected account and action.
-- [ ] A Student registration remains inactive until the email OTP is verified.
-- [ ] Registration OTP expires, cannot be reused, and resend invalidates the previous code.
+- [ ] Staff-issued students cannot enter the portal before password change, staff-recorded Gmail OTP, matching Google binding and profile completion.
+- [ ] Onboarding OTP expires, cannot be reused, and resend invalidates the previous code; public signup/linking remains unavailable.
 - [ ] Forgot-password responses do not reveal whether a Student account exists.
 - [ ] Password reset requires OTP verification and a single-use reset authorization.
 - [ ] Existing sessions stop working after a successful password reset.
 - [ ] Only DISCIPLINE_ADMIN can create or manage staff and Department Accounts.
 - [ ] Temporary-password accounts cannot call business APIs until changing password.
 - [ ] Password fields have keyboard-accessible show/hide controls.
-- [ ] SMTP variables are configured in Render before production testing.
+- [ ] Brevo HTTPS variables and approved sender are configured before controlled email testing; no automatic SMTP failover is assumed.
 
 
 ## College and SHS academic acceptance

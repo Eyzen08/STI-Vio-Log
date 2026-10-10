@@ -1,5 +1,8 @@
 # STI Vio-Log Security Audit
 
+> **Historical incomplete audit — October 10, 2026 addendum.** Preserve the original September source-only report and its deferred findings; “0 confirmed” is not security clearance. Current socket source reauthorizes before room emissions and periodically, and regression tests passed (NV-01 live revocation still unverified). Signature/avatar parsing already checks encoded size, PNG/JPEG structure and bounded dimensions, but full decode/re-encode remains unverified (NV-02). Supabase catalog checks observed all 49 public tables RLS-enabled and no public API CRUD/function grants; actual Render runtime login/TLS, backups and preview isolation remain incomplete (NV-03–05). [Current audit evidence and priorities](../AUDIT-REPORT.md) supersede readiness claims, not the original audit record.
+
+
 Audit date: 2026-09-24  
 Source: commit `0aec1876aaba50f7796002ff43546ab14a4c2d0a` (clean at audit start)  
 Profile: standard, full repository scope  
@@ -119,7 +122,7 @@ Source shows transactions and locks around several certificate, attendance, regi
 
 ## Privacy Assessment
 
-Public certificate verification returns full student name, masked student number, program, and completed hours (`backend/src/controllers/clearanceCertificateController.js:314-326`). The code is an HMAC bearer value and is not predictably enumerable without the key, but STI must document that this disclosure is necessary and obtain a privacy-policy decision. An ignored 43 KB `sti_vio_log_backup.sql` exists in the local/OneDrive workspace; its contents were not opened. Future backups must never be left unencrypted in synchronized folders.
+Public certificate verification returns full student name, masked student number, program, and completed hours (`backend/src/controllers/clearanceCertificateController.js:314-326`). The code is an HMAC bearer value and is not predictably enumerable without the key, but STI must document that this disclosure is necessary and obtain a privacy-policy decision. Local backup-storage observations are withheld from this public edition and retained in the private audit evidence; contents were not opened. Backups must never be left unencrypted in synchronized folders.
 
 ## CI/CD Assessment
 

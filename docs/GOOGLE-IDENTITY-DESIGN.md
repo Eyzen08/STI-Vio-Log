@@ -1,5 +1,8 @@
 # Student Google identity linking design
 
+> **Historical design — reviewed October 10, 2026.** Preserve these decisions as design history, not current instructions or approved requirements. Current authentication uses opaque cookies and four active roles; public student registration/linking and all department Google HTTP workflows are retired. JWT/local-storage, legacy ADMIN, enrollment-gated signup and old identity uniqueness descriptions below are superseded. Use [authentication](AUTHENTICATION-USER-GUIDE.md), [RBAC](api/RBAC.md) and [traceability](FEATURE_TRACEABILITY.md) for current behavior. External institutional approval was not found.
+
+
 Status: implemented with enrollment-gated registration; live Google configuration remains environment-specific.
 
 ## Security boundary

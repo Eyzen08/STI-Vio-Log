@@ -1,4 +1,46 @@
-# Vercel and Supabase production deployment
+# Vercel, Render and Supabase production deployment
+
+## Observed deployment inventory — October 10, 2026
+
+Source baseline: `3601e16031c36d08308176d9c7807d02198ac7b8`. Read-only provider inspections matched repository/project identity before use. No deployments, settings, environment values, shared migrations or messages were changed. Instructions below are requirements/recommendations, not proof that all live settings match them.
+
+| Platform/category | Responsibility/component | Source/configuration | Observed status | Verification needed / limitation |
+|---|---|---|---|---|
+| Vercel/frontend | Vite frontend and same-origin API/polling proxy | `frontend/vercel.mjs`, `vite.config.js`; proxy origins, Google public client | Matched `sti-vio-log`, root `frontend`, Vite, `dist`, Node setting 24.x, build `npm run build`, **install `npm install`**. Latest production READY deployment matches audited SHA. Canonical frontend/proxy smoke passed. | Exact runtime, previews and authenticated browser flows unverified. Prefer locked `npm ci` in a separately approved provider change. |
+| Render/API | Long-lived Express/Socket.IO | `backend/package.json`, `src/server.js`; origin, database/email/security variables | Matched repository/main, root `backend`, Node **Free** service, Oregon, one instance, automatic commit deployments, previews off. Build `npm ci --omit=dev && npm audit --omit=dev --audit-level=moderate`; start `npm start`. Latest **Live** deployment matches audited SHA. Health/CORS smoke passed. | Release-command and health-check configuration require owner review; detailed control-plane observations are retained privately. No release command was executed. Runtime environment-name inventory/login/TLS and exact runtime unavailable. |
+| Supabase/database | PostgreSQL for API, no browser Auth/Storage SDK | Migrations, `src/config/database.js`; runtime/owner URL and TLS names | Matched ACTIVE_HEALTHY project, Tokyo; PostgreSQL **17.6**. All **50 migration filenames** recorded, 49 public tables all RLS-enabled, no anon/authenticated CRUD/public app-function grants in inspected metadata. Nonprivileged app login/runtime group exist. | Actual Render login/pooler/TLS, Data API settings, backups/PITR/retention/restore unverified. Owners can bypass non-FORCE RLS. |
+| Brevo/email | Backend HTTPS OTP/reset/credentials/certificates | `emailService.js`; `BREVO_API_KEY`, `BREVO_SENDER_EMAIL`, name/timeouts | One connection errored; another existing connection returned two active project-named senders. Addresses withheld. | Active sender metadata does not prove Render configuration or delivery. Controlled tests needed; no mail sent. |
+| Google/identity | Student ID-token verification/binding | GIS helper, `googleIdentityVerifier.js`; matching public client IDs | Source integration and Vercel client variable name present. | Google Cloud origins and live OAuth unavailable. No client secret needed for this flow. |
+| GitHub/repository and CI | Source, Actions, Dependabot | `.github/workflows/security.yml`, `.github/dependabot.yml` | Configuration inspected; connected commit lookup returned no PR-triggered runs in its limited scope. | This does not establish absent CI. Full Actions lookup could not execute because automatic approval review hit a usage limit. Job outcomes/branch protection unavailable. |
+| Vercel Analytics/analytics | Optional frontend dependency | Manifest; no entry-point loading | **Inactive** in current source. | Logged-in network absence and institutional activation approval unverified. |
+
+Vercel and Render deployment snapshots around **13:16 Asia/Manila, October 10** match the audited commit. Migration 050 metadata records approximately **11:09 Asia/Manila**. These are snapshots, not availability history or workflow certification.
+
+Provider environment names/presence were inspected without retrieving values. The public source configuration inventory is in TECH_STACK.md; the detailed live inventory is retained privately. The owner must verify necessity, least privilege and Production/Preview isolation. Vite normally exposes VITE-prefixed values; environment-name presence alone does not establish browser exposure.
+
+## Current architecture and request flow
+
+```mermaid
+flowchart LR
+    Browsers[Student and staff browsers] --> Vercel[React and Vite on Vercel]
+    Vercel -->|Same-origin API and Socket.IO polling proxy| Render[Express on Render]
+    Render --> Auth[Session CSRF permissions ownership validation]
+    Auth --> Logic[Routes controllers and services]
+    Logic -->|pg queries and transactions| DB[Supabase PostgreSQL]
+    Browsers --> GIS[Google Identity Services]
+    Logic -->|Verify ID token| GIS
+    Logic -->|HTTPS email| Mail[Brevo]
+    GitHub[GitHub commits] -->|Automatic deployment triggers| Vercel
+    GitHub -->|Automatic deployment triggers| Render
+```
+
+Google/mail source branches exist; live completion was not tested. Email is synchronous with timeout/errors and no durable queue. Socket.IO sends scoped refresh signals after committed writes; REST remains authoritative. Database pooling belongs to Render, not a currently deployed Vercel backend function.
+
+## Operational limits and recommendations
+
+**Current limits:** one Free API instance; incomplete provider environment/runtime evidence; no verified backup/PITR/restore; no full authenticated/browser/load/security evaluation; backup-storage review pending; retired registration tables retained; legal acknowledgment disabled. Health alone does not establish handover readiness.
+
+**Recommendations, not changes made:** review the release command and health-check configuration, verify runtime least privilege/TLS/proxy trust and preview isolation, use reproducible installs, approve backup/restore monitoring/retention, and test controlled Google/email/camera/revocation journeys. Keep owner credentials out of frontend/runtime services and migrations out of runtime startup. [The audit](AUDIT-REPORT.md) assigns priorities and next actions.
 
 ## Required architecture
 
@@ -25,7 +67,7 @@ Do not expose server secrets with a `VITE_` prefix. Disable public Vercel previe
 
 Use two connection strings:
 
-- `DATABASE_URL`: Supabase transaction pooler URL (port 6543) for the serverless/runtime application. The application automatically limits a Vercel pool to one connection.
+- `DATABASE_URL`: provider-approved runtime pooler/direct URL with the dedicated app login. Transaction pooling commonly uses port 6543; confirm provider settings. The current Render process defaults to ten pooled connections; the conditional one-connection Vercel behavior is not the observed backend deployment.
 - `MIGRATION_DATABASE_URL`: direct connection or session pooler URL (port 5432) for migrations, held only by the deployment/migration job.
 
 Require verified TLS and never set `DB_SSL=no-verify` in production. Enable Supabase SSL enforcement. Migration 034 revokes `anon` and `authenticated` access to application tables and enables RLS so the Supabase Data API cannot become an accidental bypass. If the Data API is not used by any other schema, disable it or expose a separate empty schema in Supabase API settings.
@@ -51,7 +93,7 @@ Set all of these as encrypted production-only variables:
 - `MFA_ENCRYPTION_KEY`: exactly 32 random bytes encoded as Base64
 - `TRUST_PROXY_HOPS`: the validated proxy-hop count for the API host (normally `1`, but confirm with the host)
 
-Never reuse keys between purposes. Startup rejects missing, short, placeholder, or insecure settings. Keep the legacy `JWT_SECRET` independent while any short-lived reset/verification challenge still uses JWT; those tokens are algorithm-, issuer-, audience-, purpose-, and lifetime-bound.
+Never reuse keys between purposes. Startup rejects missing, short, placeholder, or insecure settings. Keep legacy `JWT_SECRET` independent while required by readiness/development compatibility. Normal browser sessions and current reset authorizations use hashed opaque values; retained legacy bearer issuance is disabled in production. Configure `DEPLOYMENT_ENV` and `DATABASE_ENVIRONMENT` consistently with the readiness check and the selected email provider.
 
 ## Release procedure
 

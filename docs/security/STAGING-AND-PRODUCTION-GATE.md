@@ -1,5 +1,8 @@
 # Staging and Production Security Gate
 
+> **October 10, 2026 audit status.** This is a release gate, not an executed acceptance record. [Testing](../TESTING.md) records passed local and read-only smoke checks plus one failing disposable academic test. Provider backups/PITR, runtime TLS/login, authenticated browser journeys, physical camera and full security review remain unverified; release approval was not established.
+
+
 ## Environment separation
 
 Provision five distinct configuration scopes: local, test, preview, staging, and production. Staging must use a separate Supabase project, Render service, Google OAuth client, Brevo sender/API key, cookie-signing material, and fake identities. Never copy production database URLs, service-role keys, mail keys, OAuth secrets, session keys, or backup keys into Vercel Preview or GitHub pull-request environments.

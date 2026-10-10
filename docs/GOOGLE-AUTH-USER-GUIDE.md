@@ -2,7 +2,7 @@
 
 ## Mandatory Google binding for newly issued Student accounts
 
-Students whose credentials were issued by the Discipline Office first sign in with their Student Number and temporary password. Staff provision only the Student Number and legal name; the backend creates the private QR value. After changing the temporary password, the student enters a Google-account email, confirms the six-digit email code, and then signs in with Google using that exact address. Gmail and Google Workspace/custom-domain accounts are accepted. Only the successfully confirmed and Google-matched address becomes the password-recovery email.
+Students whose credentials were issued by the Discipline Office first sign in with their Student Number and temporary password. Staff provision the Student Number, legal name and personal Gmail; the backend creates the private QR value. After changing the temporary password, the student confirms the code sent to that read-only staff-recorded Gmail, then binds its matching Google identity. Newly issued accounts require personal Gmail; arbitrary Workspace/custom-domain addresses are not accepted by this provisioning workflow. Only the successfully confirmed and Google-matched address becomes the password-recovery email.
 
 The student cannot open normal portal pages until the password, Google, and profile-information steps are complete. Student Number and legal name are read-only during onboarding. Returning Google sign-in resumes an incomplete setup at the correct step. Existing Student accounts are not retroactively placed into this workflow.
 
@@ -10,11 +10,9 @@ The student cannot open normal portal pages until the password, Google, and prof
 
 1. Open the unified `/login` page and expand **Continue with Google**.
 2. Select **Continue with Google** and use the student's linked Google account. Microsoft Entra school accounts are not Google accounts.
-3. If the Google identity is already linked to an active Student record, the student enters the portal immediately.
-4. On first use, enter the school-issued Student Number exactly as shown in the enrollment record, plus the student's first and last name.
-5. When an existing school-managed Student record matches, the Google identity is linked and the student signs in.
-6. When no matching record exists, linking is rejected. Ask the Discipline Office to issue an account and complete required onboarding.
-7. Historical pending Google registrations remain available for authorized review; public creation of new registration requests is retired.
+3. A linked active Student identity signs in; incomplete onboarding/rebinding resumes before portal access.
+4. An unknown identity cannot link by supplying a Student Number and name. Ask staff for issued credentials and complete authenticated onboarding. `POST /api/auth/google/link` is removed (404); binding uses `POST /api/account/student-onboarding/google-link`.
+5. Historical pending registrations remain reviewable only by DISCIPLINE_ADMIN; no new public registration route is active.
 
 Students never choose a Student ID or application role. One Google account cannot be linked to multiple portal users.
 

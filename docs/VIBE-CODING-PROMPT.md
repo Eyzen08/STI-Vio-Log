@@ -1,5 +1,8 @@
 # STI Vio-Log — Vibe Coding Master Prompt
 
+> **Historical planning prompt.** Reviewed October 10, 2026. This is retained development context, not the current schema/API/stack or evidence of finished work. Use [the technology inventory](TECH_STACK.md) and [feature traces](FEATURE_TRACEABILITY.md). Proposed libraries, objects, endpoints and workflows require separate approval and implementation.
+
+
 You are helping develop **STI Vio-Log**, a production-ready web-based student disciplinary management system.
 
 ## Project Goal

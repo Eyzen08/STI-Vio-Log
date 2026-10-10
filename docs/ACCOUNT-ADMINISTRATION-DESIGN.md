@@ -1,5 +1,8 @@
 # Account administration and recovery design
 
+> **Historical design — reviewed October 10, 2026.** Preserve these decisions as design history, not current instructions or approved requirements. Current authentication uses opaque cookies and four active roles; public student registration/linking and all department Google HTTP workflows are retired. JWT/local-storage, legacy ADMIN, enrollment-gated signup and old identity uniqueness descriptions below are superseded. Use [authentication](AUTHENTICATION-USER-GUIDE.md), [RBAC](api/RBAC.md) and [traceability](FEATURE_TRACEABILITY.md) for current behavior. External institutional approval was not found.
+
+
 ## Scope and security boundary
 
 This design must be implemented before staff accounts are provisioned through the application. Account administration is restricted to authenticated, active `ADMIN` users. `DISCIPLINE_OFFICE`, `DEPARTMENT_HEAD`, and `STUDENT` users cannot create accounts, change roles, assign departments, deactivate users, reset credentials, or recover Google links.

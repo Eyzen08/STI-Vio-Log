@@ -1,11 +1,14 @@
 # Admin violation corrections
 
+> **October 10, 2026 evidence.** Migration 045 is present/applied in connected metadata; correction unit and disposable database tests passed. The source workflow exists; authenticated deployment acceptance remains incomplete. See [testing](TESTING.md).
+
+
 The violation editor supports classification, handbook offense, incident details,
 incident date/time, required hours, and completed-hour corrections. A reason is
 required. Closed cases must be reopened before editing. Cancellation retains the
 case and attendance evidence while removing active obligations and offense counts.
 
-Completed-hour corrections require `DISCIPLINE_ADMIN`. Hours are decimal hours
+Completed-hour corrections require `DTR_CORRECT`, granted to both `DISCIPLINE_ADMIN` and `DISCIPLINE_OFFICE`; Department Accounts and students cannot correct totals. Hours are decimal hours
 with up to two decimal places; completed hours cannot exceed required hours.
 Changing hours or cancelling a case is blocked until active attendance times out.
 When service is assigned inside the editor, an active department and its active
@@ -16,7 +19,7 @@ Attendance records remain unchanged. Corrections are stored in the append-only
 student service views, and DTR reports. Future attendance credits add to the
 corrected completed-hour total.
 
-`PUT /api/violations/:id` accepts the fields described in the OpenAPI contract.
+`PUT /api/violations/:id` accepts the fields described in [current Markdown API contracts](api/CONTRACTS.md). The JSON OpenAPI description still incorrectly says completed-hour corrections are administrator-only; its permission wording needs a separately authorized update.
 `PUT /api/community-service/:id` continues to accept `required_hours` and now also
 requires `reason`; it uses the same correction transaction and validation.
 

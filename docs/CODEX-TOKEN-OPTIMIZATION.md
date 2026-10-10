@@ -1,5 +1,8 @@
 # Codex Token-Optimization Plan
 
+> **Historical developer-process note.** Reviewed October 10, 2026. Its checkpoint commit, file/test totals and working-tree statements describe the earlier checkpoint only. Current inventory/results are in [the audit](AUDIT-REPORT.md) and [testing](TESTING.md); this note is not acceptance evidence.
+
+
 ## Finding
 
 The long-running project session has grown to roughly 77–81 MB, while recent separate sessions are generally below 1.4 MB. The main causes are repeated one-word continuation turns, full test logs, repeated repository-wide searches, screenshots, and reloading project history that has already been settled.
@@ -33,7 +36,7 @@ npm run build
 
 Tool output should be capped or summarized to the final pass/fail counts while preserving the process exit code.
 
-## Current checkpoint
+## Historical checkpoint
 
 - Latest pushed commit: `041e8bf` (`fix(department): prevent blank portal after password change`).
 - One tested milestone is currently uncommitted: live Department Account service monitoring and immediate capped credit at Time-Out.

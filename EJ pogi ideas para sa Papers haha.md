@@ -1,10 +1,80 @@
 # STI Vio-Log Capstone Paper Sourcebook
 
+Updated **October 10, 2026, Asia/Manila**, against commit `3601e16031c36d08308176d9c7807d02198ac7b8`. All original sourcebook sections, defense prompts, glossary, writing ideas and evidence index are preserved in G; two malformed/outdated technology rows are corrected. A–F and H establish current revision guidance. This is a sourcebook, not a submitted or approved manuscript.
+
+## A. Official Project Information
+
+**Preserved repository title:** A Web-Based Student Violation Monitoring and Incident Management System for STI Global City.
+
+The campus context, objectives and problem description come from repository documents, not inspected approval records or fresh interviews. No formal manuscript, signed proposal, bibliography manuscript, editable academic source or institutional template was found in accessible project assets. Official title, approved scope, methodology and intended stakeholder outcomes therefore remain **Unable to verify**. Obtain those documents before changing institutional terminology or chapter structure.
+
+The implemented objective is to connect disciplinary cases, assigned service, QR/DTR credit, communication, reporting and clearance for Student, Department Account, Discipline Office and Discipline Administrator users. Describe intended efficiency/accountability benefits as objectives; measured improvements, adoption, satisfaction and academic acceptance are not established. Current limits include ALL_HISTORY offense policy, no authoritative incident-term model, limited departmental permissions, unverified live integrations, disabled mandatory Terms acknowledgment and incomplete operational/security acceptance.
+
+## B. Complete System Feature Inventory
+
+[Feature traceability](docs/FEATURE_TRACEABILITY.md) maps every major discovered area with requirement provenance, frontend, API, backend, database, dependency/platform, authorization, tests/result, implementation status, documentation, academic section, discrepancy and next action. Use the six exact implementation labels in that document; the shorter evidence labels retained in G are historical writing aids, not current feature-status replacements.
+
+Describe staff-issued students and locked password → recorded Gmail OTP → Google binding → profile onboarding; owned student views; accountable departments/supervisors; violation lifecycle and all-history indicator; service routing; server-timed attendance, immediate capped credit and separate corrections; manual guardian-contact logs; staff/student messages; scoped notifications; reports/exports; clearance and issued PDF snapshots; duplicate/historical registration review; administrator MFA/audit/system recovery; avatar/preferences and public legal pages. A general good-standing report is not an issued good-standing PDF. No automated SMS delivery was found.
+
+Avoid copying historical registration, department Google, JWT/local-storage, deferred correction or broader guardian/clearance permissions from G. Current rules: personal Gmail recorded by staff is read-only during onboarding; public linking returns 404; Department Accounts have no guardian/messages/clearance access; both operational staff roles can make reasoned hour corrections.
+
+## C. Full Technology Stack and Platforms
+
+Use [the stack inventory](docs/TECH_STACK.md) for all direct manifest ranges, locked/installed versions, selected transitive packages, custom implementations and environment-name purposes. The application is JavaScript/JSX, SQL, HTML/CSS/SVG and PowerShell, with React 19.2.8, Vite 8.2.1, Express 5.2.1, pg 8.23.0, Socket.IO 4.8.1, bcrypt, QR libraries, PDFKit and ExcelJS. Routing, fetch, forms, CSS, SVG charts, TOTP and CSV helpers are custom. TypeScript, Tailwind, React Router, Axios, an ORM and a browser Supabase SDK are not the active project stack.
+
+Both manifests require Node 24.x/npm 11.x; local checks used 24.18.1/11.16.0. The hosted database reported PostgreSQL 17.6, while disposable tests used 18.6. Exact deployed package/runtime versions remain unknown.
+
+[Production deployment](docs/PRODUCTION-DEPLOYMENT.md) contains the matched Vercel frontend, Render API and Supabase PostgreSQL observations. Both hosting providers showed the audited commit; all 50 database migration names were observed applied. Brevo sender metadata was observed but mail delivery was not tested. Google configuration/live OAuth and full GitHub CI outcomes remain unavailable. Analytics is installed but inactive. Supabase database use does not imply Supabase Auth, Storage or Realtime use.
+
+## D. System-to-Paper Mapping
+
+The official paper was unavailable, so whether each section already describes the system accurately is **Unable to verify** for every row. Suggested section names below must be fitted to the supplied institutional template; no chapter numbering or methodology is imposed.
+
+| Paper area | Source-grounded revision | Roles/workflow/component evidence | Evidence still needed |
+|---|---|---|---|
+| Title/abstract/introduction | Preserve title pending approval; describe implemented linked workflows and objectives without measured benefit claims. | README; sourcebook B; functional requirements. | Approved proposal/title/scope and actual abstract. |
+| Problem/objectives/scope | Distinguish documented expectations from approved requirements; explain department boundaries, manual guardian calls, all-history policy, legal and operational limits. | R1/R2/R3 provenance and status in traceability; RBAC. | Stakeholder decisions and formal research questions. |
+| Requirements/use cases | Map four roles, staff provisioning, self-service ownership, automatic credit and reasoned corrections; identify retired public registration. | Login/StudentOnboarding → account routes/services → users/students/guardians; staff/department tests. | Written approval and controlled workflow acceptance. |
+| Design/implementation | Trace user actions → session/CSRF/permission checks → controllers/services → PostgreSQL transactions → scoped refresh/mail. | server.js, route catalog, schema/security migrations; deployment diagram. | Approved diagram requirements and manuscript diagrams. |
+| Attendance/business rules | Explain eight-hour Manila-day cap, fixed/Open Time, exact final remainder, server outcomes, midnight cutoff and separate correction history. | QR/timing/session services, assignment/session/progress/officer tables, PG tests. | Camera/offline/multi-device and edge acceptance. |
+| Communication/privacy/security | Explain staff-only guardian log, owned messages, minimal public certificate fields, opaque sessions/MFA/RLS and image signatures. | Parent/message/certificate/identity services; RBAC; privacy review. | Disclosure/retention/minors approval and independent security/live evaluation. |
+| Testing/results/discussion | Report 334/334 backend, 438/438 frontend, lint/build/budget, zero registry advisories, PG 48/49 and public smoke, with scope and one failure. | TESTING.md and audit findings; no production data sampled. | CI, browser/accessibility/load, stakeholder usability/effectiveness data. |
+| Conclusion/recommendations | Conclude only from supported implementation/checks; identify failed test, deployment settings, backup/restore and acceptance gaps. | AUDIT-REPORT outstanding-work ledger. | Completed evaluation and adviser review. |
+| Literature/methodology | Preserve legitimate citations/research design; choose sources/instruments only with adviser approval. | Existing ideas in G; legal draft retains its existing references. | Actual literature, citation style, approved method, participants/consent/instruments. |
+
+## E. Architecture, Diagrams, and Workflows
+
+Start with the current Mermaid architecture in [the existing deployment guide](docs/PRODUCTION-DEPLOYMENT.md). Browser → Vercel same-origin API/polling proxy → Render Express → pg/Supabase PostgreSQL; Google verifies external identity, Brevo handles server mail. Do not replace this with serverless Supabase Auth/Storage or a planned worker queue.
+
+If required by the approved template, prepare: four-role use cases; context/DFD showing guardian contact is manual; ERD from all 50 migrations and the observed 49 tables (not one table per migration); onboarding/QR/correction/certificate activity or sequence diagrams showing ownership, locks, failure rollback and separate email success. Show retired support/registration tables as retained history where relevant. Existing diagrams in the official paper were unavailable; do not claim they were reviewed. Screenshots must use authorized synthetic identities and omit passwords, QR secrets, tokens and real student records.
+
+## F. Research, Testing, and Evaluation Evidence
+
+[TESTING.md](docs/TESTING.md) records real commands/environment/results. The PG failure is a stale migration expectation (043 alone vs 043–050), and later assertions in that case were not reached. Builds/asset budgets are not response-time or load results; mocked/source/SSR tests are not authenticated browser verification; healthy deployments are not completed handover. Historical browser/test counts in G remain earlier release records unless independently reproduced.
+
+No current survey responses, respondent counts, interview results, usability scores, measured efficiency improvements, adoption figures, stakeholder acceptance or formal security certification were found. Obtain approved research instruments/procedures and actual anonymized findings before writing results. Preserve legitimate sources; no scholarly citation or research result is invented by this update.
+
+## G. Preserve and Organize the Original Ideas
+
+| Original idea group | Current classification and placement |
+|---|---|
+| Connected discipline/service/DTR/clearance workflows; four roles; accountability | Implemented feature, with verification limits; use B/D/E and traceability. Institutional requirement approval unverified. |
+| Public student Google/password signup, department Google identity, old enrollment/linking decisions | Outdated idea requiring review; historical designs, not current onboarding or verified registrar integration. |
+| REST plus scoped realtime, secure cookies, transactional consistency, defense explanations | Implemented mechanisms; retain defense ideas and glossary below with current test/production qualifications. |
+| Good-standing documents, future enhancements and policy/term refinements | Proposed enhancement or idea needing stakeholder/adviser approval; not silently promoted to scope. |
+| Usability, effectiveness, efficiency, literature, respondents and research methods | Research question/evidence needed; use approved methodology and actual collected data. |
+| Handover, formal security review, backups, retention and diagram checklist | Proposed verification/approval tasks; “approved unfinished requirement” is not assigned without an approval record. |
+
+### Preserved original sourcebook — September checkpoint with later notes
+
+The complete original ideas follow. Current A–F/H and linked guides take precedence over stale technology counts/status wording. These historical ideas retain their evidence index, questions and distinctions rather than being replaced by a generic template.
+
+
 > **Purpose.** This file is an evidence-based reference for preparing the STI Vio-Log capstone manuscript, presentation, and defense. It explains what the repository shows about the system, how the parts interact, and where the material may be used in a paper. It is not a finished manuscript and does not replace the school’s required research format.
 
-> **Repository baseline.** Updated on **September 25, 2026** against the current repository through migration `041_attendance_outcomes.sql`. The verified implementation includes 24 backend route modules, 29 backend controllers, 52 React components, 41 ordered database migrations, and 125 backend/frontend automated test files. These counts describe repository contents, not successful production deployment or completed user acceptance testing.
+> **Historical September baseline.** Recorded on **September 25, 2026** against the then-current repository through migration `041_attendance_outcomes.sql`. The verified implementation includes 24 backend route modules, 29 backend controllers, 52 React components, 41 ordered database migrations, and 125 backend/frontend automated test files. These counts describe repository contents, not successful production deployment or completed user acceptance testing.
 
-## 1. Evidence Labels and Writing Rules
+### 1. Evidence Labels and Writing Rules
 
 The following labels prevent the paper from presenting an assumption as a completed or evaluated result.
 
@@ -17,13 +87,13 @@ The following labels prevent the paper from presenting an assumption as a comple
 
 Repository evidence should support technical descriptions. It cannot, by itself, prove usability, user satisfaction, organizational effectiveness, faster processing, fewer errors, or improved student outcomes. Such conclusions require collected and analyzed research data.
 
-## 2. System Overview
+### 2. System Overview
 
 **Implemented.** STI Vio-Log is a web-based student violation, community-service, QR attendance, communication, reporting, and disciplinary-clearance management system. The repository contains separate browser and server applications, a PostgreSQL schema managed through migrations, role-restricted API routes, and interfaces for students and authorized personnel. Evidence: `README.md`, `frontend/src/App.jsx`, `backend/src/server.js`, and `database/migrations/`.
 
 The system addresses the operational difficulty of keeping disciplinary records, service assignments, attendance sessions, communication, and clearance decisions connected and traceable. Instead of treating these as isolated records, the implementation links a violation lifecycle to community-service progress, time-in/time-out sessions, reporting, notifications, audit history, and clearance eligibility.
 
-### 2.1 Intended users and roles
+#### 2.1 Intended users and roles
 
 | User or role | Main system responsibilities | Evidence status |
 |---|---|---|
@@ -34,9 +104,9 @@ The system addresses the operational difficulty of keeping disciplinary records,
 
 Role names and responsibilities should be copied consistently into the paper. The project documentation sometimes uses informal labels such as “DO Admin”; the code-level role constants above are the more precise technical terms. Evidence: `backend/src/security/permissions.js`, `backend/src/middleware/authMiddleware.js`, and `docs/FUNCTIONAL-REQUIREMENTS.md`.
 
-## 3. Verified Technology and Platform Inventory
+### 3. Verified Technology and Platform Inventory
 
-### 3.1 Frontend technologies
+#### 3.1 Frontend technologies
 
 | Technology | Classification | Function in STI Vio-Log | Evidence |
 |---|---|---|---|
@@ -46,10 +116,10 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Socket.IO Client 4 | Real-time client library | Receives authenticated, audience-scoped refresh events and prompts the interface to retrieve authoritative data. | **Implemented** — `frontend/package.json`, `frontend/src/lib/realtime.js`. |
 | `html5-qrcode` | Browser QR-scanning library | Uses a permitted device camera to scan student QR codes in department workflows. | **Implemented** — `frontend/package.json`, `frontend/src/components/DepartmentQrScanner.jsx`. |
 | `qrcode` | QR-generation library | Generates a student-facing QR image from the opaque QR payload supplied by the system. | **Implemented** — `frontend/package.json`, `frontend/src/components/StudentQr.jsx`. |
-| Vercel Web Analytics | Adds frontend traffic-analytics integration for the deployed site. | **Implemented; Configured/Deployed** — `@vercel/analytics` in `frontend/package.json` and the frontend entry point. Live collection and the institution’s approved analytics/privacy configuration **Need verification**. |
-| Theme and responsive interface system | Provides light/dark themes, mobile navigation, reusable portal headers, accessible focus states, responsive record cards, and mobile QR/message/account workflows. | **Implemented** — `frontend/src/lib/theme.js`, `frontend/src/styles/portal-system.css`, components, and frontend tests. |
+| Vercel Web Analytics | Installed, inactive dependency | Current entry point does not load Analytics; the October 10 privacy decision disables loading. | Manifest presence is not runtime collection; production network absence still needs verification. |
+| Theme and responsive interface system | Custom UI | Provides light/dark themes, mobile navigation, reusable portal headers, accessible focus states, responsive record cards, and mobile QR/message/account workflows. | **Implemented** — `frontend/src/lib/theme.js`, `frontend/src/styles/portal-system.css`, components, and frontend tests. |
 
-### 3.2 Backend and API technologies
+#### 3.2 Backend and API technologies
 
 | Technology | Classification | Function in STI Vio-Log | Evidence |
 |---|---|---|---|
@@ -59,7 +129,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Socket.IO 4 | Real-time communication library | Sends scoped update events to user, role, or department rooms over WebSocket or fallback transport. | **Implemented** — `backend/src/realtime.js`, `backend/src/services/realtimeEventService.js`. |
 | `pg` | PostgreSQL driver | Provides connection pooling, parameterized queries, transactions, and database access. | **Implemented** — `backend/package.json`, `backend/src/config/database.js`. |
 
-### 3.3 Database and data management
+#### 3.3 Database and data management
 
 | Technology or practice | Function in STI Vio-Log | Evidence status |
 |---|---|---|
@@ -71,7 +141,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Runtime/owner role separation, RLS, and Data API lockdown | Separates migration ownership from application access, hardens function search paths and retention operations, and prevents unintended anonymous/authenticated Data API access. | **Implemented; Configured/Deployed** — migrations 034–036 and 040, database security checks, and `docs/PRODUCTION-DEPLOYMENT.md`. |
 | Supabase-managed PostgreSQL | Intended production database platform; Supabase is used as PostgreSQL rather than as browser-side Auth or direct application Data API access. | **Configured/Deployed; Documented** — `backend/src/config/database.js`, `docs/PRODUCTION-DEPLOYMENT.md`. Live use **Needs verification**. |
 
-### 3.4 Authentication and security technologies
+#### 3.4 Authentication and security technologies
 
 | Technology or control | Purpose | Evidence status |
 |---|---|---|
@@ -92,7 +162,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | Mandatory Student onboarding | Blocks normal Student portal/API use until required Google-email confirmation/linking and profile completion steps are satisfied. | **Implemented** — migrations 038–039, `studentOnboardingService.js`, onboarding middleware/routes, UI, and tests. |
 | Certificate and session signature hardening | Uses bounded signing secrets, validates certificate references, and protects session/certificate trust boundaries from weak or reused production configuration. | **Implemented; Configured/Deployed** — security configuration, certificate/session services, production checks, and security tests. |
 
-### 3.5 Communication, document, and export technologies
+#### 3.5 Communication, document, and export technologies
 
 | Technology or capability | Function | Evidence status |
 |---|---|---|
@@ -103,7 +173,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | CSV export | Produces validated, privacy-limited tabular reports for authorized users. | **Implemented** — report controllers/routes and export tests. |
 | In-app notifications and messaging | Delivers role-relevant operational updates and authorized text communication. | **Implemented** — message/notification services, routes, frontend components, and tests. |
 
-### 3.6 Deployment, development, and quality platforms
+#### 3.6 Deployment, development, and quality platforms
 
 | Platform or tool | Role in the project | Evidence status |
 |---|---|---|
@@ -120,7 +190,7 @@ Role names and responsibilities should be copied consistently into the paper. Th
 | npm audit and CycloneDX SBOM | Check dependency vulnerabilities and create software bills of materials in CI. | **Configured/Deployed** — security workflow. Actual audit status **Needs verification** from a current run. |
 | Performance-budget script | Builds the frontend and checks defined bundle/performance limits. | **Implemented; Configured/Deployed** — frontend package scripts and `frontend/scripts/check-performance-budget.mjs`. |
 
-### 3.7 Database evolution summary
+#### 3.7 Database evolution summary
 
 | Migration range | Major capability added or hardened |
 |---|---|
@@ -133,9 +203,9 @@ Role names and responsibilities should be copied consistently into the paper. Th
 
 The migrations are cumulative. Earlier tables or workflows may remain for historical compatibility even when a newer migration retires their active use. The applied production migration status is **Needs verification** with `npm run migrate:status`; repository presence alone does not prove that every production migration has run.
 
-## 4. System Architecture and Component Interaction
+### 4. System Architecture and Component Interaction
 
-### 4.1 Configured production architecture
+#### 4.1 Configured production architecture
 
 ```mermaid
 flowchart LR
@@ -148,12 +218,12 @@ flowchart LR
     F -->|Google ID credential| G[Google Identity Services]
     A -->|Server-side token verification| G
     A -->|HTTPS email API| B[Brevo]
-    A -.->|Optional SMTP fallback| M[SMTP provider via Nodemailer]
+    A -.->|Optional SMTP alternative| M[SMTP provider via Nodemailer]
 ```
 
 **Configured/Deployed; Documented.** The diagram represents the intended production arrangement found in `frontend/vercel.mjs` and `docs/PRODUCTION-DEPLOYMENT.md`. Researchers should confirm the active domains, deployment status, proxy behavior, and provider dashboards before writing that this architecture is currently operational.
 
-### 4.2 Component-interaction summary
+#### 4.2 Component-interaction summary
 
 | Source | Destination | Interaction | Protection or design rule |
 |---|---|---|---|
@@ -164,7 +234,7 @@ flowchart LR
 | Express API | Brevo or SMTP | Sends verification or operational email when configured | Credentials remain server-side; delivery status requires live verification. |
 | Express API | PDF/Excel/CSV response | Produces authorized certificates and reports | Report filters are validated and sensitive fields are restricted. |
 
-### 4.3 Request and security flow
+#### 4.3 Request and security flow
 
 1. **Implemented.** A user enters through the React interface and authenticates with a supported local or Google-based flow.
 2. **Implemented.** The backend verifies credentials, account state, role requirements, and—where required—MFA or forced-password-change state.
@@ -175,77 +245,77 @@ flowchart LR
 7. **Implemented.** Successful operations may create audit/security events and send a minimal Socket.IO refresh notification to the relevant audience.
 8. **Implemented.** The client retrieves the updated authoritative state through its REST endpoint. Polling provides recovery if the real-time connection is interrupted.
 
-## 5. Major Functional Workflows
+### 5. Major Functional Workflows
 
-### 5.1 Student registration, identity, and access
+#### 5.1 Student registration, identity, and access
 
 **Implemented.** The repository contains Student Number/password access and Google identity/registration flows. Google credentials are verified on the server. New or linking requests can enter an administrative review process, while approved records create or connect the local identity with an audit trail. Newly provisioned students must finish ordered onboarding steps before normal portal access: change a temporary password when applicable, confirm the intended Google email through a single-use OTP, bind the verified Google identity, and complete required profile information. Department Google access has been retired in favor of administrator-provisioned Department Accounts with forced password change. Evidence: Google/student authentication and onboarding services, migrations 005–006, 019–020, and 038–039, onboarding UI/tests, and `docs/GOOGLE-AUTH-USER-GUIDE.md`.
 
 **Paper use:** Discuss identity verification, controlled registration, account lifecycle, and the separation between an external identity provider and the application’s own authorization model.
 
-### 5.2 Violation management
+#### 5.2 Violation management
 
 **Implemented.** Authorized personnel can record and transition violation cases through controlled actions. Structured history and audit entries preserve who performed lifecycle operations, while invalid/cancelled records are treated differently from completed requirements. Evidence: `backend/src/controllers/violationController.js`, `backend/src/services/violationWorkflowService.js`, migrations 002 and 025, violation tests.
 
 **Paper use:** Present the lifecycle as an example of data integrity, accountability, and rule-based process automation. Do not claim that the system reduces violations unless research data demonstrates that outcome.
 
-### 5.3 Community-service assignment and progress
+#### 5.3 Community-service assignment and progress
 
 **Implemented.** The Discipline Office assigns required service separately from the violation record and associates work with a department. Progress is derived from credited attendance sessions and cannot exceed the remaining requirement. Officer availability, permanent/temporary responsibility, supervising-officer history, legacy result review, and current attendance outcomes are represented in later migrations and services. Evidence: community-service and officer-responsibility controllers/services, migrations 003–004, 013, 018, 026, and 041.
 
 **Paper use:** Explain how separating the offense record, corrective assignment, and attendance evidence improves data normalization and preserves historical meaning.
 
-### 5.4 QR time-in, time-out, and digital DTR
+#### 5.4 QR time-in, time-out, and digital DTR
 
 **Implemented.** A Department Account scans an opaque student QR value. The server derives the authenticated department and scanner identity, checks the relevant assignment, prevents conflicting active sessions, records server timestamps, and calculates worked and credited time at time-out. Time-out requires one controlled outcome: `TODAYS_SERVICE_COMPLETED`, `LEFT_EARLY`, or `SERVICE_COMPLETED`; the server rejects an outcome inconsistent with the remaining required time. Eligible elapsed time is credited immediately, capped at the assignment’s remaining requirement, without a second Discipline Office approval. Active attendance, student service views, QR screens, and DTR screens receive scoped refresh signals and retain polling recovery; live timers are capped at remaining required time. Evidence: QR/community-service attendance controllers and service, migration 041, `AdminActiveAttendance.jsx`, `DepartmentQrScanner.jsx`, `StudentServiceTimeDrawer.jsx`, real-time modules, API contract, and workflow/isolation tests.
 
 **Paper use:** Describe QR as an identifier transport mechanism, not as the source of authorization. The server—not the scanned content—decides access, department scope, timestamps, and credit.
 
-### 5.5 Non-compliance monitoring
+#### 5.5 Non-compliance monitoring
 
 **Implemented.** Authorized views and reports identify unresolved or overdue service-related conditions using validated filters and department scoping. Evidence: report controller/routes, department non-compliance frontend modules, notification service, and report tests.
 
 **Paper use:** Position the module as decision support for authorized staff. Any claim that alerts improve compliance is **needs verification** through actual evaluation data.
 
-### 5.6 Parent or guardian contact records
+#### 5.6 Parent or guardian contact records
 
 **Implemented.** Authorized personnel can access necessary guardian information and append contact-attempt records. Sensitive access is included in administrative auditing, and report/export rules limit disclosure. Evidence: parent-contact controller/service/routes, migration 012, frontend panel, and API/service tests.
 
 **Paper use:** Discuss traceability and privacy controls. Avoid reproducing real names, phone numbers, or contact notes in the manuscript or screenshots.
 
-### 5.7 Messaging and notifications
+#### 5.7 Messaging and notifications
 
 **Implemented.** The system supports authorized text communication and operational notifications. Real-time events signal changes to permitted audiences without treating event payloads as the authoritative record. Evidence: message and notification controllers/services, migrations 014 and 016, Socket.IO modules, and tests.
 
 **Paper use:** Explain the hybrid REST and real-time pattern: REST provides consistency and recoverability, while Socket.IO improves interface responsiveness.
 
-### 5.8 Clearance, good standing, and certificates
+#### 5.8 Clearance, good standing, and certificates
 
 **Implemented.** Backend rules evaluate unresolved violations and service requirements to determine eligibility. Authorized personnel manage clearance records; eligible students can view records and download signed, tamper-evident PDF certificates. Evidence: clearance controllers/services, certificate service, migrations 024 and related workflow tests.
 
 **Paper use:** Describe the rule-based eligibility model and separation between calculated eligibility, authorized approval, permanent record, and generated certificate.
 
-### 5.9 Reports and exports
+#### 5.9 Reports and exports
 
 **Implemented.** Authorized report endpoints cover violations, community service, DTR, non-compliance, guardian contact, clearance, and good standing. The implementation validates supported filters/sorting and excludes inappropriate internal or sensitive values from exports. Evidence: report controllers/routes, frontend report modules, API contract, privacy tests, and functional requirements.
 
 **Paper use:** Identify reports as operational outputs and possible sources for approved aggregate analysis. Do not insert production student-level records into the manuscript.
 
-### 5.10 Administration, audit, and monitoring
+#### 5.10 Administration, audit, and monitoring
 
 **Implemented.** Protected administration includes account provisioning/recovery, department and officer responsibility management, active-attendance monitoring, duplicate-account review, Google-link recovery, security events, authentication activity, sanitized component health, and audited sensitive actions. Privileged users require TOTP MFA. Account lock/recovery uses a fresh, single-use, five-minute confirmation bound to the selected action, target, and target version. Earlier temporary-support and two-person approval designs are retired; migration 037 preserves their history while revoking/cancelling open legacy records. Audit stores are hardened against ordinary alteration. Evidence: system/account administration modules, high-risk action service, migrations 028–037, administrative security documentation, and tests.
 
 **Paper use:** Relate these controls to accountability, least privilege, separation of duties, and defense in depth. A live penetration test or formal security certification is **Needs verification** and must not be implied by code presence.
 
-### 5.11 Current interface and accessibility behavior
+#### 5.11 Current interface and accessibility behavior
 
 **Implemented.** The frontend provides role-specific dashboards and navigation, unified portal page headers, responsive desktop/mobile layouts, light and dark themes, keyboard-visible focus treatment, password visibility controls, segmented OTP entry, normalized form input, searchable messaging recipients, mobile-friendly message and certificate layouts, and consistent user-facing capitalization. Department mobile navigation exposes the operational service pages required for QR scanning, DTR, service monitoring, students, non-compliance, and reports. Evidence: `frontend/src/App.jsx`, portal components/styles/libraries, and frontend UI contract tests.
 
 **Paper use:** Screenshots may demonstrate responsive and themed states, but accessibility conformance, usability, and user satisfaction remain **Needs verification** through the selected evaluation method and real-device testing.
 
-## 6. Suggested Use in the Capstone Manuscript
+### 6. Suggested Use in the Capstone Manuscript
 
-### 6.1 Chapters 1 and 2: introduction and related concepts
+#### 6.1 Chapters 1 and 2: introduction and related concepts
 
 Possible material:
 
@@ -257,7 +327,7 @@ Possible material:
 
 **Needs verification:** the researchers’ approved problem statement, institutional workflow interviews, study locale, respondents, theoretical framework, and literature citations.
 
-### 6.2 Chapter 3: methodology, design, and implementation
+#### 6.2 Chapter 3: methodology, design, and implementation
 
 Strong repository-supported topics include:
 
@@ -275,7 +345,7 @@ Suggested academic sentence pattern:
 
 Adapt the statement to the institution’s prescribed tense and format. Confirm deployed providers before changing “configured” to “deployed.”
 
-### 6.3 Chapter 4: results, testing, and discussion
+#### 6.3 Chapter 4: results, testing, and discussion
 
 The repository can support a description of implemented modules and test coverage. Chapter 4 should separately present actual evaluation evidence, such as:
 
@@ -289,13 +359,13 @@ The repository can support a description of implemented modules and test coverag
 
 **Needs verification:** current test-run totals, pass/fail output, response-time measurements, respondent demographics, survey computations, acceptance scores, screenshots from an approved test environment, and any comparison with the previous process. Never invent these values from the existence of test files.
 
-### 6.4 Chapter 5: conclusions and recommendations
+#### 6.4 Chapter 5: conclusions and recommendations
 
 Conclusions must answer the study objectives using Chapter 4 evidence. Repository-supported recommendations that may be considered—but are not automatically required—include ongoing dependency updates, backup/restore exercises, accessibility evaluation, performance monitoring, periodic access review, security testing, and future integration with approved school information systems.
 
 Do not label an unimplemented idea as an existing feature. Mark future items clearly as proposed enhancements.
 
-## 7. Suggested Figures and Tables
+### 7. Suggested Figures and Tables
 
 The following artifacts can make the manuscript easier to understand:
 
@@ -310,45 +380,45 @@ The following artifacts can make the manuscript easier to understand:
 9. **Deployment diagram** — identify Vercel, Render, Supabase, Google, and Brevo only after live confirmation.
 10. **Sanitized interface screenshots** — use test accounts and remove personal, credential, QR, contact, violation, and session data.
 
-## 8. Possible Capstone Defense Questions and Evidence-Based Answers
+### 8. Possible Capstone Defense Questions and Evidence-Based Answers
 
-### Why was PostgreSQL selected?
+#### Why was PostgreSQL selected?
 
 PostgreSQL supports the relational structure, constraints, transactions, indexes, role separation, and audit-oriented operations required by the system. The implementation uses parameterized queries and transaction boundaries for connected disciplinary workflows. Avoid claiming that it is objectively “the best” database without a defined comparison.
 
-### Why use both REST and Socket.IO?
+#### Why use both REST and Socket.IO?
 
 REST remains the authoritative and recoverable interface for reading and changing records. Socket.IO sends small, scoped refresh signals so connected screens can update promptly; polling can recover after an interrupted real-time connection.
 
-### How is a QR code secured?
+#### How is a QR code secured?
 
 The QR value identifies the student record but does not grant permission by itself. The authenticated server session determines the scanner’s role and department, validates the assignment, uses server timestamps, and enforces workflow rules.
 
-### How does the system prevent one department from viewing another department’s records?
+#### How does the system prevent one department from viewing another department’s records?
 
 Department identity is derived from the authenticated account. Backend queries and authorization rules restrict applicable assignments, attendance, students, and reports to that department, with automated isolation scenarios in the test suite.
 
-### Why are secure cookies used instead of local storage tokens?
+#### Why are secure cookies used instead of local storage tokens?
 
 The implementation keeps opaque session values in `HttpOnly` cookies so browser JavaScript cannot read them directly. Server-side session records permit expiry and revocation, while CSRF tokens and trusted-origin checks protect state-changing requests.
 
-### Does Google sign-in replace the system’s authorization?
+#### Does Google sign-in replace the system’s authorization?
 
 No. Google verifies an external identity credential. STI Vio-Log still controls registration approval, local account state, role, permissions, department association, session issuance, and audit history.
 
-### How is data consistency maintained?
+#### How is data consistency maintained?
 
 The system uses database constraints, controlled state transitions, parameterized queries, and transactions. Integration tests include rollback and concurrency scenarios for workflows in which a partial write would be unsafe.
 
-### Can the proponents claim that the system is secure?
+#### Can the proponents claim that the system is secure?
 
 The paper may describe the implemented security controls and report executed security test results. It should not claim absolute security or production readiness. The repository security audit reports zero independently confirmed vulnerabilities, but its mandatory validators could not execute fully in the available Windows environment and 14 planned coverage units were deferred. That result is not proof that no vulnerabilities exist. A completed formal audit, penetration test, current dependency/security workflow results, and operational monitoring evidence must be identified explicitly if performed.
 
-### How was effectiveness evaluated?
+#### How was effectiveness evaluated?
 
 **Needs verification.** Answer using the approved research design, actual respondents, instruments, measurements, and analyzed results. Automated software tests demonstrate technical behavior; they do not establish user satisfaction or institutional effectiveness.
 
-## 9. Glossary
+### 9. Glossary
 
 | Term | Meaning in this project |
 |---|---|
@@ -364,7 +434,7 @@ The paper may describe the implemented security controls and report executed sec
 | Socket.IO | Real-time communication library used for scoped refresh notifications. |
 | TOTP | Time-Based One-Time Password used as an MFA mechanism. |
 
-## 10. Verification Checklist Before Copying Material into the Paper
+### 10. Verification Checklist Before Copying Material into the Paper
 
 - [ ] Confirm the official capstone title, objectives, scope, and role names with the approved proposal.
 - [ ] Confirm the frontend, backend, and database are currently deployed on the providers named in this file.
@@ -377,7 +447,7 @@ The paper may describe the implemented security controls and report executed sec
 - [ ] Cite external scholarly and technical sources using the institution’s required citation style.
 - [ ] Describe limitations, failed tests, and unimplemented enhancements honestly.
 
-## 11. Primary Repository Evidence Index
+### 11. Primary Repository Evidence Index
 
 | Topic | Primary evidence locations |
 |---|---|
@@ -399,3 +469,19 @@ The paper may describe the implemented security controls and report executed sec
 ---
 
 **Research integrity reminder:** Code proves that a mechanism is present; executed tests provide evidence about specified behavior under test conditions; production monitoring describes operational behavior; and research instruments evaluate effects on people and processes. The capstone paper should state which kind of evidence supports each conclusion.
+
+## H. Paper Revision Checklist
+
+| Priority | Section/action | Implementation/evidence link | Gap and completion status |
+|---|---|---|---|
+| High | Obtain approved title/proposal/manuscript/template; reconcile scope/objectives. | A; README; functional requirements. | Open: official assets unavailable; no manuscript edited. |
+| High | Correct implementation narrative: retired public registration, recorded Gmail, four roles, immediate server credit, staff-only guardian access and both-staff corrections. | B/D; FEATURE_TRACEABILITY; API/RBAC. | Sourcebook/current guides corrected; formal paper pending. |
+| High | Update stack/deployment and ERD from actual dependencies and 50 migrations; remove active Analytics claim. | TECH_STACK; PRODUCTION-DEPLOYMENT; api/MIGRATIONS. | Evidence assembled; formal diagrams/template pending. |
+| High | Report test scopes and the failed academic expectation honestly; never claim all suites or acceptance pass. | TESTING; AUDIT-REPORT. | Local evidence recorded; separate code/test repair and rerun pending. |
+| High | Resolve privacy/retention/minors and public certificate-disclosure/current-vs-historical meaning. | privacy-terms-review; certificate trace; audit risks. | Institutional/DPO review open; acknowledgment disabled. |
+| Medium | Complete controlled OAuth/email/camera/multi-device/accessibility/restore and deployment acceptance. | FINAL-ACCEPTANCE-CHECKLIST; TESTING. | Open; no boxes marked passed from code alone. |
+| High | Use real approved instruments, participants and analyzed results for evaluation/discussion. | F; preserved research ideas in G. | No new research data available or fabricated. |
+| Medium | Review legitimate literature/references and methodology with adviser; preserve existing citations. | D/G; actual manuscript when supplied. | Formal bibliography/method unavailable. |
+| Medium | Revise conclusion/recommendations and defense answers to acknowledge limits and unresolved findings. | AUDIT-REPORT; G defense questions. | Sourcebook guidance complete; adviser/manuscript review pending. |
+
+Do not check an academic item complete until the actual manuscript and responsible approval/evaluation evidence exist. Repository documentation alignment does not establish a submitted, accepted or approved capstone paper.

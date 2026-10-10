@@ -1,5 +1,8 @@
 # Privacy and analytics decision
 
+> **Evidence boundary, October 10, 2026.** Source confirms no Analytics loading and disabled mandatory acknowledgment. Optional-cookie/legal conclusions below are project policy decisions pending institutional/DPO review, not this audit's legal opinion. Production network absence and client approval were not tested.
+
+
 ## Current decision
 
 STI Vio-Log does not enable third-party behavioral analytics, advertising trackers, or nonessential cookies. The portal handles student and disciplinary information, so collecting additional user-level browsing data would add privacy risk without a defined operational need.

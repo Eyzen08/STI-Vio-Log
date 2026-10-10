@@ -1,5 +1,8 @@
 # STI Vio-Log — Functional Requirements
 
+> **Requirement provenance.** Reviewed October 10, 2026. These are documented repository expectations, not externally approved institutional requirements: no signed proposal/template/manuscript was found. Current implementation, test scope and discrepancies are mapped in [feature traceability](FEATURE_TRACEABILITY.md). In this document “DO Admin” denotes operational Discipline Office/Admin users, not a separate code role. No academic outcome or handover approval is inferred.
+
+
 ## Student
 
 1. Student can authenticate securely.
@@ -23,7 +26,7 @@
 5. A Department Account can record student Time-In and Time-Out without a second Discipline Office approval.
 6. The system calculates worked time from server timestamps and credits no more than the remaining required hours.
 7. A Department Account can monitor its currently active students and live elapsed service time.
-8. A Department Account can record the student's service condition and an optional result note at Time-Out.
+8. A Department Account can record an optional result note at Time-Out; the server derives the saved outcome from timing and remaining work.
 9. A Department Account can view only the student/service details necessary for its assigned work.
 10. A Department Account cannot decide required hours, approve clearance, access student messages, or view parent/guardian contact information.
 11. Department A cannot view, scan, update, or export Department B's assignments.

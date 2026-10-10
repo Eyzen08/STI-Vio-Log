@@ -39,7 +39,7 @@ The deployed service uses Vercel for frontend hosting, Render for the backend, S
 
 ### Certificate Verification
 
-A person with a valid certificate-verification link can view the verification information exposed by that link, including the student's full name, masked student number, program and completed service hours. Treat the link as information that can be shared beyond the portal. The DPO must approve the disclosure and whether the verification fields need further reduction.
+A person with a valid certificate-verification link can view the verification information exposed by that link, including the student's full name, masked student number, certificate number, issue date and recorded issued/revoked status. Program and completed service hours are not returned by the current public verification endpoint. Verification does not recompute current clearance eligibility. Treat the link as information that can be shared beyond the portal. The DPO must approve the disclosure and whether the verification fields need further reduction.
 
 ### Automated Rules and Human Review
 
