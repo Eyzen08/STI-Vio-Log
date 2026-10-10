@@ -821,7 +821,7 @@ For additional information:
 
 | Command | Description |
 |---|---|
-| `npm run dev` | Start the API using Nodemon |
+| `npm run dev` | Start the API using Node.js watch mode |
 | `npm start` | Run production checks and start the API |
 | `npm test` | Run backend tests |
 | `npm run test:violation-integration` | Run PostgreSQL violation-workflow integration tests |
