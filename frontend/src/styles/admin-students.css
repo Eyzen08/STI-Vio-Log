@@ -114,7 +114,7 @@
 .student-account-menu .danger-text { color:var(--status-danger-text,#c92136); }
 :root[data-theme='dark'] .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card,.student-directory-toolbar > label,.student-filter-toggle) { background:var(--dash-surface) !important; border-color:var(--dash-line) !important; }
 :root[data-theme='dark'] .student-management-page :is(.student-directory-tabs button,.student-directory-table th) { background:var(--surface-nested); color:var(--dash-ink); }
-:root[data-theme='dark'] .student-summary-card > i { background:var(--surface-interactive); color:var(--link-color); width:60px; height:60px; flex:0 0 60px; }
+:root[data-theme='dark'] .student-summary-card > i { background:var(--surface-interactive); color:var(--link-color); }
 :root[data-theme='dark'] .student-metric-red > i,:root[data-theme='dark'] .clearance-not_cleared { background:var(--status-danger-surface); color:var(--status-danger-text); }
 :root[data-theme='dark'] .student-metric-orange > i { background:var(--status-warning-surface); color:var(--status-warning-text); }
 :root[data-theme='dark'] .student-metric-green > i,:root[data-theme='dark'] .clearance-cleared { background:var(--status-success-surface); color:var(--status-success-text); }

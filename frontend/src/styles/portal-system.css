@@ -2492,7 +2492,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color:#edf5fc;
 }
 [data-theme='dark'] .main-panel { background:transparent; color:#edf5fc; }
-[data-theme='dark'] .page-content { color:#edf5fc; padding: 14px 20px 20px; }
+[data-theme='dark'] .page-content { color:#edf5fc; }
 [data-theme='dark'] .topbar { border-color:#243d55 !important; background:rgba(8,25,42,.96) !important; box-shadow:var(--decorative-shadow, 0 3px 16px rgba(0,8,18,.22)) !important; min-height: var(--topbar-height); }
 [data-theme='dark'] .topbar-search { border-color:#29445e !important; background:#102a43 !important; color:#a9bfd3 !important; width: 100%; max-width: var(--topbar-search-width); min-height: var(--control-height); }
 [data-theme='dark'] .topbar-search input { color:#edf5fc !important; }

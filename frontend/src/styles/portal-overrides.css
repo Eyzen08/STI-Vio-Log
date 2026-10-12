@@ -251,7 +251,7 @@
   color:var(--status-danger-text) !important;
 }
 :root[data-theme='dark'] .selected-account-summary {
-  border:1px solid var(--border-subtle) !important;
+  border-color:var(--border-subtle) !important;
   background:var(--surface-nested) !important;
   color:var(--text-primary) !important;
 }
@@ -274,8 +274,7 @@
 :root[data-theme='dark'] .system-dashboard .temporary-credential :is(span,small) { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .system-dashboard .temporary-credential strong { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .system-dashboard .account-action-tabs > button {
-  border:1px solid var(--border-subtle) !important;
-  border-radius:.5rem !important;
+  border-color:var(--border-subtle) !important;
   box-shadow:none !important;
 }
 :root[data-theme='dark'] .system-dashboard .account-action-tabs > button[aria-selected='true'] { border-color:var(--link-color) !important; }
@@ -330,7 +329,7 @@
 /* Wizard steps, modal actions, and disabled controls use intentional dark states. */
 :root[data-theme='dark'] .app-modal .compact-stepper { border-color:var(--border-subtle) !important; }
 :root[data-theme='dark'] .app-modal .compact-stepper button {
-  border:1px solid var(--border-subtle) !important;
+  border-color:var(--border-subtle) !important;
   background:var(--surface-interactive) !important;
   color:var(--text-secondary) !important;
 }
@@ -603,7 +602,7 @@
 
 /* Dashboard clearance state must not retain the legacy pale warning panel. */
 :root[data-theme='dark'] .clearance-summary-card .clearance-state {
-  border:1px solid var(--status-warning-text) !important;
+  border-color:var(--status-warning-text) !important;
   background:var(--status-warning-surface) !important;
   color:var(--status-warning-text) !important;
 }
@@ -739,7 +738,6 @@
   background:var(--status-warning-surface) !important;
   color:var(--status-warning-text) !important;
 }
-:root[data-theme='dark'] .clearance-requirements ul { margin:0; padding:12px 14px 12px 2rem; border-radius:10px; }
 :root[data-theme='dark'] .clearance-record-list > article { border-color:var(--border-subtle) !important; }
 :root[data-theme='dark'] .clearance-empty h4 { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }
@@ -943,7 +941,7 @@
 
 /* QR attendance field qualifiers must not inherit their pale light-mode pills. */
 :root[data-theme='dark'] .record-fields .record-field-label small {
-  border:1px solid var(--border-strong) !important;
+  border-color:var(--border-strong) !important;
   background:var(--surface-interactive) !important;
   color:var(--text-secondary) !important;
 }
@@ -1077,8 +1075,6 @@
   background: var(--surface-raised) !important;
   color: var(--text-primary) !important;
   box-shadow: var(--decorative-shadow, 0 0.75rem 2rem rgba(0, 8, 18, 0.24)) !important;
-  padding: 12px 28px;
-  min-height: 115px;
 }
 :root[data-theme='dark'] .portal-page-header :is(h1, h2, strong) { color: var(--text-primary) !important; }
 :root[data-theme='dark'] .portal-page-header :is(p, time, .page-breadcrumb, .eyebrow) { color: var(--text-secondary) !important; }
@@ -1215,7 +1211,7 @@
    dashboard stylesheet unless each nested surface is explicitly themed. */
 :root[data-theme='dark'] .recent-activity-card li { border-color: var(--border-subtle) !important; }
 :root[data-theme='dark'] .recent-activity-card li i {
-  border: 1px solid var(--border-strong);
+  border-color: var(--border-strong);
   background: var(--status-info-surface) !important;
   color: var(--status-info-text) !important;
 }
