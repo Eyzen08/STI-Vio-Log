@@ -159,6 +159,7 @@
 .auth-shell .google-button > div { margin-inline: auto; }
 .auth-shell .google-access-eligibility { margin: 0; color: var(--auth-muted); font-size: 12px; text-align: center; }
 .auth-shell .auth-mobile-help,.auth-shell .auth-status { margin: 0; color: var(--auth-muted); font-size: 13px; line-height: 1.6; }
+.auth-shell .auth-status.account-check-status { min-height: 22px; justify-content: center; }
 .auth-shell .login-first-signin-note { margin: 16px 0 0; padding: 12px 16px; border: 0; border-left: 2px solid var(--auth-yellow); border-radius: 0 8px 8px 0; background: var(--auth-canvas); color: var(--auth-muted); font-size: 13px; line-height: 1.65; }
 .auth-shell .login-first-signin-note strong { color: var(--auth-ink); font-weight: 600; }
 .auth-shell .login-footer { margin-top: 16px; }

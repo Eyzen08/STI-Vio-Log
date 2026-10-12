@@ -36,6 +36,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
     const nextCredential = readGoogleCredential(response)
 
     if (!nextCredential) {
+      setIsBusy(false)
       setError('Google did not return a valid sign-in response. Please try again.')
       return
     }
@@ -104,8 +105,8 @@ function GoogleStudentAccess({ clientId, onSession }) {
     <section className="google-access" aria-label="Google sign-in">
       <div className="auth-divider" aria-hidden="true"><span>or</span></div>
       <div ref={buttonRef} className="google-button" aria-busy={isBusy} />
+      <p className="auth-status account-check-status" role="status">{isBusy && <><span className="action-spinner" aria-hidden="true" />Checking your account…</>}</p>
       <p className="google-access-eligibility">For linked student accounts.</p>
-      {isBusy && <p className="auth-status" role="status">Checking your account…</p>}
       {error && <p className="auth-mobile-help">On a phone, use Chrome or Safari. If the Google window stays blank, return here and retry outside Messenger or another in-app browser.</p>}
 
       {error && <p className="error-message" role="alert" aria-live="polite">{error}</p>}

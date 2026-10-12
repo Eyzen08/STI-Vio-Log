@@ -437,6 +437,9 @@
   animation: login-spin .7s linear infinite;
 }
 
+.account-check-status { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.account-check-status .action-spinner { width: 16px; height: 16px; flex: 0 0 16px; margin: 0; box-sizing: border-box; }
+
 button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::before {
   content: '';
   display: inline-block;

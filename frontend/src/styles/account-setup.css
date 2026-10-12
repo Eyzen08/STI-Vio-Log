@@ -108,3 +108,9 @@
   .onboarding-progress li { font-size:11px; }
   .account-setup-card .password-requirements ul { grid-template-columns:1fr; }
 }
+
+.setup-shell .legal-acknowledgment--compact { max-width:400px; margin:0 auto; padding:24px; }
+.setup-shell .legal-acknowledgment--compact h1 { font-size:18px; }
+.setup-shell .legal-acknowledgment--compact h1:focus { box-shadow:none; }
+.setup-shell .legal-acknowledgment--compact .account-check-status { margin:0 0 20px; }
+.setup-shell .legal-acknowledgment--compact .legal-acknowledgment-actions { margin-top:8px; }
