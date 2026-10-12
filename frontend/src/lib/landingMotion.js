@@ -5,61 +5,179 @@ gsap.registerPlugin(ScrollTrigger)
 
 export function animateLanding(root) {
   const media = gsap.matchMedia()
+  const removals = []
+  const dispose = () => {
+    removals.splice(0).reverse().forEach(remove => remove())
+    root.removeAttribute('data-cursor')
+    root.querySelector('.landing-cursor')?.removeAttribute('data-tone')
+  }
+  const listen = (element, name, handler) => {
+    element.addEventListener(name, handler)
+    removals.push(() => element.removeEventListener(name, handler))
+  }
   try {
-    media.add({ reduce: '(prefers-reduced-motion: reduce)', animate: '(prefers-reduced-motion: no-preference)', pointer: '(hover: hover) and (pointer: fine)' }, context => {
-    if (context.conditions.reduce) return undefined
-    const select = gsap.utils.selector(root)
-    const intro = gsap.timeline({ defaults: { ease: 'power3.out' } })
-    intro.from(select('[data-hero-word]'), { opacity: 0, y: 30, duration: .8, stagger: .085 })
-      .from(select('[data-hero-reveal]'), { opacity: 0, y: 16, duration: .7, stagger: .1 }, .25)
-    for (const section of select('[data-section-reveal]')) {
-      gsap.from(section, { opacity: 0, y: 24, duration: .7, ease: 'power2.out', scrollTrigger: { trigger: section, start: 'top 94%', once: true } })
-    }
-    const floating = select('[data-float]').map((element, index) => ({ element, tween: gsap.to(element, { y: index ? -8 : -12, duration: index ? 5 : 7, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }), visible: false, interacting: false }))
-    const sync = () => floating.forEach(item => item.tween.paused(document.hidden || !item.visible || item.interacting))
-    const removeInteraction = floating.map(item => {
-      const enter = () => { item.interacting = true; sync() }
-      const leave = () => { item.interacting = item.element.matches(':hover') || item.element.contains(document.activeElement); sync() }
-      item.element.addEventListener('pointerenter', enter)
-      item.element.addEventListener('pointerleave', leave)
-      item.element.addEventListener('focusin', enter)
-      item.element.addEventListener('focusout', leave)
-      return () => { item.element.removeEventListener('pointerenter', enter); item.element.removeEventListener('pointerleave', leave); item.element.removeEventListener('focusin', enter); item.element.removeEventListener('focusout', leave) }
-    })
-    const observer = new IntersectionObserver(entries => {
-      for (const entry of entries) {
-        const item = floating.find(item => item.element === entry.target)
-        if (item) item.visible = entry.isIntersecting
+    // Full is an explicit landing-only choice, independent of the OS preference.
+    media.add({ all: '(min-width: 0px)', pointer: '(hover: hover) and (pointer: fine)', forced: '(forced-colors: active)' }, context => {
+      const select = gsap.utils.selector(root)
+      if (!root.dataset.introPlayed) {
+        root.dataset.introPlayed = 'true'
+        gsap.timeline({ defaults: { ease: 'power3.out' } })
+          .from(select('[data-hero-word]'), { opacity: 0, y: 30, duration: .8, stagger: .085 })
+          .from(select('[data-hero-reveal]'), { opacity: 0, y: 16, duration: .7, stagger: .1 }, .25)
       }
-      sync()
-    })
-    floating.forEach(item => observer.observe(item.element))
-    document.addEventListener('visibilitychange', sync)
-    const removePointer = []
-    if (context.conditions.pointer) {
-      for (const element of select('[data-magnetic], [data-tilt]')) {
-        const tilt = element.hasAttribute('data-tilt')
-        const x = gsap.quickTo(element, tilt ? 'rotationY' : 'x', { duration: .4, ease: 'power3.out' })
-        const y = gsap.quickTo(element, tilt ? 'rotationX' : 'y', { duration: .4, ease: 'power3.out' })
-        const move = event => {
-          if (event.pointerType !== 'mouse') return
-          const rect = element.getBoundingClientRect()
-          const dx = (event.clientX - rect.left) / rect.width - .5
-          const dy = (event.clientY - rect.top) / rect.height - .5
-          x(dx * (tilt ? 5 : 10))
-          y(dy * (tilt ? -5 : 8))
+      for (const section of select('[data-section-reveal]')) {
+        gsap.from(section, { opacity: 0, y: 28, duration: .75, ease: 'power2.out', scrollTrigger: { trigger: section, start: 'top 94%', once: true } })
+      }
+      for (const group of select('.landing-feature-grid, .landing-steps-panel ol')) {
+        gsap.from(group.children, { opacity: 0, y: 18, duration: .65, stagger: .12, scrollTrigger: { trigger: group, start: 'top 92%', once: true } })
+      }
+      const floating = [
+        ...select('[data-orbit]').map(element => ({ element, tween: gsap.fromTo(element, { x: -12, y: -22, rotation: -3 }, { x: 12, y: 22, rotation: 3, duration: 4.8, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }) })),
+        ...select('[data-float]').map(element => ({ element, tween: gsap.fromTo(element, { y: -7 }, { y: 7, duration: 3.5, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }) })),
+      ].map(item => ({ ...item, visible: false, interacting: false }))
+      const sync = () => floating.forEach(item => item.tween.paused(document.hidden || !item.visible || item.interacting))
+      const observer = new IntersectionObserver(entries => {
+        for (const entry of entries) {
+          const item = floating.find(item => item.element === entry.target)
+          if (item) item.visible = entry.isIntersecting
         }
-        const reset = () => { x(0); y(0) }
-        element.addEventListener('pointermove', move)
-        element.addEventListener('pointerleave', reset)
-        removePointer.push(() => { element.removeEventListener('pointermove', move); element.removeEventListener('pointerleave', reset) })
+        sync()
+      })
+      removals.push(() => observer.disconnect())
+      floating.forEach(item => {
+        observer.observe(item.element)
+        if (!item.element.hasAttribute('data-float')) return
+        listen(item.element, 'pointerenter', () => { item.interacting = true; sync() })
+        listen(item.element, 'pointerleave', () => { item.interacting = item.element.contains(document.activeElement); sync() })
+        listen(item.element, 'focusin', () => { item.interacting = true; sync() })
+        listen(item.element, 'focusout', event => { item.interacting = item.element.matches(':hover') || item.element.contains(event.relatedTarget); sync() })
+      })
+      listen(document, 'visibilitychange', sync)
+
+      let activePanel
+      context.add('revealPanel', () => {
+        const panel = root.querySelector('.landing-preview-panel:not([hidden])')
+        if (!panel || panel === activePanel) return
+        activePanel = panel
+        gsap.fromTo(panel, { opacity: .35, y: 5 }, { opacity: 1, y: 0, duration: .3, overwrite: true })
+        const bar = panel.querySelector('.landing-progress-track > span')
+        if (bar) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, transformOrigin: 'left center', duration: .9, ease: 'power2.out' })
+        const items = panel.querySelectorAll('.landing-clearance-list li')
+        if (items.length) gsap.fromTo(items, { opacity: .3, x: 8 }, { opacity: 1, x: 0, duration: .3, stagger: .07 })
+      })
+      context.revealPanel()
+      const panels = new MutationObserver(() => context.revealPanel())
+      panels.observe(root.querySelector('.landing-preview'), { attributes: true, attributeFilter: ['hidden'], subtree: true })
+      removals.push(() => panels.disconnect())
+
+      if (context.conditions.pointer && !context.conditions.forced) {
+        const quick = (element, property, duration = .45) => gsap.quickTo(element, property, { duration, ease: 'power3.out' })
+        const interactive = 'a, button, summary, [role="tab"]'
+        const editable = 'input, textarea, [contenteditable="true"], [contenteditable=""]'
+        const visual = root.querySelector('.landing-hero-visual')
+        const ribbon = root.querySelector('.landing-ribbon-parallax')
+        const preview = root.querySelector('.landing-preview-parallax')
+        const ribbonX = quick(ribbon, 'x'), ribbonY = quick(ribbon, 'y')
+        const previewX = quick(preview, 'x'), previewY = quick(preview, 'y')
+        let heroBounds
+        const resetHero = () => { ribbonX(0); ribbonY(0); previewX(0); previewY(0); heroBounds = null }
+        listen(visual, 'pointerenter', () => { heroBounds = visual.getBoundingClientRect() })
+        listen(visual, 'pointermove', event => {
+          if (event.pointerType !== 'mouse') return
+          const rect = heroBounds ||= visual.getBoundingClientRect()
+          const dx = gsap.utils.clamp(-.5, .5, (event.clientX - rect.left) / rect.width - .5)
+          const dy = gsap.utils.clamp(-.5, .5, (event.clientY - rect.top) / rect.height - .5)
+          ribbonX(dx * -24); ribbonY(dy * -16)
+          const steady = event.target.closest(interactive) || preview.querySelector(':focus-visible')
+          if (steady) { previewX.tween.pause(); previewY.tween.pause() }
+          else { previewX(dx * 12); previewY(dy * 8) }
+        })
+        listen(visual, 'pointerleave', resetHero)
+        listen(visual, 'focusin', () => { previewX.tween.pause(); previewY.tween.pause() })
+        listen(window, 'resize', resetHero)
+        listen(window, 'scroll', () => { heroBounds = null })
+        for (const element of select('[data-tilt]')) {
+          const feature = element.dataset.tilt === 'feature'
+          const x = quick(element, 'rotationY'), y = quick(element, 'rotationX'), lift = quick(element, 'y')
+          let bounds
+          const reset = () => { x(0); y(0); lift(0); element.removeAttribute('data-hover'); bounds = null }
+          listen(element, 'pointerenter', () => { bounds = element.getBoundingClientRect() })
+          listen(element, 'pointermove', event => {
+            if (event.pointerType !== 'mouse') return
+            if (event.target.closest(interactive) || element.querySelector(':focus-visible')) { x.tween.pause(); y.tween.pause(); lift.tween.pause(); return }
+            const rect = bounds ||= element.getBoundingClientRect()
+            const dx = gsap.utils.clamp(-.5, .5, (event.clientX - rect.left) / rect.width - .5)
+            const dy = gsap.utils.clamp(-.5, .5, (event.clientY - rect.top) / rect.height - .5)
+            x(dx * (feature ? 6 : 18)); y(dy * (feature ? -6 : -14)); lift(feature ? -8 : 0)
+            if (feature) {
+              element.dataset.hover = 'true'
+              element.style.setProperty('--highlight-x', `${(dx + .5) * 100}%`)
+              element.style.setProperty('--highlight-y', `${(dy + .5) * 100}%`)
+            }
+          })
+          listen(element, 'pointerleave', reset)
+          listen(element, 'focusin', () => { x.tween.pause(); y.tween.pause(); lift.tween.pause() })
+          removals.push(() => { element.removeAttribute('data-hover'); element.style.removeProperty('--highlight-x'); element.style.removeProperty('--highlight-y') })
+        }
+        const campus = root.querySelector('.landing-campus-panel')
+        const campusX = quick(campus.querySelector('img'), 'x'), campusY = quick(campus.querySelector('img'), 'y')
+        listen(campus, 'pointermove', event => {
+          if (event.pointerType !== 'mouse') return
+          const rect = campus.getBoundingClientRect()
+          campusX(((event.clientX - rect.left) / rect.width - .5) * 12)
+          campusY(((event.clientY - rect.top) / rect.height - .5) * 12)
+        })
+        listen(campus, 'pointerleave', () => { campusX(0); campusY(0) })
+        for (const element of select('[data-magnetic]')) {
+          const x = quick(element, 'x'), y = quick(element, 'y')
+          const reset = () => { x(0); y(0) }
+          let bounds
+          listen(element, 'pointerenter', () => { bounds = element.getBoundingClientRect() })
+          listen(element, 'pointermove', event => {
+            if (event.pointerType !== 'mouse' || event.buttons || element.matches(':focus-visible')) return
+            const rect = bounds ||= element.getBoundingClientRect()
+            x(gsap.utils.clamp(-5, 5, (event.clientX - rect.left - rect.width / 2) * .1))
+            y(gsap.utils.clamp(-4, 4, (event.clientY - rect.top - rect.height / 2) * .1))
+          })
+          listen(element, 'pointerleave', reset); listen(element, 'pointerdown', reset); listen(element, 'focusin', reset)
+        }
+        const dot = root.querySelector('.landing-cursor-dot'), ring = root.querySelector('.landing-cursor-ring')
+        const ringX = quick(ring, 'x', .18), ringY = quick(ring, 'y', .18)
+        const scaleX = quick(ring, 'scaleX', .2), scaleY = quick(ring, 'scaleY', .2)
+        const ringScale = value => { scaleX(value); scaleY(value) }
+        gsap.set([dot, ring], { xPercent: -50, yPercent: -50 })
+        let selecting = false, visible = false
+        const hideCursor = () => { visible = false; root.removeAttribute('data-cursor') }
+        const cursorState = target => {
+          ringScale(target.closest(interactive) ? 1.5 : 1)
+          root.querySelector('.landing-cursor').dataset.tone = target.closest('.landing-button-primary') ? 'dark' : 'yellow'
+        }
+        listen(root, 'pointermove', event => {
+          if (event.pointerType !== 'mouse' || selecting || document.getSelection()?.toString() || event.target.closest(editable)) { hideCursor(); return }
+          if (!visible) { gsap.set(ring, { x: event.clientX, y: event.clientY }); visible = true }
+          gsap.set(dot, { x: event.clientX, y: event.clientY })
+          ringX(event.clientX); ringY(event.clientY); cursorState(event.target)
+          if (event.buttons) ringScale(.65)
+          root.dataset.cursor = 'active'
+        })
+        listen(root, 'pointerover', event => cursorState(event.target))
+        listen(root, 'pointerdown', event => {
+          if (event.target.closest(editable)) hideCursor()
+          else ringScale(.65)
+        })
+        listen(root, 'pointerup', event => { selecting = false; cursorState(event.target) })
+        listen(root, 'selectstart', () => { selecting = true; hideCursor() })
+        listen(document, 'selectionchange', () => { if (document.getSelection()?.toString()) hideCursor() })
+        listen(root, 'pointerleave', hideCursor)
+        listen(window, 'blur', hideCursor)
+        listen(document, 'keydown', hideCursor)
+        listen(document, 'visibilitychange', () => { if (document.hidden) hideCursor() })
       }
-    }
-    return () => { observer.disconnect(); document.removeEventListener('visibilitychange', sync); removeInteraction.forEach(remove => remove()); removePointer.forEach(remove => remove()) }
+      return dispose
     }, root)
   } catch (error) {
-    media.revert()
+    dispose(); media.revert()
     throw error
   }
-  return () => media.revert()
+  return () => { dispose(); media.revert() }
 }

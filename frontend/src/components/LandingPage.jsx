@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import LandingPreview from './LandingPreview.jsx'
 import PortalIcon from './PortalIcon.jsx'
+import { LANDING_MOTION_KEY, normalizeLandingMotion } from '../lib/landingPreferences.js'
 import logo from '../assets/sti-logo-web-transparent.png'
 import campus from '../assets/sti-global-city-building-night.jpg'
 import ribbon from '../assets/landing-ribbon.webp'
@@ -27,7 +28,9 @@ const FAQS = [
 export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const rootRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [motionPaused, setMotionPaused] = useState(false)
+  const [motionMode, setMotionMode] = useState(() => {
+    try { return normalizeLandingMotion(localStorage.getItem(LANDING_MOTION_KEY)) } catch { return 'full' }
+  })
   const checking = accessState === 'restoring'
   const accountLabel = checking ? 'Checking Session…' : accessState === 'signed-in' ? 'Open My Portal' : 'Sign In'
 
@@ -35,12 +38,12 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
     const root = rootRef.current
     let disposed = false
     let cleanup = () => {}
-    if (motionPaused) return undefined
+    if (motionMode === 'reduced') return undefined
     import('../lib/landingMotion.js').then(({ animateLanding }) => {
       if (!disposed) cleanup = animateLanding(root)
     }).catch(() => { /* Content remains visible if optional motion cannot load. */ })
     return () => { disposed = true; cleanup() }
-  }, [motionPaused])
+  }, [motionMode])
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -62,15 +65,21 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const accountAction = className => checking
     ? <button className={className} type="button" disabled aria-busy="true">{accountLabel}</button>
     : <a className={className} data-magnetic href="/login" onClick={event => navigate(event, '/login')}>{accountLabel}<PortalIcon name="arrow-right" size={18} /></a>
+  const motionControl = () => <button className="landing-motion-toggle" type="button" aria-pressed={motionMode === 'full'} aria-label={`Motion: ${motionMode === 'full' ? 'Full' : 'Reduced'}. Switch to ${motionMode === 'full' ? 'Reduced' : 'Full'} Motion`} onClick={() => {
+    const next = motionMode === 'full' ? 'reduced' : 'full'
+    setMotionMode(next)
+    try { localStorage.setItem(LANDING_MOTION_KEY, next) } catch { /* The switch still works when storage is unavailable. */ }
+  }}><PortalIcon name={motionMode === 'full' ? 'pause' : 'play'} size={15} />Motion: {motionMode === 'full' ? 'Full' : 'Reduced'}</button>
 
-  return <div className="landing-page" ref={rootRef} data-motion={motionPaused ? 'paused' : 'running'}>
+  return <div className="landing-page" ref={rootRef} data-motion={motionMode}>
+    <div className="landing-cursor" aria-hidden="true"><span className="landing-cursor-dot" /><span className="landing-cursor-ring" /></div>
     <header className="landing-header">
       <a className="landing-brand" href="/" aria-label="STI Vio-Log home"><img src={logo} alt="STI Vio-Log" width="420" height="236" /><span>Global City</span></a>
-      <button className="landing-menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="landing-navigation" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setMenuOpen(value => !value)}><PortalIcon name={menuOpen ? 'close' : 'menu'} size={22} /></button>
       <nav id="landing-navigation" className={`landing-navigation${menuOpen ? ' is-open' : ''}`} aria-label="Main navigation">
         <a href="#overview" onClick={() => setMenuOpen(false)}>Overview</a><a href="#how-it-works" onClick={() => setMenuOpen(false)}>How It Works</a><a href="#faqs" onClick={() => setMenuOpen(false)}>FAQs</a>
         {accountAction('landing-nav-action')}
       </nav>
+      <div className="landing-header-controls">{motionControl()}<button className="landing-menu-toggle" type="button" aria-expanded={menuOpen} aria-controls="landing-navigation" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} onClick={() => setMenuOpen(value => !value)}><PortalIcon name={menuOpen ? 'close' : 'menu'} size={22} /></button></div>
     </header>
 
     <section className="landing-hero" aria-labelledby="landing-title">
@@ -83,8 +92,8 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
         <div className="landing-hero-assurance" data-hero-reveal><PortalIcon name="lock" size={16} /><span>Your records stay private. This preview uses sample data.</span></div>
       </div>
       <div className="landing-hero-visual" data-hero-reveal>
-        <img className="landing-ribbon" data-float src={ribbon} alt="" aria-hidden="true" width="1200" height="800" fetchPriority="high" />
-        <div className="landing-preview-float" data-float><div className="landing-preview-tilt" data-tilt><LandingPreview /></div></div>
+        <div className="landing-ribbon-parallax"><img className="landing-ribbon" data-orbit src={ribbon} alt="" aria-hidden="true" width="1200" height="800" fetchPriority="high" /></div>
+        <div className="landing-preview-parallax"><div className="landing-preview-float" data-float><div className="landing-preview-tilt" data-tilt="preview"><LandingPreview /></div></div></div>
         <div className="landing-visual-caption"><span className="landing-caption-line" /> A little clarity. A better way forward.</div>
       </div>
       <div className="landing-hero-footer"><a href="#overview"><span>Discover your portal</span><PortalIcon name="arrow-down" size={17} /></a><span>Discipline. Accountability. Progress.</span></div>
@@ -92,7 +101,7 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
 
     <section className="landing-section landing-overview" id="overview" aria-labelledby="overview-title" data-section-reveal>
       <div className="landing-section-heading"><span className="landing-eyebrow">Built around your next step</span><h2 id="overview-title">Less wondering.<br /><span>More understanding.</span></h2><p>A clearer connection between your records, your progress, and what comes next.</p></div>
-      <div className="landing-feature-grid">{FEATURES.map(feature => <article key={feature.number} className="landing-feature"><div className="landing-feature-top"><PortalIcon name={feature.icon} size={24} /><span>{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.copy}</p></article>)}</div>
+      <div className="landing-feature-grid">{FEATURES.map(feature => <article key={feature.number} className="landing-feature" data-tilt="feature"><div className="landing-feature-top"><PortalIcon name={feature.icon} size={24} /><span>{feature.number}</span></div><h3>{feature.title}</h3><p>{feature.copy}</p></article>)}</div>
       <a className="landing-inline-link" href="#portal-preview">Try the interactive preview<PortalIcon name="arrow-right" size={18} /></a>
     </section>
 
@@ -105,6 +114,6 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
 
     <section className="landing-closing" aria-labelledby="closing-title" data-section-reveal><span className="landing-eyebrow">Your next step starts here</span><h2 id="closing-title">A clearer way<br />forward.</h2><p>Your records. Your progress. Your campus portal.</p>{accountAction('landing-button landing-button-primary')}</section>
 
-    <footer className="landing-footer"><div><strong>STI Vio-Log</strong><span>© {new Date().getFullYear()} STI Global City</span></div><nav aria-label="Legal information"><a href="/privacy?return=%2F" onClick={event => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onOpenPolicy('/privacy', '/') }}>Privacy Notice</a><a href="/terms?return=%2F" onClick={event => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onOpenPolicy('/terms', '/') }}>Terms of Use</a></nav><button className="landing-motion-toggle" type="button" aria-pressed={motionPaused} onClick={() => setMotionPaused(value => !value)}><PortalIcon name={motionPaused ? 'play' : 'pause'} size={15} />{motionPaused ? 'Resume Motion' : 'Pause Motion'}</button></footer>
+    <footer className="landing-footer"><div><strong>STI Vio-Log</strong><span>© {new Date().getFullYear()} STI Global City</span></div><nav aria-label="Legal information"><a href="/privacy?return=%2F" onClick={event => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onOpenPolicy('/privacy', '/') }}>Privacy Notice</a><a href="/terms?return=%2F" onClick={event => { if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return; event.preventDefault(); onOpenPolicy('/terms', '/') }}>Terms of Use</a></nav>{motionControl()}</footer>
   </div>
 }
