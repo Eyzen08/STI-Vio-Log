@@ -22,18 +22,57 @@ const checkContrast = async locator => {
   return ratio
 }
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
-const contextFor = async ({ theme = 'dark', reducedMotion = 'reduce', motion = null, touch = false, failMotion = false } = {}) => {
+const checkHero = async page => {
+  const states = await page.locator('[data-hero-word], [data-hero-reveal]').evaluateAll(elements => elements.map(el => ({ opacity: getComputedStyle(el).opacity, text: el.textContent.trim().slice(0, 50) })))
+  assert.equal(states.length, 9, 'The complete hero must be mounted')
+  const hidden = states.filter(el => el.opacity !== '1').map(el => el.text)
+  assert.deepEqual(hidden, [], 'Every hero word and supporting element must finish visible without toggling motion')
+}
+const checkMotionButtons = async (page, full) => {
+  const buttons = page.locator('.landing-motion-toggle')
+  assert.equal(await buttons.count(), 2)
+  for (const button of await buttons.all()) {
+    assert.equal((await button.textContent()).trim(), '')
+    assert.equal(await button.getAttribute('aria-pressed'), String(full))
+    assert.equal(await button.getAttribute('title'), full ? 'Reduce Motion' : 'Enable Full Motion')
+    assert.match(await button.getAttribute('aria-label'), full ? /Full/ : /Reduced/)
+    const size = await button.evaluate(el => ({ width: el.offsetWidth, height: el.offsetHeight }))
+    assert.deepEqual(size, { width: 44, height: 44 })
+    assert.equal(await button.locator('svg').getAttribute('width'), '18')
+  }
+}
+const checkCursorAsset = async locator => {
+  const dimensions = await locator.evaluate(async el => {
+    const url = getComputedStyle(el).cursor.match(/url\("([^"]+)"\)/)[1]
+    const image = new Image()
+    image.src = url
+    await image.decode()
+    return [image.naturalWidth, image.naturalHeight]
+  })
+  assert.deepEqual(dimensions, [28, 34], 'The self-hosted cursor must decode as an actual SVG image')
+}
+const contextFor = async ({ theme = 'dark', reducedMotion = 'reduce', motion = null, touch = false, failMotion = false, stallMotion = false, delayMotion = false } = {}) => {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion, hasTouch: touch, isMobile: touch })
   await context.addInitScript(({ theme, motion }) => {
     localStorage.setItem('sti-vio-log-theme', theme)
     if (motion) localStorage.setItem('sti-vio-log-landing-motion', motion)
   }, { theme, motion })
+  if (stallMotion) await context.addInitScript(() => {
+    const raf = requestAnimationFrame.bind(window)
+    window.requestAnimationFrame = callback => raf(time => { if (!document.querySelector('[data-orbit]')?.style.transform) callback(time) })
+  })
   const page = await context.newPage()
   if (failMotion) await page.route(/\/landingMotion[^/]*\.js/, route => route.abort())
+  if (delayMotion) await page.route(/\/landingMotion[^/]*\.js/, async route => { await pause(1200); await route.continue() })
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(origin)
   await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
-  if (!failMotion && motion !== 'reduced') await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform)
+  if (delayMotion || motion === 'reduced') await checkHero(page)
+  if (!failMotion && motion !== 'reduced') await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform, undefined, { polling: 100 })
+  if (stallMotion) assert.ok(await page.locator('[data-hero-word]').evaluateAll(elements => elements.some(el => getComputedStyle(el).opacity !== '1')), 'The fallback fixture must actually stall the entrance')
+  await pause(2200)
+  await checkHero(page)
+  await checkMotionButtons(page, motion !== 'reduced')
   return { context, page }
 }
 try {
@@ -48,7 +87,8 @@ try {
     await page.mouse.down()
     await pause(250)
     await checkContrast(cta)
-    assert.ok(await page.locator('.landing-cursor-ring').evaluate(el => new DOMMatrix(getComputedStyle(el).transform).a) < 1, 'Cursor contracts on press')
+    assert.match(await cta.evaluate(el => getComputedStyle(el).cursor), /landing-cursor-navy.*3 2/)
+    await checkCursorAsset(cta)
     await page.mouse.move(20, 20)
     await page.mouse.up()
     await page.keyboard.press('Tab')
@@ -79,18 +119,15 @@ try {
     assert.notEqual(await page.locator('[data-tilt="preview"]').evaluate(el => getComputedStyle(el).transform), 'none')
     assert.equal(await page.locator('.landing-preview-float').evaluate(el => getComputedStyle(el).perspective), '1000px')
     await page.waitForFunction(() => document.querySelector('.landing-page').getAttribute('data-cursor') === 'active')
-    assert.equal(await page.locator('.landing-page').evaluate(el => getComputedStyle(el).cursor), 'none')
-    assert.equal(await page.locator('.landing-cursor').evaluate(el => getComputedStyle(el).pointerEvents), 'none')
+    assert.match(await page.locator('.landing-page').evaluate(el => getComputedStyle(el).cursor), /landing-cursor-yellow.*3 2/)
+    await checkCursorAsset(page.locator('.landing-page'))
+    assert.equal(await page.locator('.landing-cursor,.landing-cursor-dot,.landing-cursor-ring').count(), 0)
     await tabs.nth(1).hover()
     const steadyBefore = await page.locator('.landing-preview-tilt').evaluate(el => getComputedStyle(el).transform)
     const orbitDuringControl = await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform)
     await pause(500)
     assert.equal(await page.locator('.landing-preview-tilt').evaluate(el => getComputedStyle(el).transform), steadyBefore, 'Controls stay steady during use')
     assert.notEqual(await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform), orbitDuringControl)
-    const dotBefore = await page.locator('.landing-cursor-dot').evaluate(el => getComputedStyle(el).transform)
-    await page.mouse.move(30, 40)
-    await pause(300)
-    assert.notEqual(await page.locator('.landing-cursor-dot').evaluate(el => getComputedStyle(el).transform), dotBefore)
     await page.evaluate(() => {
       const range = document.createRange()
       range.selectNodeContents(document.querySelector('.landing-hero-description'))
@@ -98,6 +135,15 @@ try {
     })
     await page.waitForFunction(() => !document.querySelector('.landing-page').hasAttribute('data-cursor'))
     await page.evaluate(() => getSelection().removeAllRanges())
+    await page.evaluate(() => {
+      const input = document.createElement('input')
+      input.id = 'cursor-fallback-fixture'
+      document.querySelector('.landing-hero-actions').append(input)
+    })
+    await page.locator('#cursor-fallback-fixture').hover()
+    assert.equal(await page.locator('.landing-page').getAttribute('data-cursor'), null)
+    assert.equal(await page.locator('#cursor-fallback-fixture').evaluate(el => getComputedStyle(el).cursor), 'text')
+    await page.locator('#cursor-fallback-fixture').evaluate(el => el.remove())
     const feature = page.locator('.landing-feature').first()
     await feature.scrollIntoViewIfNeeded()
     await pause(1000)
@@ -121,8 +167,9 @@ try {
     await page.screenshot({ path: fileURLToPath(new URL(`${theme}-full-motion.png`, artifacts)) })
     await page.locator('.landing-header .landing-motion-toggle').click()
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'reduced')
+    await checkMotionButtons(page, false)
     assert.equal(await page.locator('.landing-page').getAttribute('data-cursor'), null)
-    assert.notEqual(await page.locator('.landing-page').evaluate(el => getComputedStyle(el).cursor), 'none')
+    assert.doesNotMatch(await page.locator('.landing-page').evaluate(el => getComputedStyle(el).cursor), /landing-cursor/)
     assert.equal(await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform), 'none')
     await page.reload()
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'reduced')
@@ -142,6 +189,10 @@ try {
     await page.getByRole('link', { name: 'Back to Home', exact: true }).click()
     await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'full')
+    await checkMotionButtons(page, true)
+    await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform)
+    await pause(1600)
+    await checkHero(page)
     await checkContrast(page.locator('.landing-hero-actions .landing-button-primary'))
     assert.equal(await page.evaluate(() => localStorage.getItem('sti-vio-log-theme')), theme)
     await context.close()
@@ -158,7 +209,26 @@ try {
   await normal.page.emulateMedia({ forcedColors: 'active' })
   await normal.page.mouse.move(30, 40)
   assert.equal(await normal.page.locator('.landing-page').getAttribute('data-cursor'), null)
+  await checkHero(normal.page)
+  await normal.page.emulateMedia({ forcedColors: 'none' })
+  await pause(1600)
+  await checkHero(normal.page)
+  const toggle = normal.page.locator('.landing-header .landing-motion-toggle')
+  await toggle.evaluate(el => { el.click(); el.click(); el.click(); el.click() })
+  await pause(500)
+  await checkHero(normal.page)
+  await checkMotionButtons(normal.page, true)
+  await normal.page.locator('.landing-footer .landing-motion-toggle').click()
+  await checkMotionButtons(normal.page, false)
+  assert.equal(await normal.page.evaluate(() => localStorage.getItem('sti-vio-log-landing-motion')), 'reduced')
   await normal.context.close()
+  for (const option of ['stallMotion', 'delayMotion']) {
+    const fixture = await contextFor({ [option]: true })
+    await checkHero(fixture.page)
+    await fixture.page.locator('.landing-header .landing-motion-toggle').click()
+    await checkHero(fixture.page)
+    await fixture.context.close()
+  }
   const failed = await contextFor({ failMotion: true })
   await pause(1000)
   await failed.page.mouse.move(30, 40)
@@ -168,5 +238,5 @@ try {
   await failed.page.getByText('Uniform requirement', { exact: true }).waitFor()
   await failed.context.close()
   assert.deepEqual(errors, [])
-  console.log('PASS: live computed contrast, Full with browser reduced motion, orbital motion, pointer depth/cursor, saved Reduced mode, touch/native fallbacks, route cleanup and six widths.')
+  console.log('PASS: complete hero visibility and stalled/delayed/failed animation fallbacks; native arrow cursors; icon-only saved motion switches; contrast, motion, accessibility fallbacks, route cleanup and six widths.')
 } finally { await browser.close(); await server?.close() }

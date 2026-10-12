@@ -35,6 +35,10 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const accountLabel = checking ? 'Checking Session…' : accessState === 'signed-in' ? 'Open My Portal' : 'Sign In'
 
   useEffect(() => {
+    try { localStorage.setItem(LANDING_MOTION_KEY, motionMode) } catch { /* The switch still works when storage is unavailable. */ }
+  }, [motionMode])
+
+  useEffect(() => {
     const root = rootRef.current
     let disposed = false
     let cleanup = () => {}
@@ -65,14 +69,9 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const accountAction = className => checking
     ? <button className={className} type="button" disabled aria-busy="true">{accountLabel}</button>
     : <a className={className} data-magnetic href="/login" onClick={event => navigate(event, '/login')}>{accountLabel}<PortalIcon name="arrow-right" size={18} /></a>
-  const motionControl = () => <button className="landing-motion-toggle" type="button" aria-pressed={motionMode === 'full'} aria-label={`Motion: ${motionMode === 'full' ? 'Full' : 'Reduced'}. Switch to ${motionMode === 'full' ? 'Reduced' : 'Full'} Motion`} onClick={() => {
-    const next = motionMode === 'full' ? 'reduced' : 'full'
-    setMotionMode(next)
-    try { localStorage.setItem(LANDING_MOTION_KEY, next) } catch { /* The switch still works when storage is unavailable. */ }
-  }}><PortalIcon name={motionMode === 'full' ? 'pause' : 'play'} size={15} />Motion: {motionMode === 'full' ? 'Full' : 'Reduced'}</button>
+  const motionControl = () => <button className="landing-motion-toggle" type="button" aria-pressed={motionMode === 'full'} aria-label={`Motion: ${motionMode === 'full' ? 'Full' : 'Reduced'}. ${motionMode === 'full' ? 'Reduce Motion' : 'Enable Full Motion'}`} title={motionMode === 'full' ? 'Reduce Motion' : 'Enable Full Motion'} onClick={() => setMotionMode(value => value === 'full' ? 'reduced' : 'full')}><PortalIcon name={motionMode === 'full' ? 'pause' : 'play'} size={18} /></button>
 
   return <div className="landing-page" ref={rootRef} data-motion={motionMode}>
-    <div className="landing-cursor" aria-hidden="true"><span className="landing-cursor-dot" /><span className="landing-cursor-ring" /></div>
     <header className="landing-header">
       <a className="landing-brand" href="/" aria-label="STI Vio-Log home"><img src={logo} alt="STI Vio-Log" width="420" height="236" /><span>Global City</span></a>
       <nav id="landing-navigation" className={`landing-navigation${menuOpen ? ' is-open' : ''}`} aria-label="Main navigation">

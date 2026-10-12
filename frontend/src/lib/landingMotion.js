@@ -9,7 +9,6 @@ export function animateLanding(root) {
   const dispose = () => {
     removals.splice(0).reverse().forEach(remove => remove())
     root.removeAttribute('data-cursor')
-    root.querySelector('.landing-cursor')?.removeAttribute('data-tone')
   }
   const listen = (element, name, handler) => {
     element.addEventListener(name, handler)
@@ -21,15 +20,25 @@ export function animateLanding(root) {
       const select = gsap.utils.selector(root)
       if (!root.dataset.introPlayed) {
         root.dataset.introPlayed = 'true'
-        gsap.timeline({ defaults: { ease: 'power3.out' } })
-          .from(select('[data-hero-word]'), { opacity: 0, y: 30, duration: .8, stagger: .085 })
-          .from(select('[data-hero-reveal]'), { opacity: 0, y: 16, duration: .7, stagger: .1 }, .25)
+        const elements = select('[data-hero-word], [data-hero-reveal]')
+        let intro, fallback
+        context.add('finishHero', () => {
+          clearTimeout(fallback)
+          intro?.kill()
+          gsap.set(elements, { clearProps: 'opacity,transform,translate,rotate,scale' })
+        })
+        intro = gsap.timeline({ defaults: { ease: 'power3.out' }, onComplete: context.finishHero })
+          .fromTo(select('[data-hero-word]'), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .8, stagger: .085 })
+          .fromTo(select('[data-hero-reveal]'), { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .7, stagger: .1 }, .25)
+        // A stopped ticker must never leave essential content invisible.
+        fallback = setTimeout(context.finishHero, 2000)
+        removals.push(() => clearTimeout(fallback))
       }
       for (const section of select('[data-section-reveal]')) {
-        gsap.from(section, { opacity: 0, y: 28, duration: .75, ease: 'power2.out', scrollTrigger: { trigger: section, start: 'top 94%', once: true } })
+        gsap.fromTo(section, { opacity: 0, y: 28 }, { opacity: 1, y: 0, clearProps: 'opacity,transform,translate,rotate,scale', duration: .75, ease: 'power2.out', scrollTrigger: { trigger: section, start: 'top 94%', once: true } })
       }
       for (const group of select('.landing-feature-grid, .landing-steps-panel ol')) {
-        gsap.from(group.children, { opacity: 0, y: 18, duration: .65, stagger: .12, scrollTrigger: { trigger: group, start: 'top 92%', once: true } })
+        gsap.fromTo(group.children, { opacity: 0, y: 18 }, { opacity: 1, y: 0, clearProps: 'opacity,transform,translate,rotate,scale', duration: .65, stagger: .12, scrollTrigger: { trigger: group, start: 'top 92%', once: true } })
       }
       const floating = [
         ...select('[data-orbit]').map(element => ({ element, tween: gsap.fromTo(element, { x: -12, y: -22, rotation: -3 }, { x: 12, y: 22, rotation: 3, duration: 4.8, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }) })),
@@ -141,31 +150,16 @@ export function animateLanding(root) {
           })
           listen(element, 'pointerleave', reset); listen(element, 'pointerdown', reset); listen(element, 'focusin', reset)
         }
-        const dot = root.querySelector('.landing-cursor-dot'), ring = root.querySelector('.landing-cursor-ring')
-        const ringX = quick(ring, 'x', .18), ringY = quick(ring, 'y', .18)
-        const scaleX = quick(ring, 'scaleX', .2), scaleY = quick(ring, 'scaleY', .2)
-        const ringScale = value => { scaleX(value); scaleY(value) }
-        gsap.set([dot, ring], { xPercent: -50, yPercent: -50 })
-        let selecting = false, visible = false
-        const hideCursor = () => { visible = false; root.removeAttribute('data-cursor') }
-        const cursorState = target => {
-          ringScale(target.closest(interactive) ? 1.5 : 1)
-          root.querySelector('.landing-cursor').dataset.tone = target.closest('.landing-button-primary') ? 'dark' : 'yellow'
+        let selecting = false
+        const hideCursor = () => root.removeAttribute('data-cursor')
+        const updateCursor = event => {
+          if (event.pointerType !== 'mouse' || selecting || document.getSelection()?.toString() || event.target.closest(editable)) hideCursor()
+          else root.dataset.cursor = 'active'
         }
-        listen(root, 'pointermove', event => {
-          if (event.pointerType !== 'mouse' || selecting || document.getSelection()?.toString() || event.target.closest(editable)) { hideCursor(); return }
-          if (!visible) { gsap.set(ring, { x: event.clientX, y: event.clientY }); visible = true }
-          gsap.set(dot, { x: event.clientX, y: event.clientY })
-          ringX(event.clientX); ringY(event.clientY); cursorState(event.target)
-          if (event.buttons) ringScale(.65)
-          root.dataset.cursor = 'active'
-        })
-        listen(root, 'pointerover', event => cursorState(event.target))
-        listen(root, 'pointerdown', event => {
-          if (event.target.closest(editable)) hideCursor()
-          else ringScale(.65)
-        })
-        listen(root, 'pointerup', event => { selecting = false; cursorState(event.target) })
+        listen(root, 'pointermove', updateCursor)
+        listen(root, 'pointerover', updateCursor)
+        listen(root, 'pointerdown', updateCursor)
+        listen(window, 'pointerup', () => { selecting = false })
         listen(root, 'selectstart', () => { selecting = true; hideCursor() })
         listen(document, 'selectionchange', () => { if (document.getSelection()?.toString()) hideCursor() })
         listen(root, 'pointerleave', hideCursor)
