@@ -92,9 +92,11 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: var\(--control-height\) !important/)
 })
 
-test('sign-in keeps persistent labels, autocomplete, and help before submission', () => {
-  assert.match(source, /<label htmlFor="username">Username or student number<input/)
-  assert.doesNotMatch(source, /login-form--outlined|login-floating-field/)
+test('sign-in scopes floating labels to its two fields and preserves autocomplete', () => {
+  assert.match(source, /className="login-form login-form--floating"/)
+  assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number<\/span>/)
+  assert.match(source, /labelClassName="login-floating-field" placeholder=" "/)
+  assert.doesNotMatch(registrationSource, /login-floating-field/)
   assert.match(source, /autoComplete="username"/)
   assert.match(source, /autoComplete="current-password"/)
   assert.match(source, /aria-describedby=\{error\?'login-error':undefined\}/)

@@ -60,6 +60,9 @@ await context.route('**/*', async route => {
   else await route.abort()
 })
 const page = await context.newPage()
+const cdp = await context.newCDPSession(page)
+await cdp.send('DOM.enable')
+await cdp.send('CSS.enable')
 page.on('pageerror', error => errors.push(error.message))
 page.setDefaultTimeout(8000)
 const visible = async locator => { await locator.waitFor({ state: 'visible' }) }
@@ -117,6 +120,52 @@ const pasteCode = async (id, code = '123456') => {
     input.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true }))
   }, code)
 }
+const labelAt = async (id, raised) => {
+  await page.waitForFunction(({ id, raised }) => {
+    const input = document.getElementById(id), label = document.querySelector(`label[for="${id}"] .login-floating-label`)
+    if (!label) return false
+    const field = input.getBoundingClientRect(), bounds = label.getBoundingClientRect()
+    return Math.abs(bounds.y + bounds.height / 2 - (raised ? field.y : field.y + field.height / 2)) < 1
+  }, { id, raised })
+}
+const checkFloatingLabels = async () => {
+  for (const id of ['username', 'password']) {
+    const input = page.locator(`#${id}`)
+    await input.fill('')
+    await page.locator('#login-title').click()
+    await labelAt(id, false)
+    await input.focus()
+    await labelAt(id, true)
+    await input.fill(id === 'password' ? 'Temporary!Pass123' : '02000123456')
+    await page.locator('#login-title').click()
+    await labelAt(id, true)
+    for (const state of ['invalid', 'disabled']) {
+      await input.evaluate((node, state) => state === 'invalid' ? node.setAttribute('aria-invalid', 'true') : node.setAttribute('disabled', ''), state)
+      await labelAt(id, true)
+      await page.waitForFunction(id => {
+        const nodes = [document.getElementById(id), document.querySelector(`label[for="${id}"] .login-floating-label`)]
+        return nodes.every(node => node.getAnimations().every(animation => animation.playState !== 'running'))
+      }, id)
+      assert.equal(await input.evaluate(node => getComputedStyle(node).backgroundColor), await page.locator(`label[for="${id}"] .login-floating-label`).evaluate(node => getComputedStyle(node).backgroundColor), `${state} label notch matches its field`)
+    }
+    await input.evaluate(node => { node.removeAttribute('disabled'); node.setAttribute('aria-invalid', 'false') })
+    await input.fill('')
+    await page.locator('#login-title').click()
+    await labelAt(id, false)
+    const { root } = await cdp.send('DOM.getDocument')
+    const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: `#${id}` })
+    await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: ['autofill'] })
+    await labelAt(id, true)
+    await cdp.send('CSS.forcePseudoState', { nodeId, forcedPseudoClasses: [] })
+    await labelAt(id, false)
+  }
+  await page.getByRole('button', { name: 'Show password' }).click()
+  await labelAt('password', true)
+  await page.getByRole('button', { name: 'Hide password' }).click()
+  const input = await page.locator('#password').boundingBox(), help = await page.getByRole('link', { name: 'Forgot password?' }).boundingBox()
+  assert.ok(help.y >= input.y + input.height, 'Account help sits below the password field')
+  await page.locator('#login-title').click()
+}
 
 try {
   await page.goto(`${origin}login`)
@@ -143,9 +192,13 @@ try {
     await checkContrast()
     for (const width of [320, 390, 768, 1024, 1366, 1920]) {
       await page.setViewportSize({ width, height: width >= 1024 ? 768 : 844 })
+      if (width === 320 || width === 1366) await checkFloatingLabels()
       await fits()
       await screenshot(`login-${theme}-${width}`)
     }
+    await page.locator('#username').focus()
+    await labelAt('username', true)
+    await screenshot(`floating-label-focused-${theme}`)
   }
   await page.setViewportSize({ width: 1366, height: 768 })
   await page.getByLabel('Password', { exact: true }).fill('Temporary!Pass123')
