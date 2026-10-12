@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     `img-src 'self' data: blob: ${apiOrigin} https://*.googleusercontent.com`,
     "font-src 'self'",
     `connect-src 'self' ${apiOrigin} ${socketOrigin} https://accounts.google.com`,
-    "frame-src https://accounts.google.com",
+    "frame-src 'self' https://accounts.google.com",
     "worker-src 'self' blob:",
     "manifest-src 'self'",
     'upgrade-insecure-requests',

@@ -10,6 +10,7 @@ export const APP_ROUTES = [
   { path: '/account/password-change', label: 'Create New Password', view: 'Password Change', roles: [...ROLE_GROUPS.administration, ...ROLE_GROUPS.department, ...ROLE_GROUPS.student], navigation: false },
   { path: '/student/onboarding', label: 'Student Account Setup', view: 'Student Onboarding', roles: ROLE_GROUPS.student, navigation: false },
   { path: '/admin/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.administration },
+  { path: '/admin/handbook', label: 'STI Handbook', view: 'STI Handbook', roles: ROLE_GROUPS.administration },
   { path: '/admin/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/profile', label: 'Profile', view: 'Profile', roles: ROLE_GROUPS.administration, navigation: false },
   { path: '/admin/students', label: 'Students', view: 'Students', roles: ROLE_GROUPS.administration },

@@ -41,3 +41,14 @@ test('production build adds an API-origin-specific CSP', () => {
   assert.doesNotMatch(source,/script-src[^\n]*unsafe-inline/)
   assert.doesNotMatch(source,/unsafe-eval/)
 })
+
+test('saved handbook PDFs allow same-origin embedding without allowing the portal to be framed', () => {
+  const headers = buildConfig(process.env).headers
+  assert.equal(headers[0].headers.find(({ key }) => key === 'X-Frame-Options').value, 'DENY')
+  assert.match(headers[0].headers.find(({ key }) => key === 'Content-Security-Policy').value, /frame-src 'self' https:\/\/accounts.google.com;/)
+  const pdfHeaders = headers.find(({ source }) => source === '/handbook/:path*').headers
+  assert.equal(pdfHeaders.find(({ key }) => key === 'X-Frame-Options').value, 'SAMEORIGIN')
+  assert.match(pdfHeaders.find(({ key }) => key === 'Content-Security-Policy').value, /frame-ancestors 'self'/)
+  const vite = fs.readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8')
+  assert.match(vite, /frame-src 'self' https:\/\/accounts.google.com/)
+})

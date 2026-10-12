@@ -15,7 +15,7 @@ export const sidebarNavigationFor = (role = '') => {
     : role === 'DEPARTMENT_HEAD'
       ? [section('daily-work','Daily work',['QR Scan','Community Service','DTR','Students'])]
       : [section('student-records','Student records',['Students','Violations']),section('attendance-service','Attendance & service',['QR Scan','Active Attendance','Community Service']),section('clearance','Clearance',['Awaiting Clearance','Clearance'])]
-  return [page('Dashboard'), ...sections, section('updates','Updates',['Messages','Notifications']),
+  return [page('Dashboard'), page('STI Handbook'), ...sections, section('updates','Updates',['Messages','Notifications']),
     {...section('reports','Reporting',['Reports','Analytics & Trends']),type:'group',icon:'reports'},
     {...section('management','Administration',['Departments & Officer Accounts','Duplicate Review','Audit Log','System Dashboard']),type:'group',icon:'settings'},
     {...section('account','Account',[role==='STUDENT'?'My Profile':'Profile','Account Settings']),placement:'footer'}]
@@ -27,6 +27,7 @@ export const sidebarGroupForPath = (entries = [], path = '') =>
 
 const SIDEBAR_TOOLTIPS = {
   Dashboard: 'View discipline overview',
+  'STI Handbook': 'Read the STI Student Handbook',
   Students: 'Manage student records',
   Violations: 'Add student violation',
   'Active Attendance': 'Monitor active attendance',
@@ -60,6 +61,7 @@ const SIDEBAR_TOOLTIPS = {
 export const sidebarTooltipFor = (label) => SIDEBAR_TOOLTIPS[label]
 
 export const iconNameForView = (view = '') => ({
+  'STI Handbook': 'book',
   Dashboard: 'dashboard', 'System Dashboard': 'monitoring', Students: 'students', Profile:'user', 'My Profile': 'user', 'Assigned Students': 'students',
   'Duplicate Review': 'clearance', Violations: 'violations', 'My Violations': 'violations',
   'Community Service': 'service', 'My Service': 'service', 'Service Results': 'service', 'Active Attendance': 'clock', DTR: 'clock', Attendance: 'clock',

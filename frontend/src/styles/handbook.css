@@ -1,0 +1,15 @@
+.handbook-page { display: grid; gap: var(--page-gap); min-width: 0; }
+.handbook-page .portal-page-header { margin-bottom: 0; }
+.handbook-toolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+.handbook-toolbar label { display: grid; gap: 8px; min-width: 0; flex: 1 1 260px; max-width: 400px; color: var(--text-primary); font-weight: 700; }
+.handbook-toolbar select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-interactive); color: var(--text-primary); font: inherit; }
+.handbook-toolbar a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; text-decoration: none; }
+.handbook-source, .handbook-help { margin: 0; color: var(--text-secondary); line-height: 1.6; }
+.handbook-source a { color: var(--link-color); }
+.handbook-reader { width: 100%; height: max(520px, 72vh); box-sizing: border-box; border: 1px solid var(--border-strong); border-radius: 8px; background: #fff; }
+.handbook-toolbar :is(a, select):focus-visible, .handbook-source a:focus-visible { outline: 3px solid var(--link-color); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .handbook-toolbar label { max-width: none; }
+  .handbook-toolbar .action-row { width: 100%; }
+  .handbook-toolbar a { flex: 1 1 auto; }
+}

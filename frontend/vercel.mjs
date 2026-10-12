@@ -13,7 +13,7 @@ export const buildConfig = (env = process.env) => {
   if (target !== 'production' && productionOrigin && apiOrigin === productionOrigin) throw new Error('Non-production Vercel deployments must not proxy to the production API')
   const socketOrigin = apiOrigin?.replace(/^https:/, 'wss:')
   const connectOrigins = [apiOrigin, socketOrigin, 'https://accounts.google.com'].filter(Boolean).join(' ')
-  const csp = `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' ${connectOrigins}; frame-src https://accounts.google.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests`
+  const csp = `default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https://*.googleusercontent.com; font-src 'self'; connect-src 'self' ${connectOrigins}; frame-src 'self' https://accounts.google.com; worker-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests`
   return {
     rewrites: [
       ...(apiOrigin ? [{ source:'/api/:path*', destination:`${apiOrigin}/api/:path*` },
@@ -29,6 +29,9 @@ export const buildConfig = (env = process.env) => {
       { key:'Content-Security-Policy', value:csp },
       { key:'Cross-Origin-Opener-Policy', value:'same-origin-allow-popups' },
       { key:'Cross-Origin-Resource-Policy', value:'same-site' }
+    ] }, { source:'/handbook/:path*', headers: [
+      { key:'X-Frame-Options', value:'SAMEORIGIN' },
+      { key:'Content-Security-Policy', value:"default-src 'none'; base-uri 'none'; frame-ancestors 'self'" }
     ] }]
   }
 }

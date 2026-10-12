@@ -47,7 +47,7 @@ test('sidebar tooltips describe every permitted item with the approved copy', ()
 
 test('administrator sidebar follows the requested hierarchy and child order', () => {
   assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
-    'Dashboard', ['Student records', ['Students', 'Violations']],
+    'Dashboard', 'STI Handbook', ['Student records', ['Students', 'Violations']],
     ['Attendance & service', ['QR Scan', 'Active Attendance', 'Community Service']],
     ['Clearance', ['Awaiting Clearance', 'Clearance']], ['Updates', ['Messages', 'Notifications']],
     ['Reporting', ['Reports', 'Analytics & Trends']],
@@ -55,7 +55,7 @@ test('administrator sidebar follows the requested hierarchy and child order', ()
     ['Account', ['Profile', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
-    'Dashboard', ['Student records', ['Students', 'Violations']],
+    'Dashboard', 'STI Handbook', ['Student records', ['Students', 'Violations']],
     ['Attendance & service', ['QR Scan', 'Active Attendance', 'Community Service']],
     ['Clearance', ['Awaiting Clearance', 'Clearance']], ['Updates', ['Messages', 'Notifications']],
     ['Reporting', ['Reports', 'Analytics & Trends']], ['Account', ['Profile', 'Settings']]

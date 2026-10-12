@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useSta
 import { createPortal, flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
+const HandbookPage = lazy(() => import('./components/HandbookPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
 const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
 const DepartmentQrScanner = lazy(() => import('./components/DepartmentQrScanner.jsx'))
@@ -2122,6 +2123,8 @@ function App() {
       )
     }
 
+    if (isAdmin && activeView === 'STI Handbook') return <HandbookPage />
+
     if (isDepartmentHead && activeView === 'Students') {
       return (
         <DepartmentStudents
@@ -2779,6 +2782,7 @@ function App() {
 
           {isLoggedIn && (
             <div className="account-actions">
+              {isAdmin && <button className="theme-toggle handbook-shortcut" type="button" aria-label="Open STI Handbook" title="Open STI Handbook" onClick={() => navigateTo('/admin/handbook')}><PortalIcon name="book" /></button>}
               <button
                 className="theme-toggle"
                 type="button"

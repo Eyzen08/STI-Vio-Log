@@ -1,0 +1,282 @@
+{
+  "edition": "July 2026",
+  "capturedOn": "2026-10-12",
+  "source": "https://one.sti.edu/STI-BCT_Handbook.html",
+  "requiredReadingSections": 51,
+  "includedSourcePages": 53,
+  "pdfPages": 85,
+  "sections": [
+    {
+      "id": "home",
+      "title": "Home",
+      "sourceTextSha256": "5dc378e5f46a2ae1aae2ec3e12f4e2153fc12f938fea55381780e3b54a0d00eb"
+    },
+    {
+      "id": "history",
+      "title": "History",
+      "sourceTextSha256": "f2c4d607a13939ff0ebd983d3d8593ce8ef06b9be279658b90f449428a7558d8"
+    },
+    {
+      "id": "vision",
+      "title": "Vision",
+      "sourceTextSha256": "99ec5268bfbfa74108e8097427d8b1794b28e98f6b225f5d8091c0b72df2df05"
+    },
+    {
+      "id": "mission",
+      "title": "Mission",
+      "sourceTextSha256": "413d9618c7ab52e526a71c2962bb4f497ce96354566a53cedfdd5d2523f7668e"
+    },
+    {
+      "id": "seal",
+      "title": "Academic Seal",
+      "sourceTextSha256": "a513f5de4db74515ed58f74a2cb04851bb53b85a711298dbd0c6f2c1c618cb8b"
+    },
+    {
+      "id": "philosophy",
+      "title": "Educational Philosophy",
+      "sourceTextSha256": "64a71bc17b19362361d10df9a34b3515f375d18b81b66c9fc1cf675b108967c8"
+    },
+    {
+      "id": "goal",
+      "title": "Educational Goal",
+      "sourceTextSha256": "80286300f2a0ccabdbfd886f158de1a562d192a1f248d1c816e4e7bd6e687690"
+    },
+    {
+      "id": "network",
+      "title": "Educational Network System",
+      "sourceTextSha256": "bb80c919b76e01daba8489d1acdb11d11d856ad7b4ef0ce4b076ec9c6d3c0d12"
+    },
+    {
+      "id": "procedures",
+      "title": "Academic Procedures",
+      "sourceTextSha256": "e0bc3775dc5f0453f0b5d2bda7ac6f924b01a9d8f9e604d3ba839876ae3be2b7"
+    },
+    {
+      "id": "contract",
+      "title": "School-Student Relationship: A Legal Contract",
+      "sourceTextSha256": "d9531c01d21f5bf93bb6c590de5e60d534323dd7bb990df007f5933243d8c10b"
+    },
+    {
+      "id": "admission",
+      "title": "Admission Policy and Requirements",
+      "sourceTextSha256": "31d46169effa726e8c5afd5443a8b6dc828e07b715a49c36b5d68640840e975f"
+    },
+    {
+      "id": "residency",
+      "title": "Residency",
+      "sourceTextSha256": "e46ae03354f3b41500f05a58b9cce6cf6f8fd1ba59fd489aa383db84945cada6"
+    },
+    {
+      "id": "crossenroll",
+      "title": "Cross Enrollment",
+      "sourceTextSha256": "4eaceb590dd3d67097cd2c9bc7fafea610b62cb04f324ad664665a2c67656751"
+    },
+    {
+      "id": "schoolyear",
+      "title": "School Year",
+      "sourceTextSha256": "2e6f213a54e71219576b9bddb70099b2b392f9dd93615607dd5a20f6e849591a"
+    },
+    {
+      "id": "classification",
+      "title": "Student Classification",
+      "sourceTextSha256": "5936b3cad557fc0b85664e72938ad7dfddef471cccae04dc99ae22a0406a8275"
+    },
+    {
+      "id": "studyload",
+      "title": "Study Load",
+      "sourceTextSha256": "d8890037473e27a4a419117346ad40562fe9b06a7c69673ccc1b01267cd91f53"
+    },
+    {
+      "id": "suspension",
+      "title": "Suspension of Classes",
+      "sourceTextSha256": "c78d8536f7b2fd313f9bf9960322eeffb6ea394b650876bbb8981d7667c1335c"
+    },
+    {
+      "id": "coursesequence",
+      "title": "Course Sequence",
+      "sourceTextSha256": "a19fdccbd94985b61695a627a0521723650f92327c713df5f464c91e2529ba76"
+    },
+    {
+      "id": "petitioned",
+      "title": "Petitioned Classes",
+      "sourceTextSha256": "c59fa63ad8b2ebaeba0e301d107f4db132e7f2d4bcfd86151e18de47525130d3"
+    },
+    {
+      "id": "coursechanges",
+      "title": "Changes of Courses or Schedules",
+      "sourceTextSha256": "9e6627b62f3f4fcd3261ae5c86ea14f6ee1b4c9a5f5267c994850baa8a7742f4"
+    },
+    {
+      "id": "dropping",
+      "title": "Dropping of Courses",
+      "sourceTextSha256": "57b9696428ab30376f5143c911b5c5ac466111b5e512cdb1dd123b89d8ee9b3c"
+    },
+    {
+      "id": "shifting",
+      "title": "Shifting of Academic Program",
+      "sourceTextSha256": "67f2bc99ee74daace97ae968c7f24d4f4ea4533cb9f020d99df011d0a3ddd6ad"
+    },
+    {
+      "id": "fees",
+      "title": "Fees and Payments",
+      "sourceTextSha256": "a7dbad11e2e066d08b7f4877f802ad3c443b81414dd2cbc38e4f70d91fbe815e"
+    },
+    {
+      "id": "stdexams",
+      "title": "Standardized Periodical Examinations",
+      "sourceTextSha256": "39643bc9673ee206cb54d22a18daf2351f388f8b20f195cdf510a4061b5a74b3"
+    },
+    {
+      "id": "assessment",
+      "title": "Grading and Earned Credits",
+      "sourceTextSha256": "09adeefce39f30f5ba4809beec59c6961f84560d56fb4b4df6b05f662d1c6502"
+    },
+    {
+      "id": "honors",
+      "title": "Academic Honors",
+      "sourceTextSha256": "dea675215c9df2a571e9339534acd755f576d65035c9a5e61522facd338b7f12"
+    },
+    {
+      "id": "scholarships",
+      "title": "Scholarships and Financial Aid",
+      "sourceTextSha256": "2db2fef62c95ca4cc50d345c877924fb8fbe110712d05de2947f4f964ad0962a"
+    },
+    {
+      "id": "assistantship",
+      "title": "Student Assistantship Program",
+      "sourceTextSha256": "06304e03c27b9f2cfb3d18cab4fe3231a0bf6fe10a14fcd8d8704f5b1de5e439"
+    },
+    {
+      "id": "ojt",
+      "title": "On-the-Job (OJT) / Practicum",
+      "sourceTextSha256": "377e0f94e791918496fa1e7bd5372410197d4e6e35753af66d6920e88e8bfa61"
+    },
+    {
+      "id": "probation",
+      "title": "Academic Standing",
+      "sourceTextSha256": "47a5f81c3e39e30e0b48e13d49472ba441645b32b68011c227defc69ba8739ac"
+    },
+    {
+      "id": "promotion",
+      "title": "Remediation Program",
+      "sourceTextSha256": "61a67943a9dfedb6e63089dcc7c104abb1fbc4679455fdc15065dd186845b0ca"
+    },
+    {
+      "id": "graduation",
+      "title": "Graduation",
+      "sourceTextSha256": "69a349bd819ed9914b3d569b920201ae9f60b764713ffeaff9f05021d9b40cc3"
+    },
+    {
+      "id": "services",
+      "title": "Guidance & Counseling Services",
+      "sourceTextSha256": "52a7d4c199508c31b71eb9863b97c8bec75ec4a229ec5a7b285ef0a7406aabf3"
+    },
+    {
+      "id": "records",
+      "title": "Student Records Services",
+      "sourceTextSha256": "844e6b4932f03c519ad1ac3d2f357336ba9f3a9ad539e8e8ebe047809470b22c"
+    },
+    {
+      "id": "ictservices",
+      "title": "ICT Services",
+      "sourceTextSha256": "d19f26374cd687b35ca41a6374611ce3dc6f5c4a61d7d9905499d3c6213a7017"
+    },
+    {
+      "id": "library",
+      "title": "Library Services",
+      "sourceTextSha256": "8d45b43e2741826f6b5e6488e01fc9891d60ca80459f31483780f964b9c771ee"
+    },
+    {
+      "id": "sportsdev",
+      "title": "Sports Development Services",
+      "sourceTextSha256": "1a0c6aa273374caf8cbb8c6edcde23e3348f599ff3a9d96a82b8e5805eeff468"
+    },
+    {
+      "id": "healthsvc",
+      "title": "Health Services",
+      "sourceTextSha256": "bbe819e4a590a29152cd6aa684c1c147870d99aa66e33f6a1c149dc40e135284"
+    },
+    {
+      "id": "specialneeds",
+      "title": "Services for Student with Special Needs and Persons with Disabilities",
+      "sourceTextSha256": "48c0edd8a4ab6d912460666b15264cf7f4d523d028fbce78696205933637e31f"
+    },
+    {
+      "id": "activities",
+      "title": "Student Affairs Services",
+      "sourceTextSha256": "8bcebd9d5b2af6ab07e8dc92a5de245d12b9495656a530a6cbe37186d9b8823e"
+    },
+    {
+      "id": "alumni",
+      "title": "Alumni and Placement Services",
+      "sourceTextSha256": "ab634fb44ae40dfe2c5446e0c93b5afe64c1d5b01c5eccb3610d89b114e12450"
+    },
+    {
+      "id": "safetysvc",
+      "title": "Alumni Services",
+      "sourceTextSha256": "0120e3b59515e458089203673c0d3aae520cb9e08e8bf4a8f8429c01b473864a"
+    },
+    {
+      "id": "maintenance",
+      "title": "Auxiliary Services",
+      "sourceTextSha256": "48ca9f447f61c88e53c5329b55931bfe1df6d937141e1b0c4450b69253fbfa0c"
+    },
+    {
+      "id": "behavior",
+      "title": "Student Behavior & Discipline",
+      "sourceTextSha256": "580c3cafafa0eb7adf825eb1c3d7d14979d103bdf5426ef321b766ad7c8e51e5"
+    },
+    {
+      "id": "appearance",
+      "title": "Student Appearance",
+      "sourceTextSha256": "293b64e6115bd0988f6e19346788459ac468c117375ea08beb9a0e3b6d42f29c"
+    },
+    {
+      "id": "attire",
+      "title": "Student Uniform",
+      "sourceTextSha256": "fa0118f1f64f6044a6214196fe4d640b9f8b7855127bd3b70e07b429cbfff48f"
+    },
+    {
+      "id": "decorum",
+      "title": "Student Decorum",
+      "sourceTextSha256": "602bc8c39770fbf4dfe7a9998f0a707434e0369b29d23163018005d0fc14ade3"
+    },
+    {
+      "id": "discipline",
+      "title": "Student Discipline",
+      "sourceTextSha256": "5ae96c313c63a22cf8957d8e026c69e2a214f1fe44e79f628aca28a1dff2a2bd"
+    },
+    {
+      "id": "measures",
+      "title": "Disciplinary Measures",
+      "sourceTextSha256": "98281d1dcac987207580e92a51a8fc12308586dedad48a78a4165f9a5db2c15b"
+    },
+    {
+      "id": "offenses",
+      "title": "Offenses",
+      "sourceTextSha256": "7d3b0882fa1d631572448ab32951ef4d56c36be8068c9e0b93b11e99d89c5fb1"
+    },
+    {
+      "id": "commitment",
+      "title": "Commitment Form",
+      "sourceTextSha256": "1834fea697206f43c05caeb4242cfbbfc237df97bec476927b8d7d9780dc2496"
+    },
+    {
+      "id": "appA",
+      "title": "Appendix A \u2014 The STIer's Creed",
+      "sourceTextSha256": "3cffe8a0dd18f4f56c4d8373e9c423563bd5e014dae17a9ee2fe887eb9b1522c"
+    },
+    {
+      "id": "appB",
+      "title": "Appendix B \u2014 STI Hymn",
+      "sourceTextSha256": "2508b8c61afba323f3674902561104bf98bb3151182c5b05811a472ef2156fbe"
+    }
+  ],
+  "printableCommitmentFormSource": "https://one.sti.edu/files/3e9efa22-3e4c-4fc4-8f56-ce1b5f9a96cb.pdf",
+  "files": {
+    "sti-disciplinary-measures-july-2026.pdf": "d35883bf2e80a2a44f753e7dfb5d052b2b629e2f2779c37596c85ed7628cc013",
+    "sti-offenses-july-2026.pdf": "934f3e1389de25287540302b0c7ef0559e47f537835ce2d0aa4db67f38c3f85b",
+    "sti-student-discipline-july-2026.pdf": "7d8b8e6e51f8cd02e9d5246889b7f45d758d947fc3ced6c5d2fcb10be0ceda5a",
+    "sti-tertiary-handbook-july-2026.pdf": "c30248217d151a67d8304da5065c1047e388ec11a0527a3293c95b923baf66ca"
+  }
+}
