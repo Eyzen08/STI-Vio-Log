@@ -166,6 +166,45 @@ const checkFloatingLabels = async () => {
   assert.ok(help.y >= input.y + input.height, 'Account help sits below the password field')
   await page.locator('#login-title').click()
 }
+const checkLabelMotion = async (id, duringTheme) => {
+  const input = page.locator(`#${id}`)
+  await input.fill('')
+  await page.locator('#login-title').click()
+  await labelAt(id, false)
+  await page.waitForFunction(id => document.querySelector(`label[for="${id}"] .login-floating-label`).getAnimations().every(animation => animation.playState !== 'running'), id)
+  const motion = await input.evaluate((node, duringTheme) => {
+    const label = document.querySelector(`label[for="${node.id}"] .login-floating-label`)
+    const center = () => {
+      const bounds = label.getBoundingClientRect()
+      return bounds.y + bounds.height / 2 - node.getBoundingClientRect().y
+    }
+    if (duringTheme) document.documentElement.classList.add('theme-transitioning')
+    try {
+      const start = center()
+      node.focus()
+      getComputedStyle(label).transform
+      const transition = label.getAnimations().find(animation => animation.transitionProperty === 'transform')
+      if (!transition) return { duration: null }
+      transition.pause()
+      transition.currentTime = 110
+      const middle = center(), timing = transition.effect.getTiming()
+      const height = label.getBoundingClientRect().height
+      node.blur()
+      const reversal = center()
+      const reverse = label.getAnimations().find(animation => animation.transitionProperty === 'transform')
+      reverse?.finish()
+      return { start, middle, reversal, end: center(), duration: timing.duration, easing: timing.easing, height }
+    } finally {
+      if (duringTheme) document.documentElement.classList.remove('theme-transitioning')
+    }
+  }, duringTheme)
+  assert.equal(motion.duration, 220, `${id}: movement uses a 220ms transform transition, including theme changes`)
+  assert.equal(motion.easing, 'cubic-bezier(0.2, 0, 0, 1)')
+  assert.ok(motion.middle > 0 && motion.middle < motion.start, 'Intermediate frame moves smoothly between the endpoints')
+  assert.ok(motion.height > 12 && motion.height < 16, 'Intermediate frame scales the label')
+  assert.ok(Math.abs(motion.reversal - motion.middle) < 1, 'Reversal starts from the current position without jumping')
+  assert.ok(Math.abs(motion.end - motion.start) < 1, 'Reversal returns to the original position')
+}
 
 try {
   await page.goto(`${origin}login`)
@@ -188,6 +227,11 @@ try {
   assert.equal(await page.getByRole('button', { name: 'Show password' }).evaluate(node => node === document.activeElement), true)
   for (const theme of ['light', 'dark']) {
     if (await page.locator('html').getAttribute('data-theme') !== theme) await page.getByRole('button', { name: `Switch to ${theme} mode` }).click()
+    await page.waitForFunction(() => !document.documentElement.classList.contains('theme-transitioning'))
+    for (const id of ['username', 'password']) {
+      await checkLabelMotion(id, false)
+      await checkLabelMotion(id, true)
+    }
     await page.locator('#username').focus()
     await checkContrast()
     for (const width of [320, 390, 768, 1024, 1366, 1920]) {
@@ -282,6 +326,9 @@ try {
   await screenshot('login-200-percent-reflow')
   await page.emulateMedia({ reducedMotion: 'reduce' })
   assert.equal(await page.locator('.login-submit').evaluate(node => getComputedStyle(node).transitionDuration), '0s')
+  await page.locator('#username').focus()
+  await labelAt('username', true)
+  assert.equal(await page.locator('label[for="username"] .login-floating-label').evaluate(node => node.getAnimations().length), 0, 'Reduced motion updates the label immediately')
   googleUnavailable = true
   await page.evaluate(() => localStorage.setItem('login-sdk-unavailable', 'true'))
   await page.reload()

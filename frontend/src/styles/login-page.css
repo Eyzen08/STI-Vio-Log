@@ -109,20 +109,24 @@
   left: 12px;
   max-width: calc(100% - 28px);
   padding: 0 4px;
-  background: transparent;
+  background: var(--login-field-surface);
   color: var(--auth-muted);
   font-size: 16px;
   font-weight: 400;
   line-height: 1;
   pointer-events: none;
   transform: translateY(-50%);
-  transition: top 160ms ease, font-size 160ms ease, color 160ms ease, background-color 160ms ease;
+  transform-origin: left center;
+  transition: transform 220ms cubic-bezier(0.2, 0, 0, 1), color 160ms ease, background-color 160ms ease;
 }
 .auth-shell .login-form--floating .login-floating-field:focus-within > .login-floating-label,
 .auth-shell .login-form--floating .login-floating-field:has(input:is(:not(:placeholder-shown),:autofill,:-webkit-autofill)) > .login-floating-label {
-  top: 0;
-  font-size: 12px;
-  background: var(--login-field-surface);
+  transform: translateY(calc(-50% - 26px)) scale(.75);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .theme-transitioning .auth-shell .login-form--floating .login-floating-label {
+    transition: transform 220ms cubic-bezier(0.2, 0, 0, 1), color 160ms ease, background-color 160ms ease !important;
+  }
 }
 .auth-shell .login-form--floating .login-floating-field:focus-within > .login-floating-label { color: var(--auth-link); }
 .auth-shell .login-form--floating .login-floating-field:has(input[aria-invalid='true']) { --login-field-surface: var(--status-danger-surface); }
