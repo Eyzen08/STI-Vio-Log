@@ -80,7 +80,7 @@ export const installMutationRequestGuard = (target = globalThis) => {
       clearSession()
       const EventConstructor = target.CustomEvent || globalThis.CustomEvent
       if (target.dispatchEvent && EventConstructor) target.dispatchEvent(new EventConstructor('sti:session-expired'))
-      if (target.location?.pathname !== '/login') target.location?.replace?.('/login')
+      if (!['/', '/login'].includes(target.location?.pathname)) target.location?.replace?.('/login')
       return response
     }
     if(isMutation&&protectedApi&&!publicAuth){let csrf=csrfToken();if(!csrf){const response=await originalFetch(`${API_URL}/api/auth/csrf`,{credentials:'include',headers:{Accept:'application/json'}});const data=await response.json().catch(()=>null);if(response.ok&&data?.csrf_token){saveCsrf(data.csrf_token);csrf=data.csrf_token}}if(csrf)headers.set('X-CSRF-Token',csrf)}

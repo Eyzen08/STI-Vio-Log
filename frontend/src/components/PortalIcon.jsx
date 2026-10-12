@@ -1,4 +1,8 @@
 const paths = {
+  'arrow-right': <path d="M4 12h16M14 6l6 6-6 6"/>,
+  'arrow-down': <path d="M12 4v16M6 14l6 6 6-6"/>,
+  close: <path d="m6 6 12 12M18 6 6 18"/>,
+  pause: <path d="M9 4v16M15 4v16"/>,
   play: <path d="m8 4 12 8-12 8V4Z"/>,
   rotate: <><path d="M20 8a8 8 0 1 0 0 8M20 3v5h-5"/></>,
   save: <><path d="M4 3h13l4 4v14H3V3ZM7 3v6h10V3M7 21v-8h10v8"/></>,

@@ -10,7 +10,7 @@ const PUBLIC_METADATA = {
 }
 
 export const metadataForRoute = (path, routeLabel) => {
-  if (path === '/') return { title: 'STI Vio-Log | STI Global City', description: 'Secure student discipline, community service, and clearance management for STI Global City.', robots: 'index, follow' }
+  if (path === '/') return { title: 'STI Vio-Log | STI Global City', description: 'View your records, track community service, and follow your clearance progress in one secure STI Global City portal.', robots: 'index, follow' }
   const [page, description] = PUBLIC_METADATA[path] || [routeLabel || 'Page Not Found', 'STI Vio-Log student discipline and community service portal.']
   return { title: `${formatTitleCase(page)} | STI Vio-Log`, description, robots: PUBLIC_METADATA[path] ? 'index, follow' : 'noindex, nofollow' }
 }

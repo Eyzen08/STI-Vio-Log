@@ -74,7 +74,7 @@ Bootstrap an individual administrator only on that development database using th
 npm.cmd run dev
 ```
 
-Vite normally serves `http://localhost:5173`; the API defaults to port 5000. Set `VITE_API_URL=http://localhost:5000` and an exact local frontend origin in `FRONTEND_URL`. Open `/login`; no role selector is used.
+Vite normally serves `http://localhost:5173`; the API defaults to port 5000. Set `VITE_API_URL=http://localhost:5000` and an exact local frontend origin in `FRONTEND_URL`. Open `/` to browse the welcome page, or `/login` to access your account; no role selector is used.
 
 ## Configuration and commands
 

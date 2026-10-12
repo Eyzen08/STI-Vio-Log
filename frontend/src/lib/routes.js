@@ -4,7 +4,7 @@ export const ROLE_GROUPS = {
   student: ['STUDENT']
 }
 
-export const PUBLIC_ROUTES = ['/login','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
+export const PUBLIC_ROUTES = ['/','/login','/forgot-password','/reset-password/verify','/reset-password/new','/privacy','/terms']
 
 export const APP_ROUTES = [
   { path: '/account/password-change', label: 'Create New Password', view: 'Password Change', roles: [...ROLE_GROUPS.administration, ...ROLE_GROUPS.department, ...ROLE_GROUPS.student], navigation: false },
@@ -60,7 +60,7 @@ const HOME_PATHS = {
 export const getHomePath = (role) => HOME_PATHS[role] || '/unauthorized'
 
 export const accountSetupRedirect = (path, user, showCompletion = false) => {
-  if (path === '/privacy' || path === '/terms') return null
+  if (path === '/' || path === '/privacy' || path === '/terms') return null
   if (!user) return ['/account/password-change', '/student/onboarding'].includes(path) ? '/login' : null
   const required = user.password_change_required ? '/account/password-change'
     : user.role === 'STUDENT' && user.onboarding_required ? '/student/onboarding' : null

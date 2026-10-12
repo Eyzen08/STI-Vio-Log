@@ -6,6 +6,7 @@ import buildingImage from '../assets/sti-global-city-building-web.jpg'
 import buildingNightImage from '../assets/sti-global-city-building-night.jpg'
 import stiVioLogLogoTransparent from '../assets/sti-logo-web-transparent.png'
 import MfaChallenge from './MfaChallenge.jsx'
+import PortalIcon from './PortalIcon.jsx'
 
 const STUDENT_AUTH_PATHS = new Set(['/forgot-password','/reset-password/verify','/reset-password/new'])
 
@@ -27,13 +28,15 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
       <div className="login-brand-mark"><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="420" height="236" fetchPriority="high"/></div>
       <div className="login-intro-content">
         <span className="login-kicker">STI Global City</span>
-        <h2>Student accountability, made clearer.</h2>
-        <p>Manage violations, community service, attendance, and clearance through one secure campus portal.</p>
+        <h2>A clearer way<br /><span>forward.</span></h2>
+        <p>Your records. Your progress. Your campus portal. Take your next step with STI Vio-Log.</p>
+        <div className="login-journey-labels" aria-label="Portal features"><span>Records</span><i aria-hidden="true">/</i><span>Service</span><i aria-hidden="true">/</i><span>Clearance</span></div>
       </div>
-      <footer className="login-assurance"><small>© {new Date().getFullYear()} STI Global City</small></footer>
+      <footer className="login-assurance"><span>Discipline. Accountability. Progress.</span><small>© {new Date().getFullYear()} STI Global City</small></footer>
     </aside>
     <div className="login-form-panel">
       <div className="login-card auth-card">
+        <a className="login-home-link" href="/" onClick={(event)=>navigate(event, '/', isSubmitting)} aria-disabled={isSubmitting}><PortalIcon name="arrow-right" size={16} />Back to Home</a>
         <div className="auth-trust-note"><CampusIcon/><span>STI Global City <span aria-hidden="true">/</span> Discipline Office</span></div>
         {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
           <header className="auth-card-header"><h1 id="login-title">Welcome Back</h1><p>Sign in to your STI Vio-Log account.</p></header>

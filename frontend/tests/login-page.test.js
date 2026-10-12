@@ -115,7 +115,7 @@ test('login inputs cover focus, autofill, invalid, disabled and reduced-motion s
 
 test('authentication has one responsive style owner and preserves campus image layers', () => {
   assert.match(loginCssSource, /grid-template-columns: minmax\(0, 1\.04fr\) minmax\(0, \.96fr\)/)
-  assert.match(loginCssSource, /width: min\(420px, 100%\)/)
+  assert.match(loginCssSource, /width: min\(480px, 100%\)/)
   assert.match(loginCssSource, /height: calc\(100dvh - 48px\)/)
   assert.match(loginCssSource, /@media \(max-width: 1023px\)/)
   assert.match(loginCssSource, /height: 144px; min-height: 144px/)

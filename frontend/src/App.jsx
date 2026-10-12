@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useSta
 import { createPortal, flushSync } from 'react-dom'
 import { cameraUnavailableMessage, scannerQrBox } from './lib/departmentScanner.js'
 const LoginPage = lazy(() => import('./components/LoginPage.jsx'))
+const LandingPage = lazy(() => import('./components/LandingPage.jsx'))
 const HandbookPage = lazy(() => import('./components/HandbookPage.jsx'))
 const DepartmentDashboard = lazy(() => import('./components/DepartmentDashboard.jsx'))
 const DepartmentCommunityService = lazy(() => import('./components/DepartmentCommunityService.jsx'))
@@ -152,6 +153,7 @@ function App() {
   const [routeLocation, setRouteLocation] = useState(() => `${window.location.pathname}${window.location.search}${window.location.hash}`)
   const routeUrl = new URL(routeLocation, window.location.origin)
   const routePath = routeUrl.pathname
+  const isLanding = routePath === '/'
   const routeSearch = routeUrl.search
   const recordTarget = notificationTarget(routeSearch)
   const [recordTargetError, setRecordTargetError] = useState(null)
@@ -177,8 +179,8 @@ function App() {
   const [token, setToken] = useState('')
   const [user, setUser] = useState(null)
   const legal = useLegalPolicy(user?.id, user?.password_change_required)
-  const portalReady = Boolean(token && user && legal.ready && !user.password_change_required && !user.onboarding_required)
-  const setupActive = Boolean(user && (user.password_change_required || !legal.ready || user.onboarding_required || showOnboardingComplete))
+  const portalReady = Boolean(!isLanding && token && user && legal.ready && !user.password_change_required && !user.onboarding_required)
+  const setupActive = Boolean(!isLanding && user && (user.password_change_required || !legal.ready || user.onboarding_required || showOnboardingComplete))
   const portalChrome = portalReady && !showOnboardingComplete
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
   const [sessionRestoreError, setSessionRestoreError] = useState(false)
@@ -601,7 +603,8 @@ function App() {
   useEffect(() => {
     const label = user && !user.password_change_required && !legal.ready && !['/privacy','/terms'].includes(routePath) ? 'Terms of Use' : routeResolution.route?.label
     applyPageMetadata(metadataForRoute(routePath, label))
-  }, [routePath, routeResolution.route?.label, user, legal.ready])
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isLanding || theme === 'dark' ? '#071421' : '#075aab')
+  }, [routePath, routeResolution.route?.label, user, legal.ready, isLanding, theme])
 
   useEffect(() => {
     if (!isMobileNavOpen) return undefined
@@ -712,14 +715,14 @@ function App() {
 
   useEffect(() => {
     if (sessionRestoring) return
-    if (routePath === '/privacy' || routePath === '/terms') return
+    if (routePath === '/' || routePath === '/privacy' || routePath === '/terms') return
     if (!isLoggedIn) {
       if (routePath === '/register' || routePath === '/verify-email') {
         setError('Student accounts are created by the Discipline Office. Please sign in or contact an authorized officer.')
         navigateTo('/login', { replace: true })
         return
       }
-      if (routePath === '/' || routeResolution.status === 'unauthorized') navigateTo('/login', { replace: true })
+      if (routeResolution.status === 'unauthorized') navigateTo('/login', { replace: true })
       return
     }
 
@@ -732,7 +735,7 @@ function App() {
       return
     }
 
-    if (routePath === '/' || routePath === '/login') {
+    if (routePath === '/login') {
       navigateTo(getHomePath(userRole), { replace: true })
       return
     }
@@ -1891,6 +1894,10 @@ function App() {
   }
 
   const renderContent = () => {
+    if (isLanding) {
+      const accessState = sessionRestoreError ? 'unavailable' : sessionRestoring ? 'restoring' : isLoggedIn ? 'signed-in' : 'guest'
+      return <LandingPage accessState={accessState} onNavigate={navigateTo} onOpenPolicy={openPolicy} />
+    }
     /*
      * ==========================================================
      * LOGIN SCREEN
@@ -2666,7 +2673,7 @@ function App() {
   }
 
   return (
-    <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${setupActive ? ' setup-shell' : ''}${portalChrome && isAdmin ? ' admin-portal' : ''}${portalChrome && isStudent ? ' student-portal' : ''}${portalChrome && isDepartmentHead ? ' department-portal' : ''}${portalChrome && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
+    <div className={`app-shell ${isLanding ? 'landing-shell' : !isLoggedIn ? 'auth-shell' : ''}${setupActive ? ' setup-shell' : ''}${portalChrome && isAdmin ? ' admin-portal' : ''}${portalChrome && isStudent ? ' student-portal' : ''}${portalChrome && isDepartmentHead ? ' department-portal' : ''}${portalChrome && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
       <a className="skip-link" href="#main-content">Skip to Main Content</a>
       {portalChrome && isMobileNavOpen && (
         <button
@@ -2799,7 +2806,7 @@ function App() {
           )}
         </header>}
 
-        {!isLoggedIn && <button
+        {!isLoggedIn && !isLanding && <button
           className="theme-toggle auth-theme-toggle"
           type="button"
           aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}

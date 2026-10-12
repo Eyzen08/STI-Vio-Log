@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 
 const app = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
+const login = await readFile(new URL('../src/components/LoginPage.jsx', import.meta.url), 'utf8')
 const studentDashboard = await readFile(new URL('../src/components/StudentDashboard.jsx', import.meta.url), 'utf8')
 const studentCss = await readFile(new URL('../src/styles/student-portal.css', import.meta.url), 'utf8')
 const passwordChange = await readFile(new URL('../src/components/PasswordChangeRequired.jsx', import.meta.url), 'utf8')
@@ -123,9 +124,9 @@ test('theme transition animates colors directly without transparent page snapsho
   assert.doesNotMatch(`${foundation}\n${portal}`, /transition\s*:\s*all\b|transition-all/)
 })
 
-test('theme image layers preload and crossfade without a blank frame', () => {
-  assert.match(html, /rel="preload" as="image"[^>]+sti-global-city-building-web\.jpg/)
-  assert.match(html, /rel="preload" as="image"[^>]+sti-global-city-building-night\.jpg/)
+test('login theme image layers stay eager and crossfade without preloading them on the landing page', () => {
+  assert.doesNotMatch(html, /rel="preload" as="image"[^>]+sti-global-city-building/)
+  assert.match(login, /login-campus-image--day[^>]*fetchPriority="high"/)
   assert.match(appCss, /\.theme-transitioning \.login-campus-image\s*\{[^}]*opacity 160ms ease-out/s)
 })
 
@@ -397,7 +398,7 @@ test('the dark cascade guard follows every legacy route rule and contains no acc
   const guard = portal.slice(guardMarker)
   assert.match(guard, /\.app-modal--drawer \.app-modal-header[\s\S]*var\(--modal-header-surface\)/)
   assert.match(guard, /\.message-bubble-row\.mine \.message-bubble[\s\S]*var\(--message-outgoing-surface\)/)
-  assert.match(guard, /\.auth-shell \.auth-card\.login-card[^}]*background: transparent/)
+  assert.match(guard, /\.auth-shell \.auth-card\.login-card[^}]*background: var\(--auth-surface\)/)
   const themeableGuard = guard.split('Deliberately light for printing/scanning')[0]
   assert.doesNotMatch(themeableGuard, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
 })
