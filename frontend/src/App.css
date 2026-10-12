@@ -3190,7 +3190,7 @@ td {
 }
 
 tbody tr:hover {
-  background: #f8fbfe;
+  background: var(--surface-interactive-hover);
 }
 
 .badge,
@@ -4556,9 +4556,9 @@ a {
 .table-card:has(.management-table-header) table { min-width: 940px; }
 .table-card:has(.management-table-header) th { padding: 9px 10px; background: #f0f5fa; color: #24466e; font-size: var(--text-base); letter-spacing: 0; text-transform: none; }
 .table-card:has(.management-table-header) td { padding: 9px 10px; color: #274767; font-size: var(--text-base); }
-.table-card:has(.management-table-header) tbody tr:hover { background: #f5faff; }
+.table-card:has(.management-table-header) tbody tr:hover { background: var(--surface-interactive-hover); }
 .table-card:has(.management-table-header) tbody tr:nth-child(even) { background: #fbfdff; }
-.table-card:has(.management-table-header) tbody tr:nth-child(even):hover { background: #f5faff; }
+.table-card:has(.management-table-header) tbody tr:nth-child(even):hover { background: var(--surface-interactive-hover); }
 .table-actions { flex-wrap: nowrap; align-items: center; }
 .icon-row-action,.row-action-trigger { width: var(--control-height); height: var(--control-height); display: flex; align-items: center; justify-content: center; line-height: 1; padding: 0 !important; border: 1px solid #cddbeb !important; border-radius: 6px !important; background: white !important; color: #0a4e98 !important; cursor: pointer; }
 .table-progress { min-width: 86px; display: grid; gap: 3px; }

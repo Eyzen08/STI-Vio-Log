@@ -65,7 +65,7 @@
 .portal-dashboard th { background: #f7f9fc; font-weight: 600; }
 .table-wrap { max-width: 100%; overscroll-behavior-x: contain; }
 .table-wrap table { font-variant-numeric: tabular-nums; }
-.table-wrap tbody tr:hover { background: #f4f9ff; }
+.table-wrap tbody tr:hover { background: var(--surface-interactive-hover); }
 .portal-dashboard .status-badge,.status-badge { font-size: var(--text-xs); line-height: 1.4; text-transform: capitalize; letter-spacing: .01em; }
 .progress-ring { width: 130px; }
 .progress-ring span { max-width: 85px; font-size: var(--text-xs); color: var(--color-text-secondary); }
@@ -1135,7 +1135,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .main-panel :where(input,textarea)::placeholder { color: #788ba2; opacity: 1; }
 .table-wrap { scrollbar-color: #b5c8da #eef3f8; scrollbar-width: thin; }
 .table-wrap tbody tr { transition: background-color 160ms ease,box-shadow 160ms ease; }
-.table-wrap tbody tr:hover { background: #f1f7fd; box-shadow: inset 3px 0 var(--portal-blue); }
+.table-wrap tbody tr:hover { background: var(--surface-interactive-hover); box-shadow: inset 3px 0 var(--portal-blue); }
 .status-badge { border: 1px solid currentColor; font-weight: 720; }
 .empty-state,.department-empty { border: 1px dashed #cbdbea; border-radius: 10px; background: #f8fbfe; text-align: center; }
 .error-message,.success-message { border-width: 1px 1px 1px 4px; border-style: solid; }
