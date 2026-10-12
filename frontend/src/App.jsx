@@ -2243,7 +2243,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="02000123456"
+                    placeholder="e.g. 02000123456"
                     aria-describedby="create-student-number-help"
                     inputMode="numeric"
                     pattern={STUDENT_NUMBER_PATTERN}
@@ -2265,7 +2265,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="Juan"
+                    placeholder="e.g. Juan"
                     pattern={STUDENT_NAME_PATTERN}
                     maxLength={150}
                     onBlur={handleStudentNameBlur}
@@ -2287,7 +2287,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="Dela Cruz"
+                    placeholder="e.g. Dela Cruz"
                     pattern={STUDENT_NAME_PATTERN}
                     maxLength={150}
                     onBlur={handleStudentNameBlur}
@@ -2308,7 +2308,7 @@ function App() {
                     onChange={
                       handleStudentFieldChange
                     }
-                    placeholder="Santos"
+                    placeholder="e.g. Santos"
                     pattern={STUDENT_NAME_PATTERN}
                     maxLength={150}
                     onBlur={handleStudentNameBlur}
@@ -2339,7 +2339,7 @@ function App() {
                     value={studentForm.email}
                     onChange={handleStudentFieldChange}
                     onBlur={() => setStudentForm((current) => ({...current, email: normalizeStudentGmail(current.email)}))}
-                    placeholder="juan.delacruz@gmail.com"
+                    placeholder="e.g. juan.delacruz@gmail.com"
                     autoComplete="email"
                     pattern="[^ @]+@[gG][mM][aA][iI][lL][.][cC][oO][mM]"
                     maxLength={255}
@@ -2434,7 +2434,7 @@ function App() {
                     aria-invalid={Boolean(violationFormError && !violationForm.student_id)}
                     aria-describedby={`violation-student-help${violationFormError && !violationForm.student_id ? ' create-violation-error' : ''}`}
                     autoComplete="off"
-                    placeholder="02000123456 or Juan Dela Cruz"
+                    placeholder="e.g. Juan or 02000123456"
                     value={
                       violationForm.student_search
                     }
@@ -2479,6 +2479,7 @@ function App() {
                     name="incident_date"
                     id="create-violation-incident_date"
                     aria-labelledby="create-violation-incident_date-label"
+                    aria-describedby="app-date-help-1"
                     value={
                       violationForm.incident_date
                     }
@@ -2487,6 +2488,7 @@ function App() {
                     }
                     required
                   />
+                  <small id="app-date-help-1">e.g. 12 Oct 2026.</small>
                 </label>
 
                 <label><span id="create-violation-incident_time-label">Incident time <b aria-hidden="true">*</b></span>
@@ -2495,10 +2497,12 @@ function App() {
                     name="incident_time"
                     id="create-violation-incident_time"
                     aria-labelledby="create-violation-incident_time-label"
+                    aria-describedby="app-date-help-2"
                     value={violationForm.incident_time}
                     onChange={handleViolationFieldChange}
                     required
                   />
+                  <small id="app-date-help-2">e.g. 9:15 AM (Philippine time).</small>
                 </label>
 
                 <label className="full-width-field"><span id="create-violation-exact_offense-label">Specific handbook offense <b aria-hidden="true">*</b></span>
@@ -2512,7 +2516,7 @@ function App() {
                     required
                   >
                     <option value="">
-                      {selectedType ? 'Select the exact offense' : 'Choose a handbook classification first'}
+                      {selectedType ? 'Select a handbook offense' : 'Choose a handbook classification first'}
                     </option>
                     {exactOffenses.map((offense) => (
                       <option key={offense} value={offense}>{offense}</option>
@@ -2525,6 +2529,7 @@ function App() {
                     name="incident_details"
                     id="create-violation-incident_details"
                     aria-labelledby="create-violation-incident_details-label"
+                    aria-describedby="create-incident-details-help"
                     value={
                       violationForm.incident_details
                     }
@@ -2532,9 +2537,10 @@ function App() {
                       handleViolationFieldChange
                     }
                     rows="4"
-                    placeholder="Describe what happened, where and when it occurred, and other relevant facts"
+                    placeholder="e.g. Student entered the library without a school ID at 9:15 AM."
                     required
                   />
+                  <small id="create-incident-details-help">Describe what happened, where and when it occurred, and other relevant facts.</small>
                 </label>
                 {selectedType && (
                   <p className="form-guidance full-width-field">
@@ -2767,7 +2773,7 @@ function App() {
             </button>
 
             {(isAdmin || isDepartmentHead) && <form className="topbar-search" role="search" onSubmit={(event)=>{event.preventDefault(); navigateTo(isAdmin?'/admin/students':'/department/students')}}>
-              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder={isDepartmentHead?'Search assigned students…':'Search students, violations, IDs...'}/>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="e.g. Juan or 02000123456"/>
             </form>}
           </div>
 

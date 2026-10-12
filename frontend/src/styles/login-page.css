@@ -123,6 +123,10 @@
 .auth-shell .login-form--floating .login-floating-field:has(input:is(:not(:placeholder-shown),:autofill,:-webkit-autofill)) > .login-floating-label {
   transform: translateY(calc(-50% - 26px)) scale(.75);
 }
+
+.auth-shell .login-form--floating .login-floating-field > .login-floating-label {
+  transform: translateY(calc(-50% - 26px)) scale(.75);
+}
 @media (prefers-reduced-motion: no-preference) {
   .theme-transitioning .auth-shell .login-form--floating .login-floating-label {
     transition: transform 220ms cubic-bezier(0.2, 0, 0, 1), color 160ms ease, background-color 160ms ease !important;

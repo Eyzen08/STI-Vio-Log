@@ -130,9 +130,9 @@ export default function StudentOnboarding({user,clientId,draft,onDraftChange,onS
           <div className="onboarding-academic-level"><span id="onboarding-academic-level-label">Academic level</span><div className="onboarding-academic-toggle" role="radiogroup" aria-labelledby="onboarding-academic-level-label">{[['COLLEGE','College'],['SENIOR_HIGH_SCHOOL','Senior High School']].map(([value,label])=><label key={value} className={form.academicLevel===value?'active':''}><input type="radio" name="academic_level" value={value} checked={form.academicLevel===value} onChange={changeAcademicLevel}/><span>{label}</span></label>)}</div></div>
           <div className="onboarding-academic-grid">
             {form.academicLevel==='COLLEGE'&&<label className="onboarding-program-field">Program<ProgramSelect value={form.program} onChange={change('program')} required/></label>}
-            {form.academicLevel==='SENIOR_HIGH_SCHOOL'&&<label>Strand<select value={form.strand} onChange={change('strand')} required><option value="">Select strand</option>{STRANDS.map(([code,name])=><option key={code} value={code}>{code} - {name}</option>)}</select></label>}
+            {form.academicLevel==='SENIOR_HIGH_SCHOOL'&&<label>Strand<select value={form.strand} onChange={change('strand')} required><option value="">Select a strand</option>{STRANDS.map(([code,name])=><option key={code} value={code}>{code} - {name}</option>)}</select></label>}
             <label className="onboarding-year-field">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Grade level':'Year level'}<select value={form.yearLevel} onChange={change('yearLevel')} required><option value="">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Select grade level':'Select year level'}</option>{yearLevelOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="onboarding-section-field">Section<input value={form.section} onChange={change('section')} maxLength="100" pattern=".*\S.*" placeholder={form.academicLevel==='COLLEGE'?'e.g. BSIT-3A':'e.g. STEM-11A'} required/></label>
+            <label className="onboarding-section-field">Section<input value={form.section} onChange={change('section')} maxLength="100" pattern=".*\S.*" placeholder={form.academicLevel==='COLLEGE'?'e.g. A103':'e.g. STEM123'} required/></label>
           </div>
         </div>
       </fieldset>:<fieldset className="onboarding-fieldset" disabled={busy}>
@@ -141,7 +141,7 @@ export default function StudentOnboarding({user,clientId,draft,onDraftChange,onS
           <PhoneInput id="onboarding-phone" name="phone_number" label="Your mobile number" value={form.phoneNumber} onChange={change('phoneNumber')} required/>
           <div className="setup-field-divider"><h2>Guardian contact</h2><p>Enter the details of your parent or guardian.</p></div>
           <label><span id="onboarding-guardian-name-label">Guardian’s full name</span><input value={form.guardianName} onChange={change('guardianName')} onBlur={event=>{const value=normalizeNameSpacing(event.target.value);setForm(current=>({...current,guardianName:value}))}} pattern={STUDENT_NAME_PATTERN} maxLength="200" placeholder="e.g. Maria Dela Cruz" aria-labelledby="onboarding-guardian-name-label" aria-describedby="onboarding-guardian-name-help" required/><small id="onboarding-guardian-name-help">Letters, spaces, apostrophes, hyphens, and periods only.</small></label>
-          <label>Relationship to you<input value={form.guardianRelationship} onChange={change('guardianRelationship')} maxLength="100" pattern=".*\S.*" placeholder="e.g. Mother, Father, or Guardian" required/></label>
+          <label>Relationship to you<input value={form.guardianRelationship} onChange={change('guardianRelationship')} maxLength="100" pattern=".*\S.*" placeholder="e.g. Mother" required/></label>
           <PhoneInput id="onboarding-guardian-phone" name="guardian_phone_number" label="Guardian’s mobile number" value={form.guardianPhoneNumber} onChange={change('guardianPhoneNumber')} required/>
         </div>
       </fieldset>}

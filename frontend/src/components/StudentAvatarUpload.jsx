@@ -35,7 +35,7 @@ export default function StudentAvatarUpload({ student, onUpdated, onDirtyChange,
     <form onSubmit={(event) => { event.preventDefault(); save(false) }}>
       <label className="student-photo-file">{student.avatar?.photo_url ? 'Replace photo' : 'Upload photo'}<input ref={input} type="file" accept="image/jpeg,image/png" onChange={choose} disabled={busy} /><small>JPEG or PNG, up to 5 MB. Photos are centered in a square.</small></label>
       {image && <div className="student-photo-preview"><img src={image} alt="Preview of the new student photo" /><span>New photo preview</span></div>}
-      <label>Photo change reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={1000} required disabled={busy} /></label>
+      <label>Photo change reason<textarea value={reason} onChange={(event) => setReason(event.target.value)} maxLength={1000} required disabled={busy}  placeholder="e.g. Student requested a profile photo correction."/></label>
       {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
       <div className="registration-review-actions"><button disabled={busy || !image || !reason.trim()} data-action-disabled={busy || !image || !reason.trim() ? 'true' : 'false'}>{busy ? 'Working…' : 'Save photo'}</button>
         {student.avatar?.photo_url && <button type="button" className="secondary-button danger-button" disabled={busy || !reason.trim()} data-action-disabled={busy || !reason.trim() ? 'true' : 'false'} onClick={() => save(true)}>Remove photo</button>}</div>

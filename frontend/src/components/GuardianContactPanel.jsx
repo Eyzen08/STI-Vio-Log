@@ -71,7 +71,7 @@ function GuardianContactPanel({ token, student, onClose, showClose = true }) {
           <label>Guardian Contact<select value={form.guardianId} onChange={(event) => setForm({ ...form, guardianId: event.target.value })} required>{guardians.map((guardian) => <option key={guardian.id} value={guardian.id}>{guardian.guardian_name}</option>)}</select></label>
           <label>Contact Method<span className="guardian-select-icon"><PortalIcon name={form.method === 'SMS' ? 'messages' : form.method === 'CALL' ? 'phone' : 'user'}/><select value={form.method} onChange={(event) => setForm({ ...form, method: event.target.value })}>{CONTACT_METHODS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></span></label>
           <label>Outcome<span className="guardian-select-icon"><PortalIcon name="check"/><select value={form.outcome} onChange={(event) => setForm({ ...form, outcome: event.target.value })}>{CONTACT_OUTCOMES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></span></label>
-          <label>Notes<textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} maxLength="1000" placeholder="Optional factual Guardian Contact note" /></label>
+          <label>Notes<textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} maxLength="1000" placeholder="e.g. Spoke with the student's mother about the service schedule." /></label>
         </div>
         <button type="submit" disabled={saving || !form.guardianId}><PortalIcon name="registrations" size={20}/>{saving ? 'Saving…' : 'Record Guardian Contact Attempt'}</button>
       </form>

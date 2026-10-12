@@ -29,7 +29,7 @@ export default function MfaChallenge({ state, error, busy, onSubmit, onCancel, o
       <p>{enrollment ? 'Add this setup key to your authenticator app, then enter the current six-digit code.' : recovery ? 'Enter one of the recovery codes you saved when setting up two-factor authentication.' : 'Enter the six-digit code from your authenticator app to finish signing in.'}</p>
     </header>
     {enrollment && <label>Setup key<input readOnly value={state.secret || ''} aria-label="Authenticator setup key" spellCheck="false" /></label>}
-    {recovery ? <label>Recovery code<input value={code} onChange={event => setCode(event.target.value)} autoComplete="one-time-code" autoCapitalize="none" spellCheck="false" maxLength={32} required disabled={busy} aria-invalid={Boolean(error)} aria-describedby={error ? 'mfa-error' : undefined} autoFocus /></label>
+    {recovery ? <label>Recovery code<input value={code} onChange={event => setCode(event.target.value)} autoComplete="one-time-code" autoCapitalize="none" spellCheck="false" maxLength={32} required disabled={busy} aria-invalid={Boolean(error)} aria-describedby={error ? 'mfa-error' : undefined} autoFocus  placeholder="Enter one saved recovery code"/></label>
       : <OtpInput id="mfa-code" label="Six-digit code" value={code} onChange={setCode} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'mfa-error' : undefined} autoFocus />}
     {!recovery && <div className="totp-countdown">
       <div><span>New code in</span><strong>{remaining}s</strong></div>

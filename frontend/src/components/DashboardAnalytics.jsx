@@ -83,7 +83,7 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
         <label>Export format<select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)} disabled={exporting}><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select></label>
         <button type="button" className="primary-action" onClick={exportSnapshot} disabled={exportDisabled} data-action-disabled={Boolean(exportDisabled)} aria-busy={exporting}>{exporting ? 'Exporting…' : 'Export'}</button>
       </div>
-      {period === 'CUSTOM' && <div className="dashboard-analytics-custom"><label>From<input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)}/></label><label>To<input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)}/></label></div>}
+      {period === 'CUSTOM' && <div className="dashboard-analytics-custom"><label>From<input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)} aria-describedby="dashboard-analytics-date-help-1"/><small id="dashboard-analytics-date-help-1">e.g. 1 Oct 2026.</small></label><label>To<input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)} aria-describedby="dashboard-analytics-date-help-2"/><small id="dashboard-analytics-date-help-2">e.g. 12 Oct 2026.</small></label></div>}
     </div>
     {period === 'CUSTOM' && !range && <p className="dashboard-analytics-error" role="alert">Choose valid dates with From on or before To. Showing the last valid range.</p>}
     {exportError && <p className="dashboard-analytics-error" role="alert">{exportError}</p>}

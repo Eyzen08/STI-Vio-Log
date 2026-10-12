@@ -42,7 +42,7 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
     <section className="table-card active-attendance-card">
       <div className="table-header management-table-header"><div><h3>Active sessions</h3><p>Live session time and approved credited service.</p></div><span className="attendance-session-count">{attendanceReady ? activeSessions.length : '—'} timed in</span></div>
       {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
-      <div className="active-attendance-toolbar"><label><span>Search student or department</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Name, student number, or department" /></label></div>
+      <div className="active-attendance-toolbar"><label><span>Search student or department</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Juan or Library" /></label></div>
       {!attendanceReady ? <p className="empty-state">{loading ? 'Loading active attendance…' : 'Attendance unavailable.'}</p> : !visibleSessions.length ? <p className="empty-state">{activeSessions.length ? 'No active sessions match this search.' : 'No students are currently timed in.'}</p> : <div className="table-wrap active-attendance-table-wrap"><table className="responsive-record-table active-attendance-table">
         <colgroup><col/><col/><col/><col/><col/><col/></colgroup>
         <thead><tr><th scope="col">Student</th><th scope="col">Department &amp; supervisor</th><th scope="col">Time in</th><th scope="col">Session time</th><th scope="col">Credited service</th><th scope="col">Actions</th></tr></thead>

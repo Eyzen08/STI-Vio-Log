@@ -29,10 +29,10 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
       </section>
 
       <form className="department-dtr-filters" onSubmit={submit} aria-label="Filter department DTR">
-        <label>From<input name="from" type="date" value={filters.from} onChange={update} /></label>
-        <label>To<input name="to" type="date" value={filters.to} onChange={update} /></label>
-        <label>Student ID<input name="student_id" inputMode="numeric" pattern="[0-9]*" value={filters.student_id} onChange={update} placeholder="All students" /></label>
-        <label>Assignment ID<input name="assignment_id" inputMode="numeric" pattern="[0-9]*" value={filters.assignment_id} onChange={update} placeholder="All assignments" /></label>
+        <label>From<input name="from" type="date" value={filters.from} onChange={update}  aria-describedby="department-dtr-date-help-1"/><small id="department-dtr-date-help-1">e.g. 1 Oct 2026.</small></label>
+        <label>To<input name="to" type="date" value={filters.to} onChange={update}  aria-describedby="department-dtr-date-help-2"/><small id="department-dtr-date-help-2">e.g. 12 Oct 2026.</small></label>
+        <label>Student ID<input name="student_id" inputMode="numeric" pattern="[0-9]*" value={filters.student_id} onChange={update} placeholder="e.g. 42"  aria-describedby="dtr-student-id-help"/><small id="dtr-student-id-help">Enter the student record ID, not the 11-digit student number. Leave blank to include all students.</small></label>
+        <label>Assignment ID<input name="assignment_id" inputMode="numeric" pattern="[0-9]*" value={filters.assignment_id} onChange={update} placeholder="e.g. 105"  aria-describedby="dtr-assignment-id-help"/><small id="dtr-assignment-id-help">Use the assignment ID shown in the service records. Leave blank to include all assignments.</small></label>
         <button type="submit" disabled={loading}>{loading ? 'Loading…' : 'Apply filters'}</button>
       </form>
 
