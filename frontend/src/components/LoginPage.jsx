@@ -34,30 +34,29 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
     </aside>
     <div className="login-form-panel">
       <div className="login-card auth-card">
-        <div className="card-header auth-card-header"><div><h3 id="login-title">{studentFlow?'Student Account Security':'Sign In'}</h3><p>{studentFlow?'Complete the secure student account process below.':'Access your STI Vio-Log account'}</p></div></div>
+        <div className="auth-trust-note"><CampusIcon/><span>STI Global City <span aria-hidden="true">/</span> Discipline Office</span></div>
         {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
-          <div className="auth-trust-note"><CampusIcon/><span>Official STI Global City Discipline Office Portal</span></div>
-          <p className="login-first-signin-note">First time signing in? Use your Student Number and the temporary password from the Discipline Office. We’ll guide you through account setup.</p>
-          <form className="login-form login-form--outlined" onSubmit={onSubmit} aria-busy={isSubmitting}>
-            <label className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number</span><input id="username" type="text" name="username" placeholder=" " value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
-            <div onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
-              <PasswordField id="password" label="Password" labelClassName="login-floating-field" placeholder=" " value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={Boolean(error)} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
+          <header className="auth-card-header"><h1 id="login-title">Welcome back</h1><p>Sign in to your STI Vio-Log account.</p></header>
+          <form className="login-form" onSubmit={onSubmit} aria-busy={isSubmitting}>
+            <label htmlFor="username">Username or student number<input id="username" type="text" name="username" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
+            <div className="login-password-field" onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
+              <PasswordField id="password" label="Password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={Boolean(error)} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
+              <nav className="auth-entry-actions" aria-label="Account help"><a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot password?</a></nav>
             </div>
             {capsLockOn&&<p className="caps-lock-note" id="caps-lock-note" role="status">Caps Lock is on</p>}
             {error&&<p className="error-message" id="login-error" role="alert" aria-live="polite">{error}</p>}
-            <nav className="auth-entry-actions" aria-label="Account help">
-              <a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot Password?</a>
-            </nav>
-            <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing in…':'Sign In'}</button>
+            <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing in…':'Sign in'}</button>
           </form>
-          <details className="google-access-details"><summary>Continue with Google</summary><GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/><small>For eligible linked student accounts only</small></details>
+          <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/>
+          <p className="login-first-signin-note"><strong>First time here?</strong> Use your student number and the temporary password issued by the Discipline Office.</p>
         </>}
-        <p className="auth-help">Having trouble signing in? Contact the Discipline Office.</p>
+        <footer className="login-footer"><p className="auth-help">Need help? Contact the Discipline Office.</p>
         <nav className="auth-legal-links" aria-label="Legal information">
           <a href="/privacy" onClick={(event)=>{event.preventDefault();onOpenPolicy('/privacy',routePath)}}>Privacy Notice</a>
           <span aria-hidden="true">&bull;</span>
           <a href="/terms" onClick={(event)=>{event.preventDefault();onOpenPolicy('/terms',routePath)}}>Terms of Use</a>
         </nav>
+        </footer>
       </div>
     </div>
   </section>

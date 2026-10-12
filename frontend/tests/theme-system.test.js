@@ -398,7 +398,7 @@ test('the dark cascade guard follows every legacy route rule and contains no acc
   const guard = portal.slice(guardMarker)
   assert.match(guard, /\.app-modal--drawer \.app-modal-header[\s\S]*var\(--modal-header-surface\)/)
   assert.match(guard, /\.message-bubble-row\.mine \.message-bubble[\s\S]*var\(--message-outgoing-surface\)/)
-  assert.match(guard, /\.auth-shell \.auth-card\.login-card[\s\S]*var\(--surface-overlay\)/)
+  assert.match(guard, /\.auth-shell \.auth-card\.login-card[^}]*background: transparent/)
   const themeableGuard = guard.split('Deliberately light for printing/scanning')[0]
   assert.doesNotMatch(themeableGuard, /background(?:-color)?:\s*(?:white|#fff(?:fff)?|#fbfdff|#f8fbfe)\b/i)
 })

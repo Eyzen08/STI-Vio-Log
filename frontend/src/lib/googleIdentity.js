@@ -39,7 +39,7 @@ export const googleButtonConfiguration = ({ width, onClick }) => ({
   size: 'large',
   text: 'continue_with',
   shape: 'rectangular',
-  width: Math.max(200, Math.floor(Number(width) || 0)),
+  width: Math.min(400, Math.max(200, Math.floor(Number(width) || 0))),
   click_listener: onClick
 })
 

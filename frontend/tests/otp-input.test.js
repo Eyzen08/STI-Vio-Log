@@ -40,7 +40,7 @@ test('component exposes focus, paste, numeric, disabled, and accessible behavior
 
 test('all six-digit verification flows use the shared component and recovery remains a text input', () => {
   for (const source of [mfa, password, onboarding, admin]) assert.match(source, /import OtpInput from '\.\/OtpInput\.jsx'/)
-  assert.match(mfa, /recovery\?<label>Recovery code<input/)
+  assert.match(mfa, /recovery\s*\?\s*<label>Recovery code<input/)
   assert.match(mfa, /<OtpInput id="mfa-code"/)
   assert.match(password, /<OtpInput id="password-reset-code"/)
   assert.match(onboarding, /<OtpInput id="google-email-code"/)
@@ -48,7 +48,7 @@ test('all six-digit verification flows use the shared component and recovery rem
 })
 
 test('OTP and MFA colors use semantic light and dark theme tokens', () => {
-  assert.match(styles, /\.otp-input input,[\s\S]*background:var\(--control-background\);[\s\S]*color:var\(--text-primary\);/)
+  assert.match(styles, /\.otp-input input\s*\{[^}]*background:var\(--control-background\);[^}]*color:var\(--text-primary\);/)
   assert.match(styles, /\.otp-input input:focus-visible[^}]*box-shadow:var\(--focus-ring\);/)
   assert.match(styles, /\.otp-input\[aria-invalid='true'\] input[^}]*var\(--status-danger-surface\)/)
   assert.match(styles, /\.mfa-form \.totp-countdown[^}]*background:var\(--surface-nested\);/)

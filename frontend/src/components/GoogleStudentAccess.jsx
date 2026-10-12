@@ -57,6 +57,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
     if (!isGoogleClientConfigured(clientId)) return undefined
 
     let active = true
+    let resizeObserver
     const buttonNode = buttonRef.current
 
     loadGoogleIdentityServices()
@@ -68,10 +69,17 @@ function GoogleStudentAccess({ clientId, onSession }) {
           clientId,
           callback: (response) => credentialHandlerRef.current?.(response)
         }))
-        googleIdentity.renderButton(buttonNode, googleButtonConfiguration({
-          width: buttonNode.clientWidth,
-          onClick: beginGoogleAttempt
-        }))
+        let renderedWidth
+        const renderButton = () => {
+          const configuration = googleButtonConfiguration({ width: buttonNode.clientWidth, onClick: beginGoogleAttempt })
+          if (configuration.width === renderedWidth) return
+          renderedWidth = configuration.width
+          buttonNode.replaceChildren()
+          googleIdentity.renderButton(buttonNode, configuration)
+        }
+        renderButton()
+        resizeObserver = new ResizeObserver(renderButton)
+        resizeObserver.observe(buttonNode)
       })
       .catch((loadError) => {
         if (active) setError(loadError.message)
@@ -79,6 +87,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
     return () => {
       active = false
+      resizeObserver?.disconnect()
       clearAttemptTimer()
       if (buttonNode) buttonNode.replaceChildren()
     }
@@ -92,13 +101,12 @@ function GoogleStudentAccess({ clientId, onSession }) {
   if (!isGoogleClientConfigured(clientId)) return null
 
   return (
-    <section className="google-access" aria-labelledby="google-access-title">
-      <div className="auth-divider"><span>Student access</span></div>
-
-      <h4 id="google-access-title">Continue with your linked Google account</h4>
+    <section className="google-access" aria-label="Google sign-in">
+      <div className="auth-divider" aria-hidden="true"><span>or</span></div>
       <div ref={buttonRef} className="google-button" aria-busy={isBusy} />
+      <p className="google-access-eligibility">For linked student accounts.</p>
       {isBusy && <p className="auth-status" role="status">Checking your account…</p>}
-      <p className="auth-mobile-help">On a phone, use Chrome or Safari. If the Google window stays blank, return here and retry outside Messenger or another in-app browser.</p>
+      {error && <p className="auth-mobile-help">On a phone, use Chrome or Safari. If the Google window stays blank, return here and retry outside Messenger or another in-app browser.</p>}
 
       {error && <p className="error-message" role="alert" aria-live="polite">{error}</p>}
     </section>

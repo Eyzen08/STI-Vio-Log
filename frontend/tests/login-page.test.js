@@ -11,6 +11,7 @@ const registrationSource = await readFile(
 const appSource = await readFile(new URL('../src/App.jsx', import.meta.url), 'utf8')
 const htmlSource = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 const portalCssSource = readPortalStyles()
+const loginCssSource = await readFile(new URL('../src/styles/login-page.css', import.meta.url), 'utf8')
 const appCssSource = await readFile(new URL('../src/App.css', import.meta.url), 'utf8')
 
 test('redesigned login keeps every existing authentication entry point', () => {
@@ -44,7 +45,7 @@ test('login uses accessible form status and semantic navigation', () => {
   assert.match(source, /<nav className="auth-entry-actions"/)
   assert.match(source, /<nav className="auth-legal-links"/)
   assert.doesNotMatch(source, /auth-text-link/)
-  assert.match(source, /<span>Official STI Global City Discipline Office Portal<\/span>/)
+  assert.match(source, /STI Global City[\s\S]*Discipline Office/)
   assert.doesNotMatch(source, /<strong>Official<\/strong>/)
 })
 
@@ -91,57 +92,31 @@ test('password visibility control is positioned inside the password field', () =
   assert.match(portalCssSource, /right: 3px; bottom: 3px; left: auto; width: var\(--control-height\) !important/)
 })
 
-test('outlined sign-in retains accessible fields and puts account help before submission', () => {
-  assert.match(source, /className="login-form login-form--outlined"/)
-  assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number<\/span>/)
-  assert.match(source, /labelClassName="login-floating-field" placeholder=" "/)
+test('sign-in keeps persistent labels, autocomplete, and help before submission', () => {
+  assert.match(source, /<label htmlFor="username">Username or student number<input/)
+  assert.doesNotMatch(source, /login-form--outlined|login-floating-field/)
   assert.match(source, /autoComplete="username"/)
   assert.match(source, /autoComplete="current-password"/)
   assert.match(source, /aria-describedby=\{error\?'login-error':undefined\}/)
   assert.match(source, /<form[^>]*>[\s\S]*?<nav className="auth-entry-actions"[\s\S]*?<button type="submit" className="login-submit"[\s\S]*?<\/form>/)
 })
 
-test('outlined labels cover focus, filled, autofilled, invalid, and reduced-motion states', () => {
-  const styles = portalCssSource.slice(portalCssSource.indexOf('/* Outlined fields belong only'))
-  assert.match(styles, /--auth-floating-label-bg: var\(--surface-raised\)/)
-  assert.match(styles, /background: transparent;[\s\S]*?font-size: var\(--text-control\);/)
-  assert.match(styles, /label\.login-floating-field:focus-within > \.login-floating-label/)
-  assert.match(styles, /:has\(input:is\(:not\(:placeholder-shown\),:autofill,:-webkit-autofill\)\)/)
-  assert.match(styles, /top: 0;\s*font-size: var\(--text-xs\);\s*background: var\(--auth-floating-label-bg\)/)
-  assert.match(styles, /height: var\(--control-height\);[\s\S]*?border-radius: 4px;/)
-  assert.match(styles, /box-shadow: inset 0 0 0 1px var\(--auth-outline-color\)/)
-  assert.match(styles, /input\[aria-invalid='true'\]\) > \.login-floating-label \{ color: var\(--status-danger-text\)/)
-  assert.match(styles, /input:disabled \{[\s\S]*?color: var\(--text-secondary\) !important;/)
-  assert.match(styles, /width: var\(--control-height\) !important;\s*min-width: var\(--control-height\);\s*min-height: var\(--control-height\);/)
-  assert.match(styles, /transition: top 160ms ease/)
-  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*?transition: none !important/)
+test('Google is directly available and first-time guidance follows the sign-in actions', () => {
+  assert.doesNotMatch(source, /google-access-details/)
+  assert.match(source, /<GoogleStudentAccess[^>]*\/>[\s\S]*login-first-signin-note/)
 })
 
-test('authentication background keeps a stable crop while forms change height', () => {
-  assert.match(portalCssSource, /height: calc\(100dvh - clamp\(1\.5rem, 4\.2vw, 3rem\)\)/)
-  assert.match(portalCssSource, /\.auth-shell \.login-page--student-flow \{ overflow: visible; \}/)
-  assert.match(portalCssSource, /\.auth-shell \.login-page--student-flow \.login-intro \{\s+position: sticky;/)
-  assert.match(portalCssSource, /height: 15\.5rem;\s+min-height: 15\.5rem;\s+flex: 0 0 15\.5rem/)
-  assert.match(portalCssSource, /height: 14rem; min-height: 14rem; flex-basis: 14rem/)
+test('login inputs cover focus, autofill, invalid, disabled and reduced-motion states', () => {
+  for (const state of [':focus-visible', ':autofill', ':disabled', "[aria-invalid='true']", 'prefers-reduced-motion']) assert.ok(loginCssSource.includes(state), state)
+  assert.match(loginCssSource, /font-size: 16px/)
 })
 
-test('login logo anchors to the desktop hero corner and returns to flow on mobile', () => {
-  assert.match(portalCssSource, /@media \(min-width: 768px\)\s*\{\s*\.auth-shell \.login-brand-mark\s*\{[^}]*position:\s*absolute;[^}]*top:\s*1\.5rem;[^}]*left:\s*1\.5rem;/s)
-  assert.match(portalCssSource, /@media \(max-width: 767px\)[\s\S]*?\.auth-shell \.login-brand-mark\s*\{[^}]*position:\s*relative;[^}]*top:\s*auto;[^}]*left:\s*auto;/s)
-})
-
-test('Safari mobile authentication uses a covered hero image and dynamic viewport units', () => {
-  assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*position:\s*absolute;[^}]*object-fit:\s*cover;/s)
-  assert.match(appCssSource, /min-height:\s*100dvh/)
-  assert.match(appCssSource, /env\(safe-area-inset-top\)/)
-  assert.match(portalCssSource, /\.app-shell\.auth-shell\s*\{[^}]*width:\s*100vw;[^}]*max-width:\s*none;[^}]*padding:\s*0;/s)
-  assert.match(portalCssSource, /\.app-shell\.auth-shell \.main-panel,[\s\S]*?\.app-shell\.auth-shell \.login-form-panel\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*none;/s)
-})
-
-test('desktop authentication resets the application sidebar grid and fills wide viewports', () => {
-  assert.match(portalCssSource, /\.auth-shell\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;[^}]*max-width:\s*none;[^}]*grid-template-columns:\s*none;/s)
-  assert.match(portalCssSource, /\.auth-shell \.main-panel\s*\{[^}]*grid-column:\s*1 \/ -1;[^}]*width:\s*100%;[^}]*max-width:\s*none;/s)
-  assert.match(portalCssSource, /\.auth-shell \.login-page\s*\{[^}]*width:\s*100%;[^}]*max-width:\s*none;[^}]*grid-template-columns:\s*minmax\(0, 1\.2fr\) minmax\(27rem, \.8fr\)/s)
-  assert.match(portalCssSource, /@media \(min-width: 1800px\)[\s\S]*?grid-template-columns:\s*minmax\(0, 1\.35fr\) minmax\(32rem, \.85fr\)/s)
-  assert.doesNotMatch(appCssSource, /\/\* Reference-inspired authentication \*\//)
+test('authentication has one responsive style owner and preserves campus image layers', () => {
+  assert.match(loginCssSource, /grid-template-columns: minmax\(0, 1\.04fr\) minmax\(0, \.96fr\)/)
+  assert.match(loginCssSource, /width: min\(420px, 100%\)/)
+  assert.match(loginCssSource, /height: calc\(100dvh - 48px\)/)
+  assert.match(loginCssSource, /@media \(max-width: 1023px\)/)
+  assert.match(loginCssSource, /height: 144px; min-height: 144px/)
+  assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*object-fit:\s*cover;/s)
+  assert.doesNotMatch(portalCssSource, /login-form--outlined/)
 })

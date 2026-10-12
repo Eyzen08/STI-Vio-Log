@@ -107,8 +107,4 @@
   .onboarding-progress { gap:4px; padding-bottom:20px; margin-bottom:24px; }
   .onboarding-progress li { font-size:11px; }
   .account-setup-card .password-requirements ul { grid-template-columns:1fr; }
-  .auth-shell .login-intro { height:auto; min-height:0; flex-basis:auto; padding:18px 24px; background:var(--surface-raised); }
-  .auth-shell .login-intro::before,.auth-shell .login-campus-image,.auth-shell .login-intro-content,.auth-shell .login-assurance { display:none; }
-  .auth-shell .login-brand-mark { width:112px; margin:0; }
-  .auth-shell .login-brand-mark img { max-height:64px; object-fit:contain; }
 }

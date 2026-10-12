@@ -35,3 +35,8 @@ test('Google button uses mobile-safe FedCM and recovery callbacks', () => {
     shape: 'rectangular', width: 320, click_listener: onClick
   })
 })
+
+test('Google button stays within provider width limits', () => {
+  assert.equal(googleButtonConfiguration({ width: 420 }).width, 400)
+  assert.equal(googleButtonConfiguration({ width: 180 }).width, 200)
+})

@@ -16,7 +16,28 @@ export default function StudentPasswordAccess({ routePath, onNavigate, draft, on
   const reset=(event)=>{event.preventDefault();request(async()=>{if(!passwordIsStrong(draft.newPassword))throw new Error('Complete all password requirements.');if(draft.newPassword!==draft.confirmPassword)throw new Error('Password confirmation does not match.');await apiRequest('/api/auth/student/password/reset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reset_token:draft.resetToken,new_password:draft.newPassword,confirm_password:draft.confirmPassword})});onClearDraft();onNavigate('/login')})}
   const startAgain=()=>{onClearDraft();onNavigate('/forgot-password')}
 
-  if(routePath==='/forgot-password')return <form className="login-form" onSubmit={forgot}><h3>Forgot Password</h3><p>Enter your Student Number or registered email. We will send a code if an active account matches.</p><label>Student Number or Email<input value={draft.identifier} onChange={e=>update({identifier:e.target.value})} required disabled={busy}/></label>{error&&<p className="error-message" role="alert">{error}</p>}{draft.message&&<p className="success-message" role="status">{draft.message}</p>}<button disabled={busy}>{busy?'Sending…':'Send verification code'}</button><button type="button" className="secondary-button" onClick={()=>onNavigate('/login')}>Back to login</button></form>
-  if(routePath==='/reset-password/verify')return <form className="login-form" onSubmit={verifyReset}><h3>Verify Reset Code</h3><p>Enter the 6-digit code sent to the registered email.</p><OtpInput id="password-reset-code" label="Verification code" value={draft.code} onChange={(code)=>update({code})} disabled={busy} invalid={Boolean(error)} describedBy={error?'password-reset-error':undefined} autoFocus/>{error&&<p className="error-message" id="password-reset-error" role="alert">{error}</p>}<button disabled={busy||draft.code.length!==6}>{busy?'Verifying…':'Verify OTP'}</button><button type="button" className="secondary-button" onClick={startAgain}>Start again</button></form>
-  return <form className="login-form" onSubmit={reset}><h3>Create New Password</h3><PasswordField id="reset-password" label="New Password" value={draft.newPassword} onChange={e=>update({newPassword:e.target.value})} disabled={busy}/><PasswordRequirements password={draft.newPassword}/><PasswordField id="reset-confirm" label="Confirm New Password" value={draft.confirmPassword} onChange={e=>update({confirmPassword:e.target.value})} disabled={busy}/>{error&&<p className="error-message" role="alert">{error}</p>}<button disabled={busy||!draft.resetToken}>{busy?'Resetting…':'Reset Password'}</button><button type="button" className="secondary-button" onClick={startAgain}>Cancel</button></form>
+  if (routePath === '/forgot-password') return <form className="login-form" onSubmit={forgot} aria-busy={busy}>
+    <header className="auth-card-header"><h1 id="login-title">Forgot password?</h1><p>Enter your student number or registered email. We’ll send a code if an active account matches.</p></header>
+    <label>Student number or email<input value={draft.identifier} onChange={event => update({identifier:event.target.value})} autoComplete="username" autoCapitalize="none" spellCheck="false" required disabled={busy} aria-invalid={Boolean(error)} aria-describedby={error ? 'password-forgot-error' : undefined}/></label>
+    {error && <p className="error-message" id="password-forgot-error" role="alert">{error}</p>}
+    {draft.message && <p className="success-message" role="status">{draft.message}</p>}
+    <button type="submit" className="login-submit" disabled={busy}>{busy ? 'Sending…' : 'Send verification code'}</button>
+    <button type="button" className="auth-text-button" onClick={() => onNavigate('/login')} disabled={busy}>Back to sign in</button>
+  </form>
+  if (routePath === '/reset-password/verify') return <form className="login-form" onSubmit={verifyReset} aria-busy={busy}>
+    <header className="auth-card-header"><h1 id="login-title">Check your email</h1><p>Enter the six-digit verification code sent to your registered email.</p></header>
+    <OtpInput id="password-reset-code" label="Verification code" value={draft.code} onChange={code => update({code})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'password-reset-error' : undefined} autoFocus/>
+    {error && <p className="error-message" id="password-reset-error" role="alert">{error}</p>}
+    <button type="submit" className="login-submit" disabled={busy || draft.code.length !== 6}>{busy ? 'Verifying…' : 'Verify code'}</button>
+    <button type="button" className="auth-text-button" onClick={startAgain} disabled={busy}>Start again</button>
+  </form>
+  return <form className="login-form" onSubmit={reset} aria-busy={busy}>
+    <header className="auth-card-header"><h1 id="login-title">Create a new password</h1><p>Choose a strong password to keep your campus account secure.</p></header>
+    <PasswordField id="reset-password" label="New password" value={draft.newPassword} onChange={event => update({newPassword:event.target.value})} disabled={busy} describedBy="reset-password-requirements"/>
+    <div id="reset-password-requirements"><PasswordRequirements password={draft.newPassword}/></div>
+    <PasswordField id="reset-confirm" label="Confirm new password" value={draft.confirmPassword} onChange={event => update({confirmPassword:event.target.value})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'new-password-error' : undefined}/>
+    {error && <p className="error-message" id="new-password-error" role="alert">{error}</p>}
+    <button type="submit" className="login-submit" disabled={busy || !draft.resetToken}>{busy ? 'Resetting…' : 'Reset password'}</button>
+    <button type="button" className="auth-text-button" onClick={startAgain} disabled={busy}>Cancel</button>
+  </form>
 }

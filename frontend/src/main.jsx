@@ -12,6 +12,7 @@ await import('./styles/portal-overrides.css')
 await import('./styles/admin-dashboard.css')
 await import('./styles/department-portal.css')
 await import('./styles/account-setup.css')
+await import('./styles/login-page.css')
 
 installMutationRequestGuard(window)
 installSearchInputGuard(document)

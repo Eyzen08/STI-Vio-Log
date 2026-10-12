@@ -109,12 +109,6 @@
 :root[data-theme='dark'] .message-bubble footer { color:var(--message-metadata) !important; }
 :root[data-theme='dark'] .message-bubble-row.mine footer { color:rgba(255,255,255,.82) !important; }
 
-:root[data-theme='dark'] .auth-shell .login-page,
-:root[data-theme='dark'] .auth-shell .login-form-panel { background-color:var(--surface-canvas) !important; }
-:root[data-theme='dark'] .auth-shell .auth-card.login-card { border-color:var(--border-subtle) !important; background:var(--surface-overlay) !important; color:var(--text-primary) !important; }
-:root[data-theme='dark'] .auth-shell :is(.auth-card-header h3,.login-form label) { color:var(--text-primary) !important; }
-:root[data-theme='dark'] .auth-shell :is(.auth-card-header p,.auth-legal-links,.auth-trust-note span) { color:var(--text-secondary) !important; }
-
 :root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button) { border-color:var(--border-strong) !important; background:var(--surface-interactive) !important; color:var(--text-primary) !important; }
 :root[data-theme='dark'] :is(.theme-toggle,.sidebar-collapse,.notification-button):hover:not(:disabled) { border-color:var(--link-color) !important; background:var(--surface-interactive-hover) !important; color:var(--link-hover) !important; }
 
@@ -1521,8 +1515,7 @@
 :root[data-theme='dark'] .conversation-title-row > span,
 :root[data-theme='dark'] .conversation-search-icon,
 :root[data-theme='dark'] .offense-legend,
-:root[data-theme='dark'] .offense-indicator,
-:root[data-theme='dark'] .auth-shell .auth-divider span { color: var(--text-secondary) !important; }
+:root[data-theme='dark'] .offense-indicator { color: var(--text-secondary) !important; }
 :root[data-theme='dark'] .main-panel .text-button { color: var(--link-color) !important; }
 :root[data-theme='dark'] .main-panel .text-button:hover { color: var(--link-hover) !important; }
 :root[data-theme='dark'] .clearance-panel-tabs button[aria-selected='true'] > span { color: var(--surface-canvas) !important; }
@@ -1556,111 +1549,6 @@
 :root[data-theme='dark'] .route-state :is(h2,.route-state-code) { color: var(--text-primary) !important; }
 :root[data-theme='dark'] .route-state > p { color: var(--text-secondary) !important; }
 :root[data-theme='dark'] .skip-link { background: var(--surface-raised); color: var(--link-color); }
-
-/* Outlined fields belong only to the username/password sign-in form. */
-.app-shell.auth-shell .auth-card.login-card:has(> .login-form--outlined) {
-  --auth-floating-label-bg: var(--surface-raised);
-  background: var(--auth-floating-label-bg) !important;
-}
-.app-shell.auth-shell .login-form--outlined { gap: 20px; }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field {
-  --auth-outline-color: var(--border-strong);
-  position: relative;
-  display: block;
-  min-width: 0;
-  padding: 0;
-}
-.app-shell.auth-shell .login-form--outlined .login-floating-label {
-  position: absolute;
-  z-index: 1;
-  top: 22px;
-  left: 12px;
-  max-width: calc(100% - 24px);
-  padding: 0 4px;
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: var(--text-control);
-  font-weight: 400;
-  line-height: 1;
-  pointer-events: none;
-  transform: translateY(-50%);
-  transform-origin: left center;
-  transition: top 160ms ease, font-size 160ms ease, color 160ms ease;
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within > .login-floating-label,
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input:is(:not(:placeholder-shown),:autofill,:-webkit-autofill)) > .login-floating-label {
-  top: 0;
-  font-size: var(--text-xs);
-  background: var(--auth-floating-label-bg);
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input {
-  display: block;
-  width: 100%;
-  height: var(--control-height);
-  min-height: var(--control-height);
-  padding: 0 16px;
-  border: 1px solid var(--auth-outline-color) !important;
-  border-radius: 4px;
-  background: var(--auth-floating-label-bg) !important;
-  color: var(--text-primary) !important;
-  font-size: var(--text-control);
-  line-height: 1.5;
-  outline: none !important;
-  box-shadow: none;
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input:hover:not(:disabled) { border-color: var(--text-secondary) !important; }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) { --auth-outline-color: var(--link-color); }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input:not(:disabled)) > .login-floating-label { color: var(--link-color); }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) {
-  border-color: var(--auth-outline-color) !important;
-  box-shadow: inset 0 0 0 1px var(--auth-outline-color);
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']),
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) { --auth-outline-color: var(--status-danger-text); }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:has(input[aria-invalid='true']) > .login-floating-label,
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within:has(input[aria-invalid='true']) > .login-floating-label { color: var(--status-danger-text); }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input[aria-invalid='true']:hover:not(:disabled) { border-color: var(--status-danger-text) !important; }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input:is(:autofill,:-webkit-autofill) {
-  -webkit-text-fill-color: var(--text-primary);
-  caret-color: var(--text-primary);
-  box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg);
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:is(:autofill,:-webkit-autofill):not(:disabled) {
-  box-shadow: inset 0 0 0 1px var(--auth-outline-color), inset 0 0 0 1000px var(--auth-floating-label-bg);
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled {
-  border-color: var(--border-subtle) !important;
-  color: var(--text-secondary) !important;
-  -webkit-text-fill-color: var(--text-secondary);
-  opacity: 1;
-  box-shadow: none;
-}
-.app-shell.auth-shell .login-form--outlined label.login-floating-field input:disabled:is(:autofill,:-webkit-autofill) { box-shadow: inset 0 0 0 1000px var(--auth-floating-label-bg); }
-.app-shell.auth-shell .login-form--outlined label.login-floating-field .password-input-wrap input { padding-right: 60px; }
-.app-shell.auth-shell .login-form--outlined .password-visibility {
-  top: 0;
-  right: 0;
-  bottom: 0;
-  width: var(--control-height) !important;
-  min-width: var(--control-height);
-  min-height: var(--control-height);
-  padding: 0;
-  border-radius: 4px;
-  background: transparent !important;
-  color: var(--link-color) !important;
-}
-.app-shell.auth-shell .login-form--outlined .password-visibility:hover:not(:disabled) { background: var(--surface-interactive) !important; }
-.app-shell.auth-shell .login-form--outlined .auth-entry-actions { margin: -12px 0 -8px; }
-.app-shell.auth-shell .login-form--outlined .auth-entry-actions a { font-size: var(--text-base); }
-.app-shell.auth-shell .login-form--outlined .login-submit { width: 100%; }
-@media (prefers-reduced-motion: reduce) {
-  .app-shell.auth-shell .login-form--outlined .login-floating-label,
-  .app-shell.auth-shell .login-form--outlined label.login-floating-field input { transition: none !important; }
-}
-@media (forced-colors: active) {
-  .app-shell.auth-shell .login-form--outlined label.login-floating-field:focus-within input:not(:disabled) { outline: 2px solid Highlight !important; outline-offset: -2px; }
-}
 
 /* Responsive portal contract. Keep layout sizing together so legacy page styles
    cannot reintroduce intrinsic overflow or compress short labels into fragments. */
