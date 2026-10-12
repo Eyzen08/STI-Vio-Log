@@ -33,6 +33,7 @@ const contextFor = async ({ theme = 'dark', reducedMotion = 'reduce', motion = n
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(origin)
   await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
+  if (!failMotion && motion !== 'reduced') await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform)
   return { context, page }
 }
 try {
