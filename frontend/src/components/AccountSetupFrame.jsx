@@ -11,7 +11,7 @@ export default function AccountSetupFrame({ current, title, description, heading
     {children}
     <footer className="account-setup-footer">
       <p>Need help? Contact the Discipline Office.</p>
-      <div inert={busy?true:undefined}><PolicyLinks onOpenPolicy={onOpenPolicy}/><button type="button" className="text-button" onClick={onLogout} disabled={busy}>Sign out</button></div>
+      <div inert={busy?true:undefined}><PolicyLinks onOpenPolicy={onOpenPolicy}/><button type="button" className="text-button" onClick={onLogout} disabled={busy}>Sign Out</button></div>
     </footer>
   </section>
 }

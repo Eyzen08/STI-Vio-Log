@@ -24,7 +24,7 @@ test('section examples follow academic level without filling or restricting the 
     assert.doesNotMatch(input, /pattern=/)
   }
   const legacy = render('StudentAcademicFields', { value: {}, onChange() {}, required: false, legacy: true })
-  assert.match(legacy, /<option value="" selected="">Not recorded<\/option>/)
+  assert.match(legacy, /<option value="" selected="">Not Recorded<\/option>/)
 })
 
 test('phone example is only guidance and existing number formatting remains intact', () => {

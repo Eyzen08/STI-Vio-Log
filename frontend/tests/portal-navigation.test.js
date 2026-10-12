@@ -23,18 +23,18 @@ const sidebarLabels = (role) => sidebarNavigationFor(role).map((entry) => entry.
 
 test('sidebar tooltips describe every permitted item with the approved copy', () => {
   const expected = {
-    Dashboard: 'View discipline overview', Students: 'Manage student records',
-    Violations: 'Add student violation', 'Active Attendance': 'Monitor active attendance', 'Community Service': 'Manage community service',
-    'QR Scan': 'Scan attendance QR code', Clearance: 'Manage student clearance', Messages: 'View student messages', Notifications: 'View your notifications',
-    Reports: 'Generate discipline reports', Reporting: 'View reports and analytics', Administration: 'Manage administration tools', Logout: 'Sign out of STI Vio-Log',
-    Profile: 'View your profile',
-    'Departments & Officer Accounts': 'Manage departments and officers', 'Duplicate Review': 'Review duplicate records',
-    'System Monitoring': 'Monitor system activity', Settings: 'Configure system settings',
-    'Assigned Students': 'View assigned student records', Attendance: 'Review attendance records',
-    'Service Results': 'Review service results',
-    'My Profile': 'View your profile', 'My Violations': 'View your violations', 'My Service': 'View your service progress',
-    'My QR': 'View your QR code', 'My Clearance': 'View your clearance', 'Audit Log': 'Review discipline audit log',
-    'Analytics & Trends': 'Explore discipline trends'
+    Dashboard: 'View Discipline Overview', Students: 'Manage Student Records',
+    Violations: 'Add Student Violation', 'Active Attendance': 'Monitor Active Attendance', 'Community Service': 'Manage Community Service',
+    'QR Scan': 'Scan Attendance QR Code', Clearance: 'Manage Student Clearance', Messages: 'View Student Messages', Notifications: 'View Your Notifications',
+    Reports: 'Generate Discipline Reports', Reporting: 'View Reports and Analytics', Administration: 'Manage Administration Tools', Logout: 'Sign Out of STI Vio-Log',
+    Profile: 'View Your Profile',
+    'Departments & Officer Accounts': 'Manage Departments and Officers', 'Duplicate Review': 'Review Duplicate Records',
+    'System Monitoring': 'Monitor System Activity', Settings: 'Configure System Settings',
+    'Assigned Students': 'View Assigned Student Records', Attendance: 'Review Attendance Records',
+    'Service Results': 'Review Service Results',
+    'My Profile': 'View Your Profile', 'My Violations': 'View Your Violations', 'My Service': 'View Your Service Progress',
+    'My QR': 'View Your QR Code', 'My Clearance': 'View Your Clearance', 'Audit Log': 'Review Discipline Audit Log',
+    'Analytics & Trends': 'Explore Discipline Trends'
   }
   for (const [label, description] of Object.entries(expected)) assert.equal(sidebarTooltipFor(label), description)
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
@@ -47,16 +47,16 @@ test('sidebar tooltips describe every permitted item with the approved copy', ()
 
 test('administrator sidebar follows the requested hierarchy and child order', () => {
   assert.deepEqual(sidebarLabels('DISCIPLINE_ADMIN'), [
-    'Dashboard', 'STI Handbook', ['Student records', ['Students', 'Violations']],
-    ['Attendance & service', ['QR Scan', 'Active Attendance', 'Community Service']],
+    'Dashboard', 'STI Handbook', ['Student Records', ['Students', 'Violations']],
+    ['Attendance & Service', ['QR Scan', 'Active Attendance', 'Community Service']],
     ['Clearance', ['Awaiting Clearance', 'Clearance']], ['Updates', ['Messages', 'Notifications']],
     ['Reporting', ['Reports', 'Analytics & Trends']],
     ['Administration', ['Departments & Officer Accounts', 'Duplicate Review', 'Audit Log', 'System Monitoring']],
     ['Account', ['Profile', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('DISCIPLINE_OFFICE'), [
-    'Dashboard', 'STI Handbook', ['Student records', ['Students', 'Violations']],
-    ['Attendance & service', ['QR Scan', 'Active Attendance', 'Community Service']],
+    'Dashboard', 'STI Handbook', ['Student Records', ['Students', 'Violations']],
+    ['Attendance & Service', ['QR Scan', 'Active Attendance', 'Community Service']],
     ['Clearance', ['Awaiting Clearance', 'Clearance']], ['Updates', ['Messages', 'Notifications']],
     ['Reporting', ['Reports', 'Analytics & Trends']], ['Account', ['Profile', 'Settings']]
   ])
@@ -64,11 +64,11 @@ test('administrator sidebar follows the requested hierarchy and child order', ()
 
 test('department and student sidebars retain their role-specific pages and labels', () => {
   assert.deepEqual(sidebarLabels('DEPARTMENT_HEAD'), [
-    'Dashboard', ['Daily work', ['QR Scan', 'Service Results', 'Attendance', 'Assigned Students']],
+    'Dashboard', ['Daily Work', ['QR Scan', 'Service Results', 'Attendance', 'Assigned Students']],
     ['Updates', ['Notifications']], ['Account', ['Profile', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('STUDENT'), [
-    'Dashboard', ['Student services', ['My Service', 'My QR', 'My Violations', 'My Clearance']],
+    'Dashboard', ['Student Services', ['My Service', 'My QR', 'My Violations', 'My Clearance']],
     ['Updates', ['Messages', 'Notifications']], ['Account', ['My Profile', 'Settings']]
   ])
 })
@@ -135,7 +135,7 @@ test('sidebar exposes accessible disclosure state and synchronizes groups only o
   assert.match(appSource, /aria-current=\{routePath === item.path \? 'page' : undefined\}/)
   assert.match(appSource, /if \(isSidebarIconRail\) \{\s*setIsSidebarCollapsed\(false\)\s*setOpenSidebarGroup\(entry.id\)/)
   assert.match(appSource, /setOpenSidebarGroup\(\(current\) => current === entry.id \? null : entry.id\)/)
-  assert.match(appSource, /<\/nav>\s*<div className="nav-account-actions" role="navigation" aria-label="Account navigation">[\s\S]*?onClick=\{requestLogout\}/)
+  assert.match(appSource, /<\/nav>\s*<div className="nav-account-actions" role="navigation" aria-label="Account Navigation">[\s\S]*?onClick=\{requestLogout\}/)
 })
 
 test('department mobile navigation places Service after QR Scan', () => {
@@ -170,7 +170,7 @@ test('responsive portal includes a dedicated mobile bottom navigation', () => {
 
 test('sidebar and mobile logos use one dashboard action with navigation cleanup', () => {
   assert.match(appSource, /const goToDashboard = async \(\) => \{\s*if \(isQrScanning\) await stopQrScanner\(\)\s*setIsMobileNavOpen\(false\)\s*navigateTo\(getHomePath\(userRole\)\)\s*\}/)
-  assert.equal((appSource.match(/onClick=\{goToDashboard\} aria-label="Go to dashboard"/g) || []).length, 2)
+  assert.equal((appSource.match(/onClick=\{goToDashboard\} aria-label="Go to Dashboard"/g) || []).length, 2)
   assert.match(appSource, /className="brand-home"[^>]*>[\s\S]*className="brand-logo"[\s\S]*className="brand-favicon"[^>]*\/>\s*<\/button>\s*<button\s*className="sidebar-close"/)
   for (const [role, path] of Object.entries({ DISCIPLINE_ADMIN: '/admin/dashboard', DISCIPLINE_OFFICE: '/admin/dashboard', DEPARTMENT_HEAD: '/department/dashboard', STUDENT: '/student/dashboard' })) {
     assert.equal(getHomePath(role), path)

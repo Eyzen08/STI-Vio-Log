@@ -27,15 +27,15 @@ export default function PasswordChangeRequired({token,user,onSession,onLogout,on
       onSession(session)
     }catch(e){setError(e.message)}finally{acting.current=false;setBusy(false)}
   }
-  return <AccountSetupFrame current={user?.onboarding_required?'PASSWORD':undefined} title="Create your own password" description="Enter the temporary password from the Discipline Office, then choose a new password to keep your account secure." headingRef={heading} busy={busy} onLogout={onLogout} onOpenPolicy={onOpenPolicy}>
+  return <AccountSetupFrame current={user?.onboarding_required?'PASSWORD':undefined} title="Create Your Own Password" description="Enter the temporary password from the Discipline Office, then choose a new password to keep your account secure." headingRef={heading} busy={busy} onLogout={onLogout} onOpenPolicy={onOpenPolicy}>
     <form className="login-form setup-form" onSubmit={submit} aria-busy={busy}>
-      <PasswordField id="current-password" label="Current or temporary password" value={form.currentPassword} onChange={e=>setForm({...form,currentPassword:e.target.value})} disabled={busy} autoComplete="current-password" placeholder="Enter your current or temporary password"/>
-      <PasswordField id="new-password" label="New password" value={form.newPassword} onChange={e=>setForm({...form,newPassword:e.target.value})} disabled={busy} describedBy="setup-password-requirements" placeholder="Create a unique password"/>
+      <PasswordField id="current-password" label="Current or Temporary Password" value={form.currentPassword} onChange={e=>setForm({...form,currentPassword:e.target.value})} disabled={busy} autoComplete="current-password" placeholder="Enter your current or temporary password"/>
+      <PasswordField id="new-password" label="New Password" value={form.newPassword} onChange={e=>setForm({...form,newPassword:e.target.value})} disabled={busy} describedBy="setup-password-requirements" placeholder="Create a unique password"/>
       <div id="setup-password-requirements"><PasswordRequirements password={form.newPassword}/></div>
-      <PasswordField id="confirm-new-password" label="Confirm new password" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} disabled={busy} invalid={mismatch} describedBy={form.confirmPassword?'password-match':undefined} placeholder="Re-enter your new password"/>
+      <PasswordField id="confirm-new-password" label="Confirm New Password" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} disabled={busy} invalid={mismatch} describedBy={form.confirmPassword?'password-match':undefined} placeholder="Re-enter your new password"/>
       {form.confirmPassword&&<p id="password-match" className={`setup-field-note ${mismatch?'setup-field-note--error':'setup-field-note--success'}`} role="status">{mismatch?'Passwords do not match yet.':'Passwords match.'}</p>}
       {error&&<p className="error-message" ref={errorRef} tabIndex="-1" role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>{busy?'Saving password…':'Save password and continue'}</button>
+      <button type="submit" disabled={busy}>{busy?'Saving Password…':'Save Password and Continue'}</button>
     </form>
   </AccountSetupFrame>
 }

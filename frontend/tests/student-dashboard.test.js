@@ -16,7 +16,7 @@ test('student summary counts only active requirements and totals remaining hours
   })
 
   assert.deepEqual(summary, {
-    standing: 'Action required',
+    standing: 'Action Required',
     activeViolations: 1,
     activeAssignments: 2,
     remainingHours: 3.5,
@@ -31,6 +31,6 @@ test('student with no blockers is shown in good standing', () => {
     eligibility: { hasActiveViolation: false, hasPendingService: false }
   })
 
-  assert.equal(summary.standing, 'Good standing')
+  assert.equal(summary.standing, 'Good Standing')
   assert.equal(summary.clearanceStatus, 'PENDING')
 })

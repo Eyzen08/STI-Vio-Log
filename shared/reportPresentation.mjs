@@ -1,7 +1,7 @@
 import { academicYear, academicLevelLabel, academicProgram } from './studentAcademic.mjs'
 import { formatDisplayLabel, formatDuration, formatManilaDate, formatManilaDateTime } from './displayFormat.mjs'
 
-export const reportColumnLabel = (key) => key === 'year_level' ? 'Year / Grade level' : key === 'program' ? 'Program / Strand' : formatDisplayLabel(key)
+export const reportColumnLabel = (key) => key === 'year_level' ? 'Year / Grade Level' : key === 'program' ? 'Program / Strand' : formatDisplayLabel(key)
 
 export const statusLabel = (status) => ({
   OPEN: 'Open', COMPLETE: 'Completed', CLEAR: 'Cleared', INVALID_CANCEL: 'Invalid / Cancelled', CREATE: 'Recorded', REOPEN: 'Reopened'
@@ -39,7 +39,7 @@ const FIELDS = {
   'good-standing': ['student_name','student_number','academic_level','program','year_level','section','standing','historical_violations'],
   corrections: ['student_name','student_number','department_name','previous_completed_hours','new_completed_hours','reason','created_at']
 }
-const LABELS = {student_name:'Student',violation_name:'Classification',handbook_offense:'Handbook offense',incident_details:'Incident details',department_name:'Department',completed_hours:'Credited time',credited_hours:'Credited time',required_hours:'Required time',remaining_hours:'Remaining time',pending_hours:'Pending service',total_completed_sessions:'Completed sessions',total_worked_minutes:'Worked time',total_credited_minutes:'Attendance credit',manual_adjustment_hours:'Manual adjustment',attendance_outcome:'Latest attendance outcome',first_attendance_at:'First attendance',latest_attendance_at:'Latest attendance',previous_completed_hours:'Previous credited time',new_completed_hours:'New credited time'}
+const LABELS = {student_name:'Student',violation_name:'Classification',handbook_offense:'Handbook Offense',incident_details:'Incident Details',department_name:'Department',completed_hours:'Credited Time',credited_hours:'Credited Time',required_hours:'Required Time',remaining_hours:'Remaining Time',pending_hours:'Pending Service',total_completed_sessions:'Completed Sessions',total_worked_minutes:'Worked Time',total_credited_minutes:'Attendance Credit',manual_adjustment_hours:'Manual Adjustment',attendance_outcome:'Latest Attendance Outcome',first_attendance_at:'First Attendance',latest_attendance_at:'Latest Attendance',previous_completed_hours:'Previous Credited Time',new_completed_hours:'New Credited Time'}
 export const reportColumns = (type) => (Object.hasOwn(FIELDS,type) ? FIELDS[type] : []).map(key => ({key,label:LABELS[key] || reportColumnLabel(key),width:['incident_details','handbook_offense','notes','remarks','reason'].includes(key)?60:key==='student_name'||key==='violation_name'?28:22}))
 export const reportValues = (type, row = {}) => {
   const description = parseViolationDescription(row.description || '')

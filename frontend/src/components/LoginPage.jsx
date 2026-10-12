@@ -21,7 +21,7 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
   }
 
   return <section className={`login-page${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title">
-    <aside className="login-intro" aria-label="STI Global City portal">
+    <aside className="login-intro" aria-label="STI Global City Portal">
       <img className="login-campus-image login-campus-image--day" src={buildingImage} alt="STI Global City campus building" width="1200" height="825" fetchPriority="high"/>
       <img className="login-campus-image login-campus-image--night" src={buildingNightImage} alt="" width="1200" height="825" aria-hidden="true"/>
       <div className="login-brand-mark"><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="420" height="236" fetchPriority="high"/></div>
@@ -36,22 +36,22 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
       <div className="login-card auth-card">
         <div className="auth-trust-note"><CampusIcon/><span>STI Global City <span aria-hidden="true">/</span> Discipline Office</span></div>
         {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
-          <header className="auth-card-header"><h1 id="login-title">Welcome back</h1><p>Sign in to your STI Vio-Log account.</p></header>
+          <header className="auth-card-header"><h1 id="login-title">Welcome Back</h1><p>Sign in to your STI Vio-Log account.</p></header>
           <form className="login-form login-form--floating" onSubmit={onSubmit} aria-busy={isSubmitting}>
-            <label className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number</span><input id="username" type="text" name="username" placeholder="e.g. 02000123456 or juan.delacruz" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
+            <label className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or Student Number</span><input id="username" type="text" name="username" placeholder="e.g. 02000123456 or juan.delacruz" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
             <div className="login-password-field" onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
               <PasswordField id="password" label="Password" labelClassName="login-floating-field" placeholder="Enter your current password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={Boolean(error)} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
-              <nav className="auth-entry-actions" aria-label="Account help"><a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot password?</a></nav>
+              <nav className="auth-entry-actions" aria-label="Account Help"><a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot Password?</a></nav>
             </div>
             {capsLockOn&&<p className="caps-lock-note" id="caps-lock-note" role="status">Caps Lock is on</p>}
             {error&&<p className="error-message" id="login-error" role="alert" aria-live="polite">{error}</p>}
-            <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing in…':'Sign in'}</button>
+            <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing In…':'Sign In'}</button>
           </form>
           <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/>
-          <p className="login-first-signin-note"><strong>First time here?</strong> Use your student number and the temporary password issued by the Discipline Office.</p>
+          <p className="login-first-signin-note"><strong>First Time Here?</strong> Use your student number and the temporary password issued by the Discipline Office.</p>
         </>}
         <footer className="login-footer"><p className="auth-help">Need help? Contact the Discipline Office.</p>
-        <nav className="auth-legal-links" aria-label="Legal information">
+        <nav className="auth-legal-links" aria-label="Legal Information">
           <a href="/privacy" onClick={(event)=>{event.preventDefault();onOpenPolicy('/privacy',routePath)}}>Privacy Notice</a>
           <span aria-hidden="true">&bull;</span>
           <a href="/terms" onClick={(event)=>{event.preventDefault();onOpenPolicy('/terms',routePath)}}>Terms of Use</a>

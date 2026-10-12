@@ -26,7 +26,7 @@ test('account checks use a compact card with an accessible loading status and av
   assert.match(html, /Verifying Terms acknowledgment/)
   assert.match(html, />Privacy Notice<\/a>/)
   assert.match(html, />Terms of Use<\/a>/)
-  assert.match(html, /<button type="button" class="text-button">Sign out<\/button>/)
+  assert.match(html, /<button type="button" class="text-button">Sign Out<\/button>/)
 })
 
 test('failed account checks keep the compact card, stop loading, and offer retry', () => {
@@ -35,7 +35,7 @@ test('failed account checks keep the compact card, stop loading, and offer retry
   assert.match(html, /aria-busy="false"/)
   assert.doesNotMatch(html, /action-spinner|role="status"/)
   assert.match(html, /role="alert">Unable to verify account access/)
-  assert.match(html, />Try again<\/button>/)
+  assert.match(html, />Try Again<\/button>/)
 })
 
 test('verified accounts stop loading and required Terms keep their review layout', () => {
@@ -44,5 +44,5 @@ test('verified accounts stop loading and required Terms keep their review layout
   const review = render({ status: { required: true, terms_version: '1', privacy_notice_version: '1' } })
   assert.doesNotMatch(review, /legal-acknowledgment--compact|action-spinner/)
   assert.match(review, /Review the Terms of Use/)
-  assert.match(review, /Acknowledge Terms and continue/)
+  assert.match(review, /Acknowledge Terms and Continue/)
 })

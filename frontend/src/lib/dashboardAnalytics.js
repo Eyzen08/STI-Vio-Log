@@ -51,9 +51,9 @@ const incidentDateKey = (value) => typeof value === 'string' ? value.slice(0, 10
 const inRange = (key, from, to) => key >= from && key <= to
 const studentProgram = (student) => String(student?.program || student?.strand || '').trim() || 'Not recorded'
 const classifications = [
-  ['MINOR_1', 'First offense'],
-  ['MINOR_2', 'Repeat minor'],
-  ['MAJOR_LEVEL', 'Major level'],
+  ['MINOR_1', 'First Offense'],
+  ['MINOR_2', 'Repeat Minor'],
+  ['MAJOR_LEVEL', 'Major Level'],
   ['GRAVE', 'Grave']
 ]
 

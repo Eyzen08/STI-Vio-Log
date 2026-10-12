@@ -15,7 +15,7 @@ export const summarizeStudentCondition = (studentId, violations = []) => {
   const completed = records.filter((violation) => ['COMPLETE', 'CLEAR'].includes(violation.status))
   const requiredHours = open.reduce((sum, violation) => sum + Number(violation.required_service_hours || 0), 0)
   const completedHours = open.reduce((sum, violation) => sum + Number(violation.completed_service_hours || 0), 0)
-  return {records,total:records.length,open:open.length,resolved:completed.length,requiredHours,remainingHours:Math.max(requiredHours-completedHours,0),condition:open.length?'Requires action':records.length?'Resolved - monitor':'Good standing'}
+  return {records,total:records.length,open:open.length,resolved:completed.length,requiredHours,remainingHours:Math.max(requiredHours-completedHours,0),condition:open.length?'Requires Action':records.length?'Resolved - Monitor':'Good Standing'}
 }
 
 export const buildStudentDirectory = (students = [], violations = [], assignments = [], clearances = []) => students.map((student) => {

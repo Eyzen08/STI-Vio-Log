@@ -25,8 +25,8 @@ test('directory searches names, numbers, programs and strands without changing s
 })
 
 test('status copy distinguishes approval, issuance and already issued certificates', () => {
-  assert.equal(clearanceStatusLabel(students[0]), 'Awaiting clearance')
-  assert.equal(clearanceStatusLabel(students[1]), 'Ready for certificate')
-  assert.equal(clearanceStatusLabel(students[5]), 'Certificate issued')
-  assert.equal(clearanceStatusLabel(students[4]), 'No service assigned')
+  assert.equal(clearanceStatusLabel(students[0]), 'Awaiting Clearance')
+  assert.equal(clearanceStatusLabel(students[1]), 'Ready for Certificate')
+  assert.equal(clearanceStatusLabel(students[5]), 'Certificate Issued')
+  assert.equal(clearanceStatusLabel(students[4]), 'No Service Assigned')
 })

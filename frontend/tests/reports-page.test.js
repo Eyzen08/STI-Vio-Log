@@ -21,8 +21,8 @@ test('Reports starts with an unavailable export and presents relevant controls f
   assert.doesNotMatch(initial,/\b(?:Manila|Asia)\b/i)
   for(const type of ['violations','community-service','dtr','non-compliance','parent-contacts','clearance','good-standing']) {
     const html=renderToStaticMarkup(createElement(ReportFilters,{type,filters:{},students:[],studentSearch:'',onFilter:()=>{},onStudent:()=>{},onType:()=>{}}))
-    assert.match(html,/Report type/)
-    assert.equal(html.includes('From date'),['violations','dtr','parent-contacts'].includes(type))
+    assert.match(html,/Report Type/)
+    assert.equal(html.includes('From Date'),['violations','dtr','parent-contacts'].includes(type))
     assert.equal(html.includes('Status'),['violations','community-service','clearance'].includes(type))
     assert.equal(html.includes('<label>Student<input'),type!=='non-compliance')
   }
@@ -34,7 +34,7 @@ test('report tables group students and violations, disclose long text and hide i
   for(const type of ['violations','community-service','dtr','non-compliance','parent-contacts','clearance','good-standing']) {
     const html=renderToStaticMarkup(createElement(ReportTable,{type,rows:[source]}))
     assert.match(html,/Maria Santos/);assert.match(html,/000123/);assert.doesNotMatch(html,/hidden-avatar|Assignment Id|First Name|Last Name/)
-    if(type==='violations'){assert.match(html,/No ID/);assert.match(html,/<details/);assert.match(html,/View details/);assert.doesNotMatch(html,/Handbook offense:/)}
+    if(type==='violations'){assert.match(html,/No ID/);assert.match(html,/<details/);assert.match(html,/View Details/);assert.doesNotMatch(html,/Handbook Offense:/)}
     if(type==='clearance')assert.match(html,/>No</)
     if(type==='dtr')assert.match(html,/0 min/)
   }

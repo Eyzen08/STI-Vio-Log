@@ -2,7 +2,7 @@ import { API_URL, apiRequest } from './api.js'
 
 export const AVATAR_PRESETS = Array.from({ length: 48 }, (_, index) => ({
   id: `portrait-${String(index + 1).padStart(2, '0')}`,
-  label: `Portrait ${index + 1}${index >= 24 ? ' with glasses' : ''}`
+  label: `Portrait ${index + 1}${index >= 24 ? ' with Glasses' : ''}`
 }))
 export const avatarImageUrl = (avatar) => {
   if (avatar?.source === 'PRESET' && AVATAR_PRESETS.some((preset) => preset.id === avatar.preset_id)) return `/avatars/${avatar.preset_id}.svg`

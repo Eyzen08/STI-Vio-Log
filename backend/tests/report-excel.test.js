@@ -40,7 +40,7 @@ test('Excel year cells match report preview labels for college and senior high',
     });
     const sheet = await new ExcelJS.Workbook().xlsx.load(await workbook.xlsx.writeBuffer());
     const report = sheet.worksheets[0];
-    const column = report.getRow(6).values.indexOf('Year / Grade level');
+    const column = report.getRow(6).values.indexOf('Year / Grade Level');
     assert.equal(report.getRow(7).getCell(column).value, expected);
   }
 });

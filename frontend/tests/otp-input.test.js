@@ -34,13 +34,13 @@ test('component exposes focus, paste, numeric, disabled, and accessible behavior
   assert.match(component, /onPaste=\{\(event\) => handlePaste/)
   assert.match(component, /inputMode="numeric"/)
   assert.match(component, /autoComplete=\{index === 0 \? 'one-time-code' : 'off'\}/)
-  assert.match(component, /digit \$\{index \+ 1\} of \$\{OTP_LENGTH\}/)
+  assert.match(component, /Digit \$\{index \+ 1\} of \$\{OTP_LENGTH\}/)
   assert.match(component, /disabled=\{disabled\}/)
 })
 
 test('all six-digit verification flows use the shared component and recovery remains a text input', () => {
   for (const source of [mfa, password, onboarding, admin]) assert.match(source, /import OtpInput from '\.\/OtpInput\.jsx'/)
-  assert.match(mfa, /recovery\s*\?\s*<label>Recovery code<input/)
+  assert.match(mfa, /recovery\s*\?\s*<label>Recovery Code<input/)
   assert.match(mfa, /<OtpInput id="mfa-code"/)
   assert.match(password, /<OtpInput id="password-reset-code"/)
   assert.match(onboarding, /<OtpInput id="google-email-code"/)

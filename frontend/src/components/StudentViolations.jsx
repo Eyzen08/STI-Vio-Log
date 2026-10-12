@@ -18,7 +18,7 @@ function ServiceProgress({ violation }) {
   const percentage = required > 0 ? Math.min(100, Math.round((completed / required) * 100)) : 100
 
   return (
-    <section className="service-progress" aria-label="Community service progress">
+    <section className="service-progress" aria-label="Community Service Progress">
       <div className="service-progress-heading">
         <h4>Community Service</h4>
         <span>{percentage}% complete</span>
@@ -104,7 +104,7 @@ function StudentViolations({ violations, loading, error, searchParams = '', onCl
 
                 {expanded && (
                   <div className="violation-details" id={panelId}>
-                    {distinctNotes && <div className="violation-description"><h4>Incident notes</h4><p>{distinctNotes}</p></div>}
+                    {distinctNotes && <div className="violation-description"><h4>Incident Notes</h4><p>{distinctNotes}</p></div>}
 
                     <ServiceProgress violation={violation} />
 

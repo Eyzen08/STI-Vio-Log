@@ -3,6 +3,12 @@ import assert from 'node:assert/strict'
 import { reportCell, presentedReportRows } from '../src/lib/reportPresentation.js'
 import * as presentation from '../src/lib/reportPresentation.js'
 
+test('report preview and export schemas title-case generated column headings', () => {
+  assert.equal(presentation.reportColumnLabel('year_level'), 'Year / Grade Level')
+  assert.equal(presentation.reportColumnLabel('date_of_birth'), 'Date of Birth')
+  assert.equal(presentation.reportColumns('violations').find(column => column.key === 'handbook_offense').label, 'Handbook Offense')
+})
+
 test('report presentation preserves student numbers and formats durations and states', () => {
   assert.equal(reportCell('student_number', '02000123456'), '02000123456')
   assert.equal(reportCell('remaining_hours', '1.5'), '1 hr 30 min')

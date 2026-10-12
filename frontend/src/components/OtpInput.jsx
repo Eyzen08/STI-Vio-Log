@@ -5,7 +5,7 @@ export default function OtpInput({
   value,
   onChange,
   disabled = false,
-  label = 'Verification code',
+  label = 'Verification Code',
   id = 'otp-code',
   describedBy,
   invalid = false,
@@ -82,7 +82,7 @@ export default function OtpInput({
         onPaste={(event) => handlePaste(index, event)}
         onFocus={(event) => event.target.select()}
         autoComplete={index === 0 ? 'one-time-code' : 'off'}
-        aria-label={`${label}, digit ${index + 1} of ${OTP_LENGTH}`}
+        aria-label={`${label}, Digit ${index + 1} of ${OTP_LENGTH}`}
         aria-invalid={invalid || undefined}
         aria-describedby={describedBy}
         required={required}

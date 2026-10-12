@@ -26,21 +26,42 @@ const DISPLAY_LABELS = {
 
 const PRESERVED_TERMS = new Set([
   'STI', 'QR', 'OTP', 'CSV', 'DTR', 'ID', 'API', 'URL', 'UTC', 'UI', 'UX', 'DO', 'IT', 'ICT',
-  'BSIT', 'BSCS', 'BSBA', 'BSAIS', 'BSHM', 'BSTM', 'ABM', 'HUMSS', 'STEM',
+  'BSIT', 'BSCS', 'BSBA', 'BSAIS', 'BSHM', 'BSTM', 'ABM', 'HUMSS', 'STEM', 'MFA', 'TOTP', 'PDF', 'XLSX',
 ])
+
+const TITLE_SMALL_WORDS = new Set('a an the and but or nor for so yet as at by in of on per to via with'.split(' '))
+
+export const formatTitleCase = (value) => {
+  const text = String(value ?? '')
+  const pattern = /[\p{L}\p{N}][\p{L}\p{M}\p{N}]*(?:['’][\p{L}\p{M}\p{N}]+)*/gu
+  const words = [...text.matchAll(pattern)]
+  let index = 0
+  return text.replace(pattern, (word, offset) => {
+    const first = index++ === 0 || /[:!?]\s*$/.test(text.slice(0, offset))
+    const lower = word.toLowerCase()
+    const upper = word.toUpperCase()
+    if (/^\p{N}/u.test(word)) return word
+    const base = upper.replace(/['’].*$/, '')
+    const suffix = word.slice(base.length)
+    if (base === 'BSCPE') return `BSCpE${suffix}`
+    if (PRESERVED_TERMS.has(base) && (word.startsWith(base) || !['IT', 'DO'].includes(base))) return base + suffix
+    if (!first && index < words.length && TITLE_SMALL_WORDS.has(lower)) return lower
+    return lower[0].toLocaleUpperCase() + lower.slice(1)
+  })
+}
 
 export const formatDisplayLabel = (value, fallback = '—') => {
   if (value === null || value === undefined || String(value).trim() === '') return fallback
   const raw = String(value).trim()
   const key = raw.toUpperCase().replace(/[\s-]+/g, '_')
   if (DISPLAY_LABELS[key]) return DISPLAY_LABELS[key]
-  return raw
+  return formatTitleCase(raw
     .replaceAll('_', ' ')
     .toLowerCase()
     .replace(/(^|[\s/-])([a-z])/g, (_, separator, letter) => `${separator}${letter.toUpperCase()}`)
     .split(' ')
     .map((word) => PRESERVED_TERMS.has(word.toUpperCase()) ? word.toUpperCase() : word)
-    .join(' ')
+    .join(' '))
 }
 
 const validDate = (value) => {

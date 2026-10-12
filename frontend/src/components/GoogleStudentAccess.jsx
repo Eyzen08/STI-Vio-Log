@@ -102,7 +102,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
   if (!isGoogleClientConfigured(clientId)) return null
 
   return (
-    <section className="google-access" aria-label="Google sign-in">
+    <section className="google-access" aria-label="Google Sign-In">
       <div className="auth-divider" aria-hidden="true"><span>or</span></div>
       <div ref={buttonRef} className="google-button" aria-busy={isBusy} />
       <p className="auth-status account-check-status" role="status">{isBusy && <><span className="action-spinner" aria-hidden="true" />Checking your account…</>}</p>

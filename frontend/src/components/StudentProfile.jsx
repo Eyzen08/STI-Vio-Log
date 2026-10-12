@@ -29,7 +29,7 @@ function StudentProfile({ profile, username, loading, error }) {
   if (!profile) {
     return (
       <section className="student-page profile-card profile-unavailable">
-        <p className="eyebrow">Student profile</p>
+        <p className="eyebrow">Student Profile</p>
         <h2>Profile Information Is Unavailable</h2>
         <p>{error || 'No student record is linked to this account.'}</p>
       </section>
@@ -45,32 +45,32 @@ function StudentProfile({ profile, username, loading, error }) {
           <h2>{formatStudentName(profile)}</h2>
           <p>{profile.student_number}</p>
         </div>
-        <span className="profile-readonly-badge">Verified school record</span>
+        <span className="profile-readonly-badge">Verified School Record</span>
       </header>
 
       {error && <p className="error-message" role="alert">{error}</p>}
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Academic information</h3>
+          <h3>Academic Information</h3>
         </div>
         <dl className="profile-details-grid">
-          <ProfileField label="Student number" value={displayProfileValue(profile.student_number)} />
-          <ProfileField label="Academic level" value={academicLevelLabel(profile)} /><ProfileField label={isSeniorHigh(profile)?"Strand":"Program"} value={academicProgram(profile)} />
-          <ProfileField label={isSeniorHigh(profile)?"Grade level":"Year level"} value={academicYear(profile)} />
+          <ProfileField label="Student Number" value={displayProfileValue(profile.student_number)} />
+          <ProfileField label="Academic Level" value={academicLevelLabel(profile)} /><ProfileField label={isSeniorHigh(profile)?"Strand":"Program"} value={academicProgram(profile)} />
+          <ProfileField label={isSeniorHigh(profile)?"Grade Level":"Year Level"} value={academicYear(profile)} />
           <ProfileField label="Section" value={displayProfileValue(profile.section)} />
         </dl>
       </div>
 
       <div className="profile-section">
         <div className="profile-section-heading">
-          <h3>Contact and account</h3>
+          <h3>Contact and Account</h3>
         </div>
         <dl className="profile-details-grid">
-          <ProfileField label="Email address" value={displayProfileValue(profile.email)} />
-          <ProfileField label="Phone number" value={displayProfileValue(displayPhilippinePhone(profile.phone_number))} />
-          <ProfileField label="Guardian Contact phone number" value={displayProfileValue(displayPhilippinePhone(profile.guardian_phone_number))} />
-          <ProfileField label="Portal username" value={displayProfileValue(username)} />
+          <ProfileField label="Email Address" value={displayProfileValue(profile.email)} />
+          <ProfileField label="Phone Number" value={displayProfileValue(displayPhilippinePhone(profile.phone_number))} />
+          <ProfileField label="Guardian Contact Phone Number" value={displayProfileValue(displayPhilippinePhone(profile.guardian_phone_number))} />
+          <ProfileField label="Portal Username" value={displayProfileValue(username)} />
         </dl>
       </div>
 

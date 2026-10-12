@@ -30,7 +30,7 @@ test('violations Excel export mirrors the readable generated report layout', asy
     status: 'IN_PROGRESS', description: 'A long incident description that should wrap inside the cell.'
   }])
   const sheet = workbook.getWorksheet('Violations Report')
-  assert.deepEqual(sheet.getRow(6).values.slice(1), ['Student', 'Student Number', 'Classification', 'Handbook offense', 'Incident Date', 'Status', 'Incident details'])
+  assert.deepEqual(sheet.getRow(6).values.slice(1), ['Student', 'Student Number', 'Classification', 'Handbook Offense', 'Incident Date', 'Status', 'Incident Details'])
   assert.equal(sheet.getCell('A7').value, 'Maria Santos')
   assert.equal(sheet.getCell('B7').value, '02000123456')
   assert.equal(sheet.getCell('C7').value, 'Major Offense - Category A')

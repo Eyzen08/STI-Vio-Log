@@ -18,12 +18,12 @@ export function ViolationDetailsContent({ violation, student, role, onEdit, onAd
         <div className="violation-full-width"><dt>Offense</dt><dd>{offense}</dd></div>
         <div><dt>Classification</dt><dd>{violation.violation_name || 'Not recorded'}</dd></div>
         <div><dt>Severity</dt><dd>{formatDisplayLabel(violation.severity, 'Not recorded')}</dd></div>
-        <div className="violation-full-width"><dt>Incident date & time</dt><dd>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</dd></div>
+        <div className="violation-full-width"><dt>Incident Date & Time</dt><dd>{formatIncidentDateTime(violation.incident_date, violation.incident_time)}</dd></div>
       </dl>
-      {distinctNotes && <div className="violation-incident-notes"><h4>Incident notes</h4><p>{distinctNotes}</p></div>}
+      {distinctNotes && <div className="violation-incident-notes"><h4>Incident Notes</h4><p>{distinctNotes}</p></div>}
     </section>
     <section className="violation-detail-section">
-      <h3>Community service</h3>
+      <h3>Community Service</h3>
       <dl className="violation-service-summary">
         <div><dt>Required</dt><dd>{formatDuration(violation.required_service_hours)}</dd></div>
         <div><dt>Completed</dt><dd>{formatDuration(violation.completed_service_hours)}</dd></div>
@@ -31,8 +31,8 @@ export function ViolationDetailsContent({ violation, student, role, onEdit, onAd
       </dl>
     </section>
     <div className="violation-quick-actions">
-      {(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-drawer-primary" onClick={onEdit}>{violation.status === 'OPEN' ? 'Edit record' : 'Reopen to edit'}</button>}
-      <button type="button" className="violation-drawer-secondary" onClick={onAdd} disabled={!canAdd}>Add violation</button>
+      {(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-drawer-primary" onClick={onEdit}>{violation.status === 'OPEN' ? 'Edit Record' : 'Reopen to Edit'}</button>}
+      <button type="button" className="violation-drawer-secondary" onClick={onAdd} disabled={!canAdd}>Add Violation</button>
     </div>
   </div>
 }

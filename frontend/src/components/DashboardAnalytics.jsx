@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { analyticsForRange, analyticsInsights, availablePrograms, manilaDateKey, periodRange } from '../lib/dashboardAnalytics.js'
 import { API_URL } from '../lib/api.js'
+import { formatTitleCase } from '../lib/displayFormat.js'
 
 const number = new Intl.NumberFormat('en-PH')
 const shortDate = new Intl.DateTimeFormat('en-PH', { timeZone: 'UTC', month: 'short', day: 'numeric' })
@@ -76,11 +77,11 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
     <div className="dashboard-analytics-heading">
       <div><h2 id="dashboard-analytics-title">Analytics &amp; Trends</h2><p>Monitor violation patterns, service completion, and student compliance.</p></div>
     </div>
-    <div className="dashboard-analytics-filters" role="group" aria-label="Analytics filters and export">
-      <label>Date range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="THIS_MONTH">This Month</option><option value="LAST_MONTH">Last Month</option><option value="THIS_YEAR">This Year</option><option value="CUSTOM">Custom</option></select></label>
+    <div className="dashboard-analytics-filters" role="group" aria-label="Analytics Filters and Export">
+      <label>Date Range<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="THIS_MONTH">This Month</option><option value="LAST_MONTH">Last Month</option><option value="THIS_YEAR">This Year</option><option value="CUSTOM">Custom</option></select></label>
       <label>Department / Program<select value={program} onChange={(event) => setProgram(event.target.value)}><option value="ALL">All Departments / Programs</option>{options.map((name) => <option key={name} value={name}>{name}</option>)}</select></label>
       <div className="dashboard-analytics-export">
-        <label>Export format<select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)} disabled={exporting}><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select></label>
+        <label>Export Format<select value={exportFormat} onChange={(event) => setExportFormat(event.target.value)} disabled={exporting}><option value="xlsx">Excel (.xlsx)</option><option value="csv">CSV (.csv)</option></select></label>
         <button type="button" className="primary-action" onClick={exportSnapshot} disabled={exportDisabled} data-action-disabled={Boolean(exportDisabled)} aria-busy={exporting}>{exporting ? 'Exporting…' : 'Export'}</button>
       </div>
       {period === 'CUSTOM' && <div className="dashboard-analytics-custom"><label>From<input type="date" value={customFrom} onChange={(event) => setCustomFrom(event.target.value)} aria-describedby="dashboard-analytics-date-help-1"/><small id="dashboard-analytics-date-help-1">e.g. 1 Oct 2026.</small></label><label>To<input type="date" value={customTo} onChange={(event) => setCustomTo(event.target.value)} aria-describedby="dashboard-analytics-date-help-2"/><small id="dashboard-analytics-date-help-2">e.g. 12 Oct 2026.</small></label></div>}
@@ -90,7 +91,7 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
     {exportStatus && <p className="analytics-unavailable" role="status">{exportStatus}</p>}
     <div className="dashboard-analytics-grid">
       <article className="dashboard-card analytics-card"><header className="dashboard-section-heading"><div><h3>Recorded Violations Over Time</h3><p>{date(appliedRange.from)} – {date(appliedRange.to)}</p></div></header>
-        {violationState ? <p className="empty-state">{violationState}</p> : <><div className="analytics-trend" role="group" aria-label="Recorded violations by time period">{analytics.trend.map((bucket, index) => <button key={bucket.from} type="button" className={index === activeBucket ? 'selected' : ''} onFocus={() => setSelectedBucket(index)} onClick={() => setSelectedBucket(index)} aria-label={`${date(bucket.from)} to ${date(bucket.to)}: ${number.format(bucket.count)} recorded violations`} aria-pressed={index === activeBucket}>
+        {violationState ? <p className="empty-state">{violationState}</p> : <><div className="analytics-trend" role="group" aria-label="Recorded Violations by Time Period">{analytics.trend.map((bucket, index) => <button key={bucket.from} type="button" className={index === activeBucket ? 'selected' : ''} onFocus={() => setSelectedBucket(index)} onClick={() => setSelectedBucket(index)} aria-label={`${date(bucket.from)} to ${date(bucket.to)}: ${number.format(bucket.count)} Recorded Violations`} aria-pressed={index === activeBucket}>
           <strong>{number.format(bucket.count)}</strong><span className="analytics-trend-plot"><i style={{ height: `${Math.max(3, bucket.count / largestTrend * 100)}%` }}/></span><small>{date(bucket.from, shortDate)}</small>
         </button>)}</div><p className="analytics-trend-detail" aria-live="polite">{date(trendPoint.from)} – {date(trendPoint.to)} · {number.format(trendPoint.count)} violation{trendPoint.count === 1 ? '' : 's'}</p></>}
       </article>
@@ -105,7 +106,7 @@ function DashboardAnalytics({ students, violations, assignments, loading, error 
         {violationState ? <p className="empty-state">{violationState}</p> : <HorizontalBars items={analytics.programs}/>}
       </article>
       <article className="dashboard-card analytics-card analytics-insights"><header className="dashboard-section-heading"><div><h3>Key Insights</h3><p>What needs attention in the selected range</p></div></header>
-        {insightState ? <p className="empty-state">{insightState}</p> : <dl>{insights.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd></div>)}</dl>}
+        {insightState ? <p className="empty-state">{insightState}</p> : <dl>{insights.map(item => <div key={item.label}><dt>{formatTitleCase(item.label)}</dt><dd>{item.value}</dd></div>)}</dl>}
       </article>
     </div>
   </section>

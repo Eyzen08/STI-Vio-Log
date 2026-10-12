@@ -16,7 +16,7 @@ const FILTERS = {
 }
 export const reportFilterFields = type => Object.hasOwn(FILTERS,type) ? FILTERS[type] : []
 export const reportStatusOptions = type => type==='clearance' ? ['NOT_ELIGIBLE','PENDING','CLEARED'] : type==='violations' ? ['OPEN','COMPLETE','CLEAR','INVALID_CANCEL'] : type==='community-service' ? ['OPEN','IN_PROGRESS','COMPLETED','CLEARED','ADMIN_CLOSED','INVALID_CANCELLED'] : []
-export const reportSortLabel = sort => ({date_desc:'Newest first',date_asc:'Oldest first',status:'Status',hours_desc:'Most remaining time',hours_asc:'Least remaining time',date:'Latest violation',hours:'Most pending service',violations:'Most open violations',student_number:'Student number',name:'Student name'})[sort] || sort
+export const reportSortLabel = sort => ({date_desc:'Newest First',date_asc:'Oldest First',status:'Status',hours_desc:'Most Remaining Time',hours_asc:'Least Remaining Time',date:'Latest Violation',hours:'Most Pending Service',violations:'Most Open Violations',student_number:'Student Number',name:'Student Name'})[sort] || sort
 export const validReportDate = value => {
   const date = new Date(`${value}T00:00:00Z`)
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(date.getTime()) && date.toISOString().slice(0,10)===value

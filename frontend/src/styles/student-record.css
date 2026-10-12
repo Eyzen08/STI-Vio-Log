@@ -58,7 +58,7 @@
 .record-case-preview h4 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .record-case-card > header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
 .student-record-modal .record-case-card h4 { font-size:var(--text-lg); line-height:1.35; }
-.record-case-status { flex-shrink:0; padding:4px 10px; border:1px solid #ffa5bc; border-radius:20px; background:#fff5f8; color:#ff265c; font-size:var(--text-xs); line-height:1.2; font-weight:600; text-transform:uppercase; }
+.record-case-status { flex-shrink:0; padding:4px 10px; border:1px solid #ffa5bc; border-radius:20px; background:#fff5f8; color:#ff265c; font-size:var(--text-xs); line-height:1.2; font-weight:600; text-transform:none; }
 .record-case-resolved { border-color:#b8eacb; background:#eaf9ef; color:#07823f; }
 .record-case-date { display:flex; align-items:center; gap:8px; font-size:var(--text-sm); }
 .record-case-date svg { flex:0 0 18px; }

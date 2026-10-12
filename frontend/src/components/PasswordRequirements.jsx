@@ -9,7 +9,7 @@ export default function PasswordRequirements({ password }) {
     ['special', 'One special character'],
     ['uncommon', 'Not a commonly used password']
   ]
-  return <div className="password-requirements" aria-live="polite"><strong>Password requirements</strong><ul>
+  return <div className="password-requirements" aria-live="polite"><strong>Password Requirements</strong><ul>
     {rows.map(([key, label]) => <li key={key} className={requirements[key] ? 'valid' : 'invalid'}>
       <span aria-hidden="true">{requirements[key] ? '✓' : '○'}</span> {label} <span className="sr-only">{requirements[key] ? 'met' : 'not met'}</span>
     </li>)}

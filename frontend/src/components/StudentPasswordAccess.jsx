@@ -17,27 +17,27 @@ export default function StudentPasswordAccess({ routePath, onNavigate, draft, on
   const startAgain=()=>{onClearDraft();onNavigate('/forgot-password')}
 
   if (routePath === '/forgot-password') return <form className="login-form" onSubmit={forgot} aria-busy={busy}>
-    <header className="auth-card-header"><h1 id="login-title">Forgot password?</h1><p>Enter your student number or registered email. We’ll send a code if an active account matches.</p></header>
-    <label>Student number or email<input value={draft.identifier} onChange={event => update({identifier:event.target.value})} autoComplete="username" autoCapitalize="none" spellCheck="false" required disabled={busy} aria-invalid={Boolean(error)} aria-describedby={[error ? 'password-forgot-error' : undefined, "password-identifier-help"].filter(Boolean).join(' ')} placeholder="e.g. 02000123456"/><small id="password-identifier-help">Use your student number or registered email.</small></label>
+    <header className="auth-card-header"><h1 id="login-title">Forgot Password?</h1><p>Enter your student number or registered email. We’ll send a code if an active account matches.</p></header>
+    <label>Student Number or Email<input value={draft.identifier} onChange={event => update({identifier:event.target.value})} autoComplete="username" autoCapitalize="none" spellCheck="false" required disabled={busy} aria-invalid={Boolean(error)} aria-describedby={[error ? 'password-forgot-error' : undefined, "password-identifier-help"].filter(Boolean).join(' ')} placeholder="e.g. 02000123456"/><small id="password-identifier-help">Use your student number or registered email.</small></label>
     {error && <p className="error-message" id="password-forgot-error" role="alert">{error}</p>}
     {draft.message && <p className="success-message" role="status">{draft.message}</p>}
-    <button type="submit" className="login-submit" disabled={busy}>{busy ? 'Sending…' : 'Send verification code'}</button>
-    <button type="button" className="auth-text-button" onClick={() => onNavigate('/login')} disabled={busy}>Back to sign in</button>
+    <button type="submit" className="login-submit" disabled={busy}>{busy ? 'Sending…' : 'Send Verification Code'}</button>
+    <button type="button" className="auth-text-button" onClick={() => onNavigate('/login')} disabled={busy}>Back to Sign In</button>
   </form>
   if (routePath === '/reset-password/verify') return <form className="login-form" onSubmit={verifyReset} aria-busy={busy}>
-    <header className="auth-card-header"><h1 id="login-title">Check your email</h1><p>Enter the six-digit verification code sent to your registered email.</p></header>
-    <OtpInput id="password-reset-code" label="Verification code" value={draft.code} onChange={code => update({code})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'password-reset-error' : undefined} autoFocus/>
+    <header className="auth-card-header"><h1 id="login-title">Check Your Email</h1><p>Enter the six-digit verification code sent to your registered email.</p></header>
+    <OtpInput id="password-reset-code" label="Verification Code" value={draft.code} onChange={code => update({code})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'password-reset-error' : undefined} autoFocus/>
     {error && <p className="error-message" id="password-reset-error" role="alert">{error}</p>}
-    <button type="submit" className="login-submit" disabled={busy || draft.code.length !== 6}>{busy ? 'Verifying…' : 'Verify code'}</button>
-    <button type="button" className="auth-text-button" onClick={startAgain} disabled={busy}>Start again</button>
+    <button type="submit" className="login-submit" disabled={busy || draft.code.length !== 6}>{busy ? 'Verifying…' : 'Verify Code'}</button>
+    <button type="button" className="auth-text-button" onClick={startAgain} disabled={busy}>Start Again</button>
   </form>
   return <form className="login-form" onSubmit={reset} aria-busy={busy}>
-    <header className="auth-card-header"><h1 id="login-title">Create a new password</h1><p>Choose a strong password to keep your campus account secure.</p></header>
-    <PasswordField id="reset-password" label="New password" value={draft.newPassword} onChange={event => update({newPassword:event.target.value})} disabled={busy} describedBy="reset-password-requirements" placeholder="Create a unique password"/>
+    <header className="auth-card-header"><h1 id="login-title">Create a New Password</h1><p>Choose a strong password to keep your campus account secure.</p></header>
+    <PasswordField id="reset-password" label="New Password" value={draft.newPassword} onChange={event => update({newPassword:event.target.value})} disabled={busy} describedBy="reset-password-requirements" placeholder="Create a unique password"/>
     <div id="reset-password-requirements"><PasswordRequirements password={draft.newPassword}/></div>
-    <PasswordField id="reset-confirm" label="Confirm new password" value={draft.confirmPassword} onChange={event => update({confirmPassword:event.target.value})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'new-password-error' : undefined} placeholder="Re-enter your new password"/>
+    <PasswordField id="reset-confirm" label="Confirm New Password" value={draft.confirmPassword} onChange={event => update({confirmPassword:event.target.value})} disabled={busy} invalid={Boolean(error)} describedBy={error ? 'new-password-error' : undefined} placeholder="Re-enter your new password"/>
     {error && <p className="error-message" id="new-password-error" role="alert">{error}</p>}
-    <button type="submit" className="login-submit" disabled={busy || !draft.resetToken}>{busy ? 'Resetting…' : 'Reset password'}</button>
+    <button type="submit" className="login-submit" disabled={busy || !draft.resetToken}>{busy ? 'Resetting…' : 'Reset Password'}</button>
     <button type="button" className="auth-text-button" onClick={startAgain} disabled={busy}>Cancel</button>
   </form>
 }

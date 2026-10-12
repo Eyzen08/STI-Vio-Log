@@ -106,15 +106,15 @@ function SidebarTooltip({ anchor, text }) {
 
 function SessionRestoringScreen({ error, onRetry, onSignOut }) {
   return (
-    <section className="session-restoring-screen" role={error ? 'alert' : 'status'} aria-live="polite" aria-label={error ? 'Session verification failed' : 'Restoring your secure session'}>
+    <section className="session-restoring-screen" role={error ? 'alert' : 'status'} aria-live="polite" aria-label={error ? 'Session Verification Failed' : 'Restoring Your Secure Session'}>
       <div className="session-restoring-card">
         <img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" />
         <div className="session-restoring-copy">
           <p className="session-restoring-eyebrow">Secure student discipline portal</p>
-          <h1>{error ? 'Connection interrupted' : 'Welcome Back'}</h1>
+          <h1>{error ? 'Connection Interrupted' : 'Welcome Back'}</h1>
           <p>{error ? 'We could not verify your session. Check your connection and try again.' : 'Restoring your secure session. This should only take a moment.'}</p>
         </div>
-        {error ? <div className="session-restoring-actions"><button type="button" className="submit-btn" onClick={onRetry}>Try again</button><button type="button" className="secondary-button" onClick={onSignOut}>Sign out</button></div> : <>
+        {error ? <div className="session-restoring-actions"><button type="button" className="submit-btn" onClick={onRetry}>Try Again</button><button type="button" className="secondary-button" onClick={onSignOut}>Sign Out</button></div> : <>
           <div className="session-restoring-progress" aria-hidden="true"><span /></div>
           <p className="session-restoring-note"><span aria-hidden="true" /> Verifying account access</p>
         </>}
@@ -675,9 +675,9 @@ function App() {
   }, [portalReady, token, userRole, pendingRefreshKey])
 
   const badgeForNavigationItem = (item) => {
-    if (item.view === 'Messages') return { count: unreadMessages, label: 'unread messages' }
-    if (item.view === 'Notifications') return { count: unreadNotificationCount, label: 'unread notifications' }
-    if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'pending service reviews' }
+    if (item.view === 'Messages') return { count: unreadMessages, label: 'Unread Messages' }
+    if (item.view === 'Notifications') return { count: unreadNotificationCount, label: 'Unread Notifications' }
+    if (item.path === '/admin/community-service') return { count: pendingActionCounts.serviceResults, label: 'Pending Service Reviews' }
     return { count: 0, label: '' }
   }
 
@@ -1906,7 +1906,7 @@ function App() {
     }
 
     if (!isLoggedIn && routeResolution.status === 'not_found') {
-      return <RouteStatePage type="not_found" onGoHome={() => navigateTo('/login')} actionLabel="Return to sign in" />
+      return <RouteStatePage type="not_found" onGoHome={() => navigateTo('/login')} actionLabel="Return to Sign In" />
     }
 
     if (!isLoggedIn) {
@@ -2214,15 +2214,15 @@ function App() {
           <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
             onAdd={() => { setStudentAccountReview(null); setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
             onUpdated={(updated) => setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item))}/>
-          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => { if (!mutationBusy.studentCreate) { setIsStudentFormOpen(false); setStudentAccountReview(null) } }}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the student account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
+          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => { if (!mutationBusy.studentCreate) { setIsStudentFormOpen(false); setStudentAccountReview(null) } }}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the Student Account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
           {studentAccountReview ? <StudentAccountReview details={studentAccountReview} busy={Boolean(mutationBusy.studentCreate)} error={studentFormError} onBack={() => { setStudentAccountReview(null); setStudentFormError(''); requestAnimationFrame(() => document.getElementById('create-student-student_number')?.focus()) }} onConfirm={confirmStudentAccount}/> : <section className="drawer-form-card">
             <div className="table-header">
               <h3>
-                Add student
+                Add Student
               </h3>
 
               <span>
-                New record
+                New Record
               </span>
             </div>
 
@@ -2233,7 +2233,7 @@ function App() {
                 handleStudentSubmit
               }
             >
-              <fieldset disabled={mutationBusy.studentCreate}><legend className="sr-only">Student account details</legend><div className="student-form-grid">
+              <fieldset disabled={mutationBusy.studentCreate}><legend className="sr-only">Student Account Details</legend><div className="student-form-grid">
                 <label className="full-width-field"><span id="create-student-student_number-label">Student Number <b aria-hidden="true">*</b></span>
                   <input
                     type="text"
@@ -2370,7 +2370,7 @@ function App() {
                 type="submit"
                 className="submit-btn"
                 busy={mutationBusy.studentCreate}
-                busyLabel="Saving student…"
+                busyLabel="Saving Student…"
               >
                 Review Details
               </AsyncActionButton></div>
@@ -2404,19 +2404,19 @@ function App() {
       return (
         <>
           <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={(violation) => navigateTo(`/admin/violations?violation_id=${violation.id}`)} onEdit={startViolationEdit}/>
-          {isViolationFormOpen && <Modal title="Record Violation" className="create-record-drawer" drawer onClose={() => setIsViolationFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="violations" size={24}/></i><div><h3>Create an incident record</h3><p>Choose the exact handbook classification and document only verified facts.</p></div></div>
+          {isViolationFormOpen && <Modal title="Record Violation" className="create-record-drawer" drawer onClose={() => setIsViolationFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="violations" size={24}/></i><div><h3>Create an Incident Record</h3><p>Choose the exact handbook classification and document only verified facts.</p></div></div>
           <section className="drawer-form-card">
             <div className="table-header">
               <h3>
-                Add violation
+                Add Violation
               </h3>
 
               <span>
-                New record
+                New Record
               </span>
             </div>
-            <div className="offense-legend" aria-label="Offense indicator legend">
-              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 minor"/><OffenseIndicator level="MINOR_2" label="2 minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/><OffenseIndicator level="GRAVE" label="Grave"/>
+            <div className="offense-legend" aria-label="Offense Indicator Legend">
+              <span>Indicator:</span><OffenseIndicator level="MINOR_1" label="1 Minor"/><OffenseIndicator level="MINOR_2" label="2 Minors"/><OffenseIndicator level="MAJOR_LEVEL" label="Major-Level"/><OffenseIndicator level="GRAVE" label="Grave"/>
             </div>
 
             <form
@@ -2426,7 +2426,7 @@ function App() {
                 handleViolationSubmit
               }
             >
-              <fieldset disabled={mutationBusy.violationCreate}><legend className="sr-only">Incident record details</legend><div className="student-form-grid">
+              <fieldset disabled={mutationBusy.violationCreate}><legend className="sr-only">Incident Record Details</legend><div className="student-form-grid">
                 <label><span id="create-violation-student_search-label">Student <b aria-hidden="true">*</b></span>
                   <input
                     type="search"
@@ -2454,7 +2454,7 @@ function App() {
                   <small id="violation-student-help">Search by student number, first name, or last name, then choose the matching result.</small>
                 </label>
 
-                <label><span id="create-violation-violation_type_id-label">Handbook classification <b aria-hidden="true">*</b></span>
+                <label><span id="create-violation-violation_type_id-label">Handbook Classification <b aria-hidden="true">*</b></span>
                   <select
                     name="violation_type_id"
                     id="create-violation-violation_type_id"
@@ -2467,7 +2467,7 @@ function App() {
                     }
                     required
                   >
-                    <option value="">Select a classification</option>
+                    <option value="">Select a Classification</option>
                     {violationTypes.map((type) => (
                       <option key={type.id} value={type.id}>
                         {type.violation_name} ({type.severity})
@@ -2494,7 +2494,7 @@ function App() {
                   <small id="app-date-help-1">e.g. 12 Oct 2026.</small>
                 </label>
 
-                <label><span id="create-violation-incident_time-label">Incident time <b aria-hidden="true">*</b></span>
+                <label><span id="create-violation-incident_time-label">Incident Time <b aria-hidden="true">*</b></span>
                   <input
                     type="time"
                     name="incident_time"
@@ -2508,7 +2508,7 @@ function App() {
                   <small id="app-date-help-2">e.g. 9:15 AM (Philippine time).</small>
                 </label>
 
-                <label className="full-width-field"><span id="create-violation-exact_offense-label">Specific handbook offense <b aria-hidden="true">*</b></span>
+                <label className="full-width-field"><span id="create-violation-exact_offense-label">Specific Handbook Offense <b aria-hidden="true">*</b></span>
                   <select
                     name="exact_offense"
                     id="create-violation-exact_offense"
@@ -2519,7 +2519,7 @@ function App() {
                     required
                   >
                     <option value="">
-                      {selectedType ? 'Select a handbook offense' : 'Choose a handbook classification first'}
+                      {selectedType ? 'Select a Handbook Offense' : 'Choose a Handbook Classification First'}
                     </option>
                     {exactOffenses.map((offense) => (
                       <option key={offense} value={offense}>{offense}</option>
@@ -2527,7 +2527,7 @@ function App() {
                   </select>
                 </label>
 
-                <label className="full-width-field"><span id="create-violation-incident_details-label">Incident details <b aria-hidden="true">*</b></span>
+                <label className="full-width-field"><span id="create-violation-incident_details-label">Incident Details <b aria-hidden="true">*</b></span>
                   <textarea
                     name="incident_details"
                     id="create-violation-incident_details"
@@ -2569,7 +2569,7 @@ function App() {
                 type="submit"
                 className="submit-btn"
                 busy={mutationBusy.violationCreate}
-                busyLabel="Saving violation…"
+                busyLabel="Saving Violation…"
               >
                 Save Violation
               </AsyncActionButton></div>
@@ -2667,19 +2667,19 @@ function App() {
 
   return (
     <div className={`app-shell ${!isLoggedIn ? 'auth-shell' : ''}${setupActive ? ' setup-shell' : ''}${portalChrome && isAdmin ? ' admin-portal' : ''}${portalChrome && isStudent ? ' student-portal' : ''}${portalChrome && isDepartmentHead ? ' department-portal' : ''}${portalChrome && isSidebarCollapsed ? ' sidebar-collapsed' : ''}`}>
-      <a className="skip-link" href="#main-content">Skip to main content</a>
+      <a className="skip-link" href="#main-content">Skip to Main Content</a>
       {portalChrome && isMobileNavOpen && (
         <button
           className="sidebar-backdrop"
           type="button"
-          aria-label="Close navigation menu"
+          aria-label="Close Navigation Menu"
           onClick={() => setIsMobileNavOpen(false)}
         />
       )}
 
-      {portalChrome && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal navigation">
+      {portalChrome && <aside className={`sidebar ${isMobileNavOpen ? 'mobile-open' : ''}`} id="portal-navigation" aria-label="Portal Navigation">
         <div className="brand">
-          <button className="brand-home" type="button" onClick={goToDashboard} aria-label="Go to dashboard">
+          <button className="brand-home" type="button" onClick={goToDashboard} aria-label="Go to Dashboard">
             <img
               className="brand-logo"
               src={stiVioLogLogoTransparent}
@@ -2693,14 +2693,14 @@ function App() {
           <button
             className="sidebar-close"
             type="button"
-            aria-label="Close navigation menu"
+            aria-label="Close Navigation Menu"
             onClick={() => setIsMobileNavOpen(false)}
           >
             <span aria-hidden="true">×</span>
           </button>
         </div>
 
-        <nav className="nav" aria-label="Primary navigation">
+        <nav className="nav" aria-label="Primary Navigation">
           {sidebarEntries.filter(entry => entry.placement !== 'footer').map((entry) => {
             if (entry.type === 'page') return renderSidebarPage(entry)
             if (entry.type === 'section') return <div className="nav-section" key={entry.id}>
@@ -2736,7 +2736,7 @@ function App() {
             </div>
           })}
         </nav>
-        <div className="nav-account-actions" role="navigation" aria-label="Account navigation">
+        <div className="nav-account-actions" role="navigation" aria-label="Account Navigation">
           {sidebarEntries.filter(entry => entry.placement === 'footer').flatMap(entry => entry.items).map(renderSidebarPage)}
           <button type="button" className="nav-item" aria-label="Logout" {...sidebarTooltipProps('Logout')} onClick={requestLogout}><span className="nav-item-label"><PortalIcon name="logout"/><span>Logout</span></span></button>
         </div>
@@ -2745,13 +2745,13 @@ function App() {
       {sidebarTooltip && portalChrome && isDesktopNavigation && <SidebarTooltip anchor={sidebarTooltip.anchor} text={sidebarTooltip.text} />}
 
       <main className={`main-panel${activeView === 'Messages' ? ' main-panel--messages' : ''}`} id="main-content" tabIndex="-1">
-        {setupActive && <header className="setup-brand"><div><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="64" height="36"/><span>STI Vio-Log<small>Account setup</small></span></div><button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`} aria-pressed={theme === 'dark'} onClick={toggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'}/></button></header>}
+        {setupActive && <header className="setup-brand"><div><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="64" height="36"/><span>STI Vio-Log<small>Account Setup</small></span></div><button className="theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} aria-pressed={theme === 'dark'} onClick={toggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'}/></button></header>}
         {portalChrome && <header className="topbar">
           <div className="topbar-title">
             <button
               className="sidebar-collapse"
               type="button"
-              aria-label={isSidebarCollapsed ? 'Expand navigation' : 'Collapse navigation'}
+              aria-label={isSidebarCollapsed ? 'Expand Navigation' : 'Collapse Navigation'}
               aria-controls="portal-navigation"
               aria-expanded={!isSidebarCollapsed}
               onClick={() => setIsSidebarCollapsed((value) => !value)}
@@ -2764,19 +2764,19 @@ function App() {
               type="button"
               aria-controls="portal-navigation"
               aria-expanded={isMobileNavOpen}
-              aria-label="Open navigation menu"
+              aria-label="Open Navigation Menu"
               onClick={() => setIsMobileNavOpen(true)}
             >
               <span aria-hidden="true">☰</span>
             </button>
 
-            <button className="mobile-brand" type="button" onClick={goToDashboard} aria-label="Go to dashboard">
+            <button className="mobile-brand" type="button" onClick={goToDashboard} aria-label="Go to Dashboard">
               <img className="mobile-brand-logo" src={stiVioLogLogoTransparent} alt="" width="420" height="236" />
               <span>STI Vio-Log</span>
             </button>
 
             {(isAdmin || isDepartmentHead) && <form className="topbar-search" role="search" onSubmit={(event)=>{event.preventDefault(); navigateTo(isAdmin?'/admin/students':'/department/students')}}>
-              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="e.g. Juan or 02000123456"/>
+              <PortalIcon name="search"/><label className="sr-only" htmlFor="student-directory-search">Search Students</label><input id="student-directory-search" type="search" name="portal-student-search" autoComplete="off" value={studentRosterSearch} onChange={(event)=>setStudentRosterSearch(event.target.value)} placeholder="e.g. Juan or 02000123456"/>
             </form>}
           </div>
 
@@ -2786,14 +2786,14 @@ function App() {
               <button
                 className="theme-toggle"
                 type="button"
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
                 aria-pressed={theme === 'dark'}
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
                 onClick={toggleTheme}
               >
                 <PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} />
               </button>
-              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} unread notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <span className="notification-count-badge" aria-hidden="true">{formatActionCount(unreadNotificationCount)}</span>}</button>
+              <button className="notification-button" type="button" aria-label={`${unreadNotificationCount} Unread Notifications`} onClick={()=>navigateTo(isStudent?'/student/notifications':userRole==='DEPARTMENT_HEAD'?'/department/notifications':'/admin/notifications')}><PortalIcon name="bell"/>{unreadNotificationCount > 0 && <span className="notification-count-badge" aria-hidden="true">{formatActionCount(unreadNotificationCount)}</span>}</button>
               <ProfileMenu user={user} profile={isStudent ? studentProfile : null} routePath={routePath} onNavigate={navigateTo} onLogout={requestLogout}/>
             </div>
           )}
@@ -2802,20 +2802,20 @@ function App() {
         {!isLoggedIn && <button
           className="theme-toggle auth-theme-toggle"
           type="button"
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
           aria-pressed={theme === 'dark'}
-          title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
           onClick={toggleTheme}
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>}
 
         {portalChrome && (isStudent || isAdmin) && attendanceError && !['Dashboard', 'My Service', 'Active Attendance'].includes(activeView) && <p className="attendance-update-error attendance-global-error">{attendanceError}</p>}
         {portalChrome && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
-          {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss attendance notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
+          {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss Attendance Notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
         </div>}
         <div className="page-content">{portalChrome && (recordTarget.invalid || routeUrl.searchParams.get('record_unavailable') === '1' || recordTargetError === routeLocation) && <p className="error-message" role="alert">The specific notification record is unavailable or you no longer have access to it.</p>}<RouteErrorBoundary key={isLoggedIn?routePath:'public-auth'}><Suspense fallback={<div className="route-loading" role="status">Loading page…</div>}>{renderContent()}</Suspense></RouteErrorBoundary></div>
-        {portalChrome && <nav className="mobile-bottom-nav" aria-label="Mobile navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
+        {portalChrome && <nav className="mobile-bottom-nav" aria-label="Mobile Navigation">{mobileNavItems.map((item)=>{const badge=badgeForNavigationItem(item);return <button type="button" className={`${item.view==='Messages'?'messages-nav-item ':''}${routePath===item.path?'active':''}`.trim()} key={item.path} onClick={()=>navigateTo(item.path)}><PortalIcon name={iconNameForView(item.view)}/><span>{mobileNavLabel(item)}</span>{formatActionCount(badge.count)&&<b aria-label={`${formatActionCount(badge.count)} ${badge.label}`}>{formatActionCount(badge.count)}</b>}</button>})}<button type="button" onClick={()=>setIsMobileNavOpen(true)}><PortalIcon name="more"/><span>More</span></button></nav>}
       </main>
-      {logoutConfirmation&&<Modal title="Confirm logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging out…':'Logout'}</button></footer></div></Modal>}
+      {logoutConfirmation&&<Modal title="Confirm Logout" onClose={()=>!logoutBusy&&setLogoutConfirmation(false)}><div className="confirmation-dialog"><p>Are you sure you want to log out of your account?</p><footer className="modal-actions"><button type="button" className="secondary-button" disabled={logoutBusy} onClick={()=>setLogoutConfirmation(false)}>Cancel</button><button type="button" className="danger-button" disabled={logoutBusy} onClick={handleLogout}>{logoutBusy?'Logging Out…':'Logout'}</button></footer></div></Modal>}
     </div>
   )
 }

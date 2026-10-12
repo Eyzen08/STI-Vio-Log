@@ -5,6 +5,10 @@ import { metadataForRoute } from '../src/lib/pageMetadata.js'
 
 const html = await readFile(new URL('../index.html', import.meta.url), 'utf8')
 
+test('browser titles format generated route labels and preserve the brand', () => {
+  assert.equal(metadataForRoute('/admin/custom', 'account recovery and lock').title, 'Account Recovery and Lock | STI Vio-Log')
+})
+
 test('public routes receive specific searchable metadata', () => {
   assert.equal(metadataForRoute('/').title, 'STI Vio-Log | STI Global City')
   assert.equal(metadataForRoute('/').robots, 'index, follow')

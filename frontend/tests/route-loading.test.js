@@ -25,7 +25,7 @@ test('stale deployment chunks reload once and route errors show recovery UI', ()
   assert.match(main, /vite:preloadError/)
   assert.match(main, /window\.location\.reload\(\)/)
   assert.match(app, /<RouteErrorBoundary key=\{isLoggedIn\?routePath:'public-auth'\}>/)
-  assert.match(boundary, /Reload portal/)
+  assert.match(boundary, /Reload Portal/)
 })
 
 test('public authentication routes preserve in-progress OTP state', () => {

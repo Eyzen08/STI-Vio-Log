@@ -56,14 +56,14 @@ export default function StudentCredentialsModal({ credentials, token, onClose, o
     }
   }
 
-  return <Modal title="Temporary student credentials" onClose={close} dirty={!busy && editing && (email !== credentials.email || Boolean(reason.trim()))}>
+  return <Modal title="Temporary Student Credentials" onClose={close} dirty={!busy && editing && (email !== credentials.email || Boolean(reason.trim()))}>
     <div className="registration-pending student-credentials">
-      <strong>Student account created</strong>
+      <strong>Student Account Created</strong>
       <StudentCredentialDetails key={credentials.password} username={credentials.username} password={credentials.password} disabled={Boolean(busy)}/>
       <p className="student-credentials-gmail">Student Gmail: <strong>{credentials.email}</strong><button ref={editButton} type="button" className="secondary-button" disabled={Boolean(busy) || editing} onClick={() => { setEmail(credentials.email); setReason(''); setError(''); setNotice(''); setEditing(true) }}>Edit Gmail</button></p>
       {editing && <form className="student-credentials-edit student-form" onSubmit={saveGmail}>
         <label>Student Gmail<input type="email" value={email} onChange={event => setEmail(event.target.value)} maxLength={255} pattern="[^ @]+@[gG][mM][aA][iI][lL][.][cC][oO][mM]" autoComplete="email" disabled={Boolean(busy)} required autoFocus placeholder="e.g. juan.delacruz@gmail.com"/></label>
-        <label>Reason for correction<textarea value={reason} onChange={event => setReason(event.target.value)} maxLength={1000} disabled={Boolean(busy)} required placeholder="e.g. Corrected a typing error in the student's Gmail address."/></label>
+        <label>Reason for Correction<textarea value={reason} onChange={event => setReason(event.target.value)} maxLength={1000} disabled={Boolean(busy)} required placeholder="e.g. Corrected a typing error in the student's Gmail address."/></label>
         <p>Saving replaces the old temporary password and gives the replacement a new 24-hour expiry. Email is sent only when you click Send Email.</p>
         <div className="student-credentials-actions"><AsyncActionButton type="submit" busy={busy === 'save'} busyLabel="Saving…" disabled={Boolean(busy) || !isValidStudentGmail(email) || !reason.trim() || normalizeStudentGmail(email) === credentials.email}>Save Gmail</AsyncActionButton><button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={cancelEdit}>Cancel</button></div>
       </form>}
@@ -72,9 +72,9 @@ export default function StudentCredentialsModal({ credentials, token, onClose, o
       {error && <p className="error-message" role="alert">{error}</p>}
       <div className="student-credentials-actions">
         <AsyncActionButton type="button" busy={busy === 'send'} busyLabel="Sending…" disabled={sent || editing || Boolean(busy)} onClick={sendEmail}>
-          {sent ? 'Email sent' : error ? 'Retry Email' : 'Send Email'}
+          {sent ? 'Email Sent' : error ? 'Retry Email' : 'Send Email'}
         </AsyncActionButton>
-        <button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={close}>I stored it securely</button>
+        <button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={close}>I Stored It Securely</button>
       </div>
     </div>
   </Modal>

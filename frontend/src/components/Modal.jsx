@@ -75,7 +75,7 @@ function Modal({ title, subtitle, onClose, children, wide = false, drawer = fals
           {subtitle ? <div className="app-modal-heading"><h2 id={titleId}>{title}</h2><p>{subtitle}</p></div> : <h2 id={titleId}>{title}</h2>}
           <button ref={closeButtonRef} type="button" className="app-modal-close" onClick={requestClose} aria-label={`Close ${title}`}>×</button>
         </header>
-        <div className="app-modal-body"><div hidden={confirmDiscard}>{children}</div>{confirmDiscard && <section className="discard-edits" role="alert"><strong>Discard unsaved changes?</strong><p>Your changes have not been saved.</p><div><button type="button" onClick={() => setConfirmDiscard(false)}>Keep editing</button><button type="button" className="danger-button" onClick={onClose}>Discard changes</button></div></section>}</div>
+        <div className="app-modal-body"><div hidden={confirmDiscard}>{children}</div>{confirmDiscard && <section className="discard-edits" role="alert"><strong>Discard Unsaved Changes?</strong><p>Your changes have not been saved.</p><div><button type="button" onClick={() => setConfirmDiscard(false)}>Keep Editing</button><button type="button" className="danger-button" onClick={onClose}>Discard Changes</button></div></section>}</div>
       </section>
     </div>,
     document.body

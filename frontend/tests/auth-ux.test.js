@@ -23,6 +23,6 @@ test('authentication drafts and logout confirmation are owned by the app shell',
   const app=await readFile(new URL('../src/App.jsx',import.meta.url),'utf8')
   assert.match(app,/EMPTY_AUTH_DRAFT/)
   assert.match(app,/returnPath=\{policyReturnPath\(routeSearch,/)
-  assert.match(app,/title="Confirm logout"/)
+  assert.match(app,/title="Confirm Logout"/)
   assert.match(app,/onLogout=\{requestLogout\}/)
 })

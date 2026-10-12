@@ -11,7 +11,7 @@ const css=readFileSync(new URL('../src/styles/account-setup.css',import.meta.url
 test('mandatory Student onboarding renders before portal content and resumes by session state',()=>{
   assert.match(app,/user\?\.role==='STUDENT' && \(user\?\.onboarding_required \|\| showOnboardingComplete\)/)
   assert.match(app,/data\.user\.onboarding_required \|\| onboardingComplete \? '\/student\/onboarding'/)
-  assert.match(progress,/Password.*Google.*Student details.*Ready/s)
+  assert.match(progress,/Password.*Google.*Student Details.*Ready/s)
 });
 
 test('onboarding binds Google first and submits only student-controlled academic and contact fields',()=>{
@@ -19,10 +19,10 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.match(api,/student-onboarding\/google-link/)
   assert.match(api,/student-onboarding\/google-email\/request/)
   assert.match(api,/student-onboarding\/google-email\/verify/)
-  assert.match(onboarding,/Google account email<\/span><strong>\{email/)
+  assert.match(onboarding,/Google Account Email<\/span><strong>\{email/)
   assert.doesNotMatch(onboarding,/type="email"/)
   assert.match(onboarding,/Gmail recorded by the Discipline Office/);assert.doesNotMatch(onboarding,/Use another email/)
-  assert.match(onboarding,/Email.*Verification code.*Google sign-in/s)
+  assert.match(onboarding,/Email.*Verification Code.*Google Sign-In/s)
   assert.match(onboarding,/<OtpInput id="google-email-code"/)
   assert.match(api,/student-onboarding\/profile/)
   assert.match(onboarding,/program:.*section:.*year_level:.*phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
@@ -39,7 +39,7 @@ test('Discipline Office creation collects identity and Gmail and leaves QR gener
 });
 
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{
-  assert.match(progress,/aria-label="Student account setup progress"/)
+  assert.match(progress,/aria-label="Student Account Setup Progress"/)
   assert.match(css,/@media\(max-width:600px\).*\.onboarding-progress/s)
   assert.match(css,/var\(--surface-raised\)/)
   assert.match(css,/var\(--text-primary\)/)

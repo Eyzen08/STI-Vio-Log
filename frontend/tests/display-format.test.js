@@ -1,6 +1,32 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { formatDisplayLabel, formatDuration, formatIncidentDateTime, formatManilaDateTime, hoursToMinutes } from '../src/lib/displayFormat.js'
+import * as display from '../src/lib/displayFormat.js'
+
+test('title case keeps connecting words lowercase except at title boundaries', () => {
+  assert.equal(typeof display.formatTitleCase, 'function')
+  for (const [input, expected] of [
+    ['account recovery and lock', 'Account Recovery and Lock'],
+    ['the terms of use', 'The Terms of Use'],
+    ['timed in', 'Timed In'],
+    ['sign in to continue', 'Sign in to Continue'],
+    ['privacy: the use of data', 'Privacy: The Use of Data'],
+    ['non-compliance and follow-up', 'Non-Compliance and Follow-Up'],
+    ['QR and OTP for STI Vio-Log', 'QR and OTP for STI Vio-Log'],
+    ['open STI’s live handbook', 'Open STI’s Live Handbook'],
+    ['DTR / ID and BSCpE', 'DTR / ID and BSCpE'],
+    ["today's service", "Today's Service"],
+    ['1st semester and 2nd semester', '1st Semester and 2nd Semester'],
+    ['timed in 2026', 'Timed in 2026'],
+    ['with a, an, the, and, but, or, nor, for, so, yet, as, at, by, in, of, on, per, to, via and with', 'With a, an, the, and, but, or, nor, for, so, yet, as, at, by, in, of, on, per, to, via and With'],
+  ]) assert.equal(display.formatTitleCase(input), expected)
+})
+
+test('title case preserves spacing and accepts empty values', () => {
+  assert.equal(typeof display.formatTitleCase, 'function')
+  assert.equal(display.formatTitleCase('  academic   information  '), '  Academic   Information  ')
+  for (const value of ['', null, undefined]) assert.equal(display.formatTitleCase(value), '')
+})
 
 test('display labels format enums without changing source values or abbreviations', () => {
   const status = 'IN_PROGRESS'
@@ -13,6 +39,7 @@ test('display labels format enums without changing source values or abbreviation
   assert.equal(formatDisplayLabel('BSCPE'), 'BSCpE')
   assert.equal(formatDisplayLabel('E_SIGNATURE_MANAGEMENT'), 'E-Signature Management')
   assert.equal(formatDisplayLabel('CUSTOM_REVIEW_STATE'), 'Custom Review State')
+  assert.equal(formatDisplayLabel('ACCOUNT_RECOVERY_AND_LOCK'), 'Account Recovery and Lock')
   assert.equal(formatDisplayLabel('', 'Unknown'), 'Unknown')
 })
 

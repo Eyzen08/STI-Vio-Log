@@ -26,8 +26,8 @@ export const assignmentProgress = (assignment) => {
 }
 
 export const attendanceState = (assignment) => assignment?.active_session_id
-  ? { active: true, label: 'Currently timed in' }
-  : { active: false, label: 'Not timed in' }
+  ? { active: true, label: 'Currently Timed In' }
+  : { active: false, label: 'Not Timed In' }
 
 export const formatServiceMinutes = (value) => {
   if (Number(value)>0 && Number(value)<1) return `${Number(Number(value).toFixed(6))} min`

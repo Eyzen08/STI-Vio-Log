@@ -175,7 +175,7 @@
 .qr-attendance .record-stage > .error-message { border-color:#f0bdc7; background:#fff0f3; color:#b91e35; }
 .qr-attendance .recent-stage h3 { margin-bottom:0; }
 .qr-attendance .recent-stage table { font-size:var(--text-base); min-width:650px; }
-.qr-attendance .recent-stage th { background:#eff6fe; color:var(--service-muted); font-size:var(--text-base); letter-spacing:.035em; text-transform:uppercase; padding:7px 12px; border:0; }
+.qr-attendance .recent-stage th { background:#eff6fe; color:var(--service-muted); font-size:var(--text-base); letter-spacing:.035em; text-transform:none; padding:7px 12px; border:0; }
 .qr-attendance .recent-stage td { color:var(--service-muted); padding:8px 12px; border-color:var(--service-line); }
 .qr-attendance .recent-stage td:first-child { flex-direction:row; align-items:center; gap:14px; }
 .qr-attendance .recent-stage .portal-avatar { display:grid; place-items:center; flex:0 0 38px; height:38px; width:38px; border-radius:50%; background:#1476f6; color:white; font-size:var(--text-xs); }

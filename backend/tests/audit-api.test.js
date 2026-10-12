@@ -37,7 +37,7 @@ test('audit Excel export includes all filtered events with safe readable cells a
   assert.equal(sheet.getCell('D7').value, 'Department Head');
   assert.equal(sheet.getCell('F7').value, 'Archived record #8');
   assert.match(sheet.getCell('J7').value, /Timed out early; 0 minutes credited/);
-  assert.match(sheet.getCell('K7').value, /Supervisor changed: No/);
+  assert.match(sheet.getCell('K7').value, /Supervisor Changed: No/);
   assert.match(sheet.getCell('K7').value, /Required Service Hours: 2 hr → 0 min/);
   assert.doesNotMatch(JSON.stringify(sheet.getSheetValues()), /private|hidden-password/);
   assert.equal(sheet.views[0].ySplit, 6);
@@ -94,11 +94,11 @@ test('unfiltered Excel export batches context, preserves text identifiers, legac
   assert.equal(sheet.getCell('G7').value, '+Juan Santos');
   assert.equal(sheet.getCell('G8').value, '@Juan Santos');
   assert.equal(sheet.getCell('H7').value, '000123'); assert.equal(sheet.getCell('H7').numFmt, '@');
-  assert.match(sheet.getCell('F7').value, /Clearance certificate #5\nSTI-CGC-5/);
+  assert.match(sheet.getCell('F7').value, /Clearance Certificate #5\nSTI-CGC-5/);
   assert.match(sheet.getCell('F8').value, /Major Offense/);
   assert.equal(sheet.getCell('I8').value, 'Library');
   assert.match(sheet.getCell('J8').value, /7 hr 18 min credited/);
-  assert.match(sheet.getCell('K8').value, /Worked time: 7 hr 18 min/);
+  assert.match(sheet.getCell('K8').value, /Worked Time: 7 hr 18 min/);
   assert.equal(sheet.getCell('F9').value, 'Violation #99');
   assert.match(sheet.getCell('J9').value, /Open to Completed/);
   const { createAuditWorkbook } = require('../src/services/auditExport');

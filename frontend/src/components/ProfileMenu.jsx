@@ -76,7 +76,7 @@ function ProfileMenu({ user, profile, routePath, onLogout }) {
     <button ref={triggerRef} type="button" className="profile-menu-trigger" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
       <Avatar className="account-avatar" identity={{ ...user, ...profile }} /><span className="account-summary"><strong>{username}</strong><small>{roleLabel(user?.role)}</small></span><span className="profile-menu-chevron" aria-hidden="true">{open ? '⏶' : '⏷'}</span>
     </button>
-    {open && <div className="profile-menu-popover" role="menu" aria-label="Profile options">
+    {open && <div className="profile-menu-popover" role="menu" aria-label="Profile Options">
       <header><Avatar className="account-avatar" identity={{ ...user, ...profile }} /><div><strong>{username}</strong><small>{roleLabel(user?.role)}</small></div></header>
       <a ref={firstItemRef} role="menuitem" href={profilePath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, profilePath(user?.role))}><PortalIcon name="user"/><span>View Profile</span></a>
       <a role="menuitem" href={settingsPath(user?.role)} onTouchEnd={(event) => navigateOnTouch(event, settingsPath(user?.role))}><PortalIcon name="settings"/><span>Account Settings</span></a>

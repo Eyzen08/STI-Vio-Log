@@ -24,7 +24,7 @@ const createAuditWorkbook = (entries, filters = {}, generatedAt = new Date()) =>
       formatDisplayLabel(entry.actor_role, entry.user_id ? 'Role not recorded' : 'System'), formatAuditAction(entry.action),
       [auditRecordLabel(entry), context.violation_label, context.certificate_number].filter(Boolean).join('\n'),
       context.subject_name || '', context.subject_identifier || '', context.department_name || '', auditSummary(entry),
-      [entry.actor_name && entry.actor_username && `Actor username: ${entry.actor_username}`, ...auditDetailRows(entry).map(({ label, value }) => `${label}: ${value}`)].filter(Boolean).join('\n')
+      [entry.actor_name && entry.actor_username && `Actor Username: ${entry.actor_username}`, ...auditDetailRows(entry).map(({ label, value }) => `${label}: ${value}`)].filter(Boolean).join('\n')
     ]);
   }
   formatReportSheet(sheet, 3);

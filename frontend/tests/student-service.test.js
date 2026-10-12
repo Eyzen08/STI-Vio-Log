@@ -45,7 +45,7 @@ test('student dashboard and DTR render active sessions with live credited-safe t
   assert.match(panel, /<ServiceCountdown session=\{session\} now=\{now\}/)
   assert.match(panel, /<AttendanceIndicator/)
   assert.match(panel, /clearInterval\(clock\)/)
-  assert.match(countdown, /Time Out required/)
+  assert.match(countdown, /Time Out Required/)
   assert.match(countdown, /timing.remainingSeconds/)
   assert.match(panel, /Current session time is credited after staff records Time Out\./)
   assert.match(service, /See current session above/)

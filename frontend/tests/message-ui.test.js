@@ -101,7 +101,7 @@ test('recipient autocomplete searches authorized results and supports keyboard s
  assert.match(component,/ArrowDown','ArrowUp/)
  assert.match(component,/aria-activedescendant/)
  assert.match(component,/requestId!==recipientRequestRef.current/)
- assert.match(component,/aria-label="Change recipient"/)
+ assert.match(component,/aria-label="Change Recipient"/)
  assert.doesNotMatch(component,/searchRecipients/)
 })
 

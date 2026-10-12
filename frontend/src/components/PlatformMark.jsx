@@ -8,5 +8,5 @@ const marks = {
 }
 
 export default function PlatformMark({ name, label, size = 26 }) {
-  return <svg className={`platform-mark platform-mark--${name || 'email'}`} role="img" aria-label={`${label || 'Platform'} logo`} viewBox="0 0 24 24" width={size} height={size}>{marks[name] || marks.email}</svg>
+  return <svg className={`platform-mark platform-mark--${name || 'email'}`} role="img" aria-label={`${label || 'Platform'} Logo`} viewBox="0 0 24 24" width={size} height={size}>{marks[name] || marks.email}</svg>
 }

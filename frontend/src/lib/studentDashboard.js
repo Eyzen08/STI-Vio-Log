@@ -13,7 +13,7 @@ export const summarizeStudentDashboard = ({ violations = [], assignments = [], c
     : activeViolations.length > 0 || activeAssignments.length > 0
 
   return {
-    standing: hasBlocker ? 'Action required' : 'Good standing',
+    standing: hasBlocker ? 'Action Required' : 'Good Standing',
     activeViolations: activeViolations.length,
     activeAssignments: activeAssignments.length,
     remainingHours,

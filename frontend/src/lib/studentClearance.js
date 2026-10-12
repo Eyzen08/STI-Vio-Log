@@ -1,8 +1,8 @@
 export const clearanceLabel = (status) => ({
-  NOT_ELIGIBLE: 'Not eligible',
-  PENDING: 'Pending approval',
+  NOT_ELIGIBLE: 'Not Eligible',
+  PENDING: 'Pending Approval',
   CLEARED: 'Cleared'
-}[status] || 'Not requested')
+}[status] || 'Not Requested')
 
 export const summarizeClearance = ({ eligibility, records = [] }) => {
   const latest = records[0] || null

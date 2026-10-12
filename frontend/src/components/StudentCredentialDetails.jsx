@@ -10,7 +10,7 @@ export default function StudentCredentialDetails({ username, password, disabled 
   }
   return <>
     <dl className="credential-details">
-      {[['Student Number',username],['Temporary password',password]].map(([label,value])=><div key={label}><dt>{label}</dt><dd><code>{value}</code></dd><button type="button" className="secondary-button" disabled={disabled} onClick={()=>copy(value,label)} aria-label={`Copy ${label.toLowerCase()}`}>Copy</button></div>)}
+      {[['Student Number',username],['Temporary Password',password]].map(([label,value])=><div key={label}><dt>{label}</dt><dd><code>{value}</code></dd><button type="button" className="secondary-button" disabled={disabled} onClick={()=>copy(value,label)} aria-label={`Copy ${label}`}>Copy</button></div>)}
     </dl>
     {copyStatus&&<p role="status" className="setup-field-note">{copyStatus}</p>}
     <p className="credential-expiry">Expires 24 hours after issuance. Copy or send these credentials before closing; the password will not be shown again.</p>

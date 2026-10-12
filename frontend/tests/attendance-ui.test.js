@@ -30,9 +30,9 @@ test('both office roles can edit closed violations from the shared table and rec
   const violation = { id: 91, student_id: 1, student_name: 'Test Student', student_number: 'TEST-1', description: 'Facts', severity: 'MINOR', status: 'COMPLETE' }
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {
     const table = render('ViolationManagement', { violations: [violation], filters: { search: '', severity: 'ALL', status: 'ALL' }, role })
-    assert.match(table, /aria-label="Edit violation 91"/, role)
+    assert.match(table, /aria-label="Edit Violation 91"/, role)
     const drawer = render('ViolationDetailsContent', { violation, role })
-    assert.match(drawer, /Reopen to edit/, role)
+    assert.match(drawer, /Reopen to Edit/, role)
   }
 })
 const start = Date.parse('2026-10-05T01:00:00Z')
@@ -50,16 +50,16 @@ test('violation color legends remain visible with records, loading, empty and fi
   ]) {
     const html = render('ViolationManagement', { filters, ...props })
     assert.ok(html.includes(message))
-    const legendStart = html.indexOf('aria-label="Violation color legends"')
+    const legendStart = html.indexOf('aria-label="Violation Color Legends"')
     const tableStart = html.indexOf('class="violation-table-wrap"')
-    assert.ok(legendStart > html.indexOf('aria-label="Filter violation status"') && legendStart < tableStart)
+    assert.ok(legendStart > html.indexOf('aria-label="Filter Violation Status"') && legendStart < tableStart)
     const legends = html.slice(legendStart, tableStart)
-    assert.match(legends, /aria-label="Classification legend"/)
-    assert.match(legends, /aria-label="Student indicator legend"/)
+    assert.match(legends, /aria-label="Classification Legend"/)
+    assert.match(legends, /aria-label="Student Indicator Legend"/)
     for (const [severity, label] of [['minor', 'Minor'], ['major', 'Major'], ['grave', 'Grave']]) {
       assert.ok(legends.includes(`class="violation-classification classification-${severity}">${label}</span>`))
     }
-    for (const [tone, label] of [['neutral', 'No qualifying offenses'], ['yellow', '1 minor'], ['orange', '2 minors'], ['red', 'Major-level'], ['critical', 'Grave']]) {
+    for (const [tone, label] of [['neutral', 'No Qualifying Offenses'], ['yellow', '1 Minor'], ['orange', '2 Minors'], ['red', 'Major-Level'], ['critical', 'Grave']]) {
       assert.ok(legends.includes(`class="offense-indicator offense-${tone}" title="${label}" aria-label="${label}"`))
       assert.ok(legends.includes(`<span>${label}</span>`))
     }
@@ -69,17 +69,17 @@ test('violation color legends remain visible with records, loading, empty and fi
 test('student overview renders each timer and service total once with three recent records', () => {
   const html = render('StudentDashboard', { dtr:{sessions:[active]}, assignments:[{required_hours:6,remaining_hours:5.25,status:'IN_PROGRESS'}],
     violations:Array.from({length:5},(_,id)=>({id,status:'OPEN',exact_offense:`Offense ${id}`,severity:'GRAVE',required_service_hours:2})) })
-  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining Session Time"/g)||[]).length,1)
   assert.equal((html.match(/5 hr 15 min/g)||[]).length,1)
   assert.equal((html.match(/class="student-recent-record"/g)||[]).length,3)
-  assert.match(html, /My QR code/)
+  assert.match(html, /My QR Code/)
   assert.match(html, /Message Office/)
   assert.doesNotMatch(html, /Service Session in Progress|student-stats|standing-card/)
 })
 
 test('student DTR preserves active attendance and hides secondary fields in disclosures', () => {
   const html=render('StudentCommunityService',{liveDtr:{assignments:[],sessions:[active]},dtr:{assignments:[],sessions:[{...active,id:12,status:'COMPLETED',time_out:'2026-10-05T02:00:00Z',worked_minutes:45,credited_minutes:30,notes:'Preserved remarks',time_out_recorder_name:'Mara Cruz',time_out_role:'DEPARTMENT_HEAD'}]}})
-  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining Session Time"/g)||[]).length,1)
   assert.match(html, /See current session above/)
   assert.match(html, /<details class="student-session-details"><summary>Details<\/summary>/)
   assert.match(html, /Worked<\/dt><dd>45m/)
@@ -87,7 +87,7 @@ test('student DTR preserves active attendance and hides secondary fields in disc
   assert.match(html, /Mara Cruz/)
   assert.match(html, /Department Head/)
   assert.match(html, /Preserved remarks/)
-  assert.match(html, /<details class="student-corrections"><summary>Hour corrections<\/summary>/)
+  assert.match(html, /<details class="student-corrections"><summary>Hour Corrections<\/summary>/)
 })
 
 test('student pages retain profile data, violation facts and unavailable states', () => {
@@ -101,8 +101,8 @@ test('student pages retain profile data, violation facts and unavailable states'
   assert.match(violation,/Major Offense - Category C/)
   assert.match(violation,/Grave/)
   assert.match(render('StudentQr',{profile:null}),/No QR code is assigned/)
-  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View violations/)
-  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View service/)
+  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View Violations/)
+  assert.match(render('StudentClearance',{records:[],eligibility:{hasActiveViolation:true,hasPendingService:true}}),/View Service/)
 })
 
 test('student portal retains loading, empty, and failed-data states without invented attendance', () => {
@@ -112,7 +112,7 @@ test('student portal retains loading, empty, and failed-data states without inve
   }
   assert.match(render('StudentDashboard',{dtr:{sessions:[]}}),/No violations on record/)
   const service=render('StudentCommunityService',{dtr:{assignments:[],sessions:[active]}})
-  assert.match(service,/Current attendance unavailable/)
+  assert.match(service,/Current Attendance Unavailable/)
   assert.doesNotMatch(service,/See current session above|<time/)
   assert.match(render('StudentCommunityService',{dtr:{assignments:[],sessions:[]},liveDtr:{sessions:[]}}),/No attendance sessions match this period/)
   assert.match(render('StudentViolations',{violations:[]}),/No Violations on Record/)
@@ -125,9 +125,9 @@ test('community workflow keeps assignment filters, actual attendance, eligible c
   const html=render('CommunityServiceManagement',props)
   assert.equal((html.match(/class="management-metric /g)||[]).length,5)
   assert.match(html, /<strong>1<\/strong><span>Students Timed In/)
-  assert.match(html, /TIME IN/)
+  assert.match(html, /Time In/)
   assert.match(html, /5 hr 15 min/)
-  assert.match(html, /View service assignment 21/)
+  assert.match(html, /View Service Assignment 21/)
   assert.match(render('CommunityServiceManagement',{...props,filters:{...props.filters,department:'99'}}), /No community service assignments match/)
   const details=render('ServiceAssignmentContent',{assignment})
   assert.match(details,/45 min/); assert.match(details,/13%/); assert.match(details,/Mara Cruz/)
@@ -138,9 +138,9 @@ test('community workflow keeps assignment filters, actual attendance, eligible c
 test('assignment duration accepts minutes alone and shows the normalized total with shared help', () => {
   for (const [hours, minutes, total] of [[0,30,'30 min'],[1,90,'2 hr 30 min'],['','','0 min']]) {
     const html=render('AssignServiceForm',{form:{required_hours:hours,required_minutes:minutes}})
-    assert.match(html,/Required service time/)
+    assert.match(html,/Required Service Time/)
     assert.match(html,/Enter hours, minutes, or both/)
-    assert.match(html,new RegExp(`Total required time: <strong>${total}</strong>`))
+    assert.match(html,new RegExp(`Total Required Time: <strong>${total}</strong>`))
     for (const name of ['required_hours','required_minutes']) {
       const input=html.match(new RegExp(`<input[^>]*name="${name}"[^>]*>`))[0]
       assert.match(input,/aria-describedby="assign-duration-help"/)
@@ -155,7 +155,7 @@ test('assignment duration accepts minutes alone and shows the normalized total w
 test('48-hour shortcut is a non-submit action whose selection follows editable duration fields', () => {
   for (const [hours, minutes, selected] of [['','',false],[48,0,true],[48,'',true],[24,30,false],[48,1,false],[48,-1,false]]) {
     const html=render('AssignServiceForm',{form:{required_hours:hours,required_minutes:minutes},busy:true})
-    const button=html.match(/<button[^>]*>Use 48 hours<\/button>/)?.[0]
+    const button=html.match(/<button[^>]*>Use 48 Hours<\/button>/)?.[0]
     assert.ok(button, '48-hour shortcut is rendered')
     assert.match(button,/type="button"/)
     assert.match(button,new RegExp(`aria-pressed="${selected}"`))
@@ -177,7 +177,7 @@ test('assignment form explains unavailable choices and locks fields and actions 
   const busy=render('AssignServiceForm',{form,busy:true,error:'Assignment unavailable'})
   assert.match(busy,/<fieldset disabled=""/)
   assert.match(busy,/data-modal-dismiss="true" disabled=""/)
-  assert.match(busy,/Saving assignment…/)
+  assert.match(busy,/Saving Assignment…/)
   assert.match(busy,/role="alert">Assignment unavailable/)
   assert.match(busy,/value="Ana Reyes - TEST-1"/)
 })
@@ -188,7 +188,7 @@ test('QR workflow shows automatic department, duration limits and active session
   const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'}}
   const idle=render('DepartmentQrScanner',props)
   const initial=render('DepartmentQrScanner',{...props,form:{...form,session_type:'',selected_duration_minutes:null}})
-  assert.match(initial,/How long will the student serve today\?/)
+  assert.match(initial,/How Long Will the Student Serve Today\?/)
   assert.doesNotMatch(initial,/aria-pressed="true"|service-large-clock/)
   assert.match(initial,/disabled="">Confirm Time In/)
   assert.match(idle,/Community Service Requirement/);assert.match(idle,/45 min/);assert.match(idle,/5 hrs 15 min/)
@@ -197,18 +197,18 @@ test('QR workflow shows automatic department, duration limits and active session
   assert.match(idle,/disabled=""[^]*?6 Hours/)
   const activeResult={...result,active_session:{...active,session_type:'FIXED',selected_duration_minutes:120,credit_cutoff_at:'2026-10-05T06:00:00Z'}}
   const timedIn=render('DepartmentQrScanner',{...props,result:activeResult})
-  assert.match(timedIn,/Already timed in/)
+  assert.match(timedIn,/Already Timed In/)
   assert.match(timedIn,/Oct 5, 2026, 9:00 AM/)
   assert.match(timedIn,/Active Service Session/);assert.match(timedIn,/Time Out/);assert.doesNotMatch(timedIn,/Confirm Time In|service-duration-tile/)
   const stale=render('DepartmentQrScanner',{...props,verifiedQr:'another-code'})
-  assert.match(stale,/Waiting for student QR/);assert.doesNotMatch(stale,/Ana Reyes/)
+  assert.match(stale,/Waiting for Student QR/);assert.doesNotMatch(stale,/Ana Reyes/)
   const noOfficer=render('DepartmentQrScanner',{...props,result:{...result,available_officers:[]}})
-  assert.match(noOfficer,/No authorized officer available/);assert.match(noOfficer,/disabled="">Confirm Time In/)
+  assert.match(noOfficer,/No Authorized Officer Available/);assert.match(noOfficer,/disabled="">Confirm Time In/)
   const final=render('DepartmentQrScanner',{...props,result:{...result,allowance:{...result.allowance,available_minutes:60}}})
-  assert.match(final,/Final remainder/)
+  assert.match(final,/Final Remainder/)
 })
 
-test('QR All remaining uses the exact balance and respects daily and midnight allowances', () => {
+test('QR All Remaining uses the exact balance and respects daily and midnight allowances', () => {
   const form={qr_code:'test-code',notes:'',session_type:'FIXED',supervising_officer_id:9}
   const result={student:{first_name:'Ana'},assignment:{id:21,department_name:'Library'},available_officers:[{officer_user_id:9}],allowance:{daily_remaining_minutes:480}}
   const scan=(remaining,available,selected=remaining,daily=480)=>render('DepartmentQrScanner',{
@@ -217,13 +217,13 @@ test('QR All remaining uses the exact balance and respects daily and midnight al
   })
   for (const [balance,label] of [[390,'6 hrs 30 min'],[90,'1 hr 30 min'],[0.6,'0.6 min'],[330.00002,'5 hrs 30 min'],[180,'3 hrs']]) {
     const html=scan(balance,balance)
-    assert.match(html,new RegExp('aria-pressed="true"[^>]*><strong>All remaining</strong><small>'+label+'</small>'))
+    assert.match(html,new RegExp('aria-pressed="true"[^>]*><strong>All Remaining</strong><small>'+label+'</small>'))
     assert.doesNotMatch(html,/disabled="">Confirm Time In/)
-    assert.doesNotMatch(html,/Final remainder/)
+    assert.doesNotMatch(html,/Final Remainder/)
     const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1])
     assert.equal(new Set(ids).size,ids.length)
   }
-  for (const balance of [0,480,540]) assert.doesNotMatch(scan(balance,Math.min(balance,480)),/All remaining/)
+  for (const balance of [0,480,540]) assert.doesNotMatch(scan(balance,Math.min(balance,480)),/All Remaining/)
   for (const [balance,stale] of [[420,390],[120,90]]) {
     const html=scan(balance,balance,stale)
     assert.doesNotMatch(html,/aria-pressed="true"/)
@@ -231,12 +231,12 @@ test('QR All remaining uses the exact balance and respects daily and midnight al
   }
   for (const [available,daily,reason] of [[300,300,"today’s remaining allowance"],[30,480,'midnight'],[0,0,'Daily Community Service Limit Reached']]) {
     const html=scan(390,available,390,daily)
-    assert.match(html,/disabled=""[^>]*><strong>All remaining<\/strong><small>6 hrs 30 min<\/small>/)
+    assert.match(html,/disabled=""[^>]*><strong>All Remaining<\/strong><small>6 hrs 30 min<\/small>/)
     assert.match(html,new RegExp(reason))
     assert.match(html,/disabled="">Confirm Time In/)
-    if (available===30) assert.match(html,/<strong>Final remainder<\/strong><small>30 min<\/small>/)
+    if (available===30) assert.match(html,/<strong>Final Remainder<\/strong><small>30 min<\/small>/)
     if (available===0) {
-      assert.doesNotMatch(html,/Final remainder/)
+      assert.doesNotMatch(html,/Final Remainder/)
       assert.match(html,/disabled=""[^>]*><strong>Open Time/)
     }
   }
@@ -261,25 +261,25 @@ test('violation detail separates structured incident notes and preserves totals 
   assert.match(html, />Incident<\/h3>/)
   assert.equal((html.match(/Documented offense/g) || []).length, 1)
   assert.match(html, /Severity<\/dt><dd>Grave/)
-  assert.match(html, />Community service<\/h3>/)
+  assert.match(html, />Community Service<\/h3>/)
   assert.doesNotMatch(html, /Quick Actions|Hours use decimal|violation-retention-note/)
   assert.match(html, /Recorded incident note/)
-  assert.doesNotMatch(html, /Handbook offense:|Incident details:/)
+  assert.doesNotMatch(html, /Handbook Offense:|Incident Details:/)
   assert.match(html, /45 min/)
   assert.match(html, /5 hr 15 min/)
   assert.match(html, /Major Offense - Category D/)
-  assert.match(html, /Edit record/)
+  assert.match(html, /Edit Record/)
   const closed = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_OFFICE', canAdd:false })
-  assert.match(closed, /Reopen to edit/)
+  assert.match(closed, /Reopen to Edit/)
   assert.match(closed, /disabled=""/)
   const reopened = render('ViolationDetailsContent', { violation: { ...violation, status:'COMPLETE' }, role:'DISCIPLINE_ADMIN', canAdd:true })
-  assert.match(reopened, /Reopen to edit/)
+  assert.match(reopened, /Reopen to Edit/)
   const legacy = render('ViolationDetailsContent', { violation: { ...violation, description:'Legacy incident facts', exact_offense:null } })
   assert.match(legacy, /Legacy incident facts/)
   const duplicate = render('ViolationDetailsContent', { violation: { ...violation, incident_details:' documented OFFENSE ' } })
-  assert.doesNotMatch(duplicate, /Incident notes/)
+  assert.doesNotMatch(duplicate, /Incident Notes/)
   const blank = render('ViolationDetailsContent', { violation: { ...violation, description:'', incident_details:'  ' } })
-  assert.doesNotMatch(blank, /Incident notes/)
+  assert.doesNotMatch(blank, /Incident Notes/)
 })
 
 test('audited edit history displays real transitions and credited-hour corrections without inventing staff names', () => {
@@ -313,23 +313,23 @@ test('violation management keeps six real metrics, seven dated rows, filters and
   assert.equal((html.match(/class="violation-student"/g) || []).length, 7)
   assert.match(html, /Showing 1–7 of 12 records/)
   assert.match(html, /October 5, 2026<\/span><small>4:00 PM/)
-  assert.match(html, /View violation 12/)
-  assert.doesNotMatch(html, /View violation 5/)
-  assert.match(html, /Edit violation 12/)
-  assert.match(html, /Edit violation 9/)
+  assert.match(html, /View Violation 12/)
+  assert.doesNotMatch(html, /View Violation 5/)
+  assert.match(html, /Edit Violation 12/)
+  assert.match(html, /Edit Violation 9/)
   assert.match(html, /value="PENDING">Pending/)
   const admin = render('ViolationManagement', { ...props, role: 'DISCIPLINE_ADMIN' })
-  assert.match(admin, /Edit violation 12/)
+  assert.match(admin, /Edit Violation 12/)
   const filtered = render('ViolationManagement', { ...props, filters: { ...filters, search: 'student 9', severity: 'GRAVE', status: 'OPEN' } })
   assert.match(filtered, /1 record/)
   assert.equal((filtered.match(/class="violation-student"/g) || []).length, 1)
-  assert.match(filtered, /View violation 9/)
+  assert.match(filtered, /View Violation 9/)
   const empty = render('ViolationManagement', { ...props, filters: { ...filters, status: 'INVALID_CANCEL' } })
   assert.match(empty, /No violations match the selected filters/)
-  assert.doesNotMatch(empty, /Violation records pagination/)
+  assert.doesNotMatch(empty, /Violation Records Pagination/)
   const loading = render('ViolationManagement', { ...props, loading: true })
   assert.match(loading, /Loading violation records/)
-  assert.doesNotMatch(loading, /View violation 12/)
+  assert.doesNotMatch(loading, /View Violation 12/)
 })
 
 test('student record overview uses full API totals, two case previews and four accessible tabs', () => {
@@ -353,8 +353,8 @@ test('student record overview uses full API totals, two case previews and four a
   assert.doesNotMatch(html, /record-case-service|Handbook sanction reference|record-discipline-status|Review required for repeated minor offenses/)
   assert.equal((html.match(/Major Level/g) || []).length, 1)
   assert.equal((html.match(/5 hr 15 min/g) || []).length, 1)
-  assert.match(html, /Edit photo for Ana Reyes/)
-  assert.doesNotMatch(html, /type="file"|Photo change reason/)
+  assert.match(html, /Edit Photo for Ana Reyes/)
+  assert.doesNotMatch(html, /type="file"|Photo Change Reason/)
   const duplicate = render('StudentRecordContent', { student: { id: 1, first_name: 'Ana' }, violations: [{ id: 1, student_id: 1, violation_name: 'Documented offense', exact_offense: 'Documented offense', description: 'Documented offense' }] })
   assert.equal((duplicate.match(/Documented offense/g) || []).length, 1)
 })
@@ -366,23 +366,23 @@ test('embedded service content keeps assignments, credited time, corrections and
   ], activeSessions: [active] })
   assert.match(html, /Assignment #21/)
   assert.match(html, /Ana Montana/)
-  assert.match(html, /aria-label="Credited progress for assignment #21" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"/)
+  assert.match(html, /aria-label="Credited Progress for Assignment #21" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"/)
   assert.match(html, /1 hr completed of 4 hr/)
   assert.match(html, /3 hr remaining/)
   assert.match(html, /25%/)
   assert.match(html, /Verified attendance correction/)
-  assert.match(html, /TIME IN/)
+  assert.match(html, /Time In/)
   assert.doesNotMatch(html, /Other Department|Assignment #22/)
 })
 
 test('service drawer has explicit zero totals, attendance and corrections when there are no assignments', () => {
   const html = render('StudentServiceTimeContent', { student: { id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000123456' }, activeSessions: [], assignments: [] })
-  assert.match(html, /TIME OUT/)
-  assert.match(html, /Not currently serving/)
+  assert.match(html, /Time Out/)
+  assert.match(html, /Not Currently Serving/)
   assert.match(html, /0 assignments/)
   assert.match(html, /No community service assignments yet/)
   assert.match(html, /No completed-hour corrections recorded/)
-  assert.match(html, /aria-label="Overall credited service progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/)
+  assert.match(html, /aria-label="Overall Credited Service Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/)
   assert.equal((html.match(/<strong>0 min<\/strong>/g) || []).length, 3)
 })
 
@@ -397,8 +397,8 @@ test('student directory keeps five compact rows, real counts, and only relevant 
   assert.match(html, /Showing 1–5 of 7 students/)
   assert.match(html, /Academic Info/)
   assert.match(html, /clearance-cleared">Cleared/)
-  assert.match(html, /aria-label="More actions for Student 1 Test"/)
-  assert.doesNotMatch(html, /TIME OUT|Offense indicator legend|Show Service Time|Guardian Contact/)
+  assert.match(html, /aria-label="More Actions for Student 1 Test"/)
+  assert.doesNotMatch(html, /Time Out|Offense Indicator Legend|Show Service Time|Guardian Contact/)
 })
 
 test('administrative dashboards split primary and secondary actions with compact analytics access', () => {
@@ -406,8 +406,8 @@ test('administrative dashboards split primary and secondary actions with compact
     const html = render('AdminDashboard', { role, onNavigate() {} })
     assert.doesNotMatch(html, />Graphs</)
     assert.equal((html.match(/<button/g) || []).length > 4, true)
-    assert.match(html, /Offense distribution/)
-    for (const label of ['Scan QR','Issue violation','Add student','Generate report']) assert.match(html,new RegExp(label))
+    assert.match(html, /Offense Distribution/)
+    for (const label of ['Scan QR','Issue Violation','Add Student','Generate Report']) assert.match(html,new RegExp(label))
     assert.equal((render('DashboardQuickActions', { role, onNavigate() {} }).match(/<button/g) || []).length, 4)
     assert.doesNotMatch(html, /Analytics &amp; Trends|Recorded Violations Over Time/)
   }
@@ -419,13 +419,13 @@ test('administrative dashboards split primary and secondary actions with compact
 test('countdown renders remaining time, stops at zero, and does not announce every tick', () => {
   const midway = render('ServiceCountdown', { session: active, now: start + 1800000 })
   assert.match(midway, /00:30:00/)
-  assert.match(midway, /aria-label="Remaining session time"/)
+  assert.match(midway, /aria-label="Remaining Session Time"/)
   assert.doesNotMatch(midway, /aria-live|role="status"/)
   const finished = render('ServiceCountdown', { session: active, now: start + 7200000 })
   assert.match(finished, /00:00:00/)
-  assert.match(finished, /Service limit reached — Time Out required/)
-  assert.match(render('AttendanceIndicator', { sessions: [active] }), /TIME IN/)
-  assert.match(render('ServiceCountdown', { session: {}, now: start }), /Time unavailable/)
+  assert.match(finished, /Service Limit Reached — Time Out Required/)
+  assert.match(render('AttendanceIndicator', { sessions: [active] }), /Time In/)
+  assert.match(render('ServiceCountdown', { session: {}, now: start }), /Time Unavailable/)
 })
 
 test('daily-limit timer freezes while attendance still requires Time Out', () => {
@@ -433,10 +433,10 @@ test('daily-limit timer freezes while attendance still requires Time Out', () =>
     completed_today_minutes:120,credit_cutoff_at:new Date(start+6*3600000).toISOString()}
   for (const hours of [6,7]) {
     const html = render('ServiceCountdown', { session, now: start+hours*3600000 })
-    assert.match(html, /aria-label="Time elapsed">06:00:00<\/time>/)
-    assert.match(html, /Daily time remaining <strong>00:00:00<\/strong>/)
-    assert.match(html, /Daily Community Service Limit Reached — Time Out required/)
-    assert.match(render('AttendanceIndicator', { sessions: [session] }), /TIME IN/)
+    assert.match(html, /aria-label="Time Elapsed">06:00:00<\/time>/)
+    assert.match(html, /Daily Time Remaining <strong>00:00:00<\/strong>/)
+    assert.match(html, /Daily Community Service Limit Reached — Time Out Required/)
+    assert.match(render('AttendanceIndicator', { sessions: [session] }), /Time In/)
   }
 })
 
@@ -448,11 +448,11 @@ test('active attendance groups six columns without losing service details or act
     credit_cutoff_at:new Date(start+6*3600000).toISOString()}
   const html = render('AdminActiveAttendance', { sessions:[session] })
   assert.equal((html.match(/<th scope="col">/g)||[]).length,6)
-  assert.match(html, /Department &amp; supervisor/)
+  assert.match(html, /Department &amp; Supervisor/)
   assert.match(html, /Maria Santos/)
   assert.match(html, /2024-001/)
   assert.match(html, /Library.*Cardo Dalisay.*Department Head/s)
-  assert.match(html, /Time elapsed/)
+  assert.match(html, /Time Elapsed/)
   assert.match(html, /2 hr 10 min credited/)
   assert.match(html, /of 48 hr required/)
   assert.match(html, /45 hr 50 min remaining/)
@@ -460,11 +460,11 @@ test('active attendance groups six columns without losing service details or act
   assert.match(html, /Daily Community Service Limit Reached/)
   assert.match(html, /class="attendance-actions"/)
   assert.match(html, />Time Out<\/button>/)
-  assert.match(html, />View assignment<\/button>/)
-  assert.match(html, /TIME IN/)
+  assert.match(html, />View Assignment<\/button>/)
+  assert.match(html, /Time In/)
   const fixed = render('AdminActiveAttendance', { sessions:[{...session,session_type:'FIXED',selected_duration_minutes:120}] })
-  assert.match(fixed, /Remaining session time/)
-  assert.doesNotMatch(fixed, />Time elapsed</)
+  assert.match(fixed, /Remaining Session Time/)
+  assert.doesNotMatch(fixed, />Time Elapsed</)
 })
 
 test('active attendance preserves loading, error and empty states', () => {
@@ -478,18 +478,18 @@ test('active attendance preserves loading, error and empty states', () => {
 })
 
 test('attendance indicator distinguishes TIME OUT, loading, and unavailable data', () => {
-  assert.match(render('AttendanceIndicator', { sessions: [], details: true }), /TIME OUT.*Not currently serving/)
-  assert.match(render('AttendanceIndicator', { sessions: [active], ready: false, loading: true }), /Loading attendance/)
+  assert.match(render('AttendanceIndicator', { sessions: [], details: true }), /Time Out.*Not Currently Serving/)
+  assert.match(render('AttendanceIndicator', { sessions: [active], ready: false, loading: true }), /Loading Attendance/)
   const unavailable = render('AttendanceIndicator', { ready: false })
-  assert.match(unavailable, /Attendance unavailable/)
-  assert.doesNotMatch(unavailable, /TIME OUT/)
+  assert.match(unavailable, /Attendance Unavailable/)
+  assert.doesNotMatch(unavailable, /Time Out/)
 })
 
 test('student dashboard shows TIME OUT even without a current session', () => {
   const html = render('StudentDashboard', { dtr: { assignments: [], sessions: [] }, onNavigate() {} })
-  assert.match(html, /Current attendance status/)
-  assert.match(html, /TIME OUT/)
-  assert.match(html, /Not currently serving/)
+  assert.match(html, /Current Attendance Status/)
+  assert.match(html, /Time Out/)
+  assert.match(html, /Not Currently Serving/)
 })
 
 test('filtered student history never hides current TIME IN or alters historical worked time', () => {
@@ -498,12 +498,12 @@ test('filtered student history never hides current TIME IN or alters historical 
     dtr: { assignments: [], sessions: [completed] },
     liveDtr: { assignments: [], sessions: [active, completed] }, onFilter() {}
   })
-  assert.match(html, /TIME IN/)
-  assert.match(html, /Remaining session time/)
+  assert.match(html, /Time In/)
+  assert.match(html, /Remaining Session Time/)
   assert.match(html, /Worked<\/dt><dd>45m/)
   assert.match(html, /Assignment #21/)
   const unknown = render('StudentCommunityService', { dtr: { assignments: [], sessions: [completed] }, onFilter() {} })
-  assert.match(unknown, /Attendance unavailable/)
+  assert.match(unknown, /Attendance Unavailable/)
 })
 
 test('admin attendance shows only active students and counts students rather than sessions', () => {
@@ -513,13 +513,13 @@ test('admin attendance shows only active students and counts students rather tha
     activeSessions: [active, { ...active, id: 12, session_id: 12, assignment_id: 22, department_name: 'Clinic' }],
     role: 'DISCIPLINE_ADMIN', onNavigate() {}
   })
-  assert.match(html, /Active attendance/)
-  assert.match(html, /TIME IN/)
-  assert.doesNotMatch(html, /TIME OUT|Ben Cruz|type="search"/)
+  assert.match(html, /Active Attendance/)
+  assert.match(html, /Time In/)
+  assert.doesNotMatch(html, /<button[^>]*>Time Out|Ben Cruz|type="search"/)
   assert.match(html, /Ana Reyes/)
   assert.match(html, /Library/)
   assert.match(html, /Clinic/)
-  assert.match(html, /Timed-in students<\/span><strong>1<\/strong>/)
+  assert.match(html, /Timed-in Students<\/span><strong>1<\/strong>/)
   assert.equal((html.match(/class="dashboard-active-student"/g) || []).length, 1)
 })
 
@@ -529,13 +529,13 @@ test('admin summary derives resolved cases, severity, and progress from supplied
     violations: ['OPEN', 'COMPLETE', 'CLEAR', 'CANCELLED', 'PENDING'].map((status, id) => ({ id, student_id: id, student_name: `Student ${id}`, status, severity: 'GRAVE', offense_indicator_level: 'GRAVE' })),
     assignments: [{ id: 1, student_id: 1, status: 'OPEN', required_hours: 10, remaining_hours: 4 }]
   })
-  assert.match(html, /Resolved cases<\/span><strong>2<\/strong>/)
+  assert.match(html, /Resolved Cases<\/span><strong>2<\/strong>/)
   assert.match(html, /Open Violations<\/span><strong>2<\/strong>/)
   assert.match(html, /severity-grave">Grave/)
   assert.match(html, /<progress value="60" max="100"/)
   assert.match(html, /<dt>Credited<\/dt><dd>6 hr/)
   assert.match(html, /<dt>Remaining<\/dt><dd>4 hr/)
-  assert.equal((html.match(/aria-label="View violation /g) || []).length, 4)
+  assert.equal((html.match(/aria-label="View Violation /g) || []).length, 4)
   assert.match(render('AdminDashboard', { role: 'DISCIPLINE_ADMIN', onNavigate() {}, attendanceReady: false }), /Attendance unavailable/)
   assert.match(render('AdminDashboard', { role: 'DISCIPLINE_ADMIN', onNavigate() {}, error: 'Unable to load administration data' }), /role="alert"/)
 })
@@ -546,7 +546,7 @@ test('admin attendance caps preview at three students and excludes ended session
     activeSessions: [...[1, 2, 3, 4].map((student_id) => ({ ...active, id: student_id, session_id: student_id, student_id })), { ...active, id: 5, student_id: 5, time_out: '2026-10-05T02:00:00Z' }]
   })
   assert.equal((html.match(/class="dashboard-active-student"/g) || []).length, 3)
-  assert.match(html, /View all 4 timed-in students/)
+  assert.match(html, /View All 4 Timed-in Students/)
 })
 
 test('admin dashboard prioritizes work and shows each recent case once for both office roles', () => {
@@ -554,28 +554,28 @@ test('admin dashboard prioritizes work and shows each recent case once for both 
     const html = render('AdminDashboard', { role, onNavigate() {}, onViewViolation() {},
       violations: Array.from({length:5},(_,id)=>({id,student_name:`Case student ${id}`,exact_offense:`Unique incident ${id}`,status:'OPEN',severity:'GRAVE',offense_indicator_level:'GRAVE'})) })
     assert.match(html, /Scan QR/)
-    assert.match(html, /Issue violation/)
-    assert.ok(html.indexOf('Active attendance') < html.indexOf('Community service'))
-    assert.ok(html.indexOf('Community service') < html.indexOf('Recent violations'))
-    assert.ok(html.indexOf('Recent violations') < html.indexOf('Offense distribution'))
+    assert.match(html, /Issue Violation/)
+    assert.ok(html.indexOf('Active Attendance') < html.indexOf('Community Service'))
+    assert.ok(html.indexOf('Community Service') < html.indexOf('Recent Violations'))
+    assert.ok(html.indexOf('Recent Violations') < html.indexOf('Offense Distribution'))
     assert.doesNotMatch(html, /Recent case summary|offense-donut|dashboard-attendance-totals/)
     assert.equal((html.match(/Unique incident 0/g)||[]).length,1)
-    assert.equal((html.match(/aria-label="View violation /g)||[]).length,4)
+    assert.equal((html.match(/aria-label="View Violation /g)||[]).length,4)
     assert.doesNotMatch(html, /Unique incident 4/)
-    assert.match(html, /Awaiting clearance/)
-    assert.match(html, /<progress[^>]*aria-label="Grave: 5 of 5 classified cases"[^>]*value="5"[^>]*max="5"/)
+    assert.match(html, /Awaiting Clearance/)
+    assert.match(html, /<progress[^>]*aria-label="Grave: 5 of 5 Classified Cases"[^>]*value="5"[^>]*max="5"/)
   }
 })
 
 test('admin dashboard labels each session mode and keeps capped timers and active status once', () => {
   const session = {...active,session_type:'OPEN_TIME',credit_cutoff_at:'2026-10-05T07:00:00Z',cutoff_reason:'DAILY_LIMIT',server_time:'2026-10-05T08:00:00Z',completed_today_minutes:120,remaining_hours:12}
   const html=render('AdminDashboard',{role:'DISCIPLINE_ADMIN',onNavigate() {}, activeSessions:[session,{...session,id:12,session_id:12,assignment_id:22,session_type:'FIXED',selected_duration_minutes:120,expected_completion_at:'2026-10-05T03:00:00Z',department_name:'Clinic'}]})
-  assert.equal((html.match(/class="dashboard-session-label">Time elapsed/g)||[]).length,1)
-  assert.equal((html.match(/class="dashboard-session-label">Remaining session time/g)||[]).length,1)
-  assert.equal((html.match(/<time[^>]*aria-label="Time elapsed"/g)||[]).length,1)
-  assert.equal((html.match(/<time[^>]*aria-label="Remaining session time"/g)||[]).length,1)
+  assert.equal((html.match(/class="dashboard-session-label">Time Elapsed/g)||[]).length,1)
+  assert.equal((html.match(/class="dashboard-session-label">Remaining Session Time/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Time Elapsed"/g)||[]).length,1)
+  assert.equal((html.match(/<time[^>]*aria-label="Remaining Session Time"/g)||[]).length,1)
   assert.match(html,/06:00:00/)
-  assert.match(html,/Daily Community Service Limit Reached — Time Out required/)
+  assert.match(html,/Daily Community Service Limit Reached — Time Out Required/)
   assert.equal((html.match(/class="dashboard-active-student"/g)||[]).length,1)
-  assert.match(html,/TIME IN/)
+  assert.match(html,/Time In/)
 })

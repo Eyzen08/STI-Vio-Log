@@ -1,6 +1,6 @@
 import { formatPhilippinePhone, philippineMobileDigits } from '../lib/phone.js'
 
-export default function PhoneInput({ id, name, label = 'Phone number', value, onChange, required = false, disabled = false }) {
+export default function PhoneInput({ id, name, label = 'Phone Number', value, onChange, required = false, disabled = false }) {
   const update = (event) => {
     const next = philippineMobileDigits(event.target.value)
     onChange?.({ target: { name, value: next } })

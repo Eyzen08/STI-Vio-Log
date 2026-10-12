@@ -18,7 +18,7 @@ test('reports offer only meaningful controls, labels, statuses and valid calenda
   assert.deepEqual(reports.reportFilterFields('dtr'), ['student_id','from_date','to_date'])
   assert.deepEqual(reports.reportFilterFields('non-compliance'), ['sort_by'])
   assert.deepEqual(reports.reportStatusOptions('clearance'), ['NOT_ELIGIBLE','PENDING','CLEARED'])
-  assert.equal(reports.reportSortLabel('date_desc'), 'Newest first')
+  assert.equal(reports.reportSortLabel('date_desc'), 'Newest First')
   assert.match(reports.validateReportFilters('violations', {from_date:'2026-02-30'}), /valid calendar date/i)
   assert.match(reports.validateReportFilters('dtr', {from_date:'2026-10-09',to_date:'2026-10-08'}), /end date/i)
   assert.equal(reports.validateReportFilters('community-service', {from_date:'not-used'}), '')

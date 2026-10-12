@@ -12,13 +12,13 @@ test('unified System Monitoring uses account search and one direct password-conf
   assert.match(dashboard,/api\/high-risk-actions\/step-up/)
   assert.match(dashboard,/api\/high-risk-actions\/execute/)
   assert.doesNotMatch(dashboard,/awaiting Discipline Administrator approval|two-person/i)
-  assert.match(dashboard,/Account recovery and lock/)
+  assert.match(dashboard,/Account Recovery and Lock/)
   assert.match(dashboard,/can_lock/);assert.match(dashboard,/can_recover/)
   assert.match(dashboard,/temporary-credential/);assert.match(dashboard,/navigator\.clipboard\.writeText/)
 })
 
 test('System Monitoring exposes refreshable health and event filters',()=>{
-  assert.match(dashboard,/Component health/);assert.match(dashboard,/Refresh checks/);assert.match(dashboard,/Search events/);assert.match(dashboard,/Apply filters/)
+  assert.match(dashboard,/Component Health/);assert.match(dashboard,/Refresh Checks/);assert.match(dashboard,/Search Events/);assert.match(dashboard,/Apply Filters/)
   assert.match(dashboard,/PlatformMark/);assert.match(dashboard,/Supabase/);assert.match(dashboard,/Socket\.IO/)
 })
 

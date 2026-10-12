@@ -11,10 +11,10 @@ export const sidebarNavigationFor = (role = '') => {
   }
   const section = (id,label,views) => ({id,label,type:'section',items:views.map(page).filter(Boolean)})
   const sections = role === 'STUDENT'
-    ? [section('student-services','Student services',['My Service','My QR','My Violations','My Clearance'])]
+    ? [section('student-services','Student Services',['My Service','My QR','My Violations','My Clearance'])]
     : role === 'DEPARTMENT_HEAD'
-      ? [section('daily-work','Daily work',['QR Scan','Community Service','DTR','Students'])]
-      : [section('student-records','Student records',['Students','Violations']),section('attendance-service','Attendance & service',['QR Scan','Active Attendance','Community Service']),section('clearance','Clearance',['Awaiting Clearance','Clearance'])]
+      ? [section('daily-work','Daily Work',['QR Scan','Community Service','DTR','Students'])]
+      : [section('student-records','Student Records',['Students','Violations']),section('attendance-service','Attendance & Service',['QR Scan','Active Attendance','Community Service']),section('clearance','Clearance',['Awaiting Clearance','Clearance'])]
   return [page('Dashboard'), page('STI Handbook'), ...sections, section('updates','Updates',['Messages','Notifications']),
     {...section('reports','Reporting',['Reports','Analytics & Trends']),type:'group',icon:'reports'},
     {...section('management','Administration',['Departments & Officer Accounts','Duplicate Review','Audit Log','System Dashboard']),type:'group',icon:'settings'},
@@ -26,36 +26,36 @@ export const sidebarGroupForPath = (entries = [], path = '') =>
   entries.find((entry) => entry.type === 'group' && entry.items.some((item) => item.path === path))?.id || null
 
 const SIDEBAR_TOOLTIPS = {
-  Dashboard: 'View discipline overview',
+  Dashboard: 'View Discipline Overview',
   'STI Handbook': 'Read the STI Student Handbook',
-  Students: 'Manage student records',
-  Violations: 'Add student violation',
-  'Active Attendance': 'Monitor active attendance',
-  'Community Service': 'Manage community service',
-  'QR Scan': 'Scan attendance QR code',
-  Clearance: 'Manage student clearance',
-  'Awaiting Clearance': 'Approve completed community service',
-  Messages: 'View student messages',
-  Notifications: 'View your notifications',
-  Reports: 'Generate discipline reports',
-  Reporting: 'View reports and analytics',
-  Administration: 'Manage administration tools',
-  Logout: 'Sign out of STI Vio-Log',
-  'Departments & Officer Accounts': 'Manage departments and officers',
-  'Duplicate Review': 'Review duplicate records',
-  'System Monitoring': 'Monitor system activity',
-  Settings: 'Configure system settings',
-  'Assigned Students': 'View assigned student records',
-  Attendance: 'Review attendance records',
-  'Service Results': 'Review service results',
-  'My Profile': 'View your profile',
-  Profile: 'View your profile',
-  'My Violations': 'View your violations',
-  'My Service': 'View your service progress',
-  'My QR': 'View your QR code',
-  'My Clearance': 'View your clearance',
-  'Audit Log': 'Review discipline audit log',
-  'Analytics & Trends': 'Explore discipline trends'
+  Students: 'Manage Student Records',
+  Violations: 'Add Student Violation',
+  'Active Attendance': 'Monitor Active Attendance',
+  'Community Service': 'Manage Community Service',
+  'QR Scan': 'Scan Attendance QR Code',
+  Clearance: 'Manage Student Clearance',
+  'Awaiting Clearance': 'Approve Completed Community Service',
+  Messages: 'View Student Messages',
+  Notifications: 'View Your Notifications',
+  Reports: 'Generate Discipline Reports',
+  Reporting: 'View Reports and Analytics',
+  Administration: 'Manage Administration Tools',
+  Logout: 'Sign Out of STI Vio-Log',
+  'Departments & Officer Accounts': 'Manage Departments and Officers',
+  'Duplicate Review': 'Review Duplicate Records',
+  'System Monitoring': 'Monitor System Activity',
+  Settings: 'Configure System Settings',
+  'Assigned Students': 'View Assigned Student Records',
+  Attendance: 'Review Attendance Records',
+  'Service Results': 'Review Service Results',
+  'My Profile': 'View Your Profile',
+  Profile: 'View Your Profile',
+  'My Violations': 'View Your Violations',
+  'My Service': 'View Your Service Progress',
+  'My QR': 'View Your QR Code',
+  'My Clearance': 'View Your Clearance',
+  'Audit Log': 'Review Discipline Audit Log',
+  'Analytics & Trends': 'Explore Discipline Trends'
 }
 
 export const sidebarTooltipFor = (label) => SIDEBAR_TOOLTIPS[label]

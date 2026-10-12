@@ -25,17 +25,17 @@ export default function TermsAcknowledgment({ status, error, onStatus, onRetry, 
   }
   return <section className={`legal-acknowledgment${status?.required ? '' : ' legal-acknowledgment--compact'}`} aria-labelledby="terms-acknowledgment-title" aria-busy={checking || busy}>
     <p className="eyebrow">STI Vio-Log</p>
-    <h1 id="terms-acknowledgment-title" ref={heading} tabIndex="-1">{status?.required ? 'Review the Terms of Use' : 'Checking account access'}</h1>
+    <h1 id="terms-acknowledgment-title" ref={heading} tabIndex="-1">{status?.required ? 'Review the Terms of Use' : 'Checking Account Access'}</h1>
     {status?.required ? <>
       <p>Review the Terms of Use before continuing. The Privacy Notice explains how the portal handles your information.</p>
-      <dl className="legal-document-versions"><div><dt>Terms version</dt><dd>{status.terms_version}</dd></div><div><dt>Privacy Notice version</dt><dd>{status.privacy_notice_version}</dd></div></dl>
+      <dl className="legal-document-versions"><div><dt>Terms Version</dt><dd>{status.terms_version}</dd></div><div><dt>Privacy Notice Version</dt><dd>{status.privacy_notice_version}</dd></div></dl>
     </> : checking && <p className="account-check-status" role="status"><span className="action-spinner" aria-hidden="true" />Verifying Terms acknowledgment…</p>}
     <PolicyLinks onOpenPolicy={onOpenPolicy}/>
     {(error || saveError) && <p className="error-message" role="alert">{error || saveError}</p>}
     <footer className="legal-acknowledgment-actions">
-      {status?.required && <AsyncActionButton type="button" busy={busy} busyLabel="Saving acknowledgment..." onClick={acknowledge}>Acknowledge Terms and continue</AsyncActionButton>}
-      {error && <button type="button" className="secondary-button" onClick={onRetry}>Try again</button>}
-      <button type="button" className="text-button" disabled={busy} onClick={onLogout}>Sign out</button>
+      {status?.required && <AsyncActionButton type="button" busy={busy} busyLabel="Saving Acknowledgment..." onClick={acknowledge}>Acknowledge Terms and Continue</AsyncActionButton>}
+      {error && <button type="button" className="secondary-button" onClick={onRetry}>Try Again</button>}
+      <button type="button" className="text-button" disabled={busy} onClick={onLogout}>Sign Out</button>
     </footer>
   </section>
 }

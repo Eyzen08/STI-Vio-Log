@@ -3,6 +3,7 @@ const { assertAllowedFields } = require('../utils/validators');
 const ExcelJS = require('exceljs');
 const { createReportWorkbook, reportFilename, formatReportSheet } = require('../services/reportExport');
 const { validReportDate, reportStatusOptions } = require('../../../shared/adminReports.mjs');
+const { formatTitleCase } = require('../../../shared/displayFormat.mjs');
 const bad = (message) => { const error = new Error(message); error.statusCode = 400; throw error; };
 const validateId = (value) => { if (value !== undefined && (!/^\d+$/.test(String(value)) || Number(value) < 1)) bad('student_id must be a positive integer'); };
 const validateDate = (name, value) => { if (value !== undefined && !validReportDate(String(value))) bad(`${name} must use a valid YYYY-MM-DD calendar date`); };
@@ -134,7 +135,7 @@ const analyticsRows = (snapshot, generatedAt = new Date()) => {
   ];
 };
 
-const analyticsCsv = (snapshot, generatedAt) => `\uFEFF${[ANALYTICS_HEADERS.join(','), ...analyticsRows(snapshot, generatedAt).map(row => row.map(csvCell).join(','))].join('\r\n')}\r\n`;
+const analyticsCsv = (snapshot, generatedAt) => `\uFEFF${[ANALYTICS_HEADERS.join(','), ...analyticsRows(snapshot, generatedAt).map(([section, metric, ...values]) => [section, section === 'Department' ? metric : formatTitleCase(metric), ...values].map(csvCell).join(','))].join('\r\n')}\r\n`;
 const createAnalyticsWorkbook = (snapshot, generatedAt = new Date()) => {
   const rows = analyticsRows(snapshot, generatedAt);
   const workbook = new ExcelJS.Workbook();
@@ -156,12 +157,13 @@ const createAnalyticsWorkbook = (snapshot, generatedAt = new Date()) => {
     sheet.addRow([`Filters: ${rows[0][4]}`]);
     sheet.addRow([`Selected dates: ${snapshot.range.from} – ${snapshot.range.to}`]);
     for (let row = 1; row <= 4; row++) sheet.mergeCells(row, 1, row, headers.length);
-    sheet.addRow([]); sheet.addRow(headers);
+    sheet.addRow([]); sheet.addRow(headers.map(formatTitleCase));
     rows.filter(row => row[0] === section).forEach(([, metric, from, to, value, unit]) => {
+      const label = section === 'Department' ? metric : formatTitleCase(metric);
       if (section === 'Violations Over Time') sheet.addRow([new Date(`${from}T00:00:00Z`), new Date(`${to}T00:00:00Z`), value]);
-      else if (section === 'Community Service') sheet.addRow([metric, unit === 'percent' ? value / 100 : value, unit]);
-      else if (section === 'Key Insights' && metric === 'Service completion' && value === `${snapshot.analytics.service.completionPercent}%`) sheet.addRow([metric, snapshot.analytics.service.completionPercent / 100]);
-      else sheet.addRow([metric, section === 'Filters' && (metric === 'Date range' || metric === 'Comparison dates') ? `${from} – ${to}` : value]);
+      else if (section === 'Community Service') sheet.addRow([label, unit === 'percent' ? value / 100 : value, unit]);
+      else if (section === 'Key Insights' && metric === 'Service completion' && value === `${snapshot.analytics.service.completionPercent}%`) sheet.addRow([label, snapshot.analytics.service.completionPercent / 100]);
+      else sheet.addRow([label, section === 'Filters' && (metric === 'Date range' || metric === 'Comparison dates') ? `${from} – ${to}` : value]);
     });
     formatReportSheet(sheet);
     if (section === 'Violations Over Time') {

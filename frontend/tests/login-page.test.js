@@ -94,7 +94,7 @@ test('password visibility control is positioned inside the password field', () =
 
 test('sign-in scopes floating labels to its two fields and preserves autocomplete', () => {
   assert.match(source, /className="login-form login-form--floating"/)
-  assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or student number<\/span>/)
+  assert.match(source, /className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or Student Number<\/span>/)
   assert.match(source, /labelClassName="login-floating-field" placeholder="Enter your current password"/)
   assert.doesNotMatch(registrationSource, /login-floating-field/)
   assert.match(source, /autoComplete="username"/)

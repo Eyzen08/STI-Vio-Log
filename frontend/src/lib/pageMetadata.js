@@ -1,3 +1,5 @@
+import { formatTitleCase } from './displayFormat.js'
+
 const PUBLIC_METADATA = {
   '/login': ['Sign In', 'Access the secure STI Vio-Log portal for STI Global City.'],
   '/forgot-password': ['Forgot Password', 'Request secure recovery for your STI Vio-Log account.'],
@@ -10,7 +12,7 @@ const PUBLIC_METADATA = {
 export const metadataForRoute = (path, routeLabel) => {
   if (path === '/') return { title: 'STI Vio-Log | STI Global City', description: 'Secure student discipline, community service, and clearance management for STI Global City.', robots: 'index, follow' }
   const [page, description] = PUBLIC_METADATA[path] || [routeLabel || 'Page Not Found', 'STI Vio-Log student discipline and community service portal.']
-  return { title: `${page} | STI Vio-Log`, description, robots: PUBLIC_METADATA[path] ? 'index, follow' : 'noindex, nofollow' }
+  return { title: `${formatTitleCase(page)} | STI Vio-Log`, description, robots: PUBLIC_METADATA[path] ? 'index, follow' : 'noindex, nofollow' }
 }
 
 export const applyPageMetadata = ({ title, description, robots }) => {

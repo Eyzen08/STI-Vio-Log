@@ -20,6 +20,15 @@ const snapshot = () => ({
   insights: [{ label: 'Violation change', value: '↑ 100% violations vs previous period' }, { label: 'Active service', value: '1 assignment' }, { label: 'Service completion', value: '50%' }, { label: 'Overdue assignments', value: 'Data unavailable' }]
 });
 
+test('analytics export title-cases headings without changing snapshot labels or program names', () => {
+  const data = snapshot();
+  data.analytics.programs[0].label = 'itA-101';
+  const csv = reports.analyticsCsv(data);
+  assert.match(csv, /"Key Insights","Violation Change",/);
+  assert.match(csv, /"Department","itA-101",/);
+  assert.equal(data.insights[0].label, 'Violation change');
+});
+
 test('analytics downloads preserve all six sections, typed counts, filters, and Manila generation time', async () => {
   const data = snapshot();
   data.program = '=BSIT, "José"';
@@ -30,7 +39,7 @@ test('analytics downloads preserve all six sections, typed counts, filters, and 
   const workbook = await new ExcelJS.Workbook().xlsx.load(buffer);
   assert.deepEqual(workbook.worksheets.map(sheet => sheet.name), ['Filters', 'Violations Over Time', 'Classification', 'Community Service', 'Department', 'Key Insights']);
   const filters = workbook.getWorksheet('Filters');
-  const headers = [['Setting', 'Value'], ['Period start', 'Period end', 'Recorded violations'], ['Classification', 'Recorded violations'], ['Metric', 'Value', 'Unit'], ['Program / Strand', 'Recorded violations'], ['Insight', 'Value']];
+  const headers = [['Setting', 'Value'], ['Period Start', 'Period End', 'Recorded Violations'], ['Classification', 'Recorded Violations'], ['Metric', 'Value', 'Unit'], ['Program / Strand', 'Recorded Violations'], ['Insight', 'Value']];
   workbook.worksheets.forEach((sheet, index) => {
     assert.deepEqual(sheet.getRow(6).values.slice(1), headers[index]);
     assert.equal(sheet.views[0].showGridLines, false);
@@ -101,7 +110,7 @@ test('empty analytics export retains zero counts and unavailable labels', async 
   const csv = reports.analyticsCsv(data);
   assert.match(csv, /No records for this selection/);
   assert.match(csv, /No assignments/);
-  assert.match(csv, /"Total assignments","2026-10-01","2026-10-07","0","assignments"/);
+  assert.match(csv, /"Total Assignments","2026-10-01","2026-10-07","0","assignments"/);
   const workbook = await new ExcelJS.Workbook().xlsx.load(await reports.createAnalyticsWorkbook(data).xlsx.writeBuffer());
   assert.equal(workbook.getWorksheet('Department').getCell('A7').value, 'No records for this selection.');
   assert.equal(workbook.getWorksheet('Department').getCell('B7').value, 0);
@@ -123,8 +132,8 @@ test('exports accept actual dashboard snapshots across program filters, periods,
     const range = periodRange(period, '2026-10-07', '2026-10-01', '2026-10-01');
     const analytics = analyticsForRange({ students, violations, assignments, range, program });
     const csv = reports.analyticsCsv({ range, program, analytics, insights: analyticsInsights(analytics) });
-    assert.ok(csv.includes(`"Current violations","${range.from}","${range.to}","${current}","violations"`));
-    assert.ok(csv.includes(`"Previous violations","${range.previousFrom}","${range.previousTo}","${previous}","violations"`));
+    assert.ok(csv.includes(`"Current Violations","${range.from}","${range.to}","${current}","violations"`));
+    assert.ok(csv.includes(`"Previous Violations","${range.previousFrom}","${range.previousTo}","${previous}","violations"`));
     assert.ok(csv.includes(`"Completed","${range.from}","${range.to}","${completed}","assignments"`));
   }
 });

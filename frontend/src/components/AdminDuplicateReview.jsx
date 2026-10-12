@@ -5,10 +5,10 @@ import ManagementMetric from './ManagementMetric.jsx'
 import { formatManilaDateTime } from '../../../shared/displayFormat.mjs'
 
 const SUMMARY_ITEMS = [
-  ['student_number', 'Student number'],
-  ['employee_number', 'Employee number'],
+  ['student_number', 'Student Number'],
+  ['employee_number', 'Employee Number'],
   ['username', 'Username'],
-  ['google_identity', 'Google identity']
+  ['google_identity', 'Google Identity']
 ]
 
 function AdminDuplicateReview({ token, embedded = false }) {
@@ -54,36 +54,36 @@ function AdminDuplicateReview({ token, embedded = false }) {
   }, [conflicts, search, sort, typeFilter])
   const selected = visible.find((conflict) => conflict.id === selectedId) || visible[0] || null
 
-  return <section className="duplicate-workspace" aria-label={embedded ? 'Duplicate review' : undefined} aria-labelledby={embedded ? undefined : 'duplicate-review-title'}>
+  return <section className="duplicate-workspace" aria-label={embedded ? 'Duplicate Review' : undefined} aria-labelledby={embedded ? undefined : 'duplicate-review-title'}>
     {!embedded && <header className="management-page-header portal-page-header">
       <div><span className="page-breadcrumb">Home / Students / Duplicate Review</span><h2 id="duplicate-review-title">Duplicate Review</h2><p>Identify possible account conflicts while preserving every source record for audited review.</p></div>
-      <span className="readonly-badge">Read-only review</span>
+      <span className="readonly-badge">Read-Only Review</span>
     </header>}
 
-    <section className="management-metrics" aria-label="Duplicate review summary">
-      {SUMMARY_ITEMS.map(([key, label], index) => <ManagementMetric key={key} tone={index === 1 ? 'red' : index === 3 ? 'orange' : index === 2 ? 'green' : 'blue'} icon={index === 0 ? 'students' : index === 1 ? 'user' : index === 2 ? 'registrations' : 'search'} value={Number(summary[key]) || 0} label={`${label} conflicts`}/>)}
+    <section className="management-metrics" aria-label="Duplicate Review Summary">
+      {SUMMARY_ITEMS.map(([key, label], index) => <ManagementMetric key={key} tone={index === 1 ? 'red' : index === 3 ? 'orange' : index === 2 ? 'green' : 'blue'} icon={index === 0 ? 'students' : index === 1 ? 'user' : index === 2 ? 'registrations' : 'search'} value={Number(summary[key]) || 0} label={`${label} Conflicts`}/>)}
     </section>
 
     {error && <p className="error-message" role="alert">{error} <button type="button" onClick={load}>Retry</button></p>}
     <div className="duplicate-review-grid">
       <section className="table-card duplicate-list-pane">
         <div className="table-header management-table-header"><div><h3>Possible Duplicate Records</h3><p>{duplicateSummaryTotal(summary)} conflicts require verification</p></div></div>
-        <div className="duplicate-filters"><label><span className="sr-only">Search conflicts</span><input type="search" name="duplicate-conflict-filter" autoComplete="off" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="e.g. 02000123456 or juan.delacruz" /></label><label><span>Conflict type</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="ALL">All conflict types</option>{SUMMARY_ITEMS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="MOST_MATCHES">Most matches</option><option value="IDENTIFIER">Identifier A–Z</option></select></label>{(search || typeFilter !== 'ALL' || sort !== 'MOST_MATCHES') && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL'); setSort('MOST_MATCHES') }}>Clear filters</button>}</div>
-        {loading ? <div className="duplicate-skeleton" aria-live="polite"><span/><span/><span/><p>Checking account identifiers…</p></div> : !error && visible.length === 0 ? <div className="department-empty"><h4>{conflicts.length ? 'No search results' : 'No conflicts found'}</h4><p>{conflicts.length ? 'Try changing or clearing the filters.' : 'Active account records use distinct identifiers.'}</p>{conflicts.length > 0 && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL') }}>Clear filters</button>}</div> : <div className="duplicate-list">{visible.map((conflict) => <button type="button" key={conflict.id} className={selected?.id === conflict.id ? 'selected' : ''} onClick={() => setSelectedId(conflict.id)}><span><strong>{duplicateTypeLabel(conflict.type)}</strong><small>{conflict.identifier}</small></span><b>{conflict.occurrences} matches</b></button>)}</div>}
+        <div className="duplicate-filters"><label><span className="sr-only">Search Conflicts</span><input type="search" name="duplicate-conflict-filter" autoComplete="off" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="e.g. 02000123456 or juan.delacruz" /></label><label><span>Conflict Type</span><select value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="ALL">All Conflict Types</option>{SUMMARY_ITEMS.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label><label><span>Sort</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="MOST_MATCHES">Most Matches</option><option value="IDENTIFIER">Identifier a–Z</option></select></label>{(search || typeFilter !== 'ALL' || sort !== 'MOST_MATCHES') && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL'); setSort('MOST_MATCHES') }}>Clear Filters</button>}</div>
+        {loading ? <div className="duplicate-skeleton" aria-live="polite"><span/><span/><span/><p>Checking account identifiers…</p></div> : !error && visible.length === 0 ? <div className="department-empty"><h4>{conflicts.length ? 'No Search Results' : 'No Conflicts Found'}</h4><p>{conflicts.length ? 'Try changing or clearing the filters.' : 'Active account records use distinct identifiers.'}</p>{conflicts.length > 0 && <button type="button" onClick={() => { setSearch(''); setTypeFilter('ALL') }}>Clear Filters</button>}</div> : <div className="duplicate-list">{visible.map((conflict) => <button type="button" key={conflict.id} className={selected?.id === conflict.id ? 'selected' : ''} onClick={() => setSelectedId(conflict.id)}><span><strong>{duplicateTypeLabel(conflict.type)}</strong><small>{conflict.identifier}</small></span><b>{conflict.occurrences} Matches</b></button>)}</div>}
       </section>
 
       <section className="table-card duplicate-compare-pane">
         <div className="table-header management-table-header"><div><h3>Compare Source Records</h3><p>Confirm the school records before any separate audited account action.</p></div>{selected && <span>{selected.occurrences} sources</span>}</div>
-        {!selected ? <div className="department-empty"><h4>{loading ? 'Preparing comparison' : conflicts.length ? 'Select a possible conflict' : 'Nothing to compare'}</h4><p>{loading ? 'Potential conflicts are still being checked.' : conflicts.length ? 'Choose a record from the list to compare its sources.' : 'No duplicate source records are currently available for comparison.'}</p></div> : <>
+        {!selected ? <div className="department-empty"><h4>{loading ? 'Preparing Comparison' : conflicts.length ? 'Select a Possible Conflict' : 'Nothing to Compare'}</h4><p>{loading ? 'Potential conflicts are still being checked.' : conflicts.length ? 'Choose a record from the list to compare its sources.' : 'No duplicate source records are currently available for comparison.'}</p></div> : <>
           <div className="duplicate-match-banner"><span>{duplicateTypeLabel(selected.type)}</span><strong>{selected.identifier}</strong></div>
-          <div className="duplicate-source-grid">{selected.sources.map((source, index) => <article key={`${source.source}-${source.record_id}-${index}`}><header><i>{String.fromCharCode(65 + index)}</i><div><strong>Record {String.fromCharCode(65 + index)}</strong><span>{source.source_label}</span></div></header><dl><div><dt>Conflict field</dt><dd>{duplicateTypeLabel(selected.type)}</dd></div><div><dt>Displayed value</dt><dd>{source.display}</dd></div><div><dt>Source</dt><dd>{source.source_label}</dd></div><div><dt>Comparison</dt><dd><span className="match-label">● Exact identifier match</span></dd></div></dl></article>)}</div>
+          <div className="duplicate-source-grid">{selected.sources.map((source, index) => <article key={`${source.source}-${source.record_id}-${index}`}><header><i>{String.fromCharCode(65 + index)}</i><div><strong>Record {String.fromCharCode(65 + index)}</strong><span>{source.source_label}</span></div></header><dl><div><dt>Conflict Field</dt><dd>{duplicateTypeLabel(selected.type)}</dd></div><div><dt>Displayed Value</dt><dd>{source.display}</dd></div><div><dt>Source</dt><dd>{source.source_label}</dd></div><div><dt>Comparison</dt><dd><span className="match-label">● Exact Identifier Match</span></dd></div></dl></article>)}</div>
           <div className="duplicate-safety-note"><strong>No automatic merge is available.</strong><span>This workspace intentionally does not expose Google identity claims, delete records, or combine accounts.</span></div>
         </>}
       </section>
     </div>
     <section className="table-card" aria-labelledby="rejected-conflicts-title">
-      <div className="table-header management-table-header"><div><h3 id="rejected-conflicts-title">Rejected account conflicts</h3><p>Latest 50 blocked attempts. These attempts did not create duplicate records.</p></div></div>
-      {loading ? <p role="status">Loading rejected attempts…</p> : !error && rejectedAttempts.length === 0 ? <div className="department-empty"><h4>No rejected conflicts recorded</h4></div> : <div className="table-container"><table><thead><tr><th scope="col">When</th><th scope="col">Conflict</th><th scope="col">Account / identifier</th><th scope="col">Reason</th></tr></thead><tbody>{rejectedAttempts.map(attempt=><tr key={attempt.id}><td>{formatManilaDateTime(attempt.occurred_at)}</td><td>{attempt.conflict_type==='GMAIL'?'Gmail':duplicateTypeLabel(attempt.conflict_type)}</td><td>{attempt.target_label || 'Student account'}</td><td>{attempt.reason}</td></tr>)}</tbody></table></div>}
+      <div className="table-header management-table-header"><div><h3 id="rejected-conflicts-title">Rejected Account Conflicts</h3><p>Latest 50 blocked attempts. These attempts did not create duplicate records.</p></div></div>
+      {loading ? <p role="status">Loading rejected attempts…</p> : !error && rejectedAttempts.length === 0 ? <div className="department-empty"><h4>No Rejected Conflicts Recorded</h4></div> : <div className="table-container"><table><thead><tr><th scope="col">When</th><th scope="col">Conflict</th><th scope="col">Account / Identifier</th><th scope="col">Reason</th></tr></thead><tbody>{rejectedAttempts.map(attempt=><tr key={attempt.id}><td>{formatManilaDateTime(attempt.occurred_at)}</td><td>{attempt.conflict_type==='GMAIL'?'Gmail':duplicateTypeLabel(attempt.conflict_type)}</td><td>{attempt.target_label || 'Student Account'}</td><td>{attempt.reason}</td></tr>)}</tbody></table></div>}
     </section>
   </section>
 }

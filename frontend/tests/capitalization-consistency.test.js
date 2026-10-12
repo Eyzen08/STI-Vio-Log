@@ -21,9 +21,9 @@ test('compact student labels and account actions retain their approved wording',
   const dashboard = source('components/StudentDashboard.jsx')
   const account = source('components/AccountSecuritySettings.jsx')
 
-  assert.match(dashboard, />Service progress</)
-  assert.match(dashboard, />My QR code</)
-  assert.match(dashboard, />View all</)
+  assert.match(dashboard, />Service Progress</)
+  assert.match(dashboard, />My QR Code</)
+  assert.match(dashboard, />View All</)
   assert.match(account, />Change Password</)
   assert.match(account, /Changing your password signs out other sessions\./)
 })

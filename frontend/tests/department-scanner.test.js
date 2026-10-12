@@ -18,8 +18,8 @@ test('assignment progress normalizes numeric database values', () => {
 })
 
 test('verified assignment state controls time-in and time-out availability', () => {
-  assert.deepEqual(attendanceState({ active_session_id: 17 }), { active: true, label: 'Currently timed in' })
-  assert.deepEqual(attendanceState({ active_session_id: null }), { active: false, label: 'Not timed in' })
+  assert.deepEqual(attendanceState({ active_session_id: 17 }), { active: true, label: 'Currently Timed In' })
+  assert.deepEqual(attendanceState({ active_session_id: null }), { active: false, label: 'Not Timed In' })
   assert.equal(formatServiceMinutes(150), '2 hrs 30 min')
   assert.equal(formatServiceMinutes(60), '1 hr')
 })

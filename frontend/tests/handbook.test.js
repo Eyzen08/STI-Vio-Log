@@ -31,9 +31,9 @@ test('handbook reader defaults to the complete copy and offers all four PDFs', a
     assert.match(html, /<label[^>]*for="handbook-document"/)
     assert.match(html, /selected=""[^>]*>Complete Tertiary Handbook/)
     assert.match(html, /title="Complete Tertiary Handbook PDF"/)
-    assert.match(html, /Open in new tab/)
+    assert.match(html, /Open in New Tab/)
     assert.match(html, /Download PDF/)
-    assert.match(html, /Open STI’s live handbook/)
+    assert.match(html, /Open STI’s Live Handbook/)
     for (const doc of HANDBOOK_DOCUMENTS) {
       const bytes = await readFile(new URL(`../public${doc.url}`, import.meta.url))
       assert.equal(bytes.subarray(0, 5).toString(), '%PDF-')

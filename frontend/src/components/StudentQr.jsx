@@ -64,19 +64,19 @@ function StudentQr({ profile, loading, error }) {
             <div className="student-qr-frame">
               {imageUrl
                 ? <img src={imageUrl} alt="Your STI Vio-Log attendance QR code" width="320" height="320" />
-                : <div className="skeleton qr-code-skeleton" aria-label="Generating QR code" />}
+                : <div className="skeleton qr-code-skeleton" aria-label="Generating QR Code" />}
             </div>
 
             {imageUrl && (
               <a className="qr-download-button" href={imageUrl} download={qrDownloadName(profile.student_number)}>
-                Download QR code
+                Download QR Code
               </a>
             )}
           </>
         )}
       </div>
 
-      <aside className="qr-guidance" aria-label="QR code guidance">
+      <aside className="qr-guidance" aria-label="QR Code Guidance">
         <p>Increase screen brightness for scanning. Keep your QR private and use only your own code. It contains your attendance code, never your password or login token.</p>
       </aside>
     </section>

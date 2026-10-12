@@ -15,7 +15,7 @@ test('audit summaries explain recorded outcomes without losing zero credit', () 
 
 test('audit fallbacks keep existing text and identify unknown or missing records', () => {
   assert.equal(audit.auditSummary({ action: 'AVATAR_SELECT', description: 'Selected preset avatar' }), 'Selected preset avatar')
-  assert.equal(audit.auditRecordLabel({ table_name: 'community_service_sessions', record_id: 24 }), 'Community service session #24')
+  assert.equal(audit.auditRecordLabel({ table_name: 'community_service_sessions', record_id: 24 }), 'Community Service Session #24')
   assert.equal(audit.auditRecordLabel({ table_name: 'future_records', record_id: 8 }), 'Future Records #8')
   assert.match(audit.auditSummary({ action: 'FUTURE_EVENT', description: '{broken json' }), /Future Event/)
   assert.equal(auditActorLabel({ actor_name: 'Ana Cruz', actor_username: 'ana' }), 'Ana Cruz')

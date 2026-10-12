@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { apiRequest } from '../lib/api.js'
 import { buildParentContactPayload, CONTACT_METHODS, CONTACT_OUTCOMES, contactLabel } from '../lib/parentContact.js'
-import { formatManilaDateTime } from '../lib/displayFormat.js'
+import { formatDisplayLabel, formatManilaDateTime } from '../lib/displayFormat.js'
 import PortalIcon from './PortalIcon.jsx'
 import '../styles/student-action-drawers.css'
 
@@ -61,7 +61,7 @@ function GuardianContactPanel({ token, student, onClose, showClose = true }) {
     {loading && !data ? <p className="empty-state" aria-live="polite">Loading Guardian Contact…</p> : guardians.length === 0 ? <p className="empty-state">No Guardian Contact is recorded.</p> : <>
       <div className="guardian-contact-grid">
         {guardians.map((guardian) => <article key={guardian.id}>
-          <div className="guardian-identity"><i><PortalIcon name="students" size={32}/></i><div><h4>{guardian.guardian_name}</h4><p>{guardian.relationship || 'Relationship not provided'}{guardian.is_primary ? ' • Primary Guardian' : ''}</p><strong><PortalIcon name="phone" size={20}/>{guardian.phone_number || 'Phone not recorded'}</strong></div></div>
+          <div className="guardian-identity"><i><PortalIcon name="students" size={32}/></i><div><h4>{guardian.guardian_name}</h4><p>{guardian.relationship || 'Relationship not provided'}{guardian.is_primary ? ' • Primary Guardian' : ''}</p><strong><PortalIcon name="phone" size={20}/>{guardian.phone_number || 'Phone Not Recorded'}</strong></div></div>
           <div className="guardian-contact-actions"><a className="guardian-call" href={`tel:${guardian.phone_number}`} aria-label={`Call Guardian ${guardian.guardian_name}`}><PortalIcon name="phone" size={20}/>Call Guardian</a><a href={`sms:${guardian.phone_number}`} aria-label={`Message Guardian ${guardian.guardian_name}`}><PortalIcon name="messages" size={20}/>Message Guardian</a></div>
         </article>)}
       </div>
@@ -78,10 +78,10 @@ function GuardianContactPanel({ token, student, onClose, showClose = true }) {
       <section className="guardian-contact-history" aria-label="Guardian Contact History">
         <header className="guardian-section-heading"><i><PortalIcon name="history" size={24}/></i><h4>Guardian Contact History</h4><span>{contacts.length} record{contacts.length === 1 ? '' : 's'}</span></header>
         {contacts.length === 0 ? <p className="empty-state">No Guardian Contact attempts recorded yet.</p> : contacts.slice(0, historyLimit).map((contact) => <article key={contact.id} className={`guardian-history-card guardian-outcome-${String(contact.outcome).toLowerCase()}`}>
-          <i><PortalIcon name={contact.contact_method === 'SMS' ? 'messages' : contact.contact_method === 'CALL' ? 'phone' : 'user'} size={22}/></i><div><header><h4>{contactLabel(contact.contact_method)} • <span>{contactLabel(contact.outcome)}</span></h4><span className="guardian-office-badge">{String(contact.contacted_by_role || '').replaceAll('_', ' ')}</span></header><p>{formatManilaDateTime(contact.created_at)}</p>
+          <i><PortalIcon name={contact.contact_method === 'SMS' ? 'messages' : contact.contact_method === 'CALL' ? 'phone' : 'user'} size={22}/></i><div><header><h4>{contactLabel(contact.contact_method)} • <span>{contactLabel(contact.outcome)}</span></h4><span className="guardian-office-badge">{formatDisplayLabel(contact.contacted_by_role)}</span></header><p>{formatManilaDateTime(contact.created_at)}</p>
           <p>{contact.notes || 'No notes recorded.'}</p><small><PortalIcon name="user" size={15}/>{[contact.contacted_by_first_name, contact.contacted_by_last_name].filter(Boolean).join(' ')}{contact.department_name ? ` · ${contact.department_name}` : ''}</small></div>
         </article>)}
-        {contacts.length > historyLimit && <button type="button" className="guardian-show-more" onClick={() => setHistoryLimit((current) => current + 5)}>Show more ({contacts.length - historyLimit} remaining)</button>}
+        {contacts.length > historyLimit && <button type="button" className="guardian-show-more" onClick={() => setHistoryLimit((current) => current + 5)}>Show More ({contacts.length - historyLimit} Remaining)</button>}
       </section>
     </>}
     <aside className="guardian-privacy-note"><PortalIcon name="lock" size={24}/><p>Guardian contact information is private. Use it only for authorized student support and discipline follow-up.</p></aside>

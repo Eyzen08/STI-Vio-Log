@@ -12,11 +12,11 @@ export default function StudentAttendancePanel({ sessions = [], ready, loading, 
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [active.length])
-  return <section className="student-attendance-panel" aria-label="Current attendance status">
-    <header><h3>Current attendance</h3><AttendanceIndicator sessions={active} ready={ready} loading={loading} details/></header>
+  return <section className="student-attendance-panel" aria-label="Current Attendance Status">
+    <header><h3>Current Attendance</h3><AttendanceIndicator sessions={active} ready={ready} loading={loading} details/></header>
     {active.map((session) => <article className="student-current-session" key={session.id}>
       <div className="student-session-identity"><strong>{session.department_name || `Assignment #${session.assignment_id}`}</strong><span>Assignment #{session.assignment_id}</span><span>Started {formatManilaDateTime(session.time_in)}</span></div>
-      <div className="student-session-clock"><span>{session.session_type === 'OPEN_TIME' && session.credit_cutoff_at ? 'Time elapsed' : 'Remaining session time'}</span><ServiceCountdown session={session} now={now}/></div>
+      <div className="student-session-clock"><span>{session.session_type === 'OPEN_TIME' && session.credit_cutoff_at ? 'Time Elapsed' : 'Remaining Session Time'}</span><ServiceCountdown session={session} now={now}/></div>
     </article>)}
     {active.length > 0 && <p className="student-caption">Current session time is credited after staff records Time Out.</p>}
     {error && <p className="attendance-update-error" role="alert">{error}</p>}

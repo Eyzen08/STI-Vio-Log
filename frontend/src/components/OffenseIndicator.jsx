@@ -1,9 +1,9 @@
 const metadata = {
-  NEUTRAL: { tone: 'neutral', label: 'No qualifying offenses' },
-  MINOR_1: { tone: 'yellow', label: '1 minor offense' },
-  MINOR_2: { tone: 'orange', label: '2 minor offenses' },
-  MAJOR_LEVEL: { tone: 'red', label: 'Major-level disciplinary status' },
-  GRAVE: { tone: 'critical', label: 'Grave-offense disciplinary status' }
+  NEUTRAL: { tone: 'neutral', label: 'No Qualifying Offenses' },
+  MINOR_1: { tone: 'yellow', label: '1 Minor Offense' },
+  MINOR_2: { tone: 'orange', label: '2 Minor Offenses' },
+  MAJOR_LEVEL: { tone: 'red', label: 'Major-Level Disciplinary Status' },
+  GRAVE: { tone: 'critical', label: 'Grave-Offense Disciplinary Status' }
 }
 
 function OffenseIndicator({ level = 'NEUTRAL', label, compact = false }) {

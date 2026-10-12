@@ -73,7 +73,7 @@
 .auth-shell .login-brand-mark { width: clamp(168px, 15vw, 220px); }
 .auth-shell .login-brand-mark img { display: block; width: 100%; height: auto; }
 .auth-shell .login-intro-content { margin: auto 0 36px; padding-top: 72px; max-width: 560px; }
-.auth-shell .login-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #ffdf70; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.auth-shell .login-kicker { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; color: #ffdf70; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: none; }
 .auth-shell .login-kicker::before { content: ''; width: 28px; height: 2px; background: currentColor; }
 .auth-shell .login-intro h2 { max-width: 18ch; margin: 0 0 20px; color: #fff; font-size: clamp(44px, 3.6vw, 56px); font-weight: 600; line-height: 1.08; letter-spacing: -.045em; text-wrap: balance; }
 .auth-shell .login-intro-content > p { max-width: 43ch; margin: 0; color: #e0e9f3; font-size: 15px; line-height: 1.7; }

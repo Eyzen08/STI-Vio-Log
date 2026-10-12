@@ -5,11 +5,11 @@ export function filterClearanceStudents(students, search, status) {
 }
 
 export function clearanceStatusLabel(student) {
-  if (student.qualification_status === 'QUALIFIED') return student.has_issued_certificate ? 'Certificate issued' : 'Ready for certificate'
+  if (student.qualification_status === 'QUALIFIED') return student.has_issued_certificate ? 'Certificate Issued' : 'Ready for Certificate'
   return {
-    AWAITING_CLEARANCE: 'Awaiting clearance',
-    NEEDS_SERVICE: 'Needs service hours',
-    BLOCKED: 'Blocked by violation',
-    NO_SERVICE_REQUIRED: 'No service assigned',
-  }[student.qualification_status] || 'Status unavailable'
+    AWAITING_CLEARANCE: 'Awaiting Clearance',
+    NEEDS_SERVICE: 'Needs Service Hours',
+    BLOCKED: 'Blocked by Violation',
+    NO_SERVICE_REQUIRED: 'No Service Assigned',
+  }[student.qualification_status] || 'Status Unavailable'
 }

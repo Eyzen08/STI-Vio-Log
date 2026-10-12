@@ -1,10 +1,10 @@
-function RouteStatePage({ type, onGoHome, actionLabel = 'Return to dashboard' }) {
+function RouteStatePage({ type, onGoHome, actionLabel = 'Return to Dashboard' }) {
   const isUnauthorized = type === 'unauthorized'
 
   return (
     <section className="route-state" aria-labelledby="route-state-title">
       <span className="route-state-code">{isUnauthorized ? '403' : '404'}</span>
-      <p className="eyebrow">{isUnauthorized ? 'Access restricted' : 'Page not found'}</p>
+      <p className="eyebrow">{isUnauthorized ? 'Access Restricted' : 'Page Not Found'}</p>
       <h2 id="route-state-title">
         {isUnauthorized
           ? 'This page is not available for your role.'

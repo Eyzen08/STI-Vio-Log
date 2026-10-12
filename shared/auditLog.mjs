@@ -27,14 +27,14 @@ export const auditActorLabel = (entry = {}) =>
 
 const RECORD_TYPES = {
   users: 'Account', students: 'Student', violations: 'Violation',
-  community_service_sessions: 'Community service session', community_service_assignments: 'Service assignment',
-  student_offense_escalations: 'Student offense level', student_clearance: 'Student clearance',
-  clearance_certificates: 'Clearance certificate', departments: 'Department',
-  parent_contact_logs: 'Guardian contact', officer_department_assignments: 'Officer assignment',
-  officer_availability: 'Officer availability', google_identity_links: 'Google account link',
-  google_student_registrations: 'Student registration', discipline_officer_signatures: 'Officer signature'
+  community_service_sessions: 'Community Service Session', community_service_assignments: 'Service Assignment',
+  student_offense_escalations: 'Student Offense Level', student_clearance: 'Student Clearance',
+  clearance_certificates: 'Clearance Certificate', departments: 'Department',
+  parent_contact_logs: 'Guardian Contact', officer_department_assignments: 'Officer Assignment',
+  officer_availability: 'Officer Availability', google_identity_links: 'Google Account Link',
+  google_student_registrations: 'Student Registration', discipline_officer_signatures: 'Officer Signature'
 }
-export const auditRecordType = (type) => Object.hasOwn(RECORD_TYPES, type) ? RECORD_TYPES[type] : formatDisplayLabel(type, 'System event')
+export const auditRecordType = (type) => Object.hasOwn(RECORD_TYPES, type) ? RECORD_TYPES[type] : formatDisplayLabel(type, 'System Event')
 export const auditRecordLabel = (entry = {}) => entry.record_context?.label || `${auditRecordType(entry.table_name)}${entry.record_id != null ? ` #${entry.record_id}` : ''}`
 const duration = (minutes) => Number(minutes) === 0 ? '0 minutes' : formatDuration(Number(minutes) / 60)
 
@@ -55,11 +55,11 @@ export const auditSummary = (entry = {}) => {
 }
 
 const DETAIL_LABELS = {
-  assignment_id: 'Service assignment', department_id: 'Department', supervising_officer_user_id: 'Supervising officer',
-  actual_elapsed_minutes: 'Actual elapsed time', worked_minutes: 'Worked time', credited_minutes: 'Credited time', timer_limit_minutes: 'Timer limit',
-  completion_reason: 'Completion reason', attendance_outcome: 'Attendance outcome', supervisor_changed: 'Supervisor changed',
-  limit_reached: 'Timer limit reached', from: 'Previous offense level', to: 'New offense level',
-  from_status: 'Previous status', to_status: 'New status', policy_scope: 'Policy scope'
+  assignment_id: 'Service Assignment', department_id: 'Department', supervising_officer_user_id: 'Supervising Officer',
+  actual_elapsed_minutes: 'Actual Elapsed Time', worked_minutes: 'Worked Time', credited_minutes: 'Credited Time', timer_limit_minutes: 'Timer Limit',
+  completion_reason: 'Completion Reason', attendance_outcome: 'Attendance Outcome', supervisor_changed: 'Supervisor Changed',
+  limit_reached: 'Timer Limit Reached', from: 'Previous Offense Level', to: 'New Offense Level',
+  from_status: 'Previous Status', to_status: 'New Status', policy_scope: 'Policy Scope'
 }
 const detailValue = (key, value, context) => {
   if (value == null) return 'Not recorded'

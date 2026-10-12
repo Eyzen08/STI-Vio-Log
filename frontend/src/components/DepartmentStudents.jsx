@@ -15,14 +15,14 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
     <div className="department-students-page department-page">
       <section className="department-welcome portal-page-header">
         <div><p className="eyebrow">Department Roster</p><h2>Students Served</h2><p>Students with community-service attendance recorded by your department.</p></div>
-        <button type="button" onClick={onOpenDtr}>View full DTR</button>
+        <button type="button" onClick={onOpenDtr}>View Full DTR</button>
       </section>
 
       {error && <p className="error-message dashboard-error" role="alert">{error}</p>}
 
-      <section className="student-roster-tools" aria-label="Filter department students">
-        <label><span>Search roster</span><input type="search" name="department-student-roster-filter" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Juan or 02000123456" /></label>
-        <label><span>Service standing</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="ALL">All students</option><option value="ACTIVE">Active service</option><option value="COMPLETE">No remaining service</option></select></label>
+      <section className="student-roster-tools" aria-label="Filter Department Students">
+        <label><span>Search Roster</span><input type="search" name="department-student-roster-filter" autoComplete="off" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Juan or 02000123456" /></label>
+        <label><span>Service Standing</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="ALL">All Students</option><option value="ACTIVE">Active Service</option><option value="COMPLETE">No Remaining Service</option></select></label>
       </section>
 
       <section className="table-card" aria-busy={loading}>
@@ -30,14 +30,14 @@ function DepartmentStudents({ report, loading, error, onOpenDtr }) {
         {loading ? (
           <div className="department-empty" aria-live="polite"><p>Loading department students…</p></div>
         ) : visibleStudents.length === 0 ? (
-          <div className="department-empty"><h4>{error ? 'Student records unavailable' : roster.length ? 'No students match these filters' : 'No students served yet'}</h4><p>{roster.length ? 'Try another name or service standing.' : 'Students appear after attendance is recorded in your department.'}</p></div>
+          <div className="department-empty"><h4>{error ? 'Student Records Unavailable' : roster.length ? 'No Students Match These Filters' : 'No Students Served Yet'}</h4><p>{roster.length ? 'Try another name or service standing.' : 'Students appear after attendance is recorded in your department.'}</p></div>
         ) : (
           <div className="department-student-grid">
             {visibleStudents.map((student) => (
               <article key={student.id}>
-                <div className="student-roster-heading"><Avatar className="student-avatar" identity={student}/><div><h4>{student.name}</h4><span>{student.studentNumber}</span></div><span className={`status-badge ${student.hasActiveService ? 'status-open' : 'status-complete'}`}>{student.hasActiveService ? 'Active service' : 'No remaining service'}</span></div>
+                <div className="student-roster-heading"><Avatar className="student-avatar" identity={student}/><div><h4>{student.name}</h4><span>{student.studentNumber}</span></div><span className={`status-badge ${student.hasActiveService ? 'status-open' : 'status-complete'}`}>{student.hasActiveService ? 'Active Service' : 'No Remaining Service'}</span></div>
                 <dl><div><dt>Assignments</dt><dd>{student.assignments}</dd></div><div><dt>Sessions</dt><dd>{student.completedSessions}</dd></div><div><dt>Credited</dt><dd>{formatDuration(student.creditedMinutes)}</dd></div><div><dt>Remaining</dt><dd>{formatHourDuration(student.remainingHours)}</dd></div></dl>
-                <p>Latest attendance: {displayDepartmentDtrDate(student.latestAttendanceAt)}</p>
+                <p>Latest Attendance: {displayDepartmentDtrDate(student.latestAttendanceAt)}</p>
               </article>
             ))}
           </div>

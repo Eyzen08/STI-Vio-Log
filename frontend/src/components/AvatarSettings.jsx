@@ -40,11 +40,11 @@ export default function AvatarSettings({ user, onAvatarChange }) {
     {error && <p className="error-message" role="alert">{error}</p>}
     {!saved ? error ? <button type="button" className="secondary-button" onClick={() => setReload((value) => value + 1)}>Retry</button> : <p role="status">Loading avatars…</p> : <form onSubmit={submit}>
       <fieldset disabled={busy}><legend>Click an avatar to select it.</legend>
-        <div className="avatar-special-choices"><div>{option('INITIALS', saved.preset_id, 'Use my initials')}<span>Initials</span></div>
-          {saved.photo_url && <div>{option('PHOTO', saved.preset_id, 'Use my school-uploaded photo')}<span>School photo</span></div>}</div>
+        <div className="avatar-special-choices"><div>{option('INITIALS', saved.preset_id, 'Use My Initials')}<span>Initials</span></div>
+          {saved.photo_url && <div>{option('PHOTO', saved.preset_id, 'Use My School-Uploaded Photo')}<span>School Photo</span></div>}</div>
         <div className="avatar-preset-grid">{AVATAR_PRESETS.map(({ id, label }) => option('PRESET', id, label))}</div>
       </fieldset>
-      <footer className="avatar-settings-actions"><button type="submit" disabled={busy || !changed} data-action-disabled={busy || !changed ? 'true' : 'false'}>{busy ? 'Saving…' : 'Save avatar'}</button>{message && <p className="success-message" role="status">{message}</p>}</footer>
+      <footer className="avatar-settings-actions"><button type="submit" disabled={busy || !changed} data-action-disabled={busy || !changed ? 'true' : 'false'}>{busy ? 'Saving…' : 'Save Avatar'}</button>{message && <p className="success-message" role="status">{message}</p>}</footer>
     </form>}
   </section>
 }

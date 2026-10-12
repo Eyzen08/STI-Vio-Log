@@ -35,53 +35,53 @@ export default function ViolationManagement({ violations = [], loading = false, 
       <div><nav aria-label="Breadcrumb">Home <span aria-hidden="true">/</span> Violations</nav><h2 id="violation-management-title">Violation Management</h2><p>Manage student violations, disciplinary progress, and service requirements.</p></div>
       <button type="button" className="violation-record-button" onClick={onRecord}><span aria-hidden="true">＋</span>Record Violation</button>
     </header>
-    <section className="violation-summary-grid" aria-label="Violation summary">
+    <section className="violation-summary-grid" aria-label="Violation Summary">
       {[['Total Violations', violations.length, 'red', 'violations'], ['Minor', severityCount('MINOR'), 'orange', 'violations'], ['Major', severityCount('MAJOR'), 'red', 'violations'], ['Grave', severityCount('GRAVE'), 'purple', 'violations'], ['Open', statusCount('OPEN'), 'blue', 'reports'], ['Completed', statusCount('COMPLETE'), 'green', 'check']].map(([label, value, tone, icon]) => <ManagementMetric key={label} label={label} value={loading ? '—' : value} tone={tone} icon={icon}/>)}
     </section>
     <section className="violation-records-card" aria-labelledby="violation-records-title" aria-busy={loading}>
       <header className="violation-records-heading"><div><h3 id="violation-records-title">Violation Records</h3><p>Most recent incidents and their current status.</p></div><span>{loading ? 'Loading…' : `${visible.length} record${visible.length === 1 ? '' : 's'}`}</span></header>
       <div className="violation-toolbar">
-        <label className="violation-search"><PortalIcon name="search" size={22}/><input type="search" name="violation-directory-filter" aria-label="Search violations" autoComplete="off" placeholder="e.g. Juan or uniform" value={filters.search} onChange={(event) => changeFilters({ ...filters, search: event.target.value })}/></label>
-        <select aria-label="Filter violation classification" value={filters.severity} onChange={(event) => changeFilters({ ...filters, severity: event.target.value })}><option value="ALL">All classifications</option>{['MINOR', 'MAJOR', 'GRAVE'].map((severity) => <option key={severity} value={severity}>{formatDisplayLabel(severity)}</option>)}</select>
-        <select aria-label="Filter violation status" value={filters.status} onChange={(event) => changeFilters({ ...filters, status: event.target.value })}><option value="ALL">All statuses</option>{statuses.map((status) => <option key={status} value={status}>{formatDisplayLabel(status)}</option>)}</select>
+        <label className="violation-search"><PortalIcon name="search" size={22}/><input type="search" name="violation-directory-filter" aria-label="Search Violations" autoComplete="off" placeholder="e.g. Juan or uniform" value={filters.search} onChange={(event) => changeFilters({ ...filters, search: event.target.value })}/></label>
+        <select aria-label="Filter Violation Classification" value={filters.severity} onChange={(event) => changeFilters({ ...filters, severity: event.target.value })}><option value="ALL">All Classifications</option>{['MINOR', 'MAJOR', 'GRAVE'].map((severity) => <option key={severity} value={severity}>{formatDisplayLabel(severity)}</option>)}</select>
+        <select aria-label="Filter Violation Status" value={filters.status} onChange={(event) => changeFilters({ ...filters, status: event.target.value })}><option value="ALL">All Statuses</option>{statuses.map((status) => <option key={status} value={status}>{formatDisplayLabel(status)}</option>)}</select>
       </div>
-      <section className="violation-legends" aria-label="Violation color legends">
-        <div className="violation-legend-row" role="group" aria-label="Classification legend">
+      <section className="violation-legends" aria-label="Violation Color Legends">
+        <div className="violation-legend-row" role="group" aria-label="Classification Legend">
           <strong>Classification:</strong>
           <span className="violation-classification classification-minor">Minor</span>
           <span className="violation-classification classification-major">Major</span>
           <span className="violation-classification classification-grave">Grave</span>
         </div>
-        <div className="violation-legend-row" role="group" aria-label="Student indicator legend">
-          <strong>Student indicators:</strong>
+        <div className="violation-legend-row" role="group" aria-label="Student Indicator Legend">
+          <strong>Student Indicators:</strong>
           <OffenseIndicator level="NEUTRAL"/>
-          <OffenseIndicator level="MINOR_1" label="1 minor"/>
-          <OffenseIndicator level="MINOR_2" label="2 minors"/>
-          <OffenseIndicator level="MAJOR_LEVEL" label="Major-level"/>
+          <OffenseIndicator level="MINOR_1" label="1 Minor"/>
+          <OffenseIndicator level="MINOR_2" label="2 Minors"/>
+          <OffenseIndicator level="MAJOR_LEVEL" label="Major-Level"/>
           <OffenseIndicator level="GRAVE" label="Grave"/>
         </div>
       </section>
-      <div className="violation-table-wrap" role="region" aria-label="Violation records" tabIndex={0}>
+      <div className="violation-table-wrap" role="region" aria-label="Violation Records" tabIndex={0}>
         <table className="violation-table">
           <colgroup><col style={{ width:'6.5%' }}/><col style={{ width:'21%' }}/><col style={{ width:'15%' }}/><col/><col style={{ width:'10.5%' }}/><col style={{ width:170 }}/><col style={{ width:180 }}/></colgroup>
-          <thead><tr><th scope="col">ID</th><th scope="col">Student</th><th scope="col" aria-sort={ascending ? 'ascending' : 'descending'}><button type="button" onClick={() => { setPagination({ key: '', page: 1 }); setAscending(!ascending) }} aria-label={`Sort incident date ${ascending ? 'newest' : 'oldest'} first`}>Incident Date<PortalIcon name="chevron-right" className={ascending ? 'sort-ascending' : 'sort-descending'} size={14}/></button></th><th scope="col">Offense</th><th scope="col">Classification</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+          <thead><tr><th scope="col">ID</th><th scope="col">Student</th><th scope="col" aria-sort={ascending ? 'ascending' : 'descending'}><button type="button" onClick={() => { setPagination({ key: '', page: 1 }); setAscending(!ascending) }} aria-label={`Sort Incident Date ${ascending ? 'Newest' : 'Oldest'} First`}>Incident Date<PortalIcon name="chevron-right" className={ascending ? 'sort-ascending' : 'sort-descending'} size={14}/></button></th><th scope="col">Offense</th><th scope="col">Classification</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
           <tbody>{loading ? <tr><td colSpan={7} className="violation-empty" role="status">Loading violation records…</td></tr> : !visible.length ? <tr><td colSpan={7} className="violation-empty">{violations.length ? 'No violations match the selected filters.' : 'No violation records yet.'}</td></tr> : visible.slice(first, first + pageSize).map((violation) => {
             const severity = String(violation.severity || '').toLowerCase()
             const status = String(violation.status || '').toLowerCase()
             const [date, time] = formatIncidentDateTime(violation.incident_date, violation.incident_time).split(/ at | · /)
             return <tr key={violation.id}>
               <td data-label="ID">#{violation.id}</td>
-              <td data-label="Student"><div className="violation-student"><OffenseIndicator level={violation.offense_indicator_level} compact/><div><strong>{violation.student_name || 'Student record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></div></div></td>
+              <td data-label="Student"><div className="violation-student"><OffenseIndicator level={violation.offense_indicator_level} compact/><div><strong>{violation.student_name || 'Student Record'}</strong><small>{violation.student_number || 'Number unavailable'}</small></div></div></td>
               <td data-label="Incident Date"><span className="violation-incident"><span>{date}</span>{time && <small>{time}</small>}</span></td>
               <td data-label="Offense"><span className="violation-offense" title={violation.exact_offense || violation.violation_name}>{violation.exact_offense || violation.violation_name || 'Not recorded'}</span></td>
               <td data-label="Classification"><span className={`violation-classification classification-${severity}`}>{formatDisplayLabel(violation.severity)}</span></td>
               <td data-label="Status"><span className={`violation-status status-${status}`}>{formatDisplayLabel(violation.status)}</span></td>
-              <td data-label="Actions"><div className="violation-actions"><button type="button" aria-label={`View violation ${violation.id}`} onClick={() => onView(violation)}>View</button>{(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-edit-button" aria-label={`Edit violation ${violation.id}`} onClick={() => onEdit(violation)}><PortalIcon name="edit" size={18}/></button>}</div></td>
+              <td data-label="Actions"><div className="violation-actions"><button type="button" aria-label={`View Violation ${violation.id}`} onClick={() => onView(violation)}>View</button>{(violation.status === 'OPEN' || ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(role)) && <button type="button" className="violation-edit-button" aria-label={`Edit Violation ${violation.id}`} onClick={() => onEdit(violation)}><PortalIcon name="edit" size={18}/></button>}</div></td>
             </tr>
           })}</tbody>
         </table>
       </div>
-      {visible.length > pageSize && !loading && <footer className="violation-pagination"><span aria-live="polite">Showing {first + 1}–{Math.min(first + pageSize, visible.length)} of {visible.length} records</span><nav aria-label="Violation records pagination"><button type="button" aria-label="Previous page" disabled={page === 1} onClick={() => changePage(page - 1)}><PortalIcon name="chevron-right" className="previous-page"/></button>{Array.from({ length: Math.min(5, pages) }, (_, index) => pageStart + index).map((number) => <button type="button" key={number} aria-label={`Page ${number}`} aria-current={page === number ? 'page' : undefined} onClick={() => changePage(number)}>{number}</button>)}<button type="button" aria-label="Next page" disabled={page === pages} onClick={() => changePage(page + 1)}><PortalIcon name="chevron-right"/></button></nav></footer>}
+      {visible.length > pageSize && !loading && <footer className="violation-pagination"><span aria-live="polite">Showing {first + 1}–{Math.min(first + pageSize, visible.length)} of {visible.length} records</span><nav aria-label="Violation Records Pagination"><button type="button" aria-label="Previous Page" disabled={page === 1} onClick={() => changePage(page - 1)}><PortalIcon name="chevron-right" className="previous-page"/></button>{Array.from({ length: Math.min(5, pages) }, (_, index) => pageStart + index).map((number) => <button type="button" key={number} aria-label={`Page ${number}`} aria-current={page === number ? 'page' : undefined} onClick={() => changePage(number)}>{number}</button>)}<button type="button" aria-label="Next Page" disabled={page === pages} onClick={() => changePage(page + 1)}><PortalIcon name="chevron-right"/></button></nav></footer>}
     </section>
   </section>
 }

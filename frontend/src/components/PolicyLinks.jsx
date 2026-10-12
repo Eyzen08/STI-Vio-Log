@@ -6,7 +6,7 @@ export default function PolicyLinks({ onOpenPolicy }) {
     event.preventDefault()
     onOpenPolicy(path)
   }
-  return <nav className="account-policy-links" aria-label="Privacy and terms">
+  return <nav className="account-policy-links" aria-label="Privacy and Terms">
     <a href={href('/privacy')} onClick={(event) => open(event, '/privacy')}>Privacy Notice</a>
     <a href={href('/terms')} onClick={(event) => open(event, '/terms')}>Terms of Use</a>
   </nav>

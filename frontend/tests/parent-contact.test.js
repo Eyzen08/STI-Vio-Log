@@ -7,6 +7,6 @@ test('parent contact payload contains only append-only outcome fields', () => {
 })
 
 test('parent contact labels are readable', () => {
-  assert.equal(contactLabel('LEFT_MESSAGE'), 'Left message')
+  assert.equal(contactLabel('LEFT_MESSAGE'), 'Left Message')
 })
 
