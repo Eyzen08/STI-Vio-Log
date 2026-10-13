@@ -1,6 +1,60 @@
 # Vercel, Render and Supabase production deployment
 
-## Observed deployment inventory — October 10, 2026
+## Verified deployment snapshot — October 13, 2026
+
+Production was verified on commit `b356e2b712c65a8f30fe52753f5a398028ab706b` (Refresh browser and Apple touch icons). It remained GitHub `main` at the final review on **October 13, 2026, 11:19–11:21 Asia/Manila**. [Security verification run 38258561658](https://github.com/Eyzen08/STI-Vio-Log/actions/runs/38258561658) completed successfully for this exact commit. The application release was performed October 12; the final alias correction and public checks were performed October 13. Dependencies, hosting plans, application code and database schema were not changed by this rollout. Later documentation-only releases can advance the deployed commit without changing application source; inspect the provider for the current live revision.
+
+| Component | Release outcome | Evidence and remaining limits |
+|---|---|---|
+| Vercel frontend | **READY**, deployment `dpl_Hd4dPfaNtGarFGfSWBwikHFJN4dF`; public site [sti-vio-log.vercel.app](https://sti-vio-log.vercel.app) | Existing project remains Vite, root `frontend`, output `dist`, Node 24.x and build `npm run build`. Install command changed to `npm ci`; remote build completed with zero reported dependency vulnerabilities. |
+| Render API | **Live**, deployment `dep-db6ep6vlk1mc73d0e8j0`, pinned to `b356e2b` | Invalid pre-deploy command `--confirm` cleared; health check set to `/api/health`. Existing build/start commands, Free plan, one instance, Oregon and preview policy retained. Startup logged: `Production readiness passed: database connected; 50 migrations current.` |
+| Supabase PostgreSQL | **Current**, all 50 repository migration filenames exactly match `public.schema_migrations` | No pending or unexpected migration names; no migration executed. All 49 public tables remain RLS-enabled. Runtime login/group metadata is nonprivileged; fresh API startup passed the existing database-security checks. |
+| Google identity | **Configuration matches** | Frontend/backend public Google client IDs privately compared and matched. Google Cloud origin settings and an actual sign-in remain unverified. |
+| Brevo email | **Sender metadata active; delivery unverified** | Connected provider returned two active project senders. Render email key/sender variables are present. Sender lookup using the backend's configured key returned HTTP 401 with an inspection-IP restriction; matching that key's sender remains unverified. No email was sent and no IP allowlist changed. |
+| GitHub CI / Git integration | **Release CI passed; Vercel Git deployment path unresolved** | Repository ID, owner, project link and commit matched. Recent Vercel Git-backed production attempts failed with `git_info_fail` before building; the release used the authenticated local CLI fallback. Future automatic Git deployments have not been proven repaired. |
+
+All three existing Vercel aliases were checked against the release deployment: `sti-vio-log.vercel.app`, `sti-vio-log-eyzen08s-projects.vercel.app` and `sti-vio-log-git-main-eyzen08s-projects.vercel.app`. Promotion updated the production aliases; the `git-main` alias required explicit reassignment on October 13.
+
+The CLI upload came from a clean `git archive` of the release commit. A dry run verified all **649 uploaded files** belonged to that commit. The original workspace dry run included ignored backups and unrelated work folders, so it was not deployed. Locally configured environment files, backups and unrelated work folders were excluded from upload. The build was staged with `--prod --skip-domain`; authenticated `vercel curl` checks passed before promotion. Deployment Protection was retained.
+
+### Verification performed
+
+- Staged and public `/` and `/login` returned the application HTML. All 31 directly linked assets returned nonempty, non-HTML content; browser and Apple touch icons matched the release files byte-for-byte by SHA-256.
+- Public responses included CSP, HSTS, anti-framing, nosniff, referrer and permissions headers. Same-origin `/api/health` confirmed database connectivity.
+- The existing production smoke check passed after release and again October 13: direct API health, frontend route, frontend API proxy, unauthenticated protected-endpoint rejection, approved-origin preflight and rejected unapproved origin.
+- Private configuration comparisons confirmed production environment names, canonical frontend allowlisting, matching proxy origins and Google IDs, required secret presence, verified database TLS settings with a CA, the expected dedicated runtime login, and absence of `MIGRATION_DATABASE_URL` from Render runtime settings. No secret values were written to evidence files or documentation.
+- The release Vercel error-log query returned no entries. Render's October 12 release scan returned two CORS rejections at the times of the deliberate unapproved-origin smoke probes; no other error entries were returned in that window. This is a bounded release scan, not continuous monitoring.
+
+### Preview audit — October 12, 2026
+
+All 46 Vercel preview deployment records were inspected: 14 latest deployments for open PR branches, 18 superseded deployments on those branches, and 14 deployments on closed branches classified as historical. Every open branch's latest deployment record matched its current head. These are frontend deployment records, including for backend-only dependency PRs; they do not represent deployed preview APIs.
+
+| Open PR | Branch suffix after `dependabot/` | Head / deployed commit | Build state | Latest deployment |
+|---|---|---|---|---|
+| #16 | npm_and_yarn/backend/google-auth-library-11.1.0 | `918d240` | READY | `dpl_A7XjZgQAEaXyExsZPW1iTxMWRYZT` |
+| #15 | npm_and_yarn/frontend/globals-17.12.0 | `a05ac65` | READY | `dpl_7G9XfioVSmn8MLisP4khSDsNdyFk` |
+| #14 | github_actions/github/codeql-action/analyze-4.38.0 | `a8ea2cd` | READY | `dpl_5tnyLe43RQYYg6A8rTV5aHnU5y74` |
+| #13 | github_actions/github/codeql-action/init-4.38.0 | `9f17799` | READY | `dpl_5TETffMpCTbdigUS2QLEGATqhwwj` |
+| #12 | npm_and_yarn/frontend/multi-7f19880bf6 | `ae5412a` | ERROR (`git_info_fail`) | `dpl_i9RneWEd29HyLenDpRNMdHJp8gtt` |
+| #10 | npm_and_yarn/frontend/multi-de36fa8f59 | `21edaeb` | READY | `dpl_Dy8w2vD6dNNpPrsKQ3foZu8898c7` |
+| #9 | npm_and_yarn/backend/pdfkit-0.20.2 | `a916f8a` | READY | `dpl_8FDHcZDYRLXa6EsxzSCQSPxW8DSD` |
+| #8 | npm_and_yarn/backend/socket.io-4.8.3 | `81ee0ed` | READY | `dpl_G3mmamUTcBASbWKL7deoSWtX62jr` |
+| #7 | npm_and_yarn/frontend/vitejs/plugin-react-6.1.1 | `2672770` | READY | `dpl_D6btK9vq4gHkKCVqqCNCithDykHF` |
+| #5 | npm_and_yarn/backend/express-rate-limit-8.7.0 | `632cc74` | READY | `dpl_AMz3KfK3D6AUgcKF85Exv5qDzkQr` |
+| #4 | github_actions/actions/checkout-7.0.1 | `f17ff36` | READY | `dpl_DCMgcvqDCgFZi2DK4CnLsPEMSj6D` |
+| #3 | npm_and_yarn/frontend/socket.io-client-4.8.3 | `400b732` | READY | `dpl_DWFK7qTmyvTeSdXbstE8kHNf8vG8` |
+| #2 | github_actions/actions/upload-artifact-7.0.1 | `38bad45` | READY | `dpl_7tCV6TZoQYa1WH8T7oiL8emwLrRb` |
+| #1 | github_actions/actions/setup-node-7.0.0 | `54e187b` | READY | `dpl_639YBPzrCzMZrxhmtnS3X8GvMmkq` |
+
+**Every active preview remains blocked for functional verification/rebuild:** Vercel Preview has neither `API_PROXY_ORIGIN` nor `PRODUCTION_API_ORIGIN`, and Render has no isolated preview API/database. READY establishes only build completion. No preview was rebuilt or pointed to production, no PR was merged, and no historical deployment was deleted. Provision approved isolated services before validating these branches end-to-end; retry the failed Git deployment only after that isolation exists.
+
+### Rollback and remaining checks
+
+Prior working frontend: `dpl_Bf5T3YJNX8JGbKeMMaxuV6z34oka`, commit `15e4a9965b7c7b9d1683138bbb6c1237ced4da72`. Prior working API: `dep-db6cafbbc2fs739i72mg`, commit `ba45922047c4860ef3da68b02b445f55ef1cf3b4`. No rollback was needed. If a later failure requires rollback, restore the application deployment and verify every alias; do not automatically reverse database migrations.
+
+Authenticated role workflows, Google sign-in completion, email delivery, camera behavior and backup/restore remain unverified. Sixteen unused Supabase/Postgres-related Vercel environment-variable names were observed and left unchanged; their presence does not establish browser exposure. Review that provider integration separately. Private redacted evidence and assert-based checks are in ignored `.cache/deployment-update/`, which may not exist in another checkout. The earlier audit below is retained as historical evidence.
+
+## Historical deployment inventory — October 10, 2026
 
 Source baseline: `3601e16031c36d08308176d9c7807d02198ac7b8`. Read-only provider inspections matched repository/project identity before use. No deployments, settings, environment values, shared migrations or messages were changed. Instructions below are requirements/recommendations, not proof that all live settings match them.
 
@@ -38,9 +92,9 @@ Google/mail source branches exist; live completion was not tested. Email is sync
 
 ## Operational limits and recommendations
 
-**Current limits:** one Free API instance; incomplete provider environment/runtime evidence; no verified backup/PITR/restore; no full authenticated/browser/load/security evaluation; backup-storage review pending; retired registration tables retained; legal acknowledgment disabled. Health alone does not establish handover readiness.
+**Current limits:** one Free API instance; unresolved Vercel Git-backed deployment errors; no isolated preview API/database; no verified backup/PITR/restore; no full authenticated/browser/load/security evaluation; email delivery unverified; backup-storage review pending; retired registration tables retained; legal acknowledgment disabled. Health alone does not establish handover readiness.
 
-**Recommendations, not changes made:** review the release command and health-check configuration, verify runtime least privilege/TLS/proxy trust and preview isolation, use reproducible installs, approve backup/restore monitoring/retention, and test controlled Google/email/camera/revocation journeys. Keep owner credentials out of frontend/runtime services and migrations out of runtime startup. [The audit](AUDIT-REPORT.md) assigns priorities and next actions.
+**Remaining recommendations:** repair and verify the Vercel Git deployment path, establish preview isolation, confirm actual proxy-hop topology, review unused frontend provider variables, approve backup/restore monitoring/retention, and test controlled Google/email/camera/revocation journeys. Locked installs, the API health check and runtime least-privilege/TLS configuration were verified in the October 12–13 release above. Keep owner credentials out of frontend/runtime services and migrations out of runtime startup. [The audit](AUDIT-REPORT.md) retains earlier findings and next actions.
 
 ## Required architecture
 
