@@ -50,7 +50,7 @@ All 46 Vercel preview deployment records were inspected: 14 latest deployments f
 
 ### Rollback and remaining checks
 
-Prior working frontend: `dpl_Bf5T3YJNX8JGbKeMMaxuV6z34oka`, commit `15e4a9965b7c7b9d1683138bbb6c1237ced4da72`. Prior working API: `dep-db6cafbbc2fs739i72mg`, commit `ba45922047c4860ef3da68b02b445f55ef1cf3b4`. No rollback was needed. If a later failure requires rollback, restore the application deployment and verify every alias; do not automatically reverse database migrations.
+Prior working frontend: `dpl_Bf5T3YJNX8JGbKeMMaxuV6z34oka`, commit `15e4a9965b7c7b9d1683138bbb6c1237ced4da72`. Prior working backend: `dep-db6cafbbc2fs739i72mg`, commit `ba45922047c4860ef3da68b02b445f55ef1cf3b4`. No rollback was needed. If a later failure requires rollback, restore the application deployment and verify every alias; do not automatically reverse database migrations.
 
 Authenticated role workflows, Google sign-in completion, email delivery, camera behavior and backup/restore remain unverified. Sixteen unused Supabase/Postgres-related Vercel environment-variable names were observed and left unchanged; their presence does not establish browser exposure. Review that provider integration separately. Private redacted evidence and assert-based checks are in ignored `.cache/deployment-update/`, which may not exist in another checkout. The earlier audit below is retained as historical evidence.
 

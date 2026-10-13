@@ -1,1 +1,3 @@
 26328857a99440fbb2a2b4963da7ec62f8da8c16:backend/tests/production-check.test.js:generic-api-key:6
+# Public rollback deployment/commit identifiers, not credentials.
+7b7820c66ec982a735c9fa005c8c0aa5c7fb9bd1:docs/PRODUCTION-DEPLOYMENT.md:generic-api-key:53
