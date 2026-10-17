@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import GoogleStudentAccess from './GoogleStudentAccess.jsx'
 import PasswordField from './PasswordField.jsx'
 import StudentPasswordAccess from './StudentPasswordAccess.jsx'
@@ -7,24 +7,46 @@ import buildingNightImage from '../assets/sti-global-city-building-night.jpg'
 import stiVioLogLogoTransparent from '../assets/sti-logo-web-transparent.png'
 import MfaChallenge from './MfaChallenge.jsx'
 import PortalIcon from './PortalIcon.jsx'
+import PublicMotionToggle from './PublicMotionToggle.jsx'
+import usePublicMotion from '../lib/usePublicMotion.js'
+import ribbon from '../assets/landing-ribbon.webp'
+import '../styles/public-motion.css'
 
 const STUDENT_AUTH_PATHS = new Set(['/forgot-password','/reset-password/verify','/reset-password/new'])
 
 const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20h16M6 20V9m12 11V9M3 9l9-5 9 5M9 12v4m6-4v4"/></svg>
 
-function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue }) {
+function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue, theme='light', onToggleTheme }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
+  const rootRef = useRef(null)
+  const [motionMode, toggleMotion] = usePublicMotion()
   const [capsLockOn, setCapsLockOn] = useState(false)
+  useEffect(() => {
+    let disposed = false
+    let cleanup = () => {}
+    if (motionMode === 'reduced') return undefined
+    import('../lib/loginMotion.js').then(({ animateLogin }) => {
+      if (!disposed) cleanup = animateLogin(rootRef.current)
+    }).catch(() => { /* Authentication stays visible when optional motion is unavailable. */ })
+    return () => { disposed = true; cleanup() }
+  }, [motionMode])
   const navigate = (event, path, disabled=false) => {
     event.preventDefault()
     if (disabled) return
     onNavigate(path)
   }
 
-  return <section className={`login-page${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title">
+  return <section className={`login-page public-motion-surface${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title" ref={rootRef} data-motion={motionMode}>
+    <div className="login-utility-controls" aria-label="Display preferences">
+      <PublicMotionToggle mode={motionMode} onToggle={toggleMotion} className="login-motion-toggle" />
+      <button className="theme-toggle auth-theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} onClick={onToggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
+    </div>
     <aside className="login-intro" aria-label="STI Global City Portal">
+      <div className="login-campus-parallax"><div className="login-campus-drift">
       <img className="login-campus-image login-campus-image--day" src={buildingImage} alt="STI Global City campus building" width="1200" height="825" fetchPriority="high"/>
       <img className="login-campus-image login-campus-image--night" src={buildingNightImage} alt="" width="1200" height="825" aria-hidden="true"/>
+      </div></div>
+      <div className="login-ribbon-frame" aria-hidden="true"><img className="login-ribbon" src={ribbon} alt="" width="1200" height="800" loading="lazy" /></div>
       <div className="login-brand-mark"><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="420" height="236" fetchPriority="high"/></div>
       <div className="login-intro-content">
         <span className="login-kicker">STI Global City</span>

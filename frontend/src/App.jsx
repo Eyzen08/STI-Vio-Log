@@ -598,6 +598,7 @@ function App() {
   }, [attendanceNotices])
 
   const routeResolution = resolveRoute(routePath, userRole)
+  const loginView = !isLanding && !isLoggedIn && !sessionRestoring && !['/privacy', '/terms'].includes(routePath) && routeResolution.status !== 'not_found'
   const activeView = routeResolution.status === 'allowed' ? routeResolution.route.view : ''
 
   useEffect(() => {
@@ -1919,6 +1920,8 @@ function App() {
     if (!isLoggedIn) {
       return (
         <LoginPage
+          theme={theme}
+          onToggleTheme={toggleTheme}
           form={form}
           error={error}
           isSubmitting={isSubmitting}
@@ -2806,7 +2809,7 @@ function App() {
           )}
         </header>}
 
-        {!isLoggedIn && !isLanding && <button
+        {!isLoggedIn && !isLanding && !loginView && <button
           className="theme-toggle auth-theme-toggle"
           type="button"
           aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}

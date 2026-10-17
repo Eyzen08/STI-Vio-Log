@@ -1,5 +1,6 @@
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { installPublicCursor } from './publicCursor.js'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -15,7 +16,7 @@ export function animateLanding(root) {
     removals.push(() => element.removeEventListener(name, handler))
   }
   try {
-    // Full is an explicit landing-only choice, independent of the OS preference.
+    // Full is an explicit public-page choice, independent of the OS preference.
     media.add({ all: '(min-width: 0px)', pointer: '(hover: hover) and (pointer: fine)', forced: '(forced-colors: active)' }, context => {
       const select = gsap.utils.selector(root)
       if (!root.dataset.introPlayed) {
@@ -82,7 +83,6 @@ export function animateLanding(root) {
       if (context.conditions.pointer && !context.conditions.forced) {
         const quick = (element, property, duration = .45) => gsap.quickTo(element, property, { duration, ease: 'power3.out' })
         const interactive = 'a, button, summary, [role="tab"]'
-        const editable = 'input, textarea, [contenteditable="true"], [contenteditable=""]'
         const visual = root.querySelector('.landing-hero-visual')
         const ribbon = root.querySelector('.landing-ribbon-parallax')
         const preview = root.querySelector('.landing-preview-parallax')
@@ -150,22 +150,7 @@ export function animateLanding(root) {
           })
           listen(element, 'pointerleave', reset); listen(element, 'pointerdown', reset); listen(element, 'focusin', reset)
         }
-        let selecting = false
-        const hideCursor = () => root.removeAttribute('data-cursor')
-        const updateCursor = event => {
-          if (event.pointerType !== 'mouse' || selecting || document.getSelection()?.toString() || event.target.closest(editable)) hideCursor()
-          else root.dataset.cursor = 'active'
-        }
-        listen(root, 'pointermove', updateCursor)
-        listen(root, 'pointerover', updateCursor)
-        listen(root, 'pointerdown', updateCursor)
-        listen(window, 'pointerup', () => { selecting = false })
-        listen(root, 'selectstart', () => { selecting = true; hideCursor() })
-        listen(document, 'selectionchange', () => { if (document.getSelection()?.toString()) hideCursor() })
-        listen(root, 'pointerleave', hideCursor)
-        listen(window, 'blur', hideCursor)
-        listen(document, 'keydown', hideCursor)
-        listen(document, 'visibilitychange', () => { if (document.hidden) hideCursor() })
+        removals.push(installPublicCursor(root))
       }
       return dispose
     }, root)

@@ -285,6 +285,7 @@ try {
   await fits()
   await screenshot('login-200-percent-reflow')
   await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.locator('.login-motion-toggle[aria-pressed="true"]').click()
   assert.equal(await page.locator('.login-submit').evaluate(node => getComputedStyle(node).transitionDuration), '0s')
   await page.locator('#username').focus()
   await labelAt('username', true)

@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import LandingPreview from './LandingPreview.jsx'
 import PortalIcon from './PortalIcon.jsx'
-import { LANDING_MOTION_KEY, normalizeLandingMotion } from '../lib/landingPreferences.js'
+import usePublicMotion from '../lib/usePublicMotion.js'
+import PublicMotionToggle from './PublicMotionToggle.jsx'
 import logo from '../assets/sti-logo-web-transparent.png'
 import campus from '../assets/sti-global-city-building-night.jpg'
 import ribbon from '../assets/landing-ribbon.webp'
 import '../styles/landing-page.css'
+import '../styles/public-motion.css'
 
 const FEATURES = [
   { icon: 'violations', number: '01', title: 'Understand your records.', copy: 'See incident details and their status, with a clear view of what needs your attention.' },
@@ -28,15 +30,9 @@ const FAQS = [
 export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const rootRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [motionMode, setMotionMode] = useState(() => {
-    try { return normalizeLandingMotion(localStorage.getItem(LANDING_MOTION_KEY)) } catch { return 'full' }
-  })
+  const [motionMode, toggleMotion] = usePublicMotion()
   const checking = accessState === 'restoring'
   const accountLabel = checking ? 'Checking Session…' : accessState === 'signed-in' ? 'Open My Portal' : 'Sign In'
-
-  useEffect(() => {
-    try { localStorage.setItem(LANDING_MOTION_KEY, motionMode) } catch { /* The switch still works when storage is unavailable. */ }
-  }, [motionMode])
 
   useEffect(() => {
     const root = rootRef.current
@@ -69,9 +65,9 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const accountAction = className => checking
     ? <button className={className} type="button" disabled aria-busy="true">{accountLabel}</button>
     : <a className={className} data-magnetic href="/login" onClick={event => navigate(event, '/login')}>{accountLabel}<PortalIcon name="arrow-right" size={18} /></a>
-  const motionControl = () => <button className="landing-motion-toggle" type="button" aria-pressed={motionMode === 'full'} aria-label={`Motion: ${motionMode === 'full' ? 'Full' : 'Reduced'}. ${motionMode === 'full' ? 'Reduce Motion' : 'Enable Full Motion'}`} title={motionMode === 'full' ? 'Reduce Motion' : 'Enable Full Motion'} onClick={() => setMotionMode(value => value === 'full' ? 'reduced' : 'full')}><PortalIcon name={motionMode === 'full' ? 'pause' : 'play'} size={18} /></button>
+  const motionControl = () => <PublicMotionToggle mode={motionMode} onToggle={toggleMotion} className="landing-motion-toggle" />
 
-  return <div className="landing-page" ref={rootRef} data-motion={motionMode}>
+  return <div className="landing-page public-motion-surface" ref={rootRef} data-motion={motionMode}>
     <header className="landing-header">
       <a className="landing-brand" href="/" aria-label="STI Vio-Log home"><img src={logo} alt="STI Vio-Log" width="420" height="236" /><span>Global City</span></a>
       <nav id="landing-navigation" className={`landing-navigation${menuOpen ? ' is-open' : ''}`} aria-label="Main navigation">

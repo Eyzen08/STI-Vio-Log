@@ -229,14 +229,6 @@
 :root:has(.landing-page[data-motion='reduced']) { scroll-behavior: auto !important; }
 .landing-page[data-motion='full'] .landing-feature::before { transition-duration: 200ms !important; }
 .landing-page[data-motion='full'] :is(.landing-button, .landing-navigation > a) { transition-duration: 180ms !important; }
-@media (hover: hover) and (pointer: fine) and (forced-colors: none) {
-  .app-shell.landing-shell .landing-page[data-motion='full'][data-cursor='active'],
-  .app-shell.landing-shell .landing-page[data-motion='full'][data-cursor='active'] * { cursor: url('../assets/landing-cursor-yellow.svg?no-inline') 3 2, auto; }
-  .app-shell.landing-shell .landing-page[data-motion='full'][data-cursor='active'] :is(a,button,summary,[role='tab']) { cursor: url('../assets/landing-cursor-yellow.svg?no-inline') 3 2, pointer; }
-  .app-shell.landing-shell .landing-page[data-motion='full'][data-cursor='active'] :is(.landing-button-primary,.landing-button-primary *) { cursor: url('../assets/landing-cursor-navy.svg?no-inline') 3 2, pointer; }
-  .app-shell.landing-shell .landing-page[data-cursor='active'] :is(input,textarea,[contenteditable='true'],[contenteditable='']) { cursor: text; }
-  .app-shell.landing-shell .landing-page[data-cursor='active'] button:disabled { cursor: wait; }
-}
 @media (max-width: 1100px) { .landing-header { gap: 16px; }.landing-navigation { gap: 16px; }.landing-brand > span { display: none; } }
 @media (max-width: 800px) { .landing-header-controls { margin-left: auto; }.landing-navigation { margin-left: 0; } }
 @media (max-width: 480px) { .landing-header { gap: 8px; }.landing-header-controls { gap: 8px; }.landing-preview-heading h2 { font-size: 16px; }.landing-status { padding-inline: 6px; }.landing-preview-tabs { gap: 2px; margin-inline: 12px; }.landing-preview-tabs button svg { width: 13px; }.landing-preview-disclaimer { padding-inline: 8px; }.landing-preview-panel { min-height: 328px; } }
