@@ -178,3 +178,50 @@ test('password-change session replacement rejects recovery committed after the c
   await controller.passwordChange({ user: { id: 8 }, body: { current_password: 'Old!Password123', new_password: 'New!Password123' }, get: () => 'test-browser' }, res);
   assert.equal(res.statusCode, 401);
 });
+
+test('student password-change requests require email recovery without changing credentials or sessions', async () => {
+  const db = fakePool(sql => {
+    if (sql.includes('u.password_hash')) return { rows: [{ ...student, id: 8, password_hash: 'old-hash', session_version: 3 }] };
+    if (sql.startsWith('UPDATE users')) return { rows: [{ id: 8, username: '02000123456', role: 'STUDENT', session_version: 4, must_change_password: false }] };
+    return { rows: [] };
+  });
+  let hashed = false, sessionChanges = 0;
+  const service = createPasswordChangeService({ pool: db.pool, comparePassword: async value => value === 'Old!Password123', hashPassword: async () => { hashed = true; return 'new-hash'; }, issueToken: () => null });
+  const controller = createAccountController({ service, sessions: {
+    revokeUserSessions: async () => { sessionChanges++; },
+    createSession: async () => { sessionChanges++; return { csrf: 'test-csrf' }; },
+    setSessionCookies: () => { sessionChanges++; }
+  } });
+  const res = { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
+  await controller.passwordChange({ user: { id: 8, role: 'STUDENT' }, body: { current_password: 'Old!Password123', new_password: 'New!Password123' }, get: () => 'test-browser' }, res);
+  assert.equal(res.statusCode, 403);
+  assert.equal(res.body.error.code, 'PASSWORD_RESET_REQUIRED');
+  assert.equal(hashed, false);
+  assert.equal(sessionChanges, 0);
+  assert.equal(db.calls.some(({ sql }) => /^(UPDATE|INSERT)/.test(sql)), false);
+  assert.equal(db.calls.at(-1).sql, 'ROLLBACK');
+});
+
+test('students can replace valid temporary passwords but cannot use missing or expired temporary credentials', async () => {
+  for (const expiry of [new Date(Date.now() + 3600000), new Date(Date.now() - 3600000), null]) {
+    const db = fakePool(sql => {
+      if (sql.includes('u.password_hash')) return { rows: [{ ...student, id: 8, username: '02000123456', password_hash: 'old-hash', session_version: 3, must_change_password: true, temporary_password_expires_at: expiry }] };
+      if (sql.startsWith('UPDATE users')) return { rows: [{ id: 8, username: '02000123456', role: 'STUDENT', session_version: 4, must_change_password: false }] };
+      return { rows: [] };
+    });
+    const service = createPasswordChangeService({ pool: db.pool, comparePassword: async value => value === 'Temporary!123', hashPassword: async () => 'new-hash', issueToken: () => null });
+    const change = service.change({ userId: 8, currentPassword: 'Temporary!123', newPassword: 'New!Password123' });
+    if (expiry && expiry > new Date()) {
+      const result = await change;
+      assert.equal(result.user.password_change_required, false);
+      assert.equal(result.user.onboarding_step, 'GOOGLE');
+      assert.equal(result.session_version, 4);
+      assert(db.calls.some(({ sql }) => sql.includes('must_change_password=FALSE') && sql.includes('temporary_password_expires_at=NULL')));
+      assert.equal(db.calls.at(-1).sql, 'COMMIT');
+    } else {
+      await assert.rejects(change, error => error.statusCode === 409 && error.code === 'CREDENTIALS_EXPIRED');
+      assert.equal(db.calls.some(({ sql }) => /^(UPDATE|INSERT)/.test(sql)), false);
+      assert.equal(db.calls.at(-1).sql, 'ROLLBACK');
+    }
+  }
+});

@@ -22,6 +22,7 @@ const createPasswordChangeService = ({ pool, comparePassword = bcrypt.compare, h
         LEFT JOIN staff_profiles sp ON sp.user_id=u.id LEFT JOIN admin_profiles ap ON ap.user_id=u.id
         WHERE u.id=$1 AND u.is_active=TRUE FOR UPDATE OF u`, [Number(userId)])).rows[0];
       if (!user || !(await comparePassword(currentPassword,user.password_hash))) throw new ApiError(401,'INVALID_CREDENTIALS','Current password is incorrect');
+      if (user.role==='STUDENT' && !user.must_change_password) throw new ApiError(403,'PASSWORD_RESET_REQUIRED','To reset your password, sign out and select Forgot Password on the login page. A verification code will be sent to your registered Gmail.');
       if (user.role==='STUDENT' && user.must_change_password && (!user.temporary_password_expires_at || new Date(user.temporary_password_expires_at)<=new Date())) throw new ApiError(409,'CREDENTIALS_EXPIRED','Temporary password expired. Request password recovery or contact the Discipline Office');
       if (await comparePassword(newPassword,user.password_hash)) throw new ApiError(409,'PASSWORD_REUSE','New password must be different from the current password');
       const passwordHash = await hashPassword(newPassword);
