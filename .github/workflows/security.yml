@@ -86,7 +86,12 @@ jobs:
         shell: bash
         run: |
           test -z "$(git ls-files '*.env' '*.pem' '*.key' '*.dump' '*.dump.enc' | grep -vE '(^|/)\.env\.example$')"
-          ! git grep -nEI '(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|service_role["'"' ]*[:=]|BACKUP_ENCRYPTION_KEY["'"' ]*[:=]["'"' ][A-Za-z0-9+/=]{32,})' -- ':!package-lock.json'
+          if git grep -qEI "(BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|service_role[\"' ]*[:=]|BACKUP_ENCRYPTION_KEY[\"' ]*[:=][\"' ][A-Za-z0-9+/=]{32,})" -- ':!package-lock.json'; then
+            echo "Tracked source contains a secret pattern."
+            exit 1
+          else
+            test "$?" -eq 1
+          fi
       - name: Scan full history for secrets
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:

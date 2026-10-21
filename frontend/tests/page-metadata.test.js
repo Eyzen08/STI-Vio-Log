@@ -24,8 +24,9 @@ test('authenticated and unknown routes are excluded from indexing', () => {
 
 test('application shell includes canonical social and icon metadata', () => {
   assert.match(html, /property="og:url" content="https:\/\/stiviolog\.com\/"/)
-  assert.match(html, /property="og:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021"/)
-  assert.match(html, /name="twitter:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021"/)
+  assert.match(html, /property="og:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021-2"/)
+  assert.match(html, /name="twitter:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021-2"/)
+  assert.match(html, /property="og:image:alt" content="STI Vio-Log: STI Global City Discipline Office Portal\. Records\. Service\. Clearance\. STI Global City campus at night\. stiviolog\.com\."/)
   assert.match(html, /name="twitter:card" content="summary_large_image"/)
   assert.match(html, /rel="canonical" href="https:\/\/stiviolog\.com\/"/)
   assert.match(html, /rel="icon" type="image\/png" sizes="32x32" href="\/favicon-32\.png"/)
