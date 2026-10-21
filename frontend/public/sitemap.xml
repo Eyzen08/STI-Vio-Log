@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://sti-vio-log.vercel.app/</loc>
+    <loc>https://stiviolog.com/</loc>
   </url>
   <url>
-    <loc>https://sti-vio-log.vercel.app/login</loc>
+    <loc>https://stiviolog.com/login</loc>
   </url>
   <url>
-    <loc>https://sti-vio-log.vercel.app/privacy</loc>
+    <loc>https://stiviolog.com/privacy</loc>
   </url>
   <url>
-    <loc>https://sti-vio-log.vercel.app/terms</loc>
+    <loc>https://stiviolog.com/terms</loc>
   </url>
 </urlset>

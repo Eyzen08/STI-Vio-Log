@@ -74,7 +74,7 @@ Use the deployed HTTPS site on at least one Android phone and one iPhone if both
 - [ ] Run the read-only smoke test from `backend`:
 
 ```powershell
-$env:PRODUCTION_FRONTEND_URL = "https://sti-vio-log.vercel.app"
+$env:PRODUCTION_FRONTEND_URL = "https://stiviolog.com"
 $env:PRODUCTION_API_URL = "https://sti-vio-log.onrender.com"
 npm run smoke:production
 ```

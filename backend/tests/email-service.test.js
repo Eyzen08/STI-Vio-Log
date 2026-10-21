@@ -56,12 +56,13 @@ test('certificate email uses only the registered recipient and attaches the gene
 
 test('student credentials use Brevo with the login URL from the first configured frontend origin',async()=>{
   let body;
-  const service=createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test',FRONTEND_URL:'https://portal.example.test,https://other.example.test'},fetchImpl:async(url,options)=>{assert.equal(url,BREVO_EMAIL_ENDPOINT);body=JSON.parse(options.body);return{ok:true}}});
+  const service=createEmailService({env:{BREVO_API_KEY:'private-test-key',BREVO_SENDER_EMAIL:'verified@example.test',FRONTEND_URL:'https://stiviolog.com,https://www.stiviolog.com,https://sti-vio-log.vercel.app'},fetchImpl:async(url,options)=>{assert.equal(url,BREVO_EMAIL_ENDPOINT);body=JSON.parse(options.body);return{ok:true}}});
   const result=await service.sendStudentCredentials({to:'student@gmail.com',studentName:'Maria Santos',studentNumber:'02000123456',temporaryPassword:'Private-test!Aa1'});
   assert.equal(result,undefined);
   assert.deepEqual(body.to,[{email:'student@gmail.com'}]);
-  for(const value of ['Maria Santos','02000123456','Private-test!Aa1','https://portal.example.test/login','change this temporary password','guardian information']) assert(body.textContent.includes(value),value);
-  assert(!body.textContent.includes('other.example.test'));
+  for(const value of ['Maria Santos','02000123456','Private-test!Aa1','https://stiviolog.com/login','change this temporary password','guardian information']) assert(body.textContent.includes(value),value);
+  assert(!body.textContent.includes('www.stiviolog.com'));
+  assert(!body.textContent.includes('sti-vio-log.vercel.app'));
   for(const step of ['1. Sign in','2. Create your own password','3. Review and acknowledge','4. Verify the Gmail','5. Complete your academic details','6. When you see "Your account is ready"'])assert(body.textContent.includes(step),step);
 });
 

@@ -25,8 +25,8 @@ Department Google registration and login are retired. Historical registration an
 - The frontend and backend use the same Google Web Client ID.
 - Vercel defines `VITE_GOOGLE_CLIENT_ID` and the production server-side `API_PROXY_ORIGIN` (production browser requests use the same-origin proxy).
 - The backend defines `GOOGLE_CLIENT_ID` with the same public Web Client ID.
-- Google Cloud lists both the local frontend origin and the exact Vercel production origin under **Authorized JavaScript origins**.
-- The production backend allows the Vercel origin through `FRONTEND_URL`/CORS.
+- Google Cloud lists `https://stiviolog.com` under **Authorized JavaScript origins**, retaining the local frontend and existing Vercel origins. Keep the existing Web Client ID; this ID-token flow does not need a new redirect URI or client secret.
+- The production backend lists `https://stiviolog.com` first in `FRONTEND_URL` so credential emails link to the canonical domain. Retain existing approved origins and include `https://www.stiviolog.com` and `https://sti-vio-log.vercel.app` for CORS/realtime compatibility.
 - `.env` files remain ignored; only placeholder values belong in `.env.example`.
 - Restart or redeploy services after environment-variable changes.
 

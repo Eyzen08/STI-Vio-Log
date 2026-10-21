@@ -15,7 +15,7 @@ const response = () => ({
 test('production HTTP requests redirect permanently to HTTPS', () => {
   const res = response();
   let continued = false;
-  enforceHttps({ NODE_ENV: 'production', FRONTEND_URL: 'https://sti-vio-log.vercel.app' })(
+  enforceHttps({ NODE_ENV: 'production', FRONTEND_URL: 'https://stiviolog.com' })(
     { secure: false, protocol: 'http', originalUrl: '/api/health?full=1', get: () => 'api.example.test' },
     res,
     () => { continued = true; },

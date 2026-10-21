@@ -1,5 +1,15 @@
 # Vercel, Render and Supabase production deployment
 
+## Current domain — October 21, 2026
+
+The canonical frontend is [stiviolog.com](https://stiviolog.com). Keep `sti-vio-log.vercel.app` available. The `www.stiviolog.com` alias should redirect permanently to the canonical domain while preserving paths and query strings. GoDaddy DNS already points to the existing Vercel project; preserve the current nameservers and unrelated records.
+
+The existing Render service remains `STI-Vio-Log` (`srv-da2auknqj5pc73ec08ag`) in `My Workspace`, serving `https://sti-vio-log.onrender.com`. Put `https://stiviolog.com` first in `FRONTEND_URL`, retain approved origins, and include both `https://www.stiviolog.com` and `https://sti-vio-log.vercel.app`. Apply that setting with a merge, preserving every unrelated variable, and deploy before switching the canonical redirect. Google Cloud's existing Web Client must authorize `https://stiviolog.com`; retain working origins and the existing client ID. If Google Console access is unavailable, the owner must apply this setting before the canonical switch.
+
+The social preview is `frontend/public/social-preview.jpg` (1200 × 630), referenced as `https://stiviolog.com/social-preview.jpg?v=20261021`. The icon-generation script intentionally leaves this generated image alone. Stage a production deployment, verify metadata/image, routes, API proxy and CORS, then promote that tested deployment. Use `PRODUCTION_FRONTEND_URL=https://stiviolog.com` and `PRODUCTION_API_URL=https://sti-vio-log.onrender.com` for the read-only production smoke check. Check Google sign-in with an authorized test account; existing shared previews may need a refresh. Historical deployment snapshots below retain their original URLs and verification limits.
+
+Configuration verified October 21: the existing Google client already authorizes both new HTTPS origins and retains its local/Vercel origins. Render deployment `dep-dbc31cks728c73dqok9g` is Live with the canonical origin first; all 29 environment-variable names remain present. Read-only preflights accepted the apex, `www`, and Vercel origins and rejected an unapproved origin. Actual Google sign-in still requires an authorized test account.
+
 ## Verified deployment snapshot — October 13, 2026
 
 Production was verified on commit `b356e2b712c65a8f30fe52753f5a398028ab706b` (Refresh browser and Apple touch icons). It remained GitHub `main` at the final review on **October 13, 2026, 11:19–11:21 Asia/Manila**. [Security verification run 38258561658](https://github.com/Eyzen08/STI-Vio-Log/actions/runs/38258561658) completed successfully for this exact commit. The application release was performed October 12; the final alias correction and public checks were performed October 13. Dependencies, hosting plans, application code and database schema were not changed by this rollout. Later documentation-only releases can advance the deployed commit without changing application source; inspect the provider for the current live revision.

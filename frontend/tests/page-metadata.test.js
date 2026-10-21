@@ -23,10 +23,24 @@ test('authenticated and unknown routes are excluded from indexing', () => {
 })
 
 test('application shell includes canonical social and icon metadata', () => {
-  assert.match(html, /property="og:image" content="https:\/\/sti-vio-log\.vercel\.app\/social-preview\.jpg"/)
+  assert.match(html, /property="og:url" content="https:\/\/stiviolog\.com\/"/)
+  assert.match(html, /property="og:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021"/)
+  assert.match(html, /name="twitter:image" content="https:\/\/stiviolog\.com\/social-preview\.jpg\?v=20261021"/)
   assert.match(html, /name="twitter:card" content="summary_large_image"/)
-  assert.match(html, /rel="canonical"/)
+  assert.match(html, /rel="canonical" href="https:\/\/stiviolog\.com\/"/)
   assert.match(html, /rel="icon" type="image\/png" sizes="32x32" href="\/favicon-32\.png"/)
   assert.doesNotMatch(html, /rel="icon" type="image\/svg\+xml"/)
   assert.match(html, /rel="apple-touch-icon" sizes="180x180" href="\/apple-touch-icon\.png"/)
+})
+
+test('search discovery URLs use the canonical custom domain', async () => {
+  const sitemap = await readFile(new URL('../public/sitemap.xml', import.meta.url), 'utf8')
+  const robots = await readFile(new URL('../public/robots.txt', import.meta.url), 'utf8')
+  assert.deepEqual([...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]), [
+    'https://stiviolog.com/',
+    'https://stiviolog.com/login',
+    'https://stiviolog.com/privacy',
+    'https://stiviolog.com/terms',
+  ])
+  assert.match(robots, /^Sitemap: https:\/\/stiviolog\.com\/sitemap\.xml$/m)
 })
