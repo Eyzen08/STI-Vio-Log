@@ -14,7 +14,7 @@ test('public legal pages cover privacy, authorized access, and contact guidance'
   assert.match(content, /Who can access information/)
   assert.match(content, /Account security/)
   assert.match(content, /Discipline Office/)
-  assert.match(content, /https:\/\/www.sti.edu\/sti_dataprivacy.asp/)
+  assert.match(content, /https:\/\/www\.sti\.edu\/sti_dataprivacy\.asp/)
 })
 
 test('crawler files expose public information without advertising protected areas', () => {

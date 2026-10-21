@@ -9,7 +9,8 @@ test('all 48 unique preset images are bundled as local SVG portraits', () => {
     assert.equal(avatarImageUrl({ source: 'PRESET', preset_id: id }), `/avatars/${id}.svg`)
     const svg = fs.readFileSync(new URL(`../public/avatars/${id}.svg`, import.meta.url), 'utf8')
     assert.match(svg, /viewBox="0 0 100 100"/)
-    assert.doesNotMatch(svg, /<script|https?:\/\/(?!www.w3.org)/)
+    assert.doesNotMatch(svg, /<script\b/i)
+    assert.deepEqual(svg.match(/https?:\/\/[^\s"'<>]+/g), ['http://www.w3.org/2000/svg'])
   }
 })
 

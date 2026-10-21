@@ -61,8 +61,7 @@ test('student credentials use Brevo with the login URL from the first configured
   assert.equal(result,undefined);
   assert.deepEqual(body.to,[{email:'student@gmail.com'}]);
   for(const value of ['Maria Santos','02000123456','Private-test!Aa1','https://stiviolog.com/login','change this temporary password','guardian information']) assert(body.textContent.includes(value),value);
-  assert(!body.textContent.includes('www.stiviolog.com'));
-  assert(!body.textContent.includes('sti-vio-log.vercel.app'));
+  assert.deepEqual(body.textContent.match(/https?:\/\/[^\s]+/g),['https://stiviolog.com/login']);
   for(const step of ['1. Sign in','2. Create your own password','3. Review and acknowledge','4. Verify the Gmail','5. Complete your academic details','6. When you see "Your account is ready"'])assert(body.textContent.includes(step),step);
 });
 

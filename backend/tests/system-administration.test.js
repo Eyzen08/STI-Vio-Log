@@ -35,9 +35,13 @@ test('system routes expose security events and authentication activity behind ex
 
 test('system metadata identifies configured providers without returning configuration values',()=>{
   const metadata=platformMetadata({RENDER_SERVICE_ID:'srv-private',DATABASE_URL:'postgresql://secret@pooler.supabase.com/postgres',BREVO_API_KEY:'private-key'});
-  assert.deepEqual(metadata.api,{provider:'Render',technology:'Node.js / Express',icon:'render'});
-  assert.equal(metadata.database.provider,'Supabase');assert.equal(metadata.email_delivery.provider,'Brevo');
-  assert.equal(JSON.stringify(metadata).includes('private-key'),false);assert.equal(JSON.stringify(metadata).includes('pooler.supabase.com'),false);
+  assert.deepEqual(metadata,{
+    api:{provider:'Render',technology:'Node.js / Express',icon:'render'},
+    database:{provider:'Supabase',technology:'PostgreSQL',icon:'supabase'},
+    google_identity:{provider:'Google',technology:'Google Identity Services',icon:'google'},
+    email_delivery:{provider:'Brevo',technology:'HTTPS Email API',icon:'brevo'},
+    realtime:{provider:'Socket.IO',technology:'WebSocket / polling',icon:'socketio'}
+  });
 });
 
 test('account directory exposes safe action capabilities for self, locked, and final-admin targets',async(t)=>{

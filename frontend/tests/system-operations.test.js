@@ -24,7 +24,7 @@ test('System Monitoring exposes refreshable health and event filters',()=>{
 
 test('System Monitoring presents four URL-backed accessible panels',()=>{
   assert.match(dashboard,/overview.*security.*authentication.*accounts/s)
-  for(const label of ['Overview & Health','Security Events','Authentication Activity','Account Controls'])assert.match(dashboard,new RegExp(label.replace('&','&')))
+  for(const label of ['Overview & Health','Security Events','Authentication Activity','Account Controls'])assert.ok(dashboard.includes(label))
   assert.match(dashboard,/role="tablist"/);assert.match(dashboard,/role="tabpanel"/)
   assert.match(dashboard,/URLSearchParams\(window\.location\.search\)/)
   assert.match(dashboard,/window\.history\.pushState/);assert.match(dashboard,/popstate/)

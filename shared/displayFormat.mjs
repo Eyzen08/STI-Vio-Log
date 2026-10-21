@@ -127,5 +127,5 @@ export const formatIncidentDateTime = (incidentDate, incidentTime) => {
   return new Intl.DateTimeFormat('en-PH', {
     timeZone: 'Asia/Manila', month: 'long', day: 'numeric', year: 'numeric',
     hour: 'numeric', minute: '2-digit'
-  }).format(date).replace(' at ', ' at ')
+  }).format(date)
 }

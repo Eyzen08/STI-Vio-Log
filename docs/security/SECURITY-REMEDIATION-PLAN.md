@@ -5,6 +5,27 @@
 
 This plan corresponds to the source-only audit dated 2026-09-24. P1 tasks are required before real student data or school handover. No source change should be treated as verified until its negative and positive regression cases run in an isolated environment.
 
+## CodeQL triage — October 21, 2026
+
+The main-branch analysis at commit `b9552bb6e2d046979ba5d3a8bda69c9bc40c72c7` reported 14 open alerts. This focused review follows their SARIF data flows; it does not replace the broader audit below.
+
+| Alerts | Assessment and remediation |
+| --- | --- |
+| #18 | The email regex has overlapping repetitions on request-controlled input. Replace it with linear string checks, reject inputs over the database's 255-character limit, and retain the existing address acceptance rules within that limit. |
+| #5, #12, #13 | The department-head updater constructs SQL using the length of a bound-values array. The trace follows the request ID through that array's length, not through raw SQL text, so this is not evidence of injectable SQL. However, filtering values without renumbering placeholders breaks partial updates. Use one literal SQL statement with bound presence/value pairs. The other two alerts are the same query forwarded by test clock wrappers; fix the shared controller rather than suppressing those wrappers. |
+| #11, #19 | Test hostname expressions contain unescaped dots. Check bundled SVG URLs against the exact SVG namespace and escape literal dots in the public-policy URL assertion. |
+| #8, #20 | Negative URL-substring assertions in tests are not production URL authorization. Replace them with a complete metadata-shape assertion and an exact list of extracted email links. |
+| #9, #10, #14 | Remove identity replacements. Monitoring labels need literal substring assertions, not a dynamically constructed regex; date formatting needs no replacement of ` at ` with itself. |
+
+### Findings retained as false positives
+
+- **#4 — CSRF token mistaken for password data.** SARIF starts at frontend `changePassword()` calls and ends at `sessionStorage.setItem(CSRF_KEY, csrf_token)` in `frontend/src/lib/session.js`. The password-change controller returns a public user and a newly generated CSRF token; it does not return the submitted password or password hash. Authentication is carried by the `sti_session` HttpOnly cookie, while this JavaScript-readable token is used as the CSRF request header. The backend requires a matching CSRF cookie/header and the session's stored token hash. Keep this behavior, and test that top-level/user passwords, password hashes and authentication tokens are excluded from persisted session data and legacy localStorage tokens are removed.
+- **#15 and #16 — isolated test HTTP servers.** `backend/tests/audit-api.test.js` and `backend/tests/report-excel.test.js` create loopback-only Express servers with stubbed database queries to exercise export authentication and permissions. They intentionally do not mount the production application's global rate limiter. In `backend/src/server.js`, `app.use(apiLimiter)` precedes the report and audit mounts and limits requests to 200 per 15 minutes. The test-only route definitions do not establish a missing production limiter; keep their permission checks and the production limiter unchanged.
+
+No alerts are dismissed on GitHub, no queries are disabled, and tests remain included in CodeQL analysis. A subsequent scan of the changed commit must establish which alerts close; #4, #15 and #16 may remain visible with the above explanations. Test execution evidence is recorded separately from scan status: passing regressions do not prove that GitHub has rescanned the fixes.
+
+Local verification on Node 24.18.1: 341 backend tests, 470 frontend tests and 31 lifecycle/attendance PostgreSQL integration tests passed; frontend lint and production build passed. Tests used a temporary source copy without private environment files, an allowlisted dummy environment and a newly initialized loopback PostgreSQL database. The email-limit and partial-update regressions failed against the original code before passing with the fixes. A source-only independent review found no actionable issues. The build retains its existing large-chunk warning; GitHub CodeQL results for these changes remain unverified.
+
 ## P0 — Block Deployment
 
 No independently confirmed critical/high vulnerability was established. Deployment remains blocked by incomplete audit coverage rather than a P0 code finding.

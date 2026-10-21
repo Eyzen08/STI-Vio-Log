@@ -122,48 +122,25 @@ const updateDepartmentHead = async (req, res) => {
             qr_scanner_enabled
         } = req.body;
 
-        const fields = [
-            user_id !== undefined ? "user_id = $1" : null,
-            department_id !== undefined ? "department_id = $2" : null,
-            employee_number !== undefined ? "employee_number = $3" : null,
-            first_name !== undefined ? "first_name = $4" : null,
-            last_name !== undefined ? "last_name = $5" : null,
-            email !== undefined ? "email = $6" : null,
-            qr_scanner_enabled !== undefined ? "qr_scanner_enabled = $7" : null
-        ].filter(Boolean);
-
-        if (fields.length === 0) {
+        const values = [user_id, department_id, employee_number, first_name, last_name, email, qr_scanner_enabled];
+        if (values.every((value) => value === undefined)) {
             return res.status(400).json({
                 success: false,
                 message: "No department head fields provided for update"
             });
         }
 
-        const values = [
-            user_id,
-            department_id,
-            employee_number,
-            first_name,
-            last_name,
-            email,
-            qr_scanner_enabled,
-            id
-        ].filter((value, index) => {
-            const provided = [
-                user_id !== undefined,
-                department_id !== undefined,
-                employee_number !== undefined,
-                first_name !== undefined,
-                last_name !== undefined,
-                email !== undefined,
-                qr_scanner_enabled !== undefined
-            ];
-            return provided[index];
-        }).concat(id);
-
         const result = await pool.query(
-            `UPDATE department_heads SET ${fields.join(", ")} WHERE id = $${values.length} RETURNING *`,
-            values
+            `UPDATE department_heads SET
+                user_id = CASE WHEN $1 THEN $2 ELSE user_id END,
+                department_id = CASE WHEN $3 THEN $4 ELSE department_id END,
+                employee_number = CASE WHEN $5 THEN $6 ELSE employee_number END,
+                first_name = CASE WHEN $7 THEN $8 ELSE first_name END,
+                last_name = CASE WHEN $9 THEN $10 ELSE last_name END,
+                email = CASE WHEN $11 THEN $12 ELSE email END,
+                qr_scanner_enabled = CASE WHEN $13 THEN $14 ELSE qr_scanner_enabled END
+             WHERE id = $15 RETURNING *`,
+            [...values.flatMap((value) => [value !== undefined, value]), id]
         );
 
         if (result.rows.length === 0) {

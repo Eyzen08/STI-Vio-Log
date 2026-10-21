@@ -217,6 +217,41 @@ test.after(async () => {
   await adminPool.end();
 });
 
+test('department head partial updates preserve omitted fields and bind every supplied value', async () => {
+  const { updateDepartmentHead } = require('../src/controllers/departmentHeadController');
+  const update = async (id, body) => {
+    const res = { statusCode: 200, status(code) { this.statusCode = code; return this; }, json(value) { this.body = value; return this; } };
+    await updateDepartmentHead({ params: { id }, body }, res);
+    return res;
+  };
+  const original = (await pool.query('SELECT * FROM department_heads LIMIT 1')).rows[0];
+  const otherUser = (await pool.query("INSERT INTO users(username,password_hash,role) VALUES('other_head_test','hash','DEPARTMENT_HEAD') RETURNING id")).rows[0];
+  const otherDepartment = (await pool.query("INSERT INTO departments(department_code,department_name) VALUES('OTHER','Other Department') RETURNING id")).rows[0];
+  const expected = { ...original };
+  const patches = [
+    { user_id: otherUser.id },
+    { department_id: otherDepartment.id },
+    { employee_number: 'EMP-42' },
+    { first_name: 'Updated' },
+    { last_name: 'Officer' },
+    { email: 'officer@example.test' },
+    { qr_scanner_enabled: false },
+    { employee_number: null, email: null },
+    { first_name: "Robert'); DROP TABLE department_heads;--", qr_scanner_enabled: true },
+    { user_id: original.user_id, department_id: original.department_id, employee_number: 'EMP-43', first_name: 'Final', last_name: 'Head', email: 'final@example.test', qr_scanner_enabled: false }
+  ];
+  for (const body of patches) {
+    const result = await update(original.id, body);
+    assert.equal(result.statusCode, 200, JSON.stringify(result.body));
+    Object.assign(expected, body);
+    for (const field of Object.keys(patches.at(-1))) assert.equal(result.body.departmentHead[field], expected[field], field);
+    const stored = (await pool.query('SELECT * FROM department_heads WHERE id=$1', [original.id])).rows[0];
+    for (const field of Object.keys(patches.at(-1))) assert.equal(stored[field], expected[field], field);
+  }
+  assert.equal((await update(original.id, {})).statusCode, 400);
+  assert.equal((await update(999999, { last_name: 'Missing' })).statusCode, 404);
+});
+
 test('admin hour corrections create routed assignments and preserve attendance evidence', async () => {
   const admin = await login('admin_test');
   const head = await login('head_test');

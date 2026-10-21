@@ -1,4 +1,9 @@
-const isValidEmail = (value) => typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+const isValidEmail = (value) => {
+    if (typeof value !== "string" || value.length > 255 || /\s/.test(value)) return false;
+    const at = value.indexOf("@");
+    const dot = value.indexOf(".", at + 2);
+    return at > 0 && at === value.lastIndexOf("@") && dot > at + 1 && dot < value.length - 1;
+};
 const { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } = require('../../../shared/studentIdentity.mjs');
 
 const officerText = (value) => typeof value === 'string' ? value.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';

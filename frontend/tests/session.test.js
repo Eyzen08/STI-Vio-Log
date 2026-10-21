@@ -43,6 +43,19 @@ test('an invalid persisted user hint is rejected and removed', () => {
   assert.equal(localStorage.getItem('sti_vio_log_user'), null)
 })
 
+test('persisted session data excludes passwords, hashes and authentication tokens', () => {
+  localStorage.setItem('sti_vio_log_token', 'legacy-authentication-token')
+  saveSession({
+    token: 'authentication-token',
+    password: 'private-password',
+    user: { ...user, password: 'private-password', password_hash: 'private-hash', token: 'authentication-token' },
+    csrf_token: 'csrf-not-an-authenticator'
+  })
+  assert.deepEqual(JSON.parse(localStorage.getItem('sti_vio_log_user')), user)
+  assert.equal(localStorage.getItem('sti_vio_log_token'), null)
+  assert.equal(sessionStorage.getItem('sti_vio_log_csrf'), 'csrf-not-an-authenticator')
+})
+
 test('logout clears all persisted authentication data', () => {
   saveSession({ user,csrf_token:'csrf' })
   clearSession()
