@@ -3,7 +3,7 @@ import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServiceCountdown from './ServiceCountdown.jsx'
-import ServiceTimeOutDialog from './ServiceTimeOutDialog.jsx'
+import ServiceAttendanceControls from './ServiceAttendanceControls.jsx'
 import '../styles/active-attendance.css'
 
 const progressForSession = (session) => {
@@ -17,7 +17,6 @@ const progressForSession = (session) => {
 
 export default function AdminActiveAttendance({ sessions = [], loading = false, onNavigate, attendanceReady = true, attendanceError,token,onAttendanceSaved }) {
   const [query, setQuery] = useState('')
-  const [selectedSession,setSelectedSession] = useState(null)
   const [now, setNow] = useState(Date.now())
   const activeSessions = useMemo(() => sessions.filter(isActiveServiceSession), [sessions])
 
@@ -54,11 +53,10 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
             <td data-label="Time In"><span className="attendance-time-in">{formatManilaDateTime(session.time_in)}</span></td>
             <td data-label="Session Time"><div className="session-clock"><span className="session-clock-label">{session.session_type==='OPEN_TIME' && session.credit_cutoff_at ? 'Time elapsed' : 'Remaining session time'}</span><ServiceCountdown session={session} now={now} className="active-attendance-clock"/></div></td>
             <td data-label="Credited Service"><div className="attendance-credit"><strong>{formatDuration(service.completed)} credited</strong><small>of {formatDuration(service.required)} required</small><span>{formatDuration(service.remaining)} remaining</span><div className="table-progress"><div role="progressbar" aria-label={`Credited Service for ${session.first_name} ${session.last_name}`} aria-valuenow={service.progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${service.progress}%` }} /></div><small>{service.progress}% credited</small></div></div></td>
-            <td data-label="Actions"><div className="attendance-actions"><button type="button" className="primary-row-action time-out-button" onClick={()=>setSelectedSession(session)}>Time Out</button><button type="button" className="text-button" onClick={()=>onNavigate('/admin/community-service')}>View Assignment</button></div></td>
+            <td data-label="Actions"><div className="attendance-actions"><ServiceAttendanceControls session={session} token={token} onSaved={onAttendanceSaved}/><button type="button" className="text-button" onClick={()=>onNavigate('/admin/community-service')}>View Assignment</button></div></td>
           </tr>
         })}</tbody>
       </table></div>}
     </section>
-    {selectedSession&&<ServiceTimeOutDialog session={selectedSession} token={token} onClose={()=>setSelectedSession(null)} onSaved={onAttendanceSaved}/>}
   </div>
 }

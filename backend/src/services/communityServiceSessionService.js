@@ -18,9 +18,27 @@ const lockStudent = async (client, assignmentId) => {
     return student;
 };
 
-// One clock and one grouped daily-credit read for an entire list of sessions.
+const attachSessionPauses = async (client, sessions) => {
+    if (!sessions.length) return [];
+    const rows = (await client.query(`SELECT p.*, starter.username AS started_by_name, ender.username AS ended_by_name
+        FROM community_service_session_pauses p
+        JOIN users starter ON starter.id=p.started_by_user_id
+        LEFT JOIN users ender ON ender.id=p.ended_by_user_id
+        WHERE p.session_id=ANY($1::bigint[]) ORDER BY p.started_at,p.id`,
+    [sessions.map(session => session.id || session.session_id)])).rows;
+    const bySession = new Map();
+    for (const pause of rows) {
+        const key = String(pause.session_id);
+        if (!bySession.has(key)) bySession.set(key, []);
+        bySession.get(key).push(pause);
+    }
+    return sessions.map(session => ({ ...session, pause_history: bySession.get(String(session.id || session.session_id)) || [] }));
+};
+
+// Group pause history and daily credit for the entire list, rather than per row.
 const hydrateSessions = async (client, sessions) => {
     if (!sessions.length) return [];
+    sessions = await attachSessionPauses(client, sessions);
     const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
     const totals = (await client.query(`SELECT student_id,service_date::text,COALESCE(SUM(credited_minutes),0) AS minutes
         FROM community_service_sessions WHERE student_id=ANY($1::bigint[]) AND time_out IS NOT NULL
@@ -172,7 +190,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
         const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
         const completedToday = await dailyCredit(client, assignment.student_id, serviceDate(now));
         const allowance = serviceAllowance(assignment, completedToday, now);
-        const selection = validateDuration(sessionType, selectedDurationMinutes, allowance.available_minutes, Number(assignment.remaining_hours) * 60);
+        validateDuration(sessionType ?? 'OPEN_TIME', selectedDurationMinutes, allowance.available_minutes, Number(assignment.remaining_hours) * 60);
         const cutoff = new Date(Math.ceil(new Date(now).getTime() + allowance.available_minutes * 60000));
 
         const supervisor = await chooseSupervisor(client, { departmentId, selectedOfficerId: supervisingOfficerId });
@@ -184,7 +202,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
                  student_id,session_type,selected_duration_minutes,service_date,credit_cutoff_at,time_in_role,time_in)
              VALUES ($1, $2, $3, $4, $5, $6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
             [assignmentId, departmentId, supervisor.officer_user_id, actor.id, attendance.id, notes || null,
-                assignment.student_id,selection.session_type,selection.selected_duration_minutes,allowance.service_date,cutoff,actor.role,now]
+                assignment.student_id,'OPEN_TIME',null,allowance.service_date,cutoff,actor.role,now]
         );
         const session = sessionResult.rows[0];
         await client.query(
@@ -299,6 +317,9 @@ const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, depar
 
         const attendance = await insertAttendance({ client, assignment, departmentId, actorId: actor.id, type: "TIME_OUT", notes });
         const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+        await client.query(`UPDATE community_service_session_pauses SET ended_at=$2,ended_by_user_id=$3
+            WHERE session_id=$1 AND ended_at IS NULL`, [session.id, now, actor.id]);
+        Object.assign(session, (await attachSessionPauses(client, [session]))[0]);
         const completedToday = await dailyCredit(client, assignment.student_id, serviceDate(session.time_in), session.id);
         const credit = calculateCredit(session, assignment, completedToday, now);
         const { previousMinutes, creditedMinutes, newMinutes, remainingMinutes } = credit;
@@ -366,7 +387,7 @@ const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, depar
         });
         await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, assignmentId:assignment.id, action:'TIME_OUT', occurredAt:completedSession.time_out });
         await client.query("COMMIT");
-        return { assignment: updatedAssignment, assignment_status: assignmentStatus, attendance_outcome: normalizedOutcome, attendance, session: { ...completedSession, attendance_outcome: normalizedOutcome }, supervising_officer: supervisor, violation, clearanceSync, scanLog };
+        return { assignment: updatedAssignment, assignment_status: assignmentStatus, attendance_outcome: normalizedOutcome, attendance, session: { ...completedSession, pause_history:session.pause_history, ...sessionTiming({...completedSession,pause_history:session.pause_history},assignment,completedToday,now), attendance_outcome: normalizedOutcome }, supervising_officer: supervisor, violation, clearanceSync, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         throw error;
@@ -421,13 +442,57 @@ const previewTimeOut = async ({ sessionId, departmentId }) => {
         WHERE css.id=$1 AND css.department_id=$2`,[sessionId,departmentId])).rows[0];
     if (!session) throw new CommunityServiceSessionError('Service session not found',404);
     const now = (await pool.query('SELECT clock_timestamp() AS now')).rows[0].now;
-    if (session.time_out) return {session,already_completed:true,server_time:now,available_officers:[],preview:{
+    if (session.time_out) return {session:(await hydrateSessions(pool,[session]))[0],already_completed:true,server_time:now,available_officers:[],preview:{
         server_time:new Date(now).toISOString(),workedMinutes:Number(session.worked_minutes),creditedMinutes:Number(session.credited_minutes),completionReason:session.completion_reason||'COMPLETED'}};
     const completedToday = await dailyCredit(pool,session.student_id,serviceDate(session.time_in),session.id);
     const officers = (await availableSupervisors(pool, session.department_id)).filter(officer =>
         Number(officer.officer_user_id) === Number(session.supervising_officer_user_id)
         || (officer.assignment_type === 'TEMPORARY' && Number(officer.original_officer_user_id) === Number(session.supervising_officer_user_id)));
-    return { session, preview:calculateCredit(session,session,completedToday,now), server_time:now, available_officers:officers };
+    const withPauses = (await attachSessionPauses(pool, [session]))[0];
+    return { session: { ...withPauses, ...sessionTiming(withPauses,session,completedToday,now) }, preview:calculateCredit(withPauses,session,completedToday,now), server_time:now, available_officers:officers };
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, availableSupervisors, chooseSupervisor, ATTENDANCE_OUTCOMES, dailyCredit, hydrateSessions, previewTimeOut };
+const setSessionPaused = async ({ sessionId, departmentId, actor, reason, paused, ipAddress }) => {
+    if (!/^\d+$/.test(String(sessionId)) || Number(sessionId) < 1) throw new CommunityServiceSessionError('A valid session ID is required',400);
+    if (paused && (typeof reason !== 'string' || !reason.trim() || reason.trim().length > 500)) {
+        throw new CommunityServiceSessionError('Enter a pause reason of 1 to 500 characters',400);
+    }
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const identity = (await client.query('SELECT assignment_id FROM community_service_sessions WHERE id=$1 AND department_id=$2',[sessionId,departmentId])).rows[0];
+        if (!identity) throw new CommunityServiceSessionError('Service session not found',404);
+        await lockStudent(client,identity.assignment_id);
+        const assignment = await loadAssignment(client,identity.assignment_id,true);
+        await recheckRecorder(client,actor,assignment.department_id);
+        const session = (await client.query('SELECT * FROM community_service_sessions WHERE id=$1 FOR UPDATE',[sessionId])).rows[0];
+        if (session.time_out) throw new CommunityServiceSessionError('This service session is already completed',409,'SESSION_COMPLETED');
+        validateEligible(assignment,null,departmentId);
+        await chooseSupervisor(client,{departmentId, currentOfficerId:session.supervising_officer_user_id});
+        Object.assign(session,(await attachSessionPauses(client,[session]))[0]);
+        const open = session.pause_history.find(pause => !pause.ended_at);
+        const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+        const completedToday = await dailyCredit(client,session.student_id,serviceDate(session.time_in),session.id);
+        if (Boolean(open) !== paused) {
+            if (sessionTiming(session,assignment,completedToday,now).limit_reached) {
+                throw new CommunityServiceSessionError('No service time remains in this session. Record Time Out.',409,'SERVICE_LIMIT_REACHED');
+            }
+            if (paused) {
+                await client.query(`INSERT INTO community_service_session_pauses(session_id,started_at,started_by_user_id,reason)
+                    VALUES($1,$2,$3,$4)`,[session.id,now,actor.id,reason.trim()]);
+            } else {
+                await client.query('UPDATE community_service_session_pauses SET ended_at=$2,ended_by_user_id=$3 WHERE id=$1',[open.id,now,actor.id]);
+            }
+            await insertAudit({client,actor,action:paused?'SERVICE_PAUSE':'SERVICE_RESUME',sessionId:session.id,assignmentId:assignment.id,
+                description: { ...(paused ? {reason:reason.trim()} : {}), occurred_at:new Date(now).toISOString() },ipAddress});
+        }
+        const hydrated = (await hydrateSessions(client,[{...session,required_hours:assignment.required_hours,completed_hours:assignment.completed_hours,remaining_hours:assignment.remaining_hours}]))[0];
+        await client.query('COMMIT');
+        return {assignment,session:hydrated,server_time:new Date(now).toISOString()};
+    } catch(error) {
+        try { await client.query('ROLLBACK'); } catch(_) {}
+        throw error;
+    } finally { client.release(); }
+};
+
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, setSessionPaused, reviewServiceResult, calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, availableSupervisors, chooseSupervisor, ATTENDANCE_OUTCOMES, dailyCredit, hydrateSessions, previewTimeOut };

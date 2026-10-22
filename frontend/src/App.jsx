@@ -34,6 +34,7 @@ const AdminDepartmentOfficers = lazy(() => import('./components/AdminDepartmentO
 const AdminAccountSettings = lazy(() => import('./components/AdminAccountSettings.jsx'))
 const AdminClearanceCertificates = lazy(() => import('./components/AdminClearanceCertificates.jsx'))
 import OffenseIndicator from './components/OffenseIndicator.jsx'
+import ViolationOffenseSearch from './components/ViolationOffenseSearch.jsx'
 const AccountSecuritySettings = lazy(() => import('./components/AccountSecuritySettings.jsx'))
 const AdminDashboard = lazy(() => import('./components/AdminDashboard.jsx'))
 const DashboardAnalytics = lazy(() => import('./components/DashboardAnalytics.jsx'))
@@ -83,7 +84,7 @@ const EMPTY_MFA_DRAFT = { code:'', recovery:false }
 const EMPTY_ONBOARDING_DRAFT = { screen:'ACADEMIC', profile:{academicLevel:'COLLEGE',strand:'',program:'',section:'',yearLevel:'',phoneNumber:'',guardianName:'',guardianRelationship:'',guardianPhoneNumber:''} }
 const EMPTY_QR_SERVICE_DRAFT = {
   department_id: '', assignment_id: '', supervising_officer_id: '', notes: '',
-  attendance_outcome: '', session_type: '', selected_duration_minutes: null
+  attendance_outcome: ''
 }
 
 function SidebarTooltip({ anchor, text }) {
@@ -420,6 +421,7 @@ function App() {
   const [viewingViolation, setViewingViolation] = useState(null)
 
   const [violationFormError, setViolationFormError] = useState('')
+  const violationOffenseRef = useRef(null)
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
   const [isViolationFormOpen, setIsViolationFormOpen] = useState(false)
   const [violationTableFilters, setViolationTableFilters] = useState({ search: '', status: 'ALL', severity: 'ALL' })
@@ -1656,7 +1658,6 @@ function App() {
   }, [qrScanner])
 
   const handleQrFieldChange = (event) => {
-    if (event.target.name==='service_selection') {setQrForm(current=>({...current,...event.target.value}));return}
     if (event.target.name==='assignment_id') {
       const id=Number(event.target.value)||''
       qrInputVersionRef.current += 1
@@ -1709,11 +1710,11 @@ function App() {
     try {
       if (!normalizedQr) throw new Error('QR code is required.')
       if (action!=='scan'&&normalizedQr!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
-      if (action==='time-in'&&(!current.session_type||!current.supervising_officer_id)) throw new Error('Select service time and an authorized supervising officer.')
+      if (action==='time-in'&&!current.supervising_officer_id) throw new Error('Select an authorized supervising officer.')
       const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQrRef.current?current.assignment_id:undefined
       const response=await fetch(API_URL+'/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
         ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
-        ...(action==='time-in'?{session_type:current.session_type,selected_duration_minutes:current.selected_duration_minutes,supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
+        ...(action==='time-in'?{supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
       const data=await response.json()
       if(action==='scan'&&version!==qrInputVersionRef.current) return false
       if(!response.ok||!data.success) throw new Error(data.message||'Unable to process attendance.')
@@ -2389,10 +2390,10 @@ function App() {
           {createdStudentCredentials && <StudentCredentialsModal credentials={createdStudentCredentials} token={token} onClose={() => setCreatedStudentCredentials(null)} onUpdated={(data) => { setCreatedStudentCredentials((current) => ({...current,email:data.student.email,username:data.account.username,password:data.temporary_password})); setStudents((current) => current.map((item) => Number(item.id) === Number(data.student.id) ? {...item,...data.student} : item)) }}/>}
 
           {guardianContactStudent && <Modal title="Guardian Contact" className="student-action-modal guardian-contact-modal" drawer onClose={() => setGuardianContactStudent(null)}><GuardianContactPanel key={guardianContactStudent.id} token={token} student={guardianContactStudent} onClose={() => setGuardianContactStudent(null)} showClose={false} /></Modal>}
-          {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} onClose={() => setServiceTimeStudent(null)} />}
+          {serviceTimeStudent && <StudentServiceTimeDrawer student={serviceTimeStudent} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token} onAttendanceSaved={()=>{refreshAdminAttendance();setDashboardRefreshKey(key=>key+1)}} onClose={() => setServiceTimeStudent(null)} />}
 
           {reviewedStudent && <StudentRecordDrawer key={reviewedStudent.id} student={reviewedStudent} violations={reviewedStudentViolations} summary={reviewedStudentSummary} loading={reviewedStudentLoading} error={reviewedStudentError} hasMore={reviewedStudentHasMore}
-            onLoadMore={() => loadReviewedStudentHistory(reviewedStudent, reviewedStudentPage + 1, true)} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token}
+            onLoadMore={() => loadReviewedStudentHistory(reviewedStudent, reviewedStudentPage + 1, true)} assignments={communityServiceAssignments} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} attendanceError={attendanceError} token={token} onAttendanceSaved={()=>{refreshAdminAttendance();setDashboardRefreshKey(key=>key+1)}}
             onClose={() => { setReviewedStudent(null); closeRecordTarget() }} onViewCase={(violation) => { setReviewedStudent(null); navigateTo('/admin/violations'); setViewingViolation(violation) }} onAddViolation={addViolationForStudent}
             onPhotoUpdated={(updated) => { setReviewedStudent(updated); setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? { ...item, avatar: updated.avatar } : item)) }}/>
           }
@@ -2437,6 +2438,10 @@ function App() {
               }
             >
               <fieldset disabled={mutationBusy.violationCreate}><legend className="sr-only">Incident Record Details</legend><div className="student-form-grid">
+                <ViolationOffenseSearch types={violationTypes} onSelect={({ type, offense }) => {
+                  setViolationForm((current) => ({ ...current, violation_type_id: type.id, exact_offense: offense }))
+                  requestAnimationFrame(() => violationOffenseRef.current?.focus())
+                }}/>
                 <label><span id="create-violation-student_search-label">Student <b aria-hidden="true">*</b></span>
                   <input
                     type="search"
@@ -2521,6 +2526,7 @@ function App() {
                 <label className="full-width-field"><span id="create-violation-exact_offense-label">Specific Handbook Offense <b aria-hidden="true">*</b></span>
                   <select
                     name="exact_offense"
+                    ref={violationOffenseRef}
                     id="create-violation-exact_offense"
                     aria-labelledby="create-violation-exact_offense-label"
                     value={violationForm.exact_offense}
@@ -2617,7 +2623,7 @@ function App() {
         isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory}
         onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
         onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}
-        onAttendanceSaved={async result=>{setQrResult(current=>({...current,...result,active_session:null,action:'time-out'}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>
+        onAttendanceSaved={async (result,action)=>{setQrResult(current=>({...current,...result,active_session:action==='time-out'?null:{...result.session,server_time:result.server_time},action}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>
     }
 
 

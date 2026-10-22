@@ -36,12 +36,51 @@ test('fixed target reaches zero while overtime and actual time keep increasing',
   assert.equal(credit.creditedMinutes, 125);
   assert.equal(credit.completionReason, 'COMPLETED');
 });
-test('early exits credit actual whole minutes and Open Time requires the normal minimum', () => {
+test('legacy fixed exits preserve early status while flexible sessions have no minimum', () => {
   const assignment = { required_hours: 20, completed_hours: 0, remaining_hours: 20 };
   const session = { time_in: now, session_type: 'FIXED', selected_duration_minutes: 120, credit_cutoff_at: '2026-10-07T09:00:00Z' };
   assert.equal(calculateCredit(session, assignment, 0, '2026-10-07T02:30:59Z').creditedMinutes, 90);
   assert.equal(calculateCredit(session, assignment, 0, '2026-10-07T02:30:59Z').completionReason, 'EARLY_TIME_OUT');
-  assert.equal(calculateCredit({ ...session, session_type: 'OPEN_TIME', selected_duration_minutes: null }, assignment, 0, '2026-10-07T02:00:00Z').completionReason, 'EARLY_TIME_OUT');
+  const flexible = calculateCredit({ ...session, session_type: 'OPEN_TIME', selected_duration_minutes: null }, assignment, 0, '2026-10-07T02:00:00Z');
+  assert.equal(flexible.completionReason, 'COMPLETED');
+  assert.equal(flexible.attendanceOutcome, 'TODAYS_SERVICE_COMPLETED');
+});
+
+test('paused service freezes earned time and finished pauses extend the work allowance', () => {
+  const assignment = { required_hours: 2, completed_hours: 0, remaining_hours: 2 };
+  const session = { time_in: now, session_type: 'OPEN_TIME', credit_cutoff_at: '2026-10-07T03:00:00Z',
+    pause_history: [{ started_at: '2026-10-07T01:30:00Z', ended_at: null }] };
+  const paused = calculateCredit(session, assignment, 0, '2026-10-07T03:30:00Z');
+  assert.equal(paused.creditedMinutes, 30);
+  assert.equal(paused.workedMinutes, 30);
+  assert.equal(paused.paused_at, '2026-10-07T01:30:00Z');
+  assert.equal(paused.limit_reached, false);
+  const resumed = { ...session, pause_history: [{ started_at: '2026-10-07T01:30:00Z', ended_at: '2026-10-07T03:30:00Z' }] };
+  const running = calculateCredit(resumed, assignment, 0, '2026-10-07T04:00:00Z');
+  assert.equal(running.creditedMinutes, 60);
+  assert.equal(running.paused_seconds, 7200);
+  assert.equal(running.credit_cutoff_at, '2026-10-07T05:00:00.000Z');
+  const completed = calculateCredit(resumed, assignment, 0, '2026-10-07T05:00:00Z');
+  assert.equal(completed.creditedMinutes, 120);
+  assert.equal(completed.attendanceOutcome, 'SERVICE_COMPLETED');
+});
+
+test('pause intervals are subtracted before rounding and clipped correctly at midnight', () => {
+  const assignment = { required_hours: 20, completed_hours: 0, remaining_hours: 20 };
+  const short = { time_in: now, session_type: 'OPEN_TIME', credit_cutoff_at: '2026-10-07T09:00:00Z', pause_history: [
+    { started_at: '2026-10-07T01:00:40Z', ended_at: '2026-10-07T01:00:50Z' },
+    { started_at: '2026-10-07T01:01:20Z', ended_at: '2026-10-07T01:01:30Z' }
+  ] };
+  const result = calculateCredit(short, assignment, 0, '2026-10-07T01:01:40Z');
+  assert.equal(result.workedMinutes, 1);
+  assert.equal(result.creditedMinutes, 1);
+  const overnight = { time_in: '2026-10-07T14:00:00Z', session_type: 'OPEN_TIME', credit_cutoff_at: '2026-10-07T16:00:00Z',
+    pause_history: [{ started_at: '2026-10-07T15:30:00Z', ended_at: '2026-10-08T01:00:00Z' }] };
+  const midnight = calculateCredit(overnight, assignment, 0, '2026-10-08T01:00:00Z');
+  assert.equal(midnight.creditedMinutes, 90);
+  assert.equal(midnight.workedMinutes, 90);
+  assert.equal(midnight.completionReason, 'DAY_ENDED');
+  assert.equal(midnight.credit_cutoff_at, '2026-10-07T16:00:00.000Z');
 });
 test('credit stops at the daily cap, requirement or Manila midnight without capping raw work', () => {
   const assignment = { required_hours: 20, completed_hours: 0, remaining_hours: 20 };

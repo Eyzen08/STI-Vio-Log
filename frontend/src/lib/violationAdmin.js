@@ -4,6 +4,19 @@ import handbookOffenses from '../../../shared/handbookOffenses.json' with { type
 
 export const HANDBOOK_OFFENSES = handbookOffenses
 
+export const searchHandbookOffenses = (types, query) => {
+  const words = query.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean)
+  if (!words.length) return []
+  return Object.entries(HANDBOOK_OFFENSES).flatMap(([code, offenses]) => {
+    const type = types.find((item) => item.violation_code === code)
+    if (!type) return []
+    return offenses.filter((offense) => {
+      const text = `${type.violation_name} ${offense}`.toLocaleLowerCase()
+      return words.every((word) => text.includes(word))
+    }).map((offense) => ({ type, offense }))
+  })
+}
+
 export const offensesForType = (type) => {
   const offenses = type ? HANDBOOK_OFFENSES[type.violation_code] : null
   return offenses ? [...offenses, 'Other offense for Discipline Committee review'] : []

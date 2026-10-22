@@ -6,6 +6,7 @@ import Avatar from './Avatar.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import ManagementMetric from './ManagementMetric.jsx'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
+import ServicePauseHistory from './ServicePauseHistory.jsx'
 import AsyncActionButton from './AsyncActionButton.jsx'
 import { communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, normalizedRequiredMinutes, serviceDepartmentOptions } from '../lib/communityServiceAdmin.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
@@ -41,7 +42,7 @@ function ServiceSessionDetails({ assignmentId, sessionId, token }) {
         ['Worked', formatDuration(Number(session.worked_minutes || 0) / 60)], ['Credited', session.credited_minutes == null ? 'Pending' : formatDuration(Number(session.credited_minutes) / 60)],
         ['Status', formatDisplayLabel(session.status)], ['Attendance Outcome', formatDisplayLabel(session.attendance_outcome)],
         ['Recorded By', session.time_out_recorder_name || session.time_in_recorder_name || 'Not recorded'], ['Notes', session.result_notes || session.notes || '—']
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>
+      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><ServicePauseHistory session={session}/>
     </section>}
   </>
 }

@@ -7,13 +7,13 @@ import useServiceClock from '../lib/useServiceClock.js'
 import Avatar from './Avatar.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import ServiceCountdown from './ServiceCountdown.jsx'
-import ServiceTimeOutDialog from './ServiceTimeOutDialog.jsx'
+import ServiceAttendanceControls from './ServiceAttendanceControls.jsx'
+import ServicePauseHistory from './ServicePauseHistory.jsx'
 import Modal from './Modal.jsx'
 import '../styles/community-workflow.css'
 
 export default function DepartmentQrScanner({ form, result, error, verifiedQr, inputSource='manual', isScanning, isSubmitting, recorder, history=[], token, onFieldChange, onStartCamera, onStopCamera, onSwitchCamera, onAction, onAttendanceSaved }) {
   const [studentOpen,setStudentOpen] = useState(false)
-  const [timeOutOpen,setTimeOutOpen] = useState(false)
   const verified=isVerifiedQr(form.qr_code,verifiedQr)&&Boolean(result?.student)
   const progress=assignmentProgress(result?.assignment)
   const session=result?.active_session || (result?.session?.status==='ACTIVE'?result.session:null)
@@ -22,26 +22,13 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
   const timing=session?serviceSessionTiming(session,now):null
   const allowance=result?.allowance||{}
   const available=Number(allowance.available_minutes||0)
-  const remainingMinutes=Math.round(progress.remaining*60*1e6)/1e6
-  const hasAllRemaining=remainingMinutes>0&&remainingMinutes<480
-  const remainingDisabledReason=Number(allowance.daily_remaining_minutes)<remainingMinutes?'Exceeds today’s remaining allowance.':'Cannot finish before midnight.'
   const officers=result?.available_officers||[]
   const noOfficer=verified&&officers.length===0
-  const selected=form.session_type==='OPEN_TIME'?null:Number(form.selected_duration_minutes)
-  const selectedValid=form.session_type==='OPEN_TIME'?available>0:form.session_type==='FIXED'&&selected>0&&selected<=available&&(
-    (selected>=120&&selected<=480&&selected%60===0)||(hasAllRemaining&&selected===remainingMinutes)||(available<120&&selected===available)
-  )
   const cameraAvailable=typeof window==='undefined'||(window.isSecureContext&&Boolean(navigator.mediaDevices?.getUserMedia))
-  const choose=(mode,minutes)=>onFieldChange({target:{name:'service_selection',value:{session_type:mode,selected_duration_minutes:minutes}}})
-  const preset=(minutes,label,caption,disabledReason)=> {
-    const disabled=minutes>available || (available<120&&minutes>=120)
-    const id='duration-'+label.replaceAll(' ','-')
-    return <div key={label}><button type="button" className={'service-duration-tile'+(form.session_type==='FIXED'&&selected===minutes?' selected':'')} onClick={()=>choose('FIXED',minutes)} disabled={disabled||isSubmitting} aria-pressed={form.session_type==='FIXED'&&selected===minutes} aria-describedby={disabled?id:undefined}><strong>{label}</strong>{caption&&<small>{caption}</small>}{disabled&&disabledReason&&<small id={id}>{disabledReason}</small>}</button>{disabled&&!disabledReason&&<small id={id} className="duration-disabled-reason">Exceeds available service time.</small>}</div>
-  }
-  const eligibleMinutes=session?Math.max(0,(Math.min(now,new Date(session.credit_cutoff_at).getTime())-new Date(session.time_in).getTime())/60000):0
+  const eligibleMinutes=timing ? timing.elapsedSeconds/60 : 0
   const projectedMinutes=Math.min(progress.remaining*60,eligibleMinutes>=progress.remaining*60?eligibleMinutes:Math.floor(eligibleMinutes))
   return <section className="qr-attendance" aria-labelledby="qr-attendance-title">
-    <header className="qr-attendance-header portal-page-header"><div><p className="page-breadcrumb">Home / QR Attendance</p><h2 id="qr-attendance-title">Time in / Time Out</h2><p>Scan, verify, select service time, and record attendance.</p></div><span className={'scanner-state'+(isScanning?' active':'')}><i aria-hidden="true"/>{isSubmitting?'Updating Attendance':isScanning?'Scanner Active':cameraAvailable?'Scanner Ready':'Manual Entry Available'}</span></header>
+    <header className="qr-attendance-header portal-page-header"><div><p className="page-breadcrumb">Home / QR Attendance</p><h2 id="qr-attendance-title">Time in / Time Out</h2><p>Scan, verify, and record attendance.</p></div><span className={'scanner-state'+(isScanning?' active':'')}><i aria-hidden="true"/>{isSubmitting?'Updating Attendance':isScanning?'Scanner Active':cameraAvailable?'Scanner Ready':'Manual Entry Available'}</span></header>
     <div className="qr-stage-grid">
       <article className="qr-stage-card scan-stage"><h3><b>1</b> Scan Student QR</h3>
         <div className={'scanner-viewfinder'+(isScanning?' active':'')}><div id="qr-reader" aria-label="Camera QR Scanner"/><div className="scanner-frame" aria-hidden="true"><span><PortalIcon name="camera" size={32}/></span><strong>{isScanning?'Position the student QR code inside the frame':'Camera preview is stopped'}</strong>{!isScanning&&<small>Click Start Camera to begin scanning</small>}</div><em>{isScanning?'Camera Active':cameraAvailable?'Camera Ready':'Manual QR Available'}</em></div>
@@ -59,30 +46,22 @@ export default function DepartmentQrScanner({ form, result, error, verifiedQr, i
     </div>
     <article className="qr-stage-card record-stage"><h3><b>3</b> {session?'Active Service Session':'Record Attendance'}</h3>
       {error&&<p className="error-message" role="alert">{error}</p>}
-      {!verified?<p className="qr-recent-empty">Verify a student to select service time.</p>:result.active_session_elsewhere?<p className="error-message" role="alert">Active Service Session Found. This student is timed in with another department. Contact the supervising staff to record Time Out.</p>:session?<div className="service-active-panel">
+      {!verified?<p className="qr-recent-empty">Verify a student to record attendance.</p>:result.active_session_elsewhere?<p className="error-message" role="alert">Active Service Session Found. This student is timed in with another department. Contact the supervising staff to record Time Out.</p>:session?<div className="service-active-panel">
         <div className="service-active-heading"><span className="scanner-state active"><i/>Already Timed In</span><strong>{session.session_type==='FIXED'?formatServiceMinutes(session.selected_duration_minutes)+' target':'Open Time Session'}</strong></div>
         <div className="service-active-clock"><span>{session.session_type==='FIXED'?'Time Remaining':'Time Elapsed'}</span><ServiceCountdown session={session} now={now} className="service-large-clock"/></div>
         <dl className="service-confirm-details"><div><dt>Time In</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div><div><dt>{session.session_type==='FIXED'?'Expected Completion':'Credit Stops At'}</dt><dd>{formatManilaTime(session.session_type==='FIXED'?session.expected_completion_at:session.credit_cutoff_at)}</dd></div><div><dt>Available Service Time</dt><dd>{formatLiveServiceTime(timing.creditRemainingSeconds)}</dd></div><div><dt>Projected Total / Remaining</dt><dd>{formatServiceMinutes(progress.completed*60+projectedMinutes)} / {formatServiceMinutes(Math.max(0,progress.remaining*60-projectedMinutes))}</dd></div></dl>
-        <p className="field-help">Current session time is credited only after Time Out is saved.</p><div className="service-confirm-actions"><button type="button" className="secondary-button" onClick={()=>setStudentOpen(true)}>View Student</button><button type="button" className={'time-out-button'+(timing.targetCompleted||timing.limitReached?' service-target-ready':'')} onClick={()=>setTimeOutOpen(true)} disabled={isSubmitting}>Time Out</button></div>
+        <p className="field-help">Current session time is credited only after Time Out is saved.</p><div className="service-confirm-actions"><button type="button" className="secondary-button" onClick={()=>setStudentOpen(true)}>View Student</button><ServiceAttendanceControls session={session} token={token} supervisingOfficerId={form.supervising_officer_id} initialNotes={form.notes} disabled={isSubmitting} onSaved={onAttendanceSaved}/></div>
       </div>:<>
-        {result.assignment&&(available>0||hasAllRemaining)?<><div className="service-duration-heading"><h4>How Long Will the Student Serve Today?</h4><p>Minimum 2 hours, except final remainder · Maximum 8 credited hours per calendar day</p></div>
-          {available<=0&&<p className="service-timer-warning">{Number(allowance.daily_remaining_minutes)===0?'Daily Community Service Limit Reached. New service can begin tomorrow.':'No creditable service time remains.'}</p>}
-          {available>0&&available<120&&<p className="service-timer-warning">Only {formatServiceMinutes(available)} is available before the requirement, daily allowance, or midnight cutoff. A final-remainder session is allowed.</p>}
-          <div className="service-duration-grid">{[120,180,240,300,360,420,480].map(minutes=>preset(minutes,minutes/60+' Hours',minutes===120?'Minimum':minutes===480?'Maximum':null))}
-            <div><button type="button" className={'service-duration-tile'+(form.session_type==='OPEN_TIME'?' selected':'')} aria-pressed={form.session_type==='OPEN_TIME'} onClick={()=>choose('OPEN_TIME',null)} disabled={isSubmitting||available<=0}><strong>Open Time</strong><small>Up to {formatServiceMinutes(available)}</small></button></div>
-            {hasAllRemaining&&preset(remainingMinutes,'All Remaining',formatServiceMinutes(remainingMinutes),remainingDisabledReason)}
-            {available>0&&available<120&&available!==remainingMinutes&&preset(available,'Final Remainder',formatServiceMinutes(available))}
-          </div>
+        {result.assignment&&available>0?<>
           <div className="service-confirm-panel"><div className="record-fields"><label>Department<input readOnly value={result.assignment.department_name||''}/></label><label>Supervising Officer<select name="supervising_officer_id" value={form.supervising_officer_id||''} onChange={onFieldChange} disabled={isSubmitting||officers.length<=1}><option value="">{noOfficer?'No Authorized Officer Available':'Select a Supervising Officer'}</option>{officers.map(officer=><option key={officer.officer_user_id} value={officer.officer_user_id}>{officer.first_name} {officer.last_name} · {formatDisplayLabel(officer.role)}</option>)}</select></label><label><span className="record-field-label">Attendance Note <small>Optional</small></span><input name="notes" maxLength="500" value={form.notes} onChange={onFieldChange} disabled={isSubmitting} placeholder="e.g. Assigned to organize library books."/></label></div>
             {noOfficer&&<p className="error-message">Contact the Discipline Office: no authorized officer is currently available.</p>}
-            {selectedValid&&<dl className="service-confirm-details"><div><dt>Selected Service</dt><dd>{form.session_type==='OPEN_TIME'?'Open Time':formatServiceMinutes(selected)}</dd></div><div><dt>Time in Estimate</dt><dd>{formatManilaTime(now)}</dd></div><div><dt>{selected===null?'Maximum Today':'Expected Completion'}</dt><dd>{selected===null?formatServiceMinutes(available):formatManilaTime(now+selected*60000)}</dd></div><div><dt>Credit Stops at Midnight</dt><dd>{formatManilaTime(allowance.day_ends_at)}</dd></div></dl>}
-            <div className="service-confirm-actions"><p className="field-help">Recorded By {recorder?.username||'authenticated staff'} · {formatDisplayLabel(recorder?.role)}</p><button type="button" onClick={()=>onAction('time-in')} disabled={!selectedValid||!form.supervising_officer_id||noOfficer||isSubmitting}>{isSubmitting?'Recording…':'Confirm Time In'}</button></div>
+            <p className="field-help">Service time counts while working. Pause for breaks and record Time Out when finished. Up to 8 hours can be credited per calendar day.</p>
+            <div className="service-confirm-actions"><p className="field-help">Recorded By {recorder?.username||'authenticated staff'} · {formatDisplayLabel(recorder?.role)}</p><button type="button" onClick={()=>onAction('time-in')} disabled={!form.supervising_officer_id||noOfficer||isSubmitting}>{isSubmitting?'Recording…':'Confirm Time In'}</button></div>
           </div></>:<p className="service-timer-warning">{!result.assignment?(result.assignments?.length?'Select an eligible assignment to continue.':'Time In requires an active service assignment in your authorized departments.'):Number(allowance.daily_remaining_minutes)===0?'Daily Community Service Limit Reached. New service can begin tomorrow.':'No creditable service time remains.'}</p>}
       </>}
       {result?.action==='time-out'&&<p className="success-message" role="status">Time Out saved. {formatServiceMinutes(result.session?.credited_minutes)} credited.</p>}
     </article>
-    {history.length>0&&<article className="qr-stage-card recent-stage"><h3>Community Service History</h3><div className="responsive-table"><table className="responsive-record-table"><thead><tr><th>Date / Department</th><th>Time in / Out</th><th>Mode / Target</th><th>Actual / Credited</th><th>Status</th><th>Authorized by / Notes</th></tr></thead><tbody>{history.map(item=><tr key={item.id}><td data-label="Date / Department">{formatManilaDateTime(item.time_in)}<small>{item.department_name}</small></td><td data-label="Time in / Out">{formatManilaTime(item.time_in)} / {formatManilaTime(item.time_out)||'Active'}</td><td data-label="Mode / Target">{item.session_type==='FIXED'?formatServiceMinutes(item.selected_duration_minutes):item.session_type==='OPEN_TIME'?'Open Time':'Legacy Session'}</td><td data-label="Actual / Credited">{item.worked_minutes==null?'—':formatServiceMinutes(item.worked_minutes)} / {item.credited_minutes==null?'—':formatServiceMinutes(item.credited_minutes)}</td><td data-label="Status">{formatDisplayLabel(item.completion_reason||item.status)}</td><td data-label="Authorized by / Notes">{item.time_out_recorder_name||item.time_in_recorder_name||'Staff #'+(item.time_out_by_user_id||item.time_in_by_user_id)} · {formatDisplayLabel(item.time_out_role||item.time_in_role)}<small>{item.result_notes||item.notes||'—'}</small></td></tr>)}</tbody></table></div></article>}
+    {history.length>0&&<article className="qr-stage-card recent-stage"><h3>Community Service History</h3><div className="responsive-table"><table className="responsive-record-table"><thead><tr><th>Date / Department</th><th>Time in / Out</th><th>Mode / Target</th><th>Actual / Credited</th><th>Status</th><th>Authorized by / Notes</th></tr></thead><tbody>{history.map(item=><tr key={item.id}><td data-label="Date / Department">{formatManilaDateTime(item.time_in)}<small>{item.department_name}</small></td><td data-label="Time in / Out">{formatManilaTime(item.time_in)} / {formatManilaTime(item.time_out)||'Active'}</td><td data-label="Mode / Target">{item.session_type==='FIXED'?formatServiceMinutes(item.selected_duration_minutes):item.session_type==='OPEN_TIME'?'Open Time':'Legacy Session'}</td><td data-label="Actual / Credited">{item.worked_minutes==null?'—':formatServiceMinutes(item.worked_minutes)} / {item.credited_minutes==null?'—':formatServiceMinutes(item.credited_minutes)}</td><td data-label="Status">{formatDisplayLabel(item.completion_reason||item.status)}</td><td data-label="Authorized by / Notes">{item.time_out_recorder_name||item.time_in_recorder_name||'Staff #'+(item.time_out_by_user_id||item.time_in_by_user_id)} · {formatDisplayLabel(item.time_out_role||item.time_in_role)}<small>{item.result_notes||item.notes||'—'}</small><ServicePauseHistory session={item}/></td></tr>)}</tbody></table></div></article>}
 {studentOpen&&verified&&<Modal title="Student Information" onClose={()=>setStudentOpen(false)}><div className="verified-student"><Avatar identity={result.student}/><div><h3>{result.student.first_name} {result.student.last_name}</h3><p>{result.student.student_number}</p><p>{academicSummary(result.student)}</p><p>{result.student.section}</p><p>{result.assignment?.department_name}</p><p>{result.student_status}</p></div></div></Modal>}
-    {timeOutOpen&&session&&<ServiceTimeOutDialog session={session} token={token} supervisingOfficerId={form.supervising_officer_id} initialNotes={form.notes} onClose={()=>setTimeOutOpen(false)} onSaved={onAttendanceSaved}/>}
   </section>
 }

@@ -37,6 +37,11 @@ const assignment = async (hours=20) => {
 };
 const start = (a,type='FIXED',minutes=120) => service.recordTimeIn({assignmentId:a.id,expectedStudentId:studentId,departmentId,supervisingOfficerId:2,actor,sessionType:type,selectedDurationMinutes:type==='OPEN_TIME'?null:minutes});
 const finish = (a,session) => service.recordTimeOut({assignmentId:a.id,sessionId:session.id,expectedStudentId:studentId,departmentId,actor});
+const pause = (session,reason='Scheduled break',overrides={}) => service.setSessionPaused({sessionId:session.id,departmentId,actor,paused:true,reason,...overrides});
+const resume = (session,overrides={}) => service.setSessionPaused({sessionId:session.id,departmentId,actor,paused:false,...overrides});
+const pauseRows = async (session) => (await pool.query('SELECT * FROM community_service_session_pauses WHERE session_id=$1 ORDER BY started_at,id',[session.id])).rows;
+const currentSession = async (session) => (await service.hydrateSessions(pool,(await pool.query(`SELECT css.*,a.required_hours,a.completed_hours,a.remaining_hours
+  FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id WHERE css.id=$1`,[session.id])).rows))[0];
 
 test.before(async()=>{
   await admin.query(`CREATE SCHEMA ${schema}`);
@@ -54,11 +59,12 @@ test.beforeEach(async()=>{
 });
 test.after(async()=>{await pool.end();await admin.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);await admin.end();});
 
-test('All remaining targets persist and complete fractional-hour assignments exactly',async()=>{
+test('legacy duration selections open flexible sessions and complete fractional-hour assignments exactly',async()=>{
   for (const [hours,minutes] of [[6.5,390],[1.5,90],[0.01,0.6],[5.500001,330.00006]]) {
     const a=await assignment(hours)
     const opened=await start(a,'FIXED',minutes)
-    assert.equal(Number(opened.session.selected_duration_minutes),minutes)
+    assert.equal(opened.session.session_type,'OPEN_TIME')
+    assert.equal(opened.session.selected_duration_minutes,null)
     // Existing Time Out constraints require whole worked minutes to cover fractional credit.
     instant=new Date(Date.parse(instant)+Math.ceil(minutes)*60000).toISOString()
     const closed=await finish(a,opened.session)
@@ -87,9 +93,10 @@ test('stale All remaining selections roll back when the live balance or allowanc
   assert.equal(Number((await pool.query('SELECT COUNT(*) AS count FROM community_service_attendance')).rows[0].count),2)
 });
 
-test('fixed target permits overtime, records raw work and retries Time Out without duplicate credit',async()=>{
+test('legacy fixed selection opens flexible attendance and retries Time Out without duplicate credit',async()=>{
   const a=await assignment();const opened=await start(a);
-  assert.equal(Number(opened.session.selected_duration_minutes),120);
+  assert.equal(opened.session.session_type,'OPEN_TIME');
+  assert.equal(opened.session.selected_duration_minutes,null);
   instant='2026-10-07T03:05:00Z';
   const closed=await finish(a,opened.session);
   assert.equal(Number(closed.session.worked_minutes),125);
@@ -121,11 +128,12 @@ test('daily cap aggregates assignments and caps long sessions while retaining ac
   await assert.rejects(start(a,'OPEN_TIME'),e=>e.code==='INVALID_SERVICE_DURATION');
   assert.equal(await service.dailyCredit(pool,studentId,'2026-10-07'),480);
 });
-test('early exit credits actual minutes and stale IDs cannot close a new session',async()=>{
+test('flexible attendance under two hours credits actual minutes normally and stale IDs cannot close a new session',async()=>{
   const a=await assignment();const opened=await start(a);
   instant='2026-10-07T02:30:59Z';const closed=await finish(a,opened.session);
   assert.equal(Number(closed.session.credited_minutes),90);
-  assert.equal(closed.session.completion_reason,'EARLY_TIME_OUT');
+  assert.equal(closed.session.completion_reason,'COMPLETED');
+  assert.equal(closed.session.service_condition,'TODAYS_SERVICE_COMPLETED');
   const next=await start(a);await finish(a,opened.session);
   assert.equal((await pool.query('SELECT time_out FROM community_service_sessions WHERE id=$1',[next.session.id])).rows[0].time_out,null);
 });
@@ -149,7 +157,7 @@ test('midnight stops yesterday credit and requires staff Time Out before restart
   const closed=await finish(a,opened.session);assert.equal(Number(closed.session.worked_minutes),180);
   assert.equal(await service.dailyCredit(pool,studentId,'2026-10-07'),60);
   assert.equal(await service.dailyCredit(pool,studentId,'2026-10-08'),0);
-  const restarted=await start(a);assert.equal(restarted.session.session_type,'FIXED');
+  const restarted=await start(a);assert.equal(restarted.session.session_type,'OPEN_TIME');
 });
 test('invalid supervisor, inactive account and invalid duration roll back all attendance writes',async()=>{
   const a=await assignment();
@@ -160,7 +168,7 @@ test('invalid supervisor, inactive account and invalid duration roll back all at
 });
 
 test('a progress-write failure rolls back Time Out, events, totals and audit together',async()=>{
-  const a=await assignment();const opened=await start(a);instant='2026-10-07T03:00:00Z';
+  const a=await assignment();const opened=await start(a);instant='2026-10-07T02:00:00Z';await pause(opened.session);instant='2026-10-07T03:00:00Z';
   await pool.query(`CREATE FUNCTION test_fail_progress() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced attendance rollback'; END $$`);
   await pool.query('CREATE TRIGGER test_fail_progress BEFORE INSERT ON community_service_progress_history FOR EACH ROW EXECUTE FUNCTION test_fail_progress()');
   try {
@@ -169,6 +177,7 @@ test('a progress-write failure rolls back Time Out, events, totals and audit tog
     assert.equal(Number((await pool.query('SELECT completed_hours FROM community_service_assignments WHERE id=$1',[a.id])).rows[0].completed_hours),0);
     assert.equal(Number((await pool.query("SELECT COUNT(*) AS count FROM community_service_attendance WHERE attendance_type='TIME_OUT'")).rows[0].count),0);
     assert.equal(Number((await pool.query("SELECT COUNT(*) AS count FROM audit_logs WHERE action='TIME_OUT_CREDITED'")).rows[0].count),0);
+    assert.equal((await pauseRows(opened.session))[0].ended_at,null);
   } finally {await pool.query('DROP FUNCTION test_fail_progress() CASCADE');}
 });
 
@@ -190,8 +199,8 @@ test('six-decimal hour balances close exactly and fractional timers reach zero',
   const opened=await start(a,'FIXED',55.00002);
   instant='2026-10-07T02:00:00Z';
   const preview=await service.previewTimeOut({sessionId:opened.session.id,departmentId});
-  assert.equal(preview.preview.target_completed,true);
-  assert.equal(preview.preview.remaining_seconds,0);
+  assert.equal(preview.preview.limit_reached,true);
+  assert.equal(preview.preview.credit_remaining_seconds,0);
   const closed=await finish(a,opened.session);
   assert.equal(Number(closed.session.credited_minutes),55.00002);
   assert.equal(Number(closed.assignment.completed_hours),5);
@@ -214,4 +223,150 @@ test('legacy approval cannot close an assignment while its current session is ac
   await assert.rejects(service.reviewServiceResult({sessionId:pending.id,decision:'APPROVE',reviewNotes:'Legacy evidence',actor}),error=>error.code==='ACTIVE_SESSION_EXISTS');
   assert.equal((await pool.query('SELECT time_out FROM community_service_sessions WHERE id=$1',[opened.session.id])).rows[0].time_out,null);
   instant='2026-10-07T02:00:00Z';assert.equal((await finish(a,opened.session)).session.status,'COMPLETED');
+});
+
+test('Time In needs no duration and still rejects malformed legacy selections',async()=>{
+  const a=await assignment();
+  for (const input of [{sessionType:'FIXED',selectedDurationMinutes:60},{sessionType:'OPEN_TIME',selectedDurationMinutes:120},{sessionType:'BOGUS'}, {selectedDurationMinutes:120}]) {
+    await assert.rejects(service.recordTimeIn({assignmentId:a.id,expectedStudentId:studentId,departmentId,supervisingOfficerId:2,actor,...input}),error=>error.code==='INVALID_SERVICE_DURATION');
+  }
+  const opened=await service.recordTimeIn({assignmentId:a.id,expectedStudentId:studentId,departmentId,supervisingOfficerId:2,actor});
+  assert.equal(opened.session.session_type,'OPEN_TIME');
+  assert.equal(opened.session.selected_duration_minutes,null);
+});
+
+test('pause ledger retains trimmed reasons and actors; repeated transitions are idempotent',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T01:30:00Z';
+  await pause(opened.session,'  Lunch break  ');
+  await Promise.all([pause(opened.session,'Duplicate request'),pause(opened.session,'Duplicate request')]);
+  let rows=await pauseRows(opened.session),session=await currentSession(opened.session);
+  assert.equal(rows.length,1);assert.equal(rows[0].reason,'Lunch break');
+  assert.equal(Number(rows[0].started_by_user_id),actor.id);
+  assert.equal(rows[0].started_at.toISOString(),instant.replace('Z','.000Z'));
+  assert.equal(rows[0].ended_at,null);assert.equal(session.status,'ACTIVE');
+  assert.equal(new Date(session.paused_at).toISOString(),instant.replace('Z','.000Z'));
+  assert.equal(Number(session.paused_seconds),0);
+  await assert.rejects(start(await assignment(),'OPEN_TIME'),error=>error.code==='ACTIVE_SESSION_EXISTS');
+  instant='2026-10-07T02:00:00Z';
+  await Promise.all([resume(opened.session),resume(opened.session)]);
+  rows=await pauseRows(opened.session);session=await currentSession(opened.session);
+  assert.equal(rows.length,1);assert.equal(Number(rows[0].ended_by_user_id),actor.id);
+  assert.equal(rows[0].ended_at.toISOString(),'2026-10-07T02:00:00.000Z');
+  assert.equal(session.paused_at,null);assert.equal(Number(session.paused_seconds),1800);
+  const hydrated=(await service.hydrateSessions(pool,[{...session,...a,id:session.id,time_in:session.time_in}]))[0];
+  assert.equal(hydrated.pause_history.length,1);
+  assert.equal(hydrated.pause_history[0].reason,'Lunch break');
+  assert.ok(hydrated.pause_history[0].started_by_name);
+  assert.ok(hydrated.pause_history[0].ended_by_name);
+});
+
+test('multiple fractional pause intervals aggregate before whole working minutes are rounded',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T01:00:10.100Z';await pause(opened.session);
+  instant='2026-10-07T01:00:40.600Z';await resume(opened.session);
+  instant='2026-10-07T01:01:00.100Z';await pause(opened.session,'Second break');
+  instant='2026-10-07T01:01:30.600Z';await resume(opened.session);
+  instant='2026-10-07T01:03:00Z';
+  const preview=await service.previewTimeOut({sessionId:opened.session.id,departmentId});
+  assert.equal(preview.preview.workedMinutes,1);assert.equal(preview.preview.creditedMinutes,1);
+  const closed=await finish(a,opened.session);
+  assert.equal(Number((await currentSession(opened.session)).paused_seconds),61);
+  assert.equal(Number(closed.session.worked_minutes),1);assert.equal(Number(closed.session.credited_minutes),1);
+  assert.equal(closed.session.service_condition,'TODAYS_SERVICE_COMPLETED');
+  assert.equal((await pauseRows(opened.session)).length,2);
+});
+
+test('Time Out while paused ends the interval at departure without counting the break',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T01:45:30Z';await pause(opened.session,'Left on break');
+  instant='2026-10-07T03:00:00Z';
+  const closed=await finish(a,opened.session),rows=await pauseRows(opened.session);
+  assert.equal(Number(closed.session.worked_minutes),45);assert.equal(Number(closed.session.credited_minutes),45);
+  const completed=await currentSession(opened.session);
+  assert.equal(completed.paused_at,null);assert.equal(Number(completed.paused_seconds),4470);
+  assert.equal(rows[0].ended_at.toISOString(),closed.session.time_out.toISOString());
+  assert.equal(Number(rows[0].ended_by_user_id),actor.id);
+  await finish(a,opened.session);
+  await assert.rejects(pause(opened.session),error=>error.statusCode===409);
+  await assert.rejects(resume(opened.session),error=>error.statusCode===409);
+  assert.equal((await pauseRows(opened.session)).length,1);
+});
+
+test('pauses move requirement and daily cutoffs later while retaining their credit caps',async()=>{
+  const a=await assignment(2),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T02:00:00Z';await pause(opened.session);
+  instant='2026-10-07T03:00:00Z';await resume(opened.session);
+  let preview=await service.previewTimeOut({sessionId:opened.session.id,departmentId});
+  assert.equal(preview.preview.creditedMinutes,60);assert.equal(preview.preview.limit_reached,false);
+  assert.equal(new Date(preview.preview.credit_cutoff_at).toISOString(),'2026-10-07T04:00:00.000Z');
+  instant='2026-10-07T04:30:00Z';
+  const closed=await finish(a,opened.session);
+  assert.equal(Number(closed.session.worked_minutes),150);assert.equal(Number(closed.session.credited_minutes),120);
+  const b=await assignment(),second=await start(b,'OPEN_TIME');
+  instant='2026-10-07T05:00:00Z';await pause(second.session);
+  instant='2026-10-07T06:00:00Z';await resume(second.session);
+  instant='2026-10-07T11:00:00Z';preview=await service.previewTimeOut({sessionId:second.session.id,departmentId});
+  assert.equal(preview.preview.creditedMinutes,330);
+  instant='2026-10-07T12:00:00Z';
+  const capped=await finish(b,second.session);
+  assert.equal(Number(capped.session.worked_minutes),390);assert.equal(Number(capped.session.credited_minutes),360);
+  assert.equal(capped.session.completion_reason,'DAILY_LIMIT_REACHED');
+  assert.equal(await service.dailyCredit(pool,studentId,'2026-10-07'),480);
+});
+
+test('midnight clips paused credit, disallows resume and never carries yesterday into today',async()=>{
+  instant='2026-10-07T15:00:00Z';const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T15:30:00Z';await pause(opened.session);
+  instant='2026-10-07T17:00:00Z';
+  await assert.rejects(resume(opened.session),error=>error.statusCode===409);
+  const closed=await finish(a,opened.session),rows=await pauseRows(opened.session);
+  assert.equal(Number(closed.session.credited_minutes),30);assert.equal(Number(closed.session.worked_minutes),30);
+  assert.equal(closed.session.completion_reason,'DAY_ENDED');
+  assert.equal(rows[0].ended_at.toISOString(),'2026-10-07T17:00:00.000Z');
+  assert.equal(await service.dailyCredit(pool,studentId,'2026-10-07'),30);
+  assert.equal(await service.dailyCredit(pool,studentId,'2026-10-08'),0);
+  const restarted=await start(a,'OPEN_TIME');
+  assert.equal((await pool.query('SELECT service_date::text FROM community_service_sessions WHERE id=$1',[restarted.session.id])).rows[0].service_date,'2026-10-08');
+});
+
+test('pause validates reason, department, live recorder permission and supervisor availability atomically',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  for (const reason of [undefined,null,'','   ',1,'x'.repeat(501)]) await assert.rejects(pause(opened.session,reason,{reason}),error=>error.statusCode===400);
+  await assert.rejects(pause(opened.session,'Wrong department',{departmentId:Number(departmentId)+1}),error=>[403,404,409].includes(error.statusCode));
+  await assert.rejects(pause(opened.session,'Student cannot pause',{actor:{id:3,role:'STUDENT'}}),error=>error.statusCode===403);
+  await pool.query('UPDATE department_heads SET qr_scanner_enabled=FALSE WHERE user_id=2');
+  await assert.rejects(pause(opened.session,'Revoked recorder',{actor:{id:2,role:'DEPARTMENT_HEAD',department_id:departmentId,session_version:1}}),error=>error.statusCode===403);
+  await pool.query('UPDATE users SET is_active=FALSE,deactivated_at=CURRENT_TIMESTAMP WHERE id=2');
+  await assert.rejects(pause(opened.session),error=>[403,409].includes(error.statusCode));
+  assert.equal((await pauseRows(opened.session)).length,0);
+  assert.equal((await currentSession(opened.session)).paused_at,null);
+});
+
+test('concurrent Pause, Resume and Time Out close once with no open pause or duplicate credit',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T02:00:00Z';await pause(opened.session);
+  instant='2026-10-07T02:15:00Z';
+  const results=await Promise.allSettled([resume(opened.session),pause(opened.session,'Concurrent break'),finish(a,opened.session),finish(a,opened.session)]);
+  for (const result of results.filter(result=>result.status==='rejected')) assert.equal(result.reason.statusCode,409);
+  const session=await currentSession(opened.session),rows=await pauseRows(opened.session);
+  assert.equal(session.status,'COMPLETED');assert.equal(session.paused_at,null);
+  assert.equal(Number(session.worked_minutes),60);assert.equal(Number(session.credited_minutes),60);
+  assert.ok(rows.every(row=>row.ended_at));
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS count FROM community_service_progress_history WHERE session_id=$1',[session.id])).rows[0].count),1);
+  assert.equal(Number((await pool.query("SELECT COUNT(*) AS count FROM community_service_attendance WHERE attendance_type='TIME_OUT'")).rows[0].count),1);
+});
+
+test('audit failure rolls back a pause and resume rechecks live authorization',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  await pool.query(`CREATE FUNCTION test_fail_pause_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced pause audit rollback'; END $$`);
+  await pool.query('CREATE TRIGGER test_fail_pause_audit BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION test_fail_pause_audit()');
+  try {
+    await assert.rejects(pause(opened.session),/forced pause audit rollback/);
+    assert.equal((await pauseRows(opened.session)).length,0);
+  } finally {await pool.query('DROP FUNCTION test_fail_pause_audit() CASCADE');}
+  instant='2026-10-07T01:30:00Z';await pause(opened.session,'x'.repeat(500));
+  await pool.query('UPDATE users SET is_active=FALSE,deactivated_at=CURRENT_TIMESTAMP WHERE id=1');
+  await assert.rejects(resume(opened.session),error=>error.statusCode===403);
+  assert.equal((await pauseRows(opened.session))[0].ended_at,null);
 });

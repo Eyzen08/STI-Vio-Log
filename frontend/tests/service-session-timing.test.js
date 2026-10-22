@@ -4,6 +4,37 @@ import { serviceSessionTiming, serverClockTime } from '../src/lib/departmentServ
 
 const start = Date.parse('2026-10-07T01:00:00Z')
 const session = {time_in:new Date(start).toISOString(),session_type:'FIXED',selected_duration_minutes:120,credit_cutoff_at:new Date(start+8*3600000).toISOString(),completed_today_minutes:0}
+
+test('paused service freezes net work and excludes completed pauses', () => {
+  const paused = {...session,session_type:'OPEN_TIME',paused_at:new Date(start+2*3600000).toISOString(),paused_seconds:600}
+  const timing = serviceSessionTiming(paused,start+3*3600000)
+  assert.equal(timing.elapsedSeconds,6600)
+  assert.equal(timing.actualElapsedSeconds,6600)
+  assert.equal(timing.pausedSeconds,4200)
+})
+
+test('resumed net work retains raw work beyond credit cap', () => {
+  const resumed = {...session,session_type:'OPEN_TIME',paused_at:null,paused_seconds:3600,credit_cutoff_at:new Date(start+3*3600000).toISOString(),day_ends_at:new Date(start+15*3600000).toISOString()}
+  const timing = serviceSessionTiming(resumed,start+4*3600000)
+  assert.equal(timing.elapsedSeconds,7200)
+  assert.equal(timing.actualElapsedSeconds,10800)
+})
+
+test('server elapsed anchors advance only while working and keep net raw overtime', () => {
+  const anchored = {...session,session_type:'OPEN_TIME',server_time:new Date(start+4*3600000).toISOString(),elapsed_seconds:7200,actual_elapsed_seconds:10800,paused_seconds:3600,day_ends_at:new Date(start+15*3600000).toISOString(),credit_cutoff_at:new Date(start+3*3600000).toISOString()}
+  assert.equal(serviceSessionTiming(anchored,start+4*3600000+60000).actualElapsedSeconds,10860)
+  assert.equal(serviceSessionTiming({...anchored,paused_at:anchored.server_time},start+5*3600000).actualElapsedSeconds,10800)
+})
+
+test('pause history is clipped to original midnight while raw work can continue', () => {
+  const open = {...session,session_type:'OPEN_TIME',credit_limit_seconds:28800,
+    day_ends_at:new Date(start+2*3600000).toISOString(),paused_at:null,paused_seconds:7200,
+    pause_history:[{started_at:new Date(start+3600000).toISOString(),ended_at:new Date(start+3*3600000).toISOString()}]}
+  const timing = serviceSessionTiming(open,start+4*3600000)
+  assert.equal(timing.elapsedSeconds,3600)
+  assert.equal(timing.actualElapsedSeconds,7200)
+  assert.equal(timing.limitReached,true)
+})
 test('fixed countdown switches to overtime before the credit cutoff', () => {
   const timing = serviceSessionTiming(session,start+125*60000)
   assert.equal(timing.remainingSeconds,0)

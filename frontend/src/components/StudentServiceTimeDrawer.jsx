@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import Modal from './Modal.jsx'
+import ServiceAttendanceControls from './ServiceAttendanceControls.jsx'
 import { assignmentsForStudent, summarizeServiceAssignments } from '../lib/adminServiceTime.js'
 import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import { isActiveServiceSession, serviceProgress } from '../lib/departmentService.js'
@@ -10,7 +11,7 @@ import Avatar from './Avatar.jsx'
 import PortalIcon from './PortalIcon.jsx'
 import '../styles/student-action-drawers.css'
 
-export function StudentServiceTimeContent({ student, assignments = [], activeSessions = [], attendanceReady = true, attendanceError }) {
+export function StudentServiceTimeContent({ student, assignments = [], activeSessions = [], attendanceReady = true, attendanceError, token, onAttendanceSaved }) {
   const [now, setNow] = useState(Date.now())
   const studentAssignments = useMemo(() => assignmentsForStudent(assignments, student.id), [assignments, student.id])
   const summary = useMemo(() => summarizeServiceAssignments(studentAssignments), [studentAssignments])
@@ -29,7 +30,7 @@ export function StudentServiceTimeContent({ student, assignments = [], activeSes
       {attendanceError && <p className="attendance-update-error">{attendanceError}</p>}
       <section className="service-time-summary" aria-label="Overall Service Progress">{[['Required', summary.required, 'clock', 'blue'], ['Completed', summary.completed, 'check', 'green'], ['Remaining', summary.remaining, 'hourglass', 'orange']].map(([label, value, icon, tone]) => <div key={label} className={`service-metric service-metric-${tone}`}><i><PortalIcon name={icon} size={22}/></i><div><span>{label}</span><strong>{formatDuration(value)}</strong></div></div>)}</section>
       <div className="service-time-overall"><progress value={summary.progress} max="100" aria-label="Overall Credited Service Progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow={summary.progress}/><p><strong>{summary.progress}%</strong> overall credited progress</p></div>
-      {studentSessions.map((session) => <section key={session.session_id} className="service-time-live" aria-label="Active Attendance Session"><div><span>{session.session_type==='OPEN_TIME'?'Time Elapsed':'Remaining Session Time'}</span><ServiceCountdown session={session} now={now}/></div><dl><div><dt>Department</dt><dd>{session.department_name || 'Not assigned'}</dd></div><div><dt>Time In</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div></dl><p>Active time remains uncredited until Time Out is saved.</p></section>)}
+      {studentSessions.map((session) => <section key={session.session_id} className="service-time-live" aria-label="Active Attendance Session"><div><span>{session.session_type==='OPEN_TIME'?'Time Elapsed':'Remaining Session Time'}</span><ServiceCountdown session={session} now={now}/></div><dl><div><dt>Department</dt><dd>{session.department_name || 'Not assigned'}</dd></div><div><dt>Time In</dt><dd>{formatManilaDateTime(session.time_in)}</dd></div></dl><p>Active time remains uncredited until Time Out is saved.</p>{token && onAttendanceSaved && <ServiceAttendanceControls session={session} token={token} onSaved={onAttendanceSaved}/>}</section>)}
       <section className="service-time-assignment-list" aria-label="Service Assignments"><header className="service-section-heading"><div><h3>Assignments</h3><p>Credited progress for every assignment.</p></div><span>{studentAssignments.length} assignment{studentAssignments.length === 1 ? '' : 's'}</span></header>{studentAssignments.map((assignment) => {
           const credited = summarizeServiceAssignments([assignment])
           const progress = assignment.completed_hours == null ? credited.progress : serviceProgress(assignment)

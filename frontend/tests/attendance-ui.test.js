@@ -21,6 +21,34 @@ before(async () => {
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
 
+test('paused attendance stays active and staff can resume or time out', () => {
+  const session = {id:77,session_id:77,student_id:1,status:'ACTIVE',time_in:'2026-10-07T01:00:00Z',session_type:'OPEN_TIME',paused_at:'2026-10-07T02:00:00Z',paused_seconds:600,credit_cutoff_at:'2026-10-07T09:00:00Z'}
+  assert.match(render('AttendanceIndicator',{sessions:[session],details:true}), /Paused/)
+  const html = render('AdminActiveAttendance',{sessions:[session],token:'test',onAttendanceSaved(){}})
+  assert.match(html, />Resume<\/button>/)
+  assert.match(html, />Time Out<\/button>/)
+  assert.doesNotMatch(html, />Pause<\/button>/)
+  const clock = render('ServiceCountdown',{session,now:Date.parse('2026-10-07T03:00:00Z')})
+  assert.match(clock,/00:50:00/)
+  assert.match(clock,/Paused Since/)
+  assert.match(clock,/Total Paused/)
+})
+
+test('running staff attendance offers Pause and Time Out together', () => {
+  const html = render('AdminActiveAttendance',{sessions:[{session_id:77,status:'ACTIVE'}],token:'test',onAttendanceSaved(){}})
+  assert.match(html,/>Pause<\/button>/)
+  assert.match(html,/>Time Out<\/button>/)
+})
+
+test('paused attendance after original midnight requires Time Out and disables Resume', () => {
+  const session = {session_id:77,status:'ACTIVE',session_type:'OPEN_TIME',time_in:'2026-10-07T14:00:00Z',paused_at:'2026-10-07T15:00:00Z',paused_seconds:0,
+    credit_limit_seconds:7200,credit_cutoff_at:'2026-10-07T16:00:00Z',day_ends_at:'2026-10-07T16:00:00Z',server_time:'2026-10-07T17:00:00Z',actual_elapsed_seconds:3600,elapsed_seconds:3600}
+  const html = render('AdminActiveAttendance',{sessions:[session],token:'test',onAttendanceSaved(){}})
+  assert.match(html, /disabled="">Resume<\/button>/)
+  assert.match(html, /class="time-out-button">Time Out<\/button>/)
+  assert.match(html, /Paused Since/)
+})
+
 test('legacy college year stays selectable with its ordinal label', () => {
   const html = render('StudentAcademicFields', { value: { academic_level: 'COLLEGE', program: 'BSIT', year_level: 5 }, onChange() {}, legacy: true })
   assert.match(html, /<option value="5" selected="">5th Year<\/option>/)
@@ -182,19 +210,14 @@ test('assignment form explains unavailable choices and locks fields and actions 
   assert.match(busy,/value="Ana Reyes - TEST-1"/)
 })
 
-test('QR workflow shows automatic department, duration limits and active session without another Time In', () => {
-  const form={qr_code:'test-code',supervising_officer_id:9,notes:'',session_type:'FIXED',selected_duration_minutes:120}
+test('QR workflow records flexible attendance and keeps active sessions out of Time In', () => {
+  const form={qr_code:'test-code',supervising_officer_id:9,notes:''}
   const result={action:'scan',server_time:new Date(start).toISOString(),student:{first_name:'Ana',last_name:'Reyes',student_number:'02000',program:'BSIT'},assignment:{id:21,department_name:'Library',required_hours:6,completed_hours:.75,remaining_hours:5.25},allowance:{available_minutes:300,completed_today_minutes:180,daily_remaining_minutes:300,day_ends_at:'2026-10-05T16:00:00Z'},available_officers:[{officer_user_id:9,first_name:'Mara',role:'DEPARTMENT_HEAD'}]}
   const props={form,result,verifiedQr:'test-code',recorder:{role:'DISCIPLINE_ADMIN'}}
   const idle=render('DepartmentQrScanner',props)
-  const initial=render('DepartmentQrScanner',{...props,form:{...form,session_type:'',selected_duration_minutes:null}})
-  assert.match(initial,/How Long Will the Student Serve Today\?/)
-  assert.doesNotMatch(initial,/aria-pressed="true"|service-large-clock/)
-  assert.match(initial,/disabled="">Confirm Time In/)
   assert.match(idle,/Community Service Requirement/);assert.match(idle,/45 min/);assert.match(idle,/5 hrs 15 min/)
-  assert.match(idle,/Confirm Time In/);assert.match(idle,/Open Time/);assert.match(idle,/Minimum/);assert.match(idle,/Maximum/)
+  assert.match(idle,/Confirm Time In/);assert.doesNotMatch(idle,/disabled="">Confirm Time In|service-duration-tile/)
   assert.doesNotMatch(idle,/name="department_id"|Select Outcome/)
-  assert.match(idle,/disabled=""[^]*?6 Hours/)
   const activeResult={...result,active_session:{...active,session_type:'FIXED',selected_duration_minutes:120,credit_cutoff_at:'2026-10-05T06:00:00Z'}}
   const timedIn=render('DepartmentQrScanner',{...props,result:activeResult})
   assert.match(timedIn,/Already Timed In/)
@@ -205,41 +228,20 @@ test('QR workflow shows automatic department, duration limits and active session
   const noOfficer=render('DepartmentQrScanner',{...props,result:{...result,available_officers:[]}})
   assert.match(noOfficer,/No Authorized Officer Available/);assert.match(noOfficer,/disabled="">Confirm Time In/)
   const final=render('DepartmentQrScanner',{...props,result:{...result,allowance:{...result.allowance,available_minutes:60}}})
-  assert.match(final,/Final Remainder/)
+  assert.match(final,/Confirm Time In/);assert.doesNotMatch(final,/disabled="">Confirm Time In/)
 })
 
-test('QR All Remaining uses the exact balance and respects daily and midnight allowances', () => {
-  const form={qr_code:'test-code',notes:'',session_type:'FIXED',supervising_officer_id:9}
-  const result={student:{first_name:'Ana'},assignment:{id:21,department_name:'Library'},available_officers:[{officer_user_id:9}],allowance:{daily_remaining_minutes:480}}
-  const scan=(remaining,available,selected=remaining,daily=480)=>render('DepartmentQrScanner',{
-    form:{...form,selected_duration_minutes:selected},verifiedQr:'test-code',
-    result:{...result,assignment:{...result.assignment,remaining_hours:remaining/60},allowance:{available_minutes:available,daily_remaining_minutes:daily}}
-  })
-  for (const [balance,label] of [[390,'6 hrs 30 min'],[90,'1 hr 30 min'],[0.6,'0.6 min'],[330.00002,'5 hrs 30 min'],[180,'3 hrs']]) {
-    const html=scan(balance,balance)
-    assert.match(html,new RegExp('aria-pressed="true"[^>]*><strong>All Remaining</strong><small>'+label+'</small>'))
-    assert.doesNotMatch(html,/disabled="">Confirm Time In/)
-    assert.doesNotMatch(html,/Final Remainder/)
-    const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1])
-    assert.equal(new Set(ids).size,ids.length)
+test('QR accepts short flexible service and blocks exhausted allowance', () => {
+  const props={form:{qr_code:'test-code',notes:'',supervising_officer_id:9},verifiedQr:'test-code'}
+  const result={student:{first_name:'Ana'},assignment:{id:21,department_name:'Library',remaining_hours:6.5},available_officers:[{officer_user_id:9}],allowance:{daily_remaining_minutes:480}}
+  for(const available of [0.6,30,90,390]) {
+    const html=render('DepartmentQrScanner',{...props,result:{...result,allowance:{available_minutes:available,daily_remaining_minutes:480}}})
+    assert.match(html,/>Confirm Time In<\/button>/)
+    assert.doesNotMatch(html,/disabled="">Confirm Time In|service-duration-tile|All Remaining/)
   }
-  for (const balance of [0,480,540]) assert.doesNotMatch(scan(balance,Math.min(balance,480)),/All Remaining/)
-  for (const [balance,stale] of [[420,390],[120,90]]) {
-    const html=scan(balance,balance,stale)
-    assert.doesNotMatch(html,/aria-pressed="true"/)
-    assert.match(html,/disabled="">Confirm Time In/)
-  }
-  for (const [available,daily,reason] of [[300,300,"today’s remaining allowance"],[30,480,'midnight'],[0,0,'Daily Community Service Limit Reached']]) {
-    const html=scan(390,available,390,daily)
-    assert.match(html,/disabled=""[^>]*><strong>All Remaining<\/strong><small>6 hrs 30 min<\/small>/)
-    assert.match(html,new RegExp(reason))
-    assert.match(html,/disabled="">Confirm Time In/)
-    if (available===30) assert.match(html,/<strong>Final Remainder<\/strong><small>30 min<\/small>/)
-    if (available===0) {
-      assert.doesNotMatch(html,/Final Remainder/)
-      assert.match(html,/disabled=""[^>]*><strong>Open Time/)
-    }
-  }
+  const html=render('DepartmentQrScanner',{...props,result:{...result,allowance:{available_minutes:0,daily_remaining_minutes:0}}})
+  assert.match(html,/Daily Community Service Limit Reached/)
+  assert.doesNotMatch(html,/>Confirm Time In<\/button>/)
 })
 
 test('camera QR verification is automatic and Verify is reserved for manual input', () => {

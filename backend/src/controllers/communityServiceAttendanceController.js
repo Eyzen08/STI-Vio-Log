@@ -1,5 +1,5 @@
 const pool = require("../config/database");
-const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, reviewServiceResult, hydrateSessions, previewTimeOut } = require("../services/communityServiceSessionService");
+const { CommunityServiceSessionError, recordTimeIn, recordTimeOut, setSessionPaused, reviewServiceResult, hydrateSessions, previewTimeOut } = require("../services/communityServiceSessionService");
 const { sendError: sendApiError } = require("../utils/api");
 const { assertAllowedFields } = require("../utils/validators");
 const { emitAttendanceChange, emitCommunityServiceChange } = require('../services/realtimeEventService');
@@ -176,4 +176,14 @@ const getTimeOutPreview = async (req,res) => {
     try { return res.json({success:true,...await previewTimeOut({sessionId:req.params.sessionId,departmentId:req.staffDepartmentId})}); }
     catch(error) { return sendError(res,error,'preview community service time-out'); }
 };
-module.exports = { communityServiceTimeIn, communityServiceTimeOut, getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters, getTimeOutPreview };
+const changePause = (paused) => async (req,res) => {
+    try {
+        assertAllowedFields(req.body,paused ? ['reason'] : []);
+        const result = await setSessionPaused({sessionId:req.params.sessionId,departmentId:req.staffDepartmentId,
+            actor:req.user,reason:req.body?.reason,paused,ipAddress:req.ip});
+        await emitCommunityServiceChange({assignmentId:result.assignment.id,studentId:result.assignment.student_id,
+            departmentId:result.assignment.department_id,action:paused?'PAUSE':'RESUME'});
+        return res.json({success:true,message:paused?'Service time paused':'Service time resumed',...result});
+    } catch(error) { return sendError(res,error,paused?'pause service session':'resume service session'); }
+};
+module.exports = { communityServiceTimeIn, communityServiceTimeOut, pauseCommunityServiceSession:changePause(true), resumeCommunityServiceSession:changePause(false), getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters, getTimeOutPreview };

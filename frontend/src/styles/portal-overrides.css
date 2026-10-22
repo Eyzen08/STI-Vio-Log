@@ -2037,6 +2037,14 @@
 .app-modal.app-modal--drawer.create-record-drawer .create-field-optional { color:var(--text-secondary); font-size:var(--text-xs); font-weight:400; }
 .app-modal.app-modal--drawer.create-record-drawer :is(label,legend) b { color:var(--status-danger-text); font-weight:600; }
 .app-modal.app-modal--drawer.create-record-drawer .offense-legend { flex-wrap:wrap; gap:8px 12px; margin:0 0 20px; font-size:var(--text-sm); }
+.create-record-drawer .violation-offense-search { min-width:0; }
+.create-record-drawer .violation-offense-search-status { margin:8px 0 0; color:var(--text-secondary); font-size:var(--text-sm); }
+.create-record-drawer .violation-offense-search-status:empty { margin:0; }
+.create-record-drawer .violation-offense-search-results { display:grid; gap:8px; max-height:280px; overflow-y:auto; margin:8px 0 0; padding:4px; list-style:none; }
+.app-modal.app-modal--drawer.create-record-drawer .violation-offense-search-results button { display:grid; gap:4px; width:100%; min-height:44px; margin:0; padding:12px 16px; border:1px solid var(--border-strong); border-radius:9px; background:var(--control-background); color:var(--text-primary); text-align:left; font:inherit; white-space:normal; overflow-wrap:anywhere; cursor:pointer; box-shadow:none; }
+.create-record-drawer .violation-offense-search-results button strong { font-weight:600; }
+.create-record-drawer .violation-offense-search-results button small { color:var(--text-secondary); font-size:var(--text-sm); }
+.app-modal.app-modal--drawer.create-record-drawer .violation-offense-search-results button:hover:not(:disabled) { border-color:var(--link-color); background:var(--surface-interactive); }
 .app-modal.app-modal--drawer.create-record-drawer .assign-service-duration legend { color:var(--text-primary); font-size:var(--text-base); }
 .app-modal.app-modal--drawer.create-record-drawer .assign-service-duration-inputs { gap:20px 24px; }
 .app-modal.app-modal--drawer.create-record-drawer .assign-service-preset { min-height:44px; padding:8px 16px; border-color:var(--border-strong); background:var(--surface-nested); color:var(--text-primary); }

@@ -10,13 +10,27 @@ const handler=source.slice(source.indexOf('  const handleQrAction = async'),sour
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done});return {promise,resolve}}
 const setup=()=>{
   const requests=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:'old'},qrFormRef:{current:{qr_code:'old',assignment_id:21,supervising_officer_id:9,session_type:'OPEN_TIME',selected_duration_minutes:null,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},verifiedQrRef:{current:'old'},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,setDashboardRefreshKey(){},refreshPendingActions(){},setQrInputSource(){},
+  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:'old'},qrFormRef:{current:{qr_code:'old',assignment_id:21,supervising_officer_id:9,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},verifiedQrRef:{current:'old'},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,setDashboardRefreshKey(){},refreshPendingActions(){},setQrInputSource(){},
     setQrResult(value){context.result=typeof value==='function'?value(context.result):value},setVerifiedQr(value){context.verified=value},setQrError(value){context.error=value},setQrSubmitting(){},setQrHistory(){},setQrForm(update){context.qrFormRef.current=typeof update==='function'?update(context.qrFormRef.current):update},
     fetch(url,options){if(url.endsWith('/sessions')) return Promise.resolve({ok:true,json:async()=>({sessions:[]})});const pending=deferred();requests.push({url,options,pending});return pending.promise}}
   const action=runInNewContext(handler+'; handleQrAction',context)
   return {action,context,requests}
 }
 const ok=(code,fields={})=>({ok:true,json:async()=>({success:true,student:{qr_code:code},...fields})})
+
+test('verified time in needs an officer and sends no planned duration',async()=>{
+  const {action,context,requests}=setup()
+  delete context.qrFormRef.current.session_type
+  delete context.qrFormRef.current.selected_duration_minutes
+  const saving=action('time-in','old')
+  assert.equal(requests.length,1)
+  const body=JSON.parse(requests[0].options.body)
+  assert.equal(body.supervising_officer_id,9)
+  assert.equal('session_type' in body,false)
+  assert.equal('selected_duration_minutes' in body,false)
+  requests[0].pending.resolve(ok('old'))
+  assert.equal(await saving,true)
+})
 
 test('a decoded scan waits for polling and ignores the older student response',async()=>{
   const {action,context,requests}=setup()
@@ -76,13 +90,12 @@ test('camera decode invokes current automatic verification without a Verify clic
   const end=source.indexOf('\n        },',start)
   const callback=source.slice(start,end)+'\n        }'
   const calls=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{session_type:'OPEN_TIME',assignment_id:21,supervising_officer_id:9,notes:'Previous note'}},verifiedQrRef:{current:'previous'},scanner:{},setQrInputSource(value){context.inputSource=value},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrError(){},stopQrScanner:async()=>{},qrActionRef:{current:async(...args)=>{calls.push(args)}}}
+  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{assignment_id:21,supervising_officer_id:9,notes:'Previous note'}},verifiedQrRef:{current:'previous'},scanner:{},setQrInputSource(value){context.inputSource=value},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrError(){},stopQrScanner:async()=>{},qrActionRef:{current:async(...args)=>{calls.push(args)}}}
   runInNewContext('('+callback+')',context)(' camera-code ')
   await new Promise(resolve=>setImmediate(resolve))
   assert.deepEqual(calls,[['scan','camera-code']])
   assert.equal(context.inputSource,'camera')
   assert.equal(context.qrFormRef.current.qr_code,'camera-code')
-  assert.equal(context.qrFormRef.current.session_type,'')
   assert.equal(context.qrFormRef.current.assignment_id,'')
   assert.equal(context.qrFormRef.current.supervising_officer_id,'')
   assert.equal(context.qrFormRef.current.notes,'')
@@ -106,13 +119,11 @@ test('manual editing while the camera stops cancels its delayed verification',as
   assert.equal(context.qrDecodeBusyRef.current,false)
 })
 
-test('fresh verification clears Open Time and notes and never submits Time In',async()=>{
+test('fresh verification clears notes and never submits Time In',async()=>{
   const {action,context,requests}=setup()
   const checking=action('scan','new-student')
   requests[0].pending.resolve(ok('new-student',{assignment:{id:22},available_officers:[{officer_user_id:10}]}))
   await checking
-  assert.equal(context.qrFormRef.current.session_type,'')
-  assert.equal(context.qrFormRef.current.selected_duration_minutes,null)
   assert.equal(context.qrFormRef.current.notes,'')
   assert.equal(context.qrFormRef.current.assignment_id,22)
   assert.equal(context.qrFormRef.current.supervising_officer_id,10)
@@ -125,71 +136,47 @@ test('manual QR changes and assignment selection clear the prior service draft',
   const fieldHandler=source.slice(source.indexOf('  const handleQrFieldChange ='),source.indexOf('  const handleQrAction = async'))
   const change=runInNewContext(fieldHandler+'; handleQrFieldChange',context)
   change({target:{name:'qr_code',value:'new-student'}})
-  assert.equal(context.qrFormRef.current.session_type,'')
   assert.equal(context.qrFormRef.current.assignment_id,'')
   assert.equal(context.qrFormRef.current.supervising_officer_id,'')
   assert.equal(context.qrFormRef.current.notes,'')
   assert.equal(requests.length,0)
-  Object.assign(context.qrFormRef.current,{session_type:'FIXED',selected_duration_minutes:120,notes:'Previous note'})
+  Object.assign(context.qrFormRef.current,{notes:'Previous note'})
   change({target:{name:'assignment_id',value:'22'}})
   assert.equal(context.qrFormRef.current.assignment_id,22)
-  assert.equal(context.qrFormRef.current.session_type,'')
   assert.equal(context.qrFormRef.current.notes,'')
   assert.equal(requests[0].url,'/api/qr/scan')
   requests[0].pending.resolve(ok('new-student',{assignment:{id:22}}))
   await new Promise(resolve=>setImmediate(resolve))
 })
 
-test('polling preserves a chosen duration, supervisor and note only for the same assignment',async()=>{
+test('polling preserves supervisor and note only for the same assignment',async()=>{
   const {action,context,requests}=setup()
-  Object.assign(context.qrFormRef.current,{session_type:'FIXED',selected_duration_minutes:180,notes:'Current note'})
+  Object.assign(context.qrFormRef.current,{notes:'Current note'})
   const fields={assignment:{id:21},available_officers:[{officer_user_id:1},{officer_user_id:9}]}
   const polling=action('scan','old',{quiet:true})
   requests[0].pending.resolve(ok('old',fields))
   await polling
-  assert.equal(context.qrFormRef.current.selected_duration_minutes,180)
   assert.equal(context.qrFormRef.current.supervising_officer_id,9)
   assert.equal(context.qrFormRef.current.notes,'Current note')
   const changed=action('scan','old',{quiet:true})
   requests[1].pending.resolve(ok('old',{...fields,assignment:{id:22}}))
   await changed
-  assert.equal(context.qrFormRef.current.session_type,'')
   assert.equal(context.qrFormRef.current.notes,'')
 })
 
-test('Time In sends exact All remaining targets without rounding',async()=>{
-  for (const minutes of [390,90,0.6,330.00002]) {
-    const {action,context,requests}=setup()
-    Object.assign(context.qrFormRef.current,{session_type:'FIXED',selected_duration_minutes:minutes})
-    const confirmed=action('time-in','old')
-    const body=JSON.parse(requests[0].options.body)
-    assert.equal(body.session_type,'FIXED')
-    assert.equal(body.selected_duration_minutes,minutes)
-    requests[0].pending.resolve(ok('old',{assignment:{id:21},session:{id:7,status:'ACTIVE',session_type:'FIXED',selected_duration_minutes:minutes}}))
-    assert.equal(await confirmed,true)
-    assert.equal(context.result.session.selected_duration_minutes,minutes)
-  }
-})
-
-test('Time In requires selection, preserves it on failure and starts only after confirmation',async()=>{
+test('Time In requires an officer and preserves the draft on failure',async()=>{
   const {action,context,requests}=setup()
-  context.qrFormRef.current.session_type=''
+  context.qrFormRef.current.supervising_officer_id=''
   assert.equal(await action('time-in','old'),false)
   assert.equal(requests.length,0)
-  for(const [type,minutes] of [['FIXED',120],['OPEN_TIME',null],['FIXED',45]]) {
-    Object.assign(context.qrFormRef.current,{session_type:type,selected_duration_minutes:minutes})
-    const rejected=action('time-in','old')
-    const request=requests.at(-1)
-    const body=JSON.parse(request.options.body)
-    assert.equal(body.session_type,type)
-    assert.equal(body.selected_duration_minutes,minutes)
-    request.pending.resolve({ok:false,json:async()=>({success:false,message:'Unable to save'})})
-    assert.equal(await rejected,false)
-    assert.equal(context.qrFormRef.current.session_type,type)
-    assert.equal(context.result,undefined)
-  }
+  Object.assign(context.qrFormRef.current,{supervising_officer_id:9,notes:'Keep this note'})
+  const rejected=action('time-in','old')
+  requests[0].pending.resolve({ok:false,json:async()=>({success:false,message:'Unable to save'})})
+  assert.equal(await rejected,false)
+  assert.equal(context.qrFormRef.current.notes,'Keep this note')
+  assert.equal(context.result,undefined)
   const confirmed=action('time-in','old')
-  requests.at(-1).pending.resolve(ok('old',{assignment:{id:21},session:{id:7,status:'ACTIVE',session_type:'FIXED',time_in:'2026-10-08T01:00:00Z'}}))
+  requests[1].pending.resolve(ok('old',{assignment:{id:21},session:{id:7,status:'ACTIVE',session_type:'OPEN_TIME',time_in:'2026-10-08T01:00:00Z'}}))
   assert.equal(await confirmed,true)
   assert.equal(context.result.session.status,'ACTIVE')
 })

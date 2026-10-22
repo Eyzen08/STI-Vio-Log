@@ -64,10 +64,65 @@ test('duration upgrade reports duplicate active students, preserves history and 
     } finally {await pool.end();await adminPool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);}
 });
 
+test('flexible attendance migration converts only unfinished targets and preserves credited evidence and totals',async()=>{
+    const schema=`sti_vio_log_test_flexible_${suffix}`;
+    await adminPool.query(`CREATE SCHEMA ${schema}`);
+    const pool=schemaPool(schema);
+    try {
+        for (const file of listMigrationFiles(migrationsDir).filter(file=>file<'051')) await pool.query(fs.readFileSync(path.join(migrationsDir,file),'utf8'));
+        await pool.query(`INSERT INTO users(username,password_hash,role) VALUES('flex_admin','hash','DISCIPLINE_ADMIN'),('flex_head','hash','DEPARTMENT_HEAD'),('flex_student','hash','STUDENT');
+            INSERT INTO departments(department_code,department_name) VALUES('FLEX','Flexible test');
+            INSERT INTO department_heads(user_id,department_id,first_name,last_name) VALUES(2,1,'Test','Officer');
+            INSERT INTO students(user_id,student_number,first_name,last_name,qr_code) VALUES(3,'FLEX-1','Test','Student','FLEX-QR');
+            INSERT INTO violations(student_id,violation_type_id,incident_date,description,required_service_hours,completed_service_hours) VALUES(1,1,'2026-10-07','Flexible migration',20,2);
+            INSERT INTO community_service_assignments(violation_id,student_id,department_id,department_head_id,required_hours,completed_hours,remaining_hours,status) VALUES(1,1,1,1,20,2,18,'IN_PROGRESS');
+            INSERT INTO community_service_sessions(assignment_id,student_id,department_id,time_in,time_out,time_in_by_user_id,time_out_by_user_id,supervising_officer_user_id,status,review_status,worked_minutes,credited_minutes,session_type,selected_duration_minutes,service_date,credit_cutoff_at,completion_reason,service_condition)
+            VALUES(1,1,1,'2026-10-07T01:00:00Z','2026-10-07T03:00:00Z',1,1,2,'COMPLETED','APPROVED',120,120,'FIXED',120,'2026-10-07','2026-10-07T09:00:00Z','COMPLETED','TODAYS_SERVICE_COMPLETED');
+            INSERT INTO community_service_sessions(assignment_id,student_id,department_id,time_in,time_in_by_user_id,supervising_officer_user_id,session_type,selected_duration_minutes,service_date,credit_cutoff_at)
+            VALUES(1,1,1,'2026-10-07T04:00:00Z',1,2,'FIXED',180,'2026-10-07','2026-10-07T10:00:00Z');
+            INSERT INTO community_service_progress_history(assignment_id,session_id,previous_completed_minutes,worked_minutes,credited_minutes,new_completed_minutes,performed_by_user_id) VALUES(1,1,0,120,120,120,1);
+            INSERT INTO community_service_attendance(assignment_id,student_id,department_id,scanned_by,attendance_type) VALUES(1,1,1,1,'TIME_IN'),(1,1,1,1,'TIME_OUT');
+            INSERT INTO audit_logs(user_id,action,table_name,record_id,description) VALUES(1,'TIME_OUT_CREDITED','community_service_sessions',1,'Historical credit');
+            INSERT INTO community_service_session_officer_history(session_id,officer_user_id,starts_at,ends_at,reason,changed_by_user_id) VALUES(1,2,'2026-10-07T01:00:00Z','2026-10-07T03:00:00Z','Original supervisor',1)`);
+        const tables=['community_service_assignments','violations','community_service_progress_history','community_service_attendance','community_service_session_officer_history','audit_logs'];
+        const snapshot=async()=>Object.fromEntries(await Promise.all(tables.map(async table=>[table,(await pool.query(`SELECT * FROM ${table} ORDER BY id`)).rows])));
+        const before=await snapshot();
+        const completed=(await pool.query('SELECT * FROM community_service_sessions WHERE id=1')).rows[0];
+        const active=(await pool.query('SELECT * FROM community_service_sessions WHERE id=2')).rows[0];
+        await pool.query(fs.readFileSync(path.join(migrationsDir,'051_flexible_attendance_pauses.sql'),'utf8'));
+        assert.deepEqual(await snapshot(),before);
+        assert.deepEqual((await pool.query('SELECT * FROM community_service_sessions WHERE id=1')).rows[0],completed);
+        const converted=(await pool.query('SELECT * FROM community_service_sessions WHERE id=2')).rows[0];
+        assert.deepEqual(converted,{...active,session_type:'OPEN_TIME',selected_duration_minutes:null});
+        assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_session_pauses')).rows[0].count,0);
+        await pool.query(`INSERT INTO community_service_session_pauses(session_id,started_at,started_by_user_id,reason) VALUES(2,'2026-10-07T05:00:00Z',1,'Break')`);
+        await assert.rejects(pool.query(`INSERT INTO community_service_session_pauses(session_id,started_at,started_by_user_id,reason) VALUES(2,'2026-10-07T05:01:00Z',1,'Duplicate break')`),error=>error.code==='23505');
+        await assert.rejects(pool.query(`INSERT INTO community_service_session_pauses(session_id,started_at,ended_at,started_by_user_id,ended_by_user_id,reason) VALUES(2,'2026-10-07T05:01:00Z','2026-10-07T05:00:00Z',1,1,'Backwards')`),error=>error.code==='23514');
+        assert.equal((await pool.query("SELECT relrowsecurity FROM pg_class WHERE oid='community_service_session_pauses'::regclass")).rows[0].relrowsecurity,true);
+        const exposed=(await pool.query(`SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace,
+            LATERAL aclexplode(COALESCE(c.relacl,acldefault(CASE WHEN c.relkind='S' THEN 'S'::"char" ELSE 'r'::"char" END,c.relowner))) acl
+            WHERE n.nspname=$1 AND c.relname IN ('community_service_session_pauses','community_service_session_pauses_id_seq')
+            AND (acl.grantee=0 OR acl.grantee IN (SELECT oid FROM pg_roles WHERE rolname IN ('anon','authenticated')))`,[schema])).rows;
+        assert.deepEqual(exposed,[]);
+        const runtime=await pool.connect();
+        try {
+            await runtime.query('BEGIN');await runtime.query('SET LOCAL ROLE sti_vio_log_runtime');
+            assert.equal((await runtime.query('SELECT COUNT(*)::int AS count FROM community_service_session_pauses')).rows[0].count,1);
+            assert.equal((await runtime.query("UPDATE community_service_session_pauses SET ended_at='2026-10-07T05:05:00Z',ended_by_user_id=1 WHERE session_id=2 AND ended_at IS NULL")).rowCount,1);
+            const inserted=(await runtime.query("INSERT INTO community_service_session_pauses(session_id,started_at,started_by_user_id,reason) VALUES(2,'2026-10-07T05:10:00Z',1,'Runtime break') RETURNING id")).rows[0];
+            assert.equal((await runtime.query("UPDATE community_service_session_pauses SET ended_at='2026-10-07T05:20:00Z',ended_by_user_id=1 WHERE id=$1",[inserted.id])).rowCount,1);
+            await runtime.query('SAVEPOINT delete_denied');
+            await assert.rejects(runtime.query('DELETE FROM community_service_session_pauses WHERE id=$1',[inserted.id]),error=>error.code==='42501');
+            await runtime.query('ROLLBACK TO SAVEPOINT delete_denied');
+        } finally {await runtime.query('ROLLBACK');runtime.release();}
+    } finally {await pool.end();await adminPool.query(`DROP SCHEMA IF EXISTS ${schema} CASCADE`);}
+});
+
 test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "051_flexible_attendance_pauses.sql");
         assert.equal(first.applied.pop(), "050_terms_acknowledgments.sql");
         assert.equal(first.applied.pop(), "049_office_attendance_notifications.sql");
         assert.equal(first.applied.pop(), "048_student_account_activation_security.sql");
@@ -250,6 +305,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "051_flexible_attendance_pauses.sql");
         assert.equal(legacyResult.applied.pop(), "050_terms_acknowledgments.sql");
         assert.equal(legacyResult.applied.pop(), "049_office_attendance_notifications.sql");
         assert.equal(legacyResult.applied.pop(), "048_student_account_activation_security.sql");

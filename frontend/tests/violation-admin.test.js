@@ -1,6 +1,33 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel, parseViolationDescription, violationEditForm, validateViolationEditForm } from '../src/lib/violationAdmin.js'
+import * as violationAdmin from '../src/lib/violationAdmin.js'
+
+test('offense search matches every keyword across offense and classification text', () => {
+  assert.equal(typeof violationAdmin.searchHandbookOffenses, 'function')
+  const types = [
+    { id: 2, violation_code: 'HANDBOOK_MAJOR_A', violation_name: 'Major Offense - Category A' },
+    { id: 1, violation_code: 'HANDBOOK_MINOR', violation_name: 'Minor Offense' },
+    { id: 3, violation_code: 'UNKNOWN', violation_name: 'Unknown' }
+  ]
+  const smoking = [{ type: types[0], offense: 'Smoking or vaping inside the campus' }]
+  for (const query of ['smoking', '  SMoKing  ', 'smok', 'category campus smoking', 'smoking\tmajor']) {
+    assert.deepEqual(violationAdmin.searchHandbookOffenses(types, query), smoking)
+  }
+  assert.deepEqual(violationAdmin.searchHandbookOffenses(types, 'minor cigarettes'), [
+    { type: types[1], offense: 'Possession of cigarettes or vapes' }
+  ])
+  const category = violationAdmin.searchHandbookOffenses(types, 'Category A')
+  assert.equal(category.length, 6)
+  assert.equal(category[0].offense, 'More than three commissions of any minor offense')
+  assert.equal(category[5].offense, 'Cheating, unauthorized resources, plagiarism, prohibited communication, impersonation, or commissioned academic work')
+  assert.deepEqual(violationAdmin.searchHandbookOffenses(types, 'smoking bullying'), [])
+  for (const query of ['', ' \t ', 'unmatchedword', 'Other offense for Discipline Committee review']) {
+    assert.deepEqual(violationAdmin.searchHandbookOffenses(types, query), [])
+  }
+  assert.deepEqual(violationAdmin.searchHandbookOffenses([], 'smoking'), [])
+  assert.equal(violationAdmin.searchHandbookOffenses(types, 'offense')[0].type.id, 1)
+})
 
 test('violation creation sends only staff-editable contract fields', () => {
   assert.deepEqual(buildViolationPayload({student_id:'4',violation_type_id:'2',incident_date:'2026-08-28',exact_offense:' ID misuse ',incident_details:' Used another ID ',required_service_hours:'3.5',reported_by:99,status:'CLEAR',completed_service_hours:9}), {student_id:4,violation_type_id:2,incident_date:'2026-08-28',description:'Handbook offense: ID misuse\nIncident details: Used another ID'})

@@ -5,6 +5,13 @@ import { attendanceRoster, attendanceTransitions } from '../src/lib/attendanceSt
 const active = { id: 11, assignment_id: 21, student_id: 1, status: 'ACTIVE', time_out: null }
 const completed = { ...active, status: 'COMPLETED', time_out: '2026-10-05T02:30:00Z' }
 
+test('pausing and resuming never announce a false Time Out', () => {
+  const paused = {...active,paused_at:'2026-10-05T02:00:00Z'}
+  assert.deepEqual(attendanceTransitions([active],[paused]),[])
+  assert.deepEqual(attendanceTransitions([paused],[active]),[])
+  assert.deepEqual(attendanceTransitions([paused],[completed]),[{action:'TIME OUT',assignmentId:21,sessionId:'11'}])
+})
+
 test('attendance alerts suppress initial loads and duplicate refreshes', () => {
   assert.deepEqual(attendanceTransitions(null, [active]), [])
   assert.deepEqual(attendanceTransitions(null, [completed]), [])

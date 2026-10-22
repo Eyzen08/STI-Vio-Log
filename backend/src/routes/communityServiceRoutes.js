@@ -14,6 +14,8 @@ const canCorrectDtr = authorizePermissions(PERMISSIONS.DTR_CORRECT);
 router.get('/my-assignment', authorizeRoles('STUDENT'), service.getMyCommunityServiceAssignment);
 router.post('/attendance/time-in', canScan, serviceReaders, requireAuthorizedDepartment, attendance.communityServiceTimeIn);
 router.post('/attendance/time-out', canScan, serviceReaders, requireAuthorizedDepartment, attendance.communityServiceTimeOut);
+router.post('/sessions/:sessionId/pause', canScan, serviceReaders, requireAuthorizedDepartment, attendance.pauseCommunityServiceSession);
+router.post('/sessions/:sessionId/resume', canScan, serviceReaders, requireAuthorizedDepartment, attendance.resumeCommunityServiceSession);
 router.get('/sessions/:sessionId/time-out-preview', canScan, serviceReaders, requireAuthorizedDepartment, attendance.getTimeOutPreview);
 router.get('/results/pending', canCorrectDtr, operationalStaff, attendance.getPendingServiceResults);
 router.post('/results/:sessionId/review', canCorrectDtr, operationalStaff, attendance.reviewCommunityServiceResult);

@@ -32,7 +32,7 @@ function ViolationCaseCard({ violation, onView, preview = false }) {
   </article>
 }
 
-export function StudentRecordContent({ student, violations = [], summary, loading = false, error, hasMore = false, onLoadMore, assignments = [], activeSessions = [], attendanceReady = true, attendanceError, token, onViewCase, onAddViolation, onPhotoUpdated }) {
+export function StudentRecordContent({ student, violations = [], summary, loading = false, error, hasMore = false, onLoadMore, assignments = [], activeSessions = [], attendanceReady = true, attendanceError, token, onAttendanceSaved, onViewCase, onAddViolation, onPhotoUpdated }) {
   const id = useId()
   const tabsRef = useRef(null)
   const [tab, setTab] = useState('overview')
@@ -85,7 +85,7 @@ export function StudentRecordContent({ student, violations = [], summary, loadin
       {loading && !records.length ? <p className="record-empty" role="status">Loading violation history…</p> : !records.length ? <p className="record-empty">No violation history for this student.</p> : <div className="record-history-list">{records.map((violation) => <ViolationCaseCard key={violation.id} violation={violation} onView={onViewCase}/>)}</div>}
       {hasMore && <button type="button" className="record-load-more" disabled={loading} onClick={onLoadMore}>{loading ? 'Loading…' : 'Load Older Violations'}</button>}
     </>}</section>
-    <section className="record-tab-panel record-service-panel" role="tabpanel" id={`${id}-service-panel`} aria-labelledby={`${id}-service-tab`} hidden={tab !== 'service'} tabIndex={0}>{visited.includes('service') && <StudentServiceTimeContent student={student} assignments={assignments} activeSessions={activeSessions} attendanceReady={attendanceReady} attendanceError={attendanceError}/>}</section>
+    <section className="record-tab-panel record-service-panel" role="tabpanel" id={`${id}-service-panel`} aria-labelledby={`${id}-service-tab`} hidden={tab !== 'service'} tabIndex={0}>{visited.includes('service') && <StudentServiceTimeContent student={student} assignments={assignments} activeSessions={activeSessions} attendanceReady={attendanceReady} attendanceError={attendanceError} token={token} onAttendanceSaved={onAttendanceSaved}/>}</section>
     <section className="record-tab-panel record-guardian-panel" role="tabpanel" id={`${id}-contact-panel`} aria-labelledby={`${id}-contact-tab`} hidden={tab !== 'contact'} tabIndex={0}>{visited.includes('contact') && <GuardianContactPanel token={token} student={student} showClose={false}/>}</section>
     {photoOpen && <Modal title="Edit Student Photo" className="student-photo-modal" dirty={photoDirty && !photoBusy} onClose={() => { if (!photoBusy) setPhotoOpen(false) }}><StudentAvatarUpload student={student} onUpdated={onPhotoUpdated} onDirtyChange={setPhotoDirty} onBusyChange={setPhotoBusy}/></Modal>}
   </div>

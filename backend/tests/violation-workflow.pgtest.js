@@ -30,7 +30,6 @@ const migrationsDirectory = path.resolve(__dirname, '../../database/migrations')
 const migrationFiles = listMigrationFiles(migrationsDirectory).map((name) => path.join(migrationsDirectory, name));
 
 async function request(route, { token, method = 'GET', body } = {}) {
-  if (route.endsWith('/time-in') && body && !body.session_type) body={...body,session_type:'OPEN_TIME',selected_duration_minutes:null};
   if (route.endsWith('/time-out') && body && !body.session_id) {
     const active=(await pool.query('SELECT css.id FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN students s ON s.id=a.student_id WHERE css.time_out IS NULL AND (s.qr_code=$1 OR a.id=$2) ORDER BY css.id DESC LIMIT 1',[body.qr_code||null,body.assignment_id||null])).rows[0];
     body={...body,session_id:active?.id||999999};
@@ -202,6 +201,8 @@ test.before(async () => {
 });
 
 test.beforeEach(async () => {
+  // Each HTTP case gets its own loopback quota while retaining the real rate limiter.
+  await app.router.stack.find(layer=>typeof layer.handle.resetKey==='function').handle.resetKey('127.0.0.1');
   await resetAndSeedTestData();
 });
 
@@ -619,7 +620,7 @@ test('CLEAR and INVALID_CANCEL preserve service history and REOPEN safely reacti
   await pool.query("UPDATE community_service_sessions SET time_in = time_in - INTERVAL '30 minutes' WHERE id = $1", [clearTimeIn.body.session.id]);
   const leftEarly = await request('/api/qr/time-out', { token: headToken, method: 'POST', body: { qr_code: 'QR-TEST', attendance_outcome: 'LEFT_EARLY' } });
   assert.equal(leftEarly.status, 201);
-  assert.equal(leftEarly.body.attendance_outcome, 'LEFT_EARLY');
+  assert.equal(leftEarly.body.attendance_outcome, 'TODAYS_SERVICE_COMPLETED');
   assert.equal(Number(leftEarly.body.assignment.completed_hours), 0.5);
 
   const cleared = await act(adminToken, clearViolation.id, 'CLEAR', 'Administrative closure');
@@ -743,11 +744,11 @@ test('QR resolves assignment departments, prioritizes active sessions and protec
   const rescan=await request('/api/qr/scan',{token:head,method:'POST',body:{qr_code:'QR-TEST',assignment_id:second.assignment.id}});
   assert.equal(rescan.body.assignment.id,first.assignment.id);assert.equal(rescan.body.active_session.id,opened.body.session.id);
   const preview=await request(`/api/community-service/sessions/${opened.body.session.id}/time-out-preview`,{token:head});
-  assert.equal(preview.status,200);assert.equal(preview.body.preview.completionReason,'EARLY_TIME_OUT');assert.equal(preview.body.available_officers.length,1);
+  assert.equal(preview.status,200);assert.equal(preview.body.preview.completionReason,'COMPLETED');assert.equal(preview.body.available_officers.length,1);
   assert.equal((await request(`/api/community-service/sessions/${opened.body.session.id}/time-out-preview`,{token:student})).status,403);
   assert.equal((await request(`/api/community-service/sessions/${opened.body.session.id}/time-out-preview`)).status,401);
   const myDtr=await request('/api/students/me/community-service/dtr',{token:student});
-  assert.equal(myDtr.body.total_sessions,1);assert.equal(myDtr.body.sessions[0].session_type,'FIXED');assert.ok(myDtr.body.sessions[0].server_time);
+  assert.equal(myDtr.body.total_sessions,1);assert.equal(myDtr.body.sessions[0].session_type,'OPEN_TIME');assert.equal(myDtr.body.sessions[0].selected_duration_minutes,null);assert.ok(myDtr.body.sessions[0].server_time);
   const department=(await pool.query("INSERT INTO departments(department_code,department_name) VALUES('OTHER','Restricted department') RETURNING id")).rows[0].id;
   assert.equal((await request('/api/community-service/attendance/time-in',{token:admin,method:'POST',body:{assignment_id:second.assignment.id,student_id:studentId,department_id:department,session_type:'FIXED',selected_duration_minutes:120}})).status,403);
   await pool.query('UPDATE department_heads SET qr_scanner_enabled=FALSE');
@@ -758,6 +759,49 @@ test('QR resolves assignment departments, prioritizes active sessions and protec
   assert.equal(restricted.body.active_session_elsewhere,true);assert.equal(restricted.body.active_session,null);
   assert.equal((await request('/api/qr/time-in',{token:head,method:'POST',body:{qr_code:'QR-TEST',assignment_id:second.assignment.id,session_type:'FIXED',selected_duration_minutes:120}})).status,409);
   assert.equal((await request(`/api/community-service/sessions/${opened.body.session.id}/time-out-preview`,{token:head})).status,403);
+});
+
+test('Pause and Resume enforce HTTP authentication, CSRF and department scope and persist net work',async()=>{
+  const admin=await login('admin_test'),head=await login('head_test'),student=await login('student_test');
+  const studentId=(await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
+  await createServiceViolation(admin,studentId,3);
+  const opened=await request('/api/qr/time-in',{token:head,method:'POST',body:{qr_code:'QR-TEST'}});
+  assert.equal(opened.status,201,JSON.stringify(opened.body));
+  assert.equal(opened.body.session.session_type,'OPEN_TIME');assert.equal(opened.body.session.selected_duration_minutes,null);
+  const sessionId=opened.body.session.id,pausePath=`/api/community-service/sessions/${sessionId}/pause`,resumePath=`/api/community-service/sessions/${sessionId}/resume`;
+  await pool.query("UPDATE community_service_sessions SET time_in=time_in-INTERVAL '1 hour' WHERE id=$1",[sessionId]);
+  assert.equal((await request(pausePath,{method:'POST',body:{reason:'Break'}})).status,401);
+  assert.equal((await request(pausePath,{token:student,method:'POST',body:{reason:'Break'}})).status,403);
+  assert.equal((await request(pausePath,{token:{...head,csrf:'invalid-csrf'},method:'POST',body:{reason:'Break'}})).status,403);
+  for (const body of [{},{reason:'   '},{reason:'Break',actor_id:1}]) assert.equal((await request(pausePath,{token:head,method:'POST',body})).status,400);
+  assert.equal((await request(pausePath,{token:head,method:'POST',body:{reason:'Break',department_id:999}})).status,403);
+  const otherDepartment=(await pool.query("INSERT INTO departments(department_code,department_name) VALUES('PAUSE-OTHER','Other pause department') RETURNING id")).rows[0].id;
+  await pool.query('UPDATE department_heads SET department_id=$1',[otherDepartment]);
+  assert.equal((await request(pausePath,{token:head,method:'POST',body:{reason:'Wrong scope'}})).status,403);
+  await pool.query('UPDATE department_heads SET department_id=$1',[opened.body.session.department_id]);
+  const paused=await request(pausePath,{token:head,method:'POST',body:{reason:'  Lunch break  '}});
+  assert.equal(paused.status,200,JSON.stringify(paused.body));assert.ok(paused.body.session.paused_at);
+  assert.equal(paused.body.session.pause_history[0].reason,'Lunch break');
+  assert.equal(paused.body.session.pause_history[0].started_by_name,'head_test');
+  assert.equal((await request(pausePath,{token:head,method:'POST',body:{reason:'Retry'}})).status,200);
+  const active=await request('/api/community-service/active-sessions',{token:head});
+  assert.ok(active.body.sessions[0].paused_at);assert.equal(active.body.sessions[0].pause_history.length,1);
+  const scan=await request('/api/qr/scan',{token:head,method:'POST',body:{qr_code:'QR-TEST'}});
+  assert.ok(scan.body.active_session.paused_at);
+  assert.equal((await request(resumePath,{token:head,method:'POST',body:{reason:'Unexpected'}})).status,400);
+  await pool.query("UPDATE community_service_session_pauses SET started_at=started_at-INTERVAL '15 minutes' WHERE session_id=$1",[sessionId]);
+  const resumed=await request(resumePath,{token:head,method:'POST',body:{}});
+  assert.equal(resumed.status,200,JSON.stringify(resumed.body));assert.equal(resumed.body.session.paused_at,null);
+  assert.ok(Number(resumed.body.session.paused_seconds)>=900);assert.ok(Number(resumed.body.session.paused_seconds)<960);
+  assert.equal(resumed.body.session.pause_history[0].ended_by_name,'head_test');
+  assert.equal((await request(resumePath,{token:head,method:'POST',body:{}})).status,200);
+  const closed=await request('/api/qr/time-out',{token:head,method:'POST',body:{qr_code:'QR-TEST',session_id:sessionId}});
+  assert.equal(closed.status,201,JSON.stringify(closed.body));assert.equal(Number(closed.body.session.worked_minutes),45);
+  assert.equal(Number(closed.body.session.credited_minutes),45);assert.equal(closed.body.attendance_outcome,'TODAYS_SERVICE_COMPLETED');
+  assert.equal((await request(resumePath,{token:head,method:'POST',body:{}})).status,409);
+  const dtr=await request('/api/students/me/community-service/dtr',{token:student});
+  assert.equal(dtr.body.sessions[0].pause_history.length,1);assert.equal(dtr.body.sessions[0].pause_history[0].reason,'Lunch break');
+  assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM community_service_session_pauses WHERE session_id=$1',[sessionId])).rows[0].count,1);
 });
 
 test('parallel TIME_IN and TIME_OUT requests preserve one session and one credit', async () => {
