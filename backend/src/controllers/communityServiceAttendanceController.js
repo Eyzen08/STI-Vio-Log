@@ -61,7 +61,7 @@ const reviewCommunityServiceResult = async (req,res) => {
 
 const getPendingServiceResults = async (_req,res) => {
     try {
-        const result=await pool.query(`SELECT css.*,a.required_hours,a.completed_hours,a.remaining_hours,s.student_number,s.first_name,s.last_name,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN students s ON s.id=a.student_id JOIN departments d ON d.id=css.department_id WHERE css.status='COMPLETED' AND css.review_status='PENDING' ORDER BY css.time_out ASC,css.id ASC`);
+        const result=await pool.query(`SELECT css.*,a.required_hours,a.completed_hours,a.remaining_hours,s.student_number,s.first_name,s.last_name,d.department_code, d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN students s ON s.id=a.student_id JOIN departments d ON d.id=css.department_id WHERE css.status='COMPLETED' AND css.review_status='PENDING' ORDER BY css.time_out ASC,css.id ASC`);
         return res.json({success:true,results:result.rows});
     } catch(error){return sendError(res,error,'get pending service results')}
 };
@@ -89,7 +89,7 @@ const getActiveDepartmentSessions = async (req, res) => {
                     FLOOR(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - css.time_in))) >= ROUND(a.remaining_hours * 60)::int * 60 AS limit_reached,
                     CURRENT_TIMESTAMP AS server_time,
                     a.student_id, a.required_hours, a.completed_hours, a.remaining_hours,
-                    s.student_number, s.first_name, s.last_name,d.department_name,
+                    s.student_number, s.first_name, s.last_name,d.department_code, d.department_name,
                     css.supervising_officer_user_id,
                     COALESCE(sp.first_name,dh.first_name) AS supervising_officer_first_name,
                     COALESCE(sp.last_name,dh.last_name) AS supervising_officer_last_name,
@@ -140,7 +140,7 @@ const getCommunityServiceSessions = async (req, res) => {
         if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Manila')`; }
         const result = await pool.query(
             `SELECT css.*, (SELECT username FROM users WHERE id=css.time_in_by_user_id) AS time_in_recorder_name, (SELECT username FROM users WHERE id=css.time_out_by_user_id) AS time_out_recorder_name, css.service_condition AS attendance_outcome,
-                    d.department_name, a.student_id, a.violation_id,
+                    d.department_code, d.department_name, a.student_id, a.violation_id,
                     a.required_hours, a.completed_hours, a.remaining_hours,
                     s.student_number, s.first_name, s.last_name,
                     COALESCE(sp.first_name,dh.first_name) AS supervising_officer_first_name,
@@ -162,7 +162,7 @@ const getCommunityServiceAttendance = async (req, res) => {
     try {
         const departmentScoped = req.user.role === 'DEPARTMENT_HEAD';
         const result = await pool.query(
-            `SELECT csa.*, s.student_number, s.first_name, s.last_name, d.department_name
+            `SELECT csa.*, s.student_number, s.first_name, s.last_name, d.department_code, d.department_name
              FROM community_service_attendance csa
              JOIN community_service_assignments a ON a.id = csa.assignment_id
              JOIN students s ON s.id = csa.student_id

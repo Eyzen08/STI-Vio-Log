@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { API_URL } from '../lib/api.js'
+import { apiRequest } from '../lib/api.js'
 import { formatManilaDate, formatManilaDateTime } from '../lib/displayFormat.js'
 import { formatServiceMinutes } from '../lib/departmentScanner.js'
 import Modal from './Modal.jsx'
@@ -32,11 +32,10 @@ function InvalidationDialog({ assignmentId, date, token, onClose, onSaved }) {
   const [busy,setBusy]=useState(false)
   const pending=useRef(false)
   const reasonId=useId()
-  const url=`${API_URL}/api/community-service/${assignmentId}/days/${date}`
+  const url=`/api/community-service/${assignmentId}/days/${date}`
   useEffect(()=>{
     const controller=new AbortController()
-    fetch(`${url}/invalidation-preview`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal})
-      .then(async response=>{const result=await response.json();if(!response.ok) throw new Error(result.message || 'Unable to preview this day');return result})
+    apiRequest(`${url}/invalidation-preview`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal})
       .then(setData).catch(failure=>{if(failure.name!=='AbortError')setError(failure.message)})
     return ()=>controller.abort()
   },[url,token])
@@ -45,21 +44,18 @@ function InvalidationDialog({ assignmentId, date, token, onClose, onSaved }) {
     if(pending.current || !reason.trim() || !data?.preview_version) return
     pending.current=true;setBusy(true);setError('')
     try {
-      const response=await fetch(`${url}/invalidate`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({reason:reason.trim(),preview_version:data.preview_version})})
-      const result=await response.json()
-      if(!response.ok || !result.success) {
-        if(result.error?.code==='STALE_DAY_PREVIEW') {
-          setData(null)
-          const refreshed=await fetch(`${url}/invalidation-preview`,{headers:{Authorization:`Bearer ${token}`}})
-          const preview=await refreshed.json()
-          if(!refreshed.ok) throw new Error(preview.message || 'Unable to refresh this day')
-          setData(preview)
-        }
-        throw new Error(result.message || 'Unable to invalidate this day')
-      }
+      const result=await apiRequest(`${url}/invalidate`,{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({reason:reason.trim(),preview_version:data.preview_version})})
+      if(!result.success) throw new Error(result.message || 'Unable to invalidate this day')
       await onSaved?.(result,'invalidate-day')
       onClose()
-    } catch(failure) {setError(failure.message)}
+    } catch(failure) {
+      if(failure.code==='STALE_DAY_PREVIEW') {
+        setData(null)
+        try {setData(await apiRequest(`${url}/invalidation-preview`,{headers:{Authorization:`Bearer ${token}`}}))}
+        catch(refreshFailure) {setError(refreshFailure.message);return}
+      }
+      setError(failure.message)
+    }
     finally {pending.current=false;setBusy(false)}
   }
   return <Modal title="Invalidate Service Day" className="service-workflow-modal" onClose={()=>{if(!pending.current)onClose()}}>

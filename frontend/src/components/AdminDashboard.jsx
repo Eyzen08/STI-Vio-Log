@@ -1,3 +1,4 @@
+import { departmentTypeLabel } from '../lib/departmentAccounts.js'
 import { useEffect, useState } from 'react'
 import { formatDisplayLabel, formatDuration, formatManilaDate, formatManilaDateTime, formatManilaTime } from '../lib/displayFormat.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
@@ -74,7 +75,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
             <div className="dashboard-active-students">{!attendanceReady ? <p className="empty-state">{loading ? 'Loading attendance status…' : 'Attendance unavailable.'}</p> : roster.length ? roster.slice(0, 3).map((student) => <article className="dashboard-active-student" key={student.student_id}>
               <header className="dashboard-active-identity"><div className="dashboard-student"><Avatar identity={student}/><div><strong>{[student.first_name, student.last_name].filter(Boolean).join(' ') || student.student_name || `Student #${student.student_id}`}</strong><small>{student.student_number}</small></div></div><AttendanceIndicator sessions={student.sessions}/></header>
               <div className="dashboard-active-services">{student.sessions.map((session) => <div className="dashboard-active-service" key={session.session_id ?? session.id}>
-                <div className="dashboard-session-info"><strong>{session.department_name || 'Department Not Recorded'}</strong><span>Assignment #{session.assignment_id}</span><small>Started: {formatManilaDateTime(session.time_in)}</small></div>
+                <div className="dashboard-session-info"><strong>{departmentTypeLabel(session)}</strong><span>Assignment #{session.assignment_id}</span><small>Started: {formatManilaDateTime(session.time_in)}</small></div>
                 <div className="dashboard-session-countdown"><span className="dashboard-session-label">{session.session_type === 'OPEN_TIME' && session.credit_cutoff_at ? 'Time Elapsed' : 'Remaining Session Time'}</span><ServiceCountdown session={session} now={now}/></div>
               </div>)}</div>
             </article>) : <p className="empty-state">No students are currently serving.</p>}{attendanceReady && roster.length > 3 && <button className="text-button" type="button" onClick={() => onNavigate('/admin/active-attendance')}>View All {timedIn} Timed-in Students</button>}</div>

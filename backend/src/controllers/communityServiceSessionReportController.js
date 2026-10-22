@@ -87,7 +87,7 @@ const getMyDTR = async (req, res) => {
         if (from) { params.push(from); filters += ` AND css.time_in >= ($${params.length}::date::timestamp AT TIME ZONE 'Asia/Manila')`; }
         if (to) { params.push(to); filters += ` AND css.time_in < (($${params.length}::date + 1)::timestamp AT TIME ZONE 'Asia/Manila')`; }
         const assignments = await pool.query(
-            `SELECT a.id AS assignment_id, a.violation_id, a.department_id, d.department_name,
+            `SELECT a.id AS assignment_id, a.violation_id, a.department_id, d.department_code, d.department_name,
                     a.department_head_id, dh.first_name AS department_head_first_name,
                     dh.last_name AS department_head_last_name,
                     (a.required_hours * 60)::float8 AS required_minutes,
@@ -98,7 +98,7 @@ const getMyDTR = async (req, res) => {
              LEFT JOIN department_heads dh ON dh.id = a.department_head_id
              WHERE s.user_id = $1 ORDER BY a.assigned_at DESC`, [req.user.id]);
         const sessions = await pool.query(
-            `SELECT css.*, (SELECT username FROM users WHERE id=css.time_in_by_user_id) AS time_in_recorder_name, (SELECT username FROM users WHERE id=css.time_out_by_user_id) AS time_out_recorder_name, a.student_id,a.required_hours,a.completed_hours,a.remaining_hours, d.department_name,
+            `SELECT css.*, (SELECT username FROM users WHERE id=css.time_in_by_user_id) AS time_in_recorder_name, (SELECT username FROM users WHERE id=css.time_out_by_user_id) AS time_out_recorder_name, a.student_id,a.required_hours,a.completed_hours,a.remaining_hours, d.department_code, d.department_name,
                     css.time_in, css.time_out, css.worked_minutes, css.credited_minutes, css.status,
                     css.service_condition AS attendance_outcome,
                     ROUND(a.remaining_hours * 60)::int * 60 AS timer_limit_seconds,

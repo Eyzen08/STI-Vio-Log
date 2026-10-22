@@ -1,5 +1,5 @@
 import { useId, useRef, useState } from 'react'
-import { API_URL } from '../lib/api.js'
+import { apiRequest } from '../lib/api.js'
 import { serviceSessionTiming } from '../lib/departmentService.js'
 import useServiceClock from '../lib/useServiceClock.js'
 import Modal from './Modal.jsx'
@@ -27,12 +27,11 @@ export default function ServiceAttendanceControls({ session, token, onSaved, sup
     setBusy(true)
     setError('')
     try {
-      const response = await fetch(`${API_URL}/api/community-service/sessions/${session.session_id || session.id}/${action}`, {
+      const result = await apiRequest(`/api/community-service/sessions/${session.session_id || session.id}/${action}`, {
         method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(action === 'pause' ? { reason: reason.trim() } : {})
       })
-      const result = await response.json()
-      if (!response.ok || !result.success) throw new Error(result.message || `Unable to ${action} service.`)
+      if (!result.success) throw new Error(result.message || `Unable to ${action} service.`)
       await onSaved?.(result, action)
       setDialog('')
       setReason('')

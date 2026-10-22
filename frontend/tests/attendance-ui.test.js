@@ -231,6 +231,39 @@ test('QR workflow records flexible attendance and keeps active sessions out of T
   assert.match(final,/Confirm Time In/);assert.doesNotMatch(final,/disabled="">Confirm Time In/)
 })
 
+test('QR department labels use the department while retaining officer and recorder attribution', () => {
+  for (const department of [
+    { department_code: 'School Guard Department', department_name: 'Cardo Dalisay' },
+    { department_code: 'SCHOOL_GUARD_DEPARTMENT', department_name: 'School Guard Department' }
+  ]) {
+    const html = render('DepartmentQrScanner', {
+      form: { qr_code: 'test-code', supervising_officer_id: 9, notes: '' }, verifiedQr: 'test-code',
+      recorder: { username: 'admin', role: 'DISCIPLINE_ADMIN' },
+      result: { student: { first_name: 'Pedro', last_name: 'Makisig' }, assignment: { id: 19, ...department, required_hours: 2, remaining_hours: 2 },
+        assignments: [{ id: 19, ...department, remaining_hours: 2 }, { id: 20, department_name: 'Library', remaining_hours: 1 }],
+        allowance: { available_minutes: 120, daily_remaining_minutes: 480 },
+        available_officers: [{ officer_user_id: 9, first_name: 'Cardo', last_name: 'Dalisay', role: 'DEPARTMENT_HEAD' }] },
+      history: [{ id: 7, ...department, time_in: '2026-10-22T05:23:00Z', time_out: '2026-10-22T05:25:00Z', time_in_recorder_name: 'admin', time_in_role: 'DISCIPLINE_ADMIN', status: 'COMPLETED' }]
+    })
+    assert.match(html, /Assignment #19 · School Guard Department/)
+    assert.match(html, /Department<input readOnly="" value="School Guard Department"/)
+    assert.match(html, /<small>School Guard Department<\/small>/)
+    assert.match(html, /Cardo Dalisay · Department Head<\/option>/)
+    assert.match(html, /Recorded By admin · Discipline Administrator/)
+    assert.match(html, /data-label="Authorized by \/ Notes">admin · Discipline Administrator/)
+    assert.doesNotMatch(html, /Assignment #19 · Cardo|value="Cardo Dalisay"|<small>Cardo Dalisay<\/small>/)
+  }
+})
+
+test('QR history failures stay beside history rather than the attendance action', () => {
+  const message = 'Attendance history is temporarily unavailable. Please try again.'
+  const html = render('DepartmentQrScanner', { form: { qr_code: '' }, historyError: message })
+  const record = html.slice(html.indexOf('class="qr-stage-card record-stage"'), html.indexOf('class="qr-stage-card recent-stage"'))
+  assert.doesNotMatch(record, /Attendance history is temporarily unavailable/)
+  assert.match(html, /Community Service History<\/h3><p class="service-timer-warning" role="status">Attendance history is temporarily unavailable/)
+  assert.doesNotMatch(html, /<table/)
+})
+
 test('QR accepts short flexible service and blocks exhausted allowance', () => {
   const props={form:{qr_code:'test-code',notes:'',supervising_officer_id:9},verifiedQr:'test-code'}
   const result={student:{first_name:'Ana'},assignment:{id:21,department_name:'Library',remaining_hours:6.5},available_officers:[{officer_user_id:9}],allowance:{daily_remaining_minutes:480}}
@@ -387,7 +420,8 @@ test('embedded service content keeps assignments, credited time, corrections and
     { id: 22, student_id: 2, status: 'OPEN', department_name: 'Other Department', required_hours: 10, remaining_hours: 10 }
   ], activeSessions: [active] })
   assert.match(html, /Assignment #21/)
-  assert.match(html, /Ana Montana/)
+  assert.match(html, /<h4>Library<\/h4><p>Assignment #21<\/p>/)
+  assert.doesNotMatch(html, /Ana Montana/)
   assert.match(html, /aria-label="Credited Progress for Assignment #21" aria-valuemin="0" aria-valuemax="100" aria-valuenow="25"/)
   assert.match(html, /1 hr completed of 4 hr/)
   assert.match(html, /3 hr remaining/)
@@ -395,6 +429,34 @@ test('embedded service content keeps assignments, credited time, corrections and
   assert.match(html, /Verified attendance correction/)
   assert.match(html, /Time In/)
   assert.doesNotMatch(html, /Other Department|Assignment #22/)
+})
+
+test('service assignment headings show department labels instead of supervising officers', () => {
+  for (const department of [
+    { department_code: 'School Guard Department', department_name: 'Cardo Dalisay' },
+    { department_code: 'SCHOOL_GUARD_DEPARTMENT', department_name: 'School Guard Department' }
+  ]) {
+    const html = render('StudentServiceTimeContent', { student: { id: 1, first_name: 'Pedro' }, assignments: [
+      { id: 19, student_id: 1, ...department, department_head_first_name: 'Cardo', department_head_last_name: 'Dalisay', required_hours: 2, completed_hours: 0, remaining_hours: 2 }
+    ] })
+    assert.match(html, /<h4>School Guard Department<\/h4><p>Assignment #19<\/p>/)
+    assert.doesNotMatch(html, /Cardo Dalisay/)
+  }
+})
+
+test('service summaries use department labels and preserve separately labeled officers', () => {
+  const department = { department_code: 'School Guard Department', department_name: 'Cardo Dalisay' }
+  const assignment = { id: 21, student_id: 1, ...department, status: 'IN_PROGRESS', required_hours: 2, remaining_hours: 2, department_head_first_name: 'Cardo', department_head_last_name: 'Dalisay' }
+  const session = { ...active, ...department, supervising_officer_first_name: 'Cardo', supervising_officer_last_name: 'Dalisay', supervising_officer_role: 'DEPARTMENT_HEAD' }
+  const details = render('ServiceAssignmentContent', { assignment })
+  assert.match(details, /<dt>Department<\/dt><dd>School Guard Department<\/dd>/)
+  assert.match(details, /<dt>Department Head<\/dt><dd>Cardo Dalisay<\/dd>/)
+  const staff = render('AdminActiveAttendance', { sessions: [session] })
+  assert.match(staff, /<strong>School Guard Department<\/strong>/)
+  assert.match(staff, /<span>Cardo Dalisay<\/span>/)
+  const student = render('StudentCommunityService', { dtr: { assignments: [{ ...assignment, assignment_id: 21 }], sessions: [session] }, liveDtr: { sessions: [session] } })
+  assert.equal((student.match(/<strong>School Guard Department<\/strong>/g) || []).length, 3)
+  assert.match(student, /Department Head: Cardo Dalisay/)
 })
 
 test('service drawer has explicit zero totals, attendance and corrections when there are no assignments', () => {

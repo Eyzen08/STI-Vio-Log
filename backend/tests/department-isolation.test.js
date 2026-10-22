@@ -2,11 +2,26 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const pool = require('../src/config/database');
 const { calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, recordTimeIn } = require('../src/services/communityServiceSessionService');
-const { communityServiceTimeIn, getActiveDepartmentSessions, getCommunityServiceAttendance } = require('../src/controllers/communityServiceAttendanceController');
+const { communityServiceTimeIn, getActiveDepartmentSessions, getCommunityServiceAttendance, getCommunityServiceSessions } = require('../src/controllers/communityServiceAttendanceController');
+const { getMyDTR } = require('../src/controllers/communityServiceSessionReportController');
 const { createDepartmentAccountService } = require('../src/services/departmentAccountService');
 const { createAccountAdministrationService } = require('../src/services/accountAdministrationService');
 
 const response=()=>({statusCode:200,body:null,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
+
+test('service history, active sessions and student DTR select both department label fields', async (t) => {
+  const queries = [];
+  t.mock.method(pool, 'query', async (sql) => { queries.push(String(sql)); return { rows: [] }; });
+  const req = { user: { id: 4, role: 'DEPARTMENT_HEAD', department_id: 7 }, staffDepartmentId: 7, query: {}, params: { assignmentId: '8' } };
+  for (const handler of [getCommunityServiceSessions, getCommunityServiceAttendance, getActiveDepartmentSessions, getMyDTR]) {
+    const res = response();
+    await handler(req, res);
+    assert.equal(res.statusCode, 200);
+  }
+  const departmentQueries = queries.filter(sql => sql.includes('d.department_name'));
+  assert.equal(departmentQueries.length, 5);
+  for (const sql of departmentQueries) assert.match(sql, /d\.department_code/);
+});
 
 test('direct attendance rejects an assignment owned by another department before writing',async()=>{
   const originalConnect=pool.connect;const queries=[];

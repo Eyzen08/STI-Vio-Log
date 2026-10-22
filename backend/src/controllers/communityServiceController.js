@@ -348,7 +348,7 @@ const getMyCommunityServiceAssignment = async (req, res) => {
                 s.student_number,
                 s.first_name,
                 s.last_name,
-                d.department_name,
+                d.department_code, d.department_name,
                 dh.first_name AS department_head_first_name,
                 dh.last_name AS department_head_last_name,
                 cs.required_hours,

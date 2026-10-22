@@ -121,6 +121,12 @@ const readJson = async (response) => {
 export const apiRequest = async (path, options = {}) => {
   const response = await fetch(`${API_URL}${path}`, options)
   const data = await readJson(response)
+  if (data === null) {
+    throw new ApiError('The service is temporarily unavailable. Please try again.', {
+      status: response.status,
+      code: 'INVALID_RESPONSE'
+    })
+  }
   if(data?.csrf_token)saveCsrf(data.csrf_token)
 
   if (!response.ok || data?.success === false) {

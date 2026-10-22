@@ -1,3 +1,4 @@
+import { departmentTypeLabel } from '../lib/departmentAccounts.js'
 import { useEffect, useState } from 'react'
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import { formatManilaDateTime } from '../lib/displayFormat.js'
@@ -15,7 +16,7 @@ export default function StudentAttendancePanel({ sessions = [], ready, loading, 
   return <section className="student-attendance-panel" aria-label="Current Attendance Status">
     <header><h3>Current Attendance</h3><AttendanceIndicator sessions={active} ready={ready} loading={loading} details/></header>
     {active.map((session) => <article className="student-current-session" key={session.id}>
-      <div className="student-session-identity"><strong>{session.department_name || `Assignment #${session.assignment_id}`}</strong><span>Assignment #{session.assignment_id}</span><span>Started {formatManilaDateTime(session.time_in)}</span></div>
+      <div className="student-session-identity"><strong>{departmentTypeLabel(session)}</strong><span>Assignment #{session.assignment_id}</span><span>Started {formatManilaDateTime(session.time_in)}</span></div>
       <div className="student-session-clock"><span>{session.session_type === 'OPEN_TIME' && session.credit_cutoff_at ? 'Time Elapsed' : 'Remaining Session Time'}</span><ServiceCountdown session={session} now={now}/></div>
     </article>)}
     {active.length > 0 && <p className="student-caption">Current session time is credited after staff records Time Out.</p>}

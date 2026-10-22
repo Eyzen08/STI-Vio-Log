@@ -1,4 +1,5 @@
 import { studentIdFromSearch } from './violationAdmin.js'
+import { departmentTypeLabel } from './departmentAccounts.js'
 
 export const communityServiceStudentLabel = (student = {}) =>
   `${[student.first_name, student.last_name].filter(Boolean).join(' ')} - ${student.student_number}`
@@ -48,6 +49,6 @@ export const serviceDepartmentOptions = (destinations = []) =>
     {
       id: Number(destination.department_id),
       code: destination.department_code || '',
-      name: destination.department_code || destination.department_name || 'Unnamed department'
+      name: departmentTypeLabel(destination)
     }
   ])).values()]

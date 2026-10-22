@@ -31,7 +31,7 @@ const resolveQr = async (req,res,recording=false) => {
     const scope = req.user.role==='DEPARTMENT_HEAD' ? req.user.department_id : null;
     // A session in another department also prevents a duplicate Time In.
     const active = (await pool.query(
-        "SELECT css.*,css.id AS session_id,a.required_hours,a.completed_hours,a.remaining_hours,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN departments d ON d.id=css.department_id WHERE css.student_id=$1 AND css.time_out IS NULL",[student.id])).rows[0];
+        "SELECT css.*,css.id AS session_id,a.required_hours,a.completed_hours,a.remaining_hours,d.department_code,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN departments d ON d.id=css.department_id WHERE css.student_id=$1 AND css.time_out IS NULL",[student.id])).rows[0];
     let assignments = (await pool.query(
         "SELECT a.*,d.department_name,d.department_code FROM community_service_assignments a JOIN violations v ON v.id=a.violation_id JOIN departments d ON d.id=a.department_id WHERE a.student_id=$1 AND a.status IN ('OPEN','IN_PROGRESS') AND v.status='OPEN' AND d.is_active=TRUE AND ($2::bigint IS NULL OR a.department_id=$2) ORDER BY a.id DESC",[student.id,scope || null])).rows;
     const now = (await pool.query('SELECT clock_timestamp() AS now')).rows[0].now;

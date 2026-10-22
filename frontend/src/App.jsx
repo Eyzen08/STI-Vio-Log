@@ -459,6 +459,7 @@ function App() {
   const qrInputVersionRef = useRef(0)
   const [qrSubmitting, setQrSubmitting] = useState(false)
   const [qrHistory,setQrHistory] = useState([])
+  const [qrHistoryError,setQrHistoryError] = useState('')
   const qrActionRef = useRef(null)
   const qrFormRef = useRef(qrForm)
   qrFormRef.current = qrForm
@@ -1556,6 +1557,7 @@ function App() {
           verifiedQrRef.current = ''
           setQrResult(null)
           setQrHistory([])
+          setQrHistoryError('')
           setQrError('')
 
           stopQrScanner(scanner)
@@ -1664,6 +1666,7 @@ function App() {
       qrFormRef.current={...qrFormRef.current,...EMPTY_QR_SERVICE_DRAFT,assignment_id:id}
       setQrForm(qrFormRef.current)
       setQrHistory([])
+      setQrHistoryError('')
       handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
     }
     const { name, value } = event.target
@@ -1689,6 +1692,7 @@ function App() {
       verifiedQrRef.current = ''
       setQrResult(null)
       setQrHistory([])
+      setQrHistoryError('')
       setQrError('')
       setQrForm((current) => ({ ...current, supervising_officer_id: '' }))
     }
@@ -1712,14 +1716,13 @@ function App() {
       if (action!=='scan'&&normalizedQr!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
       if (action==='time-in'&&!current.supervising_officer_id) throw new Error('Select an authorized supervising officer.')
       const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQrRef.current?current.assignment_id:undefined
-      const response=await fetch(API_URL+'/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
+      const data=await apiRequest('/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
         ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
         ...(action==='time-in'?{supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
-      const data=await response.json()
       if(action==='scan'&&version!==qrInputVersionRef.current) return false
-      if(!response.ok||!data.success) throw new Error(data.message||'Unable to process attendance.')
+      if(!data.success) throw new Error(data.message||'Unable to process attendance.')
       const resetDraft=action==='scan'&&(!quiet||normalizedQr!==verifiedQrRef.current||Number(data.assignment?.id||0)!==Number(current.assignment_id||0))
-      if(resetDraft) setQrHistory([])
+      if(resetDraft) {setQrHistory([]);setQrHistoryError('')}
       setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
       setVerifiedQr(normalizedQr)
       verifiedQrRef.current=normalizedQr
@@ -1729,15 +1732,19 @@ function App() {
       const selectedOfficer=!resetDraft&&officers.find(officer=>Number(officer.officer_user_id)===Number(qrFormRef.current.supervising_officer_id))?.officer_user_id
       const officerId=active?.supervising_officer_user_id||selectedOfficer||officers.find(officer=>Number(officer.officer_user_id)===Number(user.id))?.officer_user_id||(officers.length===1?officers[0].officer_user_id:'')
       setQrForm(form=>({...form,...(resetDraft?EMPTY_QR_SERVICE_DRAFT:{}),qr_code:normalizedQr,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
-      if(data.assignment?.id) {
-        const historyResponse=await fetch(API_URL+'/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
-        const historyData=await historyResponse.json()
-        if(historyResponse.ok&&version===qrInputVersionRef.current) setQrHistory(historyData.sessions||[])
-      } else setQrHistory([])
       if(action!=='scan') {
         setDashboardRefreshKey(key=>key+1);refreshPendingActions()
         if(isAdmin) refreshAdminAttendance()
       }
+      if(data.assignment?.id) {
+        try {
+          const historyData=await apiRequest('/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
+          if(!Array.isArray(historyData.sessions)) throw new Error('Invalid attendance history')
+          if(version===qrInputVersionRef.current) {setQrHistory(historyData.sessions);setQrHistoryError('')}
+        } catch {
+          if(version===qrInputVersionRef.current) setQrHistoryError('Attendance history is temporarily unavailable. Please try again.')
+        }
+      } else {setQrHistory([]);setQrHistoryError('')}
       return true
     } catch(failure) {if(version===qrInputVersionRef.current) setQrError(failure.message);return false}
     finally {if(!quiet) setQrSubmitting(false);qrActionBusyRef.current=null;release()}
@@ -2620,7 +2627,7 @@ function App() {
     }
     if (activeView === 'QR Scan') {
       return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr} inputSource={qrInputSource}
-        isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory}
+        isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory} historyError={qrHistoryError}
         onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
         onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}
         onAttendanceSaved={async (result,action)=>{setQrResult(current=>({...current,...result,active_session:['time-out','invalidate-day'].includes(action)?null:{...result.session,server_time:result.server_time},action}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>

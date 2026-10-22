@@ -446,7 +446,7 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
 
 const previewTimeOut = async ({ sessionId, departmentId }) => {
     const session = (await pool.query(`SELECT css.*,a.required_hours,a.completed_hours,a.remaining_hours,
-        s.first_name,s.last_name,s.student_number,d.department_name
+        s.first_name,s.last_name,s.student_number,d.department_code,d.department_name
         FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id
         JOIN students s ON s.id=css.student_id JOIN departments d ON d.id=css.department_id
         WHERE css.id=$1 AND css.department_id=$2`,[sessionId,departmentId])).rows[0];

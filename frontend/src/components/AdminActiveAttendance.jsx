@@ -1,3 +1,4 @@
+import { departmentTypeLabel } from '../lib/departmentAccounts.js'
 import { useEffect, useMemo, useState } from 'react'
 import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
@@ -49,7 +50,7 @@ export default function AdminActiveAttendance({ sessions = [], loading = false, 
           const service = progressForSession(session)
           return <tr key={session.session_id}>
             <td data-label="Student"><div className="attendance-student"><strong>{session.first_name} {session.last_name}</strong><small>{session.student_number}</small><AttendanceIndicator sessions={[session]}/></div></td>
-            <td data-label="Department & Supervisor"><div className="attendance-supervision"><strong>{session.department_name || session.department_code || 'Not Assigned'}</strong><div><span>{session.supervising_officer_first_name} {session.supervising_officer_last_name}</span><small>{formatDisplayLabel(session.supervising_officer_role)}</small></div></div></td>
+            <td data-label="Department & Supervisor"><div className="attendance-supervision"><strong>{departmentTypeLabel(session)}</strong><div><span>{session.supervising_officer_first_name} {session.supervising_officer_last_name}</span><small>{formatDisplayLabel(session.supervising_officer_role)}</small></div></div></td>
             <td data-label="Time In"><span className="attendance-time-in">{formatManilaDateTime(session.time_in)}</span></td>
             <td data-label="Session Time"><div className="session-clock"><span className="session-clock-label">{session.session_type==='OPEN_TIME' && session.credit_cutoff_at ? 'Time elapsed' : 'Remaining session time'}</span><ServiceCountdown session={session} now={now} className="active-attendance-clock"/></div></td>
             <td data-label="Credited Service"><div className="attendance-credit"><strong>{formatDuration(service.completed)} credited</strong><small>of {formatDuration(service.required)} required</small><span>{formatDuration(service.remaining)} remaining</span><div className="table-progress"><div role="progressbar" aria-label={`Credited Service for ${session.first_name} ${session.last_name}`} aria-valuenow={service.progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${service.progress}%` }} /></div><small>{service.progress}% credited</small></div></div></td>

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { installMutationRequestGuard, loadAllPages } from '../src/lib/api.js'
+import { ApiError, apiRequest, installMutationRequestGuard, loadAllPages } from '../src/lib/api.js'
 
 const response = (status, body = {}) => ({
   status,
@@ -8,6 +8,31 @@ const response = (status, body = {}) => ({
   headers: { get: () => 'application/json' },
   json: async () => body,
   clone() { return this }
+})
+
+test('API requests report readable errors for HTML, malformed JSON and empty responses', async (t) => {
+  const fetchMock = t.mock.method(globalThis, 'fetch')
+  for (const [status, body, contentType] of [
+    [200, '<!DOCTYPE html><title>Portal</title>', 'text/html'],
+    [502, '<!DOCTYPE html><title>Bad gateway</title>', 'text/html'],
+    [200, '{invalid', 'application/json'],
+    [200, '', 'application/json'],
+    [200, 'null', 'application/json']
+  ]) {
+    fetchMock.mock.mockImplementation(async () => new Response(body, { status, headers: { 'content-type': contentType } }))
+    await assert.rejects(apiRequest('/api/qr/scan'), error => {
+      assert.ok(error instanceof ApiError)
+      assert.equal(error.status, status)
+      assert.equal(error.code, 'INVALID_RESPONSE')
+      assert.equal(error.message, 'The service is temporarily unavailable. Please try again.')
+      return true
+    })
+  }
+})
+
+test('API requests preserve structured server errors and their authentication status', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => response(401, { success: false, error: { code: 'AUTH_REQUIRED', message: 'Authenticated session required' } }))
+  await assert.rejects(apiRequest('/api/community-service/19/sessions'), { name: 'ApiError', status: 401, code: 'AUTH_REQUIRED', message: 'Authenticated session required' })
 })
 
 test('paginated loader retrieves records beyond the first 100', async () => {

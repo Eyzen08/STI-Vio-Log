@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { runInNewContext } from 'node:vm'
+import { apiRequest } from '../src/lib/api.js'
 
 const source = await readFile(new URL('../src/components/ServiceAttendanceControls.jsx', import.meta.url), 'utf8')
 const handler = source.slice(source.indexOf('  const change = async'), source.indexOf('  return <>'))
@@ -10,7 +11,8 @@ const setup = (reason = '') => {
   const state = { pending: { current: false }, disabled: false, limitReached: false, reason, session: { session_id: 42 }, token: 'staff-token', API_URL: '',
     setBusy(value) { state.busy = value }, setError(value) { state.error = value }, setDialog(value) { state.dialog = value }, setReason(value) { state.reason = value },
     onSaved(result, action) { state.saved = { result, action } },
-    async fetch(url, options) { calls.push({ url, options }); return { ok: true, json: async () => ({ success: true, session: { id: 42, paused_at: '2026-10-22T01:00:00Z' }, server_time: '2026-10-22T01:00:00Z' }) } }
+    apiRequest(path,options){const original=globalThis.fetch;globalThis.fetch=state.fetch;try{return apiRequest(path,options)}finally{globalThis.fetch=original}},
+    async fetch(url, options) { calls.push({ url: new URL(url,'http://localhost').pathname, options }); return new Response(JSON.stringify({ success: true, session: { id: 42, paused_at: '2026-10-22T01:00:00Z' }, server_time: '2026-10-22T01:00:00Z' }),{headers:{'content-type':'application/json'}}) }
   }
   return { state, calls, change: runInNewContext(`${handler}; change`, state) }
 }
@@ -42,7 +44,7 @@ test('resume posts an empty body and preserves errors on rejected writes', async
   assert.equal(calls[0].url, '/api/community-service/sessions/42/resume')
   assert.deepEqual(JSON.parse(calls[0].options.body), {})
   assert.equal(state.saved.action, 'resume')
-  state.fetch = async () => ({ ok: false, json: async () => ({ success: false, message: 'Session already changed' }) })
+  state.fetch = async () => new Response(JSON.stringify({success:false,message:'Session already changed'}),{status:409,headers:{'content-type':'application/json'}})
   await change('resume')
   assert.equal(state.error, 'Session already changed')
   assert.equal(state.pending.current, false)
@@ -56,6 +58,6 @@ test('a pending attendance write prevents duplicate actions', async () => {
   const first = change('pause')
   await change('pause')
   assert.equal(requests, 1)
-  release({ ok: true, json: async () => ({ success: true }) })
+  release(new Response(JSON.stringify({success:true}),{headers:{'content-type':'application/json'}}))
   await first
 })
