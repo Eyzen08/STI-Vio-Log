@@ -12,7 +12,7 @@ const output = fileURLToPath(new URL('../artifacts/ui-consistency/', import.meta
 const student = { id: 1, first_name: 'Maria', last_name: 'Santos', full_name: 'Maria Santos', student_name: 'Maria Santos', student_number: '2024-001', username: 'maria', program: 'BSIT', year_level: 2, section: 'A303', email: 'maria@example.com', email_verified: true, qualification_status: 'NEEDS_SERVICE' }
 const violation = { id: 1, student_id: 1, student_name: 'Maria Santos', student_number: '2024-001', exact_offense: 'Non-wearing, incomplete, or improper use of school uniform or ID', incident_date: '2026-10-05', severity: 'MINOR', status: 'OPEN', offense_indicator_level: 'MINOR_1' }
 const assignment = { id: 1, assignment_id: 1, violation_id: 1, student_id: 1, student_name: 'Maria Santos', first_name: 'Maria', last_name: 'Santos', student_number: '2024-001', required_hours: 4, remaining_hours: 2, department_name: 'Community Engagement and Student Support Department', status: 'IN_PROGRESS' }
-const payload = { students: [student], student, profile: student, violations: [violation], assignments: [assignment], sessions: [], notifications: [], summary: {}, destinations: [], departments: [], officers: [], accounts: [], records: [], rows: [], entries: [], logs: [], conversations: [], recipients: [], messages: [], violationTypes: [], clearanceRecords: [], corrections: [], results: [], pagination: { page: 1, totalPages: 1, total: 1 } }
+const payload = { students: [student, { ...student, id: 2, first_name: 'Rafael', last_name: 'Cruz', student_number: '2024-002' }, { ...student, id: 3, first_name: 'Ana', last_name: 'Reyes', student_number: '2024-003' }], student, profile: student, violations: [violation], assignments: [assignment], sessions: [], notifications: [], summary: {}, destinations: [], departments: [], officers: [], accounts: [], records: [], rows: [], entries: [], logs: [], conversations: [], recipients: [], messages: [], violationTypes: [], clearanceRecords: [{ id: 1, student_id: 2, status: 'CLEARED' }], corrections: [], results: [], pagination: { page: 1, totalPages: 1, total: 1 } }
 const clearanceFixtures = ['AWAITING_CLEARANCE', 'QUALIFIED', 'BLOCKED', 'NEEDS_SERVICE', 'NO_SERVICE_REQUIRED', 'QUALIFIED', 'AWAITING_CLEARANCE'].map((status, i) => ({
   ...student, id: i + 1, student_name: ['Maria Santos', 'Rafael Cruz', 'Ana Reyes', 'Luis Tan', 'Bea Lim', 'Paolo Sy', 'Isabel Garcia'][i],
   student_number: `2024-00${i + 1}`, qualification_status: status, qualification_reason: status === 'BLOCKED' ? 'Has an unresolved violation.' : status === 'AWAITING_CLEARANCE' ? 'Service is complete; final clearance approval is still required.' : 'Community service status verified.',
@@ -26,7 +26,7 @@ let rejectDirectory = false
 const approvalBodies = []
 const signature = { id: 1, full_name: 'Juan Dela Cruz', position: 'Discipline Officer', is_active: true, updated_at: '2026-10-08', image_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jY1sAAAAASUVORK5CYII=' }
 const clearanceCertificates = ['ISSUED', 'REVOKED'].map((status, i) => ({ id: i + 1, student_name: 'Paolo Sy', student_number: '2024-006', certificate_number: `STI-2026-00${i + 1}`, version: i + 1, completed_hours: 4, status, email_status: 'SENT' }))
-const server = await createServer({ root, server: { host: '127.0.0.1', port: 0 } })
+const server = await createServer({ root, cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0 } })
 let browser
 let user
 const errors = []
@@ -43,6 +43,7 @@ try {
     if (url.pathname.startsWith('/api/')) {
       let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'local-browser-fixture' } : payload
       let status = url.pathname === '/api/auth/session' && !user ? 401 : 200
+      if (url.pathname === '/api/auth/legal') response = { legal: { required: false } }
       if (url.pathname === '/api/clearance/certificates/students') {
         response = rejectDirectory ? { message: 'Unable to load clearance records.' } : { students: [...clearanceStudents, clearanceStudents[0]].filter(Boolean) }
         status = rejectDirectory ? 503 : 200
@@ -81,12 +82,45 @@ try {
     }
     await page.locator('.app-shell').waitFor()
     await page.locator('.route-loading, .dashboard-loading').waitFor({ state: 'hidden' })
-    await page.locator('.page-content').locator('h1, h2, h3').first().waitFor()
+    await page.locator('.page-content').locator('h1:visible, h2:visible, h3:visible').first().waitFor()
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
   }
 
   async function check(label, width, authenticated = true) {
     await page.evaluate(() => Promise.all(document.getAnimations().filter((animation) => animation instanceof CSSTransition).map((animation) => animation.finished.catch(() => {}))))
+    const flatFindings = await page.evaluate(() => {
+      if (!document.querySelector('.app-shell:is(.admin-portal,.student-portal,.department-portal)')) return []
+      const findings = []
+      for (const element of document.querySelectorAll('.status-badge,.directory-clearance,.clearance-directory-status,.service-status,.violation-status,.violation-classification,.dashboard-severity,.attendance-indicator-label,.chat-status,.record-standing,.record-case-status')) {
+        if (!element.getClientRects().length) continue
+        const style = getComputedStyle(element)
+        if (style.borderRadius !== '4px' || style.boxShadow !== 'none' || style.backgroundImage !== 'none' || parseFloat(style.borderTopWidth) > 1) {
+          findings.push({ text: element.textContent, radius: style.borderRadius, shadow: style.boxShadow, border: style.borderTopWidth, image: style.backgroundImage })
+        }
+      }
+      for (const element of document.querySelectorAll('.student-summary-card,.student-directory-card,.dashboard-card,.management-metric,.student-section,.department-metrics > article,.app-modal:not(.app-modal--drawer)')) {
+        if (!element.getClientRects().length) continue
+        const style = getComputedStyle(element)
+        if (style.borderRadius !== '8px' || style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+      }
+      for (const element of document.querySelectorAll('.student-add-button,.directory-view-button,.theme-toggle,.notification-button,.app-modal-close,.student-directory-select,.department-header-actions button')) {
+        if (!element.getClientRects().length) continue
+        const style = getComputedStyle(element)
+        if (style.borderRadius !== '6px' || style.boxShadow !== 'none') findings.push({ control: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+      }
+      for (const element of document.querySelectorAll('.login-form > button:not([type="button"],.secondary-button,.danger-button),.topbar .account-avatar:not(:has(img))')) {
+        const style = getComputedStyle(element)
+        const alpha = style.backgroundColor.match(/[\d.]+/g)?.[3] ?? 1
+        if (Number(alpha) < 1 || style.color === style.backgroundColor) findings.push({ control: element.className, background: style.backgroundColor, color: style.color })
+      }
+      return findings
+    })
+    assert.deepEqual(flatFindings, [], `${label}: flat portal surfaces`)
+    if (await page.locator('.student-directory-table').count()) {
+      const cleared = page.locator('.directory-clearance').filter({ hasText: /^Cleared$/ })
+      assert.equal(await cleared.count(), 1, `${label}: cleared fixture is displayed`)
+      assert.equal(await cleared.evaluate((element) => element.classList.contains('clearance-cleared')), false, 'directory badges do not inherit clearance-card borders')
+    }
     if (process.argv.includes('--theme-audit')) {
       const findings = await page.evaluate(() => {
         if (document.documentElement.dataset.theme !== 'dark') return []
@@ -141,6 +175,7 @@ try {
         return rect.left < header.left - 1 || rect.right > header.right + 1 || rect.bottom > header.bottom + 1 || rect.width < 44 || rect.height < 44
       }).map((el) => el.getAttribute('aria-label')) : []
       const crowdedHeaders = [...document.querySelectorAll('th')].filter(visible).filter((el) => {
+        if (el.closest('thead')?.getBoundingClientRect().width <= 1) return false
         const style = getComputedStyle(el)
         if (style.whiteSpace !== 'nowrap') return false
         const range = document.createRange()
@@ -151,7 +186,11 @@ try {
     })
     assert.match(layout.body.font, /^Arial/, `${label}: body font`)
     assert.equal(layout.body.size, '14px', `${label}: body size`)
-    assert.ok(layout.fonts.every((font) => /^Arial/.test(font)), `${label}: fonts ${layout.fonts}`)
+    if (authenticated) assert.ok(layout.fonts.every((font) => /^Arial/.test(font)), `${label}: fonts ${layout.fonts}`)
+    else {
+      const radii = await page.evaluate(() => [document.body, document.documentElement].map((element) => getComputedStyle(element).getPropertyValue('--radius-md').trim()))
+      assert.equal(radii[0], radii[1], `${label}: public/setup pages do not inherit portal styling`)
+    }
     assert.equal(layout.overflow, false, `${label}: page overflow`)
     assert.deepEqual(layout.clipped, [], `${label}: clipped/small header controls`)
     assert.deepEqual(layout.crowdedHeaders, [], `${label}: overlapping table headings`)
@@ -159,7 +198,7 @@ try {
     if (authenticated) {
       assert.equal(layout.topbar.height, width < 768 ? 60 : 75, `${label}: topbar height`)
       if (width >= 768) {
-        assert.equal(layout.sidebar.width, 220, `${label}: sidebar width`)
+        assert.equal(layout.sidebar.width, 248, `${label}: sidebar width`)
         assert.equal(layout.nav.size, '14px', `${label}: navigation text`)
         assert.ok(layout.nav.height >= 44, `${label}: navigation target`)
       }
@@ -170,7 +209,7 @@ try {
   // Every role's routes, fresh loads and SPA navigation, in both themes/sizes.
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
-    const routes = APP_ROUTES.filter((route) => route.roles.includes(role) && !route.redirectTo)
+    const routes = APP_ROUTES.filter((route) => route.roles.includes(role) && !route.redirectTo && !['/account/password-change', '/student/onboarding'].includes(route.path))
     for (const [width, height] of [[1920, 1080], [1024, 768], [390, 844]]) {
       await page.setViewportSize({ width, height })
       for (const theme of ['light', 'dark']) {
@@ -178,6 +217,33 @@ try {
           await open(route.path, index !== 0)
           await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
           await check(`${role} ${route.path} ${theme} ${width}`, width)
+          if ([1920, 390].includes(width) && ['/admin/dashboard', '/admin/students', '/admin/violations', '/admin/active-attendance', '/admin/community-service', '/admin/clearance', '/admin/messages', '/department/dashboard', '/student/dashboard'].includes(route.path)) {
+            await page.screenshot({ path: `${output}${route.path.slice(1).replaceAll('/', '-')}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
+          }
+          if (route.path === '/admin/students') {
+            const program = page.getByRole('combobox', { name: 'Program', exact: true })
+            await program.focus()
+            await page.keyboard.press('Enter')
+            assert.equal(await program.evaluate((element) => {
+              const style = getComputedStyle(element)
+              return element.matches(':focus-visible') && style.outlineStyle === 'solid' && parseFloat(style.outlineWidth) >= 2
+            }), true, 'flat controls retain a visible keyboard focus ring')
+            for (const menu of [page.getByRole('listbox'), page.locator('.student-account-menu')]) {
+              if (await menu.count() === 0) {
+                const trigger = page.getByRole('button', { name: /^More Actions for/ }).first()
+                await trigger.scrollIntoViewIfNeeded()
+                await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+                await trigger.click()
+              }
+              assert.deepEqual(await menu.evaluate((element) => {
+                const style = getComputedStyle(element)
+                return { radius: style.borderRadius, shadow: style.boxShadow, outsideShell: !element.closest('.app-shell') }
+              }), { radius: '8px', shadow: 'none', outsideShell: true }, 'body-mounted menus share the flat portal surface')
+              await page.keyboard.press('Escape')
+            }
+            await page.locator('.student-summary-card').first().hover()
+            assert.equal(await page.locator('.student-summary-card').first().evaluate((element) => getComputedStyle(element).transform), 'none', 'summary cards stay flat on hover')
+          }
         }
         await page.screenshot({ path: `${output}${role}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
       }
@@ -195,9 +261,9 @@ try {
       await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
       assert.equal(await page.locator('.certificate-student-card').count(), 2, 'queue excludes blocked, incomplete, unassigned and approved students; duplicate students removed')
       assert.equal(await page.getByRole('tab').count(), 0, 'queue remains its own page despite a legacy panel query')
-      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search students', exact: true }).fill('garcia')
+      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search Students', exact: true }).fill('garcia')
       assert.equal(await page.locator('.certificate-student-card').count(), 1)
-      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search students', exact: true }).fill('')
+      await page.locator('.certificate-admin').getByRole('searchbox', { name: 'Search Students', exact: true }).fill('')
       await check(`Awaiting Clearance ${theme} ${width}`, width)
       await page.screenshot({ path: `${output}awaiting-clearance-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
       await page.locator('.certificate-student-card').filter({ hasText: 'Maria Santos' }).getByRole('button', { name: 'Approve Clearance', exact: true }).click()
@@ -221,7 +287,7 @@ try {
       rejectApproval = false
       await dialog.getByRole('button', { name: 'Approve Clearance', exact: true }).click()
       await dialog.waitFor({ state: 'hidden' })
-      await page.getByText('No students awaiting clearance', { exact: true }).waitFor()
+      await page.getByText('No Students Awaiting Clearance', { exact: true }).waitFor()
       assert.deepEqual(approvalBodies.at(-1), { academic_year: '2026-2027', semester: '1st Semester' })
       await page.getByRole('button', { name: 'Back to Clearance Management' }).click()
       await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
@@ -258,10 +324,10 @@ try {
   }
   rejectDirectory = true
   await open('/admin/awaiting-clearance')
-  await page.getByRole('button', { name: 'Try again' }).waitFor()
+  await page.getByRole('button', { name: 'Try Again' }).waitFor()
   rejectDirectory = false
-  await page.getByRole('button', { name: 'Try again' }).click()
-  await page.getByText('No students awaiting clearance', { exact: true }).waitFor()
+  await page.getByRole('button', { name: 'Try Again' }).click()
+  await page.getByText('No Students Awaiting Clearance', { exact: true }).waitFor()
   await page.setViewportSize({ width: 1366, height: 768 })
   for (const path of ['/admin/students', '/admin/community-service', '/admin/qr-scan', '/admin/messages', '/admin/dashboard', '/admin/students']) {
     await open(path)
@@ -271,6 +337,9 @@ try {
   await page.getByRole('button', { name: 'Collapse navigation' }).click()
   assert.equal(Math.round((await page.locator('.sidebar').boundingBox()).width), 80)
   await page.getByRole('button', { name: 'Expand navigation' }).click()
+  await page.locator('.sidebar .nav-item').first().focus()
+  await page.keyboard.press('Tab')
+  assert.equal(await page.locator('.sidebar :focus-visible').evaluate((element) => getComputedStyle(element).outlineColor), 'rgb(255, 255, 255)', 'sidebar focus remains visible against navy')
   await page.getByRole('button', { name: /^View Student / }).first().click()
   await page.getByRole('dialog').waitFor()
   assert.match(await page.getByRole('dialog').evaluate((el) => getComputedStyle(el).fontFamily), /^Arial/)

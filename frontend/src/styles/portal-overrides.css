@@ -2095,3 +2095,158 @@
   outline:2px solid var(--link-color);
   outline-offset:2px;
 }
+
+/* The body scope also reaches portal menus and dialogs mounted outside the shell. */
+:root body:has(.app-shell:is(.admin-portal,.student-portal,.department-portal)) {
+  --decorative-shadow:none;
+  --shadow-sm:none;
+  --shadow-md:none;
+  --shadow-lg:none;
+  --radius-sm:6px;
+  --radius-md:8px;
+  --radius-lg:8px;
+  --radius-xl:8px;
+
+  & .app-shell { background:var(--surface-canvas); }
+  & .sidebar { background:var(--surface-sidebar) !important; box-shadow:none !important; }
+  & :is(.topbar,.mobile-bottom-nav) { background:var(--surface-raised) !important; box-shadow:none !important; backdrop-filter:none; }
+  & .sidebar .brand { background:transparent; box-shadow:none; }
+  & .sidebar .brand::after { display:none; }
+  & .sidebar .nav-item { box-shadow:none !important; }
+
+  & :is(
+    .dashboard-card,.stat-card,.management-metric,.management-page-header,.portal-page-header,.form-card,
+    .portal-welcome,.table-card,.student-management-header,.student-summary-card,.student-directory-card,
+    .student-directory-table-wrap,.violation-table-wrap,.active-attendance-table-wrap,
+    .service-page-header,.service-tracking-card,.pending-service-results,.qr-attendance-header,.qr-stage-card,
+    .messages-page-heading,.messages-workspace,.student-section,.student-attendance-panel,.student-corrections,
+    .student-profile-page,.student-dtr-record,.qr-display-card,.staff-profile-card,.officer-card,
+    .department-stat,.department-corrections,.department-directory-surface,.department-officer-create,
+    .analytics-card,.report-filter-card,.audit-filter-card,
+    .certificate-student-card,.clearance-hero,.attendance-notice,.record-metric,.record-case-card,
+    .record-overview-card,.service-detail-card,.service-student-card,.qr-assignment-card,.drawer-form-card,
+    .violation-card,.violation-history-card,.violation-records-card,.profile-card,.notifications-hero,
+    .student-roster-tools,.noncompliance-toolbar,.department-dtr-filters,.component-health-card,.monitoring-slide,
+    .profile-menu-popover,.student-account-menu,.student-directory-select-menu,.app-modal
+  ), & :is(.department-metrics,.signature-directory,.duplicate-source-grid) > article {
+    border-radius:8px !important;
+    box-shadow:none !important;
+  }
+
+  & :is(.dashboard-card,.management-metric,.student-summary-card,.officer-card):hover,
+  & :is(.signature-directory,.duplicate-source-grid,.notification-list) > article:hover {
+    transform:none !important;
+  }
+
+  & :where(button,input:not([type='checkbox'],[type='radio'],[type='range']),select,textarea,.primary-action,.primary-row-action) {
+    border-radius:6px !important;
+    box-shadow:none !important;
+  }
+  & :is(button,.primary-action,.primary-row-action) {
+    background-image:none !important;
+  }
+  & .login-form > button:not([type='button'],.secondary-button,.danger-button) {
+    background-color:var(--action-primary-surface) !important;
+    color:var(--text-on-accent) !important;
+    &:hover:not(:disabled) { background-color:var(--action-primary-hover) !important; }
+  }
+  & .topbar .account-avatar {
+    background:var(--action-primary-surface) !important;
+    border-color:var(--action-primary-surface) !important;
+    color:var(--text-on-accent) !important;
+  }
+  & button:is(:hover,:active) { transform:none !important; }
+  & :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {
+    outline:2px solid var(--link-color) !important;
+    outline-offset:2px;
+  }
+  & .sidebar :is(button,a):focus-visible {
+    outline-color:var(--text-on-accent) !important;
+    outline-offset:-3px;
+  }
+  & :is(.student-directory-search,.topbar-search,.violation-search,.directory-search,.conversation-search) {
+    border-radius:6px !important;
+    box-shadow:none !important;
+  }
+  & :is(.student-directory-search,.topbar-search,.violation-search,.directory-search,.conversation-search) input {
+    border-radius:0 !important;
+  }
+
+  & :is(
+    .status-badge,.directory-clearance,.clearance-directory-status,.service-status,.violation-status,.violation-classification,
+    .severity-badge,.dashboard-severity,.attendance-indicator-label,.attendance-session-count,
+    .chat-status,.conversation-status,.record-standing,.record-case-status,.record-profile-status > span,.violation-context-status,
+    .action-badge,.availability-badge,.readonly-badge,.profile-readonly-badge,.live-status-badge,
+    .badge,.user-badge,.record-count,.guardian-office-badge,.service-assignment-status,.selected-recipient,
+    .conversation-title-row > span,.message-date-divider span,.notification-heading span,.support-decision-context li
+  ) {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    min-height:24px;
+    padding:4px 8px !important;
+    border-width:0 !important;
+    border-radius:4px !important;
+    background-image:none !important;
+    box-shadow:none !important;
+    font-size:var(--text-xs) !important;
+    font-weight:600;
+    line-height:1.4;
+  }
+  & :is(.status-badge,.service-status,.badge,.user-badge,.guardian-office-badge,.service-assignment-status) {
+    background-color:var(--status-info-surface) !important;
+    color:var(--status-info-text) !important;
+  }
+  & :is(.status-complete,.status-completed,.status-clear,.status-cleared,.status-qualified,.status-issued,
+    .service-status-completed,.service-status-cleared,.availability-available,.record-standing:not(.record-requires-action),
+    .record-case-resolved,.context-status-complete,.context-status-clear,.chat-status:not(.closed),.conversation-status:not(.closed)) {
+    background-color:var(--status-success-surface) !important;
+    color:var(--status-success-text) !important;
+  }
+  & :is(.status-active,.status-open,.status-pending,.status-in-progress,.status-needs-service,.service-status-in_progress,
+    .service-status-timed_in,.classification-minor,.context-status-pending,.availability-unavailable,.availability-absent) {
+    background-color:var(--status-warning-surface) !important;
+    color:var(--status-warning-text) !important;
+  }
+  & :is(.status-blocked,.status-revoked,.classification-major,.classification-grave,.record-requires-action,
+    .record-case-status:not(.record-case-resolved),.context-status-open) {
+    background-color:var(--status-danger-surface) !important;
+    color:var(--status-danger-text) !important;
+  }
+  & :is(.status-invalid-cancel,.status-invalid_cancel,.status-not-eligible,.status-no-service-required,
+    .status-badge--muted,.service-status-invalid_cancelled,.service-status-admin_closed,.chat-status.closed,.conversation-status.closed,.context-status-invalid_cancel) {
+    background-color:var(--surface-interactive) !important;
+    color:var(--text-secondary) !important;
+  }
+
+  & :is(.offense-dot,.directory-violation > i,.attendance-indicator-label > i,.scanner-state > i,.live-status-badge > i,
+    .notification-list .notification-indicator) {
+    box-shadow:none !important;
+  }
+  & .attendance-indicator { border-radius:4px !important; }
+  & :is(.student-number,.record-fields .record-field-label small) { border-radius:4px !important; }
+  & :is(.progress-track > span,.record-progress span) { background:var(--color-primary); }
+  & :is(.management-page-header,.profile-hero,.department-welcome,.notifications-hero,.dtr-intro) {
+    background:var(--surface-raised) !important;
+    color:var(--text-primary) !important;
+    & :is(h1,h2,h3,strong) { color:var(--text-primary) !important; }
+    & :is(p,.eyebrow) { color:var(--text-secondary) !important; }
+  }
+  & :is(.chat-history,.scanner-viewfinder) { background-image:none !important; }
+  & .chat-history { background-color:var(--chat-canvas) !important; }
+  & .app-modal-header { background:var(--modal-header-surface) !important; }
+  & .app-modal-backdrop { backdrop-filter:none !important; }
+  & .app-modal.app-modal--drawer { border-radius:8px 0 0 8px !important; }
+
+  @media (max-width:767px) {
+    & .topbar :is(.mobile-menu-button,.mobile-brand,.mobile-brand span,.notification-button,.profile-menu-trigger,.theme-toggle) {
+      color:var(--text-primary) !important;
+    }
+    & .app-modal.app-modal--drawer { border-radius:0 !important; }
+  }
+  @media (forced-colors:active) {
+    & :is(.status-badge,.directory-clearance,.service-status,.violation-status,.violation-classification) {
+      border:1px solid CanvasText !important;
+    }
+  }
+}

@@ -91,9 +91,9 @@
 .directory-service progress::-moz-progress-bar { background:#007aff; border-radius:5px; }
 .directory-muted { color:var(--dash-muted); }
 .directory-clearance { display:inline-flex; align-items:center; min-height:30px; padding:5px 18px; border-radius:20px; font-size:var(--text-sm); line-height:1.2; white-space:nowrap; }
-.clearance-not_cleared { background:#ffe5ec; color:#ee1744; }
-.clearance-eligible { background:#e2efff; color:#007aff; }
-.clearance-cleared { background:#def8e9; color:#008c45; }
+.directory-clearance--not_cleared { background:var(--status-danger-surface); color:var(--status-danger-text); }
+.directory-clearance--eligible { background:var(--status-info-surface); color:var(--status-info-text); }
+.directory-clearance--cleared { background:var(--status-success-surface); color:var(--status-success-text); }
 .directory-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
 .admin-portal .student-management-page .directory-view-button { min-width:0; min-height:var(--control-height); padding:7px 22px; border:1px solid #007aff; border-radius:6px; background:transparent; color:#007aff; font-size:var(--text-base); font-weight:600; white-space:nowrap; }
 .admin-portal .student-management-page .row-action-trigger { display:grid; place-items:center; width:var(--control-height); min-width:var(--control-height); height:var(--control-height); padding:0; border:1px solid var(--dash-line); border-radius:6px; background:var(--dash-surface); color:var(--dash-ink); font-size:var(--text-base); }
@@ -115,10 +115,9 @@
 :root[data-theme='dark'] .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card,.student-directory-toolbar > label,.student-filter-toggle) { background:var(--dash-surface) !important; border-color:var(--dash-line) !important; }
 :root[data-theme='dark'] .student-management-page :is(.student-directory-tabs button,.student-directory-table th) { background:var(--surface-nested); color:var(--dash-ink); }
 :root[data-theme='dark'] .student-summary-card > i { background:var(--surface-interactive); color:var(--link-color); }
-:root[data-theme='dark'] .student-metric-red > i,:root[data-theme='dark'] .clearance-not_cleared { background:var(--status-danger-surface); color:var(--status-danger-text); }
+:root[data-theme='dark'] .student-metric-red > i { background:var(--status-danger-surface); color:var(--status-danger-text); }
 :root[data-theme='dark'] .student-metric-orange > i { background:var(--status-warning-surface); color:var(--status-warning-text); }
-:root[data-theme='dark'] .student-metric-green > i,:root[data-theme='dark'] .clearance-cleared { background:var(--status-success-surface); color:var(--status-success-text); }
-:root[data-theme='dark'] .clearance-eligible { background:var(--surface-interactive); color:var(--link-color); }
+:root[data-theme='dark'] .student-metric-green > i { background:var(--status-success-surface); color:var(--status-success-text); }
 :root[data-theme='dark'] .student-management-page :is(.directory-service progress,.directory-service progress::-webkit-progress-bar) { background:var(--surface-interactive); }
 :root[data-theme='dark'] .directory-timed-in { color:var(--status-success-text); }
 :root[data-theme='dark'] .admin-portal .student-management-page .student-directory-tabs button[aria-pressed='true'],
