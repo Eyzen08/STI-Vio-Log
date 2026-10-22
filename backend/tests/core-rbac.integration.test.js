@@ -36,7 +36,7 @@ function mockResult(sql, params = []) {
 
   if (text==='SELECT clock_timestamp() AS now') return {rows:[{now:new Date('2026-10-07T01:00:00Z')}]};
   if (text.startsWith('SELECT u.id,u.role,u.is_active,u.session_version')) return {rows:[{...accounts[Number(params[0])],is_active:true}]};
-  if (text.includes('COALESCE(SUM(credited_minutes)')) return {rows:[{minutes:0}]};
+  if (text.includes('SUM(COALESCE(invalidated_allowance_minutes,credited_minutes))')) return {rows:[{minutes:0}]};
   if (text.includes('FOR UPDATE OF s')) return {rows:[{id:40,is_active:true}]};
   if (text==='SELECT department_id FROM community_service_assignments WHERE id=$1') return {rows:[{department_id:9}]};
   if (text.includes('FROM browser_sessions bs') && text.includes('JOIN users u')) {
@@ -164,7 +164,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
       if (text.includes('FROM community_service_assignments a') && text.includes('JOIN violations v')) {
         return { rows: [{ id: 80, violation_id: 70, student_id: 40, department_id: 9, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN', violation_status: 'OPEN' }] };
       }
-      if (text.includes('COALESCE(SUM(credited_minutes)')) return {rows:[{minutes:0}]};
+      if (text.includes('SUM(COALESCE(invalidated_allowance_minutes,credited_minutes))')) return {rows:[{minutes:0}]};
       if (text.includes('FROM community_service_sessions')) return { rows: [] };
       if (text.includes('INSERT INTO community_service_attendance')) {
         capturedAttendanceParams = params;
@@ -203,6 +203,12 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   const discipline = tokenFor(2);
   const head = tokenFor(3);
   const student = tokenFor(4, { claimedRole: 'ADMIN' });
+  for (const suffix of ['invalidation-preview','invalidate']) {
+    const options=suffix==='invalidate'?{method:'POST',body:{reason:'No return',preview_version:'a'.repeat(64)}}:{};
+    const path=`/api/community-service/80/days/2026-10-07/${suffix}`;
+    assert.equal((await request(baseUrl,path,{...options,token:student})).status,403);
+    assert.equal((await request(baseUrl,path,options)).status,401);
+  }
 
   for (const denied of [undefined, head, student]) assert.equal((await request(baseUrl, '/api/students/40/credentials-email', { token: denied, method: 'PATCH', body: {} })).status, denied ? 403 : 401);
   for (const allowed of [admin, discipline]) assert.equal((await request(baseUrl, '/api/students/40/credentials-email', { token: allowed, method: 'PATCH', body: {} })).status, 400);

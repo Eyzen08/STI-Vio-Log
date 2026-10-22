@@ -16,7 +16,7 @@ const sanitizeAuditDescription = (value) => {
   return parsed ? JSON.stringify(auditDetails({ description: value })) : redactText(value);
 };
 
-const EVENT_FIELDS = ['assignment_id', 'department_id', 'supervising_officer_user_id', 'actual_elapsed_minutes', 'timer_limit_minutes', 'worked_minutes', 'credited_minutes', 'completion_reason', 'attendance_outcome', 'supervisor_changed', 'limit_reached', 'actor_role', 'from_status', 'to_status', 'from', 'to', 'policy_scope', 'minor_count', 'major_count', 'grave_count', 'major_level_review_required', 'reason', 'result'];
+const EVENT_FIELDS = ['assignment_id', 'department_id', 'supervising_officer_user_id', 'actual_elapsed_minutes', 'timer_limit_minutes', 'worked_minutes', 'credited_minutes', 'completion_reason', 'attendance_outcome', 'supervisor_changed', 'limit_reached', 'actor_role', 'from_status', 'to_status', 'from', 'to', 'policy_scope', 'minor_count', 'major_count', 'grave_count', 'major_level_review_required', 'reason', 'result', 'service_date', 'removed_credit_minutes', 'invalidation_id'];
 const CHANGE_FIELDS = new Set(['violation_type_id', 'incident_date', 'incident_time', 'description', 'required_service_hours', 'completed_service_hours', 'status', 'department_id', 'department_head_id']);
 const auditDetails = (row) => {
   const parsed = parseDescription(row.description) || {};

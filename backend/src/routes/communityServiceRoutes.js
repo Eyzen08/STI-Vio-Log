@@ -21,6 +21,8 @@ router.get('/results/pending', canCorrectDtr, operationalStaff, attendance.getPe
 router.post('/results/:sessionId/review', canCorrectDtr, operationalStaff, attendance.reviewCommunityServiceResult);
 router.get('/assignment-options', canManageAssignments, operationalStaff, service.getCommunityServiceAssignmentOptions);
 router.get('/active-sessions', canReadAssignments, serviceReaders, attendance.getActiveDepartmentSessions);
+router.get('/:assignmentId/days/:serviceDate/invalidation-preview', authorizePermissions(PERMISSIONS.ATTENDANCE_INVALIDATE), serviceReaders, attendance.getDayInvalidationPreview);
+router.post('/:assignmentId/days/:serviceDate/invalidate', authorizePermissions(PERMISSIONS.ATTENDANCE_INVALIDATE), serviceReaders, attendance.invalidateCommunityServiceDay);
 router.get('/:assignmentId/sessions', canReadAssignments, serviceReaders, attendance.getCommunityServiceSessions);
 router.get('/attendance/:assignmentId', canReadAssignments, serviceReaders, attendance.getCommunityServiceAttendance);
 router.get('/', canReadAssignments, serviceReaders, service.getCommunityServiceAssignments);

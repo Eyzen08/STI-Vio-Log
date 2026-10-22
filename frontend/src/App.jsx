@@ -2616,14 +2616,14 @@ function App() {
         formProps={{ form:communityServiceForm, violations, destinations:communityServiceDestinations,
           busy:mutationBusy.serviceCreate, error:communityServiceFormError, success:communityServiceFormSuccess,
           onFieldChange:handleCommunityServiceFieldChange, onSubmit:handleCommunityServiceSubmit }}
-        token={token} targetSessionId={recordTarget.sessionId} viewingAssignment={viewingServiceAssignment} onView={(assignment) => navigateTo(`/admin/community-service?assignment_id=${assignment.id}`)} onCloseAssignment={() => { setViewingServiceAssignment(null); closeRecordTarget() }}/>
+        token={token} targetSessionId={recordTarget.sessionId} viewingAssignment={viewingServiceAssignment} onView={(assignment) => navigateTo(`/admin/community-service?assignment_id=${assignment.id}`)} onCloseAssignment={() => { setViewingServiceAssignment(null); closeRecordTarget() }} onAttendanceSaved={result=>{setViewingServiceAssignment(current=>({...current,...result.assignment}));refreshAdminAttendance();setDashboardRefreshKey(key=>key+1)}}/>
     }
     if (activeView === 'QR Scan') {
       return <DepartmentQrScanner form={qrForm} result={qrResult} error={qrError} verifiedQr={verifiedQr} inputSource={qrInputSource}
         isScanning={isQrScanning} isSubmitting={qrSubmitting} recorder={user} token={token} history={qrHistory}
         onFieldChange={handleQrFieldChange} onStartCamera={()=>startQrScanner()}
         onStopCamera={()=>stopQrScanner()} onSwitchCamera={switchQrCamera} onAction={handleQrAction}
-        onAttendanceSaved={async (result,action)=>{setQrResult(current=>({...current,...result,active_session:action==='time-out'?null:{...result.session,server_time:result.server_time},action}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>
+        onAttendanceSaved={async (result,action)=>{setQrResult(current=>({...current,...result,active_session:['time-out','invalidate-day'].includes(action)?null:{...result.session,server_time:result.server_time},action}));setDashboardRefreshKey(key=>key+1);refreshPendingActions();if(isAdmin) refreshAdminAttendance();await handleQrAction('scan',qrFormRef.current.qr_code,{quiet:true,assignment_id:''})}}/>
     }
 
 

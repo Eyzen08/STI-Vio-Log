@@ -9,6 +9,7 @@ import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServicePauseHistory from './ServicePauseHistory.jsx'
 import StudentAttendancePanel from './StudentAttendancePanel.jsx'
 import ServiceHourCorrections from './ServiceHourCorrections.jsx'
+import { ServiceDayInvalidationDetails } from './ServiceDayInvalidation.jsx'
 import '../styles/student-portal.css'
 
 const dateTime = (value) => formatManilaDateTime(value, '—')
@@ -58,6 +59,7 @@ function StudentCommunityService({ dtr, liveDtr, loading, error, onFilter, atten
         return <article className={active?'student-dtr-record student-dtr-record-active':'student-dtr-record'} key={session.id} id={`service-session-${session.id}`} tabIndex={-1}>
           <header><div><strong>{session.department_name || 'Department Not Recorded'}</strong><span>Assignment #{session.assignment_id}</span></div><AttendanceIndicator sessions={[session]}/></header>
           <dl className="student-session-facts"><div><dt>Time In</dt><dd>{dateTime(session.time_in)}</dd></div><div><dt>Time Out</dt><dd>{active?'Pending Staff Time Out':dateTime(session.time_out)}</dd></div><div><dt>Worked</dt><dd>{active ? Array.isArray(liveDtr?.sessions) ? 'See current session above' : 'Current Attendance Unavailable' : formatMinutes(session.worked_minutes)}</dd></div><div><dt>Credited</dt><dd>{session.credited_minutes == null ? '—' : formatMinutes(session.credited_minutes)}</dd></div>{!active && <div><dt>Attendance Outcome</dt><dd>{attendanceOutcomeLabel(session.attendance_outcome)}</dd></div>}</dl>
+          <ServiceDayInvalidationDetails session={session}/>
           <details className="student-session-details"><summary>Details</summary><dl className="student-session-facts"><div><dt>Mode / Target</dt><dd>{session.session_type==='FIXED'?formatMinutes(session.selected_duration_minutes):session.session_type==='OPEN_TIME'?'Open Time':'Legacy Session'}</dd></div><div><dt>Session Status</dt><dd>{formatDisplayLabel(session.completion_reason || session.status)}</dd></div><div><dt>Recorded By</dt><dd>{session.time_out_recorder_name || session.time_in_recorder_name || ((session.time_out_by_user_id || session.time_in_by_user_id) ? `Staff #${session.time_out_by_user_id || session.time_in_by_user_id}` : 'Staff not recorded')} · {formatDisplayLabel(session.time_out_role || session.time_in_role,'Staff')}</dd></div><div className="student-full-width"><dt>Notes / Remarks</dt><dd>{session.result_notes || session.notes || '—'}</dd></div></dl><ServicePauseHistory session={session}/></details>
         </article>
       })}</div>}

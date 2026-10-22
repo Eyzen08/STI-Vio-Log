@@ -244,6 +244,26 @@ test('QR accepts short flexible service and blocks exhausted allowance', () => {
   assert.doesNotMatch(html,/>Confirm Time In<\/button>/)
 })
 
+test('QR verification renders the section once for college and senior-high students', () => {
+  for (const [academic, summary] of [
+    [{ academic_level: 'COLLEGE', program: 'BSCS', year_level: 4 }, 'College / BSCS / 4th Year / O202'],
+    [{ academic_level: 'SENIOR_HIGH_SCHOOL', strand: 'STEM', year_level: 12 }, 'Senior High School / STEM / Grade 12 / O202'],
+  ]) {
+    const html = render('DepartmentQrScanner', { form: { qr_code: 'section-check', notes: '' }, verifiedQr: 'section-check', result: { student: { first_name: 'Pedro', last_name: 'Makisig', section: 'O202', ...academic } } })
+    assert.match(html, new RegExp(summary))
+    assert.equal((html.match(/O202/g) || []).length, 1)
+    assert.doesNotMatch(html, /Section not recorded/)
+  }
+})
+
+test('QR verification preserves the missing-section notice', () => {
+  for (const section of [undefined, null, '']) {
+    const html = render('DepartmentQrScanner', { form: { qr_code: 'section-check', notes: '' }, verifiedQr: 'section-check', result: { student: { academic_level: 'COLLEGE', program: 'BSCS', year_level: 4, section } } })
+    assert.match(html, /College \/ BSCS \/ 4th Year/)
+    assert.equal((html.match(/Section not recorded/g) || []).length, 1)
+  }
+})
+
 test('camera QR verification is automatic and Verify is reserved for manual input', () => {
   const props={form:{qr_code:'camera-code',notes:''},verifiedQr:'camera-code',result:{student:{first_name:'Ana',last_name:'Reyes'},allowance:{},available_officers:[]}}
   const camera=render('DepartmentQrScanner',{...props,inputSource:'camera'})
@@ -581,4 +601,18 @@ test('admin dashboard labels each session mode and keeps capped timers and activ
   assert.match(html,/Daily Community Service Limit Reached — Time Out Required/)
   assert.equal((html.match(/class="dashboard-active-student"/g)||[]).length,1)
   assert.match(html,/Time In/)
+})
+
+test('staff attendance offers day invalidation even after the daily timer limit', () => {
+  const html=render('AdminActiveAttendance',{sessions:[{session_id:77,assignment_id:5,service_date:'2026-10-07',status:'ACTIVE',time_in:'2026-10-07T01:00:00Z',credit_cutoff_at:'2026-10-07T02:00:00Z'}],token:'test',onAttendanceSaved(){}})
+  assert.match(html,/>Invalidate Day<\/button>/)
+  assert.doesNotMatch(html,/<button[^>]*disabled[^>]*>Invalidate Day/)
+})
+
+test('invalidated student sessions show zero credit, the reason and an administrative closure', () => {
+  const session={id:70,assignment_id:5,status:'COMPLETED',time_in:'2026-10-07T01:00:00Z',time_out:'2026-10-07T03:00:00Z',credited_minutes:0,original_credited_minutes:60,day_invalidation_id:3,completion_reason:'DAY_INVALIDATED',attendance_outcome:'DAY_INVALIDATED',day_invalidation:{id:3,service_date:'2026-10-07',reason:'Student did not return',performed_by_name:'Test Staff',created_at:'2026-10-07T03:00:00Z'}}
+  const html=render('StudentCommunityService',{dtr:{assignments:[],sessions:[session]}})
+  assert.match(html,/Day Invalidated/);assert.match(html,/Student did not return/);assert.match(html,/Test Staff/)
+  assert.match(html,/Administratively closed/);assert.match(html,/Credited<\/dt><dd>0m/)
+  assert.doesNotMatch(html,/>Invalidate Day<\/button>/)
 })

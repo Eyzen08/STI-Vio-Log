@@ -283,3 +283,8 @@
 .service-pause-history dd { margin:4px 0 12px; white-space:pre-wrap; }
 .service-workflow-modal textarea { font:inherit; color:var(--text-primary); background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:8px; padding:10px; }
 .qr-attendance .record-stage { display:block; }
+.service-invalidate-button, .service-attendance-controls button.service-invalidate-button { color: var(--status-danger-text); border-color: var(--border-subtle); background: var(--surface-raised); }
+.service-day-invalidated { border: 1px solid var(--border-subtle); border-radius: 4px; padding: 12px; margin-block: 12px; background: var(--status-danger-surface); overflow-wrap: anywhere; }
+.service-day-invalidated p { margin-block: 6px; }
+.service-day-sessions { padding-inline-start: 20px; overflow-wrap: anywhere; }
+.service-invalidation-warning { padding: 12px; border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--status-warning-text); background: var(--status-warning-surface); }

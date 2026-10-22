@@ -4,6 +4,8 @@ import { serviceSessionTiming } from '../lib/departmentService.js'
 import useServiceClock from '../lib/useServiceClock.js'
 import Modal from './Modal.jsx'
 import ServiceTimeOutDialog from './ServiceTimeOutDialog.jsx'
+import ServiceDayInvalidation from './ServiceDayInvalidation.jsx'
+import { manilaDateKey } from '../lib/dashboardAnalytics.js'
 import '../styles/community-workflow.css'
 
 export default function ServiceAttendanceControls({ session, token, onSaved, supervisingOfficerId, initialNotes = '', disabled = false }) {
@@ -45,6 +47,7 @@ export default function ServiceAttendanceControls({ session, token, onSaved, sup
     <div className="service-attendance-controls" aria-label="Attendance Actions">
       <button type="button" className="secondary-button" disabled={disabled || busy || limitReached} onClick={() => { setError(''); if (session.paused_at) change('resume'); else setDialog('pause') }}>{busy ? 'Saving…' : session.paused_at ? 'Resume' : 'Pause'}</button>
       <button type="button" className="time-out-button" disabled={disabled || busy} onClick={() => setDialog('time-out')}>Time Out</button>
+      {token && <ServiceDayInvalidation assignmentId={session.assignment_id} date={session.service_date?.slice(0,10) || (session.time_in ? manilaDateKey(session.time_in) : '')} token={token} disabled={disabled||busy||Boolean(dialog)} onSaved={onSaved}/>}
     </div>
     {error && dialog !== 'pause' && <p className="error-message" role="alert">{error}</p>}
     {dialog === 'pause' && <Modal title="Pause Service" className="service-workflow-modal" onClose={() => { if (!busy) setDialog('') }}>

@@ -44,7 +44,8 @@ const loadDTRReport = async (req) => {
                 COUNT(*) FILTER (WHERE css.status = 'COMPLETED')::int AS total_completed_sessions,
                 COALESCE(SUM(css.worked_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::int AS total_worked_minutes,
                 COALESCE(SUM(css.credited_minutes) FILTER (WHERE css.status = 'COMPLETED'), 0)::float8 AS total_credited_minutes,
-                (ARRAY_AGG(css.service_condition ORDER BY COALESCE(css.time_out, css.time_in) DESC, css.id DESC)
+                COALESCE(SUM(css.original_credited_minutes),0)::float8 AS invalidated_credit_minutes,
+                (ARRAY_AGG(CASE WHEN css.day_invalidation_id IS NOT NULL THEN 'DAY_INVALIDATED' ELSE css.service_condition END ORDER BY COALESCE(css.time_out, css.time_in) DESC, css.id DESC)
                     FILTER (WHERE css.status = 'COMPLETED'))[1] AS attendance_outcome,
                 MIN(css.time_in) AS first_attendance_at, MAX(COALESCE(css.time_out, css.time_in)) AS latest_attendance_at
          FROM community_service_sessions css JOIN community_service_assignments a ON a.id = css.assignment_id
@@ -66,7 +67,12 @@ const loadDTRReport = async (req) => {
          FROM community_service_hour_corrections h JOIN community_service_assignments a ON a.id = h.assignment_id
          JOIN students s ON s.id = a.student_id LEFT JOIN departments d ON d.id = a.department_id
          WHERE 1=1${correctionFilters} ORDER BY h.created_at DESC, h.id DESC`, correctionParams);
-    return { success: true, report_type: "community_service_dtr", timezone: "Asia/Manila", filters: { from: from || null, to: to || null, department_id: effectiveDepartment ? Number(effectiveDepartment) : null, student_id: student_id ? Number(student_id) : null, assignment_id: assignment_id ? Number(assignment_id) : null }, totals, total_records: result.rows.length, data: result.rows, hourCorrections: corrections.rows, generated_at: new Date().toISOString() };
+    const invalidations=await pool.query(`SELECT DISTINCT h.*,s.first_name,s.last_name,s.student_number,d.department_name,u.username AS performed_by_name
+        FROM community_service_day_invalidations h JOIN community_service_sessions css ON css.day_invalidation_id=h.id
+        JOIN community_service_assignments a ON a.id=h.assignment_id JOIN students s ON s.id=a.student_id
+        JOIN departments d ON d.id=a.department_id JOIN users u ON u.id=h.performed_by_user_id
+        WHERE 1=1${filters} ORDER BY h.created_at DESC,h.id DESC`,params);
+    return { success: true, report_type: "community_service_dtr", timezone: "Asia/Manila", filters: { from: from || null, to: to || null, department_id: effectiveDepartment ? Number(effectiveDepartment) : null, student_id: student_id ? Number(student_id) : null, assignment_id: assignment_id ? Number(assignment_id) : null }, totals, total_records: result.rows.length, data: result.rows, hourCorrections: corrections.rows, dayInvalidations: invalidations.rows, generated_at: new Date().toISOString() };
 };
 const getDTRReport = async (req, res) => {
   try { return res.json(await loadDTRReport(req)); } catch (error) { return fail(res, error); }

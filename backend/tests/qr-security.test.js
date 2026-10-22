@@ -79,7 +79,7 @@ test('admin and department staff can verify a completed student without a client
     if (String(sql).includes('officer_department_assignments')) return {rows:[{id:5}]};
     if (String(sql).includes('WHERE s.qr_code=$1')) return {rows:[{id:40,first_name:'Test',last_name:'Student'}]};
     if (String(sql)==='SELECT clock_timestamp() AS now') return {rows:[{now:new Date('2026-10-08T01:00:00Z')}]};
-    if (String(sql).includes('SUM(credited_minutes)')) return {rows:[{minutes:0}]};
+    if (String(sql).includes('SUM(COALESCE(invalidated_allowance_minutes,credited_minutes))')) return {rows:[{minutes:0}]};
     return {rows:[]};
   };
   try {

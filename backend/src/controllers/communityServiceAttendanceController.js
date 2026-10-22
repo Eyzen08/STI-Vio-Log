@@ -5,6 +5,7 @@ const { assertAllowedFields } = require("../utils/validators");
 const { emitAttendanceChange, emitCommunityServiceChange } = require('../services/realtimeEventService');
 const { emitNotificationChange } = require('../services/realtimeEventService');
 const { notifyAttendanceFailure } = require('../services/notificationService');
+const { previewDayInvalidation, invalidateServiceDay } = require('../services/communityServiceSessionService');
 
 const rejectionCodes = new Set(['ACTIVE_SESSION_EXISTS', 'NO_ACTIVE_SESSION', 'NO_AVAILABLE_OFFICER', 'OFFICER_SELECTION_REQUIRED', 'UNAUTHORIZED_OFFICER', 'OFFICER_TRANSFER_REQUIRED']);
 const recordFailureNotice = async (req, action, error) => {
@@ -186,4 +187,21 @@ const changePause = (paused) => async (req,res) => {
         return res.json({success:true,message:paused?'Service time paused':'Service time resumed',...result});
     } catch(error) { return sendError(res,error,paused?'pause service session':'resume service session'); }
 };
-module.exports = { communityServiceTimeIn, communityServiceTimeOut, pauseCommunityServiceSession:changePause(true), resumeCommunityServiceSession:changePause(false), getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters, getTimeOutPreview };
+const getDayInvalidationPreview = async (req,res) => {
+    try {
+        assertAllowedFields(req.query,[]);
+        const result=await previewDayInvalidation({assignmentId:req.params.assignmentId,date:req.params.serviceDate,actor:req.user});
+        return res.json({success:true,...result});
+    } catch(error) {return sendError(res,error,'preview service day invalidation');}
+};
+const invalidateCommunityServiceDay = async (req,res) => {
+    try {
+        assertAllowedFields(req.body,['reason','preview_version']);
+        const result=await invalidateServiceDay({assignmentId:req.params.assignmentId,date:req.params.serviceDate,actor:req.user,
+            reason:req.body.reason,previewVersion:req.body.preview_version,ipAddress:req.ip});
+        if (!result.already_invalidated) await emitCommunityServiceChange({assignmentId:result.assignment.id,
+            studentId:result.assignment.student_id,departmentId:result.assignment.department_id,action:'DAY_INVALIDATED'});
+        return res.json({success:true,...result});
+    } catch(error) {return sendError(res,error,'invalidate service day');}
+};
+module.exports = { communityServiceTimeIn, communityServiceTimeOut, pauseCommunityServiceSession:changePause(true), resumeCommunityServiceSession:changePause(false), getCommunityServiceAttendance, getCommunityServiceSessions, reviewCommunityServiceResult, getPendingServiceResults, getActiveDepartmentSessions, parseDateFilters, getTimeOutPreview, getDayInvalidationPreview, invalidateCommunityServiceDay };

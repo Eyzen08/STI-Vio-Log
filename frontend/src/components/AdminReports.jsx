@@ -7,6 +7,7 @@ import { studentIdFromSearch, studentOptionLabel } from '../lib/violationAdmin.j
 import { useActionLock } from '../lib/asyncAction.js'
 import AsyncActionButton from './AsyncActionButton.jsx'
 import ServiceHourCorrections from './ServiceHourCorrections.jsx'
+import { ServiceDayInvalidationHistory } from './ServiceDayInvalidation.jsx'
 
 const initialFilters = type => ({ search:'', student_id:'', status:'', from_date:'', to_date:'', sort_by:defaultReportSort(type) })
 
@@ -87,6 +88,7 @@ export default function AdminReports({ token, students = [] }) {
       {filterSummary.length>0&&<div className="report-applied-filters" aria-label="Generated Report Filters">{filterSummary.map(label=><span key={label}>{label}</span>)}</div>}
       {busy==='generate'?<p className="empty-state" role="status">Generating your report…</p>:!applied?<p className="empty-state">Choose filters and generate a report to see results.</p>:!rows.length?<p className="empty-state">No records match these filters. Try another selection.</p>:<ReportTable type={applied.type} rows={rows.slice((page-1)*50,page*50)}/>}
       {applied?.type==='dtr'&&busy!=='generate'&&<ServiceHourCorrections corrections={result.hourCorrections || []}/>}
+      {applied?.type==='dtr'&&busy!=='generate'&&<ServiceDayInvalidationHistory invalidations={result.dayInvalidations || []}/>}
       {rows.length>50&&<nav className="report-pagination" aria-label="Report Result Pages"><button type="button" className="secondary-button" disabled={Boolean(busy)||page===1} onClick={()=>setPage(value=>value-1)}>Previous</button><span role="status">Page {page} of {Math.ceil(rows.length/50)} · {rows.length} records</span><button type="button" className="secondary-button" disabled={Boolean(busy)||page>=Math.ceil(rows.length/50)} onClick={()=>setPage(value=>value+1)}>Next</button></nav>}
     </section>
   </section>

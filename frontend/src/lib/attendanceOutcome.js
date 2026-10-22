@@ -1,4 +1,5 @@
 const ATTENDANCE_OUTCOME_LABELS = {
+  DAY_INVALIDATED: 'Day Invalidated',
   TODAYS_SERVICE_COMPLETED: "Today’s Service Completed",
   LEFT_EARLY: 'Left Early',
   SERVICE_COMPLETED: 'Service Completed',

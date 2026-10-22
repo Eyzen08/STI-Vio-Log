@@ -9,7 +9,7 @@ const components = {}
 before(async () => {
   for (const name of ['StudentAcademicFields', 'PhoneInput', 'DepartmentDtr']) {
     const bundle = await build({ configFile: false, plugins: [react()], logLevel: 'silent', build: { ssr: `src/components/${name}.jsx`, write: false } })
-    const code = bundle.output[0].code.replace(/from "(react(?:\/[^" ]+)?)"/g, (_, id) => `from "${import.meta.resolve(id)}"`)
+    const code = bundle.output[0].code.replace(/(from |import )"(react(?:-dom)?(?:\/[^" ]+)?)"/g, (_, prefix, id) => `${prefix}"${import.meta.resolve(id)}"`)
     components[name] = (await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)).default
   }
 })

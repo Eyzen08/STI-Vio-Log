@@ -56,6 +56,7 @@ const createReportWorkbook = (type, payload, filters = {}, generatedAt = new Dat
   };
   addSheet(type==='dtr'?'DTR Attendance Report':REPORT_TITLES[type],type,payload.data || []);
   if(type==='dtr')addSheet('Hour Corrections','corrections',payload.hourCorrections || []);
+  if(type==='dtr')addSheet('Invalidated Days','invalidations',payload.dayInvalidations || []);
   return workbook;
 };
 module.exports = { createReportWorkbook, reportFilename, formatReportSheet };

@@ -4,7 +4,7 @@ const { notifyStudent, notifyAttendanceStaff } = require('./notificationService'
 const { serviceDate, serviceAllowance, validateDuration, sessionTiming, calculateCredit } = require('./communityServiceTiming');
 
 const dailyCredit = async (client, studentId, date, excludedSessionId = null) => Number((await client.query(
-    `SELECT COALESCE(SUM(credited_minutes),0) AS minutes FROM community_service_sessions
+    `SELECT COALESCE(SUM(COALESCE(invalidated_allowance_minutes,credited_minutes)),0) AS minutes FROM community_service_sessions
      WHERE student_id=$1 AND service_date=$2 AND time_out IS NOT NULL AND id IS DISTINCT FROM $3::bigint`,
     [studentId, date, excludedSessionId]
 )).rows[0].minutes);
@@ -39,13 +39,21 @@ const attachSessionPauses = async (client, sessions) => {
 const hydrateSessions = async (client, sessions) => {
     if (!sessions.length) return [];
     sessions = await attachSessionPauses(client, sessions);
+    const invalidations = (await client.query(`SELECT css.id, to_jsonb(d)||jsonb_build_object('performed_by_name',u.username) AS day_invalidation
+        FROM community_service_sessions css JOIN community_service_day_invalidations d ON d.id=css.day_invalidation_id
+        JOIN users u ON u.id=d.performed_by_user_id WHERE css.id=ANY($1::bigint[])`,
+    [sessions.map(session => session.id || session.session_id)])).rows;
+    const bySession = new Map(invalidations.map(row => [String(row.id),row.day_invalidation]));
+    sessions = sessions.map(session => ({...session,day_invalidation:bySession.get(String(session.id || session.session_id)) || null,
+        ...(session.day_invalidation_id ? {attendance_outcome:'DAY_INVALIDATED'} : {})}));
     const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
-    const totals = (await client.query(`SELECT student_id,service_date::text,COALESCE(SUM(credited_minutes),0) AS minutes
+    const totals = (await client.query(`SELECT student_id,service_date::text,COALESCE(SUM(COALESCE(invalidated_allowance_minutes,credited_minutes)),0) AS minutes
         FROM community_service_sessions WHERE student_id=ANY($1::bigint[]) AND time_out IS NOT NULL
         GROUP BY student_id,service_date`, [[...new Set(sessions.map(s => s.student_id))]])).rows;
     const byDay = new Map(totals.map(row => [`${row.student_id}:${row.service_date}`, Number(row.minutes)]));
     return sessions.map(session => {
         const date = session.service_date instanceof Date ? serviceDate(session.time_in) : String(session.service_date).slice(0,10);
+        session={...session,service_date:date};
         if (session.time_out) {
             if (!session.session_type) return {...session,server_time:new Date(now).toISOString()};
             const cutoffHours = Math.max(0,(new Date(session.credit_cutoff_at)-new Date(session.time_in))/3600000);
@@ -188,6 +196,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
         if (active.rows.length) throw new CommunityServiceSessionError("Student already has an active community service session", 409, "ACTIVE_SESSION_EXISTS");
 
         const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+        await assertServiceDayAvailable(client,assignment.id,serviceDate(now));
         const completedToday = await dailyCredit(client, assignment.student_id, serviceDate(now));
         const allowance = serviceAllowance(assignment, completedToday, now);
         validateDuration(sessionType ?? 'OPEN_TIME', selectedDurationMinutes, allowance.available_minutes, Number(assignment.remaining_hours) * 60);
@@ -231,7 +240,7 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
         });
         await notifyAttendanceStaff(client, { studentId:assignment.student_id, departmentId, supervisorId:supervisor.officer_user_id, sessionId:session.id, assignmentId:assignment.id, action:'TIME_IN', occurredAt:session.time_in });
         await client.query("COMMIT");
-        return { assignment, attendance, session: { ...session, ...sessionTiming(session, assignment, completedToday, now) }, allowance, supervising_officer: supervisor, scanLog };
+        return { assignment, attendance, session: { ...session, ...sessionTiming(session, assignment, completedToday, now),service_date:allowance.service_date }, allowance, supervising_officer: supervisor, scanLog };
     } catch (error) {
         try { await client.query("ROLLBACK"); } catch (_) {}
         if (error.code === "23505" && ['uq_community_service_active_session','uq_service_active_student'].includes(error.constraint)) {
@@ -405,6 +414,7 @@ const reviewServiceResult = async ({ sessionId, decision, reviewNotes, actor, ip
         await lockStudent(client, identity.assignment_id);
         const session = (await client.query(`SELECT css.*,a.student_id,a.violation_id,a.required_hours,a.completed_hours,a.status AS assignment_status,v.status AS violation_status FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN violations v ON v.id=a.violation_id WHERE css.id=$1 FOR UPDATE OF css,a`,[Number(sessionId)])).rows[0];
         if(!session) throw new CommunityServiceSessionError('Service result not found',404);
+        await assertServiceDayAvailable(client,session.assignment_id,serviceDate(session.time_in));
         if(session.review_status!=='PENDING') throw new CommunityServiceSessionError('Service result was already reviewed',409);
         await recheckRecorder(client,actor,session.department_id);
         if(normalizedDecision==='REJECT'){
@@ -495,4 +505,110 @@ const setSessionPaused = async ({ sessionId, departmentId, actor, reason, paused
     } finally { client.release(); }
 };
 
-module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, setSessionPaused, reviewServiceResult, calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, availableSupervisors, chooseSupervisor, ATTENDANCE_OUTCOMES, dailyCredit, hydrateSessions, previewTimeOut };
+const assertServiceDayAvailable = async (client,assignmentId,date) => {
+    if ((await client.query('SELECT id FROM community_service_day_invalidations WHERE assignment_id=$1 AND service_date=$2',[assignmentId,date])).rows.length) {
+        throw new CommunityServiceSessionError('This service day was invalidated. New credit for this assignment can begin on a later date.',409,'SERVICE_DAY_INVALIDATED');
+    }
+};
+
+const validateDayRequest = (assignmentId,date,actor) => {
+    if (!/^\d+$/.test(String(assignmentId)) || Number(assignmentId)<1) throw new CommunityServiceSessionError('A valid assignment ID is required',400);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date)) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))
+        || new Date(`${date}T00:00:00Z`).toISOString().slice(0,10)!==date) throw new CommunityServiceSessionError('A valid service date is required',400);
+    if (!['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD'].includes(actor?.role)) throw new CommunityServiceSessionError('Only authorized attendance staff can invalidate service days',403);
+};
+
+// Both preview and confirmation serialize against every other change to this student's service credit.
+const loadDayInvalidation = async (client,{assignmentId,date,actor}) => {
+    validateDayRequest(assignmentId,date,actor);
+    await lockStudent(client,assignmentId);
+    const assignment = await loadAssignment(client,assignmentId,true);
+    if (actor.role==='DEPARTMENT_HEAD' && Number(actor.department_id)!==Number(assignment.department_id)) {
+        throw new CommunityServiceSessionError('This assignment is outside your authorized department',403);
+    }
+    await recheckRecorder(client,actor,assignment.department_id);
+    const now = (await client.query('SELECT clock_timestamp() AS now')).rows[0].now;
+    if (date>serviceDate(now)) throw new CommunityServiceSessionError('Future service dates cannot be invalidated',400);
+    const existing = (await client.query('SELECT * FROM community_service_day_invalidations WHERE assignment_id=$1 AND service_date=$2',[assignmentId,date])).rows[0];
+    if (existing) return {assignment,invalidation:existing,already_invalidated:true};
+    if (!['OPEN','IN_PROGRESS'].includes(assignment.status) || assignment.violation_status!=='OPEN') {
+        throw new CommunityServiceSessionError('Only open or in-progress assignments with an open violation can be invalidated',409);
+    }
+    const sessions = await attachSessionPauses(client,(await client.query(
+        'SELECT * FROM community_service_sessions WHERE assignment_id=$1 AND service_date=$2 ORDER BY id FOR UPDATE',[assignmentId,date])).rows);
+    if (!sessions.length) throw new CommunityServiceSessionError('No attendance recorded for this assignment on this date',404);
+    const round = value => Math.round(value*1e6)/1e6;
+    const removed = round(sessions.reduce((sum,session)=>sum+Number(session.credited_minutes || 0),0));
+    const completed = round(Number(assignment.completed_hours)-removed/60);
+    if (completed<0) throw new CommunityServiceSessionError('Earlier office corrections conflict with this day’s credit. Ask the Discipline Office to reconcile the total first.',409,'CREDIT_RECONCILIATION_REQUIRED');
+    const student = (await client.query('SELECT first_name,last_name,student_number FROM students WHERE id=$1',[assignment.student_id])).rows[0];
+    const previewVersion = require('node:crypto').createHash('sha256').update(JSON.stringify({assignment,sessions})).digest('hex');
+    return {assignment,student,service_date:date,sessions,removed_credit_minutes:removed,new_completed_hours:completed,
+        new_remaining_hours:round(Number(assignment.required_hours)-completed),preview_version:previewVersion,now};
+};
+
+const previewDayInvalidation = async (options) => {
+    const client=await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const result=await loadDayInvalidation(client,options);
+        await client.query('COMMIT');
+        return result;
+    } catch(error) { await client.query('ROLLBACK'); throw error; }
+    finally {client.release();}
+};
+
+const invalidateServiceDay = async ({assignmentId,date,actor,reason,previewVersion,ipAddress}) => {
+    if (typeof reason!=='string' || !reason.trim() || reason.trim().length>500) throw new CommunityServiceSessionError('Enter an invalidation reason of 1 to 500 characters',400);
+    if (typeof previewVersion!=='string' || !/^[a-f0-9]{64}$/.test(previewVersion)) throw new CommunityServiceSessionError('Preview this service day before confirming',400);
+    const client=await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const preview=await loadDayInvalidation(client,{assignmentId,date,actor});
+        if (preview.already_invalidated) {await client.query('COMMIT');return preview;}
+        if (preview.preview_version!==previewVersion) throw new CommunityServiceSessionError('Attendance changed. Review the updated preview before confirming again.',409,'STALE_DAY_PREVIEW');
+        const {assignment,sessions,now}=preview;
+        const invalidation=(await client.query(`INSERT INTO community_service_day_invalidations
+            (assignment_id,service_date,performed_by_user_id,performed_by_role,reason,removed_credit_minutes,previous_completed_hours,new_completed_hours,created_at)
+            VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [assignmentId,date,actor.id,actor.role,reason.trim(),preview.removed_credit_minutes,assignment.completed_hours,preview.new_completed_hours,now])).rows[0];
+        for (const session of sessions) {
+            const active=!session.time_out;
+            // Uncredited elapsed time consumes allowance too, but is never added to completed service.
+            const credit=active ? calculateCredit(session,assignment,await dailyCredit(client,assignment.student_id,date,session.id),now) : null;
+            await client.query(`UPDATE community_service_sessions SET day_invalidation_id=$2,
+                original_credited_minutes=COALESCE(credited_minutes,0),invalidated_allowance_minutes=$3,credited_minutes=0,
+                time_out=COALESCE(time_out,$4),worked_minutes=COALESCE(worked_minutes,$5),status='COMPLETED',
+                time_out_by_user_id=COALESCE(time_out_by_user_id,$6),time_out_role=COALESCE(time_out_role,$7),
+                completion_reason=CASE WHEN time_out IS NULL THEN 'DAY_INVALIDATED' ELSE completion_reason END,
+                service_condition=CASE WHEN time_out IS NULL THEN 'DAY_INVALIDATED' ELSE service_condition END,
+                review_status=CASE WHEN review_status='PENDING' OR time_out IS NULL THEN 'REJECTED' ELSE review_status END,
+                updated_at=$4 WHERE id=$1`,
+            [session.id,invalidation.id,active ? credit.creditedMinutes : Number(session.credited_minutes || 0),now,credit?.workedMinutes || 0,actor.id,actor.role]);
+            if (active) {
+                await client.query('UPDATE community_service_session_pauses SET ended_at=$2,ended_by_user_id=$3 WHERE session_id=$1 AND ended_at IS NULL',[session.id,now,actor.id]);
+                await client.query('UPDATE community_service_session_officer_history SET ends_at=$2 WHERE session_id=$1 AND ends_at IS NULL',[session.id,now]);
+            }
+        }
+        const updated=(await client.query(`UPDATE community_service_assignments SET completed_hours=$2,remaining_hours=$3,
+            status=CASE WHEN $2::numeric>0 THEN 'IN_PROGRESS'::violation_status ELSE 'OPEN'::violation_status END,completed_at=NULL
+            WHERE id=$1 RETURNING *`,[assignmentId,preview.new_completed_hours,preview.new_remaining_hours])).rows[0];
+        await client.query('UPDATE violations SET completed_service_hours=$2,updated_at=$3 WHERE id=$1',[assignment.violation_id,preview.new_completed_hours,now]);
+        await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address,actor_role,reason,result)
+            VALUES($1,'SERVICE_DAY_INVALIDATE','community_service_assignments',$2,$3,$4,$5,$6,'SUCCESS')`,
+        [actor.id,assignmentId,JSON.stringify({assignment_id:Number(assignmentId),service_date:date,removed_credit_minutes:preview.removed_credit_minutes,reason:reason.trim(),invalidation_id:Number(invalidation.id)}),ipAddress || null,actor.role,reason.trim()]);
+        await notifyStudent(client,assignment.student_id,{title:'Service day invalidated',
+            message:`Assignment #${assignmentId}, ${date}: the day’s service credit was canceled. Reason: ${reason.trim()}`,
+            type:'SERVICE_DAY_INVALIDATED',category:'COMMUNITY_SERVICE',resourceType:'community_service_assignments',resourceId:assignmentId,
+            linkPath:`/student/community-service?assignment_id=${assignmentId}`,metadata:{assignment_id:Number(assignmentId)},eventKey:`service-day:${invalidation.id}:invalidated`});
+        await notifyAttendanceStaff(client,{studentId:assignment.student_id,departmentId:assignment.department_id,
+            supervisorId:sessions[sessions.length-1].supervising_officer_user_id,sessionId:sessions[sessions.length-1].id,assignmentId,
+            action:'DAY_INVALIDATED',occurredAt:now,eventSuffix:String(invalidation.id)});
+        const hydrated=await hydrateSessions(client,(await client.query('SELECT * FROM community_service_sessions WHERE day_invalidation_id=$1 ORDER BY id',[invalidation.id])).rows);
+        await client.query('COMMIT');
+        return {assignment:updated,invalidation,sessions:hydrated};
+    } catch(error) {try {await client.query('ROLLBACK');} catch(_) {} throw error;}
+    finally {client.release();}
+};
+
+module.exports = { CommunityServiceSessionError, recordTimeIn, recordTimeOut, setSessionPaused, reviewServiceResult, calculateSessionCredit, calculateSessionWork, validateAttendanceOutcome, availableSupervisors, chooseSupervisor, ATTENDANCE_OUTCOMES, dailyCredit, hydrateSessions, previewTimeOut, assertServiceDayAvailable, previewDayInvalidation, invalidateServiceDay };

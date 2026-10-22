@@ -28,6 +28,11 @@ pool.connect = (callback) => {
 };
 pool.query = (sql,params) => clockQuery(sql,params,originalQuery);
 const actor={id:1,role:'DISCIPLINE_ADMIN'};
+const dayPreview = (a,date='2026-10-07',who=actor) => service.previewDayInvalidation({assignmentId:a.id,date,actor:who});
+const invalidateDay = async (a,date='2026-10-07',options={}) => {
+  const preview = options.preview || await dayPreview(a,date,options.actor || actor);
+  return service.invalidateServiceDay({assignmentId:a.id,date,actor,reason:'Student did not return',previewVersion:preview.preview_version,...options});
+};
 let studentId,departmentId;
 const assignment = async (hours=20) => {
   const v=(await pool.query(`INSERT INTO violations(student_id,violation_type_id,incident_date,description,required_service_hours)
@@ -35,7 +40,12 @@ const assignment = async (hours=20) => {
   return (await pool.query(`INSERT INTO community_service_assignments(violation_id,student_id,department_id,department_head_id,required_hours,remaining_hours)
     VALUES($1,$2,$3,1,$4,$4) RETURNING *`,[v.id,studentId,departmentId,hours])).rows[0];
 };
-const start = (a,type='FIXED',minutes=120) => service.recordTimeIn({assignmentId:a.id,expectedStudentId:studentId,departmentId,supervisingOfficerId:2,actor,sessionType:type,selectedDurationMinutes:type==='OPEN_TIME'?null:minutes});
+const start = async (a,type='FIXED',minutes=120) => {
+  const result=await service.recordTimeIn({assignmentId:a.id,expectedStudentId:studentId,departmentId,supervisingOfficerId:2,actor,sessionType:type,selectedDurationMinutes:type==='OPEN_TIME'?null:minutes});
+  // Keep the responsibility fixture on the same controlled clock as the session.
+  await pool.query('UPDATE community_service_session_officer_history SET starts_at=$2 WHERE session_id=$1',[result.session.id,result.session.time_in]);
+  return result;
+};
 const finish = (a,session) => service.recordTimeOut({assignmentId:a.id,sessionId:session.id,expectedStudentId:studentId,departmentId,actor});
 const pause = (session,reason='Scheduled break',overrides={}) => service.setSessionPaused({sessionId:session.id,departmentId,actor,paused:true,reason,...overrides});
 const resume = (session,overrides={}) => service.setSessionPaused({sessionId:session.id,departmentId,actor,paused:false,...overrides});
@@ -369,4 +379,137 @@ test('audit failure rolls back a pause and resume rechecks live authorization',a
   await pool.query('UPDATE users SET is_active=FALSE,deactivated_at=CURRENT_TIMESTAMP WHERE id=1');
   await assert.rejects(resume(opened.session),error=>error.statusCode===403);
   assert.equal((await pauseRows(opened.session))[0].ended_at,null);
+});
+
+test('day invalidation removes all day credits, closes paused attendance and retries without a second deduction',async()=>{
+  const a=await assignment(),first=await start(a,'OPEN_TIME');
+  instant='2026-10-07T02:00:00Z';await finish(a,first.session);
+  const second=await start(a,'OPEN_TIME');
+  instant='2026-10-07T03:00:00Z';await pause(second.session,'Break');
+  instant='2026-10-07T04:00:00Z';
+  const preview=await dayPreview(a);
+  assert.equal(preview.sessions.length,2);assert.equal(preview.removed_credit_minutes,60);
+  const result=await invalidateDay(a,'2026-10-07',{preview});
+  assert.equal(Number(result.assignment.completed_hours),0);assert.equal(Number(result.assignment.remaining_hours),20);
+  const sessions=(await pool.query('SELECT * FROM community_service_sessions WHERE assignment_id=$1 ORDER BY id',[a.id])).rows;
+  assert.ok(sessions.every(row=>row.day_invalidation_id&&Number(row.credited_minutes)===0&&row.time_out));
+  assert.equal(Number(sessions[0].original_credited_minutes),60);
+  assert.equal(sessions[1].completion_reason,'DAY_INVALIDATED');
+  assert.equal((await pauseRows(second.session))[0].ended_by_user_id,actor.id.toString());
+  assert.equal(Number(await service.dailyCredit(pool,studentId,'2026-10-07')),120);
+  assert.equal(Number((await pool.query("SELECT COUNT(*) AS n FROM community_service_attendance WHERE attendance_type='TIME_OUT'")).rows[0].n),1);
+  const retry=await invalidateDay(a,'2026-10-07',{preview});assert.equal(retry.already_invalidated,true);
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS n FROM community_service_day_invalidations')).rows[0].n),1);
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS n FROM community_service_hour_corrections')).rows[0].n),0);
+  await assert.rejects(start(a,'OPEN_TIME'),e=>e.code==='SERVICE_DAY_INVALIDATED');
+  instant='2026-10-08T01:00:00Z';assert.ok((await start(a,'OPEN_TIME')).session);
+});
+
+test('past date invalidation preserves other dates, assignments, fractional credit and audit history',async()=>{
+  const a=await assignment(),other=await assignment();let opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T02:00:00Z';await finish(a,opened.session);
+  opened=await start(other,'OPEN_TIME');instant='2026-10-07T03:00:00Z';await finish(other,opened.session);
+  instant='2026-10-08T01:00:00Z';opened=await start(a,'OPEN_TIME');
+  instant='2026-10-08T02:00:00Z';await finish(a,opened.session);
+  await pool.query('UPDATE community_service_sessions SET credited_minutes=59.99994 WHERE assignment_id=$1 AND service_date=$2',[a.id,'2026-10-07']);
+  await pool.query('UPDATE community_service_assignments SET completed_hours=1.999999,remaining_hours=18.000001 WHERE id=$1',[a.id]);
+  await pool.query('UPDATE violations SET completed_service_hours=1.999999 WHERE id=$1',[a.violation_id]);
+  const before=(await pool.query('SELECT * FROM community_service_progress_history ORDER BY id')).rows;
+  const result=await invalidateDay(a);
+  assert.equal(Number(result.assignment.completed_hours),1);assert.equal(Number(result.assignment.remaining_hours),19);
+  assert.equal(Number(await service.dailyCredit(pool,studentId,'2026-10-07')),119.99994);
+  assert.equal(Number((await pool.query('SELECT completed_hours FROM community_service_assignments WHERE id=$1',[other.id])).rows[0].completed_hours),1);
+  assert.deepEqual((await pool.query('SELECT * FROM community_service_progress_history ORDER BY id')).rows,before);
+  const hydrated=(await currentSession(opened.session));assert.equal(hydrated.day_invalidation,null);
+});
+
+test('day invalidation requires a current preview, valid reason, real nonfuture service date and an open assignment',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T02:00:00Z';const preview=await dayPreview(a);
+  await pause(opened.session,'Changed after preview');
+  await assert.rejects(invalidateDay(a,'2026-10-07',{preview}),e=>e.code==='STALE_DAY_PREVIEW');
+  for(const reason of ['', ' ', 'x'.repeat(501),null]) await assert.rejects(invalidateDay(a,'2026-10-07',{reason}),e=>e.statusCode===400);
+  for(const date of ['2026-02-30','2026-10-08','bad']) await assert.rejects(dayPreview(a,date),e=>e.statusCode===400);
+  await assert.rejects(dayPreview(a,'2026-10-06'),e=>e.statusCode===404);
+  await finish(a,opened.session);
+  await pool.query("UPDATE community_service_assignments SET status='COMPLETED' WHERE id=$1",[a.id]);
+  await assert.rejects(dayPreview(a),e=>e.statusCode===409);
+});
+
+test('authorized heads may invalidate only their active department and live authorization is rechecked',async()=>{
+  const a=await assignment();await start(a,'OPEN_TIME');
+  const head={id:2,role:'DEPARTMENT_HEAD',department_id:departmentId};
+  await assert.rejects(dayPreview(a,'2026-10-07',{id:3,role:'STUDENT'}),e=>e.statusCode===403);
+  await assert.rejects(dayPreview(a,'2026-10-07',{...head,department_id:Number(departmentId)+1}),e=>e.statusCode===403);
+  const preview=await dayPreview(a,'2026-10-07',head);
+  await pool.query('UPDATE department_heads SET qr_scanner_enabled=FALSE WHERE user_id=2');
+  await assert.rejects(invalidateDay(a,'2026-10-07',{actor:head,preview}),e=>e.statusCode===403);
+  await pool.query('UPDATE department_heads SET qr_scanner_enabled=TRUE WHERE user_id=2');
+  const result=await invalidateDay(a,'2026-10-07',{actor:head,preview});assert.equal(result.invalidation.performed_by_user_id,'2');
+});
+
+test('office corrections cannot make cancellation negative and audit failure rolls the whole cancellation back',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');instant='2026-10-07T02:00:00Z';await finish(a,opened.session);
+  await pool.query('UPDATE community_service_assignments SET completed_hours=0,remaining_hours=20 WHERE id=$1',[a.id]);
+  await assert.rejects(dayPreview(a),e=>e.code==='CREDIT_RECONCILIATION_REQUIRED');
+  await pool.query('UPDATE community_service_assignments SET completed_hours=1,remaining_hours=19 WHERE id=$1',[a.id]);
+  const preview=await dayPreview(a);
+  await pool.query(`CREATE FUNCTION test_fail_invalidation_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'forced invalidation rollback'; END $$`);
+  await pool.query('CREATE TRIGGER test_fail_invalidation_audit BEFORE INSERT ON audit_logs FOR EACH ROW EXECUTE FUNCTION test_fail_invalidation_audit()');
+  try {await assert.rejects(invalidateDay(a,'2026-10-07',{preview}),/forced invalidation rollback/)} finally {await pool.query('DROP FUNCTION test_fail_invalidation_audit() CASCADE')}
+  assert.equal(Number((await pool.query('SELECT COUNT(*) AS n FROM community_service_day_invalidations')).rows[0].n),0);
+  assert.equal(Number((await currentSession(opened.session)).credited_minutes),60);
+});
+
+test('concurrent time-out and day cancellation never double-credit or double-deduct',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');instant='2026-10-07T02:00:00Z';
+  const preview=await dayPreview(a);
+  const results=await Promise.allSettled([invalidateDay(a,'2026-10-07',{preview}),finish(a,opened.session)]);
+  for(const result of results.filter(row=>row.status==='rejected')) assert.equal(result.reason.statusCode,409);
+  const refreshed=await dayPreview(a);if(!refreshed.already_invalidated)await invalidateDay(a,'2026-10-07',{preview:refreshed});
+  assert.equal(Number((await currentSession(opened.session)).credited_minutes),0);
+  assert.equal(Number((await pool.query('SELECT completed_hours FROM community_service_assignments WHERE id=$1',[a.id])).rows[0].completed_hours),0);
+});
+
+test('invalidated days remain visible to QR verification, reports and students, with no legacy reapproval',async()=>{
+  const a=await assignment(),opened=await start(a,'OPEN_TIME');instant='2026-10-07T02:00:00Z';await finish(a,opened.session);
+  const result=await invalidateDay(a);
+  const res=()=>({statusCode:200,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
+  const qr=res();await require('../src/controllers/qrController').scanQrCode({user:actor,body:{qr_code:'OPAQUE-TEST'}},qr);
+  assert.equal(qr.statusCode,200);assert.equal(qr.body.assignment.day_invalidated,true);
+  assert.equal(qr.body.allowance.available_minutes,0);assert.equal(qr.body.allowance.daily_remaining_minutes,420);
+  await pool.query("UPDATE community_service_sessions SET review_status='PENDING' WHERE id=$1",[opened.session.id]);
+  await assert.rejects(service.reviewServiceResult({sessionId:opened.session.id,decision:'APPROVE',reviewNotes:'Legacy approval',actor}),e=>e.code==='SERVICE_DAY_INVALIDATED');
+  const reports=require('../src/controllers/communityServiceSessionReportController');
+  const report=await reports.loadDTRReport({user:actor,query:{from:'2026-10-07',to:'2026-10-07',assignment_id:a.id}});
+  assert.equal(report.totals.credited_minutes,0);assert.equal(report.data[0].invalidated_credit_minutes,60);
+  assert.equal(report.data[0].attendance_outcome,'DAY_INVALIDATED');assert.equal(report.dayInvalidations.length,1);
+  assert.equal(report.dayInvalidations[0].performed_by_name,'attendance_admin');
+  const empty=await reports.loadDTRReport({user:actor,query:{from:'2026-10-08'}});assert.equal(empty.dayInvalidations.length,0);
+  const student=res();await reports.getMyDTR({user:{id:3,role:'STUDENT'},query:{}},student);
+  assert.equal(student.body.sessions[0].day_invalidation.reason,'Student did not return');
+  assert.equal(student.body.sessions[0].attendance_outcome,'DAY_INVALIDATED');
+  const workbook=require('../src/services/reportExport').createReportWorkbook('dtr',report);
+  assert.ok(workbook.getWorksheet('Invalidated Days').getRow(7).values.includes('Student did not return'));
+  assert.equal(Number((await pool.query("SELECT COUNT(*) AS n FROM notifications WHERE notification_type='SERVICE_DAY_INVALIDATED'")).rows[0].n),1);
+  await assert.rejects(pool.query('UPDATE community_service_day_invalidations SET reason=$2 WHERE id=$1',[result.invalidation.id,'Erase reason']),/append-only/);
+  await assert.rejects(pool.query('DELETE FROM community_service_day_invalidations WHERE id=$1',[result.invalidation.id]),/append-only/);
+});
+
+test('zero-credit active cancellation crosses Manila midnight without moving its date or freeing allowance',async()=>{
+  const a=await assignment();instant='2026-10-07T15:30:00Z';const opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T15:40:00Z';await pause(opened.session,'Did not return');
+  instant='2026-10-08T01:00:00Z';const result=await invalidateDay(a);
+  assert.equal(Number(result.invalidation.removed_credit_minutes),0);
+  assert.equal(Number(await service.dailyCredit(pool,studentId,'2026-10-07')),10);
+  assert.equal(Number(await service.dailyCredit(pool,studentId,'2026-10-08')),0);
+  const newSession=await start(a,'OPEN_TIME');assert.equal(newSession.session.service_date,'2026-10-08');
+});
+
+test('invalidating one assignment does not grant extra daily allowance to another assignment',async()=>{
+  const a=await assignment(),other=await assignment(),opened=await start(a,'OPEN_TIME');
+  instant='2026-10-07T08:00:00Z';await finish(a,opened.session);await invalidateDay(a);
+  const next=await start(other,'OPEN_TIME');assert.equal(next.session.credit_limit_seconds,3600);
+  instant='2026-10-07T10:00:00Z';const result=await finish(other,next.session);
+  assert.equal(Number(result.session.credited_minutes),60);assert.equal(Number(await service.dailyCredit(pool,studentId,'2026-10-07')),480);
 });

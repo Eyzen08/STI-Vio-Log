@@ -7,13 +7,15 @@ import PortalIcon from './PortalIcon.jsx'
 import ManagementMetric from './ManagementMetric.jsx'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServicePauseHistory from './ServicePauseHistory.jsx'
+import ServiceDayInvalidation, { ServiceDayInvalidationDetails } from './ServiceDayInvalidation.jsx'
+import { manilaDateKey } from '../lib/dashboardAnalytics.js'
 import AsyncActionButton from './AsyncActionButton.jsx'
 import { communityServiceStudentLabel, communityServiceViolationLabel, eligibleServiceViolations, headsForDepartment, normalizedRequiredMinutes, serviceDepartmentOptions } from '../lib/communityServiceAdmin.js'
 import { isActiveServiceSession } from '../lib/departmentService.js'
 import { formatDisplayLabel, formatDuration, formatManilaDateTime } from '../lib/displayFormat.js'
 import '../styles/community-workflow.css'
 
-function ServiceSessionDetails({ assignmentId, sessionId, token }) {
+function ServiceSessionDetails({ assignmentId, sessionId, token, revision }) {
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -31,7 +33,7 @@ function ServiceSessionDetails({ assignmentId, sessionId, token }) {
       .catch(() => { if (!controller.signal.aborted) setError(true) })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
-  }, [assignmentId, sessionId, token])
+  }, [assignmentId, sessionId, token, revision])
   if (!sessionId) return null
   return <>
     <RecordTargetFocus id={`service-session-${sessionId}`} loading={loading} error={error} />
@@ -42,12 +44,39 @@ function ServiceSessionDetails({ assignmentId, sessionId, token }) {
         ['Worked', formatDuration(Number(session.worked_minutes || 0) / 60)], ['Credited', session.credited_minutes == null ? 'Pending' : formatDuration(Number(session.credited_minutes) / 60)],
         ['Status', formatDisplayLabel(session.status)], ['Attendance Outcome', formatDisplayLabel(session.attendance_outcome)],
         ['Recorded By', session.time_out_recorder_name || session.time_in_recorder_name || 'Not recorded'], ['Notes', session.result_notes || session.notes || '—']
-      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><ServicePauseHistory session={session}/>
+      ].map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl><ServiceDayInvalidationDetails session={session}/><ServicePauseHistory session={session}/>
     </section>}
   </>
 }
 
-export function ServiceAssignmentContent({ assignment, student, token, targetSessionId }) {
+function ServiceAssignmentDays({ assignment, token, onSaved }) {
+  const [sessions,setSessions]=useState([])
+  const [date,setDate]=useState('')
+  const [error,setError]=useState('')
+  const [loading,setLoading]=useState(true)
+  useEffect(()=>{
+    if(!token) return
+    const controller=new AbortController()
+    fetch(`${API_URL}/api/community-service/${assignment.id}/sessions`,{headers:{Authorization:`Bearer ${token}`},signal:controller.signal})
+      .then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.message || 'Unable to load service dates');return data.sessions || []})
+      .then(rows=>{setSessions(rows);setError('')}).catch(failure=>{if(failure.name!=='AbortError')setError(failure.message)}).finally(()=>{if(!controller.signal.aborted)setLoading(false)})
+    return ()=>controller.abort()
+  },[assignment,token])
+  const sessionDate=session=>session.service_date?.slice(0,10) || manilaDateKey(session.time_in)
+  const dates=[...new Set(sessions.map(sessionDate))].sort().reverse()
+  const selected=dates.includes(date)?date:dates[0] || ''
+  const selectedSessions=sessions.filter(session=>sessionDate(session)===selected)
+  const invalidated=selectedSessions.some(session=>session.day_invalidation)
+  return <section className="service-detail-card"><h3>Service Days</h3>
+    {error?<p role="alert" className="error-message">{error}</p>:loading?<p role="status">Loading service dates…</p>:!dates.length?<p>No recorded service dates.</p>:<>
+      <label>Recorded Service Date<select value={selected} onChange={event=>setDate(event.target.value)}>{dates.map(day=><option key={day} value={day}>{day}</option>)}</select></label>
+      {!invalidated&&['OPEN','IN_PROGRESS'].includes(assignment.status)&&<ServiceDayInvalidation assignmentId={assignment.id} date={selected} token={token} onSaved={async result=>{setSessions(current=>current.map(session=>result.sessions?.find(updated=>String(updated.id)===String(session.id)) || session));await onSaved?.(result)}}/>}
+      {selectedSessions.map(session=><article key={session.id}><p>Session #{session.id} · {formatManilaDateTime(session.time_in)} · {session.time_out?`${formatDuration(Number(session.credited_minutes || 0)/60)} credited`:session.paused_at?'Paused':'Active'}</p><ServiceDayInvalidationDetails session={session}/></article>)}
+    </>}
+  </section>
+}
+
+export function ServiceAssignmentContent({ assignment, student, token, targetSessionId, onSaved }) {
   const required = Number(assignment.required_hours || 0)
   const remaining = Number(assignment.remaining_hours ?? required)
   const completed = Math.max(0, required - remaining)
@@ -62,7 +91,8 @@ export function ServiceAssignmentContent({ assignment, student, token, targetSes
       ['Required Time', formatDuration(required)], ['Completed Time', formatDuration(completed)], ['Remaining Time', formatDuration(remaining)]
     ].map(([label,value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></section>
     <section className="service-detail-card"><div className="service-section-heading service-heading-green"><i><PortalIcon name="clock" size={30}/></i><div><h3>Service Progress</h3><p>Completed time against the required time.</p></div></div><div className="service-detail-progress"><progress aria-label="Completed Service Progress" max="100" value={progress}>{progress}%</progress><strong>{progress}%</strong></div></section>
-    <ServiceSessionDetails key={`${assignment.id}:${targetSessionId || ''}`} assignmentId={assignment.id} sessionId={targetSessionId} token={token} />
+    <ServiceSessionDetails key={`${assignment.id}:${targetSessionId || ''}`} assignmentId={assignment.id} sessionId={targetSessionId} token={token} revision={assignment}/>
+    {token&&<ServiceAssignmentDays key={assignment.id} assignment={assignment} token={token} onSaved={onSaved}/>}
   </div>
 }
 
@@ -111,7 +141,7 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
     </form></>
 }
 
-export default function CommunityServiceManagement({ students=[], assignments=[], activeSessions=[], attendanceReady, loading, filters, onFiltersChange, pendingResults, onAssign, formOpen, onCloseForm, formProps, viewingAssignment, onView, onCloseAssignment, token, targetSessionId }) {
+export default function CommunityServiceManagement({ students=[], assignments=[], activeSessions=[], attendanceReady, loading, filters, onFiltersChange, pendingResults, onAssign, formOpen, onCloseForm, formProps, viewingAssignment, onView, onCloseAssignment, token, targetSessionId, onAttendanceSaved }) {
   const active = assignments.filter(item => !['COMPLETED','CLEARED'].includes(String(item.status).toUpperCase()))
   const timedIn = new Set(activeSessions.filter(isActiveServiceSession).map(item => item.student_id)).size
   const departmentOptions = serviceDepartmentOptions(formProps.destinations)
@@ -133,6 +163,6 @@ export default function CommunityServiceManagement({ students=[], assignments=[]
       })}</tbody></table></div>}
     </section>
     {formOpen && <Modal title="Assign Community Service" className="assign-service-modal service-workflow-modal create-record-drawer" drawer onClose={onCloseForm}><AssignServiceForm {...formProps} students={students} assignments={assignments}/></Modal>}
-    {viewingAssignment && <Modal title={`Service Assignment #${viewingAssignment.id}`} className="service-assignment-modal service-workflow-modal" drawer onClose={onCloseAssignment}><ServiceAssignmentContent token={token} targetSessionId={targetSessionId} assignment={viewingAssignment} student={students.find(item=>Number(item.id)===Number(viewingAssignment.student_id))}/></Modal>}
+    {viewingAssignment && <Modal title={`Service Assignment #${viewingAssignment.id}`} className="service-assignment-modal service-workflow-modal" drawer onClose={onCloseAssignment}><ServiceAssignmentContent token={token} targetSessionId={targetSessionId} assignment={viewingAssignment} student={students.find(item=>Number(item.id)===Number(viewingAssignment.student_id))} onSaved={onAttendanceSaved}/></Modal>}
   </section>
 }

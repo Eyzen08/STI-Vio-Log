@@ -32,8 +32,13 @@ const resolveQr = async (req,res,recording=false) => {
     // A session in another department also prevents a duplicate Time In.
     const active = (await pool.query(
         "SELECT css.*,css.id AS session_id,a.required_hours,a.completed_hours,a.remaining_hours,d.department_name FROM community_service_sessions css JOIN community_service_assignments a ON a.id=css.assignment_id JOIN departments d ON d.id=css.department_id WHERE css.student_id=$1 AND css.time_out IS NULL",[student.id])).rows[0];
-    const assignments = (await pool.query(
+    let assignments = (await pool.query(
         "SELECT a.*,d.department_name,d.department_code FROM community_service_assignments a JOIN violations v ON v.id=a.violation_id JOIN departments d ON d.id=a.department_id WHERE a.student_id=$1 AND a.status IN ('OPEN','IN_PROGRESS') AND v.status='OPEN' AND d.is_active=TRUE AND ($2::bigint IS NULL OR a.department_id=$2) ORDER BY a.id DESC",[student.id,scope || null])).rows;
+    const now = (await pool.query('SELECT clock_timestamp() AS now')).rows[0].now;
+    const invalidated=(await pool.query(`SELECT assignment_id FROM community_service_day_invalidations
+        WHERE assignment_id=ANY($1::bigint[]) AND service_date=$2`,[assignments.map(item=>item.id),serviceDate(now)])).rows;
+    const blocked=new Set(invalidated.map(item=>String(item.assignment_id)));
+    assignments=assignments.map(item=>({...item,day_invalidated:blocked.has(String(item.id))}));
     let assignment = active && (!scope || Number(active.department_id)===Number(scope)) ? assignments.find(a => Number(a.id)===Number(active.assignment_id)) : null;
     if (req.body.session_id) {
         assignment = (await pool.query(
@@ -51,15 +56,14 @@ const resolveQr = async (req,res,recording=false) => {
         if (!authorized) return null;
         req.staffDepartmentId = authorizationReq.staffDepartmentId;
     }
-    const now = (await pool.query('SELECT clock_timestamp() AS now')).rows[0].now;
     const completedToday = await dailyCredit(pool,student.id,serviceDate(now));
     const activeVisible = active && (!scope || Number(active.department_id)===Number(scope));
     const activeSession = activeVisible ? (await hydrateSessions(pool,[active]))[0] : null;
     return { student,assignments,assignment:assignment || null,active_session:activeSession,
         active_session_elsewhere:Boolean(active && !activeVisible),server_time:now,
-        allowance:serviceAllowance(assignment || {remaining_hours:0},completedToday,now),
+        allowance:serviceAllowance(assignment?.day_invalidated ? {remaining_hours:0} : assignment || {remaining_hours:0},completedToday,now),
         available_officers:assignment ? await availableSupervisors(pool,assignment.department_id) : [],
-        student_status:active ? 'Currently timed in' : assignments.length ? 'Eligible for community service' : 'No active service requirement' };
+        student_status:active ? 'Currently timed in' : assignment?.day_invalidated ? 'This assignment’s service day was invalidated. Service can resume on a later date.' : assignments.length ? 'Eligible for community service' : 'No active service requirement' };
 };
 const respondError = (res,error) => {
     const status = error.statusCode || 500;

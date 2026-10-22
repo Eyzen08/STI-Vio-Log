@@ -40,3 +40,15 @@ frontend: npm test
 frontend: npm run lint
 frontend: npm run build
 ```
+
+## Invalidate an assignment's service day
+
+Authorized attendance staff (Discipline Admin, Discipline Office and department heads with current department/scanner access) can invalidate a recorded Manila service date on an open or in-progress assignment with an open violation. Use Invalidate Day beside attendance controls or select a recorded date in the assignment drawer. Preview lists affected sessions, removed credit and the resulting balance. A visible reason of 1–500 characters is required; staff determine whether the student failed to return or meet expectations. No automatic minimum-hours rule is applied.
+
+Confirmation cancels every session's credit for that assignment/date and closes any active session, pause and officer interval administratively. It does not create a QR scan or claim the student returned. Other assignments and dates are unchanged. Original credit, pauses and progress history remain available. Canceled elapsed time still consumes the student-wide eight-hour daily allowance; new credit for that assignment is blocked on the invalidated date, including legacy approval. Students see the reason, staff identity and timestamp in their attendance history and receive a notification. DTR reports and their Invalidated Days Excel sheet retain the cancellation details separately from office corrections.
+
+The API provides GET `/api/community-service/:assignmentId/days/:serviceDate/invalidation-preview` and POST `/api/community-service/:assignmentId/days/:serviceDate/invalidate` with `{ reason, preview_version }`. Dates are YYYY-MM-DD in Asia/Manila. Stale previews return 409 `STALE_DAY_PREVIEW` and must be reviewed again. A retry using the same preview cannot deduct twice. A negative balance caused by earlier office corrections returns 409 `CREDIT_RECONCILIATION_REQUIRED`; the office must reconcile the total first.
+
+There is no restore-day action. Existing office corrections can repair totals with a reason, while the date remains blocked. Completed assignments and clearance/certificate reopening are excluded. Deploy migration `052_service_day_invalidations.sql` before the matching backend/frontend, with attendance writes paused during the coordinated release. This migration adds an append-only day record and per-session credit/allowance snapshots; it does not invalidate existing records.
+
+Browser regression: `node frontend/scripts/check-service-day-invalidation.mjs` with Playwright available locally or through NODE_PATH (no application dependency added). The API and persistence regressions are in `backend/tests/service-attendance.pgtest.js` and run only against an explicitly disposable test database.

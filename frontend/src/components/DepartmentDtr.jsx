@@ -4,6 +4,7 @@ import { departmentDtrSummary, displayDepartmentDtrDate } from '../lib/departmen
 import { attendanceOutcomeLabel } from '../lib/attendanceOutcome.js'
 import { formatDisplayLabel } from '../lib/displayFormat.js'
 import ServiceHourCorrections from './ServiceHourCorrections.jsx'
+import { ServiceDayInvalidationHistory } from './ServiceDayInvalidation.jsx'
 
 function DepartmentDtr({ report, loading, error, onFilter }) {
   const [filters, setFilters] = useState({ from: '', to: '', student_id: '', assignment_id: '' })
@@ -68,6 +69,7 @@ function DepartmentDtr({ report, loading, error, onFilter }) {
         )}
       </section>
       <details className="department-corrections"><summary>Hour Corrections</summary><ServiceHourCorrections corrections={report?.hourCorrections || []}/></details>
+      <ServiceDayInvalidationHistory invalidations={report?.dayInvalidations || []}/>
       <p className="scope-note">Department scope is derived from your authenticated account and cannot be changed here.</p>
     </div>
   )

@@ -49,6 +49,7 @@ export const auditSummary = (entry = {}) => {
   if (['OFFENSE_ESCALATED', 'OFFENSE_DEESCALATED'].includes(entry.action) && data.to) return `Changed offense level${data.from ? ` from ${formatDisplayLabel(data.from)}` : ''} to ${formatDisplayLabel(data.to)}.`
   if (data.changes && Object.keys(data.changes).length) return `Updated ${Object.keys(data.changes).map((key) => formatDisplayLabel(key).toLowerCase()).join(', ')}.`
   if (entry.action === 'SERVICE_RESULT_REJECT') return `Rejected service result${data.reason ? `: ${data.reason}` : '.'}`
+  if (entry.action === 'SERVICE_DAY_INVALIDATE') return `Invalidated service day ${data.service_date}; ${duration(data.removed_credit_minutes)} credit removed${data.reason ? `: ${data.reason}` : '.'}`
   const text = entry.description?.trim()
   if (text && !/^[{[]/.test(text)) return text
   return `${formatAuditAction(entry.action)}${data.reason ? `: ${data.reason}` : '.'}`
