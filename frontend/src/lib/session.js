@@ -27,11 +27,13 @@ export const loadSession = () => {
   }
 }
 
-export const saveSession = ({ user, csrf_token }) => {
+export const saveSession = ({ user }) => {
   localStorage.removeItem('sti_vio_log_token')
   localStorage.setItem(USER_KEY, JSON.stringify(displayUser(user)))
-  if(csrf_token)globalThis.sessionStorage?.setItem(CSRF_KEY,csrf_token)
 }
 
-export const csrfToken=()=>globalThis.sessionStorage?.getItem(CSRF_KEY)||''
-export const saveCsrf=(value)=>{if(value)globalThis.sessionStorage?.setItem(CSRF_KEY,value)}
+export const csrfToken = (document = globalThis.document) => {
+  const cookie = String(document?.cookie || '').split(';').map(value => value.trim()).find(value => value.startsWith('sti_csrf='))
+  try { return cookie ? decodeURIComponent(cookie.slice('sti_csrf='.length)) : '' }
+  catch { return '' }
+}

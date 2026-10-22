@@ -53,7 +53,7 @@ test('persisted session data excludes passwords, hashes and authentication token
   })
   assert.deepEqual(JSON.parse(localStorage.getItem('sti_vio_log_user')), user)
   assert.equal(localStorage.getItem('sti_vio_log_token'), null)
-  assert.equal(sessionStorage.getItem('sti_vio_log_csrf'), 'csrf-not-an-authenticator')
+  assert.equal(sessionStorage.getItem('sti_vio_log_csrf'), null)
 })
 
 test('logout clears all persisted authentication data', () => {

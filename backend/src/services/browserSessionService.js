@@ -11,7 +11,9 @@ const keyFor=(name)=>process.env[name]||(process.env.NODE_ENV==='production'?'':
 const hash = (value, key = keyFor('SESSION_HASH_KEY')) => crypto.createHmac('sha256', key).update(String(value)).digest('hex');
 const randomToken = () => crypto.randomBytes(32).toString('base64url');
 const parseCookies = (header = '') => Object.fromEntries(String(header).split(';').map(v => v.trim()).filter(Boolean).map(v => {
-  const at=v.indexOf('='); return at<0?[v,'']:[v.slice(0,at),decodeURIComponent(v.slice(at+1))];
+  const at=v.indexOf('=');
+  if(at<0)return[v,''];
+  try{return[v.slice(0,at),decodeURIComponent(v.slice(at+1))];}catch{return[v.slice(0,at),''];}
 }));
 const cookieOptions = (maxAge) => ({ httpOnly:true, secure:process.env.NODE_ENV==='production', sameSite:'lax', path:'/', maxAge });
 const appendCookie = (res, name, value, options={}) => {

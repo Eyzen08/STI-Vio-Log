@@ -1,4 +1,4 @@
-import { clearSession, csrfToken, saveCsrf } from './session.js'
+import { clearSession, csrfToken } from './session.js'
 
 // Production requests stay on the Vercel origin and are securely proxied to the
 // Render API. This keeps host-only SameSite=Lax cookies first-party.
@@ -21,6 +21,7 @@ export const installMutationRequestGuard = (target = globalThis) => {
   const originalFetch = target.fetch.bind(target)
   const inFlight = new Map()
   const activityCounts = new WeakMap()
+  let csrfBootstrap = null
   let sessionExpiryHandled = false
   let recentTrigger = null
   let triggerTime = 0
@@ -83,7 +84,30 @@ export const installMutationRequestGuard = (target = globalThis) => {
       if (!['/', '/login'].includes(target.location?.pathname)) target.location?.replace?.('/login')
       return response
     }
-    if(isMutation&&protectedApi&&!publicAuth){let csrf=csrfToken();if(!csrf){const response=await originalFetch(`${API_URL}/api/auth/csrf`,{credentials:'include',headers:{Accept:'application/json'}});const data=await response.json().catch(()=>null);if(response.ok&&data?.csrf_token){saveCsrf(data.csrf_token);csrf=data.csrf_token}}if(csrf)headers.set('X-CSRF-Token',csrf)}
+    if (isMutation && protectedApi && !publicAuth) {
+      if (!csrfToken(target.document)) {
+        if (!csrfBootstrap) {
+          csrfBootstrap = (async () => {
+            const response = await originalFetch(`${API_URL}/api/auth/csrf`, { credentials: 'include', headers: { Accept: 'application/json' } })
+              .catch(() => { throw new ApiError('Unable to prepare this request. Please try again.', { code: 'CSRF_BOOTSTRAP_FAILED' }) })
+            await handleProtectedResponse(response)
+            const data = await readJson(response)
+            if (!response.ok || data?.success === false) {
+              throw new ApiError(data?.error?.message || data?.message || 'Unable to prepare this request. Please try again.', {
+                status: response.status, code: data?.error?.code || 'CSRF_BOOTSTRAP_FAILED'
+              })
+            }
+            if (!data?.csrf_token || !csrfToken(target.document)) {
+              throw new ApiError('Unable to prepare this request. Please refresh the page and try again.', { code: 'CSRF_BOOTSTRAP_FAILED' })
+            }
+          })().finally(() => { csrfBootstrap = null })
+        }
+        await csrfBootstrap
+      }
+      const csrf = csrfToken(target.document)
+      if (!csrf) throw new ApiError('Unable to prepare this request. Please refresh the page and try again.', { code: 'CSRF_BOOTSTRAP_FAILED' })
+      headers.set('X-CSRF-Token', csrf)
+    }
     if (!isMutation) return originalFetch(input, securedOptions).then(handleProtectedResponse)
     const body = typeof options.body === 'string' ? options.body : ''
     const key = `${method}:${url}:${body}`
@@ -127,7 +151,6 @@ export const apiRequest = async (path, options = {}) => {
       code: 'INVALID_RESPONSE'
     })
   }
-  if(data?.csrf_token)saveCsrf(data.csrf_token)
 
   if (!response.ok || data?.success === false) {
     throw new ApiError(
