@@ -57,7 +57,7 @@
 .onboarding-fieldset { min-width:0; margin:0; padding:0; border:0; }
 .onboarding-academic-fields,.onboarding-contact-fields { display:grid; gap:18px; min-width:0; }
 .onboarding-academic-level { display:grid; gap:8px; color:var(--text-primary); font-size:14px; font-weight:600; }
-.onboarding-academic-toggle { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr); gap:4px; padding:4px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-nested); }
+.onboarding-academic-toggle { display:grid; grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) minmax(0,.7fr); gap:4px; padding:4px; border:1px solid var(--border-subtle); border-radius:8px; background:var(--surface-nested); }
 .account-setup-card .onboarding-academic-toggle label { position:relative; display:grid; place-items:center; min-height:44px; padding:8px; border:1px solid transparent; border-radius:5px; font-size:14px; text-align:center; cursor:pointer; }
 .account-setup-card .onboarding-academic-toggle label.active { border-color:var(--border-strong); background:var(--surface-raised); color:var(--link-color); }
 .onboarding-academic-toggle label:has(input:focus-visible) { outline:2px solid var(--color-primary); outline-offset:2px; }

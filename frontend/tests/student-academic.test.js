@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {academicLevel,academicProgram,academicYear,academicSummary,yearOptions,changedAcademicMode} from '../src/lib/studentAcademic.js'
-import {filterAdminStudents} from '../src/lib/adminStudentReview.js'
+import {filterAdminStudents,buildStudentDirectory,filterStudentDirectory} from '../src/lib/adminStudentReview.js'
 import {reportCell} from '../src/lib/reportPresentation.js'
 test('academic presentation displays SHS strand and Grade instead of missing College program',()=>{
  const shs={academic_level:'SENIOR_HIGH_SCHOOL',strand:'STEM',year_level:12,section:'STEM12-A'}
@@ -19,4 +19,15 @@ test('academic form choices and mode changes clear incompatible draft fields',()
  assert.deepEqual(yearOptions('COLLEGE').map(([v])=>v),[1,2,3,4])
  assert.deepEqual(yearOptions('COLLEGE').map(([,label])=>label),['1st Year','2nd Year','3rd Year','4th Year'])
  assert.deepEqual(changedAcademicMode('COLLEGE'),{academic_level:'COLLEGE',program:'',strand:'',year_level:''})
+})
+
+test('TESDA presentation and directory filters preserve its category without a school year',()=>{
+ const tesda={id:1,academic_level:'TESDA',program:'AIPA-III',year_level:null,section:'TESDA-A'}
+ assert.equal(academicYear(tesda),'Not applicable')
+ assert.match(academicSummary(tesda),/^TESDA \/ AIPA-III/)
+ assert.deepEqual(yearOptions('TESDA'),[])
+ assert.equal(reportCell('year_level',null,tesda),'Not applicable')
+ const rows=buildStudentDirectory([tesda,{id:2,academic_level:'COLLEGE',program:'BSIT',year_level:1}])
+ assert.deepEqual(filterStudentDirectory(rows,{year:'TESDA'}).map(row=>row.id),[1])
+ assert.deepEqual(filterStudentDirectory(rows,{program:'AIPA-III'}).map(row=>row.id),[1])
 })

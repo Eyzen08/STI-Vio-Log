@@ -29,8 +29,8 @@ const isPositiveId = (value) => /^\d+$/.test(String(value)) && Number(value) > 0
 const isValidStudentNumber = (value) => typeof value === "string"
     && /^\d{11}$/.test(value.trim());
 
-const PROGRAM_CODES = new Set(["BSCS", "BSIT", "BSA", "BSBA", "BSHM", "BSTM", "BSOA"]);
-const isValidProgram = (value) => typeof value === "string" && PROGRAM_CODES.has(value.trim().toUpperCase());
+const { COLLEGE_PROGRAMS } = require('../../../shared/studentPrograms.mjs');
+const isValidProgram = (value) => typeof value === "string" && Object.hasOwn(COLLEGE_PROGRAMS, value.trim().toUpperCase());
 
 const parsePagination = (query, { defaultLimit = 25, maxLimit = 100 } = {}) => {
     const page = query.page === undefined ? 1 : Number(query.page);

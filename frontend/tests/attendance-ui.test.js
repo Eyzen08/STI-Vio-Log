@@ -54,6 +54,13 @@ test('legacy college year stays selectable with its ordinal label', () => {
   assert.match(html, /<option value="5" selected="">5th Year<\/option>/)
 })
 
+test('TESDA profile shows the academic category and no missing school year', () => {
+  const html=render('StudentProfile',{profile:{academic_level:'TESDA',program:'AIPA-III',year_level:null,section:'TESDA-A'}})
+  assert.match(html,/<dt>Academic Level<\/dt><dd[^>]*>TESDA<\/dd>/)
+  assert.match(html,/<dt>Year Level<\/dt><dd[^>]*>Not applicable<\/dd>/)
+  assert.match(html,/<dt>Program<\/dt><dd[^>]*>AIPA-III<\/dd>/)
+})
+
 test('both office roles can edit closed violations from the shared table and record drawer', () => {
   const violation = { id: 91, student_id: 1, student_name: 'Test Student', student_number: 'TEST-1', description: 'Facts', severity: 'MINOR', status: 'COMPLETE' }
   for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE']) {

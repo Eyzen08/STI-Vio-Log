@@ -244,8 +244,9 @@ const updateStudent = async (req, res) => {
             const merged = {...current,...changes};
             merged.academic_level = merged.academic_level || inferAcademicLevel(merged) || undefined;
             if (changes.academic_level && changes.academic_level !== current.academic_level) {
-                if (changes.academic_level === 'COLLEGE') merged.strand = null;
-                else merged.program = null;
+                if (changes.academic_level === 'SENIOR_HIGH_SCHOOL') merged.program = null;
+                else merged.strand = null;
+                if (changes.academic_level === 'TESDA' && !Object.hasOwn(changes,'year_level')) merged.year_level = null;
             }
             Object.assign(changes,normalizeAcademic(merged));
         }

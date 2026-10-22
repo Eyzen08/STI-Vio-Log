@@ -9,6 +9,7 @@ export const statusLabel = (status) => ({
 
 export function reportCell(key, value, row) {
   if (key === 'program' && row) return academicProgram(row)
+  if (key === 'year_level' && row?.academic_level === 'TESDA') return academicYear(row)
   if (value === null || value === undefined || value === '') return 'Not recorded'
   if (key === 'academic_level') return academicLevelLabel({academic_level:value})
   if (key === 'year_level') return academicYear({...row,year_level:value})

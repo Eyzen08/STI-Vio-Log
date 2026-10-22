@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { STRANDS, yearOptions } from '../lib/studentAcademic.js'
+import { ACADEMIC_LEVELS, STRANDS, yearOptions } from '../lib/studentAcademic.js'
 import { completeStudentOnboarding, linkStudentGoogle, requestStudentGoogleEmail, verifyStudentGoogleEmail } from '../lib/api.js'
 import { googleButtonConfiguration, googleIdentityConfiguration, isGoogleClientConfigured, loadGoogleIdentityServices, readGoogleCredential } from '../lib/googleIdentity.js'
 import { normalizePhilippinePhone } from '../lib/phone.js'
@@ -80,10 +80,10 @@ export default function StudentOnboarding({user,clientId,draft,onDraftChange,onS
     }
     run(async()=>{
       const profile={
-        ...(form.academicLevel==='SENIOR_HIGH_SCHOOL'?{academic_level:form.academicLevel}:{}),
+        academic_level:form.academicLevel,
         strand:form.academicLevel==='SENIOR_HIGH_SCHOOL'?form.strand:null,
-        program:form.academicLevel==='COLLEGE'?form.program:null,
-        section:form.section.trim(),year_level:Number(form.yearLevel),
+        program:form.academicLevel==='SENIOR_HIGH_SCHOOL'?null:form.program,
+        section:form.section.trim(),year_level:form.academicLevel==='TESDA'?null:Number(form.yearLevel),
         phone_number:normalizePhilippinePhone(form.phoneNumber),guardian_name:normalizeNameSpacing(form.guardianName),
         guardian_relationship:form.guardianRelationship.trim(),guardian_phone_number:normalizePhilippinePhone(form.guardianPhoneNumber)
       }
@@ -127,12 +127,12 @@ export default function StudentOnboarding({user,clientId,draft,onDraftChange,onS
       {screen==='ACADEMIC'?<fieldset className="onboarding-fieldset" disabled={busy}>
         <legend className="sr-only">Academic Information</legend>
         <div className="onboarding-academic-fields">
-          <div className="onboarding-academic-level"><span id="onboarding-academic-level-label">Academic Level</span><div className="onboarding-academic-toggle" role="radiogroup" aria-labelledby="onboarding-academic-level-label">{[['COLLEGE','College'],['SENIOR_HIGH_SCHOOL','Senior High School']].map(([value,label])=><label key={value} className={form.academicLevel===value?'active':''}><input type="radio" name="academic_level" value={value} checked={form.academicLevel===value} onChange={changeAcademicLevel}/><span>{label}</span></label>)}</div></div>
+          <div className="onboarding-academic-level"><span id="onboarding-academic-level-label">Academic Level</span><div className="onboarding-academic-toggle" role="radiogroup" aria-labelledby="onboarding-academic-level-label">{ACADEMIC_LEVELS.map(([value,label])=><label key={value} className={form.academicLevel===value?'active':''}><input type="radio" name="academic_level" value={value} checked={form.academicLevel===value} onChange={changeAcademicLevel}/><span>{label}</span></label>)}</div></div>
           <div className="onboarding-academic-grid">
-            {form.academicLevel==='COLLEGE'&&<label className="onboarding-program-field">Program<ProgramSelect value={form.program} onChange={change('program')} required/></label>}
+            {form.academicLevel!=='SENIOR_HIGH_SCHOOL'&&<label className="onboarding-program-field">Program<ProgramSelect academicLevel={form.academicLevel} value={form.program} onChange={change('program')} required/></label>}
             {form.academicLevel==='SENIOR_HIGH_SCHOOL'&&<label>Strand<select value={form.strand} onChange={change('strand')} required><option value="">Select a Strand</option>{STRANDS.map(([code,name])=><option key={code} value={code}>{code} - {name}</option>)}</select></label>}
-            <label className="onboarding-year-field">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Grade Level':'Year Level'}<select value={form.yearLevel} onChange={change('yearLevel')} required><option value="">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Select Grade Level':'Select Year Level'}</option>{yearLevelOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
-            <label className="onboarding-section-field">Section<input value={form.section} onChange={change('section')} maxLength="100" pattern=".*\S.*" placeholder={form.academicLevel==='COLLEGE'?'e.g. A103':'e.g. STEM123'} required/></label>
+            {form.academicLevel!=='TESDA'&&<label className="onboarding-year-field">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Grade Level':'Year Level'}<select value={form.yearLevel} onChange={change('yearLevel')} required><option value="">{form.academicLevel==='SENIOR_HIGH_SCHOOL'?'Select Grade Level':'Select Year Level'}</option>{yearLevelOptions.map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>}
+            <label className="onboarding-section-field">Section<input value={form.section} onChange={change('section')} maxLength="100" pattern=".*\S.*" placeholder={form.academicLevel==='SENIOR_HIGH_SCHOOL'?'e.g. STEM123':form.academicLevel==='TESDA'?'e.g. TESDA-A':'e.g. A103'} required/></label>
           </div>
         </div>
       </fieldset>:<fieldset className="onboarding-fieldset" disabled={busy}>

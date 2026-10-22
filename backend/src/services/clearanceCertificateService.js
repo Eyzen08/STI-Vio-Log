@@ -2,20 +2,7 @@ const crypto = require('crypto');
 const PDFDocument = require('pdfkit');
 const { ApiError } = require('../utils/api');
 
-const PROGRAM_NAMES = Object.freeze({
-  BSCS: 'Bachelor of Science in Computer Science',
-  BSIT: 'Bachelor of Science in Information Technology',
-  BSA: 'Bachelor of Science in Accountancy',
-  BSBA: 'Bachelor of Science in Business Administration',
-  BSHM: 'Bachelor of Science in Hospitality Management',
-  BSTM: 'Bachelor of Science in Tourism Management',
-  BSOA: 'Bachelor of Science in Office Administration'
-});
-const formatProgramName = (value, fallback = 'Program not recorded') => {
-  const program = String(value || '').trim();
-  if (!program) return fallback;
-  return PROGRAM_NAMES[program.toUpperCase()] || program;
-};
+const { formatProgramName } = require('../../../shared/studentPrograms.mjs');
 
 const secret = () => process.env.CERTIFICATE_SIGNING_KEY || (process.env.NODE_ENV==='production'?'':process.env.JWT_SECRET) || '';
 const signatureFor = (id) => crypto.createHmac('sha256', secret()).update(`clearance:${id}`).digest('base64url');

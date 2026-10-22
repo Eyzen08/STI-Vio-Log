@@ -119,8 +119,8 @@ export default function StudentDirectorySelect({ label, value, options, onChange
     {open && createPortal(<div ref={popupRef} id={`${id}-listbox`} role="listbox" aria-labelledby={`${id}-label`} className="student-directory-select-menu" style={position}
       onPointerDown={(event) => event.preventDefault()}>
       {options.map((option, index) => <Fragment key={option.value}>
-        {option.section && option.section !== options[index - 1]?.section && <div id={`${id}-section`} role="presentation" className="student-directory-select-section">{option.section}</div>}
-        <div id={`${id}-option-${index}`} role="option" aria-describedby={option.section ? `${id}-section` : undefined}
+        {option.section && option.section !== options[index - 1]?.section && <div id={`${id}-section-${encodeURIComponent(option.section)}`} role="presentation" className="student-directory-select-section">{option.section}</div>}
+        <div id={`${id}-option-${index}`} role="option" aria-describedby={option.section ? `${id}-section-${encodeURIComponent(option.section)}` : undefined}
         aria-selected={option.value === value} data-active={index === active} data-option-index={index} className="student-directory-select-option"
         onPointerMove={() => setActiveIndex(index)} onClick={() => { onChange(option.value); close(); triggerRef.current?.focus() }}>
         <span>{option.label}</span>{option.value === value && <PortalIcon name="check" size={17}/>}

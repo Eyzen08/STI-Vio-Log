@@ -11,6 +11,23 @@ test('academic contract defaults legacy new submissions to College and normalize
 test('academic contract rejects unsupported strand, mode, years, and missing section',()=>{
  for(const input of [{...college,strand:'ABM'},{...college,year_level:5},{...college,academic_level:'UNKNOWN'},{...college,section:''},{academic_level:'SENIOR_HIGH_SCHOOL',strand:'GAS',year_level:11,section:'A'},{academic_level:'SENIOR_HIGH_SCHOOL',year_level:11,section:'A'},{academic_level:'SENIOR_HIGH_SCHOOL',strand:'STEM',year_level:1,section:'A'}]) assert.throws(()=>normalizeAcademic(input));
 });
+
+test('new college programs and SHS tracks are accepted only in their category',()=>{
+ for (const program of ['BSCpE','BSAIS','BACOMM']) assert.equal(normalizeAcademic({...college,program}).program,program.toUpperCase());
+ for (const strand of ['STEM-ETM','B&E']) assert.equal(normalizeAcademic({academic_level:'SENIOR_HIGH_SCHOOL',strand,year_level:11,section:'SHS-A'}).strand,strand);
+ for (const program of ['STEM-ETM','B&E','DCA-DSAI-II','AIPA-III']) assert.throws(()=>normalizeAcademic({...college,program}),{code:'INVALID_PROGRAM'});
+});
+
+test('TESDA stores no school year and rejects programs from other categories',()=>{
+ for (const program of ['DCA-DSAI-II','AIPA-III']) {
+  const input={academic_level:'TESDA',program,section:'TESDA-A'};
+  for (const year_level of [undefined,null,'']) assert.deepEqual(normalizeAcademic({...input,year_level}),{...input,strand:null,year_level:null});
+  for (const year_level of [0,1,2,3,11]) assert.throws(()=>normalizeAcademic({...input,year_level}),{code:'INVALID_YEAR_LEVEL'});
+  assert.throws(()=>normalizeAcademic({...input,strand:'STEM'}),{code:'INVALID_STRAND'});
+  assert.throws(()=>normalizeAcademic({...input,section:''}),{code:'SECTION_REQUIRED'});
+ }
+ assert.throws(()=>normalizeAcademic({academic_level:'TESDA',program:'BSIT',section:'A'}),{code:'INVALID_PROGRAM'});
+});
 test('historical academic inference preserves explicit level and unknown values',()=>{
  assert.equal(inferAcademicLevel({year_level:11}),'SENIOR_HIGH_SCHOOL');
  assert.equal(inferAcademicLevel({year_level:8}),'COLLEGE');
@@ -34,6 +51,14 @@ test('audited staff edits validate merged academic fields and preserve unrelated
   assert.equal((await run({academic_level:'SENIOR_HIGH_SCHOOL',strand:'STEM',year_level:12,reason:'Confirmed SHS record'})).statusCode,200);
   const update=calls.find(x=>x.sql.includes('UPDATE students'));
   assert(update.params.includes('STEM')); assert(update.params.includes(12)); assert(update.params.includes(null));
+  assert.equal((await run({academic_level:'TESDA',program:'AIPA-III',year_level:1,reason:'Invalid TESDA year'})).statusCode,400);
+  assert.equal((await run({academic_level:'TESDA',program:'DCA-DSAI-II',reason:'Confirmed TESDA record'})).statusCode,200);
+  assert(calls.find(x=>x.sql.includes('UPDATE students')).params.includes(null));
+  assert.equal((await run({academic_level:'TESDA',program:'AIPA-III',year_level:null,reason:'Confirmed TESDA record'})).statusCode,200);
+  assert(calls.find(x=>x.sql.includes('UPDATE students')).params.includes('AIPA-III'));
+  current={...current,academic_level:'TESDA',program:'AIPA-III',strand:null,year_level:null};
+  assert.equal((await run({section:'TESDA-B',reason:'Section correction'})).statusCode,200);
+  assert.equal((await run({academic_level:'COLLEGE',program:'BSAIS',year_level:1,reason:'Confirmed college enrollment'})).statusCode,200);
   current={...current,academic_level:'SENIOR_HIGH_SCHOOL',program:null,year_level:11};
   assert.equal((await run({last_name:'Corrected',reason:'Name correction'})).statusCode,200);
   assert.equal((await run({year_level:12,reason:'Grade correction'})).statusCode,400);

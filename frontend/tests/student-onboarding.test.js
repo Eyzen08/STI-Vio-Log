@@ -47,8 +47,10 @@ test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',
 
 test('academic onboarding switches levels and keeps mode-specific fields and year ranges',()=>{
   assert.match(onboarding,/role="radiogroup" aria-labelledby="onboarding-academic-level-label"/)
-  assert.match(onboarding,/form\.academicLevel==='COLLEGE'&&<label className="onboarding-program-field">Program/)
-  assert.match(onboarding,/\.\.\.\(form\.academicLevel==='SENIOR_HIGH_SCHOOL'\?\{academic_level:form\.academicLevel\}:\{\}\)/)
+  assert.match(onboarding,/form\.academicLevel!=='SENIOR_HIGH_SCHOOL'&&<label className="onboarding-program-field">Program/)
+  assert.match(onboarding,/academic_level:form\.academicLevel/)
+  assert.match(onboarding,/year_level:form\.academicLevel==='TESDA'\?null:Number\(form\.yearLevel\)/)
+  assert.match(onboarding,/form\.academicLevel!=='TESDA'&&<label className="onboarding-year-field">/)
   assert.match(onboarding,/academicLevel,strand:'',program:'',yearLevel:''/)
   assert.match(onboarding,/yearOptions\(form\.academicLevel\)/)
   assert.match(onboarding,/<select value=\{form\.yearLevel\}/)

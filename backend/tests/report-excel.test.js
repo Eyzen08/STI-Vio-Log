@@ -33,10 +33,10 @@ test('all seven report types expose Excel downloads alongside their existing JSO
   }
 });
 
-test('Excel year cells match report preview labels for college and senior high', async () => {
-  for (const [academic_level, year_level, expected] of [['COLLEGE', 2, '2nd Year'], ['SENIOR_HIGH_SCHOOL', 11, 'Grade 11']]) {
+test('Excel year cells match report preview labels for college, senior high and TESDA', async () => {
+  for (const [academic_level, year_level, expected] of [['COLLEGE', 2, '2nd Year'], ['SENIOR_HIGH_SCHOOL', 11, 'Grade 11'], ['TESDA', null, 'Not applicable']]) {
     const workbook = require('../src/services/reportExport').createReportWorkbook('good-standing', {
-      data: [{first_name:'Alex', last_name:'Santos', student_number:'02000123456', academic_level, strand:'STEM', program:'BSIT', year_level}]
+      data: [{first_name:'Alex', last_name:'Santos', student_number:'02000123456', academic_level, strand:'STEM', program:academic_level==='TESDA'?'AIPA-III':'BSIT', year_level}]
     });
     const sheet = await new ExcelJS.Workbook().xlsx.load(await workbook.xlsx.writeBuffer());
     const report = sheet.worksheets[0];

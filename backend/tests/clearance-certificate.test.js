@@ -50,6 +50,9 @@ test('certificate course abbreviations are expanded to their official names', ()
   assert.equal(formatProgramName('BSCS'), 'Bachelor of Science in Computer Science');
   assert.equal(formatProgramName('bsit'), 'Bachelor of Science in Information Technology');
   assert.equal(formatProgramName('Custom Program'), 'Custom Program');
+  assert.equal(formatProgramName('BSCpE'), 'Bachelor of Science in Computer Engineering');
+  assert.equal(formatProgramName('B&E'), 'Business and Entrepreneurship');
+  assert.equal(formatProgramName('AIPA-III'), 'AI Prompting and Automation (Level III)');
 });
 
 test('certificate PDF is printable and contains a single PDF document', async () => {

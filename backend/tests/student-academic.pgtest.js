@@ -6,7 +6,7 @@ const path=require('node:path');
 const {Pool}=require('pg');
 require('dotenv').config({quiet:true});
 const {testDatabaseConfig}=require('./testDatabase');
-const {runMigrations}=require('../scripts/migrate');
+const {runMigrations,listMigrationFiles}=require('../scripts/migrate');
 const {createStudentOnboardingService}=require('../src/services/studentOnboardingService');
 const {createStudentPasswordAuthService}=require('../src/services/studentPasswordAuthService');
 const {createGoogleRegistrationService}=require('../src/services/googleRegistrationService');
@@ -16,6 +16,7 @@ const admin=new Pool(testDatabaseConfig());
 const pool=new Pool(testDatabaseConfig(schema));
 const migrationDir=path.resolve(__dirname,'../../database/migrations');
 const beforeDir=fs.mkdtempSync(path.join(os.tmpdir(),'sti-academic-before-'));
+const beforeOfferingsDir=fs.mkdtempSync(path.join(os.tmpdir(),'sti-offerings-before-'));
 const hash='$2b$04$abcdefghijklmnopqrstuuXJfM5Z0nJf4wPMFnYbPxM3Ya7kXyQYO';
 let reviewer;
 const createStudent=async(number,year,level=null)=>{
@@ -26,17 +27,22 @@ const createStudent=async(number,year,level=null)=>{
 test.before(async()=>{
  await admin.query('CREATE SCHEMA '+schema);
  for(const name of fs.readdirSync(migrationDir).filter(n=>n.endsWith('.sql')&&n<'043_'))fs.copyFileSync(path.join(migrationDir,name),path.join(beforeDir,name));
+ for(const name of listMigrationFiles().filter(name=>name<'053_'))fs.copyFileSync(path.join(migrationDir,name),path.join(beforeOfferingsDir,name));
  await runMigrations(pool,{directory:beforeDir,logger:{log(){}}});
  reviewer=(await pool.query("INSERT INTO users(username,password_hash,role) VALUES('academic_reviewer',$1,'DISCIPLINE_ADMIN') RETURNING id",[hash])).rows[0].id;
 });
-test.after(async()=>{await pool.end();await admin.query('DROP SCHEMA '+schema+' CASCADE');await admin.end();fs.rmSync(beforeDir,{recursive:true,force:true});});
+test.after(async()=>{await pool.end();await admin.query('DROP SCHEMA '+schema+' CASCADE');await admin.end();fs.rmSync(beforeDir,{recursive:true,force:true});fs.rmSync(beforeOfferingsDir,{recursive:true,force:true});});
 test('043 infers only missing levels, preserves programs and access, and is tracked once',async()=>{
  const rows=[];
  for(const [i,year,level] of [[1,11,null],[2,8,null],[3,9,null],[4,12,'COLLEGE']]) rows.push(await createStudent('0200000000'+i,year,level));
  await pool.query('UPDATE students SET onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP WHERE id=$1',[rows[1].student.id]);
  await pool.query("INSERT INTO student_account_registrations(student_number,full_name,email,password_hash,year_level) VALUES('02000000901','Legacy Applicant','legacy@example.test',$1,6)",[hash]);
  await pool.query("INSERT INTO google_student_registrations(google_subject,student_number,first_name,last_name,year_level) VALUES('legacy-google','02000000902','Legacy','Applicant',6)");
- const result=await runMigrations(pool,{logger:{log(){}}});assert.deepEqual(result.applied,['043_student_academic_strands.sql']);
+ const result=await runMigrations(pool,{directory:beforeOfferingsDir,logger:{log(){}}});assert.deepEqual(result.applied,listMigrationFiles().filter(name=>name>='043_'&&name<'053_'));
+ const tables=['students','student_account_registrations','google_student_registrations'];
+ const before=await Promise.all(tables.map(table=>pool.query('SELECT * FROM '+table+' ORDER BY id')));
+ assert.deepEqual((await runMigrations(pool,{logger:{log(){}}})).applied,['053_academic_program_offerings.sql']);
+ for(const [index,table] of tables.entries()) assert.deepEqual((await pool.query('SELECT * FROM '+table+' ORDER BY id')).rows,before[index].rows);
  const records=(await pool.query('SELECT academic_level,strand,program,onboarding_required,onboarding_completed_at FROM students ORDER BY student_number')).rows;
  assert.deepEqual(records.map(r=>r.academic_level),['SENIOR_HIGH_SCHOOL','COLLEGE',null,'COLLEGE']);
  for(const [i,r] of records.entries()){assert.equal(r.strand,null);assert.equal(r.program,'BSIT');assert.equal(r.onboarding_required,i!==1);if(i===1)assert(r.onboarding_completed_at);else assert.equal(r.onboarding_completed_at,null);}
@@ -45,10 +51,17 @@ test('043 infers only missing levels, preserves programs and access, and is trac
  assert.deepEqual((await runMigrations(pool,{logger:{log(){}}})).applied,[]);
  await assert.rejects(pool.query("UPDATE students SET strand='GAS' WHERE id=$1",[rows[0].student.id]),e=>e.code==='23514');
 });
-test('College, ABM, and STEM onboarding persist academic details and preserve Google identity access',async()=>{
+const offerings=[
+ {academicLevel:'COLLEGE',program:'BSIT',yearLevel:2},
+ ...['BSCPE','BSAIS','BACOMM'].map(program=>({academicLevel:'COLLEGE',program,yearLevel:1})),
+ ...['ABM','STEM','STEM-ETM','B&E'].map(strand=>({academicLevel:'SENIOR_HIGH_SCHOOL',strand,yearLevel:12})),
+ ...['DCA-DSAI-II','AIPA-III'].map(program=>({academicLevel:'TESDA',program,yearLevel:null}))
+];
+
+test('all academic offerings persist through onboarding and preserve Google identity access',async()=>{
  const service=createStudentOnboardingService({pool});
  let index=20;
- for(const input of [{academicLevel:'COLLEGE',program:'BSIT',yearLevel:2},{academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',yearLevel:11},{academicLevel:'SENIOR_HIGH_SCHOOL',strand:'STEM',yearLevel:12}]){
+ for(const input of offerings){
   const number='020000000'+(++index);
   const {user,student}=await createStudent(number,1);
   const subject='onboarding-'+number;
@@ -60,11 +73,11 @@ test('College, ABM, and STEM onboarding persist academic details and preserve Go
   assert.equal((await identity.loginStudent({credential:'verified-test-identity'})).user.onboarding_step,'COMPLETE');
  }
 });
-test('retained password verification and Google approval carry College and SHS academic values',async()=>{
+test('retained password verification and Google approval carry every academic offering',async()=>{
  const passwords=createStudentPasswordAuthService({pool,otpService:{issue:async()=>{},verify:async()=>{}},hashPassword:async()=>hash});
  const reviews=createGoogleRegistrationService({pool,hashPassword:async()=>hash});
  let index=40;
- for(const academic of [{academicLevel:'COLLEGE',program:'BSIT',yearLevel:2},{academicLevel:'SENIOR_HIGH_SCHOOL',strand:'ABM',yearLevel:11},{academicLevel:'SENIOR_HIGH_SCHOOL',strand:'STEM',yearLevel:12}]){
+ for(const academic of offerings){
   const number='020000000'+(++index);
   const result=await passwords.register({...academic,firstName:'Password',lastName:'Student',studentNumber:number,email:number+'@example.test',phoneNumber:'09171234567',section:'TEST-A',guardianName:'Test Guardian',guardianRelationship:'Parent',guardianPhoneNumber:'09181234567',password:'UniquePass@1234',confirmPassword:'UniquePass@1234'});
   await passwords.verifyRegistration({registrationId:result.registration_id,code:'123456'});
