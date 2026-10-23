@@ -59,3 +59,27 @@ test('leaving session restoration cancels an outstanding request', async () => {
   controller.abort()
   await assert.rejects(restoring, { name: 'AbortError' })
 })
+
+test('timeouts have a stable error code and abort the timed-out request', async () => {
+  let requestSignal
+  await assert.rejects(restoreSession((signal) => {
+    requestSignal = signal
+    return new Promise(() => {})
+  }, { attempts: 1, timeoutMs: 5 }), { code: 'SESSION_TIMEOUT' })
+  assert.equal(requestSignal.aborted, true)
+})
+
+test('invalid session responses retry and expose a stable error code', async () => {
+  let calls = 0
+  await assert.rejects(restoreSession(async () => {
+    calls++
+    return { success: true }
+  }, { retryDelayMs: 0 }), { code: 'INVALID_RESPONSE' })
+  assert.equal(calls, 3)
+})
+
+test('a fresh verification cycle can succeed after all earlier attempts failed', async () => {
+  const failure = Object.assign(new Error('Unavailable'), { status: 503, requestId: 'req-123' })
+  await assert.rejects(restoreSession(async () => { throw failure }, { retryDelayMs: 0 }), error => error === failure)
+  assert.deepEqual(await restoreSession(async () => ({ user })), { user })
+})

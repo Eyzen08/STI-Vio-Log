@@ -35,6 +35,18 @@ test('API requests preserve structured server errors and their authentication st
   await assert.rejects(apiRequest('/api/community-service/19/sessions'), { name: 'ApiError', status: 401, code: 'AUTH_REQUIRED', message: 'Authenticated session required' })
 })
 
+test('API failures retain request identifiers from JSON and proxy errors', async (t) => {
+  const fetchMock = t.mock.method(globalThis, 'fetch')
+  for (const headers of [{ 'x-request-id': 'req-123', 'content-type': 'application/json' }, { 'x-vercel-id': 'region::req-456', 'content-type': 'text/html' }]) {
+    fetchMock.mock.mockImplementation(async () => new Response(headers['content-type'] === 'application/json' ? '{"success":false}' : '<html>Unavailable</html>', { status: 503, headers }))
+    await assert.rejects(apiRequest('/api/auth/session'), error => {
+      assert.equal(error.requestId, headers['x-request-id'] || headers['x-vercel-id'])
+      assert.equal(error.status, 503)
+      return true
+    })
+  }
+})
+
 test('paginated loader retrieves records beyond the first 100', async () => {
   const originalFetch = globalThis.fetch
   const calls = []

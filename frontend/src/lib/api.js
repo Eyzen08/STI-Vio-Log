@@ -126,11 +126,12 @@ export const installMutationRequestGuard = (target = globalThis) => {
 }
 
 export class ApiError extends Error {
-  constructor(message, { status = 0, code = 'REQUEST_FAILED' } = {}) {
+  constructor(message, { status = 0, code = 'REQUEST_FAILED', requestId } = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.requestId = requestId
   }
 }
 
@@ -145,10 +146,11 @@ const readJson = async (response) => {
 export const apiRequest = async (path, options = {}) => {
   const response = await fetch(`${API_URL}${path}`, options)
   const data = await readJson(response)
+  const requestId = response.headers.get('x-request-id') || response.headers.get('x-vercel-id') || undefined
   if (data === null) {
     throw new ApiError('The service is temporarily unavailable. Please try again.', {
       status: response.status,
-      code: 'INVALID_RESPONSE'
+      code: 'INVALID_RESPONSE', requestId
     })
   }
 
@@ -157,7 +159,7 @@ export const apiRequest = async (path, options = {}) => {
       data?.error?.message || data?.message || 'The request could not be completed.',
       {
         status: response.status,
-        code: data?.error?.code || 'REQUEST_FAILED'
+        code: data?.error?.code || 'REQUEST_FAILED', requestId
       }
     )
   }

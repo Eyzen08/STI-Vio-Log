@@ -65,6 +65,7 @@ import stiVioLogLogo from './assets/sti-logo-web.png'
 import stiVioLogLogoTransparent from './assets/sti-logo-web-transparent.png'
 import { clearSession, loadSession, saveSession } from './lib/session.js'
 import { restoreSession } from './lib/restoreSession.js'
+import { sessionFailure, recoveryDiagnostic, retryOnReconnect } from './lib/recoveryErrors.js'
 import { buildCommunityServiceAssignmentPayload, resolveCommunityServiceStudent, communityServiceStudentLabel } from './lib/communityServiceAdmin.js'
 import { connectRealtime } from './lib/realtime.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
@@ -107,14 +108,15 @@ function SidebarTooltip({ anchor, text }) {
 }
 
 function SessionRestoringScreen({ error, onRetry, onSignOut }) {
+  const failure = error ? sessionFailure(error) : null
   return (
     <section className="session-restoring-screen" role={error ? 'alert' : 'status'} aria-live="polite" aria-label={error ? 'Session Verification Failed' : 'Restoring Your Secure Session'}>
       <div className="session-restoring-card">
         <img src={stiVioLogLogo} alt="STI Vio-Log" width="420" height="236" />
         <div className="session-restoring-copy">
           <p className="session-restoring-eyebrow">Secure student discipline portal</p>
-          <h1>{error ? 'Connection Interrupted' : 'Welcome Back'}</h1>
-          <p>{error ? 'We could not verify your session. Check your connection and try again.' : 'Restoring your secure session. This should only take a moment.'}</p>
+          <h1>{failure ? failure.title : 'Welcome Back'}</h1>
+          <p>{failure ? failure.message : 'Restoring your secure session. This should only take a moment.'}</p>
         </div>
         {error ? <div className="session-restoring-actions"><button type="button" className="submit-btn" onClick={onRetry}>Try Again</button><button type="button" className="secondary-button" onClick={onSignOut}>Sign Out</button></div> : <>
           <div className="session-restoring-progress" aria-hidden="true"><span /></div>
@@ -184,12 +186,24 @@ function App() {
   const setupActive = Boolean(!isLanding && user && (user.password_change_required || !legal.ready || user.onboarding_required || showOnboardingComplete))
   const portalChrome = portalReady && !showOnboardingComplete
   const [sessionRestoring, setSessionRestoring] = useState(Boolean(initialSession.user))
-  const [sessionRestoreError, setSessionRestoreError] = useState(false)
+  const [sessionRestoreError, setSessionRestoreError] = useState(null)
   const [sessionRestoreAttempt, setSessionRestoreAttempt] = useState(0)
+  const sessionRetryPending = useRef(false)
+  const retrySessionRestoration = useCallback(() => {
+    if (sessionRetryPending.current) return
+    sessionRetryPending.current = true
+    setSessionRestoreError(null)
+    setSessionRestoreAttempt((attempt) => attempt + 1)
+  }, [])
+
+  useEffect(() => {
+    if (!sessionRestoring || !sessionRestoreError) return undefined
+    return retryOnReconnect(window, retrySessionRestoration)
+  }, [sessionRestoring, sessionRestoreError, retrySessionRestoration])
 
   const signOutFailedRestoration = () => {
     clearSession()
-    setSessionRestoreError(false)
+    setSessionRestoreError(null)
     setSessionRestoring(false)
     window.history.replaceState({}, '', '/login')
     setRouteLocation('/login')
@@ -230,6 +244,7 @@ function App() {
       return undefined
     }
     if (!sessionRestoring) return undefined
+    sessionRetryPending.current = false
     const controller = new AbortController()
     restoreSession((signal) => apiRequest('/api/auth/session', { signal }), { signal: controller.signal })
       .then((data) => {
@@ -247,7 +262,8 @@ function App() {
           setToken('')
           setSessionRestoring(false)
         } else {
-          setSessionRestoreError(true)
+          console.warn('Session verification failed', recoveryDiagnostic(error, sessionFailure(error).code))
+          setSessionRestoreError(error)
         }
       })
     return () => controller.abort()
@@ -1918,7 +1934,7 @@ function App() {
     }
 
     if (sessionRestoring) {
-      return <SessionRestoringScreen error={sessionRestoreError} onRetry={() => { setSessionRestoreError(false); setSessionRestoreAttempt((attempt) => attempt + 1) }} onSignOut={signOutFailedRestoration} />
+      return <SessionRestoringScreen error={sessionRestoreError} onRetry={retrySessionRestoration} onSignOut={signOutFailedRestoration} />
     }
 
     if (!isLoggedIn && routeResolution.status === 'not_found') {

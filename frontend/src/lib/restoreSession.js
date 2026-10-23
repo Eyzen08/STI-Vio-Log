@@ -12,13 +12,13 @@ export async function restoreSession(request, { timeoutMs = 20000, retryDelayMs 
     signal?.addEventListener('abort', cancel, { once: true })
     const deadline = new Promise((_, reject) => {
       timer = setTimeout(() => {
-        reject(new Error('Session request timed out'))
+        reject(Object.assign(new Error('Session request timed out'), { code: 'SESSION_TIMEOUT' }))
         controller.abort()
       }, timeoutMs)
     })
     try {
       const data = await Promise.race([request(controller.signal), deadline, cancelled])
-      if (!data?.user) throw new Error('Invalid session response')
+      if (!data?.user) throw Object.assign(new Error('Invalid session response'), { code: 'INVALID_RESPONSE' })
       return data
     } catch (error) {
       if (signal?.aborted || error?.status === 401) throw error

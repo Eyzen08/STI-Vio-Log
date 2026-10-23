@@ -21,9 +21,8 @@ test('department student and attendance screens remain in the stable entry bundl
   assert.doesNotMatch(app, /lazy\(\(\) => import\('\.\/components\/DepartmentDtr\.jsx'\)\)/)
 })
 
-test('stale deployment chunks reload once and route errors show recovery UI', () => {
-  assert.match(main, /vite:preloadError/)
-  assert.match(main, /window\.location\.reload\(\)/)
+test('route loading failures offer explicit recovery without automatic reloads', () => {
+  assert.doesNotMatch(main, /window\.location\.reload\(\)/)
   assert.match(app, /<RouteErrorBoundary key=\{isLoggedIn\?routePath:'public-auth'\}>/)
   assert.match(boundary, /Reload Portal/)
 })
