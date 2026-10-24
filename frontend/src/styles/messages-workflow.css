@@ -4,7 +4,7 @@
 .messages-page-heading::before,.messages-page-heading::after{display:none!important}
 .main-panel--messages .messages-page-heading h2{font-size:var(--text-page-title);line-height:1.2;margin:0 0 6px}
 .main-panel--messages .messages-page-heading p{font-size:var(--text-base);margin:0;color:var(--text-secondary,#6b83a8)}
-.main-panel--messages .messages-new-button,.new-message-modal .modal-actions button[type=submit],.main-panel--messages .chat-composer>button{background:#0075f5!important;color:#fff!important;border:1px solid #0075f5!important;box-shadow:var(--decorative-shadow, 0 4px 12px #0075f51a);display:flex;align-items:center;justify-content:center;gap:10px;min-height:var(--page-action-height);border-radius:10px}
+.main-panel--messages .messages-new-button,.new-message-modal .modal-actions button[type=submit],.main-panel--messages .chat-composer>button{background:var(--action-primary-surface)!important;color:#fff!important;border:1px solid var(--action-primary-surface)!important;box-shadow:var(--decorative-shadow, 0 4px 12px #0075f51a);display:flex;align-items:center;justify-content:center;gap:10px;min-height:var(--page-action-height);border-radius:10px}
 .messages-new-button svg{width:20px;height:20px}
 .main-panel--messages .messages-workspace{grid-template-columns:380px minmax(0,1fr);border:1px solid #dbe8f5;border-radius:16px;background:var(--surface-raised,#fff);box-shadow:none;overflow:hidden}
 .main-panel--messages .conversation-pane{background:transparent;border-right:1px solid #e1ebf6;min-width:0}
@@ -33,7 +33,7 @@
 .conversation-row-meta i{width:9px;height:9px;background:#0080ff;border-radius:50%}
 .main-panel--messages .chat-pane{min-width:0;background:transparent;display:grid;grid-template-rows:auto minmax(0,1fr) auto auto}
 .main-panel--messages .message-state--center{grid-row:1/-1;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
-.main-panel--messages .message-empty-icon{display:grid;place-items:center;width:134px;height:134px;border-radius:50%;background:#eaf4ff;color:#007aff;margin-bottom:14px;font-size:48px}
+.main-panel--messages .message-empty-icon{display:grid;place-items:center;width:134px;height:134px;border-radius:50%;background:#eaf4ff;color:var(--action-primary-surface);margin-bottom:14px;font-size:48px}
 .message-empty-icon svg{width:54px;height:54px}
 .main-panel--messages .message-state--center strong{font-size:var(--text-xl);color:inherit}
 .main-panel--messages .message-state--center>span:last-child{font-size:var(--text-base);color:var(--text-secondary,#6b83a8)}
@@ -51,7 +51,7 @@
 .main-panel--messages .message-sender-avatar{width:36px;height:36px;flex:0 0 36px;margin-bottom:20px}
 .message-bubble-content{max-width:70%;min-width:0}
 .main-panel--messages .message-bubble{max-width:none;min-width:110px;padding:14px 18px;border-radius:12px;background:#edf1f5;color:#16294c;box-shadow:none}
-.main-panel--messages .mine .message-bubble{background:#0079fa!important;color:#fff!important;border:0}
+.main-panel--messages .mine .message-bubble{background:var(--message-outgoing-surface)!important;color:#fff!important;border:0}
 .message-bubble-content footer{font-size:var(--text-xs);color:var(--text-secondary,#6b83a8);padding:6px 4px 0}
 .mine .message-bubble-content footer{text-align:right}
 .main-panel--messages .message-record-note{min-height:40px;padding:10px 14px;text-align:center;border-block:1px solid #e1ebf6;background:transparent;font-size:var(--text-xs);color:var(--text-secondary,#56739d)}

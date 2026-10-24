@@ -7,7 +7,7 @@
 .guardian-contact-modal > .app-modal-header { border-bottom:0; }
 .guardian-contact-modal > .app-modal-body { padding-top:0; padding-bottom:14px; }
 .service-time-modal > .app-modal-header { min-height:80px; }
-.student-action-content { --detail-ink:#102a56; --detail-muted:#50688e; --detail-line:#dce8f3; --detail-surface:#fff; --detail-soft:#f6faff; --detail-blue:#0068eb; --detail-accent:#e9f3ff; --detail-track:#dce6f2; --detail-green:#008736; --detail-green-soft:#e2f7e9; --detail-orange:#9a5900; --detail-orange-soft:#fff1df; min-width:0; font-family:var(--font-sans); font-size:var(--text-base); line-height:1.4; color:var(--detail-ink); }
+.student-action-content { --detail-ink:var(--text-primary); --detail-muted:var(--text-secondary); --detail-line:var(--border-subtle); --detail-surface:var(--surface-raised); --detail-soft:var(--surface-nested); --detail-blue:#0068eb; --detail-accent:#e9f3ff; --detail-track:#dce6f2; --detail-green:#008736; --detail-green-soft:#e2f7e9; --detail-orange:#9a5900; --detail-orange-soft:#fff1df; min-width:0; font-family:var(--font-sans); font-size:var(--text-base); line-height:1.4; color:var(--detail-ink); }
 .student-action-content :is(h3,h4,p,dl,dd) { margin:0; }
 .student-action-content :is(h3,h4,strong) { color:var(--detail-ink); }
 .student-action-content :is(button,input,select,textarea) { font-family:inherit; }

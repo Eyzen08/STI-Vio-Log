@@ -1,16 +1,16 @@
 /* The approved violation reference uses a compact six-card summary and seven-row table. */
-.violation-management { --vio-ink:#102f60; --vio-muted:#506c96; --vio-line:#dce8f3; --vio-surface:#fff; --vio-soft:#f4f8fc; display:grid; gap:var(--page-gap); min-width:0; color:var(--vio-ink); font-family:var(--font-sans); }
+.violation-management { --vio-ink:var(--text-primary); --vio-muted:var(--text-secondary); --vio-line:var(--border-subtle); --vio-surface:var(--surface-raised); --vio-soft:var(--surface-nested); display:grid; gap:var(--page-gap); min-width:0; color:var(--vio-ink); font-family:var(--font-sans); }
 .violation-management :is(h2,h3,p) { margin:0; }
 .violation-management :is(button,input,select) { font-family:inherit; }
 .violation-page-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; }
 .violation-page-heading nav { margin-bottom:7px; color:var(--vio-muted); font-size:var(--text-base); line-height:18px; }
 .admin-portal .violation-page-heading h2 { color:var(--vio-ink); font-size:var(--text-page-title); font-weight:700; line-height:1.15; letter-spacing:-.025em; }
 .violation-page-heading p { margin-top:4px; color:var(--vio-muted); font-size:var(--text-base); line-height:1.5; }
-.admin-portal .violation-record-button { display:flex; align-items:center; justify-content:center; flex-shrink:0; gap:14px; min-height:var(--page-action-height); padding:12px 25px; border:1px solid #0067da; border-radius:10px; background:#0068df; color:#fff; font-size:var(--text-action); font-weight:700; box-shadow:none; }
+.admin-portal .violation-record-button { display:flex; align-items:center; justify-content:center; flex-shrink:0; gap:14px; min-height:var(--page-action-height); padding:12px 25px; border:1px solid var(--action-primary-surface); border-radius:10px; background:var(--action-primary-surface); color:#fff; font-size:var(--text-action); font-weight:700; box-shadow:none; }
 .violation-record-button > span { font-size:var(--text-action); line-height:1; font-weight:400; }
 .violation-summary-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:12px; }
-.admin-portal .violation-summary-grid .management-metric { min-height:99px; gap:20px; padding:16px 17px; border:1px solid var(--vio-line); border-radius:14px; background:var(--vio-surface); box-shadow:var(--decorative-shadow, 0 3px 12px rgb(20 54 90 / 3%)); }
-.violation-summary-grid .management-metric i { width:60px; height:60px; border-radius:14px; flex:0 0 60px; }
+.admin-portal .violation-summary-grid .management-metric { min-height:0; gap:20px; padding:16px 17px; border:1px solid var(--vio-line); border-radius:14px; background:var(--vio-surface); box-shadow:var(--decorative-shadow, 0 3px 12px rgb(20 54 90 / 3%)); }
+.violation-summary-grid .management-metric i { width:var(--summary-icon-size); height:var(--summary-icon-size); border-radius:14px; flex:0 0 var(--summary-icon-size); }
 .violation-summary-grid .management-metric svg { width:26px; height:26px; }
 .violation-summary-grid .management-metric > div { gap:8px; min-width:0; }
 .admin-portal .violation-summary-grid .management-metric strong { color:var(--vio-ink); font-size:var(--text-metric); line-height:1; font-weight:700; font-variant-numeric:tabular-nums; }
@@ -55,19 +55,19 @@
 .status-open { background:#dcedff; color:#0061d6; }
 .status-complete,.status-clear { background:#dbf6e9; color:#00823e; }
 .violation-actions { display:flex; align-items:center; gap:10px; }
-.admin-portal .violation-actions button { min-height:var(--control-height); min-width:86px; padding:7px 20px; border:1px solid #0072ec; border-radius:8px; background:#0072ec; color:#fff; font-size:var(--text-base); font-weight:700; line-height:20px; box-shadow:none; }
+.admin-portal .violation-actions button { min-height:var(--control-height); min-width:86px; padding:7px 20px; border:1px solid var(--action-primary-surface); border-radius:8px; background:var(--action-primary-surface); color:#fff; font-size:var(--text-base); font-weight:700; line-height:20px; box-shadow:none; }
 .admin-portal .violation-actions .violation-edit-button { display:grid; place-items:center; min-width:44px; width:44px; height:var(--control-height); padding:0; border-color:#cbdff3; background:var(--vio-surface); color:var(--vio-ink); }
 .admin-portal .violation-table .violation-empty { height:130px; text-align:center; }
 .violation-pagination { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:14px 20px; border-top:1px solid var(--vio-line); color:var(--vio-muted); font-size:var(--text-sm); }
 .violation-pagination nav { display:flex; gap:5px; }
 .admin-portal .violation-pagination button { display:grid; place-items:center; width:38px; min-height:var(--control-height); padding:0; border:1px solid var(--vio-line); border-radius:7px; background:var(--vio-soft); color:var(--vio-ink); font-size:var(--text-base); box-shadow:none; }
-.admin-portal .violation-pagination button[aria-current='page'] { background:#0072ec; border-color:#0072ec; color:white; font-weight:700; }
+.admin-portal .violation-pagination button[aria-current='page'] { background:var(--action-primary-surface); border-color:var(--action-primary-surface); color:white; font-weight:700; }
 .violation-pagination .previous-page { transform:rotate(180deg); }
 .violation-pagination button:disabled { opacity:.45; cursor:default; }
-.violation-management :is(button,input,select,[tabindex]):focus-visible { outline:2px solid #0072ec; outline-offset:3px; }
-.violation-search:focus-within { outline:2px solid #0072ec; outline-offset:2px; }
+.violation-management :is(button,input,select,[tabindex]):focus-visible { outline:2px solid var(--action-primary-surface); outline-offset:3px; }
+.violation-search:focus-within { outline:2px solid var(--action-primary-surface); outline-offset:2px; }
 .violation-management .violation-search input:focus { outline:none; }
-.admin-portal .violation-record-button:hover,.admin-portal .violation-actions button:not(.violation-edit-button):hover { background:#0058bd; border-color:#0058bd; }
+.admin-portal .violation-record-button:hover,.admin-portal .violation-actions button:not(.violation-edit-button):hover { background:var(--action-primary-hover); border-color:var(--action-primary-hover); }
 :root[data-theme='dark'] .violation-management { --vio-ink:var(--text-primary); --vio-muted:var(--text-secondary); --vio-line:var(--border-subtle); --vio-surface:var(--surface-raised); --vio-soft:var(--surface-nested); }
 :root[data-theme='dark'] .admin-portal .violation-table th { background:var(--surface-nested); }
 :root[data-theme='dark'] .violation-management :is(.classification-major,.classification-grave) { background:var(--status-danger-surface); color:var(--status-danger-text); }
@@ -75,8 +75,8 @@
 :root[data-theme='dark'] .violation-management :is(.status-complete,.status-clear) { background:var(--status-success-surface); color:var(--status-success-text); }
 :root[data-theme='dark'] .violation-management .status-open { background:var(--surface-interactive); color:var(--link-color); }
 :root[data-theme='dark'] .violation-management .status-invalid_cancel { background:var(--surface-nested); color:var(--text-secondary); }
-@media (max-width:1450px) { .admin-portal .violation-summary-grid .management-metric { gap:20px; padding:16px 17px; min-height:99px; } .violation-summary-grid .management-metric i { width:60px; height:60px; flex:0 0 60px; } .violation-summary-grid .management-metric span { font-size:var(--text-sm); } }
-@media (max-width:1200px) { .violation-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .admin-portal .violation-summary-grid .management-metric { min-height:99px; gap:20px; } .violation-toolbar { grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); } }
+@media (max-width:1450px) { .admin-portal .violation-summary-grid .management-metric { gap:20px; padding:16px 17px; min-height:0; } .violation-summary-grid .management-metric i { width:var(--summary-icon-size); height:var(--summary-icon-size); flex:0 0 var(--summary-icon-size); } .violation-summary-grid .management-metric span { font-size:var(--text-sm); } }
+@media (max-width:1200px) { .violation-summary-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .admin-portal .violation-summary-grid .management-metric { min-height:0; gap:20px; } .violation-toolbar { grid-template-columns:minmax(0,2fr) repeat(2,minmax(0,1fr)); } }
 @media (max-width:767px) {
   .violation-management { gap:var(--page-gap); }
   .violation-page-heading { align-items:flex-start; flex-direction:column; gap:14px; }

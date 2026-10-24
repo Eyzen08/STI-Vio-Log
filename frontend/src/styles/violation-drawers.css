@@ -1,5 +1,5 @@
 /* Shared reference styling for read-only and audited violation drawers. */
-.app-modal:is(.violation-details-modal,.violation-edit-modal) { --case-ink:#102e60; --case-muted:#55709a; --case-line:#d7e7f7; --case-surface:#fff; --case-soft:#f6f9fc; height:100dvh; max-height:100dvh; border:1px solid var(--case-line); border-radius:14px 0 0 14px; background:var(--case-surface); color:var(--case-ink); font-family:var(--font-sans); box-shadow:var(--decorative-shadow, -12px 0 35px rgb(15 40 70 / 12%)); }
+.app-modal:is(.violation-details-modal,.violation-edit-modal) { --case-ink:var(--text-primary); --case-muted:var(--text-secondary); --case-line:var(--border-subtle); --case-surface:var(--surface-raised); --case-soft:var(--surface-nested); height:100dvh; max-height:100dvh; border:1px solid var(--case-line); border-radius:14px 0 0 14px; background:var(--case-surface); color:var(--case-ink); font-family:var(--font-sans); box-shadow:var(--decorative-shadow, -12px 0 35px rgb(15 40 70 / 12%)); }
 .app-modal.violation-details-modal { width:min(720px,100vw); }
 .app-modal.violation-edit-modal { width:min(760px,100vw); }
 .app-modal-backdrop:has(> :is(.violation-details-modal,.violation-edit-modal)) { justify-content:flex-end; padding:0; background:rgb(8 30 52 / 43%); backdrop-filter:blur(3px); }
@@ -27,10 +27,10 @@
 .context-status-pending > i { background:#e98d00; }
 .violation-detail-section { min-width:0; padding:20px; border:1px solid var(--case-line); border-radius:10px; background:var(--case-surface); }
 .violation-quick-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-.app-modal :is(.violation-drawer-primary,.violation-drawer-secondary,.violation-drawer-danger) { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:8px 14px; border:1px solid #0065d5; border-radius:7px; background:#0065d5; color:white; font-size:var(--text-sm); font-weight:600; line-height:1.3; box-shadow:none; }
+.app-modal :is(.violation-drawer-primary,.violation-drawer-secondary,.violation-drawer-danger) { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:8px 14px; border:1px solid var(--action-primary-surface); border-radius:7px; background:var(--action-primary-surface); color:white; font-size:var(--text-sm); font-weight:600; line-height:1.3; box-shadow:none; }
 .app-modal .violation-drawer-secondary { border-color:#98c4f7; background:var(--case-surface); color:#005fcf; }
 .app-modal .violation-drawer-danger { border-color:#f04454; background:var(--case-surface); color:#c7192c; }
-.app-modal .violation-drawer-primary:hover { background:#0054b5; border-color:#0054b5; }
+.app-modal .violation-drawer-primary:hover { background:var(--action-primary-hover); border-color:var(--action-primary-hover); }
 .app-modal .violation-drawer-danger:hover { background:#ffedf0; }
 .app-modal :is(.violation-drawer-primary,.violation-drawer-secondary,.violation-drawer-danger):disabled { opacity:.5; cursor:default; }
 .violation-edit-content { gap:20px; }
@@ -90,7 +90,7 @@
 .violation-edit-footer { position:sticky; bottom:-14px; z-index:1; margin:0 -24px -14px; padding:16px 24px; border-top:1px solid var(--case-line); background:var(--case-surface); }
 .violation-cancel-confirm .violation-edit-actions { margin-top:12px; }
 
-.app-modal:is(.violation-details-modal,.violation-edit-modal) :is(button,input,select,textarea,summary):focus-visible { outline:2px solid #0068df; outline-offset:3px; }
+.app-modal:is(.violation-details-modal,.violation-edit-modal) :is(button,input,select,textarea,summary):focus-visible { outline:2px solid var(--action-primary-surface); outline-offset:3px; }
 :root[data-theme='dark'] .app-modal:is(.violation-details-modal,.violation-edit-modal) { --case-ink:var(--text-primary); --case-muted:var(--text-secondary); --case-line:var(--border-subtle); --case-surface:var(--surface-raised); --case-soft:var(--surface-nested); }
 :root[data-theme='dark'] .app-modal :is(.violation-context-avatar,.context-status-open) { background:var(--surface-interactive); color:var(--link-color); border-color:var(--border-subtle); }
 :root[data-theme='dark'] .app-modal .violation-cancel-confirm { background:var(--status-danger-surface); color:var(--status-danger-text); }

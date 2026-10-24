@@ -89,6 +89,15 @@ function contrast(foreground, background) {
   return (values[0] + 0.05) / (values[1] + 0.05)
 }
 
+test('light metadata and placeholders retain readable contrast on shared surfaces', () => {
+  const light = foundation.split(":root[data-theme='dark']")[0]
+  const tokens = Object.fromEntries([...light.matchAll(/(--[\w-]+):\s*(#[\da-f]{6});/gi)].map(([, name, value]) => [name, value]))
+  for (const surface of ['--surface-canvas', '--surface-raised', '--surface-nested']) {
+    assert.ok(contrast(tokens['--text-muted'], tokens[surface]) >= 4.5, `muted metadata on ${surface}`)
+  }
+  assert.ok(contrast(tokens['--control-placeholder'], tokens['--control-background']) >= 4.5, 'placeholder contrast')
+})
+
 test('appearance preference defaults to the light reference, persists, and updates browser color scheme', () => {
   assert.match(app, /useState\(\(\) => readDocumentTheme\(document\)\)/)
   assert.match(app, /applyTheme\(nextTheme, document, window\.localStorage\)/)
@@ -214,7 +223,7 @@ test('portal navigation keeps transparent branding and a fixed navy palette in b
   assert.match(app, /className="brand-logo"\s+src=\{stiVioLogLogoTransparent\}/s)
   assert.match(app, /className="mobile-brand-logo" src=\{stiVioLogLogoTransparent\}/)
   assert.doesNotMatch(app, /brand-logo-(?:light|dark)|mobile-brand-logo-(?:light|dark)/)
-  assert.match(guard, /Authenticated navigation is deliberately theme-invariant/)
+  assert.match(portal, /Authenticated navigation is deliberately theme-invariant/)
   assert.match(guard, /\.app-shell:not\(\.auth-shell\) \.sidebar,[^}]*background: #07345f/s)
   assert.match(guard, /:root\[data-theme='dark'\] \.sidebar \.brand\s*\{[^}]*background: transparent !important/s)
   assert.match(guard, /:root\[data-theme='dark'\] \.sidebar \.nav-item\.active,[^}]*background: #0878df/s)

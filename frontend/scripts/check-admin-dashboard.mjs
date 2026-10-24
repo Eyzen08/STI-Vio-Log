@@ -42,7 +42,7 @@ const resetNotifications = (count) => {
 }
 resetNotifications(unread)
 const checkNotificationCount = async (page, count) => {
-  await page.getByRole('button', { name: `${count} unread notifications`, exact: true }).waitFor()
+  await page.getByRole('button', { name: `${count} Unread Notifications`, exact: true }).waitFor()
   const expected = count > 99 ? '99+' : String(count)
   const bellBadge = page.locator('.notification-button .notification-count-badge')
   const sidebarBadge = page.locator('.sidebar').getByRole('button', { name: 'Notifications', exact: true, includeHidden: true }).locator('.nav-pending-badge')
@@ -68,6 +68,7 @@ try {
   browser = await chromium.launch({ headless: true, channel: 'chrome' })
   // API responses are intercepted; bypass the development origin's CSP for fixtures.
   const page = await browser.newPage({ bypassCSP: true })
+  await page.context().addCookies([{ name: 'sti_csrf', value: 'local-browser-fixture', url: origin }])
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/*', async (route) => {
@@ -94,6 +95,7 @@ try {
       const empty = scenario === 'empty'
       const payloads = {
         '/api/auth/session': { user },
+        '/api/auth/legal': { legal: { required: false } },
         '/api/students': { students: empty ? [] : students },
         '/api/violations': { violations: empty ? [] : caseItems },
         '/api/violations/types': { violationTypes: [] },
@@ -144,16 +146,18 @@ try {
             const bounds = el.getBoundingClientRect()
             return bounds.width < 44 || bounds.height < 44
           }).map((el) => el.getAttribute('aria-label'))
-          const caseOverlap = [...document.querySelectorAll('.recent-activity-card li')].some((row) => {
-            const content = row.querySelector('.case-details')?.getBoundingClientRect()
-            const metadata = row.querySelector('.case-meta')?.getBoundingClientRect()
-            return !content || !metadata || (content.left < metadata.right && content.right > metadata.left && content.top < metadata.bottom && content.bottom > metadata.top)
+          const caseOverlap = [...document.querySelectorAll('.dashboard-violations-table tbody td')].some((cell) => {
+            const bounds = cell.getBoundingClientRect()
+            const range = document.createRange()
+            range.selectNodeContents(cell)
+            const content = range.getBoundingClientRect()
+            return content.left < bounds.left - 1 || content.right > bounds.right + 1
           })
-          const card = document.querySelector('.recent-activity-card').getBoundingClientRect()
-          const list = document.querySelector('.recent-activity-card ul').getBoundingClientRect()
+          const card = document.querySelector('.recent-violations-card').getBoundingClientRect()
+          const list = document.querySelector('.dashboard-violations-table').getBoundingClientRect()
           return { pageOverflow: document.documentElement.scrollWidth > innerWidth, caseOverlap, caseBottomSpace: card.bottom - list.bottom,
             headerColor: getComputedStyle(document.querySelector('.topbar')).backgroundColor,
-            totals: rect('.dashboard-attendance-totals'), roster: rect('.dashboard-active-students'), overflowing, clippedControls, smallControls }
+            totals: rect('.active-session-card .dashboard-section-heading'), roster: rect('.dashboard-active-students'), overflowing, clippedControls, smallControls }
         })
         const label = `${theme} ${width}x${height} ${zoom * 100}%`
         assert.match(layout.headerColor, /^rgb\(/, `${label}: sticky header must be opaque`)
@@ -163,14 +167,14 @@ try {
         assert.deepEqual(layout.smallControls, [], `${label}: header controls smaller than 44px`)
         assert.equal(layout.caseOverlap, false, `${label}: case content and metadata overlap or are missing`)
         assert.ok(layout.caseBottomSpace < 40, `${label}: case card stretches beyond its content`)
-        assert.equal(await page.locator('.recent-activity-card li').count(), 3, `${label}: recent cases missing`)
-        assert.equal(await page.locator('.recent-activity-card li strong').first().textContent(), 'Rollz-Steven Maballo Mahilum')
-        assert.equal(await page.locator('.case-offense').first().textContent(), violations[0].exact_offense)
+        assert.equal(await page.locator('.dashboard-violations-table tbody tr').count(), Math.min(4, caseItems.length), `${label}: recent cases missing`)
+        assert.equal(await page.locator('.dashboard-violations-table tbody tr strong').first().textContent(), 'Rollz-Steven Maballo Mahilum')
+        assert.equal(await page.locator('.dashboard-offense-text').first().textContent(), violations[0].exact_offense)
         await checkNotificationCount(page, unread)
         assert.ok(layout.totals.y + layout.totals.height <= layout.roster.y, `${label}: attendance totals must sit above sessions`)
         assert.equal(await page.locator('.dashboard-active-service').count(), 3, `${label}: sessions missing`)
         assert.equal(await page.locator('.timer-limit-notice').count(), 1, `${label}: expired-session notice missing`)
-        assert.ok(!(await page.locator('.recent-activity-card').innerText()).includes('opened'), `${label}: current statuses presented as events`)
+        assert.ok(!(await page.locator('.recent-violations-card').innerText()).includes('opened'), `${label}: current statuses presented as events`)
         await page.evaluate(() => window.scrollTo(0, 400))
         const headerY = (await page.locator('.topbar').boundingBox()).y
         if (headerY < 0) console.error(await page.locator('.topbar').evaluate((el) => {
@@ -229,11 +233,11 @@ try {
         await page.waitForURL('**/admin/notifications')
         assert.equal(await page.locator('.sidebar .nav-item.active').getAttribute('aria-label'), 'Notifications')
         if (count === 35) {
-          await page.locator('.notification-list > article').first().getByRole('button', { name: 'Mark as read', exact: true }).click()
+          await page.locator('.notification-list > article').first().getByRole('button', { name: /mark as read/i }).click()
           await checkNotificationCount(page, 34)
           await page.getByRole('button', { name: 'Acknowledge', exact: true }).click()
           await checkNotificationCount(page, 33)
-          await page.getByRole('button', { name: 'Mark all read', exact: true }).click()
+          await page.getByRole('button', { name: /mark all read/i }).click()
           await checkNotificationCount(page, 0)
         }
         console.log(`PASS notifications ${theme} ${width}px count ${count}`)
@@ -247,16 +251,16 @@ try {
   ]
   await page.goto(`${origin}admin/dashboard`)
   await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
-  const caseRows = page.locator('.recent-activity-card li')
+  const caseRows = page.locator('.dashboard-violations-table tbody tr')
   assert.equal(await caseRows.nth(0).locator('.status-badge').textContent(), 'Clear')
-  assert.equal(await caseRows.nth(0).locator('.case-offense').textContent(), 'Handbook offense fallback')
+  assert.equal(await caseRows.nth(0).locator('.dashboard-offense-text').textContent(), 'Handbook offense fallback')
   assert.match(await caseRows.nth(0).locator('time').textContent(), /Time not recorded/)
   assert.equal(await caseRows.nth(1).locator('strong').textContent(), 'Student #2')
-  assert.equal(await caseRows.nth(1).locator('.case-offense').textContent(), 'Recorded offense')
+  assert.equal(await caseRows.nth(1).locator('.dashboard-offense-text').textContent(), 'Recorded Offense')
   assert.match(await caseRows.nth(1).locator('time').textContent(), /Not recorded.*Time not recorded/)
   assert.equal(await caseRows.nth(1).locator('time').getAttribute('datetime'), null)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'case fallbacks and unbroken text')
-  await page.locator('.recent-activity-card').getByRole('button', { name: 'View All', exact: true }).click()
+  await page.locator('.recent-violations-card').getByRole('button', { name: 'View All', exact: true }).click()
   await page.waitForURL('**/admin/violations')
   caseItems = violations
   for (const state of ['empty', 'loading', 'error']) {
@@ -269,7 +273,7 @@ try {
     else {
       await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
       await page.getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
-      await page.locator('.recent-activity-card').getByText(state === 'empty' ? 'No recent cases.' : 'Cases unavailable.', { exact: true }).waitFor()
+      await page.locator('.recent-violations-card').getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
     }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, state)
     console.log(`PASS ${state}`)

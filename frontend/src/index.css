@@ -1,14 +1,14 @@
 :root {
   /* STI Vio-Log design foundation */
-  --color-primary: #1463d6;
-  --color-primary-dark: #0f4fac;
-  --color-secondary: #1463d6;
+  --color-primary: #0969c7;
+  --color-primary-dark: #0755a3;
+  --color-secondary: var(--color-primary);
   --color-accent: #f4c542;
   --color-page: #f5f7fb;
   --color-surface: #ffffff;
-  --color-text: #172033;
-  --color-text-secondary: #526174;
-  --color-border: #dee5ef;
+  --color-text: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border-subtle);
   --color-success: #198754;
   --color-warning: #f59e0b;
   --color-danger: #dc3545;
@@ -24,9 +24,9 @@
   --surface-interactive-hover: #e3eef9;
   --surface-selected: #dcebfa;
   --surface-overlay: rgba(255, 255, 255, .96);
-  --text-primary: #172033;
+  --text-primary: #17345b;
   --text-secondary: #526174;
-  --text-muted: #6b7b90;
+  --text-muted: #607086;
   --text-on-accent: #ffffff;
   --action-primary-surface: var(--color-primary);
   --action-primary-hover: var(--color-primary-dark);
@@ -36,7 +36,7 @@
   --link-hover: #064989;
   --control-background: #ffffff;
   --control-disabled-background: #edf1f6;
-  --control-placeholder: #687a90;
+  --control-placeholder: #607086;
   --backdrop-color: rgba(7, 20, 33, .58);
   --modal-surface: #ffffff;
   --modal-header-surface: #f7f9fc;
@@ -60,11 +60,11 @@
   --text-sm: 0.8125rem;
   --text-base: 0.875rem;
   --text-lg: 1rem;
-  --text-xl: 1.375rem;
+  --text-xl: 1.25rem;
   --text-2xl: 2rem;
   --text-3xl: 2rem;
-  --text-page-title: var(--text-2xl);
-  --text-section-title: var(--text-xl);
+  --text-page-title: 1.75rem;
+  --text-section-title: 1.25rem;
   --text-metric: var(--text-2xl);
   --text-action: 0.9375rem;
   --text-control: var(--text-base);
@@ -75,7 +75,31 @@
   --control-height: 2.75rem;
   --page-action-height: 3.0625rem;
   --filter-height: 3.25rem;
-  --page-gap: 0.9375rem;
+  --page-gap: 1rem;
+  --grid-gap: 0.75rem;
+  --page-gutter: 1.25rem;
+  --card-radius: 0.75rem;
+  --card-padding: 1.25rem;
+  --summary-padding: 1rem;
+  --summary-icon-size: 2.75rem;
+  --form-max-width: 47.5rem;
+  --reading-max-width: 70ch;
+  --severity-minor: #806000;
+  --severity-major: #a64700;
+  --severity-grave: var(--status-danger-text);
+  --portal-canvas: var(--surface-canvas);
+  --portal-line: var(--border-subtle);
+  --portal-text: var(--text-primary);
+  --portal-muted: var(--text-secondary);
+  --portal-light-blue: var(--surface-interactive);
+  --portal-navy: var(--surface-sidebar);
+  --portal-navy-2: var(--action-primary-hover);
+  --portal-blue: var(--action-primary-surface);
+  --portal-blue-hover: var(--action-primary-hover);
+  --portal-yellow: var(--color-accent);
+  --portal-message-border: var(--border-strong);
+  --portal-raised: var(--shadow-sm);
+  --portal-raised-hover: var(--shadow-md);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -155,6 +179,8 @@ html {
   --color-warning: #f1bd47;
   --color-danger: #ff7180;
   --color-info: #6bbcff;
+  --severity-minor: #ffd870;
+  --severity-major: #ffb579;
   --decorative-shadow: none;
   --shadow-sm: none;
   --shadow-md: none;
@@ -291,16 +317,16 @@ small {
   font-size: var(--text-sm);
 }
 
-@media (max-width: 1279px) {
-  :root { --text-page-title: 1.75rem; }
-}
-
 @media (max-width: 767px) {
   :root {
-    --text-page-title: 1.625rem;
+    --text-page-title: 1.5rem;
     --text-section-title: 1.25rem;
     --text-metric: 1.625rem;
     --text-control: 1rem;
+    --page-gutter: 0.75rem;
+    --card-padding: 1rem;
+    --summary-padding: 0.75rem;
+    --summary-icon-size: 2.25rem;
   }
 }
 

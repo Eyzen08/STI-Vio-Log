@@ -17,22 +17,22 @@ function declarations(css, selector) {
 test('page and header spacing comes from shared responsive rules in both themes', () => {
   for (const [css, selector] of [
     [portal, "[data-theme='dark'] .page-content"],
-    [overrides, ":root[data-theme='dark'] .portal-page-header"],
+    [portal, ":root[data-theme='dark'] .portal-page-header"],
   ]) {
     const rules = declarations(css, selector)
     assert.ok(rules.length, `${selector} retains its theme colors`)
     for (const rule of rules) assert.doesNotMatch(rule, geometry, selector)
   }
   assert.match(portal, /@media[^{}]+\{[\s\S]*?\.page-content\s*\{\s*padding: 14px 12px 24px;/)
-  assert.match(overrides, /@media \(max-width: 767px\)\s*\{\s*\.portal-page-header\s*\{[^}]*padding: 1\.1rem;/)
+  assert.match(portal, /@media \(max-width: 767px\)\s*\{\s*\.portal-page-header\s*\{[^}]*padding: var\(--card-padding\);/)
 })
 
 test('student summary icons use shared desktop and mobile sizes', () => {
   const rules = declarations(students, ":root[data-theme='dark'] .student-summary-card > i")
   assert.equal(rules.length, 1)
   assert.doesNotMatch(rules[0], geometry)
-  assert.match(students, /\.student-summary-card > i\s*\{[^}]*flex:0 0 60px;[^}]*height:60px;/)
-  assert.match(students, /@media \(max-width:767px\)[\s\S]*?\.student-summary-card > i\s*\{[^}]*flex-basis:40px; height:40px;/)
+  assert.match(students, /\.student-summary-card > i\s*\{[^}]*flex:0 0 var\(--summary-icon-size\);[^}]*height:var\(--summary-icon-size\);/)
+  assert.doesNotMatch(students, /\.student-summary-card > i\s*\{[^}]*height:(?:40|60)px/)
 })
 
 test('dark card details keep the light layout without adding borders or list padding', () => {

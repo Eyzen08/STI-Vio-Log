@@ -26,17 +26,20 @@ let rejectDirectory = false
 const approvalBodies = []
 const signature = { id: 1, full_name: 'Juan Dela Cruz', position: 'Discipline Officer', is_active: true, updated_at: '2026-10-08', image_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jY1sAAAAASUVORK5CYII=' }
 const clearanceCertificates = ['ISSUED', 'REVOKED'].map((status, i) => ({ id: i + 1, student_name: 'Paolo Sy', student_number: '2024-006', certificate_number: `STI-2026-00${i + 1}`, version: i + 1, completed_hours: 4, status, email_status: 'SENT' }))
-const server = await createServer({ root, cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0 } })
-let browser
+const server = await createServer({ root, cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0, hmr: false } })
+let browser, page
 let user
 const errors = []
 const themeFindings = []
+const coverage = []
+let degraded = false
+const representativeRoutes = new Set(['/admin/dashboard', '/admin/students', '/admin/system-monitoring', '/admin/messages', '/admin/qr-scan', '/admin/account-settings', '/department/dashboard', '/department/students', '/department/dtr', '/department/qr-scan', '/student/dashboard', '/student/profile', '/student/community-service', '/student/clearance', '/student/messages'])
 
 try {
   await server.listen()
   const origin = server.resolvedUrls.local[0]
   browser = await chromium.launch({ headless: true, channel: 'chrome' })
-  const page = await browser.newPage({ bypassCSP: true })
+  page = await browser.newPage({ bypassCSP: true })
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url())
@@ -44,6 +47,15 @@ try {
       let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'local-browser-fixture' } : payload
       let status = url.pathname === '/api/auth/session' && !user ? 401 : 200
       if (url.pathname === '/api/auth/legal') response = { legal: { required: false } }
+      if (url.pathname === '/api/system/status') response = { system: { application: 'STI Vio-Log', environment: 'Production', version: 'layout-fixture', status: 'OPERATIONAL', database: 'CONNECTED', checked_at: '2026-10-23T12:00:00Z', components: {
+        api: { status: 'OPERATIONAL' }, database: { status: 'OPERATIONAL', latency_ms: 96 },
+        google_identity: { status: 'CONFIGURED' }, email_delivery: { status: 'CONFIGURED' }, realtime: { status: 'AVAILABLE' },
+      } } }
+      if (degraded && url.pathname === '/api/system/status') {
+        response.system.status = 'DEGRADED'
+        response.system.database = 'UNAVAILABLE'
+        response.system.components.database = { status: 'UNAVAILABLE', remediation: 'Database connectivity is unavailable. Contact the responsible administrator and retry after the connection is restored.' }
+      }
       if (url.pathname === '/api/clearance/certificates/students') {
         response = rejectDirectory ? { message: 'Unable to load clearance records.' } : { students: [...clearanceStudents, clearanceStudents[0]].filter(Boolean) }
         status = rejectDirectory ? 503 : 200
@@ -66,6 +78,8 @@ try {
   await page.addInitScript(() => localStorage.removeItem('sti_vio_log_sidebar_collapsed'))
   await mkdir(output, { recursive: true })
   await page.goto(origin)
+  // Protected mutations use the same double-submit cookie as the real session.
+  await page.context().addCookies([{ name: 'sti_csrf', value: 'local-browser-fixture', url: origin }])
 
   async function open(path, navigate = false) {
     if (navigate) {
@@ -101,7 +115,7 @@ try {
       for (const element of document.querySelectorAll('.student-summary-card,.student-directory-card,.dashboard-card,.management-metric,.student-section,.department-metrics > article,.app-modal:not(.app-modal--drawer)')) {
         if (!element.getClientRects().length) continue
         const style = getComputedStyle(element)
-        if (style.borderRadius !== '8px' || style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+        if (style.borderRadius !== '12px' || document.documentElement.dataset.theme === 'dark' && style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
       }
       for (const element of document.querySelectorAll('.student-add-button,.directory-view-button,.theme-toggle,.notification-button,.app-modal-close,.student-directory-select,.department-header-actions button')) {
         if (!element.getClientRects().length) continue
@@ -118,8 +132,9 @@ try {
     assert.deepEqual(flatFindings, [], `${label}: flat portal surfaces`)
     if (await page.locator('.student-directory-table').count()) {
       const cleared = page.locator('.directory-clearance').filter({ hasText: /^Cleared$/ })
-      assert.equal(await cleared.count(), 1, `${label}: cleared fixture is displayed`)
-      assert.equal(await cleared.evaluate((element) => element.classList.contains('clearance-cleared')), false, 'directory badges do not inherit clearance-card borders')
+      const expectedCleared = payload.students.filter(student => payload.clearanceRecords.some(record => record.student_id === student.id && record.status === 'CLEARED')).length
+      assert.equal(await cleared.count(), expectedCleared, `${label}: cleared fixture is displayed`)
+      if (expectedCleared) assert.equal(await cleared.first().evaluate((element) => element.classList.contains('clearance-cleared')), false, 'directory badges do not inherit clearance-card borders')
     }
     if (process.argv.includes('--theme-audit')) {
       const findings = await page.evaluate(() => {
@@ -133,7 +148,7 @@ try {
           if (!el.getClientRects().length || rect.width < 2 || rect.height < 2 || style.visibility !== 'visible' || Number(style.opacity) === 0 || el.closest('[aria-hidden="true"],svg,script,style,.sr-only')) continue
           const ownBackground = rgb(style.backgroundColor)
           const selector = `${el.parentElement?.className || el.parentElement?.tagName} > ${el.tagName.toLowerCase()}.${String(el.className).trim().replaceAll(' ', '.')}`
-          const paper = el.closest('.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img,.signature-directory img,.signature-form > img,.signature-preview-grid img,.signature-picker img')
+          const paper = el.closest('.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img,.signature-directory img,.signature-form > img,.signature-preview-grid img,.signature-picker img,.handbook-reader')
           if (!paper && (ownBackground[3] ?? 1) >= .9 && luminance(ownBackground) > .65 && rect.width * rect.height > 150) findings.push({ selector, issue: 'light surface', background: style.backgroundColor })
           const text = [...el.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent.trim()).join(' ')
           if (!text || el.matches('progress') || el.closest(':disabled,[disabled]')) continue
@@ -202,18 +217,33 @@ try {
         assert.equal(layout.nav.size, '14px', `${label}: navigation text`)
         assert.ok(layout.nav.height >= 44, `${label}: navigation target`)
       }
-      if (layout.title) assert.equal(layout.title.size, label.includes('/admin/system-monitoring') ? '22px' : `${width < 768 ? 26 : width < 1280 ? 28 : 32}px`, `${label}: title size`)
+      if (layout.title) assert.equal(layout.title.size, `${width < 768 ? 24 : 28}px`, `${label}: title size`)
+      const contract = await page.evaluate(() => {
+        const content = document.querySelector('.page-content').getBoundingClientRect()
+        const working = document.querySelector('.page-content > :is(.student-management-page,.portal-dashboard,.system-dashboard,.reports-workspace,.audit-workspace,.student-page,.department-page,.department-officer-page,.active-attendance-page,.certificate-admin)')
+        const gutter = parseFloat(getComputedStyle(document.querySelector('.page-content')).paddingLeft)
+        const visible = selector => [...document.querySelectorAll(selector)].filter(el => el.getClientRects().length)
+        const icons = visible('.stat-card > i,.management-metric > i,.student-summary-card > i,.department-stat-icon')
+        return { working: working && { width:working.getBoundingClientRect().width, expected:content.width - 2 * gutter }, icons:icons.map(el => el.getBoundingClientRect().width), summaries:visible('.department-stat').map(el => { const style = getComputedStyle(el); return { minHeight:style.minHeight,padding:parseFloat(style.paddingLeft) } }), forms:visible('.account-password-form,.admin-settings-page .login-form').map(el => el.getBoundingClientRect().width), primaryColors:visible('.student-add-button,.violation-record-button,.messages-new-button,.record-primary-button,.violation-drawer-primary').map(el => getComputedStyle(el).backgroundColor) }
+      })
+      if (contract.working) assert.ok(Math.abs(contract.working.width - contract.working.expected) < 2, `${label}: working page uses available width ${JSON.stringify(contract.working)}`)
+      assert.ok(contract.icons.every(size => Math.abs(size - (width < 768 ? 36 : 44)) < 1), `${label}: summary icon sizes ${contract.icons}`)
+      assert.ok(contract.summaries.every(style => style.minHeight === '0px' && style.padding === (width < 768 ? 12 : 16)), `${label}: summary density ${JSON.stringify(contract.summaries)}`)
+      assert.ok(contract.forms.every(size => size <= 760), `${label}: form width ${contract.forms}`)
+      assert.ok(contract.primaryColors.every(color => ['rgb(9, 105, 199)', 'rgb(7, 85, 163)'].includes(color)), `${label}: primary action palette ${contract.primaryColors}`)
     }
+    coverage.push({ label, width, authenticated })
   }
 
   // Every role's routes, fresh loads and SPA navigation, in both themes/sizes.
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
     const routes = APP_ROUTES.filter((route) => route.roles.includes(role) && !route.redirectTo && !['/account/password-change', '/student/onboarding'].includes(route.path))
-    for (const [width, height] of [[1920, 1080], [1024, 768], [390, 844]]) {
+    for (const [width, height] of [390, 768, 1440, 320, 360, 430, 600, 1024, 1280, 1366, 1920].map(width => [width, width < 768 ? 844 : 900])) {
       await page.setViewportSize({ width, height })
       for (const theme of ['light', 'dark']) {
         for (const [index, route] of routes.entries()) {
+          if (![390, 768, 1440].includes(width) && !representativeRoutes.has(route.path)) continue
           await open(route.path, index !== 0)
           await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
           await check(`${role} ${route.path} ${theme} ${width}`, width)
@@ -235,10 +265,13 @@ try {
                 await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
                 await trigger.click()
               }
-              assert.deepEqual(await menu.evaluate((element) => {
+              const menuStyle = await menu.evaluate((element) => {
                 const style = getComputedStyle(element)
                 return { radius: style.borderRadius, shadow: style.boxShadow, outsideShell: !element.closest('.app-shell') }
-              }), { radius: '8px', shadow: 'none', outsideShell: true }, 'body-mounted menus share the flat portal surface')
+              })
+              assert.equal(menuStyle.radius, '12px', 'body-mounted menus share the portal surface')
+              assert.equal(menuStyle.outsideShell, true)
+              if (theme === 'dark') assert.equal(menuStyle.shadow, 'none')
               await page.keyboard.press('Escape')
             }
             await page.locator('.student-summary-card').first().hover()
@@ -248,8 +281,46 @@ try {
         await page.screenshot({ path: `${output}${role}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
       }
     }
-    console.log(`PASS ${role}: ${routes.length} routes, desktop/tablet/mobile, light/dark`)
+    console.log(`PASS ${role}: ${routes.length} routes at 390/768/1440px; representative routes at eight additional widths; light/dark`)
   }
+
+  // Stress the shared patterns with real-length content and truthful failure states.
+  for (const width of [1920, 320, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 })
+    for (const theme of ['light', 'dark']) {
+      for (const [role, path] of [['DISCIPLINE_ADMIN', '/admin/departments-officers'], ['DISCIPLINE_OFFICE', '/admin/account-settings'], ['DEPARTMENT_HEAD', '/department/account-settings'], ['DEPARTMENT_HEAD', '/department/dashboard'], ['DEPARTMENT_HEAD', '/department/community-service'], ['DISCIPLINE_ADMIN', '/admin/handbook'], ['DISCIPLINE_ADMIN', '/admin/dashboard']]) {
+        user = { ...student, role, department_id: 1, department_name: 'Student Support' }
+        await open(path)
+        await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+        await check(`Shared patterns ${path} ${theme} ${width}`, width)
+        const severity = page.locator('.dashboard-severity.severity-minor')
+        if (await severity.count()) assert.equal(await severity.first().evaluate(el => getComputedStyle(el).color), theme === 'dark' ? 'rgb(255, 216, 112)' : 'rgb(128, 96, 0)', 'minor severity uses the same palette in both record views')
+      }
+      user = { ...student, role: 'DISCIPLINE_ADMIN' }
+      const originalStudents = payload.students
+      payload.students = [{ ...student, first_name: 'Maria Alessandra Christina', last_name: 'Dela Cruz Villanueva-Santos', student_number: '0200000123456789', program: 'Bachelor of Science in Information Technology', section: 'INFORMATION-TECHNOLOGY-A303' }]
+      await open('/admin/students')
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await page.getByText('Maria Alessandra Christina Dela Cruz Villanueva-Santos', { exact: true }).waitFor()
+      await check(`Long student content ${theme} ${width}`, width)
+      payload.students = []
+      await open('/admin/students')
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await page.getByText('No student records yet.', { exact: true }).waitFor()
+      await check(`Empty student directory ${theme} ${width}`, width)
+      payload.students = originalStudents
+      degraded = true
+      await open('/admin/system-monitoring')
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await page.getByText('Degraded', { exact: true }).waitFor()
+      await check(`Degraded monitoring ${theme} ${width}`, width)
+      assert.equal(await page.locator('.component-health-card--database .status-badge').textContent(), 'Unavailable')
+      assert.equal(await page.locator('.component-health-card--database .status-badge').evaluate(el => getComputedStyle(el).color), theme === 'dark' ? 'rgb(255, 155, 167)' : 'rgb(165, 35, 54)')
+      await page.screenshot({ path: `${output}monitoring-degraded-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
+      degraded = false
+    }
+  }
+  console.log('PASS shared summaries, bounded password forms, severity colors, long/empty records, and degraded monitoring at 320/768/1440/1920px in both themes.')
 
   user = { ...student, role: 'DISCIPLINE_ADMIN' }
   for (const width of [1920, 1024, 390]) {
@@ -347,7 +418,7 @@ try {
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Logout', exact: true }).first().click()
   await page.getByRole('dialog').waitFor()
-  assert.equal(await page.locator('.app-modal-header h2').evaluate((el) => getComputedStyle(el).fontSize), '22px')
+  assert.equal(await page.locator('.app-modal-header h2').evaluate((el) => getComputedStyle(el).fontSize), '20px')
   await page.keyboard.press('Escape')
 
   // Zoom changes the effective CSS viewport; cover 125% and 200% equivalents.
@@ -359,7 +430,7 @@ try {
   }
 
   user = null
-  for (const width of [1920, 390]) {
+  for (const width of [320, 360, 390, 430, 600, 768, 1024, 1280, 1366, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 })
     for (const path of PUBLIC_ROUTES) {
       await open(path)
@@ -370,11 +441,16 @@ try {
       }
     }
   }
-  for (const flag of ['onboarding_required', 'password_change_required']) {
+  for (const width of [320, 390, 768, 1440]) for (const flag of ['onboarding_required', 'password_change_required']) {
+    await page.setViewportSize({ width, height: 900 })
     user = { ...student, role: 'STUDENT', [flag]: true }
     await open(flag === 'onboarding_required' ? '/student/onboarding' : '/account/password-change')
-    await check(flag, 390, false)
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await check(`${flag} ${theme} ${width}`, width, false)
+    }
   }
+  await writeFile(`${output}${process.argv.includes('--flows-only') ? 'coverage-flows' : 'coverage-routes'}.json`, JSON.stringify(coverage, null, 2))
   assert.deepEqual(errors, [], 'Browser runtime errors')
   if (process.argv.includes('--theme-audit')) {
     await writeFile(`${output}theme-audit.json`, JSON.stringify(themeFindings, null, 2))
@@ -383,6 +459,9 @@ try {
     assert.equal(unique.length, 0, `Dark theme: ${unique.length} distinct color leaks/contrast failures; see artifacts/ui-consistency/theme-audit.json`)
   }
   console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
+} catch (error) {
+  await page?.screenshot({ path: `${output}failure.png`, fullPage: true, animations: 'disabled' }).catch(() => {})
+  throw error
 } finally {
   await browser?.close()
   await server.close()

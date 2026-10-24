@@ -108,7 +108,7 @@ test('discipline workflows keep filters, long tables, and motion accessible', ()
 
 test('administration workspaces share compact tabs, dense directories, and responsive comparisons', () => {
   const css = readPortalStyles()
-  assert.match(css, /\.department-officer-page,[\s\S]*?\.admin-settings-page \{[^}]*width: min\(100%, 94rem\);/)
+  assert.match(css, /\.department-officer-page,[\s\S]*?\.admin-settings-page \{[^}]*width: 100%;/)
   assert.match(css, /\.main-panel :is\(\.department-officer-tabs, \.review-workspace-tabs\) \{[^}]*border: 1px solid var\(--color-border\);/s)
   assert.match(css, /\.officer-directory,[\s\S]*?\.signature-directory \{[^}]*grid-auto-flow: dense;/)
   assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.duplicate-review-grid \{[\s\S]*?grid-template-columns: 1fr;/)
@@ -128,7 +128,7 @@ test('communication, reporting, dark mode, and accessibility share the final res
 test('desktop shell follows the shared Students proportions', () => {
   const css = readPortalStyles()
   assert.match(css, /@media \(min-width: 1200px\)[\s\S]*?grid-template-columns: var\(--sidebar-width\) minmax\(0, 1fr\);/)
-  assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 99px;/s)
+  assert.match(css, /\.portal-dashboard \.stat-card \{[^}]*min-height: 0;/s)
   assert.match(css, /\.dashboard-quick-actions button \{[^}]*min-height: var\(--control-height\);/s)
   assert.match(css, /\.admin-dashboard-grid \{[^}]*minmax\(0, 1\.7fr\) minmax\(16rem, 0\.72fr\);/s)
   assert.match(css, /\[data-theme='dark'\] \.app-shell:not\(\.auth-shell\) \.sidebar/)

@@ -66,7 +66,7 @@ test('active slide grows naturally instead of clipping inside a fixed viewport',
 })
 
 test('overview dependency cards use an adaptive wrapping grid',()=>{
-  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-grid \{ grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,13rem\),1fr\)\)/)
+  assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-grid \{ grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,14rem\),1fr\)\)/)
   assert.match(portalStyles,/\[data-panel='overview'\] \.component-health-card:is/)
 })
 

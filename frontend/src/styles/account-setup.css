@@ -19,7 +19,7 @@
 .onboarding-progress li span { display:grid; place-items:center; width:28px; height:28px; border:1px solid var(--border-subtle); border-radius:50%; background:var(--surface-nested); color:var(--text-secondary); font-size:13px; font-weight:700; }
 .onboarding-progress .active { color:var(--link-color); }
 .onboarding-progress .active b { font-weight:700; }
-.onboarding-progress .active span { border-color:var(--color-primary); background:var(--color-primary); color:#fff; }
+.onboarding-progress .active span { border-color:var(--action-primary-surface); background:var(--action-primary-surface); color:var(--text-on-accent); }
 .onboarding-progress .complete { color:var(--status-success-text); }
 .onboarding-progress .complete span { border-color:var(--status-success-text); background:var(--status-success-surface); color:var(--status-success-text); }
 .setup-form,.setup-google-stage { display:grid; gap:18px; min-width:0; margin:0; }

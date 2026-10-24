@@ -1,31 +1,6 @@
 /* Shared presentation layer. Page components own behavior; these tokens and
    primitives set the same readable baseline across every role and route. */
-:root {
-  --color-primary: #0969c7;
-  --color-primary-dark: #0755a3;
-  --color-secondary: #0873d6;
-  --color-page: #f5f8fc;
-  --color-text: #17345b;
-  --color-text-secondary: #52657d;
-  --color-border: #dce5ef;
-  --color-success: #08794f;
-  --color-danger: #bd263c;
-  --portal-canvas: var(--color-page);
-  --portal-line: var(--color-border);
-  --portal-text: var(--color-text);
-  --portal-muted: var(--color-text-secondary);
-  --portal-light-blue: #edf5ff;
-  --shadow-sm: 0 1px 3px #17345b06;
-  --shadow-md: 0 8px 24px #17345b0a;
-  --portal-navy: #082f68;
-  --portal-blue: #0969c7;
-  --portal-blue-hover: #0757aa;
-  --portal-yellow: #ffd428;
-  --portal-message-border: #315b83;
-  --portal-raised: 0 12px 32px rgba(14, 55, 101, .08);
-  --portal-raised-hover: 0 16px 38px rgba(14, 55, 101, .12);
-  font-family: var(--font-sans);
-}
+
 .app-shell { font-size: var(--text-base); }
 .app-shell :is(h1,h2,h3,h4,p) { overflow-wrap: break-word; }
 .app-shell:not(.auth-shell) .sidebar { background: #0864b9; box-shadow: none; }
@@ -36,7 +11,7 @@
 .topbar { min-height: var(--topbar-height); padding-inline: 28px; backdrop-filter: none; background: white; box-shadow: none; }
 .topbar-search { min-height: var(--control-height); border: 1px solid var(--color-border); background: #f8fafd; width: 100%; max-width: var(--topbar-search-width); }
 .topbar-search input { font-size: var(--text-control); }
-.page-content { max-width: 1700px; margin-inline: auto; padding: 14px 20px 20px; }
+.page-content { max-width:none; margin-inline: auto; padding: 14px 20px 20px; }
 .portal-dashboard { gap: var(--page-gap); }
 .portal-welcome h2,.management-page-header h2 { color: var(--color-text); font-size: var(--text-page-title); font-weight: 700; letter-spacing: -.035em; }
 .portal-welcome p,.portal-welcome time,.management-page-header p,.messages-page-heading p { color: var(--color-text-secondary); font-size: var(--text-base); line-height: 1.6; }
@@ -47,14 +22,14 @@
 .dashboard-section-heading { margin-bottom: 16px; align-items: center; }
 .dashboard-card header h3,.dashboard-section-heading h3,.table-header h3 { color: var(--color-text); font-size: var(--text-base); font-weight: 700; }
 .dashboard-card header p,.dashboard-section-heading p,.table-header p { color: var(--color-text-secondary); font-size: var(--text-base); }
-.portal-dashboard .stat-card { min-height: 99px; padding: 16px 17px; gap: 20px; box-shadow: none; border-radius: 12px; }
+.portal-dashboard .stat-card { min-height: 0; padding: 16px 17px; gap: 20px; box-shadow: none; border-radius: 12px; }
 .portal-dashboard .stat-card span { font-size: var(--text-xs); line-height: 1.4; color: var(--color-text-secondary); }
 .portal-dashboard .stat-card strong { font-size: var(--text-metric); line-height: 1.3; color: var(--color-text); font-variant-numeric: tabular-nums; }
 .portal-dashboard .stat-card small { font-size: var(--text-xs); color: var(--color-text-secondary); white-space: normal; }
-.portal-dashboard .stat-card i { width: 60px; height: 60px; border-radius: 12px; flex: 0 0 60px; }
+.portal-dashboard .stat-card i { width:var(--summary-icon-size); height:var(--summary-icon-size); border-radius: 12px; flex:0 0 var(--summary-icon-size); }
 .dashboard-quick-actions > div { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
 .dashboard-quick-actions button { font-size: var(--text-base); min-height: 44px; }
-.dashboard-additional-metrics { max-width: 1500px; }
+.dashboard-additional-metrics { max-width:none; }
 .dashboard-additional-metrics > summary { width: max-content; margin-left: auto; padding: 6px 2px; color: var(--color-primary-dark); cursor: pointer; font-size: var(--text-sm); font-weight: 600; }
 .dashboard-additional-metrics[open] > summary { margin-bottom: 8px; }
 .portal-dashboard .text-button { font-size: var(--text-base); }
@@ -85,12 +60,12 @@
 .main-panel .profile-menu-popover .profile-logout { color: var(--color-danger); }
 .profile-menu-popover header strong { font-size: var(--text-sm); }
 .profile-menu-popover header small { font-size: var(--text-xs); }
-.primary-action,.primary-row-action { background: var(--color-primary) !important; box-shadow: none; }
-.primary-action:hover,.primary-row-action:hover { background: var(--color-primary-dark) !important; }
+.primary-action,.primary-row-action { background: var(--action-primary-surface) !important; box-shadow: none; }
+.primary-action:hover,.primary-row-action:hover { background: var(--action-primary-hover) !important; }
 :is(.student-form-grid,.signature-form,.signature-edit-form,.registration-step,.report-filter-card) :is(input,select,textarea) { font-size: var(--text-control); min-height: var(--control-height); border-color: var(--color-border); border-radius: 8px; background: white; }
 :is(.student-form-grid,.signature-form,.signature-edit-form) label { font-size: var(--text-sm); line-height: 1.5; }
 :is(input,select,textarea):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
-.management-metric { min-height: 99px; box-shadow: none; gap: 20px; }
+.management-metric { min-height: 0; box-shadow: none; gap: 20px; }
 .management-metric span { font-size: var(--text-xs); color: var(--color-text-secondary); }
 .empty-state,.department-empty { color: var(--color-text-secondary); font-size: var(--text-base); line-height: 1.6; padding: 28px; }
 .error-message,.success-message { border-radius: 10px; font-size: var(--text-base); line-height: 1.5; }
@@ -101,7 +76,7 @@
 .app-modal-header h2 { font-size: var(--text-section-title); color: var(--color-text); }
 .app-modal-body { padding: 24px; }
 .app-modal-body button { cursor: pointer; min-height: var(--control-height); font: inherit; padding: 8px 14px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-text); }
-.app-modal-body .submit-btn { background: var(--color-primary); color: white; border-color: var(--color-primary); }
+.app-modal-body .submit-btn { background: var(--action-primary-surface); color: white; border-color: var(--action-primary-surface); }
 .app-modal-body .danger-button { background: #fff1f2; }
 .discard-edits { display: grid; gap: 12px; padding: 18px; background: #fff8e8; border: 1px solid #f2d594; border-radius: 10px; }
 .discard-edits p { margin: 0; }
@@ -532,7 +507,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
 
   .portal-dashboard {
-    max-width: 100rem;
+    max-width: none;
     gap: var(--page-gap);
   }
 
@@ -548,17 +523,17 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
 
   .portal-dashboard .stat-card {
-    min-height: 99px;
+    min-height: 0;
     gap: 20px;
     padding: 16px 17px;
     border-radius: 0.55rem;
   }
 
   .portal-dashboard .stat-card i {
-    width: 60px;
-    height: 60px;
+    width:var(--summary-icon-size);
+    height:var(--summary-icon-size);
     border-radius: 0.55rem;
-    flex: 0 0 60px;
+    flex:0 0 var(--summary-icon-size);
   }
 
   .portal-dashboard .stat-card strong {
@@ -829,7 +804,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .registration-review-workspace,
 .certificate-admin,
 .admin-settings-page {
-  width: min(100%, 94rem);
+  width: 100%;
   margin-inline: auto;
 }
 
@@ -1017,7 +992,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   color: #08244b !important;
 }
 .topbar { border-bottom: 1px solid rgba(220,229,239,.9); background: rgba(255,255,255,.96); min-height: var(--topbar-height); }
-.page-content { width: 100%; max-width: 1600px; padding: 14px 20px 20px; }
+.page-content { width: 100%; max-width: none; padding: 14px 20px 20px; }
 .portal-welcome,.management-page-header,.messages-page-heading { text-wrap: balance; }
 .portal-welcome h2,.management-page-header h2,.messages-page-heading h2 {
   color: var(--portal-navy); font-weight: 760; letter-spacing: -.035em; line-height: 1.12;
@@ -1027,7 +1002,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .dashboard-card,.table-card,.form-card,.management-metric,.notifications-hero,.student-roster-tools,.noncompliance-toolbar {
   border: 1px solid rgba(211,224,238,.92); background: rgba(255,255,255,.98); box-shadow: var(--decorative-shadow, var(--portal-raised));
 }
-.dashboard-card,.management-metric { transition: border-color 200ms ease,box-shadow 200ms ease,transform 200ms ease; min-height: 99px; gap: 20px; }
+.dashboard-card,.management-metric { transition: border-color 200ms ease,box-shadow 200ms ease,transform 200ms ease; min-height: 0; gap: 20px; }
 .dashboard-card:hover,.management-metric:hover { border-color: #c4d8ec; box-shadow: var(--decorative-shadow, var(--portal-raised-hover)); transform: translateY(-2px); }
 .dashboard-section-heading,.table-header,.management-table-header { gap: 16px; }
 .dashboard-section-heading h3,.table-header h3,.management-table-header h3 { letter-spacing: -.018em; text-wrap: balance; }
@@ -1144,7 +1119,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .app-modal-header { background: linear-gradient(180deg,#fff,#fbfdff); }
 .app-modal-close { display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px !important; }
 .profile-menu-popover { border-color: #d6e2ee; box-shadow: var(--decorative-shadow, 0 22px 56px rgba(8,47,104,.18)); }
-.staff-profile-card { max-width: 1120px; margin-inline: auto; }
+.staff-profile-card { max-width:none; margin-inline: auto; }
 .staff-profile-identity { min-width: 0; }
 .profile-readonly-badge { display: inline-flex; align-items: center; gap: 6px; }
 .profile-readonly-badge svg { width: 15px; height: 15px; }
@@ -1970,16 +1945,16 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 
 .portal-dashboard .stats-grid { gap: 0.5rem; }
 .portal-dashboard .stat-card {
-  min-height: 99px;
+  min-height: 0;
   gap: 20px;
   padding: 16px 17px;
   border-radius: 0.5rem;
 }
 .portal-dashboard .stat-card i {
-  width: 60px;
-  height: 60px;
+  width:var(--summary-icon-size);
+  height:var(--summary-icon-size);
   border-radius: 0.5rem;
-  flex: 0 0 60px;
+  flex:0 0 var(--summary-icon-size);
 }
 .portal-dashboard .stat-card span { font-size: var(--text-xs); line-height: 1.2; }
 .portal-dashboard .stat-card strong { font-size: var(--text-metric); line-height: 1; }
@@ -2243,22 +2218,23 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .monitoring-slide .table-wrap thead th { position:sticky; top:0; z-index:1; background:#f4f8fc; box-shadow:0 1px #dbe6f0; }
 @keyframes monitoring-slide-forward { from { opacity:0; transform:translateX(1rem); } }
 @keyframes monitoring-slide-backward { from { opacity:0; transform:translateX(-1rem); } }
-.system-dashboard > .system-monitoring-hero.portal-page-header { min-height:0; margin:0; padding:1rem 1.25rem; border-radius:.65rem; background:var(--surface-raised); box-shadow:none; }
+.system-dashboard > .system-monitoring-hero.portal-page-header { min-height:0; margin:0; background:var(--surface-raised); }
 .system-monitoring-hero.portal-page-header::before,.system-monitoring-hero::after { content:none; }
-.system-monitoring-hero.portal-page-header h2 { margin:.25rem 0; font-size:var(--text-xl); line-height:1.25; letter-spacing:-.025em; }
-.system-monitoring-hero.portal-page-header p { margin:0; max-width:75ch; }
+.system-monitoring-hero.portal-page-header h2 { margin:.25rem 0; font-size:var(--text-page-title); line-height:1.2; letter-spacing:-.025em; }
+.system-monitoring-hero.portal-page-header p { margin:0; max-width:var(--reading-max-width); }
 .system-summary-grid .stat-card { background:var(--surface-raised); }
 .section-kicker { display:block; margin-bottom:.25rem; color:#1471c9; font-size:var(--text-xs); font-weight:700; letter-spacing:.1em; text-transform:none; }
 .component-health-section { overflow:hidden; }
 .component-health-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:.85rem; margin-top:1.1rem; }
-.component-health-card { min-width:0; min-height:8.5rem; grid-column:span 2; display:grid; align-content:start; gap:.65rem; padding:1rem; border:1px solid var(--border-subtle); border-radius:.5rem; background:var(--surface-nested); box-shadow:none; }
+.component-health-card { min-width:0; min-height:0; grid-column:span 2; display:grid; align-content:start; gap:.65rem; padding:1rem; border:1px solid var(--border-subtle); border-radius:.5rem; background:var(--surface-nested); box-shadow:none; }
 .component-health-card:is(.component-health-card--api,.component-health-card--database) { grid-column:span 3; }
-.component-health-heading { min-width:0; display:grid !important; grid-template-columns:2.8rem minmax(0,1fr) auto; align-items:center !important; gap:.75rem !important; }
+.component-health-heading { min-width:0; display:grid !important; grid-template-columns:2.25rem minmax(0,1fr); align-items:center !important; gap:.75rem !important; }
+.component-health-heading > .status-badge { grid-column:2; justify-self:start; }
 .component-health-heading > div { min-width:0; display:grid; gap:.08rem; }
 .component-health-heading > div > span { color:#647b95; font-size:var(--text-xs); font-weight:700; letter-spacing:.06em; text-transform:none; }
 .component-health-heading strong { color:var(--text-primary); font-size:var(--text-lg); overflow-wrap:anywhere; }
 .component-health-heading small { color:var(--text-secondary); font-size:var(--text-xs); overflow-wrap:anywhere; }
-.component-platform-logo { width:2.8rem; height:2.8rem; display:grid; place-items:center; border-radius:.75rem; background:var(--surface-interactive); color:var(--link-color); box-shadow:inset 0 0 0 1px rgba(8,103,189,.08); }
+.component-platform-logo { width:2.25rem; height:2.25rem; display:grid; place-items:center; border-radius:.75rem; background:var(--surface-interactive); color:var(--link-color); box-shadow:inset 0 0 0 1px rgba(8,103,189,.08); }
 .platform-mark { display:block; }
 .platform-mark--supabase { color:#17a876; }
 .platform-mark--brevo { color:#6d46ff; }
@@ -2272,7 +2248,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 @keyframes monitoring-pulse { 50% { opacity:.55; } }
 
 .monitoring-slide[data-panel='overview'] .monitoring-slide-scroll { gap:.75rem; }
-.monitoring-slide[data-panel='overview'] .component-health-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,13rem),1fr)); gap:.65rem; margin-top:.75rem; }
+.monitoring-slide[data-panel='overview'] .component-health-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,14rem),1fr)); gap:.65rem; margin-top:.75rem; }
 .monitoring-slide[data-panel='overview'] .component-health-card,
 .monitoring-slide[data-panel='overview'] .component-health-card:is(.component-health-card--api,.component-health-card--database) { grid-column:span 1; }
 
@@ -2280,9 +2256,9 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .monitoring-slide[data-panel='overview'] .monitoring-slide-scroll > .stats-grid { gap:.65rem; }
   .monitoring-slide[data-panel='overview'] .component-health-section { padding:1rem; }
   .monitoring-slide[data-panel='overview'] .component-health-card,
-  .monitoring-slide[data-panel='overview'] .component-health-card:is(.component-health-card--api,.component-health-card--database) { min-height:6.25rem; gap:.45rem; padding:.75rem; }
-  .monitoring-slide[data-panel='overview'] .component-health-heading { grid-template-columns:2.35rem minmax(0,1fr); gap:.55rem !important; }
-  .monitoring-slide[data-panel='overview'] .component-platform-logo { width:2.35rem; height:2.35rem; border-radius:.6rem; }
+  .monitoring-slide[data-panel='overview'] .component-health-card:is(.component-health-card--api,.component-health-card--database) { min-height:0; gap:.5rem; padding:var(--summary-padding); }
+  .monitoring-slide[data-panel='overview'] .component-health-heading { grid-template-columns:2.25rem minmax(0,1fr); gap:.55rem !important; }
+  .monitoring-slide[data-panel='overview'] .component-platform-logo { width:2.25rem; height:2.25rem; border-radius:.6rem; }
   .monitoring-slide[data-panel='overview'] .component-health-heading > .status-badge { grid-column:2; justify-self:start; }
   .monitoring-slide[data-panel='overview'] .health-checked { margin:.65rem 0 0; }
   .monitoring-slide[data-panel='accounts'] .account-security-workspace { gap:.75rem; padding:1rem; }
@@ -2329,7 +2305,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .account-action-results b { padding:.2rem .4rem; border-radius:.35rem; font-size:var(--text-xs); font-weight:600; text-transform:none; white-space:nowrap; }
 .account-action-results .is-active { background:#e4f6e9; color:#187238; }
 .account-action-results .is-locked { background:#fff0f0; color:#a5303b; }
-.account-result-avatar { width:2.35rem; height:2.35rem; display:grid; flex:0 0 auto; place-items:center; border:1px solid #ceddeb; border-radius:.65rem; background:#e9f0f8; color:#16457a; font-size:var(--text-xs); font-weight:700; text-transform:uppercase; }
+.account-result-avatar { width:2.25rem; height:2.25rem; display:grid; flex:0 0 auto; place-items:center; border:1px solid #ceddeb; border-radius:.65rem; background:#e9f0f8; color:#16457a; font-size:var(--text-xs); font-weight:700; text-transform:uppercase; }
 .account-action-form { display:grid; gap:.85rem; padding:1rem; }
 .selected-account-summary { min-width:0; display:flex; align-items:center; gap:.75rem; padding:.85rem; border-radius:.65rem; background:#edf5fd; }
 .selected-account-summary > div { min-width:0; display:grid; gap:.12rem; }
@@ -2403,7 +2379,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .monitoring-slide-scroll > .stats-grid { grid-template-columns:1fr; }
   .component-health-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .component-health-card,.component-health-card:is(.component-health-card--api,.component-health-card--database) { grid-column:span 1; }
-  .component-health-card:last-child { grid-column:1/-1; }
+  .component-health-card:last-child { grid-column:auto; }
   .account-action-layout { grid-template-columns:1fr; }
   .account-action-results { max-height:17rem; }
 }
@@ -2430,7 +2406,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   .monitoring-slide-scroll { padding:0; }
   .component-health-grid,.account-action-tabs { grid-template-columns:1fr; }
   .component-health-card:last-child { grid-column:auto; }
-  .component-health-heading { grid-template-columns:2.6rem minmax(0,1fr); }
+  .component-health-heading { grid-template-columns:2.25rem minmax(0,1fr); }
   .component-health-heading > .status-badge { grid-column:2; justify-self:start; }
   .temporary-credential { align-items:stretch; flex-direction:column; }
   .account-action-form > button { width:100%; }
@@ -2483,9 +2459,6 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .theme-toggle svg { width:18px; height:18px; flex:0 0 auto; }
 
 :root[data-theme='dark'] .app-shell:not(.auth-shell) {
-  --portal-blue:#1683e6;
-  --portal-blue-hover:#2997f1;
-  --portal-message-border:#294d70;
   background:
     radial-gradient(circle at 92% 4%,rgba(25,126,214,.1),transparent 25rem),
     #071525;
@@ -2580,7 +2553,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 /* Dedicated attendance monitor and per-student service drawer. */
-.active-attendance-page { width:100%; max-width:1500px; display:grid; gap:1rem; min-width:0; margin-inline:auto; }
+.active-attendance-page { width:100%; max-width:none; display:grid; gap:1rem; min-width:0; margin-inline:auto; }
 .active-attendance-page > .management-page-header,
 .active-attendance-card { width:100%; box-sizing:border-box; margin-inline:0; }
 .live-status-badge { display:inline-flex; align-items:center; gap:.45rem; padding:.55rem .75rem; border:1px solid var(--color-border); border-radius:999px; color:var(--color-text); font-size:var(--text-xs); font-weight:700; }
@@ -2693,4 +2666,306 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 @media (max-width:390px) {
   .otp-input { gap:.3rem; }
   .otp-input input { min-height:var(--control-height); border-radius:.55rem; font-size:var(--text-control); }
+}
+
+/* Authenticated navigation is deliberately theme-invariant. */
+.portal-page-header {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 1rem;
+  padding: var(--card-padding);
+  border: 1px solid var(--color-border);
+  border-radius: var(--card-radius);
+  background: var(--color-surface, #fff);
+  color: var(--color-text);
+  box-shadow: var(--decorative-shadow, 0 0.65rem 1.8rem rgba(14, 55, 101, 0.08));
+  box-sizing: border-box;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.portal-page-header::before { content: none; }
+
+.portal-page-header > * { position: relative; min-width: 0; }
+.portal-page-header > :first-child { flex: 1 1 auto; }
+.profile-card > .portal-page-header > .profile-avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 4.5rem;
+  align-self: center;
+  font-size: var(--text-xl);
+  line-height: 1;
+}
+.portal-page-header :is(h1, h2) {
+  margin-block: 0.3rem 0.35rem;
+  color: var(--color-text);
+  font-size: var(--text-page-title);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+.portal-page-header :is(p, time) {
+  max-width: var(--reading-max-width);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.portal-page-header > :is(button, .primary-action, .readonly-badge, .status-badge, .scanner-state, time) {
+  flex: 0 0 auto;
+}
+.profile-card > .portal-page-header {
+  width: calc(100% - 1.5rem);
+  margin: 0.75rem;
+}
+.account-summary-card.portal-page-header { margin-bottom: 1rem; padding: var(--card-padding); min-height: 0; }
+
+/* Daily time record uses shared light header card, not legacy navy hero text. */
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(h2, strong) {
+  color: var(--color-text) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header :is(.eyebrow, p) {
+  color: var(--color-text-secondary) !important;
+}
+:root:not([data-theme='dark']) .dtr-intro.portal-page-header > span {
+  border-color: var(--color-border);
+  background: var(--surface-interactive);
+  color: var(--color-text);
+}
+
+:root[data-theme='dark'] .portal-page-header {
+  border-color: var(--border-subtle) !important;
+  background: var(--surface-raised) !important;
+  color: var(--text-primary) !important;
+  box-shadow: var(--decorative-shadow, 0 0.75rem 2rem rgba(0, 8, 18, 0.24)) !important;
+}
+:root[data-theme='dark'] .portal-page-header :is(h1, h2, strong) { color: var(--text-primary) !important; }
+:root[data-theme='dark'] .portal-page-header :is(p, time, .page-breadcrumb, .eyebrow) { color: var(--text-secondary) !important; }
+
+@media (max-width: 900px) {
+  .portal-page-header { gap: 1rem; padding: var(--card-padding); min-height: 0; }
+  .portal-page-header :is(.department-officer-tabs, .account-summary-card dl) { max-width: 100%; }
+}
+
+@media (max-width: 767px) {
+  .portal-page-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.9rem;
+    margin-bottom: 0.85rem;
+    padding: var(--card-padding);
+  }
+  .portal-page-header :is(h1, h2) { max-width: none; font-size: var(--text-page-title); }
+  .portal-page-header :is(p, time) { max-width: 100%; margin-bottom: 0; }
+  .portal-page-header > :is(button, .primary-action, .messages-new-button) { width: 100%; min-height: var(--page-action-height); }
+  .portal-page-header > :is(.readonly-badge, .status-badge, .scanner-state, time) { align-self: flex-start; }
+  .portal-page-header .department-officer-tabs { width: 100%; }
+  .profile-card > .portal-page-header { width: calc(100% - 1rem); margin: 0.5rem; }
+  .profile-card > .portal-page-header > .profile-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    flex-basis: 3.5rem;
+    align-self: flex-start;
+    font-size: var(--text-lg);
+  }
+  .profile-card > .portal-page-header .profile-readonly-badge { align-self: flex-start; margin-left: 0; white-space: normal; }
+
+  /* Messages has a higher-specificity legacy row rule. Keep the shared mobile
+     header stacked so the full-width action cannot squeeze the title. */
+  .main-panel--messages .messages-page-heading.portal-page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
+  .main-panel--messages .messages-page-heading.portal-page-header h2 { overflow-wrap: normal; word-break: normal; }
+  .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button {
+    width: 100%;
+    min-width: 0;
+    min-height: var(--page-action-height);
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 390px) {
+  .portal-page-header { padding: var(--card-padding); border-radius: var(--card-radius); }
+  .portal-page-header .page-breadcrumb { display: none; }
+  .portal-page-header :is(p, .profile-readonly-badge, .readonly-badge) { overflow-wrap: anywhere; }
+}
+
+
+/* The body scope also reaches portal menus and dialogs mounted outside the shell. */
+:root body:has(.app-shell:is(.admin-portal,.student-portal,.department-portal)) {
+
+  & .page-content { padding-inline:var(--page-gutter); }
+  & :is(.portal-dashboard,.student-page,.department-page,.management-page,.system-dashboard,.reports-workspace,.audit-workspace,.duplicate-workspace,.analytics-workspace,.department-officer-page,.certificate-admin,.messages-page,.qr-attendance,.active-attendance-page,.account-settings-page,.admin-settings-page,.staff-profile-card) { width:100%; max-width:none; min-width:0; }
+  & :is(.portal-page-header,.student-management-header,.department-welcome.portal-page-header,.account-summary-card.portal-page-header) { padding:var(--card-padding); min-height:0; border-radius:var(--card-radius); }
+  & :is(.dashboard-card,.student-directory-card,.student-section,.qr-stage-card,.component-health-section) { padding:var(--card-padding); }
+  & :is(.stat-card,.management-metric,.student-summary-card,.department-stat,.department-metrics > article) { min-height:0; padding:var(--summary-padding) !important; gap:var(--grid-gap); }
+  & :is(.stat-card,.management-metric,.student-summary-card) > i { width:var(--summary-icon-size); height:var(--summary-icon-size); flex:0 0 var(--summary-icon-size); }
+  & :is(.stats-grid,.management-metrics,.department-metrics,.student-summary-grid) { gap:var(--grid-gap); }
+  & .portal-page-header :is(h1,h2) { font-size:var(--text-page-title); line-height:1.2; }
+  & :is(.dashboard-section-heading,.table-header) h3 { font-size:var(--text-section-title); }
+  & :is(.signature-form,.signature-edit-form,.account-action-form,.account-password-form,.department-officer-create), & .admin-settings-page .login-form, & .app-modal .student-form { max-width:var(--form-max-width); }
+  & .department-officer-page .department-welcome.portal-page-header { border:1px solid var(--border-subtle); background:var(--surface-raised); }
+  & .app-shell { background:var(--surface-canvas); }
+  & .sidebar { background:var(--surface-sidebar) !important; box-shadow:none !important; }
+  & :is(.topbar,.mobile-bottom-nav) { background:var(--surface-raised) !important; box-shadow:none !important; backdrop-filter:none; }
+  & .sidebar .brand { background:transparent; box-shadow:none; }
+  & .sidebar .brand::after { display:none; }
+  & .sidebar .nav-item { box-shadow:none !important; }
+
+  & :is(
+    .dashboard-card,.stat-card,.management-metric,.management-page-header,.portal-page-header,.form-card,
+    .portal-welcome,.table-card,.student-management-header,.student-summary-card,.student-directory-card,
+    .student-directory-table-wrap,.violation-table-wrap,.active-attendance-table-wrap,
+    .service-page-header,.service-tracking-card,.pending-service-results,.qr-attendance-header,.qr-stage-card,
+    .messages-page-heading,.messages-workspace,.student-section,.student-attendance-panel,.student-corrections,
+    .student-profile-page,.student-dtr-record,.qr-display-card,.staff-profile-card,.officer-card,
+    .department-stat,.department-corrections,.department-directory-surface,.department-officer-create,
+    .analytics-card,.report-filter-card,.audit-filter-card,
+    .certificate-student-card,.clearance-hero,.attendance-notice,.record-metric,.record-case-card,
+    .record-overview-card,.service-detail-card,.service-student-card,.qr-assignment-card,.drawer-form-card,
+    .violation-card,.violation-history-card,.violation-records-card,.profile-card,.notifications-hero,
+    .student-roster-tools,.noncompliance-toolbar,.department-dtr-filters,.component-health-card,
+    .profile-menu-popover,.student-account-menu,.student-directory-select-menu,.app-modal
+  ), & :is(.department-metrics,.signature-directory,.duplicate-source-grid) > article {
+    border-radius:var(--card-radius) !important;
+    box-shadow:var(--shadow-sm) !important;
+  }
+
+  & :is(.dashboard-card,.management-metric,.student-summary-card,.officer-card):hover,
+  & :is(.signature-directory,.duplicate-source-grid,.notification-list) > article:hover {
+    transform:none !important;
+  }
+
+  & :where(button,input:not([type='checkbox'],[type='radio'],[type='range']),select,textarea,.primary-action,.primary-row-action) {
+    border-radius:6px !important;
+    box-shadow:none !important;
+  }
+  & :is(button,.primary-action,.primary-row-action) {
+    background-image:none !important;
+  }
+  & .login-form > button:not([type='button'],.secondary-button,.danger-button) {
+    background-color:var(--action-primary-surface) !important;
+    color:var(--text-on-accent) !important;
+    &:hover:not(:disabled) { background-color:var(--action-primary-hover) !important; }
+  }
+  & .topbar .account-avatar {
+    background:var(--action-primary-surface) !important;
+    border-color:var(--action-primary-surface) !important;
+    color:var(--text-on-accent) !important;
+  }
+  & button:is(:hover,:active) { transform:none !important; }
+  & :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {
+    outline:2px solid var(--link-color) !important;
+    outline-offset:2px;
+  }
+  & .sidebar :is(button,a):focus-visible {
+    outline-color:var(--text-on-accent) !important;
+    outline-offset:-3px;
+  }
+  & :is(.student-directory-search,.topbar-search,.violation-search,.directory-search,.conversation-search) {
+    border-radius:6px !important;
+    box-shadow:none !important;
+    &:focus-within {
+      outline:2px solid var(--link-color) !important;
+      outline-offset:2px;
+    }
+  }
+  & :is(.student-directory-search,.topbar-search,.violation-search,.directory-search,.conversation-search) input {
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    &:is(:focus,:focus-visible) {
+      outline:none !important;
+      box-shadow:none !important;
+    }
+  }
+  & .conversation-search {
+    height:var(--filter-height);
+    border:1px solid var(--border-subtle);
+    background:var(--control-background);
+    & input { height:100%; min-height:0 !important; }
+  }
+
+  & :is(
+    .status-badge,.directory-clearance,.clearance-directory-status,.service-status,.violation-status,.violation-classification,
+    .severity-badge,.dashboard-severity,.attendance-indicator-label,.attendance-session-count,
+    .chat-status,.conversation-status,.record-standing,.record-case-status,.record-profile-status > span,.violation-context-status,
+    .action-badge,.availability-badge,.readonly-badge,.profile-readonly-badge,.live-status-badge,
+    .badge,.user-badge,.record-count,.guardian-office-badge,.service-assignment-status,.selected-recipient,
+    .conversation-title-row > span,.message-date-divider span,.notification-heading span,.support-decision-context li
+  ) {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    min-height:24px;
+    padding:4px 8px !important;
+    border-width:0 !important;
+    border-radius:4px !important;
+    background-image:none !important;
+    box-shadow:none !important;
+    font-size:var(--text-xs) !important;
+    font-weight:600;
+    line-height:1.4;
+  }
+  & :is(.status-badge,.service-status,.badge,.user-badge,.guardian-office-badge,.service-assignment-status) {
+    background-color:var(--status-info-surface) !important;
+    color:var(--status-info-text) !important;
+  }
+  & :is(.status-complete,.status-completed,.status-clear,.status-cleared,.status-qualified,.status-issued,.status-operational,
+    .service-status-completed,.service-status-cleared,.availability-available,.record-standing:not(.record-requires-action),
+    .record-case-resolved,.context-status-complete,.context-status-clear,.chat-status:not(.closed),.conversation-status:not(.closed)) {
+    background-color:var(--status-success-surface) !important;
+    color:var(--status-success-text) !important;
+  }
+  & :is(.status-active,.status-open,.status-pending,.status-in-progress,.status-needs-service,.status-degraded,.service-status-in_progress,
+    .service-status-timed_in,.classification-minor,.context-status-pending,.availability-unavailable,.availability-absent,.status-not_configured) {
+    background-color:var(--status-warning-surface) !important;
+    color:var(--status-warning-text) !important;
+  }
+  & :is(.status-blocked,.status-revoked,.status-unavailable,.status-error,.status-failed,.classification-grave,.record-requires-action,
+    .record-case-status:not(.record-case-resolved),.context-status-open) {
+    background-color:var(--status-danger-surface) !important;
+    color:var(--status-danger-text) !important;
+  }
+  & :is(.classification-minor,.severity-minor) { background-color:var(--status-warning-surface) !important; color:var(--severity-minor) !important; }
+  & :is(.classification-major,.severity-major) { background-color:var(--status-warning-surface) !important; color:var(--severity-major) !important; }
+  & :is(.status-invalid-cancel,.status-invalid_cancel,.status-not-eligible,.status-no-service-required,
+    .status-badge--muted,.service-status-invalid_cancelled,.service-status-admin_closed,.chat-status.closed,.conversation-status.closed,.context-status-invalid_cancel) {
+    background-color:var(--surface-interactive) !important;
+    color:var(--text-secondary) !important;
+  }
+
+  & :is(.offense-dot,.directory-violation > i,.attendance-indicator-label > i,.scanner-state > i,.live-status-badge > i,
+    .notification-list .notification-indicator) {
+    box-shadow:none !important;
+  }
+  & .attendance-indicator { border-radius:4px !important; }
+  & :is(.student-number,.record-fields .record-field-label small) { border-radius:4px !important; }
+  & :is(.progress-track > span,.record-progress span) { background:var(--color-primary); }
+  & :is(.management-page-header,.profile-hero,.department-welcome,.notifications-hero,.dtr-intro) {
+    background:var(--surface-raised) !important;
+    color:var(--text-primary) !important;
+    & :is(h1,h2,h3,strong) { color:var(--text-primary) !important; }
+    & :is(p,.eyebrow) { color:var(--text-secondary) !important; }
+  }
+  & :is(.chat-history,.scanner-viewfinder) { background-image:none !important; }
+  & .chat-history { background-color:var(--chat-canvas) !important; }
+  & .app-modal-header { background:var(--modal-header-surface) !important; }
+  & .app-modal-backdrop { backdrop-filter:none !important; }
+  & .app-modal.app-modal--drawer { border-radius:var(--card-radius) 0 0 var(--card-radius) !important; }
+
+  @media (max-width:767px) {
+    & .topbar :is(.mobile-menu-button,.mobile-brand,.mobile-brand span,.notification-button,.profile-menu-trigger,.theme-toggle) {
+      color:var(--text-primary) !important;
+    }
+    & .app-modal.app-modal--drawer { border-radius:0 !important; }
+  }
+  @media (forced-colors:active) {
+    & :is(.status-badge,.directory-clearance,.service-status,.violation-status,.violation-classification) {
+      border:1px solid CanvasText !important;
+    }
+  }
 }

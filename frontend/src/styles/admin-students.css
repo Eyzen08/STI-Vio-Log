@@ -2,7 +2,7 @@
 .admin-portal .student-management-page { display:grid; gap:var(--page-gap); min-width:0; color:var(--dash-ink); font-family:var(--font-sans); }
 .student-management-page :is(button,input,select) { font-family:inherit; }
 .admin-portal .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card) { border:1px solid var(--dash-line); border-radius:13px; background:var(--dash-surface); box-shadow:var(--decorative-shadow, 0 2px 8px rgb(15 55 90 / 3%)); }
-.admin-portal .student-management-page .student-management-header { display:flex; align-items:center; justify-content:space-between; min-height:115px; gap:20px; padding:12px 28px; margin:0; }
+.admin-portal .student-management-page .student-management-header { display:flex; align-items:center; justify-content:space-between; min-height:115px; gap:var(--grid-gap); padding:12px 28px; margin:0; }
 .student-breadcrumb { display:flex; gap:9px; margin:0; padding:0; min-height:0; color:#8098b6; font-size:var(--text-sm); line-height:18px; font-weight:600; letter-spacing:.06em; }
 .student-management-header::before,.student-management-header::after { display:none; }
 .admin-portal .student-management-page .student-management-header p { max-width:none; }
@@ -10,10 +10,10 @@
 .student-breadcrumb a:hover { text-decoration:underline; }
 .admin-portal .student-management-page h2 { margin:5px 0 4px; color:var(--dash-ink); font-size:var(--text-page-title); font-weight:700; line-height:1.15; letter-spacing:-.035em; }
 .admin-portal .student-management-page p { margin:0; color:var(--dash-muted); font-size:var(--text-base); line-height:1.5; }
-.admin-portal .student-management-page .student-add-button { display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; min-height:var(--page-action-height); min-width:172px; padding:10px 20px; border:1px solid #007aff; border-radius:8px; background:#007aff; color:#fff; font-size:var(--text-action); font-weight:600; box-shadow:var(--decorative-shadow, 0 7px 16px rgb(0 122 255 / 12%)); }
+.admin-portal .student-management-page .student-add-button { display:flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; min-height:var(--page-action-height); min-width:172px; padding:10px 20px; border:1px solid var(--action-primary-surface); border-radius:8px; background:var(--action-primary-surface); color:#fff; font-size:var(--text-action); font-weight:600; box-shadow:var(--decorative-shadow, 0 7px 16px rgb(0 122 255 / 12%)); }
 .student-summary-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-.admin-portal .student-management-page .student-summary-card { display:flex; align-items:center; gap:20px; min-width:0; min-height:99px; padding:16px 17px; text-align:left; color:var(--dash-ink); }
-.student-summary-card > i { display:grid; place-items:center; flex:0 0 60px; height:60px; border-radius:10px; background:#e7f2ff; color:#007aff; width:60px; }
+.admin-portal .student-management-page .student-summary-card { display:flex; align-items:center; gap:var(--grid-gap); min-width:0; min-height:0; padding:var(--summary-padding); text-align:left; color:var(--dash-ink); }
+.student-summary-card > i { display:grid; place-items:center; flex:0 0 var(--summary-icon-size); height:var(--summary-icon-size); border-radius:10px; background:#e7f2ff; color:var(--action-primary-surface); width:var(--summary-icon-size); }
 .student-summary-card.student-metric-red > i { background:#ffe8ed; color:#ff2549; }
 .student-summary-card.student-metric-orange > i { background:#fff6e5; color:#f59b00; }
 .student-summary-card.student-metric-green > i { background:#e3f9ed; color:#00a553; }
@@ -21,7 +21,7 @@
 .admin-portal .student-summary-card strong { color:var(--dash-ink); font-size:var(--text-metric); line-height:1.1; font-weight:700; }
 .admin-portal .student-summary-card small { color:var(--dash-muted); font-size:var(--text-sm); line-height:1.3; font-weight:400; }
 .student-metric-chevron { margin-left:auto; flex-shrink:0; }
-.admin-portal .student-management-page .student-summary-card:hover { border-color:#abd3ff; background:color-mix(in srgb,var(--dash-surface) 95%,#007aff); }
+.admin-portal .student-management-page .student-summary-card:hover { border-color:#abd3ff; background:color-mix(in srgb,var(--dash-surface) 95%,var(--action-primary-surface)); }
 .admin-portal .student-management-page .student-directory-card { min-width:0; padding:15px 23px 8px; }
 .student-directory-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:10px; }
 .admin-portal .student-management-page h3 { margin:0 0 3px; color:var(--dash-ink); font-size:var(--text-section-title); line-height:1.3; font-weight:700; letter-spacing:-.03em; }
@@ -32,7 +32,7 @@
 .student-directory-search svg { flex-shrink:0; color:#6480a4; }
 .admin-portal .student-management-page .student-directory-search input { width:100%; min-width:0; min-height:var(--filter-height); padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; color:var(--dash-ink); font-size:var(--text-control); }
 .student-directory-search input::placeholder { color:#718bad; opacity:1; }
-.student-directory-search:focus-within { outline:2px solid #007aff; outline-offset:2px; }
+.student-directory-search:focus-within { outline:2px solid var(--action-primary-surface); outline-offset:2px; }
 .admin-portal .student-management-page .student-directory-search input:focus { outline:none; }
 .admin-portal .student-management-page .student-directory-select { display:flex; align-items:center; justify-content:space-between; gap:12px; min-width:0; min-height:var(--filter-height); margin:0; padding:7px 16px; border:1px solid var(--dash-line); border-radius:8px; background:var(--dash-surface); color:var(--dash-ink); font:inherit; text-align:left; box-shadow:none; transform:none; transition:border-color .15s,background-color .15s; cursor:pointer; }
 .student-directory-select-text { display:grid; gap:2px; min-width:0; }
@@ -51,13 +51,13 @@
 .student-directory-select-option[data-active='true'] { background:var(--surface-interactive); outline:1px solid var(--border-strong); outline-offset:-1px; }
 .student-directory-select-option[aria-selected='true'] { color:var(--link-color); font-weight:600; }
 .admin-portal .student-management-page .student-filter-toggle { align-items:center; justify-content:center; gap:10px; padding:6px 10px; font-size:var(--text-base); font-weight:400; }
-.student-filter-count { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:#007aff; color:white; font-size:var(--text-xs); }
+.student-filter-count { display:grid; place-items:center; width:20px; height:20px; border-radius:50%; background:var(--action-primary-surface); color:white; font-size:var(--text-xs); }
 .student-extra-filters { display:flex; align-items:end; flex-wrap:wrap; gap:12px; padding:14px 0 0; }
 .admin-portal .student-extra-filters > button { min-height:var(--filter-height); border:1px solid var(--dash-line); background:var(--dash-surface); color:var(--dash-ink); border-radius:8px; }
 .admin-portal .student-management-page .student-extra-filters > .student-directory-select { flex:0 1 220px; max-width:100%; }
 .student-directory-tabs { display:flex; flex-wrap:wrap; gap:7px; margin:12px 0; }
 .admin-portal .student-management-page .student-directory-tabs button { min-height:var(--control-height); padding:8px 23px; border:0; border-radius:8px; background:color-mix(in srgb,var(--dash-surface) 40%,var(--dash-canvas)); color:var(--dash-ink); font-size:var(--text-base); font-weight:400; }
-.admin-portal .student-management-page .student-directory-tabs button[aria-pressed='true'] { background:#007aff; color:white; font-weight:600; }
+.admin-portal .student-management-page .student-directory-tabs button[aria-pressed='true'] { background:var(--action-primary-surface); color:white; font-weight:600; }
 .student-directory-table-wrap { overflow-x:auto; border:1px solid var(--dash-line); border-radius:13px; }
 .admin-portal .student-management-page .student-directory-table { width:100%; min-width:940px; margin:0; border-collapse:collapse; table-layout:auto; color:var(--dash-muted); font-size:var(--text-base); }
 .admin-portal .student-management-page .student-directory-table :is(th,td) { padding:8px 16px; border:0; border-bottom:1px solid var(--dash-line); text-align:left; vertical-align:middle; background:transparent; }
@@ -65,7 +65,7 @@
 .student-directory-table tbody tr { height:62px; }
 .student-directory-table tbody tr:last-child td { border-bottom:0 !important; }
 .student-directory-table tbody tr:hover { background:color-mix(in srgb,var(--dash-surface) 80%,var(--dash-canvas)); }
-.directory-student { display:flex; align-items:center; gap:20px; }
+.directory-student { display:flex; align-items:center; gap:var(--grid-gap); }
 .admin-portal .directory-student .directory-avatar { display:grid; flex:0 0 44px; width:44px; height:44px; border-radius:50%; font-size:var(--text-lg); font-weight:700; background:#e8dcff; color:#7927ed; }
 .directory-avatar.avatar-tone-1 { background:#0083ff !important; color:#fff !important; }
 .directory-avatar.avatar-tone-2 { background:#e8dcff !important; color:#7927ed !important; }
@@ -80,37 +80,37 @@
 .directory-violation > i { flex:0 0 11px; height:11px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px rgb(148 163 184 / 12%); }
 .directory-violation > div { display:grid; gap:3px; }
 .directory-violation small { font-size:var(--text-sm); color:var(--severity-color); }
-.directory-severity-grave { --severity-color:#ff214c; }
-.directory-severity-major { --severity-color:#ff7509; }
-.directory-severity-minor { --severity-color:#efa900; }
+.directory-severity-grave { --severity-color:var(--severity-grave); }
+.directory-severity-major { --severity-color:var(--severity-major); }
+.directory-severity-minor { --severity-color:var(--severity-minor); }
 .directory-violation:not(.directory-severity-neutral) > i { background:var(--severity-color); box-shadow:0 0 0 4px color-mix(in srgb,var(--severity-color) 13%,transparent); }
 .directory-service { display:grid; gap:5px; max-width:166px; }
 .directory-service progress { display:block; appearance:none; width:100%; height:6px; border:0; border-radius:5px; background:#e7eff8; overflow:hidden; }
 .directory-service progress::-webkit-progress-bar { background:#e7eff8; border-radius:5px; }
-.directory-service progress::-webkit-progress-value { background:#007aff; border-radius:5px; }
-.directory-service progress::-moz-progress-bar { background:#007aff; border-radius:5px; }
+.directory-service progress::-webkit-progress-value { background:var(--action-primary-surface); border-radius:5px; }
+.directory-service progress::-moz-progress-bar { background:var(--action-primary-surface); border-radius:5px; }
 .directory-muted { color:var(--dash-muted); }
 .directory-clearance { display:inline-flex; align-items:center; min-height:30px; padding:5px 18px; border-radius:20px; font-size:var(--text-sm); line-height:1.2; white-space:nowrap; }
 .directory-clearance--not_cleared { background:var(--status-danger-surface); color:var(--status-danger-text); }
 .directory-clearance--eligible { background:var(--status-info-surface); color:var(--status-info-text); }
 .directory-clearance--cleared { background:var(--status-success-surface); color:var(--status-success-text); }
 .directory-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-.admin-portal .student-management-page .directory-view-button { min-width:0; min-height:var(--control-height); padding:7px 22px; border:1px solid #007aff; border-radius:6px; background:transparent; color:#007aff; font-size:var(--text-base); font-weight:600; white-space:nowrap; }
+.admin-portal .student-management-page .directory-view-button { min-width:0; min-height:var(--control-height); padding:7px 22px; border:1px solid var(--action-primary-surface); border-radius:6px; background:transparent; color:var(--action-primary-surface); font-size:var(--text-base); font-weight:600; white-space:nowrap; }
 .admin-portal .student-management-page .row-action-trigger { display:grid; place-items:center; width:var(--control-height); min-width:var(--control-height); height:var(--control-height); padding:0; border:1px solid var(--dash-line); border-radius:6px; background:var(--dash-surface); color:var(--dash-ink); font-size:var(--text-base); }
 .student-directory-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:48px; padding-top:8px; color:var(--dash-muted); font-size:var(--text-base); }
 .student-directory-footer nav { display:flex; flex-wrap:wrap; gap:5px; }
 .admin-portal .student-management-page .student-directory-footer button { display:grid; place-items:center; width:40px; min-width:40px; min-height:var(--control-height); padding:0; border:1px solid transparent; border-radius:7px; background:var(--dash-canvas); color:var(--dash-ink); font-size:var(--text-base); }
-.admin-portal .student-management-page .student-directory-footer button[aria-current] { background:#007aff; color:white; }
+.admin-portal .student-management-page .student-directory-footer button[aria-current] { background:var(--action-primary-surface); color:white; }
 .admin-portal .student-directory-footer button:is(:first-child,:last-child) { border-color:var(--dash-line); background:transparent; }
 .student-directory-footer button:disabled { opacity:.45; cursor:default; }
 .previous-page { transform:rotate(180deg); }
 .admin-portal .student-directory-table .student-directory-empty { height:310px; text-align:center; }
 .student-directory-empty strong { display:block; font-size:var(--text-lg); margin-bottom:12px; }
-.admin-portal .student-directory-empty button { background:#007aff; color:white; }
-.student-management-page :is(button,a,select):focus-visible,.student-directory-table-wrap:focus-visible { outline:2px solid #007aff; outline-offset:3px; }
+.admin-portal .student-directory-empty button { background:var(--action-primary-surface); color:white; }
+.student-management-page :is(button,a,select):focus-visible,.student-directory-table-wrap:focus-visible { outline:2px solid var(--action-primary-surface); outline-offset:3px; }
 .student-account-menu { position:fixed; z-index:1300; display:grid; width:230px; max-height:calc(100dvh - 16px); overflow-y:auto; padding:5px; border:1px solid var(--border-subtle,#dce8f3); border-radius:9px; background:var(--surface-overlay,#fff); color:var(--text-primary,#102a56); box-shadow:var(--decorative-shadow, 0 12px 32px rgb(10 43 80 / 16%)); }
 .student-account-menu button { display:flex; align-items:center; gap:9px; min-height:44px; padding:9px 12px; border:0; border-radius:5px; background:transparent; color:inherit; text-align:left; font:inherit; font-size:var(--text-base); cursor:pointer; }
-.student-account-menu button:hover,.student-account-menu button:focus-visible { background:var(--surface-interactive-hover,#eef5fb); outline:2px solid #007aff; outline-offset:-2px; }
+.student-account-menu button:hover,.student-account-menu button:focus-visible { background:var(--surface-interactive-hover,#eef5fb); outline:2px solid var(--action-primary-surface); outline-offset:-2px; }
 .student-account-menu .danger-text { color:var(--status-danger-text,#c92136); }
 :root[data-theme='dark'] .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card,.student-directory-toolbar > label,.student-filter-toggle) { background:var(--dash-surface) !important; border-color:var(--dash-line) !important; }
 :root[data-theme='dark'] .student-management-page :is(.student-directory-tabs button,.student-directory-table th) { background:var(--surface-nested); color:var(--dash-ink); }
@@ -139,8 +139,8 @@
 @media (max-width:767px) {
   .admin-portal .student-management-page .student-management-header { align-items:flex-start; flex-direction:column; gap:14px; padding:18px; }
   .admin-portal .student-management-page h2 { font-size:var(--text-page-title); }
-  .admin-portal .student-management-page .student-summary-card { min-height:94px; padding:12px; gap:10px; }
-  .student-summary-card > i { flex-basis:40px; height:40px; }
+  .admin-portal .student-management-page .student-summary-card { min-height:0; padding:12px; gap:10px; }
+  .student-summary-card > i { flex-basis:var(--summary-icon-size); height:var(--summary-icon-size); }
   .student-summary-card > i svg { width:26px; }
   .admin-portal .student-summary-card strong { font-size:var(--text-metric); }
   .admin-portal .student-summary-card small { font-size:var(--text-xs); }
@@ -154,7 +154,7 @@
   .student-directory-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
   .admin-portal .student-management-page .student-directory-tabs button { min-height:44px; padding:8px 6px; font-size:var(--text-base); }
   .student-directory-footer { flex-direction:column; align-items:flex-start; gap:10px; padding-top:12px; }
-  .admin-portal .student-management-page .student-directory-footer button { width:40px; min-width:40px; min-height:44px; }
+  .admin-portal .student-management-page .student-directory-footer button { width:44px; min-width:44px; min-height:44px; }
   .student-extra-filters { align-items:stretch; flex-direction:column; }
   .admin-portal .student-management-page .student-extra-filters > .student-directory-select { flex:auto; }
   .admin-portal .student-management-page :is(.directory-view-button,.row-action-trigger) { min-height:44px; }
