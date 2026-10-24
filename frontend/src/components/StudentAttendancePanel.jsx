@@ -13,7 +13,7 @@ export default function StudentAttendancePanel({ sessions = [], ready, loading, 
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(clock)
   }, [active.length])
-  return <section className="student-attendance-panel" aria-label="Current Attendance Status">
+  return <section className={`student-attendance-panel${active.length ? ' has-active-sessions' : ''}`} aria-label="Current Attendance Status">
     <header><h3>Current Attendance</h3><AttendanceIndicator sessions={active} ready={ready} loading={loading} details/></header>
     {active.map((session) => <article className="student-current-session" key={session.id}>
       <div className="student-session-identity"><strong>{departmentTypeLabel(session)}</strong><span>Assignment #{session.assignment_id}</span><span>Started {formatManilaDateTime(session.time_in)}</span></div>

@@ -648,7 +648,7 @@ test('admin dashboard prioritizes work and shows each recent case once for both 
     assert.match(html, /Scan QR/)
     assert.match(html, /Issue Violation/)
     assert.ok(html.indexOf('Active Attendance') < html.indexOf('Community Service'))
-    assert.ok(html.indexOf('Community Service') < html.indexOf('Recent Violations'))
+    assert.ok(html.indexOf('Recent Violations') < html.indexOf('Community Service'))
     assert.ok(html.indexOf('Recent Violations') < html.indexOf('Offense Distribution'))
     assert.doesNotMatch(html, /Recent case summary|offense-donut|dashboard-attendance-totals/)
     assert.equal((html.match(/Unique incident 0/g)||[]).length,1)

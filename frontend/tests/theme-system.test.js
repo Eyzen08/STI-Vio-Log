@@ -63,15 +63,11 @@ test('assignment labels override shared workflow label grids without affecting o
   assert.match(css, /\.app-modal \.assign-service-actions button\s*\{[^}]*background:var\(--action-primary-surface\);[^}]*color:var\(--text-on-accent\);/)
 })
 
-test('admin dark-mode campus framing matches light mode on desktop and mobile', async () => {
+test('admin actions and date use normal header flow in both themes', async () => {
   const css = await readFile(new URL('../src/styles/admin-dashboard.css', import.meta.url), 'utf8')
-  const darkBanner = ":root[data-theme='dark'] .admin-portal .admin-dashboard .portal-welcome"
-  const rules = css.split(darkBanner).slice(1).map((part) => part.slice(0, part.indexOf('}') + 1))
-  assert.ok(rules.some((rule) => /background-image:[^}]*sti-global-city-building-night\.jpg/.test(rule) && /background-position:center,right 35% !important;/.test(rule) && /background-size:cover,50% auto !important;/.test(rule) && /background-repeat:no-repeat !important;/.test(rule)))
-  const mobileCss = css.slice(css.indexOf('@media (max-width:767px)'))
-  assert.ok(mobileCss.includes(`${darkBanner} { background-position:center,right 35% !important; background-size:cover,auto 150% !important; }`))
-  assert.match(css, /background-position:center,right 35%;/)
-  assert.match(mobileCss, /background-size:cover,auto 150%;/)
+  assert.match(css, /\.dashboard-heading-tools \{[^}]*display:flex;/)
+  assert.doesNotMatch(css, /\.dashboard-primary-actions \{[^}]*position:absolute/)
+  assert.doesNotMatch(css, /--campus-image|sti-global-city-building/)
 })
 
 function hexToRgb(hex) {

@@ -1,6 +1,6 @@
 // Run with Playwright available locally or through NODE_PATH (no app dependency).
 import assert from 'node:assert/strict'
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
@@ -33,6 +33,10 @@ const errors = []
 const themeFindings = []
 const coverage = []
 let degraded = false
+let reportMode = 'populated'
+const reportRequests = []
+const messageFlow = process.argv.includes('--message-flow')
+let threadMessages = []
 const representativeRoutes = new Set(['/admin/dashboard', '/admin/students', '/admin/system-monitoring', '/admin/messages', '/admin/qr-scan', '/admin/account-settings', '/department/dashboard', '/department/students', '/department/dtr', '/department/qr-scan', '/student/dashboard', '/student/profile', '/student/community-service', '/student/clearance', '/student/messages'])
 
 try {
@@ -44,6 +48,23 @@ try {
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url())
     if (url.pathname.startsWith('/api/')) {
+      if (messageFlow && url.pathname.startsWith('/api/messages/')) {
+        const conversation = { id:45, student_name:'Maria Santos', student_number:student.student_number, subject:'Service schedule', school_participant:'Discipline Office', status:'OPEN' }
+        if (url.pathname.endsWith('/messages') && route.request().method() === 'POST') {
+          threadMessages.push({ id:threadMessages.length + 1, message_text:route.request().postDataJSON().message, sent_by_me:true, created_at:'2026-10-24T02:00:00Z', sender_name:'Fixture User' })
+        }
+        await route.fulfill({ json:url.pathname === '/api/messages/conversations' ? { conversations:[conversation], pagination:{ pages:1,total:1 } } : { conversation, messages:threadMessages, pagination:{ pages:1 } } })
+        return
+      }
+      if (url.pathname.startsWith('/api/reports/')) {
+        reportRequests.push({ path:url.pathname, query:url.search })
+        if (url.pathname.endsWith('.xlsx')) {
+          await route.fulfill({ contentType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', headers:{ 'Content-Disposition':'attachment; filename="STI_Vio-Log_Fixture.xlsx"', 'Access-Control-Expose-Headers':'Content-Disposition' }, body:'Synthetic download fixture' })
+        } else {
+          await route.fulfill({ status:reportMode === 'error' ? 503 : 200, json:reportMode === 'error' ? { message:'Report fixture unavailable.' } : { success:true, generated_at:'2026-10-24T02:00:00Z', data:reportMode === 'empty' ? [] : [{ ...student, ...violation, ...assignment }] } })
+        }
+        return
+      }
       let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'local-browser-fixture' } : payload
       let status = url.pathname === '/api/auth/session' && !user ? 401 : 200
       if (url.pathname === '/api/auth/legal') response = { legal: { required: false } }
@@ -115,7 +136,7 @@ try {
       for (const element of document.querySelectorAll('.student-summary-card,.student-directory-card,.dashboard-card,.management-metric,.student-section,.department-metrics > article,.app-modal:not(.app-modal--drawer)')) {
         if (!element.getClientRects().length) continue
         const style = getComputedStyle(element)
-        if (style.borderRadius !== '12px' || document.documentElement.dataset.theme === 'dark' && style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+        if (style.borderRadius !== '10px' || document.documentElement.dataset.theme === 'dark' && style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
       }
       for (const element of document.querySelectorAll('.student-add-button,.directory-view-button,.theme-toggle,.notification-button,.app-modal-close,.student-directory-select,.department-header-actions button')) {
         if (!element.getClientRects().length) continue
@@ -199,9 +220,9 @@ try {
       }).map((el) => el.textContent)
       return { body: css('body'), sidebar: css('.sidebar'), topbar: css('.topbar'), title: css('.portal-page-header h1, .portal-page-header h2'), nav: css('.sidebar .nav-item'), fonts: [...new Set(fonts)], clipped, crowdedHeaders, overflow: document.documentElement.scrollWidth > innerWidth, text: document.querySelector('.page-content').textContent }
     })
-    assert.match(layout.body.font, /^Arial/, `${label}: body font`)
+    assert.match(layout.body.font, authenticated ? /^"?Segoe UI/ : /^Arial/, `${label}: body font`)
     assert.equal(layout.body.size, '14px', `${label}: body size`)
-    if (authenticated) assert.ok(layout.fonts.every((font) => /^Arial/.test(font)), `${label}: fonts ${layout.fonts}`)
+    if (authenticated) assert.ok(layout.fonts.every((font) => /^"?(?:Segoe UI|Plus Jakarta Sans)/.test(font)), `${label}: fonts ${layout.fonts}`)
     else {
       const radii = await page.evaluate(() => [document.body, document.documentElement].map((element) => getComputedStyle(element).getPropertyValue('--radius-md').trim()))
       assert.equal(radii[0], radii[1], `${label}: public/setup pages do not inherit portal styling`)
@@ -211,13 +232,13 @@ try {
     assert.deepEqual(layout.crowdedHeaders, [], `${label}: overlapping table headings`)
     assert.ok(!layout.text.includes('This page could not finish loading'), `${label}: route error`)
     if (authenticated) {
-      assert.equal(layout.topbar.height, width < 768 ? 60 : 75, `${label}: topbar height`)
+      assert.equal(layout.topbar.height, width < 768 ? 60 : 64, `${label}: topbar height`)
       if (width >= 768) {
-        assert.equal(layout.sidebar.width, 248, `${label}: sidebar width`)
+        assert.equal(layout.sidebar.width, 232, `${label}: sidebar width`)
         assert.equal(layout.nav.size, '14px', `${label}: navigation text`)
         assert.ok(layout.nav.height >= 44, `${label}: navigation target`)
       }
-      if (layout.title) assert.equal(layout.title.size, `${width < 768 ? 24 : 28}px`, `${label}: title size`)
+      if (layout.title) assert.equal(layout.title.size, '24px', `${label}: title size`)
       const contract = await page.evaluate(() => {
         const content = document.querySelector('.page-content').getBoundingClientRect()
         const working = document.querySelector('.page-content > :is(.student-management-page,.portal-dashboard,.system-dashboard,.reports-workspace,.audit-workspace,.student-page,.department-page,.department-officer-page,.active-attendance-page,.certificate-admin)')
@@ -227,14 +248,142 @@ try {
         return { working: working && { width:working.getBoundingClientRect().width, expected:content.width - 2 * gutter }, icons:icons.map(el => el.getBoundingClientRect().width), summaries:visible('.department-stat').map(el => { const style = getComputedStyle(el); return { minHeight:style.minHeight,padding:parseFloat(style.paddingLeft) } }), forms:visible('.account-password-form,.admin-settings-page .login-form').map(el => el.getBoundingClientRect().width), primaryColors:visible('.student-add-button,.violation-record-button,.messages-new-button,.record-primary-button,.violation-drawer-primary').map(el => getComputedStyle(el).backgroundColor) }
       })
       if (contract.working) assert.ok(Math.abs(contract.working.width - contract.working.expected) < 2, `${label}: working page uses available width ${JSON.stringify(contract.working)}`)
-      assert.ok(contract.icons.every(size => Math.abs(size - (width < 768 ? 36 : 44)) < 1), `${label}: summary icon sizes ${contract.icons}`)
-      assert.ok(contract.summaries.every(style => style.minHeight === '0px' && style.padding === (width < 768 ? 12 : 16)), `${label}: summary density ${JSON.stringify(contract.summaries)}`)
+      assert.ok(contract.icons.every(size => Math.abs(size - (width < 768 ? 32 : 36)) < 1), `${label}: summary icon sizes ${contract.icons}`)
+      assert.ok(contract.summaries.every(style => style.minHeight === '0px' && style.padding === 12), `${label}: summary density ${JSON.stringify(contract.summaries)}`)
       assert.ok(contract.forms.every(size => size <= 760), `${label}: form width ${contract.forms}`)
       assert.ok(contract.primaryColors.every(color => ['rgb(9, 105, 199)', 'rgb(7, 85, 163)'].includes(color)), `${label}: primary action palette ${contract.primaryColors}`)
     }
     coverage.push({ label, width, authenticated })
   }
 
+  const densityBaseline = process.argv.includes('--density-baseline')
+  const densityOnly = densityBaseline || process.argv.includes('--density-only')
+  const reportFlows = process.argv.includes('--report-flows')
+  if (densityOnly) {
+    const phase = densityBaseline ? 'before' : 'after'
+    const directory = `${output}density-${phase}/`
+    await mkdir(directory, { recursive: true })
+    const measurements = []
+    const before = densityBaseline ? {} : JSON.parse(await readFile(new URL('./fixtures/portal-density-baseline.json', import.meta.url), 'utf8'))
+    for (const width of [390, 1366, 1920]) for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
+      for (const [role, path] of [['DISCIPLINE_ADMIN', '/admin/dashboard'], ['DISCIPLINE_ADMIN', '/admin/reports'], ['DEPARTMENT_HEAD', '/department/dashboard'], ['STUDENT', '/student/dashboard']]) {
+        user = { ...student, role, department_id: 1, department_name: 'Student Support' }
+        await open(path)
+        await page.locator(`${path === '/admin/reports' ? '.reports-workspace' : path === '/admin/dashboard' ? '.admin-dashboard' : path === '/department/dashboard' ? '.department-dashboard' : '.student-dashboard'} .portal-page-header`).waitFor()
+        await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+        await page.evaluate(() => document.fonts.ready)
+        const layout = await page.evaluate(() => {
+          const box = selector => {
+            const element = document.querySelector(selector)
+            if (!element) return null
+            const { top, bottom, height, left, right } = element.getBoundingClientRect()
+            return { top, bottom, height, left, right, padding:getComputedStyle(element).padding }
+          }
+          return {
+            header: box('.portal-page-header'), filters: box('.report-filter-card'),
+            records: box('.recent-violations-card, .report-results-card, .department-activity-list, .department-dashboard-grid .table-card, .student-recent-list'),
+            attendance: box('.active-session-card, .student-attendance-panel'),
+            actions: box('.dashboard-primary-actions, .report-filter-actions'),
+            fields: [...document.querySelectorAll('.reports-filter-grid > label')].map(el => el.getBoundingClientRect().bottom),
+            overflow: document.documentElement.scrollWidth > innerWidth,
+            headerBackground: getComputedStyle(document.querySelector('.portal-page-header')).backgroundColor,
+            topbar: box('.topbar'),
+          }
+        })
+        const label = `${path} ${theme} ${width}`
+        measurements.push({ label, path, width, theme, ...layout })
+        if (!densityBaseline) {
+          assert.equal(layout.overflow, false, `${label}: document overflow`)
+          assert.equal(layout.topbar.height, width < 768 ? 60 : 64, `${label}: compact shell`)
+          assert.equal(layout.headerBackground, 'rgba(0, 0, 0, 0)', `${label}: borderless header`)
+          if (width >= 1280 && path === '/admin/dashboard') {
+            assert.ok(Math.abs(layout.records.top - layout.attendance.bottom - 16) < 2, `${label}: independent dashboard columns`)
+            assert.ok(layout.records.top <= before[label] * .75, `${label}: records start at least 25% earlier`)
+          }
+          if (width >= 1280 && path === '/admin/reports') {
+            assert.ok(layout.actions.top < Math.max(...layout.fields), `${label}: actions share the filter grid`)
+            assert.ok(layout.records.top <= before[label] * .75, `${label}: report begins at least 25% earlier`)
+          }
+          if (path === '/student/dashboard') assert.ok(layout.attendance.height <= 74, `${label}: inactive attendance strip ${JSON.stringify(layout.attendance)}`)
+        }
+        await page.screenshot({ path: `${directory}${path.slice(1).replaceAll('/', '-')}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
+      }
+    }
+    await writeFile(`${directory}measurements.json`, JSON.stringify(measurements, null, 2))
+    console.log(`PASS ${measurements.length} ${phase} density captures and measurements`)
+  }
+
+  if (reportFlows) {
+    user = { ...student, role:'DISCIPLINE_ADMIN' }
+    for (const width of [390, 1366]) for (const theme of ['light', 'dark']) {
+      await page.setViewportSize({ width, height:900 })
+      await open('/admin/reports')
+      await page.locator('.reports-workspace').waitFor()
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      for (const type of ['violations', 'community-service', 'dtr', 'non-compliance', 'parent-contacts', 'clearance', 'good-standing']) {
+        await page.getByRole('combobox', { name:'Report Type', exact:true }).selectOption(type)
+        await page.getByRole('button', { name:'Generate Report', exact:true }).click()
+        await page.locator('.report-record-table tbody tr').waitFor()
+        assert.equal(await page.locator('.report-record-table tbody tr').count(), 1)
+        const generated = reportRequests.at(-1)
+        if (type === 'violations') {
+          await page.getByRole('searchbox', { name:'Search', exact:true }).fill('Changed draft')
+          await page.getByText('Filters changed. Generate again to update results.').waitFor()
+        }
+        const download = page.waitForEvent('download')
+        await page.getByRole('button', { name:'Export Excel', exact:true }).click()
+        assert.equal((await download).suggestedFilename(), 'STI_Vio-Log_Fixture.xlsx')
+        assert.equal(reportRequests.at(-1).path, `/api/reports/${type}.xlsx`)
+        assert.equal(reportRequests.at(-1).query, generated.query, 'export uses generated filters, including after a draft edit')
+        await check(`Report ${type} ${theme} ${width}`, width)
+      }
+      await page.getByRole('button', { name:'Clear', exact:true }).click()
+      assert.equal(await page.getByRole('button', { name:'Export Excel', exact:true }).isDisabled(), true)
+      reportMode = 'empty'
+      await page.getByRole('button', { name:'Generate Report', exact:true }).click()
+      await page.getByText('No records match these filters. Try another selection.').waitFor()
+      assert.equal(await page.getByRole('button', { name:'Export Excel', exact:true }).isDisabled(), true)
+      reportMode = 'error'
+      await page.getByRole('button', { name:'Generate Report', exact:true }).click()
+      await page.getByRole('button', { name:'Retry Report', exact:true }).waitFor()
+      reportMode = 'populated'
+      await page.getByRole('button', { name:'Retry Report', exact:true }).click()
+      await page.locator('.report-record-table tbody tr').waitFor()
+      console.log(`PASS all seven reports: generation, export, applied filters, clear, empty and retry; ${theme} ${width}px`)
+    }
+    assert.deepEqual(errors, [], 'Report browser runtime errors')
+  }
+
+  if (messageFlow) {
+    for (const role of ['DISCIPLINE_ADMIN', 'STUDENT']) for (const width of [390,1366]) for (const theme of ['light','dark']) {
+      user = { ...student, role }
+      threadMessages = [{ id:1, message_text:'Please confirm your service schedule.', sender_name:'Discipline Office', created_at:'2026-10-24T01:00:00Z' }]
+      await page.setViewportSize({ width,height:900 })
+      await open(`${role === 'STUDENT' ? '/student' : '/admin'}/messages`)
+      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await page.locator('.conversation-list > button').first().click()
+      await page.getByText('Please confirm your service schedule.', { exact:true }).waitFor()
+      const composer = page.getByRole('textbox', { name:/^Message/ })
+      await composer.fill('Confirmed. Thank you.')
+      const send = page.getByRole('button', { name:'Send', exact:true })
+      const bounds = await send.boundingBox()
+      assert.ok(bounds.width >= 44 && bounds.height >= 44 && bounds.y >= 0 && bounds.y + bounds.height <= 900, 'composer action remains visible and touch accessible')
+      await composer.press('Enter')
+      await page.locator('.message-bubble p').filter({ hasText:'Confirmed. Thank you.' }).waitFor()
+      assert.equal(await composer.inputValue(), '')
+      assert.equal(threadMessages.at(-1).message_text, 'Confirmed. Thank you.')
+      await check(`Messages ${role} ${theme} ${width}`, width)
+      if (width < 768) {
+        await page.getByRole('button', { name:'Back to Conversations', exact:true }).click()
+        await page.getByRole('button', { name:'New Message', exact:true }).waitFor()
+      }
+      console.log(`PASS conversation, visible composer, Enter to send, and mobile Back; ${role} ${theme} ${width}px`)
+    }
+    assert.deepEqual(errors, [], 'Message browser runtime errors')
+  }
+
+  if (!densityOnly && !reportFlows && !messageFlow) {
   // Every role's routes, fresh loads and SPA navigation, in both themes/sizes.
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
@@ -269,7 +418,7 @@ try {
                 const style = getComputedStyle(element)
                 return { radius: style.borderRadius, shadow: style.boxShadow, outsideShell: !element.closest('.app-shell') }
               })
-              assert.equal(menuStyle.radius, '12px', 'body-mounted menus share the portal surface')
+              assert.equal(menuStyle.radius, '10px', 'body-mounted menus share the portal surface')
               assert.equal(menuStyle.outsideShell, true)
               if (theme === 'dark') assert.equal(menuStyle.shadow, 'none')
               await page.keyboard.press('Escape')
@@ -413,12 +562,12 @@ try {
   assert.equal(await page.locator('.sidebar :focus-visible').evaluate((element) => getComputedStyle(element).outlineColor), 'rgb(255, 255, 255)', 'sidebar focus remains visible against navy')
   await page.getByRole('button', { name: /^View Student / }).first().click()
   await page.getByRole('dialog').waitFor()
-  assert.match(await page.getByRole('dialog').evaluate((el) => getComputedStyle(el).fontFamily), /^Arial/)
+  assert.match(await page.getByRole('dialog').evaluate((el) => getComputedStyle(el).fontFamily), /^"?Segoe UI/)
   await page.screenshot({ path: `${output}student-drawer.png`, animations: 'disabled' })
   await page.keyboard.press('Escape')
   await page.getByRole('button', { name: 'Logout', exact: true }).first().click()
   await page.getByRole('dialog').waitFor()
-  assert.equal(await page.locator('.app-modal-header h2').evaluate((el) => getComputedStyle(el).fontSize), '20px')
+  assert.equal(await page.locator('.app-modal-header h2').evaluate((el) => getComputedStyle(el).fontSize), '18px')
   await page.keyboard.press('Escape')
 
   // Zoom changes the effective CSS viewport; cover 125% and 200% equivalents.
@@ -459,6 +608,7 @@ try {
     assert.equal(unique.length, 0, `Dark theme: ${unique.length} distinct color leaks/contrast failures; see artifacts/ui-consistency/theme-audit.json`)
   }
   console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
+  }
 } catch (error) {
   await page?.screenshot({ path: `${output}failure.png`, fullPage: true, animations: 'disabled' }).catch(() => {})
   throw error

@@ -1,5 +1,7 @@
 # STI Vio-Log visual consistency audit
 
+The later [portal design overhaul](PORTAL-DESIGN-OVERHAUL.md) updates the geometry and includes fresh before/after evidence. This audit records the preceding consistency pass.
+
 Date: 23–24 October 2026. Changes remain local on `codex/invalidate-service-day`; no deployment or business-rule changes.
 
 ## Verified causes and changes

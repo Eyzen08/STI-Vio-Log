@@ -1,3 +1,5 @@
+@import './public-fonts.css';
+
 /* Shared presentation layer. Page components own behavior; these tokens and
    primitives set the same readable baseline across every role and route. */
 
@@ -2673,13 +2675,17 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   position: relative;
   width: 100%;
   min-width: 0;
-  margin: 0 0 1rem;
-  padding: var(--card-padding);
-  border: 1px solid var(--color-border);
-  border-radius: var(--card-radius);
-  background: var(--color-surface, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--color-text);
-  box-shadow: var(--decorative-shadow, 0 0.65rem 1.8rem rgba(14, 55, 101, 0.08));
+  box-shadow: none;
   box-sizing: border-box;
   overflow: hidden;
   min-height: 0;
@@ -2734,10 +2740,7 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 }
 
 :root[data-theme='dark'] .portal-page-header {
-  border-color: var(--border-subtle) !important;
-  background: var(--surface-raised) !important;
   color: var(--text-primary) !important;
-  box-shadow: var(--decorative-shadow, 0 0.75rem 2rem rgba(0, 8, 18, 0.24)) !important;
 }
 :root[data-theme='dark'] .portal-page-header :is(h1, h2, strong) { color: var(--text-primary) !important; }
 :root[data-theme='dark'] .portal-page-header :is(p, time, .page-breadcrumb, .eyebrow) { color: var(--text-secondary) !important; }
@@ -2797,30 +2800,52 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 /* The body scope also reaches portal menus and dialogs mounted outside the shell. */
 :root body:has(.app-shell:is(.admin-portal,.student-portal,.department-portal)) {
 
+  --font-sans: "Segoe UI", Arial, sans-serif;
+  --font-heading: 'Plus Jakarta Sans', "Segoe UI", sans-serif;
+  --text-page-title: 1.5rem;
+  --text-section-title: 1.125rem;
+  --text-metric: 1.75rem;
+  --sidebar-expanded-width: 14.5rem;
+  --topbar-height: 4rem;
+  --page-action-height: 2.75rem;
+  --filter-height: 2.75rem;
+  --card-padding: 1rem;
+  --card-radius: 0.625rem;
+  --summary-padding: 0.75rem;
+  --summary-icon-size: 2.25rem;
+  --transition-fast: 150ms ease-out;
+  font-family: var(--font-sans);
+  caret-color: var(--link-color);
+  scrollbar-color: var(--border-strong) var(--surface-canvas);
+
+  & :is(h1,h2,h3,h4) { font-family:var(--font-heading); letter-spacing:-.025em; }
+  & :is(time,progress,td,dd,.stat-card strong,.management-metric strong) { font-variant-numeric:tabular-nums; }
+  & ::selection { background:var(--surface-selected); color:var(--text-primary); }
+
   & .page-content { padding-inline:var(--page-gutter); }
   & :is(.portal-dashboard,.student-page,.department-page,.management-page,.system-dashboard,.reports-workspace,.audit-workspace,.duplicate-workspace,.analytics-workspace,.department-officer-page,.certificate-admin,.messages-page,.qr-attendance,.active-attendance-page,.account-settings-page,.admin-settings-page,.staff-profile-card) { width:100%; max-width:none; min-width:0; }
-  & :is(.portal-page-header,.student-management-header,.department-welcome.portal-page-header,.account-summary-card.portal-page-header) { padding:var(--card-padding); min-height:0; border-radius:var(--card-radius); }
+  & .student-management-header { padding:0; min-height:0; }
   & :is(.dashboard-card,.student-directory-card,.student-section,.qr-stage-card,.component-health-section) { padding:var(--card-padding); }
-  & :is(.stat-card,.management-metric,.student-summary-card,.department-stat,.department-metrics > article) { min-height:0; padding:var(--summary-padding) !important; gap:var(--grid-gap); }
+  & :is(.stat-card,.management-metric,.student-summary-card,.department-stat,.department-metrics > article) { min-height:0; padding:var(--summary-padding) !important; gap:8px; }
   & :is(.stat-card,.management-metric,.student-summary-card) > i { width:var(--summary-icon-size); height:var(--summary-icon-size); flex:0 0 var(--summary-icon-size); }
   & :is(.stats-grid,.management-metrics,.department-metrics,.student-summary-grid) { gap:var(--grid-gap); }
   & .portal-page-header :is(h1,h2) { font-size:var(--text-page-title); line-height:1.2; }
-  & :is(.dashboard-section-heading,.table-header) h3 { font-size:var(--text-section-title); }
+  & .page-content h3 { font-size:var(--text-section-title); font-weight:650; line-height:1.35; }
   & :is(.signature-form,.signature-edit-form,.account-action-form,.account-password-form,.department-officer-create), & .admin-settings-page .login-form, & .app-modal .student-form { max-width:var(--form-max-width); }
   & .department-officer-page .department-welcome.portal-page-header { border:1px solid var(--border-subtle); background:var(--surface-raised); }
   & .app-shell { background:var(--surface-canvas); }
   & .sidebar { background:var(--surface-sidebar) !important; box-shadow:none !important; }
   & :is(.topbar,.mobile-bottom-nav) { background:var(--surface-raised) !important; box-shadow:none !important; backdrop-filter:none; }
-  & .sidebar .brand { background:transparent; box-shadow:none; }
+  & .sidebar .brand { background:transparent; box-shadow:none; margin-bottom:16px; }
   & .sidebar .brand::after { display:none; }
   & .sidebar .nav-item { box-shadow:none !important; }
 
   & :is(
-    .dashboard-card,.stat-card,.management-metric,.management-page-header,.portal-page-header,.form-card,
-    .portal-welcome,.table-card,.student-management-header,.student-summary-card,.student-directory-card,
+    .dashboard-card,.stat-card,.management-metric,.form-card,
+    .table-card,.student-summary-card,.student-directory-card,
     .student-directory-table-wrap,.violation-table-wrap,.active-attendance-table-wrap,
-    .service-page-header,.service-tracking-card,.pending-service-results,.qr-attendance-header,.qr-stage-card,
-    .messages-page-heading,.messages-workspace,.student-section,.student-attendance-panel,.student-corrections,
+    .service-tracking-card,.pending-service-results,.qr-stage-card,
+    .messages-workspace,.student-section,.student-attendance-panel,.student-corrections,
     .student-profile-page,.student-dtr-record,.qr-display-card,.staff-profile-card,.officer-card,
     .department-stat,.department-corrections,.department-directory-surface,.department-officer-create,
     .analytics-card,.report-filter-card,.audit-filter-card,
@@ -2953,11 +2978,50 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   }
   & :is(.chat-history,.scanner-viewfinder) { background-image:none !important; }
   & .chat-history { background-color:var(--chat-canvas) !important; }
+
+  & .app-shell .portal-page-header {
+    min-height:0;
+    padding:0;
+    margin:0 0 16px;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    overflow:visible;
+    gap:12px 20px;
+  }
+  & :is(.portal-dashboard,.student-page,.department-page,.system-dashboard,.qr-attendance,.account-settings-page,.messages-inbox) > .portal-page-header { margin-bottom:0; }
+  & .portal-page-header .page-breadcrumb { display:none; }
+  & .portal-page-header :is(h1,h2) { margin:0; font-weight:700; }
+  & .portal-page-header p { margin:4px 0 0; font-size:var(--text-base); line-height:1.5; }
+  & .portal-page-header::after { content:none; }
+  & .app-shell .portal-page-header:is(.account-summary-card,.student-profile-identity),
+  & .profile-card > .portal-page-header {
+    padding:var(--card-padding);
+    border:1px solid var(--border-subtle) !important;
+    border-radius:var(--card-radius) !important;
+    background:var(--surface-raised) !important;
+  }
+  & :is(.table-header,.dashboard-section-heading,.student-section-heading) { margin-bottom:12px; }
+  & :is(.empty-state,.department-empty) {
+    min-height:0;
+    margin:0;
+    padding:12px 0;
+    border:0 !important;
+    border-radius:0 !important;
+    background:transparent !important;
+    text-align:left;
+  }
+  & .report-results-card > .empty-state { padding:12px 16px 16px; }
+  & :is(.student-summary-card,.management-metric,.department-metrics > article) strong { line-height:1.1; }
+  & :is(.record-overview-card,.record-case-card,.record-metric,.drawer-form-card,.service-detail-card) { padding:var(--card-padding); }
+  & :is(.record-overview-card,.record-case-card,.drawer-form-card) :is(.record-overview-card,.record-case-card,.drawer-form-card) { border:0; border-radius:0 !important; box-shadow:none !important; }
   & .app-modal-header { background:var(--modal-header-surface) !important; }
   & .app-modal-backdrop { backdrop-filter:none !important; }
   & .app-modal.app-modal--drawer { border-radius:var(--card-radius) 0 0 var(--card-radius) !important; }
 
   @media (max-width:767px) {
+    --summary-icon-size:2rem;
     & .topbar :is(.mobile-menu-button,.mobile-brand,.mobile-brand span,.notification-button,.profile-menu-trigger,.theme-toggle) {
       color:var(--text-primary) !important;
     }

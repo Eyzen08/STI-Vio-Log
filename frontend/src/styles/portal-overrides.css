@@ -1773,14 +1773,18 @@
 .audit-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
 .audit-export-note:empty { padding: 0; }
 .audit-results-card > .error-message { padding: 0 20px 12px; }
-.reports-workspace .report-filter-card .student-form { padding: 16px 20px; gap: 0; }
-.reports-workspace .reports-filter-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 12px; padding: 0; }
+.reports-workspace .report-filter-card .student-form { padding:16px; gap:0; }
+.reports-workspace .reports-filter-grid { grid-template-columns:repeat(4,minmax(0,1fr)); align-items:start; gap:12px; padding:0; border:0; background:transparent; }
+.reports-filter-grid > label { display:grid; align-content:start; gap:4px; min-width:0; }
+.reports-filter-grid > label small { margin:0; font-size:var(--text-xs); font-weight:400; line-height:1.4; }
+.reports-filter-grid :is(input,select) { margin:0; min-height:var(--filter-height); height:var(--filter-height); }
 .reports-workspace .report-pagination { position: static; }
-.reports-workspace .report-filter-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding: 0; }
+.reports-workspace .report-filter-actions { display:flex; align-self:start; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin:22px 0 0; padding:0; background:transparent; }
+.reports-workspace .report-filter-actions button { min-height:44px; padding:8px 12px; }
 .report-date-note { margin-right: auto; color: var(--text-secondary); font-size: 12px; }
 .report-results-card .table-header > button { flex-shrink: 0; }
 .reports-workspace button span { color: inherit !important; }
-.report-export-note { margin: 0; padding: 0 20px 12px; color: var(--text-secondary); font-size: 12px; }
+.report-export-note { margin: 0; padding: 0 16px 8px; color: var(--text-secondary); font-size: 12px; }
 .report-export-note:empty { padding: 0; }
 .report-results-card > .error-message { padding: 0 20px 12px; }
 .report-change-note { color: var(--text-secondary); font-size: 13px; }
@@ -1793,7 +1797,7 @@
 .reports-workspace .report-table-violations th:nth-child(2) { width: 30%; }
 .reports-workspace .report-table-violations th:nth-child(3) { width: 135px; }
 .reports-workspace .report-table-violations th:nth-child(4) { width: 135px; }
-.reports-workspace .report-record-table :is(th,td) { padding: 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
+.reports-workspace .report-record-table :is(th,td) { padding: 12px 16px; vertical-align: top; overflow-wrap: break-word; word-break: normal; }
 .report-record-table strong { display: block; font-weight: 600; }
 .report-student-number { display: block; margin-top: 4px; font-size: 12px; white-space: nowrap; color: var(--text-secondary); }
 .report-cell-incident_date { white-space: nowrap; }
@@ -1803,14 +1807,18 @@
 .report-text-details summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
 .report-text-details .report-text { margin-top: 10px; }
 .report-cell-violation_name > .report-text { display: block; margin-top: 5px; }
-@media (max-width: 1100px) { .reports-workspace .reports-filter-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+@media (max-width: 1199px) { .reports-workspace .reports-filter-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media (max-width: 767px) {
   .app-shell .reports-workspace .report-record-table { min-width: 0; table-layout: auto; }
   .app-shell .reports-workspace .report-results-card .table-wrap { overflow: visible; }
   .app-shell .reports-workspace .report-record-table :is(.report-cell-violation_name,.report-cell-incident_details,.report-cell-notes,.report-cell-remarks,.report-cell-reason) { grid-column: 1 / -1; }
   .report-date-note { width: 100%; }
 }
-@media (max-width: 450px) { .reports-workspace .reports-filter-grid { grid-template-columns: minmax(0,1fr); } }
+@media (max-width: 600px) {
+  .reports-workspace .reports-filter-grid { grid-template-columns:minmax(0,1fr); }
+  .reports-workspace .report-filter-actions { margin-top:0; justify-content:stretch; }
+  .reports-workspace .report-filter-actions button { flex:1; }
+}
 .audit-workspace .audit-results-card .table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
 .audit-workspace .audit-record-table { width: 100%; min-width: 1080px; table-layout: fixed; }
 .audit-date-col { width: 130px; }

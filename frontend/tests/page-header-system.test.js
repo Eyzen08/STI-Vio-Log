@@ -40,9 +40,10 @@ test('authenticated route headers use the shared page-header class', () => {
   assert.match(read('../src/components/StudentClearance.jsx'), /student-clearance-status/)
 })
 
-test('shared page headers are card surfaces across themes and viewports', () => {
-  assert.match(portal, /\.portal-page-header\s*\{[^}]*border:[^;]+;[^}]*border-radius:[^;]+;[^}]*box-shadow:/s)
-  assert.match(portal, /:root\[data-theme='dark'\] \.portal-page-header\s*\{[^}]*background: var\(--surface-raised\) !important;/s)
+test('shared page headers are borderless across themes while identity headers retain a surface', () => {
+  assert.match(portal, /\.portal-page-header\s*\{[^}]*border: 0;[^}]*border-radius: 0;[^}]*background: transparent;[^}]*box-shadow: none;/s)
+  assert.match(portal, /\.app-shell \.portal-page-header\s*\{[^}]*background:transparent !important;/s)
+  assert.match(portal, /\.profile-card > \.portal-page-header\s*\{[^}]*background:var\(--surface-raised\) !important;/s)
   assert.match(portal, /@media \(max-width: 767px\)[\s\S]*?\.portal-page-header\s*\{[^}]*flex-direction: column;[^}]*align-items: stretch;/s)
   assert.match(portal, /@media \(max-width: 390px\)[\s\S]*?\.portal-page-header \.page-breadcrumb\s*\{[^}]*display: none;/s)
   assert.match(portal, /\.portal-page-header > :is\(button, \.primary-action, \.messages-new-button\)\s*\{[^}]*width: 100%;/s)

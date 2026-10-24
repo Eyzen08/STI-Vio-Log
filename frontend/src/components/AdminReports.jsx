@@ -11,7 +11,7 @@ import { ServiceDayInvalidationHistory } from './ServiceDayInvalidation.jsx'
 
 const initialFilters = type => ({ search:'', student_id:'', status:'', from_date:'', to_date:'', sort_by:defaultReportSort(type) })
 
-export function ReportFilters({ type, filters, students, studentSearch, onFilter, onStudent, onType, disabled = false }) {
+export function ReportFilters({ type, filters, students, studentSearch, onFilter, onStudent, onType, disabled = false, children }) {
   const fields = reportFilterFields(type)
   return <div className="student-form-grid reports-filter-grid">
     <label>Report Type<select value={type} onChange={event=>onType(event.target.value)} disabled={disabled}>{Object.entries(REPORT_TITLES).map(([value,title])=><option key={value} value={value}>{title}</option>)}</select></label>
@@ -20,6 +20,7 @@ export function ReportFilters({ type, filters, students, studentSearch, onFilter
     {fields.includes('status') && <label>Status<select value={filters.status || ''} onChange={event=>onFilter('status',event.target.value)} disabled={disabled}><option value="">All Statuses</option>{reportStatusOptions(type).map(status=><option key={status} value={status}>{statusLabel(status)}</option>)}</select></label>}
     {fields.includes('sort_by') && <label>Sort By<select value={filters.sort_by || defaultReportSort(type)} onChange={event=>onFilter('sort_by',event.target.value)} disabled={disabled}>{reportSortOptions(type).map(sort=><option key={sort} value={sort}>{reportSortLabel(sort)}</option>)}</select></label>}
     {fields.includes('from_date') && <><label>From Date<input type="date" value={filters.from_date || ''} max={filters.to_date || undefined} onChange={event=>onFilter('from_date',event.target.value)} disabled={disabled} aria-describedby="admin-reports-date-help-1"/><small id="admin-reports-date-help-1">e.g. 1 Oct 2026.</small></label><label>To Date<input type="date" value={filters.to_date || ''} min={filters.from_date || undefined} onChange={event=>onFilter('to_date',event.target.value)} disabled={disabled} aria-describedby="admin-reports-date-help-2"/><small id="admin-reports-date-help-2">e.g. 12 Oct 2026.</small></label></>}
+    {children}
   </div>
 }
 
@@ -76,8 +77,9 @@ export default function AdminReports({ token, students = [] }) {
   return <section className="reports-workspace">
     <header className="management-page-header portal-page-header"><div><span className="page-breadcrumb">Home / Reports</span><h2>Reports</h2><p>Review student discipline, service, attendance, guardian contact, and clearance records.</p></div></header>
     <section className="table-card report-filter-card" aria-label="Report Filters"><form className="student-form" onSubmit={event=>{event.preventDefault();generate()}}>
-      <ReportFilters type={type} filters={filters} students={students} studentSearch={studentSearch} onType={reset} disabled={Boolean(busy)} onFilter={(key,value)=>{setFilters(current=>({...current,[key]:value}));setError('')}} onStudent={value=>{setStudentSearch(value);setFilters(current=>({...current,student_id:studentIdFromSearch(students,value)}));setError('')}}/>
+      <ReportFilters type={type} filters={filters} students={students} studentSearch={studentSearch} onType={reset} disabled={Boolean(busy)} onFilter={(key,value)=>{setFilters(current=>({...current,[key]:value}));setError('')}} onStudent={value=>{setStudentSearch(value);setFilters(current=>({...current,student_id:studentIdFromSearch(students,value)}));setError('')}}>
       <div className="report-filter-actions"><AsyncActionButton type="submit" className="primary-action" busy={busy==='generate'} busyLabel="Generating Report…" disabled={busy==='export'}>Generate Report</AsyncActionButton><button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={()=>reset(type)}>Clear</button></div>
+      </ReportFilters>
     </form></section>
     {error && <p className="error-message" role="alert">{error} <button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={generate}>Retry Report</button></p>}
     {dirty && <p className="report-change-note" role="status">Filters changed. Generate again to update results.</p>}

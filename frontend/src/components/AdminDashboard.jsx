@@ -7,7 +7,6 @@ import Avatar from './Avatar.jsx'
 import AttendanceIndicator from './AttendanceIndicator.jsx'
 import ServiceCountdown from './ServiceCountdown.jsx'
 import PortalIcon from './PortalIcon.jsx'
-import campusImage from '../assets/sti-global-city-building-web.jpg'
 
 const active = (status) => ['OPEN', 'IN_PROGRESS', 'PENDING'].includes(status)
 const resolved = (status) => ['COMPLETE', 'CLEAR'].includes(status)
@@ -53,21 +52,22 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
   const showValue = (value) => loading || error ? '—' : value
 
   return <div className="admin-dashboard portal-dashboard" aria-busy={loading}>
-    <header className="dashboard-heading">
-      <div className="portal-welcome portal-page-header" style={{ '--campus-image': `url(${campusImage})` }}>
-        <div><h2>Dashboard</h2><p>Welcome back, {firstLabel}. Discipline Office overview.</p></div>
+    <header className="dashboard-heading portal-page-header">
+      <div><h2>Dashboard</h2><p>Welcome back, {firstLabel}. Discipline Office overview.</p></div>
+      <div className="dashboard-heading-tools">
         <div className="dashboard-welcome-date"><PortalIcon name="calendar"/><time>{new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' }).format(new Date())}</time></div>
+        <nav className="dashboard-primary-actions" aria-label="Dashboard Actions">
+          <button type="button" className="primary-action" onClick={() => onNavigate('/admin/qr-scan')}><PortalIcon name="qr"/>Scan QR</button>
+          <button type="button" className="secondary-button" onClick={() => onNavigate('/admin/violations')}><PortalIcon name="violations"/>Issue Violation</button>
+        </nav>
       </div>
-      <nav className="dashboard-primary-actions" aria-label="Dashboard Actions">
-        <button type="button" className="primary-action" onClick={() => onNavigate('/admin/qr-scan')}><PortalIcon name="qr"/>Scan QR</button>
-        <button type="button" className="secondary-button" onClick={() => onNavigate('/admin/violations')}><PortalIcon name="violations"/>Issue Violation</button>
-      </nav>
     </header>
     {error && <p className="attendance-update-error" role="alert">{error}</p>}
     <section className="stats-grid admin-stats" aria-label="Priority Administrative Summary">
       {primaryMetrics.map(([icon, label, value, note, tone, path]) => <button type="button" className={`stat-card metric-${tone}`} key={label} onClick={() => onNavigate(path)}><i><PortalIcon name={icon}/></i><div><span>{label}</span><strong>{showValue(value)}</strong><small>{note}</small></div><PortalIcon name="chevron-right" className="metric-chevron"/></button>)}
     </section>
     <section className="admin-dashboard-grid">
+      <div className="dashboard-main-column">
         <section className="dashboard-card active-session-card">
           <header className="dashboard-section-heading"><h3>Active Attendance</h3><button className="text-button" type="button" onClick={() => onNavigate('/admin/active-attendance')}>Manage Attendance <span aria-hidden="true">→</span></button></header>
           {attendanceError && <p className="attendance-update-error" role="alert">{attendanceError}</p>}
@@ -81,7 +81,6 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
             </article>) : <p className="empty-state">No students are currently serving.</p>}{attendanceReady && roster.length > 3 && <button className="text-button" type="button" onClick={() => onNavigate('/admin/active-attendance')}>View All {timedIn} Timed-in Students</button>}</div>
           </div>
         </section>
-        <article className="dashboard-card admin-service-overview"><header className="dashboard-section-heading"><h3>Community Service</h3><button className="text-button" type="button" onClick={() => onNavigate('/admin/community-service')}>View Service <span aria-hidden="true">→</span></button></header><div className="dashboard-service-progress"><progress value={loading || error ? 0 : progress} max="100" aria-label="Community Service Completion"/><strong>{showValue(progress)}%</strong></div><dl className="dashboard-service-totals"><div><dt>Credited</dt><dd>{showValue(formatDuration(completed))}</dd></div><div><dt>Remaining</dt><dd>{showValue(formatDuration(remaining))}</dd></div><div><dt>Active Assignments</dt><dd>{showValue(activeAssignments)}</dd></div></dl><button type="button" className="secondary-button dashboard-clearance-link" onClick={() => onNavigate('/admin/awaiting-clearance')}><PortalIcon name="clearance"/>Awaiting Clearance <span aria-hidden="true">→</span></button></article>
         <article className="dashboard-card recent-violations-card">
           <header className="dashboard-section-heading"><h3>Recent Violations</h3><button className="text-button" type="button" onClick={() => onNavigate('/admin/violations')}>View All <span aria-hidden="true">→</span></button></header>
           {!loading && !error && violations.length ? <div className="table-wrap" role="region" aria-label="Recent Violation Records" tabIndex="0"><table className="dashboard-violations-table"><colgroup><col/><col/><col/><col/><col/><col/></colgroup><thead><tr><th scope="col">Student</th><th scope="col">Offense</th><th scope="col">Incident Date</th><th scope="col">Severity</th><th scope="col">Status</th><th scope="col">View</th></tr></thead><tbody>{violations.slice(0, 4).map((item) => <tr key={item.id}>
@@ -93,8 +92,12 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
             <td data-label="View"><button className="dashboard-record-action secondary-button" type="button" aria-label={`View Violation ${item.id}`} onClick={() => onViewViolation(item)}>View</button></td>
           </tr>)}</tbody></table></div> : <p className="empty-state">{loading ? 'Loading violations…' : error ? 'Violations unavailable.' : 'No violations available.'}</p>}
         </article>
+      </div>
+      <div className="dashboard-support-column">
+        <article className="dashboard-card admin-service-overview"><header className="dashboard-section-heading"><h3>Community Service</h3><button className="text-button" type="button" onClick={() => onNavigate('/admin/community-service')}>View Service <span aria-hidden="true">→</span></button></header><div className="dashboard-service-progress"><progress value={loading || error ? 0 : progress} max="100" aria-label="Community Service Completion"/><strong>{showValue(progress)}%</strong></div><dl className="dashboard-service-totals"><div><dt>Credited</dt><dd>{showValue(formatDuration(completed))}</dd></div><div><dt>Remaining</dt><dd>{showValue(formatDuration(remaining))}</dd></div><div><dt>Active Assignments</dt><dd>{showValue(activeAssignments)}</dd></div></dl><button type="button" className="secondary-button dashboard-clearance-link" onClick={() => onNavigate('/admin/awaiting-clearance')}><PortalIcon name="clearance"/>Awaiting Clearance <span aria-hidden="true">→</span></button></article>
         <article className="dashboard-card offense-breakdown-card"><header className="dashboard-section-heading"><div><h3>Offense Distribution</h3><p>{showValue(classifiedTotal)} classified cases</p></div><button className="text-button" type="button" onClick={() => onNavigate('/admin/analytics')}>View Analytics <span aria-hidden="true">→</span></button></header><dl className="offense-breakdown-content">{offenseBreakdown.map((item) => <div key={item.level} style={{ '--legend-color': item.color }}><dt><i/>{item.label}</dt><dd><progress aria-label={`${item.label}: ${item.count} of ${classifiedTotal} Classified Cases`} value={loading || error ? 0 : item.count} max={classifiedTotal || 1}/><span>{showValue(item.count)} <small>({showValue(classifiedTotal ? Math.round(item.count / classifiedTotal * 100) : 0)}%)</small></span></dd></div>)}</dl></article>
         <nav className="dashboard-card dashboard-secondary-actions" aria-label="Other Dashboard Actions"><h3>Other Actions</h3><div><button type="button" className="secondary-button" onClick={() => onNavigate('/admin/students')}><PortalIcon name="students"/>Add Student</button><button type="button" className="secondary-button" onClick={() => onNavigate('/admin/reports')}><PortalIcon name="reports"/>Generate Report</button></div></nav>
+      </div>
     </section>
   </div>
 }

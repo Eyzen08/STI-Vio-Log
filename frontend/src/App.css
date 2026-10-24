@@ -3506,9 +3506,8 @@ a {
 .report-filter-card .management-table-header,.report-results-card .management-table-header { padding: 15px 17px 10px; }
 .report-filter-card .student-form-grid { margin: 0 !important; padding: 10px 17px 15px; border-top: 1px solid #e3eaf2; background: #fbfdff; }
 .report-filter-card .student-form-grid label { font-size: var(--text-xs); }
-.report-filter-actions { display: flex; justify-content: flex-end; gap: 9px; padding: 0 17px 16px; background: #fbfdff; }
 .report-filter-actions button { min-height: var(--control-height); }
-.report-results-card { margin-top: 14px; }
+.report-results-card { margin-top:16px; }
 .report-results-card table { min-width: 900px; }
 
 /* Bring the supporting administration pages into the same white workspace. */
