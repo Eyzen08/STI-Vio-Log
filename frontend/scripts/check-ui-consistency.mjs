@@ -122,7 +122,7 @@ try {
   }
 
   async function check(label, width, authenticated = true) {
-    await page.evaluate(() => Promise.all(document.getAnimations().filter((animation) => animation instanceof CSSTransition).map((animation) => animation.finished.catch(() => {}))))
+    await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))))
     const flatFindings = await page.evaluate(() => {
       if (!document.querySelector('.app-shell:is(.admin-portal,.student-portal,.department-portal)')) return []
       const findings = []
@@ -227,14 +227,18 @@ try {
       const radii = await page.evaluate(() => [document.body, document.documentElement].map((element) => getComputedStyle(element).getPropertyValue('--radius-md').trim()))
       assert.equal(radii[0], radii[1], `${label}: public/setup pages do not inherit portal styling`)
     }
-    assert.equal(layout.overflow, false, `${label}: page overflow`)
+    // Late route animations can start after the first data response renders.
+    await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth, null, { timeout: 2000 }).catch(error => {
+      throw new Error(`${label}: page overflow after layout settles`, { cause: error })
+    })
     assert.deepEqual(layout.clipped, [], `${label}: clipped/small header controls`)
     assert.deepEqual(layout.crowdedHeaders, [], `${label}: overlapping table headings`)
     assert.ok(!layout.text.includes('This page could not finish loading'), `${label}: route error`)
     if (authenticated) {
       assert.equal(layout.topbar.height, width < 768 ? 60 : 64, `${label}: topbar height`)
       if (width >= 768) {
-        assert.equal(layout.sidebar.width, 232, `${label}: sidebar width`)
+        const collapsed = await page.locator('.app-shell').evaluate(element => element.classList.contains('sidebar-collapsed'))
+        assert.equal(layout.sidebar.width, collapsed ? 80 : 232, `${label}: sidebar width`)
         assert.equal(layout.nav.size, '14px', `${label}: navigation text`)
         assert.ok(layout.nav.height >= 44, `${label}: navigation target`)
       }
@@ -257,6 +261,93 @@ try {
   }
 
   const densityBaseline = process.argv.includes('--density-baseline')
+  const responsiveOnly = process.argv.includes('--responsive-only')
+  if (responsiveOnly) {
+    const widths = [320, 360, 390, 600, 767, 768, 936, 1024, 1199, 1200, 1440, 1920, 2560]
+    for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
+      user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
+      const routes = APP_ROUTES.filter(route => route.roles.includes(role) && !route.redirectTo && !['/account/password-change', '/student/onboarding'].includes(route.path))
+      for (const width of widths) {
+        await page.setViewportSize({ width, height: width < 768 ? 844 : 900 })
+        for (const theme of ['light', 'dark']) for (const route of routes) {
+          if (![390, 936, 1440].includes(width) && !representativeRoutes.has(route.path)) continue
+          await open(route.path)
+          await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+          const label = `${role} ${route.path} ${theme} ${width}`
+          await check(label, width)
+          const clippedLabels = await page.locator('.mobile-bottom-nav button span').evaluateAll(elements => elements.filter(el => el.getClientRects().length && el.scrollWidth > el.clientWidth + 1).map(el => el.textContent))
+          assert.deepEqual(clippedLabels, [], `${label}: readable mobile navigation labels`)
+          const background = await page.locator('.app-shell').evaluate(async element => {
+            const layer = getComputedStyle(element, '::before')
+            const main = getComputedStyle(element.querySelector('.main-panel'))
+            const photo = new Image()
+            photo.src = layer.backgroundImage.match(/url\("?([^"()]+)"?\)/)?.[1] || ''
+            await photo.decode()
+            return { image: layer.backgroundImage, position: layer.position, inset: layer.inset, events: layer.pointerEvents, main: main.backgroundColor, content: getComputedStyle(element.querySelector('.page-content')).backgroundColor }
+          })
+          assert.ok(background.image.includes(theme === 'dark' ? 'sti-global-city-building-night' : 'sti-global-city-building-web'), `${label}: theme campus photo`)
+          assert.equal(background.position, 'fixed', `${label}: viewport background`)
+          assert.equal(background.inset, '0px', `${label}: full viewport coverage`)
+          assert.equal(background.events, 'none', `${label}: non-interactive background`)
+          assert.equal(background.main, 'rgba(0, 0, 0, 0)', `${label}: canvas reveals photo`)
+          assert.equal(background.content, 'rgba(0, 0, 0, 0)', `${label}: page reveals photo`)
+          console.log(`PASS ${label}`)
+          if (width >= 768) assert.equal(await page.locator('.app-shell').evaluate(el => el.classList.contains('sidebar-collapsed')), width < 1200, `${label}: default sidebar mode`)
+          if ([390, 936, 1440].includes(width) && route.path.endsWith('/dashboard')) {
+            await page.screenshot({ path: `${output}${role}-${theme}-${width}-campus.png`, animations: 'disabled' })
+          }
+        }
+      }
+    }
+    user = { ...student, role: 'DISCIPLINE_ADMIN' }
+    await page.setViewportSize({ width: 936, height: 1159 })
+    await open('/admin/dashboard')
+    await page.getByRole('button', { name: 'Expand Navigation', exact: true }).click()
+    for (const width of [937, 1024, 1199, 936]) {
+      await page.setViewportSize({ width, height: 900 })
+      await check(`Expanded tablet ${width}`, width)
+      assert.equal(await page.getByRole('button', { name: 'Collapse Navigation', exact: true }).count(), 1, 'manual tablet expansion survives resizing within its range')
+      const records = await page.locator('.recent-violations-card').evaluate(el => {
+        const style = getComputedStyle(el)
+        return { available: el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), display: getComputedStyle(el.querySelector('tbody tr')).display }
+      })
+      assert.equal(records.display, records.available <= 704 ? 'grid' : 'table-row', 'records adapt to 44rem of content width')
+    }
+    for (const [width, collapsed] of [[1200, false], [1199, true], [767, false], [768, true], [1440, false]]) {
+      await page.setViewportSize({ width, height: 900 })
+      await page.waitForFunction(expected => document.querySelector('.app-shell').classList.contains('sidebar-collapsed') === expected, collapsed)
+      await check(`Navigation range ${width}`, width)
+    }
+    for (let width = 320; width <= 1500; width += 37) {
+      await page.setViewportSize({ width, height: 900 })
+      await check(`Intermediate resize ${width}`, width)
+    }
+    for (const width of [468, 720, 960]) {
+      await page.setViewportSize({ width, height: 540 })
+      await check(`200% CSS viewport ${width}`, width)
+    }
+    await page.setViewportSize({ width: 936, height: 600 })
+    await open('/admin/dashboard')
+    await page.getByRole('button', { name: /Switch to .* Mode/ }).click()
+    const selectedTheme = await page.locator('html').getAttribute('data-theme')
+    assert.equal(await page.evaluate(() => localStorage.getItem('sti-vio-log-theme')), selectedTheme, 'theme toggle persists its selection')
+    await page.reload()
+    await page.locator('.admin-dashboard').waitFor()
+    assert.equal(await page.locator('html').getAttribute('data-theme'), selectedTheme, 'theme survives reload')
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+    assert.equal(await page.locator('.app-shell').evaluate(el => getComputedStyle(el, '::before').inset), '0px', 'background covers viewport after scrolling')
+    for (const media of [{ media: 'print' }, { forcedColors: 'active' }]) {
+      await page.emulateMedia(media)
+      assert.equal(await page.locator('.app-shell').evaluate(el => getComputedStyle(el, '::before').display), 'none', 'decorative image is disabled for print/forced colors')
+      await page.emulateMedia({ media: 'screen', forcedColors: 'none' })
+    }
+    user = null
+    await open('/login')
+    assert.equal(await page.locator('.app-shell').evaluate(el => getComputedStyle(el, '::before').content), 'none', 'public pages do not inherit portal background')
+    assert.deepEqual(errors, [], 'Responsive browser runtime errors')
+    await writeFile(`${output}coverage-responsive.json`, JSON.stringify(coverage, null, 2))
+    console.log(`PASS ${coverage.length} responsive portal checks`)
+  }
   const densityOnly = densityBaseline || process.argv.includes('--density-only')
   const reportFlows = process.argv.includes('--report-flows')
   if (densityOnly) {
@@ -383,7 +474,7 @@ try {
     assert.deepEqual(errors, [], 'Message browser runtime errors')
   }
 
-  if (!densityOnly && !reportFlows && !messageFlow) {
+  if (!densityOnly && !reportFlows && !messageFlow && !responsiveOnly) {
   // Every role's routes, fresh loads and SPA navigation, in both themes/sizes.
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }

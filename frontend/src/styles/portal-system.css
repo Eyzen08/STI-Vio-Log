@@ -2833,7 +2833,27 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
   & .page-content h3 { font-size:var(--text-section-title); font-weight:650; line-height:1.35; }
   & :is(.signature-form,.signature-edit-form,.account-action-form,.account-password-form,.department-officer-create), & .admin-settings-page .login-form, & .app-modal .student-form { max-width:var(--form-max-width); }
   & .department-officer-page .department-welcome.portal-page-header { border:1px solid var(--border-subtle); background:var(--surface-raised); }
-  & .app-shell { background:var(--surface-canvas); }
+  & .app-shell {
+    --portal-campus-image:url('../assets/sti-global-city-building-web.jpg');
+    --portal-campus-tint:color-mix(in srgb,var(--surface-canvas) 88%,transparent);
+    position:relative;
+    isolation:isolate;
+    min-height:100svh;
+    background:var(--surface-canvas);
+  }
+  & .app-shell::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background-color:var(--surface-canvas);
+    background-image:linear-gradient(var(--portal-campus-tint),var(--portal-campus-tint)),var(--portal-campus-image);
+    background-position:center;
+    background-size:cover;
+    background-repeat:no-repeat;
+  }
+  & :is(.main-panel,.page-content) { background:transparent; }
   & .sidebar { background:var(--surface-sidebar) !important; box-shadow:none !important; }
   & :is(.topbar,.mobile-bottom-nav) { background:var(--surface-raised) !important; box-shadow:none !important; backdrop-filter:none; }
   & .sidebar .brand { background:transparent; box-shadow:none; margin-bottom:16px; }
@@ -3022,14 +3042,32 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 
   @media (max-width:767px) {
     --summary-icon-size:2rem;
+    & .mobile-bottom-nav button span {
+      max-width:100%;
+      white-space:normal;
+      overflow:visible;
+      overflow-wrap:anywhere;
+      text-overflow:clip;
+      font-size:11px;
+      line-height:1.2;
+    }
     & .topbar :is(.mobile-menu-button,.mobile-brand,.mobile-brand span,.notification-button,.profile-menu-trigger,.theme-toggle) {
       color:var(--text-primary) !important;
     }
     & .app-modal.app-modal--drawer { border-radius:0 !important; }
   }
   @media (forced-colors:active) {
+    & .app-shell::before { display:none; }
     & :is(.status-badge,.directory-clearance,.service-status,.violation-status,.violation-classification) {
       border:1px solid CanvasText !important;
     }
   }
+  @media print {
+    & .app-shell::before { display:none; }
+  }
+}
+
+:root[data-theme='dark'] body:has(.app-shell:is(.admin-portal,.student-portal,.department-portal)) .app-shell {
+  --portal-campus-image:url('../assets/sti-global-city-building-night.jpg');
+  --portal-campus-tint:color-mix(in srgb,var(--surface-canvas) 75%,transparent);
 }

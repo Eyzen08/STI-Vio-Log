@@ -26,7 +26,7 @@ const sessions = [1, 2, 3].map((id) => ({
   time_in: new Date(Date.now() - 3600000).toISOString(), timer_limit_seconds: id === 1 ? 30 : 7200,
   department_name: 'Community Engagement and Student Support Department'
 }))
-const server = await createServer({ root, server: { host: '127.0.0.1', port: 0 } })
+const server = await createServer({ root, cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0, hmr: false } })
 let browser
 let scenario = 'populated'
 let caseItems = violations
@@ -116,10 +116,11 @@ try {
     localStorage.setItem('sti_vio_log_user', JSON.stringify(user))
   }, { user })
   await mkdir(output, { recursive: true })
-  const viewports = [[1920, 1080], [1536, 864], [1366, 768], [1024, 768], [390, 844]]
+  const viewports = [[1920, 1080], [1536, 864], [1366, 768], [1024, 768], [936, 1159], [390, 844], [320, 844]]
   for (const theme of ['light', 'dark']) {
     for (const [width, height] of viewports) {
-      for (const zoom of [1, .9, 1.25]) {
+      for (const zoom of [1, .9, 1.25, 2]) {
+        if (width / zoom < 320) continue
         // Browser zoom changes the CSS viewport. Exercise equivalent layout sizes.
         await page.setViewportSize({ width: Math.round(width / zoom), height: Math.round(height / zoom) })
         await page.goto(`${origin}admin/dashboard`)

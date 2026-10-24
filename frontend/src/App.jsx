@@ -161,7 +161,7 @@ function App() {
   const recordTarget = notificationTarget(routeSearch)
   const [recordTargetError, setRecordTargetError] = useState(null)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => window.matchMedia('(min-width: 768px) and (max-width: 1199px)').matches)
   const [isDesktopNavigation, setIsDesktopNavigation] = useState(() => window.matchMedia('(min-width: 768px)').matches)
   const [openSidebarGroup, setOpenSidebarGroup] = useState(() => sidebarGroupForPath(sidebarNavigationFor(initialSession.user?.role), routePath))
   const [sidebarTooltip, setSidebarTooltip] = useState(null)
@@ -555,9 +555,18 @@ function App() {
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 768px)')
-    const updateViewport = (event) => setIsDesktopNavigation(event.matches)
+    const tablet = window.matchMedia('(min-width: 768px) and (max-width: 1199px)')
+    const updateViewport = () => {
+      setIsDesktopNavigation(media.matches)
+      setIsSidebarCollapsed(tablet.matches)
+      setIsMobileNavOpen(false)
+    }
     media.addEventListener('change', updateViewport)
-    return () => media.removeEventListener('change', updateViewport)
+    tablet.addEventListener('change', updateViewport)
+    return () => {
+      media.removeEventListener('change', updateViewport)
+      tablet.removeEventListener('change', updateViewport)
+    }
   }, [])
 
   const mobileNavItems = mobileNavItemsFor(navItems, user?.role)

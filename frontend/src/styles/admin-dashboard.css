@@ -118,7 +118,10 @@
 .admin-portal .admin-dashboard-grid { display:grid; grid-template-columns:minmax(0,2fr) minmax(300px,1fr); gap:16px; align-items:start; }
 .admin-portal :is(.dashboard-main-column,.dashboard-support-column) { display:grid; align-content:start; gap:16px; min-width:0; }
 .admin-portal .admin-dashboard :is(.dashboard-card,.stat-card) { margin:0; border:1px solid var(--dash-line); border-radius:var(--card-radius); background:var(--dash-surface); box-shadow:var(--shadow-sm); }
-@media (max-width:1199px) {
+/* Use the available content width, including an expanded tablet sidebar. */
+.admin-portal .admin-dashboard { container:portal-dashboard / inline-size; }
+.admin-portal .recent-violations-card { container:dashboard-records / inline-size; }
+@container portal-dashboard (max-width:62rem) {
   .admin-portal .admin-dashboard .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .admin-portal .admin-dashboard-grid { grid-template-columns:minmax(0,1fr); }
   .admin-portal .dashboard-support-column { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -145,6 +148,8 @@
   .admin-portal .admin-dashboard :is(.dashboard-session-info,.dashboard-session-label,.dashboard-session-countdown > time,.dashboard-session-countdown > span:not(.dashboard-session-label),.service-clock-details) { grid-column:1; grid-row:auto; }
   .admin-portal .admin-dashboard .dashboard-session-label { margin-top:8px; }
   .admin-portal .admin-dashboard .dashboard-service-totals { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@container dashboard-records (max-width:44rem) {
   .admin-portal .admin-dashboard .dashboard-violations-table,.admin-portal .admin-dashboard .dashboard-violations-table tbody { display:block; width:100%; min-width:0; }
   .admin-portal .admin-dashboard .dashboard-violations-table colgroup { display:none; }
   .admin-portal .admin-dashboard .dashboard-violations-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
@@ -152,11 +157,23 @@
   .admin-portal .admin-dashboard .dashboard-violations-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; padding:12px; margin-bottom:10px; border:1px solid var(--dash-line); border-radius:8px; }
   .admin-portal .admin-dashboard .dashboard-violations-table td { display:block; padding:0; border:0; height:auto; text-align:left; }
   .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Student'],.admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Offense'] { grid-column:1 / -1; }
-  .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Incident date'] { grid-column:1; grid-row:3; }
+  .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Incident Date'] { grid-column:1; grid-row:3; }
   .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Severity'] { grid-column:1; grid-row:4; }
   .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='Status'] { grid-column:2; grid-row:3; }
   .admin-portal .admin-dashboard .dashboard-violations-table td[data-label='View'] { grid-column:2; grid-row:4; }
-  .admin-portal .admin-dashboard .dashboard-violations-table td:is([data-label='Incident date'],[data-label='Status'])::before { content:attr(data-label); display:block; font-size:var(--text-xs); margin-bottom:4px; color:var(--dash-muted); }
+  .admin-portal .admin-dashboard .dashboard-violations-table td:is([data-label='Incident Date'],[data-label='Status'])::before { content:attr(data-label); display:block; font-size:var(--text-xs); margin-bottom:4px; color:var(--dash-muted); }
+}
+@container portal-dashboard (max-width:44rem) {
+  .admin-portal .admin-dashboard .dashboard-heading { flex-direction:column; align-items:stretch; }
+  .admin-portal .admin-dashboard .dashboard-heading-tools { justify-content:flex-start; }
+  .admin-portal .admin-dashboard .dashboard-primary-actions { display:flex; flex-wrap:wrap; }
+  .admin-portal .admin-dashboard .dashboard-primary-actions button { flex:1; min-width:0; white-space:normal; }
+  .admin-portal .dashboard-support-column { grid-template-columns:minmax(0,1fr); }
+}
+@container portal-dashboard (max-width:22.5rem) {
+  .admin-portal .admin-dashboard .admin-stats { grid-template-columns:minmax(0,1fr); }
+  .admin-portal .admin-dashboard .dashboard-primary-actions { flex-direction:column; }
+  .admin-portal .admin-dashboard .dashboard-secondary-actions > div { grid-template-columns:minmax(0,1fr); }
 }
 @media (max-width:359px) {
   .admin-portal .admin-dashboard .stat-card { flex-wrap:wrap; gap:4px 8px; }
