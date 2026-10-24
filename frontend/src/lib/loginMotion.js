@@ -11,7 +11,6 @@ export function animateLogin(root) {
     removals.push(() => element.removeEventListener(event, handler))
   }
   try {
-    // Public Full mode is an explicit choice shared with the landing page.
     media.add({ all: '(min-width: 0px)', desktop: '(min-width: 1024px)', pointer: '(hover: hover) and (pointer: fine)', forced: '(forced-colors: active)' }, context => {
       active = true
       const intro = root.querySelector('.login-intro')

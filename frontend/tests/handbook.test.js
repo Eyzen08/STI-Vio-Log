@@ -30,16 +30,16 @@ test('handbook is directly below Dashboard for discipline roles and students wit
   assert.equal(sidebarTooltipFor('STI Handbook'), 'Read the STI Student Handbook')
 })
 
-test('handbook offers four PDFs through explicit view and download links without an embedded reader', async () => {
+test('handbook offers four document choices and an accessible reader with open and download links', async () => {
   const server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
   try {
     const { default: HandbookPage, HANDBOOK_DOCUMENTS } = await server.ssrLoadModule('/src/components/HandbookPage.jsx')
     const html = renderToStaticMarkup(createElement(HandbookPage))
     assert.equal(HANDBOOK_DOCUMENTS.length, 4)
-    assert.match(html, /<label[^>]*for="handbook-document"/)
-    assert.match(html, /selected=""[^>]*>Complete Tertiary Handbook/)
-    assert.doesNotMatch(html, /<(?:iframe|object|embed)\b/)
-    assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" target="_blank" rel="noopener noreferrer">View PDF \(new tab\)/)
+    assert.equal((html.match(/aria-pressed="(?:true|false)"/g) || []).length, 4)
+    assert.match(html, /aria-pressed="true"[^>]*>[\s\S]*?Complete Tertiary Handbook/)
+    assert.match(html, /<iframe[^>]*src="\/handbook\/sti-tertiary-handbook-july-2026.pdf"[^>]*title="Complete Tertiary Handbook PDF reader"/)
+    assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" target="_blank" rel="noopener noreferrer">Open PDF/)
     assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" download="">Download PDF/)
     assert.match(html, /Open STI’s Live Handbook/)
     assert.match(html, /Saved copy captured/)

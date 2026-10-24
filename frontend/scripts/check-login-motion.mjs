@@ -20,7 +20,7 @@ const readable = async page => {
   assert.ok(content.every(el => el.opacity === '1' && el.visibility === 'visible'), JSON.stringify(content))
   assert.equal(await page.locator('.login-card').evaluate(el => getComputedStyle(el).transform), 'none')
 }
-const contextFor = async ({ theme = 'dark', motion = 'full', reducedMotion = 'reduce', touch = false, failure = false, delay = false, stall = false } = {}) => {
+const contextFor = async ({ theme = 'dark', motion = 'full', reducedMotion = 'no-preference', touch = false, failure = false, delay = false, stall = false } = {}) => {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion, hasTouch: touch, isMobile: touch })
   await context.addInitScript(({ theme, motion, stall }) => {
     if (!localStorage.getItem('sti-vio-log-theme')) localStorage.setItem('sti-vio-log-theme', theme)
@@ -44,8 +44,8 @@ const contextFor = async ({ theme = 'dark', motion = 'full', reducedMotion = 're
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(new URL('/login', origin).href)
   await page.getByRole('heading', { name: /^Welcome Back$/i }).waitFor()
-  assert.equal(await page.locator('.login-page').getAttribute('data-motion'), motion)
-  if (motion === 'full' && !failure) await page.waitForFunction(() => document.querySelector('.login-campus-drift')?.style.transform, undefined, { polling: 100 })
+  assert.equal(await page.locator('.login-page').getAttribute('data-motion'), reducedMotion === 'reduce' ? 'reduced' : 'full')
+  if (reducedMotion !== 'reduce' && !failure) await page.waitForFunction(() => document.querySelector('.login-campus-drift')?.style.transform, undefined, { polling: 100 })
   await pause(2200)
   await readable(page)
   return { page, context, release: () => releaseLogin() }
@@ -54,7 +54,7 @@ try {
   for (const theme of ['light', 'dark']) {
     const fixture = await contextFor({ theme })
     const { page, context } = fixture
-    assert.equal(await page.locator('.login-utility-controls button').count(), 2)
+    assert.equal(await page.locator('.login-utility-controls button').count(), 1)
     const controls = await page.locator('.login-utility-controls button').evaluateAll(elements => elements.map(el => ({ text: el.textContent, width: el.offsetWidth, height: el.offsetHeight })))
     assert.ok(controls.every(el => !el.text.trim() && el.width === 44 && el.height === 44))
     assert.equal(await page.getByRole('button', { name: /Switch to .* Mode/ }).count(), 1)
@@ -62,7 +62,7 @@ try {
     await page.mouse.move(20, 20)
     const before = await transforms(page)
     await pause(900)
-    assert.notDeepEqual(await transforms(page), before, 'Full motion must run even with browser reduced-motion enabled')
+    assert.notDeepEqual(await transforms(page), before, 'Motion must run automatically when the device allows it')
     const input = page.locator('#username')
     const bounds = await input.boundingBox()
     const intro = await page.locator('.login-intro').boundingBox()
@@ -93,24 +93,27 @@ try {
     await pause(500)
     assert.deepEqual(await transforms(page), hidden, 'Hidden documents pause decoration')
     await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')) })
-    await page.locator('.login-motion-toggle').click()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.waitForFunction(() => document.querySelector('.login-page')?.dataset.motion === 'reduced')
     assert.equal(await page.locator('.login-page').getAttribute('data-motion'), 'reduced')
     assert.equal(await page.locator('.login-utility-controls .auth-theme-toggle svg').evaluate(el => getComputedStyle(el).transitionDuration), '0s')
     assert.ok((await transforms(page)).every(value => value === 'none'))
     await page.getByRole('link', { name: 'Back to Home', exact: true }).click()
     await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'reduced')
-    await page.locator('.landing-header .landing-motion-toggle').click()
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.waitForFunction(() => document.querySelector('.landing-page')?.dataset.motion === 'full')
     await page.getByRole('link', { name: 'Sign In', exact: true }).last().click()
     await page.getByRole('heading', { name: /^Welcome Back$/i }).waitFor()
     assert.equal(await page.locator('.login-page').getAttribute('data-motion'), 'full')
-    await page.locator('.login-motion-toggle').evaluate(el => { el.click(); el.click(); el.click(); el.click() })
+    assert.equal(await page.locator('.public-motion-toggle').count(), 0)
     assert.equal(await page.locator('.login-page').getAttribute('data-motion'), 'full')
     await pause(2200)
     await readable(page)
-    await page.locator('.login-motion-toggle').click()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.waitForFunction(() => document.querySelector('.login-page')?.dataset.motion === 'reduced')
     await page.reload()
-    await page.locator('.login-motion-toggle').waitFor()
+    await page.locator('.login-page[data-motion="reduced"]').waitFor()
     for (const width of [360, 390, 768, 1366, 1920, 683]) {
       await page.setViewportSize({ width, height: 900 })
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `overflow at ${width}`)
@@ -119,14 +122,14 @@ try {
       await page.screenshot({ path: fileURLToPath(new URL(`${theme}-${width}.png`, artifacts)), fullPage: true })
     }
     await page.reload()
-    await page.locator('.login-motion-toggle').waitFor()
+    await page.locator('.login-page[data-motion="reduced"]').waitFor()
     assert.equal(await page.locator('.login-page').getAttribute('data-motion'), 'reduced')
     assert.equal(await page.evaluate(() => localStorage.getItem('sti-vio-log-theme')), theme)
     await context.close()
   }
-  for (const options of [{ motion: 'reduced' }, { reducedMotion: 'no-preference' }, { failure: true }, { delay: true }, { stall: true }, { touch: true }]) {
+  for (const options of [{ reducedMotion: 'reduce' }, { motion: 'reduced' }, { failure: true }, { delay: true }, { stall: true }, { touch: true }]) {
     const { page, context } = await contextFor(options)
-    if (options.failure || options.touch || options.motion === 'reduced') assert.equal(await page.locator('.login-page').getAttribute('data-cursor'), null)
+    if (options.failure || options.touch || options.reducedMotion === 'reduce') assert.equal(await page.locator('.login-page').getAttribute('data-cursor'), null)
     if (options.touch) {
       await page.setViewportSize({ width: 390, height: 600 })
       assert.equal(await page.locator('.login-ribbon-frame').evaluate(el => getComputedStyle(el).display), 'none')

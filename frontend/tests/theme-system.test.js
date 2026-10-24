@@ -167,6 +167,27 @@ test('dark semantic text and state colors meet WCAG AA contrast', () => {
   }
 })
 
+test('both themes keep placeholders and field boundaries readable on form surfaces', () => {
+  const split = foundation.indexOf(":root[data-theme='dark']")
+  for (const [theme, css] of [['light', foundation.slice(0, split)], ['dark', foundation.slice(split)]]) {
+    const token = name => css.match(new RegExp(`${name}:\\s*(#[a-f0-9]{6});`))[1]
+    assert.ok(contrast(token('--control-placeholder'), token('--control-background')) >= 4.5, `${theme}: placeholder text`)
+    for (const surface of ['--control-background', '--surface-raised', '--surface-nested']) {
+      assert.ok(contrast(token('--border-strong'), token(surface)) >= 3, `${theme}: field boundary on ${surface}`)
+    }
+  }
+})
+
+test('offense chart series keep their semantic colors visible in both themes', () => {
+  const split = foundation.indexOf(":root[data-theme='dark']")
+  for (const [theme, css] of [['light', foundation.slice(0, split)], ['dark', foundation.slice(split)]]) {
+    const token = name => css.match(new RegExp(`${name}:\\s*(#[a-f0-9]{6});`))[1]
+    for (const series of ['--link-color', '--severity-minor', '--severity-major', '--status-danger-text']) {
+      assert.ok(contrast(token(series), token('--surface-interactive')) >= 3, `${theme}: ${series} on chart track`)
+    }
+  }
+})
+
 test('dark validation and destructive controls share danger tokens', () => {
   for (const selector of ['.error-message', '.field-error', '.registration-field-error', ".password-requirements .invalid", '.danger-text', "[aria-invalid='true']", '.account-action-notice--danger', '.danger-button']) {
     assert.match(portal, new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))

@@ -1,0 +1,20 @@
+.app-shell :is(.admin-settings-page, .account-settings-page) { display: flex; flex-direction: column; gap: 20px; min-height: calc(100dvh - var(--topbar-height) - 40px); }
+.settings-list { display: grid; gap: 12px; }
+.settings-disclosure { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--card-radius); background: var(--surface-raised); color: var(--text-primary); }
+.settings-disclosure > summary { display: flex; align-items: center; gap: 16px; min-height: 84px; padding: 16px 20px; box-sizing: border-box; list-style: none; cursor: pointer; }
+.settings-disclosure > summary::-webkit-details-marker { display: none; }
+.settings-disclosure > summary > svg { flex: 0 0 auto; color: var(--link-color); }
+.settings-disclosure > summary > span { display: grid; gap: 6px; flex: 1; min-width: 0; }
+.settings-disclosure > summary strong { font-size: var(--text-base); font-weight: 600; }
+.settings-disclosure > summary small { color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.5; }
+.settings-disclosure[open] > summary { border-bottom: 1px solid var(--border-subtle); }
+.settings-disclosure[open] > summary > svg:last-child { transform: rotate(90deg); }
+.settings-disclosure > summary:hover { background: var(--surface-interactive-hover); border-radius: inherit; }
+.settings-disclosure > summary:focus-visible { outline: 3px solid var(--link-color); outline-offset: 3px; border-radius: inherit; }
+.app-shell .settings-disclosure > .table-card { margin: 0; border: 0; border-radius: 0 0 var(--card-radius) var(--card-radius); box-shadow: none; }
+.settings-footer { margin-top: auto; padding: 20px 0 4px; border-top: 1px solid var(--border-subtle); }
+.settings-footer .account-policy-links { display: flex; flex-wrap: wrap; gap: 16px 24px; margin: 0; padding: 0; border: 0; }
+@media (max-width: 600px) {
+  .settings-disclosure > summary { gap: 12px; padding: 16px; }
+  .app-shell :is(.admin-settings-page, .account-settings-page) { min-height: calc(100dvh - var(--topbar-height) - 120px); }
+}

@@ -5,10 +5,11 @@ import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 import { APP_ROUTES, PUBLIC_ROUTES } from '../src/lib/routes.js'
+import { auditThemeColors } from './lib/themeAudit.mjs'
 
 const { chromium } = createRequire(import.meta.url)('playwright')
 const root = fileURLToPath(new URL('../', import.meta.url))
-const output = fileURLToPath(new URL('../artifacts/ui-consistency/', import.meta.url))
+const output = fileURLToPath(new URL(process.argv.includes('--theme-audit') ? '../artifacts/theme-audit/' : '../artifacts/ui-consistency/', import.meta.url))
 const student = { id: 1, first_name: 'Maria', last_name: 'Santos', full_name: 'Maria Santos', student_name: 'Maria Santos', student_number: '2024-001', username: 'maria', program: 'BSIT', year_level: 2, section: 'A303', email: 'maria@example.com', email_verified: true, qualification_status: 'NEEDS_SERVICE' }
 const violation = { id: 1, student_id: 1, student_name: 'Maria Santos', student_number: '2024-001', exact_offense: 'Non-wearing, incomplete, or improper use of school uniform or ID', incident_date: '2026-10-05', severity: 'MINOR', status: 'OPEN', offense_indicator_level: 'MINOR_1' }
 const assignment = { id: 1, assignment_id: 1, violation_id: 1, student_id: 1, student_name: 'Maria Santos', first_name: 'Maria', last_name: 'Santos', student_number: '2024-001', required_hours: 4, remaining_hours: 2, department_name: 'Community Engagement and Student Support Department', status: 'IN_PROGRESS' }
@@ -26,16 +27,19 @@ let rejectDirectory = false
 const approvalBodies = []
 const signature = { id: 1, full_name: 'Juan Dela Cruz', position: 'Discipline Officer', is_active: true, updated_at: '2026-10-08', image_data_url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jY1sAAAAASUVORK5CYII=' }
 const clearanceCertificates = ['ISSUED', 'REVOKED'].map((status, i) => ({ id: i + 1, student_name: 'Paolo Sy', student_number: '2024-006', certificate_number: `STI-2026-00${i + 1}`, version: i + 1, completed_hours: 4, status, email_status: 'SENT' }))
-const server = await createServer({ root, cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0, hmr: false } })
+const server = await createServer({ root, cacheDir: `${output}vite-cache-${process.argv.includes('--flows-only') ? 'flows' : process.argv.includes('--message-flow') ? 'messages' : process.argv.includes('--report-flows') ? 'reports' : 'routes'}`, server: { host: '127.0.0.1', port: 0, hmr: false } })
 let browser, page
 let user
 const errors = []
 const themeFindings = []
+const themeManualReview = []
+const themeCoverage = []
 const coverage = []
 let degraded = false
 let reportMode = 'populated'
 const reportRequests = []
 const messageFlow = process.argv.includes('--message-flow')
+const themeAuditSuffix = messageFlow ? '-messages' : process.argv.includes('--flows-only') ? '-flows' : process.argv.includes('--report-flows') ? '-reports' : ''
 let threadMessages = []
 const representativeRoutes = new Set(['/admin/dashboard', '/admin/students', '/admin/system-monitoring', '/admin/messages', '/admin/qr-scan', '/admin/account-settings', '/department/dashboard', '/department/students', '/department/dtr', '/department/qr-scan', '/student/dashboard', '/student/profile', '/student/community-service', '/student/clearance', '/student/messages'])
 
@@ -43,7 +47,7 @@ try {
   await server.listen()
   const origin = server.resolvedUrls.local[0]
   browser = await chromium.launch({ headless: true, channel: 'chrome' })
-  page = await browser.newPage({ bypassCSP: true })
+  page = await browser.newPage({ bypassCSP: true, reducedMotion:process.argv.includes('--theme-audit') ? 'reduce' : 'no-preference' })
   page.on('pageerror', (error) => errors.push(error.message))
   await page.route('**/*', async (route) => {
     const url = new URL(route.request().url())
@@ -67,6 +71,8 @@ try {
       }
       let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'local-browser-fixture' } : payload
       let status = url.pathname === '/api/auth/session' && !user ? 401 : 200
+      if (url.pathname === '/api/account/avatar') response = { avatar:{ source:'INITIALS', preset_id:'portrait-01' } }
+      if (url.pathname === '/api/account/admin-profile') response = { profile:{ ...student, username:'fixture.admin', email_verified:false } }
       if (url.pathname === '/api/auth/legal') response = { legal: { required: false } }
       if (url.pathname === '/api/system/status') response = { system: { application: 'STI Vio-Log', environment: 'Production', version: 'layout-fixture', status: 'OPERATIONAL', database: 'CONNECTED', checked_at: '2026-10-23T12:00:00Z', components: {
         api: { status: 'OPERATIONAL' }, database: { status: 'OPERATIONAL', latency_ms: 96 },
@@ -121,8 +127,41 @@ try {
     await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
   }
 
+  async function settleVisuals() {
+    await page.evaluate(async reduced => {
+      const animations = document.getAnimations().filter(animation => animation.playState === 'running' && Number.isFinite(animation.effect?.getComputedTiming().endTime))
+      if (reduced) {
+        for (const animation of animations) { try { animation.finish() } catch { /* Scroll timelines need manual review. */ } }
+      } else await Promise.all(animations.map(animation => animation.finished.catch(() => {})))
+    }, process.argv.includes('--theme-audit'))
+  }
+
+  async function changeTheme(theme) {
+    if (await page.locator('html').getAttribute('data-theme') !== theme) {
+      const toggle = page.getByRole('button', { name: `Switch to ${theme === 'dark' ? 'Dark' : 'Light'} Mode`, exact:true }).first()
+      if (await toggle.isVisible()) await toggle.click()
+      else await page.evaluate(value => { document.documentElement.dataset.theme = value }, theme)
+    }
+    await page.waitForFunction(value => document.documentElement.dataset.theme === value, theme)
+    await page.waitForFunction(() => !document.documentElement.classList.contains('theme-transitioning'))
+    await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    await settleVisuals()
+  }
+
+  async function collectThemeAudit(label) {
+    await settleVisuals()
+    const result = await page.evaluate(auditThemeColors)
+    const context = { page:label, route:new URL(page.url()).pathname, theme:await page.locator('html').getAttribute('data-theme') }
+    themeFindings.push(...result.findings.map(finding => ({ ...context, ...finding })))
+    themeManualReview.push(...result.manualReview.map(finding => ({ ...context, ...finding })))
+    themeCoverage.push({ ...context, checked:result.checked })
+    await writeFile(`${output}theme-audit${themeAuditSuffix}.json`, JSON.stringify(themeFindings, null, 2))
+    await writeFile(`${output}theme-manual-review${themeAuditSuffix}.json`, JSON.stringify(themeManualReview, null, 2))
+    await writeFile(`${output}theme-coverage${themeAuditSuffix}.json`, JSON.stringify(themeCoverage, null, 2))
+  }
+
   async function check(label, width, authenticated = true) {
-    await page.evaluate(() => Promise.all(document.getAnimations().filter(animation => animation.effect?.getComputedTiming().iterations !== Infinity).map(animation => animation.finished.catch(() => {}))))
+    await settleVisuals()
     const flatFindings = await page.evaluate(() => {
       if (!document.querySelector('.app-shell:is(.admin-portal,.student-portal,.department-portal)')) return []
       const findings = []
@@ -158,43 +197,7 @@ try {
       if (expectedCleared) assert.equal(await cleared.first().evaluate((element) => element.classList.contains('clearance-cleared')), false, 'directory badges do not inherit clearance-card borders')
     }
     if (process.argv.includes('--theme-audit')) {
-      const findings = await page.evaluate(() => {
-        if (document.documentElement.dataset.theme !== 'dark') return []
-        const rgb = (color) => color.match(/[\d.]+/g)?.map(Number) || [0, 0, 0, 0]
-        const luminance = (channels) => channels.slice(0, 3).map((v) => v / 255).map((v) => v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4).reduce((sum, v, i) => sum + v * [.2126, .7152, .0722][i], 0)
-        const findings = []
-        for (const el of document.querySelectorAll('body *')) {
-          const style = getComputedStyle(el)
-          const rect = el.getBoundingClientRect()
-          if (!el.getClientRects().length || rect.width < 2 || rect.height < 2 || style.visibility !== 'visible' || Number(style.opacity) === 0 || el.closest('[aria-hidden="true"],svg,script,style,.sr-only')) continue
-          const ownBackground = rgb(style.backgroundColor)
-          const selector = `${el.parentElement?.className || el.parentElement?.tagName} > ${el.tagName.toLowerCase()}.${String(el.className).trim().replaceAll(' ', '.')}`
-          const paper = el.closest('.certificate-preview,.clearance-certificate,.qr-mini,.qr-display-card canvas,.qr-display-card img,.signature-directory img,.signature-form > img,.signature-preview-grid img,.signature-picker img,.handbook-reader')
-          if (!paper && (ownBackground[3] ?? 1) >= .9 && luminance(ownBackground) > .65 && rect.width * rect.height > 150) findings.push({ selector, issue: 'light surface', background: style.backgroundColor })
-          const text = [...el.childNodes].filter((node) => node.nodeType === 3).map((node) => node.textContent.trim()).join(' ')
-          if (!text || el.matches('progress') || el.closest(':disabled,[disabled]')) continue
-          const layers = []
-          let layeredImage = false
-          for (let current = el; current; current = current.parentElement) {
-            const currentStyle = getComputedStyle(current)
-            const background = rgb(currentStyle.backgroundColor)
-            if (currentStyle.backgroundImage !== 'none') { layeredImage = true; break }
-            layers.push(background)
-            if ((background[3] ?? 1) === 1) break
-          }
-          if (layeredImage) continue
-          const composite = layers.reverse().reduce((base, color) => base.map((v, i) => color[i] * (color[3] ?? 1) + v * (1 - (color[3] ?? 1))), [255, 255, 255])
-          const foreground = rgb(style.color)
-          const textColor = composite.map((v, i) => foreground[i] * (foreground[3] ?? 1) + v * (1 - (foreground[3] ?? 1)))
-          const values = [luminance(textColor), luminance(composite)].sort((a, b) => b - a)
-          const ratio = (values[0] + .05) / (values[1] + .05)
-          const large = parseFloat(style.fontSize) >= 24 || (parseFloat(style.fontSize) >= 18.66 && Number(style.fontWeight) >= 700)
-          if (ratio < (large ? 3 : 4.5)) findings.push({ selector, issue: 'text contrast', text: text.slice(0, 70), ratio: Number(ratio.toFixed(2)), color: style.color, background: composite.map(Math.round) })
-        }
-        return findings
-      })
-      themeFindings.push(...findings.map((finding) => ({ page: label, ...finding })))
-      await writeFile(`${output}theme-audit.json`, JSON.stringify(themeFindings, null, 2))
+      await collectThemeAudit(label)
     }
     const layout = await page.evaluate(() => {
       const css = (selector) => {
@@ -272,7 +275,7 @@ try {
         for (const theme of ['light', 'dark']) for (const route of routes) {
           if (![390, 936, 1440].includes(width) && !representativeRoutes.has(route.path)) continue
           await open(route.path)
-          await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+          await changeTheme(theme)
           const label = `${role} ${route.path} ${theme} ${width}`
           await check(label, width)
           const clippedLabels = await page.locator('.mobile-bottom-nav button span').evaluateAll(elements => elements.filter(el => el.getClientRects().length && el.scrollWidth > el.clientWidth + 1).map(el => el.textContent))
@@ -362,7 +365,7 @@ try {
         user = { ...student, role, department_id: 1, department_name: 'Student Support' }
         await open(path)
         await page.locator(`${path === '/admin/reports' ? '.reports-workspace' : path === '/admin/dashboard' ? '.admin-dashboard' : path === '/department/dashboard' ? '.department-dashboard' : '.student-dashboard'} .portal-page-header`).waitFor()
-        await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+        await changeTheme(theme)
         await page.evaluate(() => document.fonts.ready)
         const layout = await page.evaluate(() => {
           const box = selector => {
@@ -411,7 +414,7 @@ try {
       await page.setViewportSize({ width, height:900 })
       await open('/admin/reports')
       await page.locator('.reports-workspace').waitFor()
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       for (const type of ['violations', 'community-service', 'dtr', 'non-compliance', 'parent-contacts', 'clearance', 'good-standing']) {
         await page.getByRole('combobox', { name:'Report Type', exact:true }).selectOption(type)
         await page.getByRole('button', { name:'Generate Report', exact:true }).click()
@@ -452,8 +455,8 @@ try {
       threadMessages = [{ id:1, message_text:'Please confirm your service schedule.', sender_name:'Discipline Office', created_at:'2026-10-24T01:00:00Z' }]
       await page.setViewportSize({ width,height:900 })
       await open(`${role === 'STUDENT' ? '/student' : '/admin'}/messages`)
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
-      await page.locator('.conversation-list > button').first().click()
+      await changeTheme(theme)
+      await page.locator('.conversation-open').first().click()
       await page.getByText('Please confirm your service schedule.', { exact:true }).waitFor()
       const composer = page.getByRole('textbox', { name:/^Message/ })
       await composer.fill('Confirmed. Thank you.')
@@ -479,14 +482,34 @@ try {
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
     const routes = APP_ROUTES.filter((route) => route.roles.includes(role) && !route.redirectTo && !['/account/password-change', '/student/onboarding'].includes(route.path))
-    for (const [width, height] of [390, 768, 1440, 320, 360, 430, 600, 1024, 1280, 1366, 1920].map(width => [width, width < 768 ? 844 : 900])) {
+    for (const [width, height] of (process.argv.includes('--theme-audit') ? [390,768,1440,320,683,1920] : [390,768,1440,320,360,430,600,1024,1280,1366,1920]).map(width => [width, width < 768 ? 844 : 900])) {
       await page.setViewportSize({ width, height })
       for (const theme of ['light', 'dark']) {
         for (const [index, route] of routes.entries()) {
           if (![390, 768, 1440].includes(width) && !representativeRoutes.has(route.path)) continue
           await open(route.path, index !== 0)
-          await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+          await changeTheme(theme)
           await check(`${role} ${route.path} ${theme} ${width}`, width)
+          if (process.argv.includes('--theme-audit')) console.log(`AUDIT ${role} ${route.path} ${theme} ${width}`)
+          if (process.argv.includes('--theme-audit') && [390,1440].includes(width)) {
+            for (const summary of await page.locator('.settings-disclosure > summary').all()) {
+              await summary.click()
+              await collectThemeAudit(`${role} ${route.path} expanded ${await summary.locator('strong').innerText()} ${theme} ${width}`)
+            }
+            const controls = page.locator('.portal-page-header button:not(:disabled),.settings-disclosure > summary,.table-card input:not(:disabled),.conversation-actions-trigger').filter({ visible:true })
+            for (const control of (await controls.all()).slice(0, 3)) {
+              await control.hover()
+              await settleVisuals()
+              await collectThemeAudit(`${role} ${route.path} hover ${theme} ${width}`)
+              await page.keyboard.press('Tab')
+              await control.focus()
+              await collectThemeAudit(`${role} ${route.path} focus ${theme} ${width}`)
+            }
+            await changeTheme(theme === 'light' ? 'dark' : 'light')
+            await collectThemeAudit(`${role} ${route.path} switched ${width}`)
+            await changeTheme(theme)
+            await collectThemeAudit(`${role} ${route.path} restored ${width}`)
+          }
           if ([1920, 390].includes(width) && ['/admin/dashboard', '/admin/students', '/admin/violations', '/admin/active-attendance', '/admin/community-service', '/admin/clearance', '/admin/messages', '/department/dashboard', '/student/dashboard'].includes(route.path)) {
             await page.screenshot({ path: `${output}${route.path.slice(1).replaceAll('/', '-')}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
           }
@@ -528,11 +551,23 @@ try {
   for (const width of [1920, 320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     for (const theme of ['light', 'dark']) {
-      for (const [role, path] of [['DISCIPLINE_ADMIN', '/admin/departments-officers'], ['DISCIPLINE_OFFICE', '/admin/account-settings'], ['DEPARTMENT_HEAD', '/department/account-settings'], ['DEPARTMENT_HEAD', '/department/dashboard'], ['DEPARTMENT_HEAD', '/department/community-service'], ['DISCIPLINE_ADMIN', '/admin/handbook'], ['DISCIPLINE_ADMIN', '/admin/dashboard']]) {
+      for (const [role, path] of [['DISCIPLINE_ADMIN', '/admin/departments-officers'], ['DISCIPLINE_OFFICE', '/admin/account-settings'], ['DEPARTMENT_HEAD', '/department/account-settings'], ['DEPARTMENT_HEAD', '/department/dashboard'], ['DEPARTMENT_HEAD', '/department/students'], ['DEPARTMENT_HEAD', '/department/community-service'], ['DISCIPLINE_ADMIN', '/admin/handbook'], ['DISCIPLINE_ADMIN', '/admin/dashboard'], ['STUDENT', '/student/dashboard']]) {
         user = { ...student, role, department_id: 1, department_name: 'Student Support' }
         await open(path)
-        await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+        await changeTheme(theme)
         await check(`Shared patterns ${path} ${theme} ${width}`, width)
+        if (process.argv.includes('--theme-audit') && ['/department/community-service','/department/students'].includes(path)) {
+          await page.locator('.department-welcome > button').hover()
+          await collectThemeAudit(`Department header ${path} hover ${theme} ${width}`)
+          await page.locator('.department-welcome > button').focus()
+          await collectThemeAudit(`Department header ${path} focus ${theme} ${width}`)
+        }
+        if (process.argv.includes('--theme-audit') && path === '/student/dashboard') {
+          await changeTheme(theme === 'light' ? 'dark' : 'light')
+          await collectThemeAudit(`Student metadata switched ${width}`)
+          await changeTheme(theme)
+          await collectThemeAudit(`Student metadata restored ${width}`)
+        }
         const severity = page.locator('.dashboard-severity.severity-minor')
         if (await severity.count()) assert.equal(await severity.first().evaluate(el => getComputedStyle(el).color), theme === 'dark' ? 'rgb(255, 216, 112)' : 'rgb(128, 96, 0)', 'minor severity uses the same palette in both record views')
       }
@@ -540,18 +575,18 @@ try {
       const originalStudents = payload.students
       payload.students = [{ ...student, first_name: 'Maria Alessandra Christina', last_name: 'Dela Cruz Villanueva-Santos', student_number: '0200000123456789', program: 'Bachelor of Science in Information Technology', section: 'INFORMATION-TECHNOLOGY-A303' }]
       await open('/admin/students')
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       await page.getByText('Maria Alessandra Christina Dela Cruz Villanueva-Santos', { exact: true }).waitFor()
       await check(`Long student content ${theme} ${width}`, width)
       payload.students = []
       await open('/admin/students')
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       await page.getByText('No student records yet.', { exact: true }).waitFor()
       await check(`Empty student directory ${theme} ${width}`, width)
       payload.students = originalStudents
       degraded = true
       await open('/admin/system-monitoring')
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       await page.getByText('Degraded', { exact: true }).waitFor()
       await check(`Degraded monitoring ${theme} ${width}`, width)
       assert.equal(await page.locator('.component-health-card--database .status-badge').textContent(), 'Unavailable')
@@ -568,7 +603,7 @@ try {
     for (const theme of ['light', 'dark']) {
       clearanceStudents = structuredClone(clearanceFixtures)
       await open('/admin/awaiting-clearance?panel=history')
-      await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       await page.locator('.certificate-student-list[aria-busy="false"]').waitFor()
       assert.equal(await page.locator('.certificate-student-card').count(), 2, 'queue excludes blocked, incomplete, unassigned and approved students; duplicate students removed')
       assert.equal(await page.getByRole('tab').count(), 0, 'queue remains its own page despite a legacy panel query')
@@ -675,8 +710,17 @@ try {
     for (const path of PUBLIC_ROUTES) {
       await open(path)
       for (const theme of ['light', 'dark']) {
-        await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+        await changeTheme(theme)
         await check(`${path} ${theme} ${width}`, width, false)
+      if (process.argv.includes('--theme-audit')) {
+        for (const control of (await page.locator('.public-policy-brand,.auth-shell input:not(:disabled),.auth-theme-toggle').filter({visible:true}).all()).slice(0,3)) {
+          await control.hover()
+          await settleVisuals()
+          await collectThemeAudit(`${path} public hover ${theme} ${width}`)
+          await control.focus()
+          await collectThemeAudit(`${path} public focus ${theme} ${width}`)
+        }
+      }
         if (path === '/login') await page.screenshot({ path: `${output}login-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
       }
     }
@@ -686,19 +730,19 @@ try {
     user = { ...student, role: 'STUDENT', [flag]: true }
     await open(flag === 'onboarding_required' ? '/student/onboarding' : '/account/password-change')
     for (const theme of ['light', 'dark']) {
-      await page.evaluate(theme => { document.documentElement.dataset.theme = theme }, theme)
+      await changeTheme(theme)
       await check(`${flag} ${theme} ${width}`, width, false)
     }
   }
   await writeFile(`${output}${process.argv.includes('--flows-only') ? 'coverage-flows' : 'coverage-routes'}.json`, JSON.stringify(coverage, null, 2))
   assert.deepEqual(errors, [], 'Browser runtime errors')
+  console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
+  }
   if (process.argv.includes('--theme-audit')) {
-    await writeFile(`${output}theme-audit.json`, JSON.stringify(themeFindings, null, 2))
+    await writeFile(`${output}theme-audit${themeAuditSuffix}.json`, JSON.stringify(themeFindings, null, 2))
     const unique = [...new Map(themeFindings.map((finding) => [`${finding.selector}:${finding.issue}:${finding.color || finding.background}`, finding])).values()]
     console.log(JSON.stringify(unique.slice(0, 40), null, 2))
-    assert.equal(unique.length, 0, `Dark theme: ${unique.length} distinct color leaks/contrast failures; see artifacts/ui-consistency/theme-audit.json`)
-  }
-  console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
+    assert.equal(unique.length, 0, `Light/dark themes: ${unique.length} distinct color leaks/contrast failures; see artifacts/ui-consistency/theme-audit.json`)
   }
 } catch (error) {
   await page?.screenshot({ path: `${output}failure.png`, fullPage: true, animations: 'disabled' }).catch(() => {})

@@ -28,18 +28,9 @@ const checkHero = async page => {
   const hidden = states.filter(el => el.opacity !== '1').map(el => el.text)
   assert.deepEqual(hidden, [], 'Every hero word and supporting element must finish visible without toggling motion')
 }
-const checkMotionButtons = async (page, full) => {
-  const buttons = page.locator('.landing-motion-toggle')
-  assert.equal(await buttons.count(), 2)
-  for (const button of await buttons.all()) {
-    assert.equal((await button.textContent()).trim(), '')
-    assert.equal(await button.getAttribute('aria-pressed'), String(full))
-    assert.equal(await button.getAttribute('title'), full ? 'Reduce Motion' : 'Enable Full Motion')
-    assert.match(await button.getAttribute('aria-label'), full ? /Full/ : /Reduced/)
-    const size = await button.evaluate(el => ({ width: el.offsetWidth, height: el.offsetHeight }))
-    assert.deepEqual(size, { width: 44, height: 44 })
-    assert.equal(await button.locator('svg').getAttribute('width'), '18')
-  }
+const checkMotionState = async (page, full) => {
+  assert.equal(await page.locator('.public-motion-toggle').count(), 0)
+  assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), full ? 'full' : 'reduced')
 }
 const checkCursorAsset = async locator => {
   const dimensions = await locator.evaluate(async el => {
@@ -51,7 +42,7 @@ const checkCursorAsset = async locator => {
   })
   assert.deepEqual(dimensions, [28, 34], 'The self-hosted cursor must decode as an actual SVG image')
 }
-const contextFor = async ({ theme = 'dark', reducedMotion = 'reduce', motion = null, touch = false, failMotion = false, stallMotion = false, delayMotion = false } = {}) => {
+const contextFor = async ({ theme = 'dark', reducedMotion = 'no-preference', motion = null, touch = false, failMotion = false, stallMotion = false, delayMotion = false } = {}) => {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion, hasTouch: touch, isMobile: touch })
   await context.addInitScript(({ theme, motion }) => {
     localStorage.setItem('sti-vio-log-theme', theme)
@@ -67,12 +58,12 @@ const contextFor = async ({ theme = 'dark', reducedMotion = 'reduce', motion = n
   page.on('pageerror', error => errors.push(error.message))
   await page.goto(origin)
   await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
-  if (delayMotion || motion === 'reduced') await checkHero(page)
-  if (!failMotion && motion !== 'reduced') await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform, undefined, { polling: 100 })
+  if (delayMotion || reducedMotion === 'reduce') await checkHero(page)
+  if (!failMotion && reducedMotion !== 'reduce') await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform, undefined, { polling: 100 })
   if (stallMotion) assert.ok(await page.locator('[data-hero-word]').evaluateAll(elements => elements.some(el => getComputedStyle(el).opacity !== '1')), 'The fallback fixture must actually stall the entrance')
   await pause(2200)
   await checkHero(page)
-  await checkMotionButtons(page, motion !== 'reduced')
+  await checkMotionState(page, reducedMotion !== 'reduce')
   return { context, page }
 }
 try {
@@ -112,7 +103,7 @@ try {
     const before = await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform)
     await pause(1200)
     const after = await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform)
-    assert.notEqual(before, after, 'Ribbon must visibly animate even when the browser requests reduced motion')
+    assert.notEqual(before, after, 'Ribbon must animate automatically when the device allows it')
     const visual = await page.locator('.landing-hero-visual').boundingBox()
     await page.mouse.move(visual.x + visual.width * .8, visual.y + visual.height * .4)
     await pause(400)
@@ -165,9 +156,10 @@ try {
     assert.equal(await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform), hidden)
     await page.evaluate(() => { delete document.hidden; document.dispatchEvent(new Event('visibilitychange')) })
     await page.screenshot({ path: fileURLToPath(new URL(`${theme}-full-motion.png`, artifacts)) })
-    await page.locator('.landing-header .landing-motion-toggle').click()
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.waitForFunction(() => document.querySelector('.landing-page')?.dataset.motion === 'reduced')
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'reduced')
-    await checkMotionButtons(page, false)
+    await checkMotionState(page, false)
     assert.equal(await page.locator('.landing-page').getAttribute('data-cursor'), null)
     assert.doesNotMatch(await page.locator('.landing-page').evaluate(el => getComputedStyle(el).cursor), /landing-cursor/)
     assert.equal(await page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform), 'none')
@@ -179,7 +171,8 @@ try {
       await page.screenshot({ path: fileURLToPath(new URL(`${theme}-${width}.png`, artifacts)) })
     }
     await page.setViewportSize({ width: 1366, height: 900 })
-    await page.locator('.landing-header .landing-motion-toggle').click()
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.waitForFunction(() => document.querySelector('.landing-page')?.dataset.motion === 'full')
     await page.mouse.move(20, 20)
     await page.keyboard.press('Tab')
     assert.equal(await page.locator('.landing-page').getAttribute('data-cursor'), null)
@@ -189,7 +182,7 @@ try {
     await page.getByRole('link', { name: 'Back to Home', exact: true }).click()
     await page.getByRole('heading', { name: 'Know your next step.', exact: true }).waitFor()
     assert.equal(await page.locator('.landing-page').getAttribute('data-motion'), 'full')
-    await checkMotionButtons(page, true)
+    await checkMotionState(page, true)
     await page.waitForFunction(() => document.querySelector('[data-orbit]').style.transform)
     await pause(1600)
     await checkHero(page)
@@ -197,10 +190,13 @@ try {
     assert.equal(await page.evaluate(() => localStorage.getItem('sti-vio-log-theme')), theme)
     await context.close()
   }
+  const reduced = await contextFor({ reducedMotion: 'reduce', motion: 'full' })
+  await checkMotionState(reduced.page, false)
+  await reduced.context.close()
   const touch = await contextFor({ touch: true })
   assert.equal(await touch.page.locator('.landing-page').getAttribute('data-cursor'), null)
   await touch.context.close()
-  const normal = await contextFor({ reducedMotion: 'no-preference', motion: 'invalid' })
+  const normal = await contextFor({ reducedMotion: 'no-preference', motion: 'reduced' })
   assert.equal(await normal.page.locator('.landing-page').getAttribute('data-motion'), 'full')
   await pause(1000)
   const normalBefore = await normal.page.locator('[data-orbit]').evaluate(el => getComputedStyle(el).transform)
@@ -213,19 +209,23 @@ try {
   await normal.page.emulateMedia({ forcedColors: 'none' })
   await pause(1600)
   await checkHero(normal.page)
-  const toggle = normal.page.locator('.landing-header .landing-motion-toggle')
-  await toggle.evaluate(el => { el.click(); el.click(); el.click(); el.click() })
+  for (const reducedMotion of ['reduce', 'no-preference', 'reduce', 'no-preference']) {
+    await normal.page.emulateMedia({ reducedMotion })
+    await normal.page.waitForFunction(mode => document.querySelector('.landing-page')?.dataset.motion === mode, reducedMotion === 'reduce' ? 'reduced' : 'full')
+  }
   await pause(500)
   await checkHero(normal.page)
-  await checkMotionButtons(normal.page, true)
-  await normal.page.locator('.landing-footer .landing-motion-toggle').click()
-  await checkMotionButtons(normal.page, false)
-  assert.equal(await normal.page.evaluate(() => localStorage.getItem('sti-vio-log-landing-motion')), 'reduced')
+  await checkMotionState(normal.page, true)
+  await normal.page.emulateMedia({ reducedMotion: 'reduce' })
+  await normal.page.waitForFunction(() => document.querySelector('.landing-page')?.dataset.motion === 'reduced')
+  await checkMotionState(normal.page, false)
+  assert.equal(await normal.page.evaluate(() => localStorage.getItem('sti-vio-log-landing-motion')), 'reduced', 'Legacy storage is ignored and never rewritten')
   await normal.context.close()
   for (const option of ['stallMotion', 'delayMotion']) {
     const fixture = await contextFor({ [option]: true })
     await checkHero(fixture.page)
-    await fixture.page.locator('.landing-header .landing-motion-toggle').click()
+    await fixture.page.emulateMedia({ reducedMotion: 'reduce' })
+    await fixture.page.waitForFunction(() => document.querySelector('.landing-page')?.dataset.motion === 'reduced')
     await checkHero(fixture.page)
     await fixture.context.close()
   }
@@ -238,5 +238,5 @@ try {
   await failed.page.getByText('Uniform requirement', { exact: true }).waitFor()
   await failed.context.close()
   assert.deepEqual(errors, [])
-  console.log('PASS: complete hero visibility and stalled/delayed/failed animation fallbacks; native arrow cursors; icon-only saved motion switches; contrast, motion, accessibility fallbacks, route cleanup and six widths.')
+  console.log('PASS: complete hero visibility and stalled/delayed/failed animation fallbacks; native arrow cursors; automatic device motion preferences without manual controls; contrast, motion, accessibility fallbacks, route cleanup and six widths.')
 } finally { await browser.close(); await server?.close() }

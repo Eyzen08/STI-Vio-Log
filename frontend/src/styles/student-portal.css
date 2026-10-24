@@ -39,6 +39,7 @@
 .student-page .student-session-clock :is(.timer-limit-notice,.service-timer-warning) { display:block; padding:10px 12px; border-radius:6px; background:var(--status-warning-surface); color:var(--status-warning-text) !important; font-size:var(--text-sm); line-height:1.5; }
 .student-recent-record { display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:start; gap:var(--page-gap); padding:16px 0; border-top:1px solid var(--border-subtle); }
 .student-recent-record > .status-badge { justify-self:start; }
+.student-recent-record > span:not(.status-badge) { color:var(--text-secondary); }
 .student-recent-record > div,.student-assignment-list header > div,.student-dtr-record header > div { display:grid; gap:4px; }
 .student-recent-record > div > span,.student-assignment-list header > div > span,.student-dtr-record header > div > span { color:var(--text-secondary); font-size:var(--text-sm); }
 .student-assignment-list > article { padding:20px 0; border-top:1px solid var(--border-subtle); }

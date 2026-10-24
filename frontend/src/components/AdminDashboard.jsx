@@ -37,10 +37,10 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
   const progress = required ? Math.min(100, Math.round(completed / required * 100)) : 0
   const firstLabel = role === 'DISCIPLINE_OFFICE' ? 'Discipline Officer' : 'Admin'
   const offenseBreakdown = [
-    { level: 'MINOR_1', label: 'First Offense', color: '#087cff' },
-    { level: 'MINOR_2', label: 'Repeat Minor', color: '#ffbd13' },
-    { level: 'MAJOR_LEVEL', label: 'Major Level', color: '#ff7028' },
-    { level: 'GRAVE', label: 'Grave', color: '#f32e3e' }
+    { level: 'MINOR_1', label: 'First Offense', color: 'var(--link-color)' },
+    { level: 'MINOR_2', label: 'Repeat Minor', color: 'var(--severity-minor)' },
+    { level: 'MAJOR_LEVEL', label: 'Major Level', color: 'var(--severity-major)' },
+    { level: 'GRAVE', label: 'Grave', color: 'var(--status-danger-text)' }
   ].map((item) => ({ ...item, count: violations.filter((violation) => violation.offense_indicator_level === item.level).length }))
   const classifiedTotal = offenseBreakdown.reduce((sum, item) => sum + item.count, 0)
   const primaryMetrics = [

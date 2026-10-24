@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
-import { LANDING_MOTION_KEY, normalizeLandingMotion } from './landingPreferences.js'
 
 export default function usePublicMotion() {
-  const [motionMode, setMotionMode] = useState(() => {
-    try { return normalizeLandingMotion(localStorage.getItem(LANDING_MOTION_KEY)) } catch { return 'full' }
-  })
+  const [motionMode, setMotionMode] = useState(() => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'reduced' : 'full')
   useEffect(() => {
-    // Retain the original key so existing landing preferences carry into login.
-    try { localStorage.setItem(LANDING_MOTION_KEY, motionMode) } catch { /* Motion remains usable without storage. */ }
-  }, [motionMode])
-  return [motionMode, () => setMotionMode(value => value === 'full' ? 'reduced' : 'full')]
+    const preference = window.matchMedia?.('(prefers-reduced-motion: reduce)')
+    if (!preference) return undefined
+    const update = () => setMotionMode(preference.matches ? 'reduced' : 'full')
+    update()
+    preference.addEventListener('change', update)
+    return () => preference.removeEventListener('change', update)
+  }, [])
+  return motionMode
 }

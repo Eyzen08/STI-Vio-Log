@@ -36,7 +36,7 @@
 }
 
 :root[data-theme='dark'] .app-modal :is(h1,h2,h3,h4,strong,label) { color:var(--text-primary) !important; }
-:root[data-theme='dark'] .app-modal :is(p,small,.modal-help) { color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-modal :is(p,small,.modal-help):not(.recipient-search-error,.error-message,.success-message,.field-error) { color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .app-modal :is(input,select,textarea) { border-color:var(--border-strong) !important; background:var(--control-background) !important; color:var(--text-primary) !important; }
 :root[data-theme='dark'] .app-modal-body form > button:not([type='button']):not(.danger-button):last-child { border-color:var(--action-primary-surface) !important; background:var(--action-primary-surface) !important; color:var(--text-on-accent) !important; }
 
@@ -1003,6 +1003,8 @@
   align-items: center;
   gap: 16px;
   margin: 0;
+  padding: 8px 0;
+  min-height: 0;
   box-shadow: var(--shadow-sm);
 }
 .main-panel--messages .messages-page-heading.portal-page-header > div { width:auto; flex:1 1 auto; }
@@ -1010,6 +1012,7 @@
 .main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0 0 4px; font-size:var(--text-page-title); line-height:1.2; }
 .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { margin:0; font-size:var(--text-base); line-height:1.5; }
 .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width:auto; min-width:0; min-height:var(--page-action-height); flex:0 0 auto; font-size:var(--text-action); white-space:nowrap; }
+.main-panel--messages .messages-inbox { gap: 8px; }
 @media (max-width:900px) {
   .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { display:none; }
   .main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0; font-size:var(--text-page-title); }
@@ -1356,16 +1359,17 @@
 :root[data-theme='dark'] .app-shell .audit-filter-card button:not([type='button']):hover:not(:disabled),
 :root[data-theme='dark'] .app-modal :is(.submit-btn,.recipient-search-row > button):hover:not(:disabled) { background: var(--action-primary-hover) !important; }
 
-:root[data-theme='dark'] .app-shell:not(.auth-shell) .password-visibility:not(:disabled) {
+:root .app-shell:not(.auth-shell) .password-visibility:not(:disabled) {
   border-color: var(--border-strong) !important;
   background: var(--control-background) !important;
   color: var(--link-color) !important;
 }
-:root[data-theme='dark'] .app-shell:not(.auth-shell) .password-visibility:hover:not(:disabled) { background: var(--surface-interactive-hover) !important; }
+:root .app-shell:not(.auth-shell) .password-visibility:hover:not(:disabled) { background: var(--surface-interactive-hover) !important; }
 :root[data-theme='dark'] .app-shell :is(.portal-avatar,.avatar-choice-check) {
   background: var(--action-primary-surface) !important;
   color: var(--text-on-accent) !important;
 }
+:root[data-theme='dark'] .app-modal .recipient-preview-avatar:not(:has(img)) { background:var(--action-primary-surface); color:var(--text-on-accent); }
 :root[data-theme='dark'] .app-shell .avatar-choice-check { border-color: var(--surface-raised) !important; }
 
 :root[data-theme='dark'] .department-summary-grid b { color: var(--text-primary) !important; }
@@ -1663,7 +1667,7 @@
 .analytics-bar-track { display: block; flex: 1; height: .55rem; overflow: hidden; border-radius: 1rem; background: color-mix(in srgb,var(--color-primary) 11%,var(--color-surface)); }
 .analytics-bar-track i { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
 .analytics-bars--service .analytics-bar-track i { background: var(--color-primary); }
-.analytics-bars--service > div:nth-child(2) .analytics-bar-track i { background: var(--color-warning,#f2b927); }
+.analytics-bars--service > div:nth-child(2) .analytics-bar-track i { background: var(--status-warning-text); }
 .analytics-card:has(> .analytics-bars) > .analytics-bars { max-height: 15rem; overflow-y: auto; padding-right: .2rem; }
 .analytics-service-summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: .5rem; margin-bottom: .7rem; }
 .analytics-service-summary strong { color: var(--color-text); font-size: var(--text-metric); line-height: 1; }
@@ -1707,12 +1711,12 @@
 .department-stat--discipline .department-stat-icon { background: var(--status-warning-surface); color: var(--status-warning-text) !important; }
 .department-summary-grid .department-stat > div { display: grid; gap: 2px; }
 .department-summary-grid .department-stat b { color: #0869c9; font-size: var(--text-metric); line-height: 1.1; font-variant-numeric: tabular-nums; }
-.department-summary-grid .department-stat div span { color: #6680a6; font-size: var(--text-sm); }
+.department-summary-grid .department-stat div span { color: var(--text-secondary); font-size: var(--text-sm); }
 .department-directory-surface { padding: 16px; border: 1px solid #e0ebf6; border-radius: 14px; background: var(--color-surface); }
 .department-officer-page .directory-toolbar { margin: 0 0 18px; padding: 0; border: 0; background: transparent; box-shadow: none; }
 .department-officer-page .directory-toolbar :is(input,select) { min-height: var(--filter-height); padding: 10px 16px; border: 1px solid #d4e4f4; border-radius: 9px; background: var(--color-surface); color: #173b70; font-size: var(--text-control); }
 .department-officer-page .directory-toolbar input { background: #f4f8fc; min-height: var(--filter-height); }
-.department-officer-page .directory-toolbar input::placeholder { color: #8299ba; min-height: var(--filter-height); }
+.department-officer-page .directory-toolbar input::placeholder { color: var(--control-placeholder); min-height: var(--filter-height); }
 .department-officer-page .officer-directory { gap: 16px; }
 .department-officer-page .officer-directory > .officer-card { display: flex; flex-direction: column; min-height: 350px; padding: 18px 20px 16px; border: 1px solid #e3edf8; border-radius: 15px; background: var(--color-surface); box-shadow: var(--decorative-shadow, 0 4px 14px rgba(26,69,114,.035)); }
 .department-officer-page .officer-directory > .officer-card::before { display: none; }
@@ -1883,8 +1887,8 @@
 :root[data-theme='dark'] .app-shell .attendance-indicator--out { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .app-shell progress { background:var(--surface-interactive); accent-color:var(--link-color); }
 :root[data-theme='dark'] .app-shell progress::-webkit-progress-bar { background:var(--surface-interactive); }
-:root[data-theme='dark'] .app-shell progress::-webkit-progress-value { background:var(--link-color); }
-:root[data-theme='dark'] .app-shell progress::-moz-progress-bar { background:var(--link-color); }
+:root[data-theme='dark'] .app-shell progress::-webkit-progress-value { background:var(--legend-color,var(--link-color)); }
+:root[data-theme='dark'] .app-shell progress::-moz-progress-bar { background:var(--legend-color,var(--link-color)); }
 
 /* Shared presentation is opt-in for the three record creation drawers. */
 .app-modal.app-modal--drawer.create-record-drawer { width:min(690px,100vw); height:100dvh; max-height:100dvh; border-radius:14px 0 0 14px; font-family:var(--font-sans); }

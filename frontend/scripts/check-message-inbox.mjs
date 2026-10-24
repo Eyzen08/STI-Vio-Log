@@ -4,6 +4,7 @@ import { mkdir } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
+import { auditThemeColors } from './lib/themeAudit.mjs'
 
 const { chromium, expect } = createRequire(import.meta.url)('playwright/test')
 const output = fileURLToPath(new URL('../artifacts/message-inbox/', import.meta.url))
@@ -18,7 +19,7 @@ const html = `<!doctype html><html><head><meta name="viewport" content="width=de
   import '/src/styles/portal-overrides.css'
   import '/src/styles/student-portal.css'
   const root = createRoot(document.getElementById('root'))
-  window.showHandbook = () => root.render(React.createElement(HandbookPage))
+  window.showHandbook = () => { document.querySelector('.main-panel').classList.remove('main-panel--messages'); root.render(React.createElement(HandbookPage)) }
   const role = new URLSearchParams(location.search).get('role') || 'DISCIPLINE_ADMIN'
   if (role === 'STUDENT') document.querySelector('.app-shell').classList.replace('admin-portal', 'student-portal')
   const unread = count => {window.fixtureUnread=count}
@@ -33,6 +34,7 @@ const html = `<!doctype html><html><head><meta name="viewport" content="width=de
 </script></body></html>`
 const server = await createServer({
   root: fileURLToPath(new URL('../', import.meta.url)),
+  cacheDir: `${output}vite-cache`,
   server: { host: '127.0.0.1', port: 0, hmr: false },
   plugins: [{ name: 'message-inbox-fixture', configureServer(vite) {
     vite.middlewares.use(async (request, response, next) => {
@@ -81,6 +83,7 @@ async function fixture(page) {
       items = [...items].sort((a,b) => Number(b.is_pinned)-Number(a.is_pinned) || b.latest_message_at.localeCompare(a.latest_message_at))
       return reply({ conversations:items, pagination:{page:1,pages:1,total:items.length}, unread_total:state.conversations.filter(item => !item.is_deleted).reduce((total,item) => total+item.unread_count,0) })
     }
+    if (url.pathname === '/api/messages/recipients') return reply({ message:'Recipient lookup failed.' }, 503)
     const match = url.pathname.match(/^\/api\/messages\/conversations\/(\d+)(?:\/(read|preferences|status))?$/)
     assert.ok(match, `Unexpected API request: ${method} ${url.pathname}`)
     const conversation = state.conversations.find(item => item.id === Number(match[1]))
@@ -149,7 +152,9 @@ try {
   await action(page,subject,'Pin')
   await expect(page.locator('.conversation-row').first()).toContainText(subject)
   await expect(row(page,subject).getByText('Pinned',{exact:true})).toBeVisible()
+  await expect(row(page,subject).locator('.conversation-pinned svg')).toBeVisible()
   await action(page,subject,'Unpin')
+  await expect(row(page,subject).locator('.conversation-pinned')).toHaveCount(0)
   await expect(page.locator('.conversation-row').first()).toContainText('Clearance follow-up')
   await action(page,subject,'Mark as read')
   await expect(row(page,subject).locator('.conversation-open')).not.toHaveClass(/unread/)
@@ -284,18 +289,24 @@ try {
     await expect(screen.getByText('Please attend your assigned schedule.',{exact:true})).toBeVisible()
     await noOverflow(screen)
     await screen.locator('.chat-header').getByRole('button',{name:`Actions for ${subject}`,exact:true}).click()
+    assert.deepEqual((await screen.evaluate(auditThemeColors)).findings, [], `${theme} ${width}: message colors`)
     await screen.screenshot({path:output+`${theme}-${width}-thread.png`})
     await screen.keyboard.press('Escape')
     await screen.evaluate(()=>window.showHandbook())
     await expect(screen.getByRole('heading',{name:'STI Handbook',exact:true})).toBeVisible()
-    assert.equal(await screen.locator('iframe,object,embed').count(),0)
-    for (const [value,file] of [['complete','sti-tertiary-handbook'],['offenses','sti-offenses'],['measures','sti-disciplinary-measures'],['discipline','sti-student-discipline']]) {
-      await screen.getByRole('combobox',{name:/^Document/}).selectOption(value)
-      await expect(screen.getByRole('link',{name:'View PDF (new tab)',exact:true})).toHaveAttribute('href',`/handbook/${file}-july-2026.pdf`)
+    await expect(screen.locator('iframe')).toHaveCount(1)
+    for (const [label,file] of [['Complete Tertiary Handbook','sti-tertiary-handbook'],['Offenses','sti-offenses'],['Disciplinary Measures','sti-disciplinary-measures'],['Student Discipline','sti-student-discipline']]) {
+      const choice = screen.getByRole('button',{name:new RegExp(`^${label}`)})
+      await choice.focus()
+      await screen.keyboard.press('Enter')
+      await expect(choice).toHaveAttribute('aria-pressed','true')
+      await expect(screen.locator('iframe')).toHaveAttribute('src',`/handbook/${file}-july-2026.pdf`)
+      await expect(screen.locator('iframe')).toHaveAttribute('title',`${label} PDF reader`)
+      await expect(screen.getByRole('link',{name:'Open PDF (new tab)',exact:true})).toHaveAttribute('href',`/handbook/${file}-july-2026.pdf`)
       await expect(screen.getByRole('link',{name:'Download PDF',exact:true})).toHaveAttribute('href',`/handbook/${file}-july-2026.pdf`)
     }
     const popupPromise = screen.waitForEvent('popup')
-    await screen.getByRole('link',{name:'View PDF (new tab)',exact:true}).click()
+    await screen.getByRole('link',{name:'Open PDF (new tab)',exact:true}).click()
     const popup = await popupPromise
     assert.ok(popup.url().endsWith('/handbook/sti-student-discipline-july-2026.pdf'))
     await popup.close()
@@ -306,8 +317,17 @@ try {
     await screen.screenshot({path:output+`${theme}-${width}-handbook.png`,fullPage:true})
     await screen.close()
   }
+  const errorPage = await browser.newPage({viewport:{width:1280,height:900},bypassCSP:true})
+  await fixture(errorPage)
+  await errorPage.goto(server.resolvedUrls.local[0]+'__message-inbox.html')
+  await errorPage.evaluate(() => { document.documentElement.dataset.theme='dark' })
+  await errorPage.getByRole('button',{name:'New Message',exact:true}).click()
+  await errorPage.getByRole('combobox').fill('Juan')
+  await expect(errorPage.getByText('Recipient lookup failed.',{exact:true})).toBeVisible()
+  assert.equal(await errorPage.locator('.recipient-search-error').evaluate(element => getComputedStyle(element).color), 'rgb(255, 155, 167)', 'Recipient lookup errors retain their danger role inside a portal modal')
+  await errorPage.close()
   assert.deepEqual(errors,[])
-  console.log('Verified inbox menu keyboard/focus/dismissal, row isolation, pin ordering, read/unread/global badge, filters, archive/unarchive, delete cancel/success, mutation errors, thread menu; desktop/mobile light/dark no overflow. Handbook selector, PDF popup/download, and no embeds verified. Screenshots: '+output)
+  console.log('Verified inbox menu keyboard/focus/dismissal, row isolation, pin icons/ordering, read/unread/global badge, filters, archive/unarchive, delete cancel/success, mutation errors, thread menu; desktop/mobile light/dark no overflow. Handbook choices, reader, PDF popup/download verified. Screenshots: '+output)
 } catch (error) {
   for (const [index,page] of (browser?.contexts().flatMap(context=>context.pages()) || []).entries()) {
     await page.screenshot({path:output+`failure-${index}.png`,fullPage:true}).catch(()=>{})

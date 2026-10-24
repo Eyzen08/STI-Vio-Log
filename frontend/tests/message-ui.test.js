@@ -40,6 +40,13 @@ test('message composer uses the shared professional send icon', async () => {
   assert.match(icons, /send:\s*<><path/)
 })
 
+test('pinned conversations show a shared pin icon and an accessible label', async () => {
+  const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
+  const icons = await readFile(new URL('../src/components/PortalIcon.jsx', import.meta.url), 'utf8')
+  assert.match(component, /conversation.is_pinned&&[\s\S]*?PortalIcon name="pin"[\s\S]*?Pinned/)
+  assert.match(icons, /pin:\s*</)
+})
+
 test('message workspace keeps the composer visible and scrolls both content columns', async () => {
   const css = readPortalStyles()
   assert.match(css, /\.main-panel--messages\s*\{[^}]*height:\s*100dvh;[^}]*display:\s*flex;[^}]*overflow:\s*hidden;/s)

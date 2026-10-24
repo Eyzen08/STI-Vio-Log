@@ -167,7 +167,6 @@
 .landing-footer > div { display: grid; gap: 7px; }.landing-footer strong { font-size: 14px; font-weight: 600; }.landing-footer span { font-size: 10px; color: var(--landing-muted); }
 .landing-footer nav { display: flex; gap: 26px; }.landing-footer nav a { display: inline-flex; align-items: center; min-height: 44px; font-size: 11px; color: #b8c8d8; }
 .landing-footer a:hover { color: var(--landing-accent); }
-.landing-motion-toggle { display: inline-grid; place-items: center; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; flex-shrink: 0; border: 1px solid #526980; border-radius: 10px; background: #10263b; color: #c9d7e4; }
 .landing-page[data-motion='reduced'] *, .landing-page[data-motion='reduced'] *::before { animation: none !important; transition: none !important; }
 
 @media (max-width: 1100px) {
@@ -209,8 +208,6 @@
 .app-shell.landing-shell .landing-page .landing-button-primary svg { color: inherit; }
 .app-shell.landing-shell .landing-page .landing-button-secondary { color: #f1f6fb; background: #071421; }
 .app-shell.landing-shell .landing-page .landing-button-secondary:hover { background: #10263b; }
-.app-shell.landing-shell .landing-page :is(.landing-motion-toggle, .landing-menu-toggle, .landing-nav-action) { color: #f1f6fb; background: #10263b; }
-.app-shell.landing-shell .landing-page :is(.landing-motion-toggle, .landing-menu-toggle, .landing-nav-action):hover { color: #fff; background: #1c3a54; transform: none; }
 .app-shell.landing-shell .landing-page .landing-preview-tabs button { background: #0a1b2b; color: #f1f6fb; font-size: 12px; transform: none; box-shadow: none; }
 .app-shell.landing-shell .landing-page .landing-preview-tabs button:is(:hover, :focus-visible) { background: #1c3a54; color: #fff; }
 .app-shell.landing-shell .landing-page .landing-preview-tabs button[aria-selected='true'] { background: #294863; color: #fff; }
@@ -220,7 +217,6 @@
 .landing-preview-tabs button:focus-visible { outline-offset: -3px !important; }
 .landing-header-controls { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .landing-navigation { margin-left: auto; gap: 24px; }
-.app-shell.landing-shell .landing-page .landing-motion-toggle[aria-pressed='true'] { color: #f4c542; border-color: #87744a; background: #f4c5420d; }
 .landing-page :is(.landing-demo-pill, .landing-mini-label, .landing-status, .landing-progress-summary > span, .landing-preview-caption, .landing-attendance-row strong, .landing-attendance-row div span, .landing-preview-bottom, .landing-preview-disclaimer, .landing-record-example > span:last-child, .landing-record-details, .landing-clearance-list li, .landing-clearance-list small, .landing-visual-caption, .landing-hero-assurance, .landing-hero-footer, .landing-footer span, .landing-footer nav a) { font-size: 12px; }
 .landing-page :is(.landing-preview-caption, .landing-mini-label, .landing-preview-disclaimer, .landing-visual-caption) { color: #bdd0e0; }
 .landing-feature::before { content: ''; position: absolute; inset: 0; background: radial-gradient(240px circle at var(--highlight-x, 50%) var(--highlight-y, 50%), #9dc7f51a, transparent 70%); opacity: 0; pointer-events: none; transition: opacity 200ms; }

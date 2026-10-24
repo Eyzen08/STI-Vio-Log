@@ -12,6 +12,7 @@
 .legal-acknowledgment-actions button { min-height: 44px; max-width: 100%; white-space: normal; }
 .public-policy-card { border-radius: 8px; box-shadow: none; }
 .public-policy-header { padding-right: 64px; }
+.main-panel .public-policy-brand:hover:not(:disabled) { background: var(--surface-interactive-hover); color: var(--text-primary); }
 .public-policy-intro { background: transparent; }
 .public-policy-intro h1, .public-policy-intro .eyebrow { letter-spacing: 0; }
 .public-policy-footer nav { flex-wrap: wrap; }

@@ -239,10 +239,8 @@
 .auth-shell .login-ribbon-frame { position: absolute; top: 8%; right: -24%; width: 105%; z-index: 1; opacity: .44; pointer-events: none; mask-image: linear-gradient(180deg, transparent, #000 12%, #000 68%, transparent); }
 .auth-shell .login-ribbon { display: block; width: 100%; height: auto; }
 .auth-shell .login-utility-controls { position: absolute; top: 0; right: 0; z-index: 5; display: flex; align-items: center; gap: 8px; }
-.auth-shell .login-utility-controls :is(.auth-theme-toggle,.login-motion-toggle) { position: static; display: grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 1px solid var(--auth-border); border-radius: 12px; background: var(--auth-surface); color: var(--auth-ink); box-shadow: none; transform: none; }
+.auth-shell .login-utility-controls .auth-theme-toggle { position: static; display: grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 1px solid var(--auth-border); border-radius: 12px; background: var(--auth-surface); color: var(--auth-ink); box-shadow: none; transform: none; }
 .auth-shell .login-utility-controls button:hover { background: var(--auth-canvas); border-color: var(--auth-link); }
-.auth-shell .login-utility-controls .login-motion-toggle[aria-pressed='true'] { color: #705300; background: #fff4c5; border-color: #a4883d; }
-:root[data-theme='dark'] .auth-shell .login-utility-controls .login-motion-toggle[aria-pressed='true'] { color: #f4c542; background: #1e2a30; border-color: #87744a; }
 .auth-shell .login-utility-controls button:focus-visible { outline: 2px solid var(--auth-link); outline-offset: 3px; }
 .auth-shell .login-card:focus-within { border-color: var(--auth-link); }
 .auth-shell .login-page[data-motion='full'] :is(.login-submit,.login-home-link,.login-utility-controls button) { transition-property: background-color,border-color,color,box-shadow; transition-duration: 180ms !important; }

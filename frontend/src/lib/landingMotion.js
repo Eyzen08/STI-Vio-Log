@@ -16,7 +16,6 @@ export function animateLanding(root) {
     removals.push(() => element.removeEventListener(name, handler))
   }
   try {
-    // Full is an explicit public-page choice, independent of the OS preference.
     media.add({ all: '(min-width: 0px)', pointer: '(hover: hover) and (pointer: fine)', forced: '(forced-colors: active)' }, context => {
       const select = gsap.utils.selector(root)
       if (!root.dataset.introPlayed) {

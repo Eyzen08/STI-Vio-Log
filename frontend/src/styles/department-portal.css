@@ -10,6 +10,7 @@
 .department-portal .portal-page-header :is(p,.eyebrow) { color:var(--text-secondary); }
 .department-portal .portal-page-header h2 { font-size:var(--text-page-title); }
 .department-portal .portal-page-header > div { min-width:0; }
+.department-portal .department-welcome > button:hover:not(:disabled) { background:var(--action-primary-hover); color:var(--text-on-accent); }
 .department-portal .table-header { display:flex; flex-direction:row; justify-content:space-between; text-align:left; margin:0 0 16px; padding:0; background:transparent; border:0; gap:12px; align-items:center; }
 .department-portal .table-header h3 { margin:0; font-size:var(--text-lg); color:var(--text-primary); }
 .department-portal .table-header p { margin:4px 0 0; color:var(--text-secondary); }

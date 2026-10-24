@@ -132,7 +132,7 @@
 .service-progress-meta { align-items: center; color: #52657d; display: flex; font-size: var(--text-base); justify-content: space-between; margin-top: 18px; }
 .progress-track { background: #e5ebf1; border-radius: 999px; height: 9px; margin-top: 8px; overflow: hidden; }
 .progress-track > span { background: linear-gradient(90deg, #0877a8, #19a974); border-radius: inherit; display: block; height: 100%; }
-.service-assignment-list article > p { color: #697a90; font-size: var(--text-base); margin: 9px 0 0; }
+.service-assignment-list article > p { color: var(--text-secondary); font-size: var(--text-base); margin: 9px 0 0; }
 .student-roster-tools { background: white; border: 1px solid #dfe7ef; border-radius: 16px; display: grid; gap: 16px; grid-template-columns: minmax(220px, 2fr) minmax(180px, 1fr); padding: 18px; }
 .student-roster-tools label { color: #3e5068; display: grid; font-size: var(--text-base); font-weight: 700; gap: 7px; }
 .student-roster-tools input, .student-roster-tools select { background: white; border: 1px solid #cbd7e3; border-radius: 9px; font: inherit; min-height: var(--control-height); padding: 0 11px; }
@@ -436,7 +436,7 @@
 .account-summary-card h2 { margin: 4px 0 8px; }
 .account-summary-card p { color: #687990; }
 .account-summary-card dl { display: grid; gap: 16px; margin: 0; }
-.account-summary-card dt { color: #687990; font-size: var(--text-xs); text-transform: none; }
+.account-summary-card dt { color: var(--text-secondary); font-size: var(--text-xs); text-transform: none; }
 .account-summary-card dd { margin: 5px 0 0; }
 .account-password-form { max-width: var(--form-max-width); }
 @media (max-width: 800px) { .account-settings-page { grid-template-columns: 1fr; } }
@@ -1113,7 +1113,7 @@ th {
 }
 
 .profile-field .profile-value-missing {
-  color: #8a98aa;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
@@ -3983,13 +3983,13 @@ a {
 .conversation-primary { display: flex; justify-content: space-between; gap: 8px; }
 .conversation-primary strong,.conversation-preview,.conversation-subject-detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .conversation-primary time { flex: 0 0 auto; color: #6c7990; font-size: var(--text-xs); }
-.conversation-subject-detail,.conversation-preview { color: #68778d; font-size: var(--text-xs); }
+.conversation-subject-detail,.conversation-preview { color: var(--text-secondary); font-size: var(--text-xs); }
 .conversation-status { position: absolute; right: 13px; bottom: 12px; padding: 3px 7px; border-radius: 999px; font-size: var(--text-xs); font-weight: 700; }
 .conversation-status.open,.chat-status.open { background: #e4f7e8; color: #16732a; }
 .conversation-status.closed,.chat-status.closed { background: #eef1f5; color: #5e6877; }
 .conversation-unread { position: absolute; top: 36px; right: 14px; display: grid; min-width: 20px; height: 20px; place-items: center; border-radius: 999px; background: #0870cf; color: white; font-size: var(--text-xs); }
 .conversation-load-more,.message-load-earlier { display: block; margin: 12px auto; border: 0; background: transparent; color: #0863bb; font-weight: 700; cursor: pointer; }
-.message-state { display: grid; gap: 5px; padding: 30px 20px; color: #77859a; text-align: center; }
+.message-state { display: grid; gap: 5px; padding: 30px 20px; color: var(--text-secondary); text-align: center; }
 .message-state--center { place-content: center; min-height: 100%; }
 .chat-pane { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0,1fr) auto auto; }
 .chat-header { display: flex; align-items: center; gap: 13px; padding: 15px 20px; border-bottom: 1px solid var(--color-border); }
@@ -4158,7 +4158,7 @@ a {
 .signature-picker label { display: grid; grid-template-columns: auto 80px 1fr; align-items: center; gap: 10px; padding: 8px; border-radius: 8px; background: #f7faff; }
 .signature-picker img { width: 80px; height: 38px; object-fit: contain; }
 .signature-picker span,.signature-picker small { display: block; }
-.signature-picker small { color: #6b7890; }
+.signature-picker small { color: var(--text-secondary); }
 .signature-form { display: grid; grid-template-columns: 1fr 1fr 1.2fr auto auto; gap: 12px; align-items: end; }
 .signature-form label { display: grid; gap: 6px; font-weight: 700; }
 .signature-form input { min-height: var(--control-height); padding: 8px 11px; border: 1px solid var(--color-border); border-radius: 9px; font: inherit; box-sizing: border-box; }
@@ -4182,7 +4182,7 @@ a {
 .modal-actions { position: sticky; bottom: 0; display: flex; justify-content: flex-end; gap: 9px; padding-top: 12px; border-top: 1px solid var(--portal-line,#d7e3f1); background: white; }
 .field-error { color: #b42334; font-weight: 600; }
 .signature-directory img { width: 130px; height: 55px; object-fit: contain; }
-.signature-directory span { color: #6b7890; font-size: var(--text-sm); }
+.signature-directory span { color: var(--text-secondary); font-size: var(--text-sm); }
 @media (max-width: 1050px) { .certificate-grid { grid-template-columns: 1fr; } .signature-form { grid-template-columns: 1fr 1fr; } .signature-directory { grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 600px) { .certificate-hero { align-items: flex-start; flex-direction: column; gap: 10px; } .signature-form,.signature-directory { grid-template-columns: 1fr; } .certificate-preview { padding: 20px 14px; } .signature-picker label { grid-template-columns: auto 60px 1fr; } }
 

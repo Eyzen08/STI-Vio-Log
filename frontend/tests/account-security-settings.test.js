@@ -38,3 +38,14 @@ test('staff settings retain current-password changes', () => {
     assert.match(html, /Changing your password signs out other sessions\./)
   }
 })
+
+test('settings use collapsed exclusive disclosures with policies after the last form', () => {
+  for (const role of ['STUDENT', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD']) {
+    const html = render(role)
+    assert.match(html, /<details[^>]*name="account-settings"/)
+    assert.doesNotMatch(html, /<details[^>]*\bopen(?:=|\s|>)/)
+    assert.match(html, /<summary>[\s\S]*?Change Avatar/)
+    assert.ok(html.indexOf('Privacy Notice') > html.lastIndexOf('</details>'))
+    if (role !== 'STUDENT') assert.match(html, /id="account-security"[^>]*>[\s\S]*?<details/)
+  }
+})

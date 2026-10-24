@@ -1,14 +1,35 @@
 .handbook-page { display: grid; gap: var(--page-gap); min-width: 0; }
 .handbook-page .portal-page-header { margin-bottom: 0; }
-.handbook-toolbar { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
-.handbook-toolbar label { display: grid; gap: 8px; min-width: 0; flex: 1 1 260px; max-width: 400px; color: var(--text-primary); font-weight: 700; }
-.handbook-toolbar select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--surface-interactive); color: var(--text-primary); font: inherit; }
+.handbook-library { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; gap: 20px; }
+.handbook-documents, .handbook-reading-area { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--card-radius); background: var(--surface-raised); overflow: hidden; }
+.handbook-documents { padding: 16px; }
+.handbook-documents h3 { margin: 0 0 6px; font-size: var(--text-section-title); }
+.handbook-documents > p { margin: 0 0 20px; color: var(--text-secondary); font-size: var(--text-sm); }
+.handbook-page .handbook-documents button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; margin: 6px 0 0; padding: 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-primary); box-shadow: none; text-align: left; font: inherit; cursor: pointer; }
+.handbook-documents button > svg { flex-shrink: 0; color: var(--link-color); }
+.handbook-documents button > span { flex: 1; font-weight: 600; line-height: 1.5; }
+.handbook-documents small { display: block; margin-top: 4px; color: var(--text-secondary); font-size: var(--text-xs); font-weight: 400; }
+.handbook-page .handbook-documents button:is(:hover, [aria-pressed='true']) { background: var(--surface-selected); border-color: var(--border-strong); }
+.handbook-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; border-bottom: 1px solid var(--border-subtle); }
+.handbook-toolbar h3 { margin: 6px 0 0; font-size: var(--text-section-title); line-height: 1.5; }
+.handbook-toolbar .eyebrow { color: var(--text-secondary); font-size: var(--text-xs); letter-spacing: .04em; }
+.handbook-toolbar .action-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .handbook-toolbar a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; box-sizing: border-box; text-decoration: none; }
+.handbook-reading-area iframe { display: block; width: 100%; height: max(480px, calc(100dvh - 320px)); border: 0; background: var(--surface-nested); }
+.handbook-reader-help { margin: 0; padding: 12px 20px; border-top: 1px solid var(--border-subtle); color: var(--text-secondary); font-size: var(--text-sm); line-height: 1.6; }
 .handbook-source { margin: 0; color: var(--text-secondary); line-height: 1.6; }
 .handbook-source a { color: var(--link-color); }
-.handbook-toolbar :is(a, select):focus-visible, .handbook-source a:focus-visible { outline: 3px solid var(--link-color); outline-offset: 3px; }
+.handbook-page :is(a, button, iframe):focus-visible { outline: 3px solid var(--link-color); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .handbook-library { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .handbook-documents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .handbook-documents > :is(h3, p) { grid-column: 1 / -1; }
+  .handbook-documents > p { margin-bottom: 4px; }
+  .handbook-page .handbook-documents button { margin: 0; padding: 10px; }
+}
 @media (max-width: 600px) {
-  .handbook-toolbar label { max-width: none; }
+  .handbook-toolbar { padding: 16px; }
   .handbook-toolbar .action-row { width: 100%; }
   .handbook-toolbar a { flex: 1 1 auto; }
+  .handbook-documents button > svg:last-child { display: none; }
 }

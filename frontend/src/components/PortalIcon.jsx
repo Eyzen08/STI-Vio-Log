@@ -1,4 +1,5 @@
 const paths = {
+  pin: <><path d="m16 3 5 5-4 1-4 4v4l-2 2-6-6 2-2h4l4-4 1-4ZM8 16l-5 5"/></>,
   'arrow-right': <path d="M4 12h16M14 6l6 6-6 6"/>,
   'arrow-down': <path d="M12 4v16M6 14l6 6 6-6"/>,
   close: <path d="m6 6 12 12M18 6 6 18"/>,

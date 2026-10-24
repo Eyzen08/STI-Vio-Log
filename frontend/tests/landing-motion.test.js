@@ -1,11 +1,14 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { LANDING_MOTION_KEY, normalizeLandingMotion } from '../src/lib/landingPreferences.js'
+import { readFile } from 'node:fs/promises'
 
-test('landing motion defaults to Full and accepts only an explicit Reduced choice', () => {
-  assert.equal(LANDING_MOTION_KEY, 'sti-vio-log-landing-motion')
-  for (const value of [null, undefined, '', 'full', 'invalid', 'paused', {}, 0]) {
-    assert.equal(normalizeLandingMotion(value), 'full')
+test('public motion follows the device preference without manual or stored overrides', async () => {
+  const hook = await readFile(new URL('../src/lib/usePublicMotion.js', import.meta.url), 'utf8')
+  assert.match(hook, /prefers-reduced-motion: reduce/)
+  assert.doesNotMatch(hook, /localStorage|landingPreferences/)
+  for (const page of ['LandingPage', 'LoginPage']) {
+    const source = await readFile(new URL(`../src/components/${page}.jsx`, import.meta.url), 'utf8')
+    assert.doesNotMatch(source, /PublicMotionToggle|toggleMotion|motionControl/)
+    assert.match(source, /data-motion=\{motionMode\}/)
   }
-  assert.equal(normalizeLandingMotion('reduced'), 'reduced')
 })

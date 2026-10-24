@@ -58,7 +58,8 @@ const shot = async (page, name, fullPage = false) => {
 try {
   const guest = await contextFor()
   const { page, requests } = guest
-  await page.locator('.landing-header .landing-motion-toggle').click()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.locator('.landing-page[data-motion="reduced"]').waitFor()
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
   await page.getByRole('tab', { name: 'Records', exact: true }).click()
   await page.getByText('Uniform requirement', { exact: true }).waitFor()
@@ -113,7 +114,8 @@ try {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   assert.equal(await page.locator('.landing-preview-panel:not([hidden])').evaluate(node => getComputedStyle(node).animationName), 'none')
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior), 'auto')
-  await page.locator('.landing-header .landing-motion-toggle').click()
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.locator('.landing-page[data-motion="reduced"]').waitFor()
   await guest.context.close()
   results.push('Guest browsing, preview keyboard interaction, menu, FAQ, policy return, login themes, reduced motion, five widths')
 
@@ -143,7 +145,8 @@ try {
   await unavailable.page.getByRole('button', { name: /try again/i }).waitFor()
   await unavailable.context.close()
   const restoring = await contextFor({ storedUser: user, holdSession: true })
-  await restoring.page.locator('.landing-header .landing-motion-toggle').click()
+  await restoring.page.emulateMedia({ reducedMotion: 'reduce' })
+  await restoring.page.locator('.landing-page[data-motion="reduced"]').waitFor()
   assert.equal(await restoring.page.getByRole('button', { name: 'Checking Session…', exact: true }).first().isDisabled(), true)
   await restoring.page.getByRole('tab', { name: 'Records', exact: true }).click()
   restoring.release()

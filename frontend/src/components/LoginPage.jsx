@@ -7,7 +7,6 @@ import buildingNightImage from '../assets/sti-global-city-building-night.jpg'
 import stiVioLogLogoTransparent from '../assets/sti-logo-web-transparent.png'
 import MfaChallenge from './MfaChallenge.jsx'
 import PortalIcon from './PortalIcon.jsx'
-import PublicMotionToggle from './PublicMotionToggle.jsx'
 import usePublicMotion from '../lib/usePublicMotion.js'
 import ribbon from '../assets/landing-ribbon.webp'
 import '../styles/public-motion.css'
@@ -19,7 +18,7 @@ const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"
 function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue, theme='light', onToggleTheme }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   const rootRef = useRef(null)
-  const [motionMode, toggleMotion] = usePublicMotion()
+  const motionMode = usePublicMotion()
   const [capsLockOn, setCapsLockOn] = useState(false)
   useEffect(() => {
     let disposed = false
@@ -38,7 +37,6 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
 
   return <section className={`login-page public-motion-surface${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title" ref={rootRef} data-motion={motionMode}>
     <div className="login-utility-controls" aria-label="Display preferences">
-      <PublicMotionToggle mode={motionMode} onToggle={toggleMotion} className="login-motion-toggle" />
       <button className="theme-toggle auth-theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} onClick={onToggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
     </div>
     <aside className="login-intro" aria-label="STI Global City Portal">

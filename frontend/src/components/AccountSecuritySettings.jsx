@@ -7,6 +7,8 @@ import { passwordIsStrong } from '../lib/passwordPolicy.js'
 import PasswordField from './PasswordField.jsx'
 import PasswordRequirements from './PasswordRequirements.jsx'
 import PolicyLinks from './PolicyLinks.jsx'
+import PortalIcon from './PortalIcon.jsx'
+import '../styles/account-settings.css'
 
 export default function AccountSecuritySettings({ token, user, onSession, onAvatarChange, onOpenPolicy, searchParams = '' }) {
   const isStudent = user.role === 'STUDENT'
@@ -28,15 +30,16 @@ export default function AccountSecuritySettings({ token, user, onSession, onAvat
   }
   return <div className="account-settings-page">
     <section className="table-card account-summary-card portal-page-header"><div><p className="eyebrow">Account Identity</p><h2>{user.username}</h2><p>Your identifier is managed by the school. Contact the Discipline Office if it is incorrect.</p></div><dl><div><dt>Role</dt><dd>{formatDisplayLabel(user.role)}</dd></div><div><dt>Session Security</dt><dd>{isStudent ? 'To reset your password, sign out and select Forgot Password on the login page. A verification code will be sent to your registered Gmail.' : 'Changing your password signs out other sessions.'}</dd></div></dl></section>
-    <AvatarSettings user={user} onAvatarChange={onAvatarChange} />
-    {!isStudent && <><RecordTargetFocus id={new URLSearchParams(searchParams).get('section') === 'security' ? 'account-security' : null} /><section className="table-card form-card" id="account-security" tabIndex={-1}><div className="table-header"><div><h3>Change Password</h3><span>Use a unique password you do not use elsewhere.</span></div></div><form className="login-form account-password-form" onSubmit={submit}>
+    <div className="settings-list"><details className="settings-disclosure" name="account-settings"><summary><PortalIcon name="user" size={22}/><span><strong>Change Avatar</strong><small>Choose how you appear throughout the portal.</small></span><PortalIcon name="chevron-right"/></summary><AvatarSettings user={user} onAvatarChange={onAvatarChange} /></details>
+    {!isStudent && <><RecordTargetFocus id={new URLSearchParams(searchParams).get('section') === 'security' ? 'account-security' : null} /><section id="account-security" tabIndex={-1}><details className="settings-disclosure" name="account-settings"><summary><PortalIcon name="lock" size={22}/><span><strong>Change Password</strong><small>Update your password and secure your account.</small></span><PortalIcon name="chevron-right"/></summary><section className="table-card form-card"><div className="table-header"><div><h3>Change Password</h3><span>Use a unique password you do not use elsewhere.</span></div></div><form className="login-form account-password-form" onSubmit={submit}>
       <PasswordField id="settings-current-password" label="Current Password" value={form.currentPassword} onChange={(event) => setForm({ ...form, currentPassword: event.target.value })} disabled={busy} autoComplete="current-password"  placeholder="Enter your current password"/>
       <PasswordField id="settings-new-password" label="New Password" value={form.newPassword} onChange={(event) => setForm({ ...form, newPassword: event.target.value })} disabled={busy}  placeholder="Create a unique password"/>
       <PasswordRequirements password={form.newPassword} />
       <PasswordField id="settings-confirm-password" label="Confirm New Password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} disabled={busy}  placeholder="Re-enter your new password"/>
       {error && <p className="error-message" role="alert">{error}</p>}{message && <p className="success-message" role="status">{message}</p>}
       <button disabled={busy}>{busy ? 'Changing Password…' : 'Change Password'}</button>
-    </form></section></>}
-    <PolicyLinks onOpenPolicy={onOpenPolicy}/>
+    </form></section></details></section></>}
+    </div>
+    <footer className="settings-footer"><PolicyLinks onOpenPolicy={onOpenPolicy}/></footer>
   </div>
 }
