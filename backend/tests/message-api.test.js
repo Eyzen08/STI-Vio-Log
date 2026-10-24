@@ -5,13 +5,16 @@ const router = require('../src/routes/messageRoutes');
 const pool = require('../src/config/database');
 const { assertConversation, getConversation, getUnreadCount, listRecipients, updateConversationStatus } = require('../src/controllers/messageController');
 
-test('messaging API is append-only and exposes no edit or delete route', () => {
+test('message content stays append-only while conversation preferences can be changed', () => {
   const routes = router.stack.filter((layer) => layer.route).map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);
   assert.deepEqual(routes, [
     'get /conversations', 'get /unread-count', 'get /recipients', 'post /conversations', 'get /conversations/:id',
-    'post /conversations/:id/messages', 'patch /conversations/:id/read', 'patch /conversations/:id/status'
+    'post /conversations/:id/messages', 'patch /conversations/:id/read', 'patch /conversations/:id/preferences',
+    'delete /conversations/:id', 'patch /conversations/:id/status'
   ]);
-  assert.equal(routes.some((route) => route.startsWith('put ') || route.startsWith('delete ')), false);
+  assert.equal(routes.some((route) => route.startsWith('put ') || route.includes('/messages/')), false);
+  const source = fs.readFileSync(require.resolve('../src/controllers/messageController'), 'utf8');
+  assert.doesNotMatch(source, /DELETE FROM (message_conversations|conversation_messages)/i);
 });
 
 test('unread count uses ownership scope without loading message previews', async () => {
@@ -82,7 +85,7 @@ test('admin conversation lookup uses a contiguous PostgreSQL parameter list', as
     await getConversation({ user: { id: 7, role: 'ADMIN' }, params: { id: '12' }, query: {} }, response);
     assert.equal(response.statusCode, 200);
     assert.match(calls[0].sql, /mc\.id = \$1 AND TRUE/);
-    assert.deepEqual(calls[0].values, [12]);
+    assert.deepEqual(calls[0].values, [12, 7]);
   } finally {
     pool.query = originalQuery;
   }

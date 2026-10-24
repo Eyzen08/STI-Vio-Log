@@ -122,6 +122,7 @@ test("fresh migration chain is complete and idempotent", async () => {
     const pool = schemaPool(freshSchema);
     try {
         const first = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(first.applied.pop(), "054_message_inbox_preferences.sql");
         assert.equal(first.applied.pop(), "053_academic_program_offerings.sql");
         assert.equal(first.applied.pop(), "052_service_day_invalidations.sql");
         assert.equal(first.applied.pop(), "051_flexible_attendance_pauses.sql");
@@ -307,6 +308,7 @@ test("production-shaped legacy upgrade preserves events and canonicalizes status
             SELECT a.id, a.student_id, d.id, u.id, 'TIME_IN' FROM community_service_assignments a CROSS JOIN departments d CROSS JOIN users u WHERE u.username = 'legacy_admin'`);
 
         const legacyResult = await runMigrations(pool, { logger: { log() {} } });
+        assert.equal(legacyResult.applied.pop(), "054_message_inbox_preferences.sql");
         assert.equal(legacyResult.applied.pop(), "053_academic_program_offerings.sql");
         assert.equal(legacyResult.applied.pop(), "052_service_day_invalidations.sql");
         assert.equal(legacyResult.applied.pop(), "051_flexible_attendance_pauses.sql");

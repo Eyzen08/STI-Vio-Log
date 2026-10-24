@@ -1,5 +1,5 @@
 const express = require('express');
-const { listConversations, getUnreadCount, listRecipients, createConversation, getConversation, sendMessage, markConversationRead, updateConversationStatus } = require('../controllers/messageController');
+const { listConversations, getUnreadCount, listRecipients, createConversation, getConversation, sendMessage, markConversationRead, updateConversationPreferences, deleteConversation, updateConversationStatus } = require('../controllers/messageController');
 const router = express.Router();
 const { authorizePermissions } = require('../middleware/authMiddleware');
 const { PERMISSIONS } = require('../security/permissions');
@@ -11,5 +11,7 @@ router.post('/conversations', canMessage, createConversation);
 router.get('/conversations/:id', canMessage, getConversation);
 router.post('/conversations/:id/messages', canMessage, sendMessage);
 router.patch('/conversations/:id/read', canMessage, markConversationRead);
+router.patch('/conversations/:id/preferences', canMessage, updateConversationPreferences);
+router.delete('/conversations/:id', canMessage, deleteConversation);
 router.patch('/conversations/:id/status', canMessage, updateConversationStatus);
 module.exports = router;

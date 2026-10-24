@@ -82,7 +82,11 @@ Administrative reports include violations, community service, DTR, non-complianc
 
 ## Secure messaging
 
-`/api/messages/conversations` provides paginated, searchable, text-only, append-only conversation summaries; message history is loaded separately and paginated. `/api/messages/unread-count` returns only `{ success, unread_total }` for lightweight badge polling. Students can access only conversations attached to their authenticated student record. A student creates a conversation with only `subject` and `message`; `recipient_department_id` and every other ownership or recipient override are rejected. The only student recipient is authorized Discipline Office personnel. Discipline Administrators and Discipline Office users may communicate with individual students and change a conversation between `OPEN` and `CLOSED`. Department Accounts receive 403 from every messaging endpoint. Historical `assigned_department_id` values remain stored solely for audit history and grant no access. Conversation detail, reply, read-state, and status endpoints repeat authorization checks, and inaccessible conversation IDs return 404. Messages are bounded to 1,000 characters and have no update or delete endpoint.
+`/api/messages/conversations` provides paginated, searchable conversation summaries; text-only message history is append-only and loaded separately. List queries accept `folder=INBOX|ARCHIVED` (default INBOX) and `unread=true|false`, alongside existing search, status and pagination. Pinned conversations sort first. Summaries/details include the authenticated account's `is_pinned`, `is_archived`, and `unread_count`. List `unread_total` and `/api/messages/unread-count` always count the account's active inbox independently of search and pagination.
+
+`PATCH /api/messages/conversations/:id/read` accepts `{ is_read: boolean }`; legacy `{}` still marks read. Manual unread contributes at least one unread item until cleared. `PATCH /api/messages/conversations/:id/preferences` accepts one or both boolean fields `is_pinned` and `is_archived`, preserving read timestamps. `DELETE /api/messages/conversations/:id` hides the conversation only for that account; it never deletes shared messages. Hidden conversations return 404 for that account. A new reply restores archived/hidden conversations to the inbox. Preference/read/delete events go only to the acting account.
+
+Students can access only conversations attached to their authenticated student record. A student creates a conversation with only `subject` and `message`; recipient and ownership overrides are rejected. The only student recipient is authorized Discipline Office personnel. Discipline Administrators and Discipline Office users may communicate with individual students and change a conversation between `OPEN` and `CLOSED`. Department Accounts receive 403 from every messaging endpoint. Historical `assigned_department_id` values remain stored solely for audit history and grant no access. All conversation operations repeat authorization checks; inaccessible IDs return 404. Messages are bounded to 1,000 characters and cannot be edited or physically deleted through the API.
 
 ## Parent and guardian contact
 
@@ -277,6 +281,8 @@ Source inventory dated October 10, 2026. Paths include the server mount prefix; 
 | GET | `/api/messages/conversations/:id` | `backend/src/routes/messageRoutes.js` | `canMessage, getConversation` |
 | POST | `/api/messages/conversations/:id/messages` | `backend/src/routes/messageRoutes.js` | `canMessage, sendMessage` |
 | PATCH | `/api/messages/conversations/:id/read` | `backend/src/routes/messageRoutes.js` | `canMessage, markConversationRead` |
+| PATCH | `/api/messages/conversations/:id/preferences` | `backend/src/routes/messageRoutes.js` | `canMessage, updateConversationPreferences` |
+| DELETE | `/api/messages/conversations/:id` | `backend/src/routes/messageRoutes.js` | `canMessage, deleteConversation` |
 | PATCH | `/api/messages/conversations/:id/status` | `backend/src/routes/messageRoutes.js` | `canMessage, updateConversationStatus` |
 | GET | `/api/messages/recipients` | `backend/src/routes/messageRoutes.js` | `canMessage, listRecipients` |
 | GET | `/api/messages/unread-count` | `backend/src/routes/messageRoutes.js` | `canMessage, getUnreadCount` |

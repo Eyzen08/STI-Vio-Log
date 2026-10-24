@@ -50,6 +50,13 @@ jobs:
         run: |
           psql -h 127.0.0.1 -U postgres -d sti_vio_log_security -v ON_ERROR_STOP=1 -c "CREATE SCHEMA sti_vio_log_test_security_gate;"
           npm run migrate
+      - name: Verify personal inbox state in disposable PostgreSQL
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:disposable-ci-password@127.0.0.1:5432/sti_vio_log_security
+          DB_SSL: disable
+          NODE_ENV: test
+        run: node --test tests/message-preferences.pgtest.js
       - name: Verify least-privilege runtime role and database invariants
         working-directory: backend
         env:

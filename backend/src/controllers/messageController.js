@@ -19,17 +19,35 @@ const scope = (user, parameterIndex, alias = 'mc') => {
   return { sql: 'TRUE', value: null };
 };
 
-const assertConversation = async (user, id, executor = pool) => {
+const unreadSql = (userParameter) => `GREATEST((SELECT COUNT(*) FROM conversation_messages unread
+  WHERE unread.conversation_id=mc.id AND unread.sender_user_id<>${userParameter}
+    AND unread.created_at>COALESCE(cr.last_read_at,'-infinity')),
+  CASE WHEN cr.marked_unread THEN 1 ELSE 0 END)::int`;
+
+const unreadCount = async (user) => {
+  const scoped = scope(user, 2);
+  const params = [user.id];
+  if (scoped.value !== null) params.push(scoped.value);
+  const row = (await pool.query(`SELECT COALESCE(SUM(${unreadSql('$1')}),0)::int AS unread_total
+    FROM message_conversations mc
+    LEFT JOIN conversation_reads cr ON cr.conversation_id=mc.id AND cr.user_id=$1
+    WHERE ${scoped.sql} AND NOT COALESCE(cr.is_deleted,FALSE) AND NOT COALESCE(cr.is_archived,FALSE)`, params)).rows[0];
+  return Number(row?.unread_total || 0);
+};
+
+const assertConversation = async (user, id, executor = pool, lock = false) => {
   if (!isPositiveId(id)) bad('A valid conversation ID is required');
   const scoped = scope(user, 2);
-  const params = [Number(id)];
-  if (scoped.value !== null) params.push(scoped.value);
+  const params = [Number(id), user.id];
   const row = (await executor.query(
-    `SELECT mc.*,${avatarSql('s.user_id')} AS student_avatar,s.student_number,s.first_name,s.last_name,d.department_name
+    `SELECT mc.*,${avatarSql('s.user_id')} AS student_avatar,s.student_number,s.first_name,s.last_name,d.department_name,
+       COALESCE(cr.is_pinned,FALSE) AS is_pinned,COALESCE(cr.is_archived,FALSE) AS is_archived,
+       ${unreadSql('$2')} AS unread_count
      FROM message_conversations mc
      JOIN students s ON s.id=mc.student_id
      LEFT JOIN departments d ON d.id=mc.assigned_department_id
-     WHERE mc.id = $1 AND ${scoped.sql}`,
+     LEFT JOIN conversation_reads cr ON cr.conversation_id=mc.id AND cr.user_id=$2
+     WHERE mc.id = $1 AND ${scoped.sql} AND NOT COALESCE(cr.is_deleted,FALSE)${lock ? ' FOR UPDATE OF mc' : ''}`,
     params
   )).rows[0];
   if (!row) notFound();
@@ -52,17 +70,21 @@ const emitMessageChange = async (conversation, actorUserId = null) => {
 const listConversations = async (req, res) => {
   try {
     const query = req.query || {};
-    assertAllowedFields(query, ['search', 'status', 'page', 'limit']);
+    assertAllowedFields(query, ['search', 'status', 'page', 'limit', 'folder', 'unread']);
     const { page, limit, offset } = parsePagination(query, { defaultLimit: 25, maxLimit: 100 });
     const status = String(query.status || 'ALL').toUpperCase();
     if (!['ALL', 'OPEN', 'CLOSED'].includes(status)) bad('status must be ALL, OPEN, or CLOSED');
+    const folder = String(query.folder || 'INBOX').toUpperCase();
+    if (!['INBOX', 'ARCHIVED'].includes(folder)) bad('folder must be INBOX or ARCHIVED');
+    if (query.unread !== undefined && !['true', 'false'].includes(query.unread)) bad('unread must be true or false');
     const search = String(query.search || '').trim();
     if (search.length > 100) bad('search must not exceed 100 characters');
 
     const params = [req.user.id];
     const scoped = scope(req.user, params.length + 1);
     if (scoped.value !== null) params.push(scoped.value);
-    const filters = [scoped.sql];
+    const filters = [scoped.sql, 'NOT COALESCE(cr.is_deleted,FALSE)', `COALESCE(cr.is_archived,FALSE)=${folder === 'ARCHIVED' ? 'TRUE' : 'FALSE'}`];
+    if (query.unread === 'true') filters.push(`${unreadSql('$1')}>0`);
     if (status !== 'ALL') { params.push(status); filters.push(`mc.status=$${params.length}`); }
     if (search) { params.push(`%${search}%`); filters.push(`(mc.subject ILIKE $${params.length} OR s.student_number ILIKE $${params.length} OR CONCAT_WS(' ',s.first_name,s.last_name) ILIKE $${params.length} OR COALESCE(d.department_name,'Discipline Office') ILIKE $${params.length})`); }
     params.push(limit, offset);
@@ -72,25 +94,20 @@ const listConversations = async (req, res) => {
         ${avatarSql('s.user_id')} AS student_avatar,s.student_number,CONCAT_WS(' ',s.first_name,s.last_name) AS student_name,
         COALESCE(d.department_name,'Discipline Office') AS school_participant,
         latest.message_text AS message_preview,latest.created_at AS latest_message_at,
-        COALESCE((SELECT COUNT(*) FROM conversation_messages unread
-          WHERE unread.conversation_id=mc.id AND unread.sender_user_id<>$1
-            AND unread.created_at>COALESCE(cr.last_read_at,'-infinity')),0)::int AS unread_count,
-        COUNT(*) OVER()::int AS total_count,
-        SUM(COALESCE((SELECT COUNT(*) FROM conversation_messages all_unread
-          WHERE all_unread.conversation_id=mc.id AND all_unread.sender_user_id<>$1
-            AND all_unread.created_at>COALESCE(cr.last_read_at,'-infinity')),0)) OVER()::int AS unread_total
+        COALESCE(cr.is_pinned,FALSE) AS is_pinned,COALESCE(cr.is_archived,FALSE) AS is_archived,
+        ${unreadSql('$1')} AS unread_count,COUNT(*) OVER()::int AS total_count
        FROM message_conversations mc
        JOIN students s ON s.id=mc.student_id
        LEFT JOIN departments d ON d.id=mc.assigned_department_id
        LEFT JOIN conversation_reads cr ON cr.conversation_id=mc.id AND cr.user_id=$1
        LEFT JOIN LATERAL (SELECT message_text,created_at FROM conversation_messages WHERE conversation_id=mc.id ORDER BY created_at DESC,id DESC LIMIT 1) latest ON TRUE
        WHERE ${filters.join(' AND ')}
-       ORDER BY COALESCE(latest.created_at,mc.created_at) DESC,mc.id DESC
+       ORDER BY COALESCE(cr.is_pinned,FALSE) DESC,COALESCE(latest.created_at,mc.created_at) DESC,mc.id DESC
        LIMIT $${params.length - 1} OFFSET $${params.length}`,
       params
     )).rows;
     const total = Number(rows[0]?.total_count || 0);
-    const unreadTotal = Number(rows[0]?.unread_total || 0);
+    const unreadTotal = await unreadCount(req.user);
     return res.json({ success:true, conversations:rows.map(({ total_count, unread_total, ...row }) => row), unread_total:unreadTotal, pagination:{ page, limit, total, pages:Math.ceil(total/limit) } });
   } catch (error) { return fail(res, error); }
 };
@@ -98,20 +115,7 @@ const listConversations = async (req, res) => {
 const getUnreadCount = async (req, res) => {
   try {
     assertAllowedFields(req.query || {}, []);
-    const params = [req.user.id];
-    const scoped = scope(req.user, params.length + 1);
-    if (scoped.value !== null) params.push(scoped.value);
-    const row = (await pool.query(
-      `SELECT COUNT(*)::int AS unread_total
-       FROM conversation_messages cm
-       JOIN message_conversations mc ON mc.id=cm.conversation_id
-       LEFT JOIN conversation_reads cr ON cr.conversation_id=mc.id AND cr.user_id=$1
-       WHERE ${scoped.sql}
-         AND cm.sender_user_id<>$1
-         AND cm.created_at>COALESCE(cr.last_read_at,'-infinity')`,
-      params
-    )).rows[0];
-    return res.json({ success:true, unread_total:Number(row?.unread_total || 0) });
+    return res.json({ success:true, unread_total:await unreadCount(req.user) });
   } catch (error) { return fail(res, error); }
 };
 
@@ -185,23 +189,68 @@ const getConversation = async (req, res) => {
 };
 
 const sendMessage = async (req,res) => {
+  let client;
   try {
     assertAllowedFields(req.body,['message']);
     const text=cleanText(req.body.message,'Message',MESSAGE_LIMIT);
-    const conversation=await assertConversation(req.user,req.params.id);
+    client=await pool.connect();
+    await client.query('BEGIN');
+    const conversation=await assertConversation(req.user,req.params.id,client,true);
     if(conversation.status!=='OPEN')throw httpError(409,'Conversation is closed');
-    const message=(await pool.query(`INSERT INTO conversation_messages(conversation_id,sender_user_id,message_text) VALUES($1,$2,$3) RETURNING id,message_text,created_at`,[conversation.id,req.user.id,text])).rows[0];
-    await pool.query('UPDATE message_conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=$1',[conversation.id]);
+    const message=(await client.query(`INSERT INTO conversation_messages(conversation_id,sender_user_id,message_text,created_at) VALUES($1,$2,$3,clock_timestamp()) RETURNING id,message_text,created_at`,[conversation.id,req.user.id,text])).rows[0];
+    await client.query('UPDATE message_conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=$1',[conversation.id]);
+    await client.query('UPDATE conversation_reads SET is_archived=FALSE,is_deleted=FALSE WHERE conversation_id=$1',[conversation.id]);
+    await client.query('COMMIT');
     await emitMessageChange(conversation,req.user.id);
     return res.status(201).json({success:true,message});
-  } catch(error){return fail(res,error);}
+  } catch(error){if(client)await client.query('ROLLBACK').catch(()=>{});return fail(res,error);}
+  finally {client?.release();}
 };
 
 const markConversationRead = async (req,res) => {
+  let client;
   try {
-    assertAllowedFields(req.body,[]);
+    if(!req.body || typeof req.body!=='object' || Array.isArray(req.body))bad('Request body must be an object');
+    assertAllowedFields(req.body,['is_read']);
+    const isRead = req.body.is_read === undefined ? true : req.body.is_read;
+    if(typeof isRead !== 'boolean')bad('is_read must be a boolean');
+    client=await pool.connect();
+    await client.query('BEGIN');
+    const conversation=await assertConversation(req.user,req.params.id,client,true);
+    await client.query(`INSERT INTO conversation_reads(conversation_id,user_id,last_read_at,marked_unread)
+      VALUES($1,$2,CASE WHEN $3 THEN clock_timestamp() ELSE '-infinity'::timestamptz END,NOT $3)
+      ON CONFLICT(conversation_id,user_id) DO UPDATE SET
+      last_read_at=CASE WHEN $3 THEN clock_timestamp() ELSE conversation_reads.last_read_at END,marked_unread=NOT $3`,[conversation.id,req.user.id,isRead]);
+    await client.query('COMMIT');
+    emitToUser(req.user.id,'messages:changed',{conversation_id:Number(conversation.id)});
+    return res.json({success:true});
+  }catch(error){if(client)await client.query('ROLLBACK').catch(()=>{});return fail(res,error);}
+  finally{client?.release();}
+};
+
+const updateConversationPreferences = async (req,res) => {
+  try {
+    if(!req.body || typeof req.body!=='object' || Array.isArray(req.body))bad('Request body must be an object');
+    assertAllowedFields(req.body,['is_pinned','is_archived']);
+    const fields=Object.keys(req.body);
+    if(!fields.length || fields.some(field=>typeof req.body[field]!=='boolean'))bad('Provide boolean conversation preferences');
     const conversation=await assertConversation(req.user,req.params.id);
-    await pool.query(`INSERT INTO conversation_reads(conversation_id,user_id,last_read_at) VALUES($1,$2,CURRENT_TIMESTAMP) ON CONFLICT(conversation_id,user_id) DO UPDATE SET last_read_at=CURRENT_TIMESTAMP`,[conversation.id,req.user.id]);
+    const values=[conversation.id,req.user.id,...fields.map(field=>req.body[field])];
+    await pool.query(`INSERT INTO conversation_reads(conversation_id,user_id,last_read_at,${fields.join(',')})
+      VALUES($1,$2,'-infinity',${fields.map((_,index)=>`$${index+3}`).join(',')})
+      ON CONFLICT(conversation_id,user_id) DO UPDATE SET ${fields.map(field=>`${field}=EXCLUDED.${field}`).join(',')}`,values);
+    emitToUser(req.user.id,'messages:changed',{conversation_id:Number(conversation.id)});
+    return res.json({success:true});
+  }catch(error){return fail(res,error);}
+};
+
+const deleteConversation = async (req,res) => {
+  try {
+    assertAllowedFields(req.body || {},[]);
+    const conversation=await assertConversation(req.user,req.params.id);
+    await pool.query(`INSERT INTO conversation_reads(conversation_id,user_id,last_read_at,is_deleted)
+      VALUES($1,$2,'-infinity',TRUE) ON CONFLICT(conversation_id,user_id)
+      DO UPDATE SET is_deleted=TRUE,is_pinned=FALSE,is_archived=FALSE,marked_unread=FALSE`,[conversation.id,req.user.id]);
     emitToUser(req.user.id,'messages:changed',{conversation_id:Number(conversation.id)});
     return res.json({success:true});
   }catch(error){return fail(res,error);}
@@ -220,4 +269,4 @@ const updateConversationStatus = async (req,res) => {
   }catch(error){return fail(res,error);}
 };
 
-module.exports={listConversations,getUnreadCount,listRecipients,createConversation,getConversation,sendMessage,markConversationRead,updateConversationStatus,assertConversation};
+module.exports={listConversations,getUnreadCount,listRecipients,createConversation,getConversation,sendMessage,markConversationRead,updateConversationPreferences,deleteConversation,updateConversationStatus,assertConversation};
