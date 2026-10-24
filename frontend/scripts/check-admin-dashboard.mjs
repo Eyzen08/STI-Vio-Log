@@ -41,6 +41,24 @@ const resetNotifications = (count) => {
   }))
 }
 resetNotifications(unread)
+const checkColumnAlignment = async (page, label) => {
+  const layout = await page.evaluate(() => {
+    const bounds = (selector) => document.querySelector(selector).getBoundingClientRect()
+    const main = bounds('.dashboard-main-column')
+    const support = bounds('.dashboard-support-column')
+    const card = bounds('.recent-violations-card')
+    const table = document.querySelector('.dashboard-violations-table')
+    return {
+      sideBySide: support.left >= main.right,
+      bottomDifference: Math.abs(card.bottom - bounds('.dashboard-secondary-actions').bottom),
+      caseBottomSpace: table ? card.bottom - table.getBoundingClientRect().bottom : 0,
+      pageOverflow: document.documentElement.scrollWidth > innerWidth
+    }
+  })
+  assert.equal(layout.pageOverflow, false, `${label}: page-wide horizontal overflow`)
+  if (layout.sideBySide) assert.ok(layout.bottomDifference <= 1, `${label}: dashboard card bottoms differ by ${layout.bottomDifference}px`)
+  else assert.ok(layout.caseBottomSpace < 40, `${label}: stacked case card stretches beyond its content`)
+}
 const checkNotificationCount = async (page, count) => {
   await page.getByRole('button', { name: `${count} Unread Notifications`, exact: true }).waitFor()
   const expected = count > 99 ? '99+' : String(count)
@@ -100,7 +118,7 @@ try {
         '/api/violations': { violations: empty ? [] : caseItems },
         '/api/violations/types': { violationTypes: [] },
         '/api/community-service': { assignments: empty ? [] : assignments },
-        '/api/community-service/active-sessions': { sessions: empty ? [] : sessions },
+        '/api/community-service/active-sessions': { sessions: empty || scenario === 'no-attendance' ? [] : sessions },
         '/api/community-service/assignment-options': { destinations: [] },
         '/api/clearance': { clearanceRecords: [] },
         '/api/notifications': { notifications, summary: { unread, total: Math.max(notifications.length, unread) } }
@@ -154,9 +172,7 @@ try {
             const content = range.getBoundingClientRect()
             return content.left < bounds.left - 1 || content.right > bounds.right + 1
           })
-          const card = document.querySelector('.recent-violations-card').getBoundingClientRect()
-          const list = document.querySelector('.dashboard-violations-table').getBoundingClientRect()
-          return { pageOverflow: document.documentElement.scrollWidth > innerWidth, caseOverlap, caseBottomSpace: card.bottom - list.bottom,
+          return { pageOverflow: document.documentElement.scrollWidth > innerWidth, caseOverlap,
             headerColor: getComputedStyle(document.querySelector('.topbar')).backgroundColor,
             totals: rect('.active-session-card .dashboard-section-heading'), roster: rect('.dashboard-active-students'), overflowing, clippedControls, smallControls }
         })
@@ -167,7 +183,7 @@ try {
         assert.deepEqual(layout.clippedControls, [], `${label}: header controls clipped`)
         assert.deepEqual(layout.smallControls, [], `${label}: header controls smaller than 44px`)
         assert.equal(layout.caseOverlap, false, `${label}: case content and metadata overlap or are missing`)
-        assert.ok(layout.caseBottomSpace < 40, `${label}: case card stretches beyond its content`)
+        await checkColumnAlignment(page, label)
         assert.equal(await page.locator('.dashboard-violations-table tbody tr').count(), Math.min(4, caseItems.length), `${label}: recent cases missing`)
         assert.equal(await page.locator('.dashboard-violations-table tbody tr strong').first().textContent(), 'Rollz-Steven Maballo Mahilum')
         assert.equal(await page.locator('.dashboard-offense-text').first().textContent(), violations[0].exact_offense)
@@ -261,23 +277,40 @@ try {
   assert.match(await caseRows.nth(1).locator('time').textContent(), /Not recorded.*Time not recorded/)
   assert.equal(await caseRows.nth(1).locator('time').getAttribute('datetime'), null)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, 'case fallbacks and unbroken text')
+  for (const theme of ['light', 'dark']) {
+    for (const width of [1920, 1366, 390]) {
+      await page.setViewportSize({ width, height: 1080 })
+      await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+      await checkColumnAlignment(page, `${theme} ${width}px long violation text`)
+    }
+  }
   await page.locator('.recent-violations-card').getByRole('button', { name: 'View All', exact: true }).click()
   await page.waitForURL('**/admin/violations')
   caseItems = violations
-  for (const state of ['empty', 'loading', 'error']) {
-    scenario = state
-    await page.goto(`${origin}admin/dashboard`)
-    if (state === 'loading') {
-      await page.locator('.admin-dashboard[aria-busy="true"]').waitFor()
-      await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
+  for (const theme of ['light', 'dark']) {
+    for (const width of [1920, 1366, 390]) {
+      await page.setViewportSize({ width, height: 1080 })
+      for (const state of ['no-attendance', 'empty', 'loading', 'error']) {
+        scenario = state
+        await page.goto(`${origin}admin/dashboard`)
+        if (state === 'loading') {
+          await page.locator('.admin-dashboard[aria-busy="true"]').waitFor()
+          await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
+        }
+        else if (state !== 'no-attendance') {
+          await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
+          await page.getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
+          await page.locator('.recent-violations-card').getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
+        }
+        else {
+          await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
+          await page.locator('.active-session-card').getByText('No students are currently serving.', { exact: true }).waitFor()
+        }
+        await page.evaluate((theme) => { document.documentElement.dataset.theme = theme }, theme)
+        await checkColumnAlignment(page, `${theme} ${width}px ${state}`)
+        console.log(`PASS ${theme} ${width}px ${state}`)
+      }
     }
-    else {
-      await page.locator('.admin-dashboard[aria-busy="false"]').waitFor()
-      await page.getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
-      await page.locator('.recent-violations-card').getByText(state === 'empty' ? 'No violations available.' : 'Violations unavailable.', { exact: true }).waitFor()
-    }
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, state)
-    console.log(`PASS ${state}`)
   }
   assert.deepEqual(errors, [], 'Browser runtime errors')
   console.log('Dashboard layout and interaction checks passed.')

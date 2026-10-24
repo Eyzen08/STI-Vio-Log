@@ -68,7 +68,7 @@ test('department and student sidebars retain their role-specific pages and label
     ['Updates', ['Notifications']], ['Account', ['Profile', 'Settings']]
   ])
   assert.deepEqual(sidebarLabels('STUDENT'), [
-    'Dashboard', ['Student Services', ['My Service', 'My QR', 'My Violations', 'My Clearance']],
+    'Dashboard', 'STI Handbook', ['Student Services', ['My Service', 'My QR', 'My Violations', 'My Clearance']],
     ['Updates', ['Messages', 'Notifications']], ['Account', ['My Profile', 'Settings']]
   ])
 })

@@ -40,6 +40,7 @@ export const APP_ROUTES = [
   { path: '/department/reports', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.department, navigation: false, redirectTo: '/department/dashboard' },
   { path: '/department/notifications', label: 'Notifications', view: 'Notifications', roles: ROLE_GROUPS.department },
   { path: '/student/dashboard', label: 'Dashboard', view: 'Dashboard', roles: ROLE_GROUPS.student },
+  { path: '/student/handbook', label: 'STI Handbook', view: 'STI Handbook', roles: ROLE_GROUPS.student },
   { path: '/student/profile', label: 'My Profile', view: 'My Profile', roles: ROLE_GROUPS.student },
   { path: '/student/account-settings', label: 'Account Settings', view: 'Account Settings', roles: ROLE_GROUPS.student, navigation: false },
   { path: '/student/qr', label: 'My QR', view: 'My QR', roles: ROLE_GROUPS.student },

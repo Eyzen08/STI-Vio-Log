@@ -19,7 +19,8 @@ export const messageParticipant = (conversation, role) => role === 'STUDENT'
 
 export const conversationMatchesTab = (conversation, tab) => tab === 'UNREAD'
   ? Number(conversation.unread_count)>0
-  : tab === 'CLOSED' ? conversation.status==='CLOSED' : true
+  : tab === 'ARCHIVED' ? Boolean(conversation.is_archived)
+    : tab === 'CLOSED' ? conversation.status==='CLOSED' : true
 
 export const messageDateLabel = (value, now = new Date()) => {
   const target = formatManilaDate(value, '')

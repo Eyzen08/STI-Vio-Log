@@ -76,7 +76,9 @@
 .student-page .violation-details :is(.service-progress,.lifecycle-section) { padding:0; border:0; background:transparent; }
 .student-page .violation-details .service-hours-grid { gap:16px; }
 .app-shell .student-page .qr-display-card { width:min(440px,100%); padding:24px; border-radius:12px; box-shadow:none; border-color:var(--border-subtle); background:var(--surface-raised); }
-.app-shell .student-page .student-qr-frame { width:min(320px,100%); padding:0; border:0; border-radius:0; background:#fff !important; box-shadow:none; }
+.app-shell .student-page .student-qr-frame { width:min(320px,100%); aspect-ratio:816 / 1024; padding:0; border:0; border-radius:0; background:#fff !important; box-shadow:none; }
+.app-shell .student-page .student-qr-frame img { height:auto; }
+.app-shell .student-page .qr-code-skeleton { aspect-ratio:816 / 1024; }
 .student-page .qr-download-button { margin-top:20px; width:100%; }
 :root .app-shell .student-page .qr-download-button { color:var(--text-on-accent) !important; }
 .app-shell .student-page .qr-guidance { display:block; width:min(440px,100%); margin:0 auto; color:var(--text-secondary); font-size:var(--text-sm); background:transparent; box-shadow:none; }

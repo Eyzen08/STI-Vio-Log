@@ -23,13 +23,11 @@ function HandbookPage() {
         </select>
       </label>
       <div className="action-row">
-        <a className="secondary-button" href={document.url} target="_blank" rel="noopener noreferrer">Open in New Tab</a>
+        <a className="secondary-button" href={document.url} target="_blank" rel="noopener noreferrer">View PDF (new tab)</a>
         <a className="submit-btn" href={document.url} download>Download PDF</a>
       </div>
     </div>
     <p className="handbook-source">Saved copy captured <time dateTime="2026-10-12">12 October 2026</time>. STI’s issued version is authoritative. <a href="https://one.sti.edu/STI-BCT_Handbook.html#home" target="_blank" rel="noopener noreferrer">Open STI’s Live Handbook</a></p>
-    <iframe key={document.id} className="handbook-reader" src={document.url} title={`${document.label} PDF`} />
-    <p className="handbook-help">If the PDF does not display in your browser, use “Open in new tab” or “Download PDF” above.</p>
   </section>
 }
 

@@ -109,7 +109,7 @@
 :root[data-theme='dark'] .admin-portal { --dash-ink:var(--text-primary); --dash-muted:var(--text-secondary); --dash-line:var(--border-subtle); --dash-surface:var(--surface-raised); --dash-canvas:var(--surface-canvas); }
 :root[data-theme='dark'] .admin-portal .admin-dashboard :is(h2,h3,.stat-card strong,.stat-card span,.dashboard-student strong) { color:var(--dash-ink) !important; }
 :root[data-theme='dark'] .admin-portal .sidebar .nav-item.active { background:var(--action-primary-surface) !important; color:#fff !important; }
-/* Each column follows its own content height; attendance cannot leave a grid-row hole. */
+/* Keep attendance and supporting cards in independent columns. */
 .admin-portal .admin-dashboard .dashboard-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .admin-portal .admin-dashboard .dashboard-heading-tools { display:flex; flex:0 1 auto; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px 16px; }
 .admin-portal .admin-dashboard .dashboard-welcome-date { display:flex; align-items:center; gap:6px; color:var(--text-secondary); font-size:var(--text-sm); }
@@ -120,7 +120,12 @@
 .admin-portal .admin-dashboard :is(.dashboard-card,.stat-card) { margin:0; border:1px solid var(--dash-line); border-radius:var(--card-radius); background:var(--dash-surface); box-shadow:var(--shadow-sm); }
 /* Use the available content width, including an expanded tablet sidebar. */
 .admin-portal .admin-dashboard { container:portal-dashboard / inline-size; }
-.admin-portal .recent-violations-card { container:dashboard-records / inline-size; }
+.admin-portal .recent-violations-card { container:dashboard-records / inline-size; grid-row:auto; }
+@container portal-dashboard (width > 62rem) {
+  .admin-portal .admin-dashboard-grid { align-items:stretch; }
+  .admin-portal .dashboard-main-column { grid-template-rows:auto minmax(min-content,1fr); }
+  .admin-portal .dashboard-support-column { grid-template-rows:auto minmax(min-content,1fr) auto; }
+}
 @container portal-dashboard (max-width:62rem) {
   .admin-portal .admin-dashboard .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .admin-portal .admin-dashboard-grid { grid-template-columns:minmax(0,1fr); }

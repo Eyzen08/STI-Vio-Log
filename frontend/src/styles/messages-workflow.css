@@ -1,4 +1,15 @@
 /* The inbox shares the portal shell; each column scrolls independently. */
+.conversation-row{position:relative;min-width:0}
+.main-panel--messages .conversation-row .conversation-open{width:100%;padding-right:52px!important}
+.conversation-row>.conversation-actions-trigger{position:absolute;right:5px;top:50%;transform:translateY(-50%)}
+.conversation-actions-trigger{display:inline-flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;padding:10px!important;border:0!important;background:transparent!important;color:var(--text-primary)!important;box-shadow:none!important;border-radius:8px;cursor:pointer}
+.conversation-actions-trigger svg{width:20px;height:20px}
+.conversation-actions-menu{position:fixed;z-index:1300;width:216px;max-width:calc(100vw - 16px);padding:6px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-raised);color:var(--text-primary);box-shadow:var(--shadow-sm);box-sizing:border-box}
+.conversation-actions-menu>button{display:block;min-height:44px;width:100%;padding:10px 12px;border:0;border-radius:6px;text-align:left;font:inherit;background:transparent;color:inherit;cursor:pointer}
+.conversation-actions-menu>button:hover,.conversation-actions-menu>button:focus-visible{background:var(--surface-interactive-hover)}
+.conversation-actions-menu .conversation-delete-action{color:var(--status-danger-text)}
+:is(.conversation-actions-trigger,.conversation-actions-menu>button):focus-visible{outline:2px solid var(--link-color);outline-offset:2px}
+.conversation-pinned{font-size:var(--text-xs);color:var(--link-color);font-weight:400}
 .main-panel--messages .messages-inbox{gap:var(--page-gap);color:var(--text-primary,#092653)}
 .main-panel--messages .messages-page-heading{background:var(--surface-raised,#fff);border:1px solid #dbe8f5;border-radius:16px;box-shadow:none}
 .messages-page-heading::before,.messages-page-heading::after{display:none!important}
@@ -20,9 +31,9 @@
 .main-panel--messages .conversation-tabs button[aria-selected=true]{background:#d5eaff!important;color:#0756b5!important}
 .main-panel--messages .conversation-tabs b{display:none}
 .main-panel--messages .conversation-list{padding:8px 12px;gap:6px;background:transparent}
-.main-panel--messages .conversation-list>button:not(.conversation-load-more){position:relative;display:flex;align-items:center;gap:14px;min-height:78px;flex-shrink:0;padding:10px 14px;border:1px solid #e1ebf6;border-radius:12px;background:var(--surface-raised,#fff);color:inherit;box-shadow:none;text-align:left}
-.main-panel--messages .conversation-list>button.active{border-color:#58a7ff!important;background:#e0efff!important;box-shadow:none!important}
-.main-panel--messages .conversation-list>button.unread:not(.active){background:var(--surface-raised,#fff);border-color:#dbe8f5}
+.main-panel--messages .conversation-list .conversation-open{position:relative;display:flex;align-items:center;gap:14px;min-height:78px;flex-shrink:0;padding:10px 14px;border:1px solid #e1ebf6;border-radius:12px;background:var(--surface-raised,#fff);color:inherit;box-shadow:none;text-align:left}
+.main-panel--messages .conversation-list .conversation-open.active{border-color:#58a7ff!important;background:#e0efff!important;box-shadow:none!important}
+.main-panel--messages .conversation-list .conversation-open.unread:not(.active){background:var(--surface-raised,#fff);border-color:#dbe8f5}
 .main-panel--messages .conversation-avatar{width:48px;height:48px;flex:0 0 48px}
 .main-panel--messages .conversation-summary{display:flex;flex-direction:column;min-width:0;flex:1;padding:0;gap:3px}
 .main-panel--messages .conversation-primary{padding-right:64px;min-width:0}
@@ -90,18 +101,18 @@
 @media(max-width:900px){.main-panel--messages .messages-workspace{grid-template-columns:1fr}.main-panel--messages .conversation-pane{border:0}.main-panel--messages .messages-page-heading h2{font-size:var(--text-page-title)}.main-panel--messages .chat-header>.conversation-avatar{width:44px;height:44px;flex-basis:44px}.main-panel--messages .chat-header h3{font-size:var(--text-lg)}.main-panel--messages .chat-header{gap:8px;padding:12px;flex-wrap:wrap}.main-panel--messages .chat-header-actions{margin-left:auto}.main-panel--messages .chat-composer{grid-template-columns:minmax(0,1fr) 90px;padding:12px}.main-panel--messages .chat-header p{font-size:var(--text-base)}.new-message-modal .app-modal-header{padding:18px!important}.new-message-modal .app-modal-body{padding:18px!important}.new-message-modal .app-modal-heading h2{font-size:var(--text-section-title)}.message-bubble-content{max-width:78%}}
 :is(.messages-inbox,.new-message-modal){font-family:var(--font-sans);color:#102f60;--text-secondary:#647fa7;--text-primary:#102f60}
 .main-panel--messages .messages-page-heading.portal-page-header h2{font-size:var(--text-page-title);color:var(--text-primary)}
-.main-panel--messages .messages-inbox .conversation-list>button:not(.conversation-load-more){background:var(--surface-raised,#fff)!important;border:1px solid #e1ebf6!important;min-height:78px;padding:10px 14px;font-weight:400}
-.main-panel--messages .messages-inbox .conversation-list>button.active{background:#e0efff!important;border-color:#58a7ff!important}
+.main-panel--messages .messages-inbox .conversation-list .conversation-open{background:var(--surface-raised,#fff)!important;border:1px solid #e1ebf6!important;min-height:78px;padding:10px 14px;font-weight:400}
+.main-panel--messages .messages-inbox .conversation-list .conversation-open.active{background:#e0efff!important;border-color:#58a7ff!important}
 .main-panel--messages .messages-inbox .conversation-preview{font-weight:400}
 .main-panel--messages .messages-inbox .message-state--center strong{color:var(--text-primary)}
 :root[data-theme=dark] :is(.messages-inbox,.new-message-modal){--text-primary:#e8f1fc;--text-secondary:#adc0dc;color:var(--text-primary)}
-:root[data-theme=dark] .main-panel--messages .messages-inbox .conversation-list>button.active{background:#173d62!important;border-color:#458edc!important}
+:root[data-theme=dark] .main-panel--messages .messages-inbox .conversation-list .conversation-open.active{background:#173d62!important;border-color:#458edc!important}
 :root[data-theme=dark] .main-panel--messages .message-empty-icon{background:#163553}
 :root[data-theme=dark] .main-panel--messages .message-bubble:not(.mine .message-bubble){background:#253a52;color:#e8f1fc}
 :root[data-theme=dark] .new-message-modal .recipient-preview-list button[aria-selected=true]{background:#173d62;color:#e8f1fc}
 @media(max-width:900px){.main-panel--messages .messages-page-heading.portal-page-header h2{font-size:var(--text-page-title)}}
 .main-panel--messages .message-bubble-content footer,.main-panel--messages .message-bubble-content footer span,.main-panel--messages .message-bubble-content footer time{color:var(--text-secondary)!important}
-.main-panel--messages .messages-inbox .conversation-list>button.unread .conversation-preview{font-weight:400!important;color:var(--text-secondary)!important}
+.main-panel--messages .messages-inbox .conversation-list .conversation-open.unread .conversation-preview{font-weight:400!important;color:var(--text-secondary)!important}
 .main-panel--messages .messages-page-heading.portal-page-header p{font-weight:400}
 .new-message-modal .message-new-form :is(input,textarea,select){font-weight:400}
 @media(max-width:900px){.main-panel--messages .chat-composer>button>span{display:inline!important}.main-panel--messages .chat-composer>button{min-width:0;padding:10px;gap:5px;font-size:var(--text-base)}.main-panel--messages .chat-composer>button svg{width:16px;height:16px}.main-panel--messages .chat-header-actions .chat-status{display:inline-flex!important}}

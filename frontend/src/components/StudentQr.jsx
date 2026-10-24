@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
-import { getStudentQrPayload, qrDownloadName } from '../lib/studentQr.js'
+import { getStudentQrPayload, qrDownloadName, renderStudentQr } from '../lib/studentQr.js'
+import stiLogo from '../assets/sti-logo-web-transparent.png'
 import '../styles/student-portal.css'
 
 function StudentQr({ profile, loading, error }) {
@@ -15,13 +16,7 @@ function StudentQr({ profile, loading, error }) {
 
     if (!payload) return () => { active = false }
 
-    import('qrcode')
-      .then(({ default: QRCode }) => QRCode.toDataURL(payload, {
-        errorCorrectionLevel: 'H',
-        margin: 3,
-        width: 720,
-        color: { dark: '#122033', light: '#ffffff' }
-      }))
+    renderStudentQr(payload, stiLogo)
       .then((url) => { if (active) setImageUrl(url) })
       .catch(() => { if (active) setRenderError('Your QR code could not be rendered.') })
 
@@ -63,7 +58,7 @@ function StudentQr({ profile, loading, error }) {
 
             <div className="student-qr-frame">
               {imageUrl
-                ? <img src={imageUrl} alt="Your STI Vio-Log attendance QR code" width="320" height="320" />
+                ? <img src={imageUrl} alt="Your STI Vio-Log community-service attendance QR code" width="816" height="1024" />
                 : <div className="skeleton qr-code-skeleton" aria-label="Generating QR Code" />}
             </div>
 

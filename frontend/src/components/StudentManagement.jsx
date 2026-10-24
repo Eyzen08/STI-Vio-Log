@@ -40,7 +40,10 @@ export default function StudentManagement({ students = [], violations = [], assi
   return <section className="student-management-page" aria-labelledby="student-management-title">
     <header className="student-management-header portal-page-header">
       <div><nav className="student-breadcrumb" aria-label="Breadcrumb"><a href="/admin/dashboard">Home</a><span aria-hidden="true">/</span><span>Students</span></nav><h2 id="student-management-title">Student Management</h2><p>View and manage student records, violations, community service, and clearance status.</p></div>
-      <button type="button" className="student-add-button" onClick={onAdd}><span aria-hidden="true">＋</span> Add Student</button>
+      <div className="student-management-actions action-row">
+        <a className="student-handbook-link" href="/admin/handbook"><PortalIcon name="book" size={18}/>Student Handbook</a>
+        <button type="button" className="student-add-button" onClick={onAdd}><span aria-hidden="true">＋</span> Add Student</button>
+      </div>
     </header>
     <section className="student-summary-grid" aria-label="Student Summary">
       {[['all', 'students', 'Total Students', 'blue'], ['violations', 'violations', 'With Violations', 'red'], ['service', 'service', 'Ongoing Community Service', 'orange'], ['cleared', 'clearance', 'Cleared Students', 'green']].map(([tab, icon, label, tone]) => <button type="button" className={`student-summary-card student-metric-${tone}`} key={tab} onClick={() => setFilters({ program: '', year: '', status: '', tab, severity: '', attendance: '' })}>

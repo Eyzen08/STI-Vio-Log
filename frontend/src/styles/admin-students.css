@@ -2,7 +2,11 @@
 .admin-portal .student-management-page { display:grid; gap:var(--page-gap); min-width:0; color:var(--dash-ink); font-family:var(--font-sans); }
 .student-management-page :is(button,input,select) { font-family:inherit; }
 .admin-portal .student-management-page :is(.student-management-header,.student-summary-card,.student-directory-card) { border:1px solid var(--dash-line); border-radius:13px; background:var(--dash-surface); box-shadow:var(--decorative-shadow, 0 2px 8px rgb(15 55 90 / 3%)); }
-.admin-portal .student-management-page .student-management-header { display:flex; align-items:center; justify-content:space-between; min-height:115px; gap:var(--grid-gap); padding:12px 28px; margin:0; }
+.admin-portal .student-management-page .student-management-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; min-height:115px; gap:var(--grid-gap); padding:12px 28px; margin:0; }
+.student-management-actions { align-items:center; }
+.student-handbook-link { display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:var(--page-action-height); box-sizing:border-box; padding:10px 14px; border:1px solid var(--dash-line); border-radius:8px; color:var(--link-color); font-size:var(--text-action); font-weight:600; text-decoration:none; }
+.student-handbook-link:hover { background:var(--surface-interactive); }
+.student-handbook-link:focus-visible { outline:3px solid var(--link-color); outline-offset:3px; }
 .student-breadcrumb { display:flex; gap:9px; margin:0; padding:0; min-height:0; color:#8098b6; font-size:var(--text-sm); line-height:18px; font-weight:600; letter-spacing:.06em; }
 .student-management-header::before,.student-management-header::after { display:none; }
 .admin-portal .student-management-page .student-management-header p { max-width:none; }
@@ -138,6 +142,8 @@
 }
 @media (max-width:767px) {
   .admin-portal .student-management-page .student-management-header { align-items:flex-start; flex-direction:column; gap:14px; padding:18px; }
+  .student-management-actions { width:100%; }
+  .student-management-actions > :is(a,button) { flex:1 1 auto; }
   .admin-portal .student-management-page h2 { font-size:var(--text-page-title); }
   .admin-portal .student-management-page .student-summary-card { min-height:0; padding:12px; gap:10px; }
   .student-summary-card > i { flex-basis:var(--summary-icon-size); height:var(--summary-icon-size); }

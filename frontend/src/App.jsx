@@ -2015,6 +2015,8 @@ function App() {
       return <AccountSecuritySettings searchParams={routeSearch} token={token} user={user} onSession={acceptSession} onAvatarChange={updateOwnAvatar} onOpenPolicy={openPolicy} />
     }
 
+    if (activeView === 'STI Handbook') return <HandbookPage />
+
     /*
      * ==========================================================
      * STUDENT VIEW
@@ -2165,8 +2167,6 @@ function App() {
         />
       )
     }
-
-    if (isAdmin && activeView === 'STI Handbook') return <HandbookPage />
 
     if (isDepartmentHead && activeView === 'Students') {
       return (
