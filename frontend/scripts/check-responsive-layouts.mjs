@@ -73,6 +73,7 @@ try {
     for (const value of ['light', 'dark']) {
       await theme(value)
       await fits('.login-page')
+      assert.equal(await page.locator('.google-button').evaluate(el => getComputedStyle(el).colorScheme), 'normal', 'Google iframe padding must keep a transparent canvas in both app themes')
       assert.equal(await page.locator('.google-button button').getAttribute('data-provider-theme'), value === 'dark' ? 'filled_black' : 'outline')
       assert.equal(await page.evaluate(() => window.googleInitializations), 1, 'Theme changes must not initialize Google again')
       const position = await page.locator('.login-intro').evaluate(el => getComputedStyle(el).position)

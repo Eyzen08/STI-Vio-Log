@@ -173,8 +173,8 @@
 .auth-shell .auth-divider { display: flex; align-items: center; gap: 16px; margin: 0 0 4px; }
 .auth-shell .auth-divider::before,.auth-shell .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle); }
 .auth-shell .auth-divider span { position: static; padding: 0; background: transparent; color: var(--auth-muted); font-size: 12px; }
-.auth-shell .google-button { display: grid; justify-items: center; width: 100%; min-height: 44px; background: transparent; color-scheme: light; }
-:root[data-theme='dark'] .auth-shell .google-button { color-scheme: dark; }
+/* Match Google's iframe canvas so its transparent padding stays transparent. */
+.auth-shell .google-button { display: grid; justify-items: center; width: 100%; min-height: 44px; background: transparent; color-scheme: normal; }
 .auth-shell .google-button > div { margin-inline: auto; }
 .auth-shell .google-access-eligibility { margin: 0; color: var(--auth-muted); font-size: 12px; text-align: center; }
 .auth-shell .auth-mobile-help,.auth-shell .auth-status { margin: 0; color: var(--auth-muted); font-size: 13px; line-height: 1.6; }
