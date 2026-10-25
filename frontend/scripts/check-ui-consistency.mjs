@@ -8,8 +8,9 @@ import { APP_ROUTES, PUBLIC_ROUTES } from '../src/lib/routes.js'
 import { auditThemeColors } from './lib/themeAudit.mjs'
 
 const { chromium } = createRequire(import.meta.url)('playwright')
+const layoutAudit = process.argv.includes('--layout-audit')
 const root = fileURLToPath(new URL('../', import.meta.url))
-const output = fileURLToPath(new URL(process.argv.includes('--theme-audit') ? '../artifacts/theme-audit/' : '../artifacts/ui-consistency/', import.meta.url))
+const output = fileURLToPath(new URL(layoutAudit ? '../artifacts/portal-layout-routes/' : process.argv.includes('--theme-audit') ? '../artifacts/theme-audit/' : '../artifacts/ui-consistency/', import.meta.url))
 const student = { id: 1, first_name: 'Maria', last_name: 'Santos', full_name: 'Maria Santos', student_name: 'Maria Santos', student_number: '2024-001', username: 'maria', program: 'BSIT', year_level: 2, section: 'A303', email: 'maria@example.com', email_verified: true, qualification_status: 'NEEDS_SERVICE' }
 const violation = { id: 1, student_id: 1, student_name: 'Maria Santos', student_number: '2024-001', exact_offense: 'Non-wearing, incomplete, or improper use of school uniform or ID', incident_date: '2026-10-05', severity: 'MINOR', status: 'OPEN', offense_indicator_level: 'MINOR_1' }
 const assignment = { id: 1, assignment_id: 1, violation_id: 1, student_id: 1, student_name: 'Maria Santos', first_name: 'Maria', last_name: 'Santos', student_number: '2024-001', required_hours: 4, remaining_hours: 2, department_name: 'Community Engagement and Student Support Department', status: 'IN_PROGRESS' }
@@ -175,7 +176,10 @@ try {
       for (const element of document.querySelectorAll('.student-summary-card,.student-directory-card,.dashboard-card,.management-metric,.student-section,.department-metrics > article,.app-modal:not(.app-modal--drawer)')) {
         if (!element.getClientRects().length) continue
         const style = getComputedStyle(element)
-        if (style.borderRadius !== '10px' || document.documentElement.dataset.theme === 'dark' && style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+        if (style.borderRadius !== '10px' || !element.matches('.app-modal') && style.boxShadow !== 'none') findings.push({ card: element.className, radius: style.borderRadius, shadow: style.boxShadow })
+      }
+      for (const element of document.querySelectorAll('.table-card,.form-card,.student-attendance-panel,.service-tracking-card,.department-dtr-filters,.student-roster-tools,.profile-card,.analytics-card,.report-filter-card')) {
+        if (element.getClientRects().length && !element.closest('.app-modal') && getComputedStyle(element).boxShadow !== 'none') findings.push({ card:element.className,shadow:getComputedStyle(element).boxShadow })
       }
       for (const element of document.querySelectorAll('.student-add-button,.directory-view-button,.theme-toggle,.notification-button,.app-modal-close,.student-directory-select,.department-header-actions button')) {
         if (!element.getClientRects().length) continue
@@ -196,7 +200,7 @@ try {
       assert.equal(await cleared.count(), expectedCleared, `${label}: cleared fixture is displayed`)
       if (expectedCleared) assert.equal(await cleared.first().evaluate((element) => element.classList.contains('clearance-cleared')), false, 'directory badges do not inherit clearance-card borders')
     }
-    if (process.argv.includes('--theme-audit')) {
+    if (process.argv.includes('--theme-audit') || layoutAudit) {
       await collectThemeAudit(label)
     }
     const layout = await page.evaluate(() => {
@@ -495,7 +499,7 @@ try {
   for (const role of process.argv.includes('--flows-only') ? [] : ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'DEPARTMENT_HEAD', 'STUDENT']) {
     user = { ...student, role, department_id: 1, department_name: 'Student Support', onboarding_required: false }
     const routes = APP_ROUTES.filter((route) => route.roles.includes(role) && !route.redirectTo && !['/account/password-change', '/student/onboarding'].includes(route.path))
-    for (const [width, height] of (process.argv.includes('--theme-audit') ? [390,768,1440,320,683,1920] : [390,768,1440,320,360,430,600,1024,1280,1366,1920]).map(width => [width, width < 768 ? 844 : 900])) {
+    for (const [width, height] of (layoutAudit ? [390,768,1440,320,1920] : process.argv.includes('--theme-audit') ? [390,768,1440,320,683,1920] : [390,768,1440,320,360,430,600,1024,1280,1366,1920]).map(width => [width, width < 768 ? 844 : 900])) {
       await page.setViewportSize({ width, height })
       for (const theme of ['light', 'dark']) {
         for (const [index, route] of routes.entries()) {
@@ -503,7 +507,8 @@ try {
           await open(route.path, index !== 0)
           await changeTheme(theme)
           await check(`${role} ${route.path} ${theme} ${width}`, width)
-          if (process.argv.includes('--theme-audit')) console.log(`AUDIT ${role} ${route.path} ${theme} ${width}`)
+          if (process.argv.includes('--theme-audit') || layoutAudit) console.log(`AUDIT ${role} ${route.path} ${theme} ${width}`)
+          if (layoutAudit && /dashboard|account-settings|community-service|student\/violations|department\/dtr/.test(route.path)) await page.screenshot({path:`${output}${role}-${route.view.replaceAll(' ','-')}-${theme}-${width}.png`,fullPage:true,animations:'disabled'})
           if (process.argv.includes('--theme-audit') && [390,1440].includes(width)) {
             for (const summary of await page.locator('.settings-disclosure > summary').all()) {
               await summary.click()
@@ -557,9 +562,10 @@ try {
         await page.screenshot({ path: `${output}${role}-${theme}-${width}.png`, fullPage: true, animations: 'disabled' })
       }
     }
-    console.log(`PASS ${role}: ${routes.length} routes at 390/768/1440px; representative routes at eight additional widths; light/dark`)
+    console.log(`PASS ${role}: ${routes.length} routes at 390/768/1440px; representative routes at ${layoutAudit?'320/1920px':'additional widths'}; light/dark`)
   }
 
+  if (!layoutAudit) {
   // Stress the shared patterns with real-length content and truthful failure states.
   for (const width of [1920, 320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 })
@@ -747,11 +753,12 @@ try {
       await check(`${flag} ${theme} ${width}`, width, false)
     }
   }
+  }
   await writeFile(`${output}${process.argv.includes('--flows-only') ? 'coverage-flows' : 'coverage-routes'}.json`, JSON.stringify(coverage, null, 2))
   assert.deepEqual(errors, [], 'Browser runtime errors')
-  console.log('PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
+  console.log(layoutAudit?'PASS authenticated route layout and theme coverage.':'PASS fresh loads, collapse/expand, dialogs, zoom layouts, public/authentication flows.')
   }
-  if (process.argv.includes('--theme-audit')) {
+  if (process.argv.includes('--theme-audit') || layoutAudit) {
     await writeFile(`${output}theme-audit${themeAuditSuffix}.json`, JSON.stringify(themeFindings, null, 2))
     const unique = [...new Map(themeFindings.map((finding) => [`${finding.selector}:${finding.issue}:${finding.color || finding.background}`, finding])).values()]
     console.log(JSON.stringify(unique.slice(0, 40), null, 2))

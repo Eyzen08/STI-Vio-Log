@@ -259,7 +259,7 @@
 .service-active-panel progress { width:100%;height:10px;accent-color:var(--action-primary-surface); }
 .qr-attendance .service-target-ready { background:#168649;border-color:#168649; }
 .active-attendance-table tr:has(.target-complete,.timer-limit-notice) .time-out-button,
-.service-assignment-list article:has(.target-complete,.timer-limit-notice) .time-out-button { background:var(--color-success);border-color:var(--color-success);color:white; }
+.service-assignment-list article:has(.target-complete,.timer-limit-notice) .time-out-button { background:var(--status-success-surface);border-color:var(--status-success-text);color:var(--status-success-text); }
 .service-workflow-modal textarea { width:100%;min-height:80px;margin-top:8px; }
 .service-workflow-modal .service-confirm-actions button { min-height:44px; }
 .qr-attendance label:has(select[name=assignment_id]) { display:grid;gap:8px;margin:16px 0; }

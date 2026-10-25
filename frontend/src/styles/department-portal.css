@@ -1,6 +1,6 @@
 .department-portal .page-content { padding-bottom:28px; }
 .department-portal :is(.department-page,.qr-attendance,.staff-profile-card,.account-settings-page,.student-notifications-page) { width:100%; max-width:none; margin:0 auto; min-width:0; color:var(--text-primary); }
-.department-portal :is(.department-page,.account-settings-page,.student-notifications-page) { display:grid; gap:var(--page-gap); }
+.department-portal :is(.department-page,.student-notifications-page) { display:grid; gap:var(--page-gap); }
 .department-portal :is(h2,h3,h4,strong,dd,p,small,span) { overflow-wrap:anywhere; }
 .department-portal :is(.department-page,.qr-attendance,.staff-profile-card,.account-settings-page,.student-notifications-page) :is(button,a,summary,input,select):focus-visible { outline:2px solid var(--link-color); outline-offset:3px; }
 .department-portal :is(button,input,select,summary) { min-height:44px; }
@@ -21,9 +21,17 @@
 .department-portal .department-metrics span { font-size:var(--text-sm); color:var(--text-secondary); }
 .department-portal .department-metrics strong { font-size:var(--text-metric); color:var(--text-primary); line-height:1.2; }
 .department-dashboard-grid { display:grid; grid-template-columns:minmax(0,1.7fr) minmax(280px,1fr); align-items:start; gap:var(--page-gap); }
-.department-dashboard-main { display:grid; min-width:0; align-content:start; gap:var(--page-gap); }
+.department-dashboard-main,.department-dashboard-side { display:grid; min-width:0; align-content:start; gap:var(--page-gap); }
 .department-dashboard-grid .table-card { margin:0; }
-.department-activity-list > article { display:flex; justify-content:space-between; gap:16px; padding:14px 0; border-top:1px solid var(--border-subtle); }
+.department-activity-list > article { display:flex; justify-content:space-between; align-items:start; gap:12px; padding:12px 0; border-top:1px solid var(--border-subtle); }
+.department-activity-list > article > :last-child { flex-shrink:0; }
+.department-near-list > article { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 12px; padding:12px 0; border-top:1px solid var(--border-subtle); }
+.department-near-list small { display:block; margin-top:4px; color:var(--text-secondary); }
+.department-near-list dl { grid-column:1/-1; display:flex; flex-wrap:wrap; gap:8px 24px; margin:0; }
+.department-near-list dl > div { display:flex; gap:8px; }
+.department-near-list :is(dt,small) { font-size:var(--text-sm); }
+.department-near-list dt { color:var(--text-secondary); }
+.department-near-list dd { margin:0; font-weight:600; }
 .department-activity-list > article > div { display:grid; gap:6px; min-width:0; align-content:start; }
 .department-activity-list small,.department-activity-list time,.department-caption { color:var(--text-secondary); font-size:var(--text-sm); }
 .department-portal .department-progress-summary > strong { font-size:var(--text-lg); }
@@ -34,7 +42,11 @@
 .department-progress-summary dt { color:var(--text-secondary); }
 .department-portal :is(.student-roster-tools,.department-dtr-filters) { padding:16px 20px; margin:0; border:1px solid var(--border-subtle); border-radius:10px; background:var(--surface-raised); display:grid; gap:12px; align-items:end; }
 .department-portal .student-roster-tools { grid-template-columns:minmax(0,2fr) minmax(180px,1fr); }
-.department-portal .department-dtr-filters { grid-template-columns:repeat(4,minmax(0,1fr)) auto; }
+.department-portal .department-dtr-filters { grid-template-columns:repeat(4,minmax(0,1fr)); align-items:stretch; }
+.department-portal .department-dtr-filters > label { display:grid; grid-template-rows:auto var(--filter-height) 1fr; align-content:start; gap:8px; }
+.department-portal .department-dtr-filters > label > span { margin:0; }
+.department-portal .department-dtr-filters small { color:var(--text-secondary); font-size:var(--text-sm); font-weight:400; line-height:1.5; }
+.department-portal .department-dtr-filters > button { grid-column:1/-1; justify-self:end; }
 .department-portal label { min-width:0; }
 .department-portal label > span:not(.portal-avatar):not(.avatar-choice-check) { display:block; margin-bottom:6px; }
 .department-portal :is(.department-student-grid,.service-assignment-list) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
@@ -48,9 +60,18 @@
 .department-portal .department-student-grid dt { color:var(--text-secondary); font-size:var(--text-sm); }
 .department-portal .department-student-grid dd { margin:4px 0 0; font-weight:600; }
 .department-portal .department-student-grid article > p { color:var(--text-secondary); font-size:var(--text-sm); margin-bottom:0; }
-.department-portal .service-assignment-list:has(.department-service-countdown) { grid-template-columns:1fr; }
+.department-portal .department-active-sessions { grid-template-columns:1fr; align-items:start; }
+.department-portal .department-active-session { display:grid; align-content:start; gap:16px; }
+.department-live-heading { display:flex; justify-content:space-between; align-items:start; flex-wrap:wrap; gap:12px; }
+.department-live-heading > div:first-child { flex:1; min-width:140px; }
+.department-live-heading h4 { margin:0 0 4px; font-size:var(--text-base); }
+.department-live-heading :is(span,p) { color:var(--text-secondary); font-size:var(--text-sm); }
+.department-live-heading p { margin:8px 0 0; }
 .department-portal .service-assignment-heading > div:first-child { flex:1 1 180px; min-width:0; }
-.department-portal .department-service-countdown { display:grid; gap:8px; flex:0 1 420px; min-width:0; align-items:start; justify-items:start; text-align:left; }
+.department-portal .department-service-countdown { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px 16px; min-width:0; text-align:left; }
+.department-portal .department-service-countdown > :is(.service-clock-details,.timer-limit-notice) { grid-column:1/-1; }
+.department-portal .department-active-session .service-attendance-controls { margin:0; }
+.department-portal .department-active-session .service-attendance-controls button { margin:0; }
 .department-portal .department-session-clock { font-size:var(--text-section-title); font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); }
 .department-portal .service-clock-details { width:100%; display:grid; gap:6px; color:var(--text-secondary); }
 .department-portal .timer-limit-notice { display:block; width:100%; padding:10px 12px; border-radius:8px; background:var(--status-warning-surface); color:var(--status-warning-text); font-size:var(--text-sm); }
@@ -84,8 +105,6 @@
 .department-portal .staff-profile-card :is(dt,.profile-value-missing,.profile-help p) { color:var(--text-secondary); }
 .department-portal .staff-profile-card dd { margin:4px 0 0; color:var(--text-primary); }
 .department-portal .staff-profile-card .profile-help { padding:16px 24px; background:transparent; border-color:var(--border-subtle); }
-.department-portal .account-settings-page { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
-.department-portal .account-settings-page .account-summary-card { grid-column:1/-1; }
 .department-portal .account-settings-page :is(.avatar-settings,.form-card) { margin:0; align-self:start; }
 .department-portal .account-password-form { max-width:var(--form-max-width); padding:0; }
 .department-portal .account-password-form .password-input-wrap { display:block; position:relative; }
@@ -97,12 +116,16 @@
 .department-portal .notification-list > article { padding:16px 0; border-radius:0; border-bottom:1px solid var(--border-subtle); }
 .department-portal .notification-actions { display:flex; flex-wrap:wrap; gap:8px; }
 .department-portal .notification-heading { flex-wrap:wrap; gap:8px; }
-@media(max-width:1023px) {
+@media(min-width:1280px) {
+  .department-portal .department-active-sessions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:1199px) {
   .department-dashboard-grid { grid-template-columns:1fr; }
+}
+@media(max-width:1023px) {
   .department-portal .qr-stage-grid { grid-template-columns:1fr; }
   .department-portal .department-dtr-filters { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .department-portal .department-dtr-filters button { grid-column:1/-1; }
-  .department-portal .account-settings-page { grid-template-columns:1fr; }
 }
 @media(max-width:767px) {
   .department-portal .main-panel { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }

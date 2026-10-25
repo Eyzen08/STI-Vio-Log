@@ -76,6 +76,12 @@
 .student-page .violation-details { padding:24px; display:grid; gap:24px; }
 .student-page .violation-description p { white-space:pre-wrap; overflow-wrap:anywhere; }
 .student-page .violation-details :is(.service-progress,.lifecycle-section) { padding:0; border:0; background:transparent; }
+.app-shell .student-page .violation-details .service-progress { padding:0; border:0; border-radius:0; background:transparent !important; box-shadow:none !important; display:grid; gap:12px; }
+.student-page .service-progress-heading { align-items:baseline; flex-wrap:wrap; gap:8px 16px; }
+.student-page .service-progress-heading > span { white-space:nowrap; }
+.student-page .service-progress .progress-track { margin:0; }
+.student-page .service-progress .service-hours-grid { margin:0; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; }
+.student-page .service-progress .service-hours-grid > div { min-width:0; }
 .student-page .violation-details .service-hours-grid { gap:16px; }
 .app-shell .student-page .qr-display-card { width:min(440px,100%); padding:24px; border-radius:12px; box-shadow:none; border-color:var(--border-subtle); background:var(--surface-raised); }
 .app-shell .student-page .student-qr-frame { width:min(320px,100%); aspect-ratio:816 / 1024; padding:0; border:0; border-radius:0; background:#fff !important; box-shadow:none; }

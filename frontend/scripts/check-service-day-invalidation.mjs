@@ -24,6 +24,7 @@ try {
   for(const role of ['DISCIPLINE_ADMIN','DISCIPLINE_OFFICE','DEPARTMENT_HEAD','STUDENT']) for(const width of [1366,390]) for(const theme of ['light','dark']) {
     const user={id:99,role,full_name:'Test Staff',first_name:'Test',last_name:'Staff',department_id:1,email_verified:true}
     const page=await browser.newPage({viewport:{width,height:900},bypassCSP:true})
+    await page.context().addCookies([{name:'sti_csrf',value:'invalidation-fixture',url:origin}])
     const errors=[],invalidated=new Map();let stale=role==='DISCIPLINE_ADMIN',posts=0,previewCount=0,correction=null,sessionLoads=0
     const currentAssignment=()=>({...assignment,completed_hours:correction ?? 2-invalidated.size,remaining_hours:20-(correction ?? 2-invalidated.size)})
     page.on('pageerror',error=>errors.push(error.message))
@@ -34,6 +35,7 @@ try {
       let status=200
       let body={success:true,students:[student],student,profile:user,assignments:[currentAssignment()],sessions:sessions().filter(session=>session.status==='ACTIVE'),notifications:[],summary:{},destinations:[],departments:[],officers:[],accounts:[],records:[],rows:[],entries:[],logs:[],conversations:[],recipients:[],messages:[],violations:[],violationTypes:[],clearanceRecords:[],results:[],pagination:{page:1,totalPages:1,total:1}}
       if(path==='/api/auth/session')body={user,csrf_token:'invalidation-fixture'}
+      if(path==='/api/auth/csrf')body={success:true,csrf_token:'invalidation-fixture'}
       if(path==='/api/auth/legal')body={legal:{required:false}}
       if(path==='/api/community-service/19')body={assignment:currentAssignment()}
       if(path==='/api/community-service/19/sessions'){sessionLoads++;body={sessions:sessions()}}
@@ -74,8 +76,8 @@ try {
       await dialog.getByLabel('Reason',{exact:false}).fill('  Student did not return  ')
       await page.keyboard.press('Tab')
       assert.equal(await dialog.evaluate(element=>element.contains(document.activeElement)),true)
-      assert.equal(await dialog.evaluate(element=>getComputedStyle(element).boxShadow),'none')
-      assert.equal(await dialog.evaluate(element=>getComputedStyle(element).borderTopLeftRadius),'8px')
+      assert.equal(await dialog.evaluate(element=>getComputedStyle(element).boxShadow==='none'),theme==='dark','Dialog elevation follows the theme while content cards stay flat')
+      assert.equal(await dialog.evaluate(element=>getComputedStyle(element).borderTopLeftRadius),'10px','Dialogs share the portal card radius')
       const contrast=await dialog.locator('.service-invalidation-warning').evaluate(element=>{
         const style=getComputedStyle(element)
         const luminance=color=>color.match(/[\d.]+/g).slice(0,3).map(Number).map(value=>value/255).map(value=>value<=.04045?value/12.92:((value+.055)/1.055)**2.4).reduce((sum,value,index)=>sum+value*[.2126,.7152,.0722][index],0)

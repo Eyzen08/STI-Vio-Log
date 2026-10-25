@@ -18,9 +18,11 @@ import '/src/App.css'
 import '/src/styles/portal-system.css'
 import '/src/styles/portal-overrides.css'
 import '/src/styles/legal-policy.css'
+import '/src/styles/department-portal.css'
 const query = new URLSearchParams(location.search)
 document.documentElement.dataset.theme = query.get('theme') || 'light'
 const role = query.get('role') || 'DISCIPLINE_ADMIN'
+document.querySelector('.app-shell').className='app-shell '+(role==='DEPARTMENT_HEAD'?'department-portal':role==='STUDENT'?'student-portal':'admin-portal')
 const root = createRoot(document.getElementById('root'))
 window.renderSettings = searchParams => root.render(React.createElement(role === 'DISCIPLINE_ADMIN' ? AdminAccountSettings : AccountSecuritySettings, {user:{id:1,username:'qa.account',role,first_name:'Juan',last_name:'Dela Cruz'}, searchParams, onSession:()=>{}}))
 window.renderSettings(query.has('security') ? '?section=security' : '')
@@ -62,6 +64,10 @@ try {
     const disclosures = page.locator('details[name="account-settings"]')
     await expect(disclosures).toHaveCount(role === 'DISCIPLINE_ADMIN' ? 3 : role === 'STUDENT' ? 1 : 2)
     await expect(page.locator('details[open]')).toHaveCount(0)
+    const settingsWidth = await page.locator('.admin-settings-page,.account-settings-page').evaluate(el=>el.getBoundingClientRect().width)
+    for (const disclosure of await disclosures.all()) {
+      assert.ok(Math.abs((await disclosure.boundingBox()).width-settingsWidth)<2,`${role} ${theme} ${width}: settings rows fill available width`)
+    }
     if (role === 'DISCIPLINE_ADMIN') await page.screenshot({ path: `${artifacts}collapsed-${theme}-${width}.png`, fullPage: true })
     await expect(page.locator('.avatar-choice').first()).not.toBeVisible()
     const avatar = disclosures.filter({ has: page.locator('summary strong', { hasText: 'Change Avatar' }) })

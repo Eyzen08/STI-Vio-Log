@@ -1,5 +1,9 @@
-.app-shell :is(.admin-settings-page, .account-settings-page) { display: flex; flex-direction: column; gap: 20px; min-height: calc(100dvh - var(--topbar-height) - 40px); }
+.app-shell :is(.admin-settings-page, .account-settings-page) { display: flex; flex-direction: column; align-items: stretch; gap: var(--page-gap); min-height: calc(100dvh - var(--topbar-height) - 40px); }
 .settings-list { display: grid; gap: 12px; }
+.settings-list, .settings-list > section { width: 100%; min-width: 0; }
+.app-shell .account-summary-card.portal-page-header { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); align-items: start; }
+.account-summary-card dl { min-width: 0; }
+.account-summary-card dl > div { min-width: 0; }
 .settings-disclosure { min-width: 0; border: 1px solid var(--border-subtle); border-radius: var(--card-radius); background: var(--surface-raised); color: var(--text-primary); }
 .settings-disclosure > summary { display: flex; align-items: center; gap: 16px; min-height: 84px; padding: 16px 20px; box-sizing: border-box; list-style: none; cursor: pointer; }
 .settings-disclosure > summary::-webkit-details-marker { display: none; }
@@ -15,6 +19,7 @@
 .settings-footer { margin-top: auto; padding: 20px 0 4px; border-top: 1px solid var(--border-subtle); }
 .settings-footer .account-policy-links { display: flex; flex-wrap: wrap; gap: 16px 24px; margin: 0; padding: 0; border: 0; }
 @media (max-width: 600px) {
+  .app-shell .account-summary-card.portal-page-header { grid-template-columns: minmax(0, 1fr); }
   .settings-disclosure > summary { gap: 12px; padding: 16px; }
   .app-shell :is(.admin-settings-page, .account-settings-page) { min-height: calc(100dvh - var(--topbar-height) - 120px); }
 }

@@ -2872,11 +2872,14 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
     .certificate-student-card,.clearance-hero,.attendance-notice,.record-metric,.record-case-card,
     .record-overview-card,.service-detail-card,.service-student-card,.qr-assignment-card,.drawer-form-card,
     .violation-card,.violation-history-card,.violation-records-card,.profile-card,.notifications-hero,
-    .student-roster-tools,.noncompliance-toolbar,.department-dtr-filters,.component-health-card,
-    .profile-menu-popover,.student-account-menu,.student-directory-select-menu,.app-modal
+    .student-roster-tools,.noncompliance-toolbar,.department-dtr-filters,.component-health-card
   ), & :is(.department-metrics,.signature-directory,.duplicate-source-grid) > article {
     border-radius:var(--card-radius) !important;
-    box-shadow:var(--shadow-sm) !important;
+    box-shadow:none !important;
+  }
+  & :is(.profile-menu-popover,.student-account-menu,.student-directory-select-menu,.app-modal) {
+    border-radius:var(--card-radius) !important;
+    box-shadow:var(--shadow-md) !important;
   }
 
   & :is(.dashboard-card,.management-metric,.student-summary-card,.officer-card):hover,
