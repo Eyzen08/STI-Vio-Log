@@ -211,6 +211,9 @@ async function checkQrLayouts() {
 }
 
 async function checkCompactQr(waiting = false) {
+  await page.locator('.app-shell').evaluate(async el => {
+    await Promise.allSettled(el.getAnimations({ subtree: true }).filter(animation => Number.isFinite(animation.effect?.getComputedTiming().endTime)).map(animation => animation.finished))
+  })
   const workspace = await page.locator('.qr-attendance').boundingBox()
   const scanner = await page.locator('.scan-stage').boundingBox()
   const preview = await page.locator('.scanner-viewfinder').boundingBox()
