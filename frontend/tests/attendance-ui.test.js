@@ -33,6 +33,15 @@ test('active QR scanning uses the library guide without a second decorative fram
   assert.doesNotMatch(render('DepartmentQrScanner', { ...props, isScanning: true }), /class="scanner-frame"/)
 })
 
+test('QR verification and attendance share the details column before history', () => {
+  const html = render('DepartmentQrScanner', { form: { qr_code: '' }, historyError: 'History fixture' })
+  const start = html.indexOf('class="qr-details-column"')
+  assert.ok(start > html.indexOf('class="qr-stage-card scan-stage"'))
+  const details = html.slice(start, html.indexOf('class="qr-stage-card recent-stage"'))
+  assert.match(details, /class="qr-stage-card verify-stage"/)
+  assert.match(details, /class="qr-stage-card record-stage"[\s\S]*<\/article><\/div><\/div>/)
+})
+
 test('dashboard case status counts distinguish active states and combine resolved states', () => {
   const violations = ['OPEN', 'OPEN', 'IN_PROGRESS', 'PENDING', 'COMPLETE', 'CLEAR', 'INVALID_CANCEL'].map((status, id) => ({ id, status }))
   const summary = (props) => render('AdminDashboard', props).match(/<section class="dashboard-case-status"[\s\S]*?<\/section>/)?.[0] || ''

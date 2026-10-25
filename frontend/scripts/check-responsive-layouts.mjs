@@ -20,6 +20,7 @@ const conversation = { id: 45, student_id: 1, student_name: `${student.first_nam
 const audit = { id: 1, action: 'GOOGLE_LOGIN', actor_name: `${student.first_name} ${student.last_name}`, actor_username: student.student_number, actor_role: 'STUDENT', table_name: 'student_google_accounts', record_id: 4, created_at: new Date(now).toISOString(), context: { subject_name: `${student.first_name} ${student.last_name}`, subject_identifier: student.student_number }, description: 'Student signed in with linked Google identity.' }
 const payload = { students: Array.from({ length: 6 }, (_, i) => ({ ...student, id: i + 1 })), violations, assignments: [assignment], sessions: [], notifications: [], departments: [], officers: [], accounts: [], records: [], conversations: [], clearanceRecords: [], violationTypes: [], profile: { username: 'fixture.admin', first_name: 'Juan', last_name: 'Dela Cruz', email: '' }, avatar: { source: 'INITIALS' }, pagination: { total: 0, pages: 1 } }
 payload.sessions = sessions
+let qrScanResponse = { success: true, student, assignment, allowance: { available_minutes: 480 }, available_officers: [] }
 const server = await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), cacheDir: `${output}vite-cache`, server: { host: '127.0.0.1', port: 0 }, define: { 'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('fixture.apps.googleusercontent.com') } })
 await mkdir(output, { recursive: true })
 await server.listen()
@@ -74,7 +75,7 @@ await page.route('**/*', async route => {
     let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'fixture-csrf' } : url.pathname === '/api/auth/legal' ? { legal: { required: false } } : { success: true, ...payload }
     if (url.pathname === '/api/clearance/certificates') response = { certificates }
     if (url.pathname === '/api/clearance/signatures') response = { signatures: [] }
-    if (url.pathname === '/api/qr/scan') response = { success: true, student, assignment, allowance: { available_minutes: 480 }, available_officers: [] }
+    if (url.pathname === '/api/qr/scan') response = qrScanResponse
     if (url.pathname === '/api/clearance/certificates/students') response = { students: [] }
     if (url.pathname === '/api/audit-logs') response = { audit_logs: [audit], pagination: { page: 1, limit: 25, total: 1 }, filter_options: { actions: ['GOOGLE_LOGIN'], record_types: ['student_google_accounts'] } }
     if (url.pathname.startsWith('/api/messages/conversations')) response = { conversations: [conversation], conversation, messages: [{ id: 1, message_text: 'Local layout fixture message.', sent_by_me: false, created_at: new Date(now).toISOString(), sender_name: conversation.student_name }], pagination: { pages: 1, total: 1 } }
@@ -131,6 +132,7 @@ async function checkQrLayouts() {
     user = { id: 1, role, username: 'fixture', full_name: 'Fixture User', department_id: 1 }
     for (const width of [360, 390, 768, 1024, 1280, 1920]) {
       await page.setViewportSize({ width, height: 1000 })
+      await page.evaluate(() => sessionStorage.removeItem('service-attendance-qr:1'))
       await open(`${role === 'DEPARTMENT_HEAD' ? '/department' : '/admin'}/qr-scan`)
       await page.locator('.scanner-viewfinder').waitFor()
       for (const value of ['light', 'dark']) {
@@ -139,8 +141,10 @@ async function checkQrLayouts() {
           if (width >= 768 && await page.locator('.app-shell').evaluate(el => el.classList.contains('sidebar-collapsed')) !== collapsed) await page.getByRole('button', { name: collapsed ? 'Collapse Navigation' : 'Expand Navigation', exact: true }).click()
           const preview = await page.locator('.scanner-viewfinder').boundingBox()
           assert.ok(Math.abs(preview.width - preview.height) <= 1, 'QR preview is square')
+          await checkCompactQr(true)
           await fits('.qr-attendance')
           await inside('.scanner-control-row button,.qr-manual-field button', '.scan-stage')
+          await page.screenshot({ path: `${output}compact-qr-waiting-${role}-${width}-${value}-${collapsed}.png`, fullPage: true })
         }
       }
       await page.getByRole('button', { name: 'Start Camera', exact: true }).click()
@@ -204,6 +208,56 @@ async function checkQrLayouts() {
   await page.getByRole('button', { name: 'Verify', exact: true }).click()
   await page.locator('.verified-student').waitFor()
   user = null
+}
+
+async function checkCompactQr(waiting = false) {
+  const workspace = await page.locator('.qr-attendance').boundingBox()
+  const scanner = await page.locator('.scan-stage').boundingBox()
+  const preview = await page.locator('.scanner-viewfinder').boundingBox()
+  const details = await page.locator('.qr-details-column').boundingBox()
+  assert.ok(workspace.width <= 1201, 'QR workbench is capped at 1200px')
+  assert.ok(scanner.width <= 417 && preview.width <= 385, 'Scanner card and camera keep compact caps')
+  assert.ok(Math.abs(preview.width - preview.height) <= 1)
+  if (workspace.width <= 896) assert.ok(details.y >= scanner.y + scanner.height - 1, 'Narrow QR workspaces stack by available width')
+  else assert.ok(Math.abs(details.y - scanner.y) <= 1 && details.x >= scanner.x + scanner.width, 'Desktop QR details sit beside the camera')
+  assert.ok(await page.locator('.qr-details-column .record-stage').count(), 'Attendance stays beneath verification in the details column')
+  assert.deepEqual(await page.locator('.qr-stage-card').evaluateAll(nodes => nodes.map(el => getComputedStyle(el).padding).filter(value => value !== '16px')), [])
+  await fits('.qr-attendance')
+  await inside('.qr-attendance button,.qr-attendance input,.qr-attendance select', '.qr-attendance')
+  assert.ok((await page.locator('.qr-attendance button').evaluateAll(nodes => nodes.filter(el => el.getClientRects().length).map(el => el.getBoundingClientRect().height))).every(height => height >= 44))
+  if (waiting) {
+    assert.ok((await page.locator('.verify-stage').boundingBox()).height < 300, 'Waiting verification has natural compact height')
+    assert.ok((await page.locator('.record-stage').boundingBox()).height < 160)
+  }
+}
+
+async function checkCompactQrStates() {
+  const original = qrScanResponse
+  const populated = { ...original, student_status: 'Eligible for community service', available_officers: [{ officer_user_id: 1, first_name: 'Alexandria Catherine', last_name: 'Dela Cruz-Santos', role: 'DEPARTMENT_HEAD' }] }
+  try {
+    for (const role of ['DISCIPLINE_ADMIN', 'DEPARTMENT_HEAD']) {
+      user = { id: 1, role, username: 'fixture', full_name: 'Fixture User', department_id: 1 }
+      for (const width of [390, 1280]) {
+        await page.setViewportSize({ width, height: 1000 })
+        for (const state of ['verified', 'multiple', 'active', 'paused', 'error']) {
+          qrScanResponse = state === 'error' ? { success: false, message: 'Fixture verification unavailable. Please enter the code again.' } : { ...populated, ...(state === 'multiple' ? { assignments: [assignment, { ...assignment, id: 2 }] } : {}), ...(['active', 'paused'].includes(state) ? { active_session: state === 'paused' ? sessions[1] : session } : {}) }
+          await page.evaluate(() => sessionStorage.removeItem('service-attendance-qr:1'))
+          await open(`${role === 'DEPARTMENT_HEAD' ? '/department' : '/admin'}/qr-scan`)
+          await page.locator('input[name="qr_code"]').fill(`compact-${state}`)
+          await page.getByRole('button', { name: 'Verify', exact: true }).click()
+          await page.locator(state === 'error' ? '.record-stage .error-message' : '.verified-student').waitFor()
+          for (const value of ['light', 'dark']) {
+            await theme(value)
+            await checkCompactQr()
+            if (state === 'multiple') await page.locator('select[name="assignment_id"]').waitFor()
+            if (state === 'active') await page.getByRole('button', { name: 'Pause', exact: true }).waitFor()
+            if (state === 'paused') await page.getByRole('button', { name: 'Resume', exact: true }).waitFor()
+            await page.screenshot({ path: `${output}compact-qr-${state}-${role}-${width}-${value}.png`, fullPage: true })
+          }
+        }
+      }
+    }
+  } finally { qrScanResponse = original; user = null }
 }
 
 async function checkMessageStates() {
@@ -283,6 +337,7 @@ async function checkMessageStates() {
 try {
   await open('/login')
   await checkQrLayouts()
+  await checkCompactQrStates()
   await checkMessageStates()
   for (const width of [360, 390, 768, 1024, 1280, 1920]) {
     await page.setViewportSize({ width, height: 1000 })
