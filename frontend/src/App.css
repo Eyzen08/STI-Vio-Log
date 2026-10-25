@@ -4045,8 +4045,6 @@ a {
   .messages-inbox { height: auto; min-height: calc(100vh - 120px); }
   .messages-workspace { min-height: 650px; grid-template-columns: 1fr; }
   .conversation-pane { border-right: 0; }
-  .messages-inbox.has-open-thread .conversation-pane { display: none; }
-  .messages-inbox:not(.has-open-thread) .chat-pane { display: none; }
   .chat-mobile-back { display: inline-flex; padding: 7px 9px; border: 0; background: transparent; color: #0863bb; font-weight: 700; }
 }
 

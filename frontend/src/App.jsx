@@ -144,6 +144,8 @@ function App() {
   const [qrFacingMode, setQrFacingMode] = useState('environment')
   const qrDecodeBusyRef = useRef(false)
   const qrActionBusyRef = useRef(false)
+  const qrCameraLayoutRef = useRef(null)
+  const qrCameraStopVersionRef = useRef(0)
 
   /*
    * IMPORTANT:
@@ -1313,6 +1315,8 @@ function App() {
       setQrScanner(scanner)
       setIsQrScanning(true)
 
+      const reader = document.getElementById('qr-reader')
+      let previousWidth = reader.parentElement.clientWidth
       await scanner.start(
         { facingMode },
 
@@ -1358,6 +1362,22 @@ function App() {
            */
         }
       )
+      if (!reader.isConnected || qrDecodeBusyRef.current) return
+      // The decoder computes its crop once at start; rebuild it after layout changes.
+      const observer = new ResizeObserver(() => {
+        if (!reader.isConnected || !reader.clientWidth || Math.abs(reader.clientWidth - previousWidth) < 1) return
+        previousWidth = reader.clientWidth
+        clearTimeout(qrCameraLayoutRef.current?.timer)
+        const timer = setTimeout(async () => {
+          if (!scanner.isScanning || qrDecodeBusyRef.current) return
+          const restartVersion = qrCameraStopVersionRef.current + 1
+          await stopQrScanner(scanner)
+          if (qrCameraStopVersionRef.current === restartVersion && reader.isConnected) await startQrScanner(facingMode, true)
+        }, 200)
+        qrCameraLayoutRef.current = { scanner, observer, timer }
+      })
+      qrCameraLayoutRef.current = { scanner, observer }
+      observer.observe(reader)
     } catch (error) {
       console.error(
         'QR scanner error:',
@@ -1377,6 +1397,10 @@ function App() {
   const stopQrScanner = async (
     scanner = qrScanner
   ) => {
+    qrCameraStopVersionRef.current += 1
+    qrCameraLayoutRef.current?.observer.disconnect()
+    clearTimeout(qrCameraLayoutRef.current?.timer)
+    qrCameraLayoutRef.current = null
     if (!scanner) {
       setIsQrScanning(false)
       setQrScanner(null)
@@ -1420,6 +1444,11 @@ function App() {
 
   useEffect(() => {
     return () => {
+      if (qrCameraLayoutRef.current?.scanner === qrScanner) {
+        qrCameraLayoutRef.current.observer.disconnect()
+        clearTimeout(qrCameraLayoutRef.current.timer)
+        qrCameraLayoutRef.current = null
+      }
       if (qrScanner) {
         try {
           if (qrScanner.isScanning) {

@@ -9,7 +9,7 @@ let server
 const components = {}
 before(async () => {
   server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
-  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'StudentProfile', 'StudentViolations', 'StudentQr', 'StudentClearance', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'StudentAcademicFields', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner']) {
+  for (const name of ['AttendanceIndicator', 'ServiceCountdown', 'AdminActiveAttendance', 'StudentDashboard', 'StudentCommunityService', 'StudentProfile', 'StudentViolations', 'StudentQr', 'StudentClearance', 'AdminDashboard', 'DashboardQuickActions', 'StudentManagement', 'StudentAcademicFields', 'ViolationManagement', 'CommunityServiceManagement', 'DepartmentQrScanner', 'MessagesPage']) {
     components[name] = (await server.ssrLoadModule(`/src/components/${name}.jsx`)).default
   }
   components.StudentRecordContent = (await server.ssrLoadModule('/src/components/StudentRecordDrawer.jsx')).StudentRecordContent
@@ -20,6 +20,18 @@ before(async () => {
 })
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
+
+test('Messages heading and New Message belong to the conversation column', () => {
+  const html = render('MessagesPage', { token: 'fixture', role: 'DISCIPLINE_ADMIN' })
+  assert.ok(html.indexOf('class="conversation-pane"') < html.indexOf('class="messages-page-heading'), 'The chat must not sit beneath a page-wide heading')
+  assert.ok(html.indexOf('class="messages-new-button"') < html.indexOf('class="conversation-pane-header"'))
+})
+
+test('active QR scanning uses the library guide without a second decorative frame', () => {
+  const props = { form: { qr_code: '' } }
+  assert.match(render('DepartmentQrScanner', props), /class="scanner-frame"/)
+  assert.doesNotMatch(render('DepartmentQrScanner', { ...props, isScanning: true }), /class="scanner-frame"/)
+})
 
 test('dashboard case status counts distinguish active states and combine resolved states', () => {
   const violations = ['OPEN', 'OPEN', 'IN_PROGRESS', 'PENDING', 'COMPLETE', 'CLEAR', 'INVALID_CANCEL'].map((status, id) => ({ id, status }))

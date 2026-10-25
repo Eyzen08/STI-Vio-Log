@@ -995,19 +995,20 @@
   color: #172033 !important;
 }
 
-/* Messages reserves the viewport for reading, with a compact page toolbar.
-   These scoped rules follow the shared portal header and its mobile variants. */
-.main-panel--messages .messages-page-heading.portal-page-header {
+/* The inbox heading belongs to the list column, leaving the chat full height. */
+:root .app-shell .main-panel--messages .conversation-pane .messages-page-heading.portal-page-header {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
   margin: 0;
-  padding: 8px 0;
+  padding: 16px;
   min-height: 0;
-  box-shadow: var(--shadow-sm);
+  border:0;
+  border-radius:0;
+  box-shadow:none;
 }
-.main-panel--messages .messages-page-heading.portal-page-header > div { width:auto; flex:1 1 auto; }
+.main-panel--messages .messages-page-heading.portal-page-header > div { width:100%; flex:0 1 auto; }
 .main-panel--messages .messages-page-heading .page-breadcrumb { display:none; }
 .main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0 0 4px; font-size:var(--text-page-title); line-height:1.2; }
 .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { margin:0; font-size:var(--text-base); line-height:1.5; }
@@ -1506,7 +1507,6 @@
   .app-shell .main-panel--messages .messages-page-heading.portal-page-header { flex-direction: column; align-items: stretch; }
   .app-shell .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
   .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width: 100%; }
-  .app-shell .main-panel--messages .messages-workspace { grid-template-columns: minmax(0,1fr); }
   .app-shell .topbar-title { gap: 4px; }
   .app-shell .mobile-brand { padding: 0 !important; gap: 4px; }
   .app-shell .mobile-brand img { width: 32px; }

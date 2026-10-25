@@ -23,12 +23,11 @@ test('mobile messages keep a compact heading and keyboard-safe composer', async 
   assert.match(baseCss, /\.chat-composer > button \{[^}]*align-self:\s*center;/s)
 })
 
-test('open mobile threads use the full message workspace without the page heading', async () => {
+test('open narrow inboxes use the full message workspace without the list column', async () => {
   const component = await readFile(new URL('../src/components/MessagesPage.jsx', import.meta.url), 'utf8')
   const css = readPortalStyles()
   assert.match(component, /messages-page messages-inbox\$\{selected\?' has-open-thread':''\}/)
-  assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread\s*\{[^}]*gap:\s*0;/)
-  assert.match(css, /@media \(max-width:900px\)[\s\S]*?\.messages-inbox\.has-open-thread > \.messages-page-heading\s*\{[^}]*display:\s*none;/)
+  assert.match(css, /@container messages \(max-width:48rem\)[\s\S]*?\.messages-inbox\.has-open-thread \.conversation-pane\s*\{[^}]*display:\s*none;/)
   assert.match(css, /\.messages-inbox:not\(\.has-open-thread\) \.chat-pane\s*\{\s*display:none;/)
 })
 
@@ -63,7 +62,7 @@ test('messages sent by the signed-in account align to the right', async () => {
 
 test('Messages previews use compact blue selected cards', async () => {
  const css=await readFile(new URL('../src/styles/messages-workflow.css',import.meta.url),'utf8')
- assert.match(css,/grid-template-columns:380px minmax/)
+ assert.match(readPortalStyles(),/grid-template-columns:clamp\(280px,24%,340px\) minmax/)
  assert.match(css,/min-height:78px/)
  assert.match(css,/background:#e0efff!important/)
  assert.match(css,/conversation-preview/)
