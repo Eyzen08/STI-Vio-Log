@@ -1,5 +1,9 @@
 .app-shell :is(.admin-settings-page, .account-settings-page) { display: flex; flex-direction: column; align-items: stretch; gap: var(--page-gap); min-height: calc(100dvh - var(--topbar-height) - 40px); }
 .settings-list { display: grid; gap: 12px; }
+.app-shell .account-password-form .password-input-wrap { position: relative; display: block; }
+.app-shell .account-password-form .password-input-wrap input { width: 100%; min-height: 50px; padding-right: 56px; }
+.app-shell .account-password-form .password-visibility { position: absolute; inset: 50% 3px auto auto; display: grid; place-items: center; width: 44px; min-width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 0; border-radius: 7px; box-shadow: none; transform: translateY(-50%); }
+.app-shell .account-password-form .password-visibility svg { display: block; width: 20px; height: 20px; }
 .settings-list, .settings-list > section { width: 100%; min-width: 0; }
 .app-shell .account-summary-card.portal-page-header { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); align-items: start; }
 .account-summary-card dl { min-width: 0; }

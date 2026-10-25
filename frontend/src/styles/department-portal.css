@@ -107,9 +107,6 @@
 .department-portal .staff-profile-card .profile-help { padding:16px 24px; background:transparent; border-color:var(--border-subtle); }
 .department-portal .account-settings-page :is(.avatar-settings,.form-card) { margin:0; align-self:start; }
 .department-portal .account-password-form { max-width:var(--form-max-width); padding:0; }
-.department-portal .account-password-form .password-input-wrap { display:block; position:relative; }
-.department-portal .account-password-form .password-input-wrap input { width:100%; padding-right:48px; }
-.department-portal .account-password-form .password-visibility { position:absolute; top:0; right:0; display:grid; place-items:center; width:44px; height:44px; padding:0; margin:0; border:0; background:transparent; color:var(--text-secondary); box-shadow:none; }
 .department-portal .avatar-preset-grid { grid-template-columns:repeat(auto-fit,minmax(64px,1fr)); }
 .department-portal .notification-filters { display:flex; flex-wrap:wrap; gap:12px; align-items:end; }
 .department-portal .notification-list { border:0; background:transparent; }

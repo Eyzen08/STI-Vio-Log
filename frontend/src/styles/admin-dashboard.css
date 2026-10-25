@@ -121,11 +121,12 @@
 /* Use the available content width, including an expanded tablet sidebar. */
 .admin-portal .admin-dashboard { container:portal-dashboard / inline-size; }
 .admin-portal .recent-violations-card { container:dashboard-records / inline-size; grid-row:auto; }
-@container portal-dashboard (width > 62rem) {
-  .admin-portal .admin-dashboard-grid { align-items:stretch; }
-  .admin-portal .dashboard-main-column { grid-template-rows:auto minmax(min-content,1fr); }
-  .admin-portal .dashboard-support-column { grid-template-rows:auto minmax(min-content,1fr) auto; }
-}
+.admin-portal .admin-dashboard .dashboard-case-status { margin-top:20px; padding-top:16px; border-top:1px solid var(--dash-line); }
+.admin-portal .admin-dashboard .dashboard-case-status h4 { margin:0 0 12px; color:var(--dash-ink); font-size:var(--text-base); font-weight:600; }
+.admin-portal .admin-dashboard .dashboard-case-status dl { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0; }
+.admin-portal .admin-dashboard .dashboard-case-status dl > div { padding:12px; border:1px solid var(--dash-line); border-radius:8px; }
+.admin-portal .admin-dashboard .dashboard-case-status dt { color:var(--dash-muted); font-size:var(--text-sm); }
+.admin-portal .admin-dashboard .dashboard-case-status dd { margin:4px 0 0; color:var(--dash-ink); font-size:var(--text-xl); font-weight:700; font-variant-numeric:tabular-nums; }
 @container portal-dashboard (max-width:62rem) {
   .admin-portal .admin-dashboard .admin-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .admin-portal .admin-dashboard-grid { grid-template-columns:minmax(0,1fr); }

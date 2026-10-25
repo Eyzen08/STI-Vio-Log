@@ -10,8 +10,10 @@ import {
 } from '../lib/googleIdentity.js'
 
 
-function GoogleStudentAccess({ clientId, onSession }) {
+function GoogleStudentAccess({ clientId, onSession, theme = 'light' }) {
   const buttonRef = useRef(null)
+  const themeRef = useRef(theme)
+  const renderButtonRef = useRef(null)
   const credentialHandlerRef = useRef(null)
   const attemptTimerRef = useRef(null)
   const startupRef = useRef(null)
@@ -77,14 +79,16 @@ function GoogleStudentAccess({ clientId, onSession }) {
           clientId,
           callback: (response) => credentialHandlerRef.current?.(response)
         }))
-        let renderedWidth
+        let renderedWidth, renderedTheme
         const renderButton = () => {
-          const configuration = googleButtonConfiguration({ width: buttonNode.clientWidth, onClick: beginGoogleAttempt })
-          if (configuration.width === renderedWidth) return
+          const configuration = googleButtonConfiguration({ width: buttonNode.clientWidth, onClick: beginGoogleAttempt, theme: themeRef.current })
+          if (configuration.width === renderedWidth && configuration.theme === renderedTheme) return
           renderedWidth = configuration.width
+          renderedTheme = configuration.theme
           buttonNode.replaceChildren()
           googleIdentity.renderButton(buttonNode, configuration)
         }
+        renderButtonRef.current = renderButton
         renderButton()
         resizeObserver = new ResizeObserver(renderButton)
         resizeObserver.observe(buttonNode)
@@ -96,10 +100,16 @@ function GoogleStudentAccess({ clientId, onSession }) {
     return () => {
       active = false
       resizeObserver?.disconnect()
+      renderButtonRef.current = null
       clearAttemptTimer()
       if (buttonNode) buttonNode.replaceChildren()
     }
   }, [clientId])
+
+  useEffect(() => {
+    themeRef.current = theme
+    renderButtonRef.current?.()
+  }, [theme])
 
   useEffect(() => () => {
     clearAttemptTimer()

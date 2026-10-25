@@ -33,9 +33,9 @@ export const googleIdentityConfiguration = ({ clientId, callback }) => ({
   use_fedcm_for_button: true
 })
 
-export const googleButtonConfiguration = ({ width, onClick }) => ({
+export const googleButtonConfiguration = ({ width, onClick, theme = 'light' }) => ({
   type: 'standard',
-  theme: 'outline',
+  theme: theme === 'dark' ? 'filled_black' : 'outline',
   size: 'large',
   text: 'continue_with',
   shape: 'rectangular',

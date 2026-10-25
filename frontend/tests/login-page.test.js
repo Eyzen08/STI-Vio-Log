@@ -18,7 +18,7 @@ test('redesigned login keeps every existing authentication entry point', () => {
   assert.match(source, /onSubmit=\{onSubmit\}/)
   assert.match(source, /href="\/forgot-password"/)
   assert.doesNotMatch(source, /href="\/register"/)
-  assert.match(source, /<GoogleStudentAccess clientId=\{googleClientId\} onSession=\{onGoogleSession\}/)
+  assert.match(source, /<GoogleStudentAccess clientId=\{googleClientId\} onSession=\{onGoogleSession\} theme=\{theme\}/)
   assert.match(source, /<PasswordField/)
   assert.match(source, /href="\/privacy"/)
   assert.match(source, /href="\/terms"/)
@@ -118,7 +118,13 @@ test('authentication has one responsive style owner and preserves campus image l
   assert.match(loginCssSource, /width: min\(480px, 100%\)/)
   assert.match(loginCssSource, /height: calc\(100dvh - 48px\)/)
   assert.match(loginCssSource, /@media \(max-width: 1023px\)/)
-  assert.match(loginCssSource, /height: 144px; min-height: 144px/)
+  assert.doesNotMatch(loginCssSource, /height: 144px; min-height: 144px/)
   assert.match(appCssSource, /\.login-campus-image\s*\{[^}]*object-fit:\s*cover;/s)
   assert.doesNotMatch(portalCssSource, /login-form--outlined/)
+})
+
+test('sign-in branding uses the approved discipline motto and supporting line', () => {
+  assert.match(source, /Discipline with purpose\.<\/span><span>Progress with confidence\./)
+  assert.match(source, /Your records\. Your responsibilities\. Your progress\./)
+  assert.doesNotMatch(source, /A clearer way|Take your next step/)
 })

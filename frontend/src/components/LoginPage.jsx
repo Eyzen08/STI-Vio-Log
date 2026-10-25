@@ -45,8 +45,8 @@ function LoginPage({ form, error, invalidCredentials=false, connectionProgress='
       <div className="login-brand-mark"><img src={stiVioLogLogoTransparent} alt="STI Vio-Log" width="420" height="236" fetchPriority="high"/></div>
       <div className="login-intro-content">
         <span className="login-kicker">STI Global City</span>
-        <h2>A clearer way<br /><span>forward.</span></h2>
-        <p>Your records. Your progress. Your campus portal. Take your next step with STI Vio-Log.</p>
+        <h2><span>Discipline with purpose.</span><span>Progress with confidence.</span></h2>
+        <p>Your records. Your responsibilities. Your progress.</p>
         <div className="login-journey-labels" aria-label="Portal features"><span>Records</span><i aria-hidden="true">/</i><span>Service</span><i aria-hidden="true">/</i><span>Clearance</span></div>
       </div>
       <footer className="login-assurance"><span>Discipline. Accountability. Progress.</span><small>© {new Date().getFullYear()} STI Global City</small></footer>
@@ -68,7 +68,7 @@ function LoginPage({ form, error, invalidCredentials=false, connectionProgress='
             {error&&<p className="error-message" id="login-error" role="alert" aria-live="polite">{error}</p>}
             <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing In…':'Sign In'}</button>
           </form>
-          <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession}/>
+          <GoogleStudentAccess clientId={googleClientId} onSession={onGoogleSession} theme={theme}/>
           <p className="login-first-signin-note"><strong>First Time Here?</strong> Use your student number and the temporary password issued by the Discipline Office.</p>
         </>}
         <footer className="login-footer"><p className="auth-help">Need help? Contact the Discipline Office.</p>

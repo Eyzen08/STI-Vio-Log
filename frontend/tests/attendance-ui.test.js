@@ -21,6 +21,21 @@ before(async () => {
 after(async () => { await server?.close() })
 const render = (name, props) => renderToStaticMarkup(createElement(components[name], { onFieldChange() {}, onFiltersChange() {}, ...props }))
 
+test('dashboard case status counts distinguish active states and combine resolved states', () => {
+  const violations = ['OPEN', 'OPEN', 'IN_PROGRESS', 'PENDING', 'COMPLETE', 'CLEAR', 'INVALID_CANCEL'].map((status, id) => ({ id, status }))
+  const summary = (props) => render('AdminDashboard', props).match(/<section class="dashboard-case-status"[\s\S]*?<\/section>/)?.[0] || ''
+  const html = summary({ violations })
+  for (const [label, count] of [['Open', 2], ['In Progress', 1], ['Pending', 1], ['Resolved', 2]]) assert.ok(html.includes(`<dt>${label}</dt><dd>${count}</dd>`), label)
+  for (const props of [{ violations, loading: true }, { violations, error: 'Unavailable' }]) assert.equal((summary(props).match(/<dd>—<\/dd>/g) || []).length, 4)
+  assert.equal((summary({ violations: [] }).match(/<dd>0<\/dd>/g) || []).length, 4)
+})
+
+test('student records retain labeled fields and actions in card layouts', () => {
+  const html = render('StudentManagement', { students: [{ id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: 'TEST-1' }] })
+  for (const label of ['Student', 'Academic Info', 'Violations', 'Community Service', 'Clearance', 'Action']) assert.ok(html.includes(`data-label="${label}"`), label)
+  assert.match(html, /aria-label="View Student Ana Reyes"/)
+})
+
 test('paused attendance stays active and staff can resume or time out', () => {
   const session = {id:77,session_id:77,student_id:1,status:'ACTIVE',time_in:'2026-10-07T01:00:00Z',session_type:'OPEN_TIME',paused_at:'2026-10-07T02:00:00Z',paused_seconds:600,credit_cutoff_at:'2026-10-07T09:00:00Z'}
   assert.match(render('AttendanceIndicator',{sessions:[session],details:true}), /Paused/)

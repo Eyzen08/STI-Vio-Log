@@ -7,7 +7,7 @@ import { createServer } from 'vite'
 const { chromium } = createRequire(import.meta.url)('playwright')
 const artifacts = new URL('../artifacts/interactive-login/', import.meta.url)
 await mkdir(artifacts, { recursive: true })
-const server = process.env.LOGIN_CHECK_URL ? null : await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), server: { host: '127.0.0.1', port: 0 }, define: { 'import.meta.env.PROD': 'true', 'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('') } })
+const server = process.env.LOGIN_CHECK_URL ? null : await createServer({ root: fileURLToPath(new URL('../', import.meta.url)), cacheDir: fileURLToPath(new URL('vite-cache/', artifacts)), server: { host: '127.0.0.1', port: 0 }, define: { 'import.meta.env.PROD': 'true', 'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('') } })
 if (server) await server.listen()
 const origin = process.env.LOGIN_CHECK_URL || server.resolvedUrls.local[0]
 const browser = await chromium.launch({ channel: 'msedge', headless: true })
@@ -150,10 +150,8 @@ try {
       assert.equal(await page.locator('.login-ribbon-frame').evaluate(el => getComputedStyle(el).display), 'none')
       await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }))
       await pause(400)
-      assert.ok(await page.locator('.login-intro').evaluate(el => el.getBoundingClientRect().bottom <= 0), 'Mobile artwork left the viewport')
-      const offscreen = await transforms(page)
-      await pause(500)
-      assert.deepEqual(await transforms(page), offscreen, 'Offscreen mobile artwork pauses')
+      assert.ok(await page.locator('.login-intro').evaluate(el => el.getBoundingClientRect().bottom > 0), 'Mobile background remains behind the entire form')
+      await checkMoving(page, 'Visible mobile background keeps moving after scrolling')
     }
     await page.emulateMedia({ forcedColors: 'active' })
     await page.mouse.move(40, 40)

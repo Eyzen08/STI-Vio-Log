@@ -160,7 +160,7 @@ try {
         assert.equal(await value('Program'), 'BSIT', 'Touch selection commits')
         await choose('Program', 'All Programs')
         await field('Program').tap()
-        await page.locator('.student-directory-table-wrap').evaluate((el) => { el.scrollLeft += 60 })
+        await page.evaluate(() => window.scrollBy(0, 60))
         await page.getByRole('listbox').waitFor({ state: 'hidden' })
       }
     }

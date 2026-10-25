@@ -40,3 +40,10 @@ test('Google button stays within provider width limits', () => {
   assert.equal(googleButtonConfiguration({ width: 420 }).width, 400)
   assert.equal(googleButtonConfiguration({ width: 180 }).width, 200)
 })
+
+test('Google button follows the app theme without changing its callbacks', () => {
+  const onClick = () => {}
+  assert.equal(googleButtonConfiguration({ width: 320, theme: 'dark', onClick }).theme, 'filled_black')
+  assert.equal(googleButtonConfiguration({ width: 320, theme: 'light', onClick }).theme, 'outline')
+  assert.equal(googleButtonConfiguration({ width: 320, theme: 'dark', onClick }).click_listener, onClick)
+})

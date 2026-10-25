@@ -10,6 +10,7 @@ const artifacts = new URL('../artifacts/login-redesign/', import.meta.url)
 await mkdir(artifacts, { recursive: true })
 const server = await createServer({
   root: fileURLToPath(new URL('../', import.meta.url)),
+  cacheDir: fileURLToPath(new URL('vite-cache/', artifacts)),
   server: { host: '127.0.0.1', port: 0 },
   define: { 'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify('login-check.apps.googleusercontent.com') },
 })
@@ -285,8 +286,9 @@ try {
   await fits()
   await screenshot('login-200-percent-reflow')
   await page.emulateMedia({ reducedMotion: 'reduce' })
-  await page.locator('.login-page[data-motion="reduced"]').waitFor()
+  await page.waitForFunction(() => matchMedia('(prefers-reduced-motion: reduce)').matches)
   assert.equal(await page.locator('.login-submit').evaluate(node => getComputedStyle(node).transitionDuration), '0s')
+  await fits()
   await page.locator('#username').focus()
   await labelAt('username', true)
   assert.equal(await page.locator('label[for="username"] .login-floating-label').evaluate(node => node.getAnimations().length), 0, 'Reduced motion updates the label immediately')
@@ -300,7 +302,7 @@ try {
   console.log('PASS: responsive light/dark login, direct Google access, MFA mode switching and submission, OTP paste, recovery journey, policy drafts, enrollment and recovery codes.')
 } catch (error) {
   await screenshot('failure')
-  console.error(await page.locator('main').innerText(), requests, errors)
+  console.error(error, requests, errors)
   throw error
 } finally {
   await browser.close()
