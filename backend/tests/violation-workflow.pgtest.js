@@ -25,6 +25,7 @@ let app;
 let pool;
 let server;
 let baseUrl;
+let clientNumber = 0;
 
 const migrationsDirectory = path.resolve(__dirname, '../../database/migrations');
 const migrationFiles = listMigrationFiles(migrationsDirectory).map((name) => path.join(migrationsDirectory, name));
@@ -37,6 +38,7 @@ async function request(route, { token, method = 'GET', body } = {}) {
   const response = await fetch(`${baseUrl}${route}`, {
     method,
     headers: {
+      'X-Forwarded-For': `192.0.2.${clientNumber}`,
       ...(token ? { Cookie: token.cookie, 'X-CSRF-Token': token.csrf } : {}),
       ...(body ? { 'Content-Type': 'application/json' } : {})
     },
@@ -194,6 +196,7 @@ test.before(async () => {
     client.release=()=>{client.query=original;client.release=release;release()};return client;
   });
   app = require('../src/server');
+  app.set('trust proxy', 1);
 
   server = app.listen(0, '127.0.0.1');
   await new Promise((resolve) => server.once('listening', resolve));
@@ -201,8 +204,8 @@ test.before(async () => {
 });
 
 test.beforeEach(async () => {
-  // Each HTTP case gets its own loopback quota while retaining the real rate limiter.
-  await app.router.stack.find(layer=>typeof layer.handle.resetKey==='function').handle.resetKey('127.0.0.1');
+  // Give each case a separate client quota without depending on middleware internals.
+  clientNumber += 1;
   await resetAndSeedTestData();
 });
 
