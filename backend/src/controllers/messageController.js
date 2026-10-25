@@ -90,7 +90,7 @@ const listConversations = async (req, res) => {
     params.push(limit, offset);
 
     const rows = (await pool.query(
-      `SELECT mc.id,mc.subject,mc.status,mc.created_at,mc.updated_at,mc.assigned_department_id,
+      `SELECT mc.id,mc.student_id,mc.subject,mc.status,mc.created_at,mc.updated_at,mc.assigned_department_id,
         ${avatarSql('s.user_id')} AS student_avatar,s.student_number,CONCAT_WS(' ',s.first_name,s.last_name) AS student_name,
         COALESCE(d.department_name,'Discipline Office') AS school_participant,
         latest.message_text AS message_preview,latest.created_at AS latest_message_at,

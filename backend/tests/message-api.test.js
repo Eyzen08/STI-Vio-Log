@@ -3,7 +3,26 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const router = require('../src/routes/messageRoutes');
 const pool = require('../src/config/database');
-const { assertConversation, getConversation, getUnreadCount, listRecipients, updateConversationStatus } = require('../src/controllers/messageController');
+const { assertConversation, getConversation, getUnreadCount, listConversations, listRecipients, updateConversationStatus } = require('../src/controllers/messageController');
+
+test('conversation lists include a student record ID without changing role scope', async () => {
+  const originalQuery = pool.query;
+  const calls = [];
+  pool.query = async (sql, values) => {
+    calls.push({ sql, values });
+    return { rows: String(sql).includes('message_preview') ? [{ id:12, student_id:42, total_count:1 }] : [{ unread_total:0 }] };
+  };
+  try {
+    for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'STUDENT']) {
+      const response = { json(body){ this.body=body; return this }, status(){ return this } };
+      await listConversations({ user:{ id:7, role, department_id:3 }, query:{} }, response);
+      const sql = calls.findLast(call => String(call.sql).includes('message_preview')).sql;
+      assert.match(sql, /SELECT mc\.id,mc\.student_id,/);
+      assert.equal(response.body.conversations[0].student_id, 42);
+      if (role === 'STUDENT') assert.match(sql, /own_student\.user_id=/);
+    }
+  } finally { pool.query = originalQuery; }
+});
 
 test('message content stays append-only while conversation preferences can be changed', () => {
   const routes = router.stack.filter((layer) => layer.route).map((layer) => `${Object.keys(layer.route.methods)[0]} ${layer.route.path}`);

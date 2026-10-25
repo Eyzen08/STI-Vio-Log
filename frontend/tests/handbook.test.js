@@ -39,9 +39,10 @@ test('handbook offers four document choices and an accessible reader with open a
     assert.equal((html.match(/aria-pressed="(?:true|false)"/g) || []).length, 4)
     assert.match(html, /aria-pressed="true"[^>]*>[\s\S]*?Complete Tertiary Handbook/)
     assert.match(html, /<iframe[^>]*src="\/handbook\/sti-tertiary-handbook-july-2026.pdf"[^>]*title="Complete Tertiary Handbook PDF reader"/)
-    assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" target="_blank" rel="noopener noreferrer">Open PDF/)
+    assert.match(html, /class="handbook-open-pdf" href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" target="_blank" rel="noopener noreferrer">Open PDF/)
     assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" download="">Download PDF/)
     assert.match(html, /Open STI’s Live Handbook/)
+    assert.ok(html.indexOf('Open STI’s Live Handbook') < html.indexOf('handbook-library'))
     assert.match(html, /Saved copy captured/)
     for (const doc of HANDBOOK_DOCUMENTS) {
       const bytes = await readFile(new URL(`../public${doc.url}`, import.meta.url))

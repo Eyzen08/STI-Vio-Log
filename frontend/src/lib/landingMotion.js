@@ -43,8 +43,8 @@ export function animateLanding(root) {
       const floating = [
         ...select('[data-orbit]').map(element => ({ element, tween: gsap.fromTo(element, { x: -12, y: -22, rotation: -3 }, { x: 12, y: 22, rotation: 3, duration: 4.8, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }) })),
         ...select('[data-float]').map(element => ({ element, tween: gsap.fromTo(element, { y: -7 }, { y: 7, duration: 3.5, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }) })),
-      ].map(item => ({ ...item, visible: false, interacting: false }))
-      const sync = () => floating.forEach(item => item.tween.paused(document.hidden || !item.visible || item.interacting))
+      ].map(item => ({ ...item, visible: false }))
+      const sync = () => floating.forEach(item => item.tween.paused(document.hidden || !item.visible))
       const observer = new IntersectionObserver(entries => {
         for (const entry of entries) {
           const item = floating.find(item => item.element === entry.target)
@@ -55,11 +55,6 @@ export function animateLanding(root) {
       removals.push(() => observer.disconnect())
       floating.forEach(item => {
         observer.observe(item.element)
-        if (!item.element.hasAttribute('data-float')) return
-        listen(item.element, 'pointerenter', () => { item.interacting = true; sync() })
-        listen(item.element, 'pointerleave', () => { item.interacting = item.element.contains(document.activeElement); sync() })
-        listen(item.element, 'focusin', () => { item.interacting = true; sync() })
-        listen(item.element, 'focusout', event => { item.interacting = item.element.matches(':hover') || item.element.contains(event.relatedTarget); sync() })
       })
       listen(document, 'visibilitychange', sync)
 

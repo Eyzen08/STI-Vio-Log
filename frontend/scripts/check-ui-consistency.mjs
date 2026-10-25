@@ -53,7 +53,7 @@ try {
     const url = new URL(route.request().url())
     if (url.pathname.startsWith('/api/')) {
       if (messageFlow && url.pathname.startsWith('/api/messages/')) {
-        const conversation = { id:45, student_name:'Maria Santos', student_number:student.student_number, subject:'Service schedule', school_participant:'Discipline Office', status:'OPEN' }
+        const conversation = { id:45, student_id:student.id, student_name:'Maria Santos', student_number:student.student_number, subject:'Service schedule', school_participant:'Discipline Office', status:'OPEN' }
         if (url.pathname.endsWith('/messages') && route.request().method() === 'POST') {
           threadMessages.push({ id:threadMessages.length + 1, message_text:route.request().postDataJSON().message, sent_by_me:true, created_at:'2026-10-24T02:00:00Z', sender_name:'Fixture User' })
         }
@@ -450,7 +450,7 @@ try {
   }
 
   if (messageFlow) {
-    for (const role of ['DISCIPLINE_ADMIN', 'STUDENT']) for (const width of [390,1366]) for (const theme of ['light','dark']) {
+    for (const role of ['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE', 'STUDENT']) for (const width of [390,1366]) for (const theme of ['light','dark']) {
       user = { ...student, role }
       threadMessages = [{ id:1, message_text:'Please confirm your service schedule.', sender_name:'Discipline Office', created_at:'2026-10-24T01:00:00Z' }]
       await page.setViewportSize({ width,height:900 })
@@ -473,6 +473,19 @@ try {
         await page.getByRole('button', { name:'New Message', exact:true }).waitFor()
       }
       console.log(`PASS conversation, visible composer, Enter to send, and mobile Back; ${role} ${theme} ${width}px`)
+      if (role !== 'STUDENT') {
+        if (width < 768) await page.locator('.conversation-open').first().click()
+        await page.locator('.chat-header .conversation-actions-trigger').click()
+        await page.getByRole('menuitem',{name:'View Student',exact:true}).click()
+        await page.getByRole('dialog',{name:`Student Record — ${student.student_number}`,exact:true}).waitFor()
+        assert.ok(page.url().endsWith('/admin/students?student_id=1'))
+        if (width===390 && theme==='light') {
+          await page.route('**/api/students/999',route=>route.fulfill({status:404,json:{message:'Student unavailable.'}}))
+          await open('/admin/students?student_id=999')
+          await page.getByRole('alert').filter({hasText:'The specific notification record is unavailable'}).waitFor()
+          assert.equal(await page.getByRole('dialog').count(),0)
+        }
+      }
     }
     assert.deepEqual(errors, [], 'Message browser runtime errors')
   }

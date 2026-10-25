@@ -1,18 +1,23 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import PortalIcon from './PortalIcon.jsx'
 
-const positionFor = (rect) => ({
-  left: Math.max(8, Math.min(rect.right - 216, window.innerWidth - 224)),
-  top: rect.bottom + 202 > window.innerHeight ? Math.max(8, rect.top - 194) : rect.bottom + 6
+const positionFor = (rect, size) => ({
+  left: Math.max(8, Math.min(rect.right - size.width, window.innerWidth - size.width - 8)),
+  top: Math.max(8, Math.min(rect.bottom + size.height + 6 > window.innerHeight - 8 ? rect.top - size.height - 6 : rect.bottom + 6, window.innerHeight - size.height - 8))
 })
 
-export default function ConversationActions({ conversation, busy, onAction }) {
+export default function ConversationActions({ conversation, busy, onAction, onViewStudent }) {
   const [position, setPosition] = useState(null)
   const trigger = useRef(null)
   const menu = useRef(null)
   const open = Boolean(position)
   const unread = Number(conversation.unread_count) > 0
+  const studentId = Number(conversation.student_id)
+  const canViewStudent = Boolean(onViewStudent) && Number.isSafeInteger(studentId) && studentId > 0
+  useLayoutEffect(() => {
+    if (open) setPosition(positionFor(trigger.current.getBoundingClientRect(), menu.current.getBoundingClientRect()))
+  }, [open, canViewStudent])
   useEffect(() => {
     if (!open) return undefined
     menu.current?.querySelector('button')?.focus({ preventScroll: true })
@@ -26,7 +31,7 @@ export default function ConversationActions({ conversation, busy, onAction }) {
       if (event.target instanceof Node && menu.current?.contains(event.target)) return
       const rect = trigger.current?.getBoundingClientRect()
       if (!rect || rect.bottom < 0 || rect.top > window.innerHeight) setPosition(null)
-      else setPosition(current => current ? positionFor(rect) : null)
+      else setPosition(current => current ? positionFor(rect, menu.current.getBoundingClientRect()) : null)
     }
     document.addEventListener('pointerdown', dismiss)
     document.addEventListener('focusin', dismiss)
@@ -42,8 +47,7 @@ export default function ConversationActions({ conversation, busy, onAction }) {
     }
   }, [open])
   const toggle = () => {
-    const rect = trigger.current.getBoundingClientRect()
-    setPosition(current => current ? null : positionFor(rect))
+    setPosition(current => current ? null : { left: 8, top: 8 })
   }
   const choose = (action, values) => { setPosition(null); trigger.current?.focus({ preventScroll: true }); onAction(conversation, action, values) }
   const keys = (event) => {
@@ -60,6 +64,7 @@ export default function ConversationActions({ conversation, busy, onAction }) {
       <button type="button" role="menuitem" onClick={() => choose('read', { is_read: unread })}>{unread ? 'Mark as read' : 'Mark as unread'}</button>
       <button type="button" role="menuitem" onClick={() => choose('preferences', { is_pinned: !conversation.is_pinned })}>{conversation.is_pinned ? 'Unpin' : 'Pin'}</button>
       <button type="button" role="menuitem" onClick={() => choose('preferences', { is_archived: !conversation.is_archived })}>{conversation.is_archived ? 'Unarchive' : 'Archive'}</button>
+      {canViewStudent && <button type="button" role="menuitem" onClick={() => { setPosition(null); trigger.current?.focus({ preventScroll: true }); onViewStudent(studentId) }}>View Student</button>}
       <button type="button" role="menuitem" className="conversation-delete-action" onClick={() => choose('delete')}>Delete</button>
     </div>, document.body)}
   </>

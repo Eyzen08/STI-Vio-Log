@@ -70,6 +70,7 @@
 .student-page .profile-readonly-badge { margin:0; white-space:normal; }
 .app-shell .student-page .student-profile-identity { background:var(--surface-raised); border-radius:12px 12px 0 0; }
 .student-page .violation-summary { text-align:left; padding:20px; }
+:root[data-theme='dark'] .student-page.violations-page :is(.page-intro,.violation-card,.violation-details,.service-progress,.violations-empty) { box-shadow:none !important; }
 .student-page .violation-summary-main h3 { overflow-wrap:anywhere; }
 .student-page .violation-summary-main > p { margin-top:8px; }
 .student-page .violation-details { padding:24px; display:grid; gap:24px; }

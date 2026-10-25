@@ -733,11 +733,11 @@
   background:var(--status-success-surface) !important;
   color:var(--status-success-text) !important;
 }
-:root[data-theme='dark'] .clearance-not-eligible .clearance-status-mark,
-:root[data-theme='dark'] .clearance-requirements ul {
+:root[data-theme='dark'] .clearance-not-eligible .clearance-status-mark {
   background:var(--status-warning-surface) !important;
   color:var(--status-warning-text) !important;
 }
+:root[data-theme='dark'] .clearance-requirements ul { background:transparent; color:var(--text-primary); }
 :root[data-theme='dark'] .clearance-record-list > article { border-color:var(--border-subtle) !important; }
 :root[data-theme='dark'] .clearance-empty h4 { color:var(--text-primary) !important; }
 :root[data-theme='dark'] .clearance-empty p { color:var(--text-secondary) !important; }

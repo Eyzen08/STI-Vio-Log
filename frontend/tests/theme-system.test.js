@@ -322,7 +322,8 @@ test('dark clearance covers pending, ready, blocked, history, and empty states',
   const guard = portal.slice(portal.lastIndexOf('FINAL THEME CASCADE GUARD'))
   assert.match(guard, /\.clearance-pending \.clearance-status-mark\s*\{[^}]*background:var\(--status-info-surface\)[^}]*color:var\(--status-info-text\)/s)
   assert.match(guard, /\.clearance-cleared \.clearance-status-mark,[\s\S]*\.clearance-ready\s*\{[^}]*background:var\(--status-success-surface\)/s)
-  assert.match(guard, /\.clearance-not-eligible \.clearance-status-mark,[\s\S]*\.clearance-requirements ul\s*\{[^}]*background:var\(--status-warning-surface\)/s)
+  assert.match(guard, /\.clearance-not-eligible \.clearance-status-mark\s*\{[^}]*background:var\(--status-warning-surface\)/s)
+  assert.match(guard, /\.clearance-requirements ul\s*\{[^}]*background:transparent;[^}]*color:var\(--text-primary\)/s)
   assert.match(guard, /\.clearance-empty p[^}]*color:var\(--text-secondary\)/s)
 })
 

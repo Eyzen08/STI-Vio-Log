@@ -1995,7 +1995,7 @@ function App() {
     }
 
     if (activeView === 'Messages') {
-      return <MessagesPage key={routeLocation} searchParams={routeSearch} onCloseTarget={closeRecordTarget} onOpenTarget={(id) => navigateTo(`${routePath}?conversation_id=${id}`)} token={token} role={userRole} students={students} currentUser={user} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
+      return <MessagesPage key={routeLocation} searchParams={routeSearch} onCloseTarget={closeRecordTarget} onOpenTarget={(id) => navigateTo(`${routePath}?conversation_id=${id}`)} onViewStudent={isAdmin?(id)=>navigateTo(`/admin/students?student_id=${id}`):undefined} token={token} role={userRole} students={students} currentUser={user} onUnreadChange={updateUnreadMessages} realtimeSocket={realtimeSocket} />
     }
 
     if (activeView === 'Profile' && !isStudent) {

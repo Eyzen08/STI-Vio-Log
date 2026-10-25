@@ -1,10 +1,12 @@
 /* The inbox shares the portal shell; each column scrolls independently. */
 .conversation-row{position:relative;min-width:0}
 .main-panel--messages .conversation-row .conversation-open{width:100%;padding-right:52px!important}
-.conversation-row>.conversation-actions-trigger{position:absolute;right:5px;top:50%;transform:translateY(-50%)}
+.conversation-row>.conversation-actions-trigger{position:absolute;right:5px;top:0;bottom:0;margin-block:auto}
 .conversation-actions-trigger{display:inline-flex;align-items:center;justify-content:center;width:44px;min-width:44px;height:44px;padding:10px!important;border:0!important;background:transparent!important;color:var(--text-primary)!important;box-shadow:none!important;border-radius:8px;cursor:pointer}
+.conversation-actions-trigger{transform:none!important}
 .conversation-actions-trigger svg{width:20px;height:20px}
 .conversation-actions-menu{position:fixed;z-index:1300;width:216px;max-width:calc(100vw - 16px);padding:6px;border:1px solid var(--border-strong);border-radius:10px;background:var(--surface-raised);color:var(--text-primary);box-shadow:var(--shadow-sm);box-sizing:border-box}
+.conversation-actions-menu{max-height:calc(100dvh - 16px);overflow-y:auto}
 .conversation-actions-menu>button{display:block;min-height:44px;width:100%;padding:10px 12px;border:0;border-radius:6px;text-align:left;font:inherit;background:transparent;color:inherit;cursor:pointer}
 .conversation-actions-menu>button:hover,.conversation-actions-menu>button:focus-visible{background:var(--surface-interactive-hover)}
 .conversation-actions-menu .conversation-delete-action{color:var(--status-danger-text)}
