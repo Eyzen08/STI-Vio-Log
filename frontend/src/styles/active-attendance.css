@@ -1,11 +1,11 @@
-.active-attendance-page .active-attendance-card { padding: 1.25rem; }
+.active-attendance-page .active-attendance-card { container:active-attendance / inline-size; padding: 1.25rem; }
 .app-shell .active-attendance-page .management-table-header { padding: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: .75rem 1rem; text-align: left; }
 .active-attendance-page .management-table-header p { margin-bottom: 0; }
 .active-attendance-page .attendance-session-count { width: fit-content; padding: .4rem .7rem; border-radius: .5rem; background: var(--color-surface-muted); color: var(--color-text); font-weight: 600; white-space: nowrap; }
 .app-shell .active-attendance-page .active-attendance-toolbar { margin: 1.25rem 0; }
 .active-attendance-page .active-attendance-toolbar input { padding-inline: .85rem; }
 .active-attendance-page .active-attendance-table-wrap { border: 1px solid var(--color-border); border-radius: .65rem; }
-.active-attendance-page .active-attendance-table { width: 100%; min-width: 72rem; table-layout: fixed; }
+.active-attendance-page .active-attendance-table { width: 100%; min-width: 0; table-layout: fixed; }
 .active-attendance-page .active-attendance-table col:nth-child(1) { width: 15%; }
 .active-attendance-page .active-attendance-table col:nth-child(2) { width: 19%; }
 .active-attendance-page .active-attendance-table col:nth-child(3),
@@ -39,7 +39,22 @@
 
 @media (max-width: 767px) {
   .active-attendance-page .active-attendance-card { padding: 1rem; }
-  .app-shell .active-attendance-page .active-attendance-table-wrap { border: 0; overflow: visible; max-height: none; }
-  .app-shell .active-attendance-page .active-attendance-table tbody { padding: 0; }
-  .app-shell .active-attendance-page .active-attendance-table td { grid-column: 1 / -1; }
+}
+
+@container active-attendance (max-width:74rem) {
+  .app-shell .active-attendance-page .active-attendance-table-wrap { border:0; overflow:visible; max-height:none; }
+  .app-shell .active-attendance-page .active-attendance-table { display:block; width:100%; min-width:0; background:transparent; }
+  .active-attendance-table colgroup { display:none; }
+  .active-attendance-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .app-shell .active-attendance-page .active-attendance-table tbody { display:grid; width:100%; gap:12px; padding:0; }
+  .app-shell .active-attendance-page .active-attendance-table tr { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding:16px; border:1px solid var(--border-subtle); border-radius:var(--card-radius); background:var(--surface-raised); box-shadow:none !important; }
+  .app-shell .active-attendance-page .active-attendance-table td { display:grid; align-content:start; min-width:0; gap:5px; padding:0; border:0; overflow-wrap:anywhere; }
+  :root .app-shell .active-attendance-page .active-attendance-table tbody td { background:transparent !important; }
+  .active-attendance-table td::before { content:attr(data-label); color:var(--text-secondary); font-size:var(--text-xs); font-weight:600; }
+  .active-attendance-table td:is([data-label='Credited Service'],[data-label='Actions']) { grid-column:1 / -1; }
+  .active-attendance-page .service-attendance-controls { display:flex; flex-wrap:wrap; gap:8px; }
+  .app-shell .active-attendance-page .service-attendance-controls button { width:auto; flex:1 1 9rem; max-width:100%; }
+}
+@container active-attendance (max-width:32rem) {
+  .app-shell .active-attendance-page .active-attendance-table tr { grid-template-columns:minmax(0,1fr); }
 }

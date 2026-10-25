@@ -2328,9 +2328,10 @@ button.mutation-in-flight:not(:has(.action-spinner, .login-submit-spinner))::bef
 .temporary-credential > div:last-child { display:flex; flex-wrap:wrap; gap:.5rem; }
 
 /* Messages: one authoritative fixed-workspace layout loaded after legacy base styles. */
-.app-shell:not(.auth-shell) .main-panel--messages { height:100dvh; min-height:0; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; }
+.app-shell:not(.auth-shell) .main-panel--messages { height:100dvh; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .main-panel--messages > .topbar { min-height:var(--topbar-height); flex:0 0 auto; flex-direction:row; overflow:visible; }
-.main-panel--messages > .page-content { min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+.main-panel--messages > :is(.attendance-sync,.attendance-notice-region) { flex:0 0 auto; }
+.main-panel--messages > .page-content { flex:1 1 0; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
 .main-panel--messages .messages-inbox { width:100%; height:100%; min-height:0; display:flex; flex:1 1 auto; flex-direction:column; gap:var(--page-gap); }
 .main-panel--messages .messages-page-heading,.main-panel--messages .messages-inbox > .error-message { flex:0 0 auto; }
 .main-panel--messages .messages-workspace { min-width:0; min-height:0; flex:1 1 auto; display:grid; grid-template-columns:clamp(300px,30%,380px) minmax(0,1fr); overflow:hidden; border:1px solid var(--border-subtle); border-radius:.8rem; background:var(--surface-raised); box-shadow:var(--shadow-md); }

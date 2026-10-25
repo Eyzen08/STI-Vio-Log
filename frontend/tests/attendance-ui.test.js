@@ -173,6 +173,7 @@ test('community workflow keeps assignment filters, actual attendance, eligible c
   const assignment = {id:21,student_id:1,violation_id:4,first_name:'Ana',last_name:'Reyes',student_number:'02000',department_id:3,department_name:'Library',department_head_first_name:'Mara',department_head_last_name:'Cruz',status:'IN_PROGRESS',required_hours:6,remaining_hours:5.25}
   const props={assignments:[assignment],activeSessions:[active,{...active,id:12,assignment_id:22}],attendanceReady:true,filters:{search:'',department:'ALL',status:'ALL'},formProps:{destinations:[]}}
   const html=render('CommunityServiceManagement',props)
+  for (const label of ['ID','Student','Violation','Department','Department Head','Required','Remaining','Progress','Status','Action']) assert.ok(html.includes(`data-label="${label}"`), label)
   assert.equal((html.match(/class="management-metric /g)||[]).length,5)
   assert.match(html, /<strong>1<\/strong><span>Students Timed In/)
   assert.match(html, /Time In/)
