@@ -11,7 +11,7 @@ const handler=source.slice(source.indexOf('  const handleQrAction = async'),sour
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done});return {promise,resolve}}
 const setup=()=>{
   const requests=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:'old'},qrFormRef:{current:{qr_code:'old',assignment_id:21,supervising_officer_id:9,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},verifiedQrRef:{current:'old'},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,refreshes:0,pendingRefreshes:0,historyRequests:0,setDashboardRefreshKey(){context.refreshes++},refreshPendingActions(){context.pendingRefreshes++},setQrInputSource(){},
+  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:'old'},qrFormRef:{current:{qr_code:'old',assignment_id:21,supervising_officer_id:9,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},attendanceAccountRef:{current:1},verifiedQrRef:{current:'old'},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,refreshes:0,pendingRefreshes:0,historyRequests:0,setDashboardRefreshKey(){context.refreshes++},refreshPendingActions(){context.pendingRefreshes++},setQrInputSource(){},
     setQrResult(value){context.result=typeof value==='function'?value(context.result):value},setVerifiedQr(value){context.verified=value},setQrError(value){context.error=value},setQrSubmitting(){},setQrHistory(value){context.history=value},setQrHistoryError(value){context.historyError=value},setQrForm(update){context.qrFormRef.current=typeof update==='function'?update(context.qrFormRef.current):update},
     apiRequest(path,options){const original=globalThis.fetch;globalThis.fetch=context.fetch;try{return apiRequest(path,options)}finally{globalThis.fetch=original}},
     fetch(url,options){url=new URL(url,'http://localhost').pathname;if(url.endsWith('/sessions')){context.historyRequests++;return context.historyResponse||Promise.resolve(ok('old',{sessions:[]}))}const pending=deferred();requests.push({url,options,pending});return pending.promise}}
@@ -128,7 +128,7 @@ test('polling verifies saved sessions but leaves unverified manual input alone',
   const block=source.slice(source.indexOf('  useEffect(()=>{\n    if(!portalReady||activeView'),source.indexOf("  },[portalReady,activeView,token,user?.id,realtimeSocket])"))+'  })'
   const calls=[]
   let refresh
-  const context={portalReady:true,activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{getItem(){return 'previous'}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
+  const context={portalReady:true,activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},attendanceAccountRef:{current:1},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{getItem(){return 'previous'}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
   runInNewContext(block,context)
   refresh()
   assert.equal(calls.length,0)
@@ -143,7 +143,7 @@ test('camera decode invokes current automatic verification without a Verify clic
   const end=source.indexOf('\n        },',start)
   const callback=source.slice(start,end)+'\n        }'
   const calls=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{assignment_id:21,supervising_officer_id:9,notes:'Previous note'}},verifiedQrRef:{current:'previous'},scanner:{},setQrInputSource(value){context.inputSource=value},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrHistoryError(){},setQrError(){},stopQrScanner:async()=>{},qrActionRef:{current:async(...args)=>{calls.push(args)}}}
+  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{assignment_id:21,supervising_officer_id:9,notes:'Previous note'}},attendanceAccountRef:{current:1},verifiedQrRef:{current:'previous'},scanner:{},setQrInputSource(value){context.inputSource=value},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrHistoryError(){},setQrError(){},stopQrScanner:async()=>{},qrActionRef:{current:async(...args)=>{calls.push(args)}}}
   runInNewContext('('+callback+')',context)(' camera-code ')
   await new Promise(resolve=>setImmediate(resolve))
   assert.deepEqual(calls,[['scan','camera-code']])
@@ -161,7 +161,7 @@ test('manual editing while the camera stops cancels its delayed verification',as
   const end=source.indexOf('\n        },',start)
   const stop=deferred()
   const calls=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{}},verifiedQrRef:{current:''},scanner:{},setQrInputSource(){},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrHistoryError(){},setQrError(){},stopQrScanner:()=>stop.promise,qrActionRef:{current:async(...args)=>{calls.push(args)}}}
+  const context={EMPTY_QR_SERVICE_DRAFT,qrDecodeBusyRef:{current:false},qrInputVersionRef:{current:0},qrFormRef:{current:{}},attendanceAccountRef:{current:1},verifiedQrRef:{current:''},scanner:{},setQrInputSource(){},setQrForm(){},setVerifiedQr(){},setQrResult(){},setQrHistory(){},setQrHistoryError(){},setQrError(){},stopQrScanner:()=>stop.promise,qrActionRef:{current:async(...args)=>{calls.push(args)}}}
   runInNewContext('('+source.slice(start,end)+'\n        })',context)('camera-code')
   context.qrInputVersionRef.current++
   context.qrFormRef.current.qr_code='manual-code'
@@ -234,4 +234,14 @@ test('Time In requires an officer and preserves the draft on failure',async()=>{
   requests[1].pending.resolve(ok('old',{assignment:{id:21},session:{id:7,status:'ACTIVE',session_type:'OPEN_TIME',time_in:'2026-10-08T01:00:00Z'}}))
   assert.equal(await confirmed,true)
   assert.equal(context.result.session.status,'ACTIVE')
+})
+
+test('an attendance lookup from a previous account cannot update the new account',async()=>{
+  const {action,context,requests}=setup()
+  const pending=action('scan','old',{quiet:true})
+  context.attendanceAccountRef.current=2
+  requests[0].pending.resolve(ok('old',{assignment:{id:21}}))
+  assert.equal(await pending,false)
+  assert.equal(context.result,undefined)
+  assert.equal(context.historyRequests,0)
 })

@@ -4,6 +4,7 @@ const sessionService = require('../services/browserSessionService');
 const { permissionsForRole } = require('../security/permissions');
 const { recordSecurityEvent } = require('../services/securityEventService');
 const { requireLegalAcknowledgment } = require('./legalPolicyMiddleware');
+const { verifiedReadLimiter } = require('./rateLimiters');
 
 const denyAuthorization = (req, res, { code = 'FORBIDDEN', message = 'Permission denied', required = [] } = {}) => {
     res.locals = res.locals || {};
@@ -121,7 +122,7 @@ const authenticateToken = async (req, res, next) => {
           idle_expires_at=LEAST(absolute_expires_at,CURRENT_TIMESTAMP+($2||' minutes')::interval) WHERE id=$1`,[account.browser_session_id,idleMinutes]);
         req.session={id:Number(account.browser_session_id),csrfHash:account.csrf_hash,absoluteExpiresAt:account.absolute_expires_at};
 
-        return requireCsrf(req,res,() => requireLegalAcknowledgment(req,res,next));
+        return verifiedReadLimiter(req,res,() => requireCsrf(req,res,() => requireLegalAcknowledgment(req,res,next)));
 
     } catch (error) {
         console.error("Authenticated account lookup failed:", error);

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { ApiError, apiRequest, installMutationRequestGuard, loadAllPages } from '../src/lib/api.js'
+import { ApiError, apiRequest, installMutationRequestGuard, loadAllPages, settleReads } from '../src/lib/api.js'
 
 const response = (status, body = {}) => ({
   status,
@@ -73,7 +73,7 @@ test('protected 401 clears cached session, emits expiry, and returns to login', 
   let expired = false
   let replaced = ''
   const target = {
-    fetch: async () => response(401),
+    fetch: async () => response(401, { success: false, error: { code: 'AUTH_REQUIRED' } }),
     location: { origin: 'https://portal.example.test', pathname: '/student/dashboard', replace: (path) => { replaced = path } },
     CustomEvent: class { constructor(type) { this.type = type } },
     dispatchEvent: (event) => { expired = event.type === 'sti:session-expired' }
@@ -98,4 +98,63 @@ test('login failures remain local to the authentication form', async () => {
   installMutationRequestGuard(target)
   await target.fetch('/api/login', { method: 'POST', body: '{}' })
   assert.equal(replaced, false)
+})
+
+test('proxy 401 and transient errors do not expire a cached session', async () => {
+  for (const status of [401, 502, 503]) {
+    const events = []
+    const target = { fetch: async () => new Response('<html>Gateway</html>', { status, headers: { 'content-type': 'text/html' } }),
+      CustomEvent: class { constructor(type) { this.type = type } }, dispatchEvent: event => events.push(event.type) }
+    installMutationRequestGuard(target)
+    await target.fetch('/api/auth/session')
+    assert.deepEqual(events, [])
+  }
+})
+
+test('rate limits retain cooldowns even when the proxy returns HTML', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => new Response('<html>Wait</html>', { status: 429, headers: { 'content-type': 'text/html', 'retry-after': '65', 'x-request-id': 'safe:123' } }))
+  await assert.rejects(apiRequest('/api/auth/session'), { code: 'RATE_LIMITED', status: 429, retryAfterMs: 65000, requestId: 'safe:123' })
+})
+
+test('network failures and timeouts are distinct and do not replay POSTs', async (t) => {
+  let calls = 0
+  const mock = t.mock.method(globalThis, 'fetch', async () => { calls++; throw new TypeError('fetch failed') })
+  await assert.rejects(apiRequest('/api/login', { method: 'POST' }), { code: 'NETWORK_ERROR' })
+  assert.equal(calls, 1)
+  mock.mock.mockImplementation(async (_url, { signal }) => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))))
+  await assert.rejects(apiRequest('/api/login', { method: 'POST', timeoutMs: 5 }), { code: 'TIMEOUT' })
+})
+
+test('offline errors remain distinct and unsafe request identifiers are discarded', async (t) => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
+  Object.defineProperty(globalThis, 'navigator', { configurable:true, value:{onLine:false} })
+  t.after(() => Object.defineProperty(globalThis, 'navigator', descriptor))
+  t.mock.method(globalThis, 'fetch', async () => { throw new TypeError('Network') })
+  await assert.rejects(apiRequest('/api/health'), {code:'OFFLINE'})
+  assert.equal(new ApiError('Failure',{requestId:'<unsafe>token'}).requestId, undefined)
+})
+
+test('a failed read batch waits for outstanding reads and retains the longest cooldown', async () => {
+  let finish, completed = false
+  const cooldown = new ApiError('Wait',{retryAfterMs:65000})
+  const pending = settleReads([Promise.reject(new Error('Unavailable')), Promise.reject(cooldown), new Promise(resolve => { finish=resolve })])
+  pending.catch(() => { completed=true })
+  await Promise.resolve(); await Promise.resolve(); assert.equal(completed,false)
+  finish({success:true})
+  await assert.rejects(pending, error => error === cooldown)
+})
+
+test('session expiry is handled again after a later account signs in', async (t) => {
+  const originalStorage=globalThis.localStorage
+  globalThis.localStorage={removeItem(){}}
+  t.after(()=>{globalThis.localStorage=originalStorage})
+  let expired=0
+  const target={ fetch:async path => path === '/api/login' ? new Response('{"user":{"id":8}}',{headers:{'content-type':'application/json'}}) : new Response('{"error":{"code":"AUTH_REQUIRED"}}',{status:401,headers:{'content-type':'application/json'}}),
+    CustomEvent:class { constructor(type) { this.type=type } },dispatchEvent:event=>{if(event.type==='sti:session-expired') expired++} }
+  installMutationRequestGuard(target)
+  await target.fetch('/api/auth/session'); await target.fetch('/api/auth/session')
+  assert.equal(expired,1)
+  await target.fetch('/api/login',{method:'POST',body:'{}'})
+  await target.fetch('/api/auth/session')
+  assert.equal(expired,2)
 })

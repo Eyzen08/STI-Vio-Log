@@ -1,3 +1,5 @@
+import { isAuthenticationRejection } from './api.js'
+import { waitForRetry } from './serviceStartup.js'
 const aborted = () => new DOMException('Session check cancelled', 'AbortError')
 
 export async function restoreSession(request, { timeoutMs = 20000, retryDelayMs = 1000, attempts = 3, signal } = {}) {
@@ -21,13 +23,13 @@ export async function restoreSession(request, { timeoutMs = 20000, retryDelayMs 
       if (!data?.user) throw Object.assign(new Error('Invalid session response'), { code: 'INVALID_RESPONSE' })
       return data
     } catch (error) {
-      if (signal?.aborted || error?.status === 401) throw error
+      if (signal?.aborted || isAuthenticationRejection(error)) throw error
       lastError = error
     } finally {
       clearTimeout(timer)
       signal?.removeEventListener('abort', cancel)
     }
-    if (attempt < attempts - 1) await new Promise((resolve) => setTimeout(resolve, retryDelayMs))
+    if (attempt < attempts - 1) await waitForRetry(Math.max(retryDelayMs, lastError?.retryAfterMs || 0), signal)
   }
   throw lastError
 }

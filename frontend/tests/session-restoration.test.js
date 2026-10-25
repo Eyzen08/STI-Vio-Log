@@ -39,7 +39,7 @@ test('a confirmed invalid session does not retry', async () => {
   let calls = 0
   await assert.rejects(restoreSession(async () => {
     calls += 1
-    throw Object.assign(new Error('Expired'), { status: 401 })
+    throw Object.assign(new Error('Expired'), { status: 401, code: 'AUTH_REQUIRED' })
   }, { timeoutMs: 1000, retryDelayMs: 0 }), { status: 401 })
   assert.equal(calls, 1)
 })
@@ -82,4 +82,13 @@ test('a fresh verification cycle can succeed after all earlier attempts failed',
   const failure = Object.assign(new Error('Unavailable'), { status: 503, requestId: 'req-123' })
   await assert.rejects(restoreSession(async () => { throw failure }, { retryDelayMs: 0 }), error => error === failure)
   assert.deepEqual(await restoreSession(async () => ({ user })), { user })
+})
+
+test('a proxy 401 is retried and does not confirm session expiry', async () => {
+  let calls=0
+  const result=await restoreSession(async () => {
+    if (++calls<3) throw Object.assign(new Error('Proxy'),{status:401,code:'INVALID_RESPONSE'})
+    return {user}
+  },{retryDelayMs:0})
+  assert.deepEqual(result.user,user); assert.equal(calls,3)
 })

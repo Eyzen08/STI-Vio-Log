@@ -3,10 +3,10 @@
   --public-action-cursor: url('../assets/landing-cursor-navy.svg?no-inline');
 }
 @media (hover: hover) and (pointer: fine) and (forced-colors: none) {
-  .app-shell .public-motion-surface[data-motion='full'][data-cursor='active'],
-  .app-shell .public-motion-surface[data-motion='full'][data-cursor='active'] * { cursor: var(--public-cursor) 3 2, auto; }
-  .app-shell .public-motion-surface[data-motion='full'][data-cursor='active'] :is(a,button,summary,[role='tab']) { cursor: var(--public-cursor) 3 2, pointer; }
-  .app-shell .public-motion-surface[data-motion='full'][data-cursor='active'] :is(.landing-button-primary,.landing-button-primary *,.login-submit,.login-submit *) { cursor: var(--public-action-cursor) 3 2, pointer; }
+  .app-shell .public-motion-surface[data-cursor='active'],
+  .app-shell .public-motion-surface[data-cursor='active'] * { cursor: var(--public-cursor) 3 2, auto; }
+  .app-shell .public-motion-surface[data-cursor='active'] :is(a,button,summary,[role='tab']) { cursor: var(--public-cursor) 3 2, pointer; }
+  .app-shell .public-motion-surface[data-cursor='active'] :is(.landing-button-primary,.landing-button-primary *,.login-submit,.login-submit *) { cursor: var(--public-action-cursor) 3 2, pointer; }
   .app-shell .public-motion-surface[data-cursor='active'] :is(input,textarea,[contenteditable='true'],[contenteditable='']) { cursor: text; }
   .app-shell .public-motion-surface[data-cursor='active'] :is(button:disabled,input:disabled) { cursor: wait; }
 }

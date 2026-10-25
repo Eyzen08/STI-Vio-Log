@@ -131,19 +131,6 @@ export function animateLanding(root) {
           campusY(((event.clientY - rect.top) / rect.height - .5) * 12)
         })
         listen(campus, 'pointerleave', () => { campusX(0); campusY(0) })
-        for (const element of select('[data-magnetic]')) {
-          const x = quick(element, 'x'), y = quick(element, 'y')
-          const reset = () => { x(0); y(0) }
-          let bounds
-          listen(element, 'pointerenter', () => { bounds = element.getBoundingClientRect() })
-          listen(element, 'pointermove', event => {
-            if (event.pointerType !== 'mouse' || event.buttons || element.matches(':focus-visible')) return
-            const rect = bounds ||= element.getBoundingClientRect()
-            x(gsap.utils.clamp(-5, 5, (event.clientX - rect.left - rect.width / 2) * .1))
-            y(gsap.utils.clamp(-4, 4, (event.clientY - rect.top - rect.height / 2) * .1))
-          })
-          listen(element, 'pointerleave', reset); listen(element, 'pointerdown', reset); listen(element, 'focusin', reset)
-        }
         removals.push(installPublicCursor(root))
       }
       return dispose

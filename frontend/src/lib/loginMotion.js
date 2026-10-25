@@ -14,7 +14,6 @@ export function animateLogin(root) {
     media.add({ all: '(min-width: 0px)', desktop: '(min-width: 1024px)', pointer: '(hover: hover) and (pointer: fine)', forced: '(forced-colors: active)' }, context => {
       active = true
       const intro = root.querySelector('.login-intro')
-      const card = root.querySelector('.login-card')
       const drift = root.querySelector('.login-campus-drift')
       const parallax = root.querySelector('.login-campus-parallax')
       const ribbon = root.querySelector('.login-ribbon')
@@ -37,27 +36,19 @@ export function animateLogin(root) {
       if (context.conditions.desktop) floating.push(gsap.fromTo(ribbon, { y: -12, rotation: -2 }, { y: 12, rotation: 2, duration: 5.5, repeat: -1, yoyo: true, ease: 'sine.inOut', paused: true }))
       let visible = false
       const pointerTweens = []
-      const blocked = () => document.hidden || !document.hasFocus() || !visible || card.contains(document.activeElement) || Boolean(card.querySelector('[aria-busy="true"]'))
+      const blocked = () => document.hidden || !visible
       const sync = () => {
         if (!active) return
         const paused = blocked()
         floating.forEach(tween => tween.paused(paused))
         if (paused) {
           pointerTweens.forEach(move => move.tween.pause())
-          if (card.contains(document.activeElement) || card.querySelector('[aria-busy="true"]')) context.finishEntrance?.()
         }
       }
       const observer = new IntersectionObserver(entries => { visible = entries[0].isIntersecting; sync() })
       observer.observe(intro)
       removals.push(() => observer.disconnect())
-      const busyObserver = new MutationObserver(sync)
-      busyObserver.observe(card, { attributes: true, attributeFilter: ['aria-busy'], subtree: true, childList: true })
-      removals.push(() => busyObserver.disconnect())
-      listen(card, 'focusin', sync)
-      listen(card, 'focusout', () => queueMicrotask(sync))
       listen(document, 'visibilitychange', sync)
-      listen(window, 'blur', sync)
-      listen(window, 'focus', sync)
       if (context.conditions.pointer && !context.conditions.forced) {
         if (context.conditions.desktop) {
           const x = gsap.quickTo(parallax, 'x', { duration: .5, ease: 'power3.out' })

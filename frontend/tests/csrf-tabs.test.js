@@ -87,7 +87,7 @@ test('expired bootstrap expires the login and never submits attendance', async (
     location: { pathname: '/admin/qr-scan', replace: path => { redirect = path } },
     CustomEvent: class { constructor(type) { this.type = type } },
     dispatchEvent: event => events.push(event.type),
-    fetch: async url => { if (!url.endsWith('/api/auth/csrf')) writes++; return json({ message: 'Session expired' }, 401) }
+    fetch: async url => { if (!url.endsWith('/api/auth/csrf')) writes++; return json({ message: 'Session expired', error: { code: 'AUTH_REQUIRED' } }, 401) }
   }
   installMutationRequestGuard(target)
   await assert.rejects(target.fetch('/api/attendance', { method: 'POST' }), { status: 401 })

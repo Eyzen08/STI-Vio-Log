@@ -1,0 +1,3 @@
+.attendance-sync { display:flex; align-items:center; flex-wrap:wrap; gap:.5rem 1rem; padding:.5rem .75rem; margin-bottom:.75rem; color:var(--text-muted); background:var(--surface-raised); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:.8rem; }
+.attendance-sync--warning { color:var(--text-primary); border-color:var(--border-strong); }
+.attendance-sync .secondary-button { min-height:44px; margin-left:auto; }

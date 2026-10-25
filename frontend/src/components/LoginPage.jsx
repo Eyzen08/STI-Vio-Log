@@ -7,7 +7,6 @@ import buildingNightImage from '../assets/sti-global-city-building-night.jpg'
 import stiVioLogLogoTransparent from '../assets/sti-logo-web-transparent.png'
 import MfaChallenge from './MfaChallenge.jsx'
 import PortalIcon from './PortalIcon.jsx'
-import usePublicMotion from '../lib/usePublicMotion.js'
 import ribbon from '../assets/landing-ribbon.webp'
 import '../styles/public-motion.css'
 
@@ -15,27 +14,25 @@ const STUDENT_AUTH_PATHS = new Set(['/forgot-password','/reset-password/verify',
 
 const CampusIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M4 20h16M6 20V9m12 11V9M3 9l9-5 9 5M9 12v4m6-4v4"/></svg>
 
-function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue, theme='light', onToggleTheme }) {
+function LoginPage({ form, error, invalidCredentials=false, connectionProgress='', isSubmitting, googleClientId, onChange, onGoogleSession, onSubmit, routePath='/login', onNavigate, onOpenPolicy, authDraft, onAuthDraftChange, onClearAuthDraft, mfaState, mfaDraft, onMfaDraftChange, onMfaSubmit, onMfaCancel, onMfaContinue, theme='light', onToggleTheme }) {
   const studentFlow = STUDENT_AUTH_PATHS.has(routePath)
   const rootRef = useRef(null)
-  const motionMode = usePublicMotion()
   const [capsLockOn, setCapsLockOn] = useState(false)
   useEffect(() => {
     let disposed = false
     let cleanup = () => {}
-    if (motionMode === 'reduced') return undefined
     import('../lib/loginMotion.js').then(({ animateLogin }) => {
       if (!disposed) cleanup = animateLogin(rootRef.current)
     }).catch(() => { /* Authentication stays visible when optional motion is unavailable. */ })
     return () => { disposed = true; cleanup() }
-  }, [motionMode])
+  }, [])
   const navigate = (event, path, disabled=false) => {
     event.preventDefault()
     if (disabled) return
     onNavigate(path)
   }
 
-  return <section className={`login-page public-motion-surface${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title" ref={rootRef} data-motion={motionMode}>
+  return <section className={`login-page public-motion-surface${studentFlow?' login-page--student-flow':''}`} aria-labelledby="login-title" ref={rootRef}>
     <div className="login-utility-controls" aria-label="Display preferences">
       <button className="theme-toggle auth-theme-toggle" type="button" aria-label={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} aria-pressed={theme === 'dark'} title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`} onClick={onToggleTheme}><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>
     </div>
@@ -61,11 +58,12 @@ function LoginPage({ form, error, isSubmitting, googleClientId, onChange, onGoog
         {mfaState ? <MfaChallenge state={mfaState} draft={mfaDraft} onDraftChange={onMfaDraftChange} error={error} busy={isSubmitting} onSubmit={onMfaSubmit} onCancel={onMfaCancel} onContinue={onMfaContinue}/> : studentFlow ? <StudentPasswordAccess routePath={routePath} onNavigate={onNavigate} draft={authDraft} onDraftChange={onAuthDraftChange} onClearDraft={onClearAuthDraft}/> : <>
           <header className="auth-card-header"><h1 id="login-title">Welcome Back</h1><p>Sign in to your STI Vio-Log account.</p></header>
           <form className="login-form login-form--floating" onSubmit={onSubmit} aria-busy={isSubmitting}>
-            <label className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or Student Number</span><input id="username" type="text" name="username" placeholder="e.g. 02000123456 or juan.delacruz" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={Boolean(error)} aria-describedby={error?'login-error':undefined} required/></label>
+            <label className="login-floating-field" htmlFor="username"><span className="login-floating-label">Username or Student Number</span><input id="username" type="text" name="username" placeholder="e.g. 02000123456 or juan.delacruz" value={form.username} onChange={onChange} autoComplete="username" autoCapitalize="none" spellCheck="false" disabled={isSubmitting} aria-invalid={invalidCredentials} aria-describedby={error?'login-error':undefined} required/></label>
             <div className="login-password-field" onKeyUp={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))} onKeyDown={(event)=>setCapsLockOn(event.getModifierState('CapsLock'))}>
-              <PasswordField id="password" label="Password" labelClassName="login-floating-field" placeholder="Enter your current password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={Boolean(error)} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
+              <PasswordField id="password" label="Password" labelClassName="login-floating-field" placeholder="Enter your current password" value={form.password} onChange={(event)=>onChange({target:{name:'password',value:event.target.value}})} disabled={isSubmitting} autoComplete="current-password" invalid={invalidCredentials} describedBy={[capsLockOn?'caps-lock-note':'',error?'login-error':''].filter(Boolean).join(' ')||undefined}/>
               <nav className="auth-entry-actions" aria-label="Account Help"><a href="/forgot-password" onClick={(event)=>navigate(event, '/forgot-password', isSubmitting)} aria-disabled={isSubmitting}>Forgot Password?</a></nav>
             </div>
+            {connectionProgress&&<p className="auth-status" role="status" aria-live="polite">{connectionProgress}</p>}
             {capsLockOn&&<p className="caps-lock-note" id="caps-lock-note" role="status">Caps Lock is on</p>}
             {error&&<p className="error-message" id="login-error" role="alert" aria-live="polite">{error}</p>}
             <button type="submit" className="login-submit" disabled={isSubmitting}>{isSubmitting&&<span className="login-submit-spinner" aria-hidden="true"/>}{isSubmitting?'Signing In…':'Sign In'}</button>

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import LandingPreview from './LandingPreview.jsx'
 import PortalIcon from './PortalIcon.jsx'
-import usePublicMotion from '../lib/usePublicMotion.js'
 import logo from '../assets/sti-logo-web-transparent.png'
 import campus from '../assets/sti-global-city-building-night.jpg'
 import ribbon from '../assets/landing-ribbon.webp'
@@ -29,7 +28,6 @@ const FAQS = [
 export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   const rootRef = useRef(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const motionMode = usePublicMotion()
   const checking = accessState === 'restoring'
   const accountLabel = checking ? 'Checking Session…' : accessState === 'signed-in' ? 'Open My Portal' : 'Sign In'
 
@@ -37,12 +35,11 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
     const root = rootRef.current
     let disposed = false
     let cleanup = () => {}
-    if (motionMode === 'reduced') return undefined
     import('../lib/landingMotion.js').then(({ animateLanding }) => {
       if (!disposed) cleanup = animateLanding(root)
     }).catch(() => { /* Content remains visible if optional motion cannot load. */ })
     return () => { disposed = true; cleanup() }
-  }, [motionMode])
+  }, [])
 
   useEffect(() => {
     if (!menuOpen) return undefined
@@ -63,9 +60,9 @@ export default function LandingPage({ accessState, onNavigate, onOpenPolicy }) {
   }
   const accountAction = className => checking
     ? <button className={className} type="button" disabled aria-busy="true">{accountLabel}</button>
-    : <a className={className} data-magnetic href="/login" onClick={event => navigate(event, '/login')}>{accountLabel}<PortalIcon name="arrow-right" size={18} /></a>
+    : <a className={className} href="/login" onClick={event => navigate(event, '/login')}>{accountLabel}<PortalIcon name="arrow-right" size={18} /></a>
 
-  return <div className="landing-page public-motion-surface" ref={rootRef} data-motion={motionMode}>
+  return <div className="landing-page public-motion-surface" ref={rootRef}>
     <header className="landing-header">
       <a className="landing-brand" href="/" aria-label="STI Vio-Log home"><img src={logo} alt="STI Vio-Log" width="420" height="236" /><span>Global City</span></a>
       <nav id="landing-navigation" className={`landing-navigation${menuOpen ? ' is-open' : ''}`} aria-label="Main navigation">

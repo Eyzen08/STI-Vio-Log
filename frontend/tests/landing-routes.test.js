@@ -32,7 +32,7 @@ test('an expired session clears credentials without redirecting away from the we
   let expired = false
   globalThis.localStorage = { removeItem: key => removed.push(key) }
   const target = {
-    fetch: async () => new Response('{}', { status: 401 }),
+    fetch: async () => new Response('{"error":{"code":"AUTH_REQUIRED"}}', { status: 401, headers: { 'content-type':'application/json' } }),
     location: { origin: 'https://portal.example.test', pathname: '/', replace: path => { redirect = path } },
     CustomEvent: class { constructor(type) { this.type = type } },
     dispatchEvent: event => { expired = event.type === 'sti:session-expired' },

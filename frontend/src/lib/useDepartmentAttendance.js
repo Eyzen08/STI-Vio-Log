@@ -1,69 +1,37 @@
-import { useEffect, useState } from 'react'
-import { API_URL } from './api.js'
+import { useState } from 'react'
+import { apiRequest, ApiError } from './api.js'
 import { buildDepartmentDtrQuery } from './departmentDtr.js'
+import useRefreshResource from './useRefreshResource.js'
 
-export default function useDepartmentAttendance({ token, userId, enabled, realtimeSocket, refreshKey, onChanged }) {
+export default function useDepartmentAttendance({ token, userId, enabled, realtimeSocket, refreshKey }) {
   const account = enabled ? `${userId}:${token}` : ''
-  const [filter, setFilter] = useState({ account:'', query:'' })
+  const [filter, setFilter] = useState({ account: '', query: '' })
   const query = filter.account === account ? filter.query : ''
   const [snapshot, setSnapshot] = useState(null)
   const current = snapshot?.account === account ? snapshot : null
-
-  useEffect(() => {
-    if (!account) return undefined
-    const controller = new AbortController()
-    const load = async (path) => {
-      const response = await fetch(`${API_URL}${path}`, { headers:{Authorization:`Bearer ${token}`}, signal:controller.signal })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.success === false) throw new Error(data.message || 'Unable to load department records.')
-      return data
-    }
-    const overview = load('/api/reports/dtr')
-    const filtered = query ? load(`/api/reports/dtr?${query}`) : overview
-    Promise.allSettled([overview, filtered, load('/api/community-service/active-sessions')]).then(([overviewResult, reportResult, attendanceResult]) => {
-      if (controller.signal.aborted) return
-      setSnapshot(previous => {
-        const saved = previous?.account === account ? previous : {}
-        const activeValid = attendanceResult.status === 'fulfilled' && Array.isArray(attendanceResult.value.sessions)
-        return {
-          ...saved, account, query, filter,
-          overview:overviewResult.status === 'fulfilled' ? overviewResult.value : saved.overview,
-          overviewError:overviewResult.status === 'rejected' ? overviewResult.reason.message : '',
-          report:reportResult.status === 'fulfilled' ? reportResult.value : saved.report,
-          reportError:reportResult.status === 'rejected' ? reportResult.reason.message : '',
-          activeSessions:activeValid ? attendanceResult.value.sessions : saved.activeSessions || [],
-          attendanceReady:activeValid || saved.attendanceReady || false,
-          attendanceError:activeValid ? '' : attendanceResult.reason?.message || 'Attendance unavailable. Last loaded status may be outdated.'
-        }
-      })
-    })
-    return () => controller.abort()
-  }, [account, token, query, filter, refreshKey])
-
-  useEffect(() => {
-    if (!account) return undefined
-    const refresh = () => { if (document.visibilityState === 'visible') onChanged() }
-    const timer = window.setInterval(refresh, 15000)
-    document.addEventListener('visibilitychange',refresh)
-    window.addEventListener('online',refresh)
-    realtimeSocket?.on('community-service:changed',onChanged)
-    realtimeSocket?.on('connect',onChanged)
-    return () => {
-      window.clearInterval(timer)
-      document.removeEventListener('visibilitychange',refresh)
-      window.removeEventListener('online',refresh)
-      realtimeSocket?.off('community-service:changed',onChanged)
-      realtimeSocket?.off('connect',onChanged)
-    }
-  }, [account, realtimeSocket, onChanged])
-
+  const save = patch => setSnapshot(previous => ({ ...(previous?.account === account ? previous : {}), account, ...patch }))
+  const options = { enabled, account, socket: realtimeSocket, refreshKey }
+  const load = (path, signal) => apiRequest(path, { headers: { Authorization: `Bearer ${token}` }, signal })
+  const overviewSync = useRefreshResource({ ...options, intervalMs: 60000,
+    load: signal => load('/api/reports/dtr', signal), onData: overview => save({ overview }) })
+  const filteredSync = useRefreshResource({ ...options, enabled: enabled && Boolean(query), account: `${account}:${query}`, intervalMs: 60000,
+    load: signal => load(`/api/reports/dtr?${query}`, signal), onData: report => save({ report, reportQuery: query }) })
+  const attendanceSync = useRefreshResource({ ...options,
+    load: async signal => {
+      const data = await load('/api/community-service/active-sessions', signal)
+      if (!Array.isArray(data?.sessions)) throw new ApiError('Attendance unavailable. Last loaded status may be outdated.', { code: 'INVALID_RESPONSE' })
+      return data.sessions
+    }, onData: activeSessions => save({ activeSessions, attendanceReady: true }) })
+  const reportSync = query ? filteredSync : overviewSync
+  const refresh = () => { overviewSync.refresh(); if (query) filteredSync.refresh(); attendanceSync.refresh() }
   return {
-    overview:current?.overview || null, overviewError:current?.overviewError || '',
-    overviewLoading:Boolean(enabled && !current),
-    report:current?.report || null, reportError:current?.reportError || '',
-    reportLoading:Boolean(enabled && (!current || current.filter !== filter)),
-    activeSessions:current?.activeSessions || [], attendanceReady:current?.attendanceReady || false,
-    attendanceLoading:Boolean(enabled && !current), attendanceError:current?.attendanceError || '',
-    onFilter:filters => setFilter({account,query:buildDepartmentDtrQuery(filters)})
+    overview: current?.overview || null, overviewError: overviewSync.error,
+    overviewLoading: Boolean(enabled && !current?.overview && overviewSync.loading),
+    report: query ? current?.report || null : current?.overview || null, reportError: reportSync.error,
+    reportLoading: Boolean(enabled && reportSync.loading && (query ? current?.reportQuery !== query : !current?.overview)),
+    activeSessions: current?.activeSessions || [], attendanceReady: current?.attendanceReady || false,
+    attendanceLoading: Boolean(enabled && !current?.attendanceReady && attendanceSync.loading), attendanceError: attendanceSync.error,
+    onFilter: filters => setFilter({ account, query: buildDepartmentDtrQuery(filters) }),
+    ...attendanceSync, refresh, retry: refresh, attendanceSync, reportSync
   }
 }

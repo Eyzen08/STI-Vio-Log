@@ -55,7 +55,10 @@ import StudentCredentialsModal from './components/StudentCredentialsModal.jsx'
 import { normalizeStudentGmail, reviewStudentAccount } from './lib/studentAccount.js'
 import StudentAccountReview from './components/StudentAccountReview.jsx'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
-import { API_URL, apiRequest, loadAllPages, login } from './lib/api.js'
+import { API_URL, apiRequest, loadAllPages, login, isAuthenticationRejection, settleReads } from './lib/api.js'
+import { prepareLoginService } from './lib/serviceStartup.js'
+import useRefreshResource from './lib/useRefreshResource.js'
+import AttendanceSync from './components/AttendanceSync.jsx'
 import { applyTheme, readDocumentTheme } from './lib/theme.js'
 import { accountSetupRedirect, getHomePath, getNavItems, resolveRoute } from './lib/routes.js'
 import { notificationDestination, notificationTarget, withoutNotificationTarget } from './lib/studentNotifications.js'
@@ -170,6 +173,10 @@ function App() {
   const themeTransitionTimerRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [invalidCredentials, setInvalidCredentials] = useState(false)
+  const [connectionProgress, setConnectionProgress] = useState('')
+  const loginStartupRef = useRef(null)
+  const loginRetryAtRef = useRef(0)
   const [mfaState,setMfaState]=useState(null)
   const [mfaDraft,setMfaDraft]=useState(EMPTY_MFA_DRAFT)
   const [authDraft,setAuthDraft]=useState(EMPTY_AUTH_DRAFT)
@@ -256,7 +263,7 @@ function App() {
       })
       .catch((error) => {
         if (controller.signal.aborted) return
-        if (error?.status === 401) {
+        if (isAuthenticationRejection(error)) {
           clearSession()
           setUser(null)
           setToken('')
@@ -271,8 +278,6 @@ function App() {
 
   const [students, setStudents] = useState([])
   const [violations, setViolations] = useState([])
-  const [dashboardLoading, setDashboardLoading] = useState(false)
-  const [dashboardError, setDashboardError] = useState('')
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
   const [studentProfile, setStudentProfile] = useState(null)
   const [clearanceEligibility, setClearanceEligibility] = useState(null)
@@ -283,17 +288,16 @@ function App() {
   const [studentDtrLoading, setStudentDtrLoading] = useState(false)
   const [studentDtrError, setStudentDtrError] = useState('')
   const studentDtrFiltersRef = useRef({ from: '', to: '' })
-  const studentLiveRefreshRef = useRef(false)
-  const adminAttendanceRefreshRef = useRef(false)
+  const studentDtrRequestRef = useRef(null)
   const [studentNotifications, setStudentNotifications] = useState([])
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0)
   const [activeServiceSessions, setActiveServiceSessions] = useState([])
   const [adminAttendanceReady, setAdminAttendanceReady] = useState(false)
-  const [attendanceError, setAttendanceError] = useState('')
   const [attendanceNotices, setAttendanceNotices] = useState([])
   const studentAttendanceSnapshotRef = useRef(null)
   const adminAttendanceSnapshotRef = useRef(null)
   const attendanceAccountRef = useRef(null)
+  attendanceAccountRef.current = user?.id
   const [notificationActionError, setNotificationActionError] = useState('')
   const [unreadMessages, setUnreadMessages] = useState(0)
   const [pendingActionCounts, setPendingActionCounts] = useState({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
@@ -318,7 +322,7 @@ function App() {
     socket.on('connect_error', handleLegalError)
     setRealtimeSocket(socket)
     return () => { socket.disconnect() }
-  }, [portalReady])
+  }, [portalReady, user?.id])
 
   useEffect(() => {
     const expireSession = () => {
@@ -332,17 +336,6 @@ function App() {
     window.addEventListener('sti:session-expired', expireSession)
     return () => window.removeEventListener('sti:session-expired', expireSession)
   }, [realtimeSocket])
-
-  useEffect(() => {
-    if (!realtimeSocket) return undefined
-    const refreshServiceData = () => { setDashboardRefreshKey((current) => current + 1); refreshPendingActions() }
-    realtimeSocket.on('community-service:changed', refreshServiceData)
-    realtimeSocket.on('notifications:changed', refreshServiceData)
-    return () => {
-      realtimeSocket.off('community-service:changed', refreshServiceData)
-      realtimeSocket.off('notifications:changed', refreshServiceData)
-    }
-  }, [realtimeSocket, refreshPendingActions])
 
   const markNotificationRead = async (notificationId) => performMutation(`notification-${notificationId}`, async () => {
     setNotificationActionError('')
@@ -584,15 +577,15 @@ function App() {
     userRole === 'STUDENT'
 
   const refreshDepartment = useCallback(() => setDashboardRefreshKey(key => key + 1), [])
-  const department = useDepartmentAttendance({token, userId:user?.id, enabled:portalReady && isDepartmentHead, realtimeSocket, refreshKey:dashboardRefreshKey, onChanged:refreshDepartment})
-  const departmentDashboardAccountRef = useRef(null)
+  const department = useDepartmentAttendance({token, userId:user?.id, enabled:portalReady && isDepartmentHead, realtimeSocket, refreshKey:dashboardRefreshKey})
 
   useEffect(() => {
-    attendanceAccountRef.current = user?.id
     studentAttendanceSnapshotRef.current = null
+    studentDtrRequestRef.current?.abort()
     adminAttendanceSnapshotRef.current = null
     setAdminAttendanceReady(false)
-    setAttendanceError('')
+    setActiveServiceSessions([])
+    setStudentLiveDtr(null)
     setAttendanceNotices([])
   }, [user?.id])
 
@@ -604,7 +597,10 @@ function App() {
     const changes = attendanceTransitions(previous?.sessions, data.sessions)
     studentAttendanceSnapshotRef.current = { sessions: data.sessions, requestedAt }
     setStudentLiveDtr(data)
-    setAttendanceError('')
+    setStudentDtr(current => {
+      const { from, to } = studentDtrFiltersRef.current
+      return (from || to) && current ? { ...current, assignments: data.assignments } : data
+    })
     if (changes.length) setAttendanceNotices(changes)
   }, [user?.id])
 
@@ -616,7 +612,6 @@ function App() {
     adminAttendanceSnapshotRef.current = { requestedAt }
     setActiveServiceSessions(data.sessions)
     setAdminAttendanceReady(true)
-    setAttendanceError('')
   }, [user?.id])
 
   useEffect(() => {
@@ -628,6 +623,16 @@ function App() {
   const routeResolution = resolveRoute(routePath, userRole)
   const loginView = !isLanding && !isLoggedIn && !sessionRestoring && !['/privacy', '/terms'].includes(routePath) && routeResolution.status !== 'not_found'
   const activeView = routeResolution.status === 'allowed' ? routeResolution.route.view : ''
+
+  useEffect(() => {
+    if (!loginView) return undefined
+    const controller = new AbortController()
+    const startup = { controller, ready: false }
+    startup.promise = prepareLoginService({ signal: controller.signal, onProgress: setConnectionProgress })
+      .then(() => { startup.ready = true }).catch(failure => { startup.error = failure })
+    loginStartupRef.current = startup
+    return () => { controller.abort(); if (loginStartupRef.current === startup) loginStartupRef.current = null; setConnectionProgress('') }
+  }, [loginView])
 
   useEffect(() => {
     const label = user && !user.password_change_required && !legal.ready && !['/privacy','/terms'].includes(routePath) ? 'Terms of Use' : routeResolution.route?.label
@@ -645,66 +650,27 @@ function App() {
   }, [isMobileNavOpen])
   const updateUnreadMessages = useCallback((count) => setUnreadMessages(Math.max(0, Number(count) || 0)), [])
 
-  useEffect(() => {
-    if (!portalReady) {
-      setUnreadMessages(0)
-      return undefined
-    }
-    const controller = new AbortController()
-    const refresh = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/messages/unread-count`, {
-          headers: { Authorization: `Bearer ${token}` }, signal: controller.signal
-        })
-        const data = await response.json().catch(() => ({}))
-        if (response.ok) setUnreadMessages(Number(data.unread_total || 0))
-      } catch (loadError) {
-        if (loadError.name !== 'AbortError') return
-      }
-    }
-    refresh()
-    const handleMessageChange = () => refresh()
-    realtimeSocket?.on('messages:changed', handleMessageChange)
-    const interval = window.setInterval(refresh, 30000)
-    return () => { controller.abort(); window.clearInterval(interval); realtimeSocket?.off('messages:changed', handleMessageChange) }
-  }, [portalReady, token, realtimeSocket])
+  useRefreshResource({ enabled: portalReady, account: `${user?.id}:${token}`, intervalMs: 60000,
+    socket: realtimeSocket, event: 'messages:changed',
+    load: signal => apiRequest('/api/messages/unread-count', { signal }),
+    onData: data => setUnreadMessages(Number(data.unread_total || 0)) })
 
-  useEffect(() => {
-    if (!portalReady || !userRole) {
-      setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
-      return undefined
-    }
+  useRefreshResource({ enabled: portalReady && isAdmin, account: `${user?.id}:${token}`, intervalMs: 60000,
+    socket: realtimeSocket, refreshKey: pendingRefreshKey,
+    load: signal => apiRequest('/api/community-service/results/pending', { signal }),
+    onData: data => {
+      if (!Array.isArray(data.results)) throw new Error('Invalid service results response')
+      setPendingActionCounts(current => ({ ...current, serviceResults: data.results.length }))
+    } })
 
-    const controller = new AbortController()
-    const headers = { Authorization: `Bearer ${token}` }
-    const refresh = async () => {
-      const requests = []
-      const keys = []
-      if (['DISCIPLINE_ADMIN', 'DISCIPLINE_OFFICE'].includes(userRole)) {
-        keys.push('serviceResults')
-        requests.push(fetch(`${API_URL}/api/community-service/results/pending`, { headers, signal: controller.signal }))
-      }
-      if (!requests.length) {
-        setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
-        return
-      }
-      try {
-        const responses = await Promise.all(requests)
-        const payloads = await Promise.all(responses.map((response) => response.ok ? response.json() : null))
-        const next = { serviceResults: 0, supportAccess: 0, actionRequests: 0 }
-        keys.forEach((key, index) => {
-          const data = payloads[index]
-          if (key === 'serviceResults') next[key] = Array.isArray(data?.results) ? data.results.length : 0
-        })
-        setPendingActionCounts(next)
-      } catch (loadError) {
-        if (loadError.name !== 'AbortError') setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
-      }
-    }
-    refresh()
-    const interval = window.setInterval(refresh, 30000)
-    return () => { controller.abort(); window.clearInterval(interval) }
-  }, [portalReady, token, userRole, pendingRefreshKey])
+  useRefreshResource({ enabled: portalReady, account: `${user?.id}:${token}`, intervalMs: 60000,
+    socket: realtimeSocket, event: 'notifications:changed',
+    load: signal => apiRequest('/api/notifications?limit=100', { signal }),
+    onData: notificationsData => {
+      if (!Array.isArray(notificationsData.notifications)) throw new Error('Invalid notifications response')
+      setStudentNotifications(notificationsData.notifications)
+      setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
+    } })
 
   const badgeForNavigationItem = (item) => {
     if (item.view === 'Messages') return { count: unreadMessages, label: 'Unread Messages' }
@@ -780,227 +746,62 @@ function App() {
    * ============================================================
    */
 
+  const dashboardSync = useRefreshResource({
+    enabled: portalReady, account: `${user?.id}:${token}`, intervalMs: 60000,
+    socket: realtimeSocket, refreshKey: dashboardRefreshKey,
+    load: async signal => {
+      const options = { signal }
+      if (isAdmin) return settleReads([
+        loadAllPages('/api/students', 'students', options),
+        loadAllPages('/api/violations', 'violations', options),
+        apiRequest('/api/violations/types', options),
+        loadAllPages('/api/community-service', 'assignments', options),
+        apiRequest('/api/clearance', options),
+        apiRequest('/api/community-service/assignment-options', options)
+      ])
+      if (isDepartmentHead) return [await loadAllPages('/api/community-service', 'assignments', options)]
+      return settleReads([
+        apiRequest('/api/students/me', options),
+        apiRequest('/api/students/me/violations', options),
+        apiRequest('/api/students/me/community-service', options),
+        apiRequest('/api/student/clearance', options),
+        apiRequest('/api/student/clearance/eligibility', options)
+      ])
+    },
+    onData: data => {
+      if (isAdmin) {
+        const [allStudents, allViolations, types, assignments, clearance, destinations] = data
+        setStudents(allStudents); setViolations(allViolations)
+        setViolationTypes((types.violationTypes || []).filter(type => type.violation_code.startsWith('HANDBOOK_')))
+        setCommunityServiceAssignments(assignments)
+        setCommunityServiceDestinations(destinations.destinations || [])
+        setClearanceRecords(clearance.clearanceRecords || [])
+      } else if (isDepartmentHead) {
+        setCommunityServiceAssignments(data[0])
+      } else {
+        const [profile, records, assignments, clearance, eligibility] = data
+        setStudentProfile(profile.student || null); setViolations(records.violations || [])
+        setCommunityServiceAssignments(assignments.assignments || [])
+        setClearanceRecords(clearance.clearanceRecords || []); setClearanceEligibility(eligibility)
+      }
+    }
+  })
+  const dashboardLoading = !dashboardSync.lastSuccess && dashboardSync.loading
+  const dashboardError = dashboardSync.error
+
   useEffect(() => {
-    if (!portalReady || !userRole) {
-      departmentDashboardAccountRef.current = null
-      setStudents([])
-      setViolations([])
-      setCommunityServiceAssignments([])
-      setClearanceRecords([])
-      setStudentProfile(null)
-      setClearanceEligibility(null)
-      setClearanceCertificate(null)
-      setClearanceCertificateError('')
-      setDashboardError('')
-      setStudentDtr(null)
-      setStudentLiveDtr(null)
-      setStudentDtrError('')
-      setStudentNotifications([])
-      setUnreadNotificationCount(0)
-      setActiveServiceSessions([])
-      return
-    }
-
-    let current = true
-    const loadDashboardData = async () => {
-      const requestedAt = Date.now()
-      const departmentAccount = `${user?.id}:${token}`
-      if (!isDepartmentHead || departmentDashboardAccountRef.current !== departmentAccount) setDashboardLoading(true)
-      if (isDepartmentHead && departmentDashboardAccountRef.current !== departmentAccount) {
-        setCommunityServiceAssignments([])
-        setStudentNotifications([])
-        setUnreadNotificationCount(0)
-      }
-      setDashboardError('')
-
-      try {
-        const authHeaders = {
-          Authorization: `Bearer ${token}`
-        }
-
-        /*
-         * ======================================================
-         * ADMIN / DISCIPLINE OFFICE
-         * ======================================================
-         */
-
-        if (isAdmin) {
-          const [
-            allStudents,
-            allViolations,
-            violationTypesResponse,
-            allAssignments,
-            clearanceResponse,
-            destinationsResponse,
-            notificationsResponse,
-            activeSessionsResponse
-          ] = await Promise.all([
-            loadAllPages('/api/students', 'students', { headers: authHeaders }),
-
-            loadAllPages('/api/violations', 'violations', { headers: authHeaders }),
-
-            fetch(`${API_URL}/api/violations/types`, {
-              headers: authHeaders
-            }),
-
-            loadAllPages('/api/community-service', 'assignments', { headers: authHeaders }),
-
-            fetch(`${API_URL}/api/clearance`, {
-              headers: authHeaders
-            }),
-
-            fetch(`${API_URL}/api/community-service/assignment-options`, {
-              headers: authHeaders
-            }),
-            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/community-service/active-sessions`, { headers: authHeaders })
-          ])
-
-          if (
-            !violationTypesResponse.ok ||
-            !clearanceResponse.ok ||
-            !destinationsResponse.ok ||
-            !notificationsResponse.ok ||
-            !activeSessionsResponse.ok
-          ) {
-            throw new Error(
-              'Unable to load administration data'
-            )
-          }
-
-          const violationTypesData =
-            await violationTypesResponse.json()
-
-          const clearanceData =
-            await clearanceResponse.json()
-
-          const destinationsData = await destinationsResponse.json()
-          const notificationsData = await notificationsResponse.json()
-          const activeSessionsData = await activeSessionsResponse.json()
-
-          setStudents(allStudents)
-
-          setViolations(allViolations)
-
-          setViolationTypes(
-            (violationTypesData.violationTypes || []).filter((type) =>
-              type.violation_code.startsWith('HANDBOOK_')
-            )
-          )
-
-          setCommunityServiceAssignments(allAssignments)
-          setCommunityServiceDestinations(destinationsData.destinations || [])
-          setStudentNotifications(notificationsData.notifications || [])
-          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
-          acceptAdminAttendance(activeSessionsData, requestedAt)
-
-          setClearanceRecords(
-            clearanceData.clearanceRecords || []
-          )
-
-          return
-        }
-
-        /*
-         * ======================================================
-         * DEPARTMENT HEAD
-         * ======================================================
-         */
-
-        if (isDepartmentHead) {
-          const [allAssignments, notificationsResponse] = await Promise.all([
-            loadAllPages('/api/community-service', 'assignments', { headers: authHeaders }),
-            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders })
-          ])
-          const notificationsData = await notificationsResponse.json().catch(() => ({}))
-          if (!current) return
-
-          if (!notificationsResponse.ok) throw new Error(notificationsData.message || 'Unable to load assigned community service')
-          departmentDashboardAccountRef.current = departmentAccount
-
-          setStudents([])
-          setViolations([])
-          setCommunityServiceAssignments(allAssignments)
-          setClearanceRecords([])
-          setStudentNotifications(notificationsData.notifications || [])
-          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
-
-          return
-        }
-
-        /*
-         * ======================================================
-         * STUDENT
-         * ======================================================
-         */
-
-        if (isStudent) {
-          setStudents([])
-
-          const responses = await Promise.all([
-            fetch(`${API_URL}/api/students/me`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/students/me/violations`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/students/me/community-service`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/notifications?limit=100`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/student/clearance`, { headers: authHeaders }),
-            fetch(`${API_URL}/api/student/clearance/eligibility`, { headers: authHeaders })
-          ])
-
-          const payloads = await Promise.all(responses.map((response) => response.json().catch(() => ({}))))
-          const failedIndex = responses.findIndex((response) => !response.ok)
-
-          if (failedIndex !== -1) {
-            throw new Error(payloads[failedIndex].message || 'Unable to load your dashboard')
-          }
-
-          const [profileData, violationsData, assignmentsData, dtrData, notificationsData, clearanceData, eligibilityData] = payloads
-          setStudentProfile(profileData.student || null)
-          setViolations(violationsData.violations || [])
-          setCommunityServiceAssignments(assignmentsData.assignments || [])
-          acceptStudentAttendance(dtrData, requestedAt)
-          setStudentDtr((current) => {
-            const { from, to } = studentDtrFiltersRef.current
-            return (from || to) && current ? { ...current, assignments: dtrData.assignments } : dtrData
-          })
-          setStudentNotifications(notificationsData.notifications || [])
-          setUnreadNotificationCount(Number(notificationsData.summary?.unread || 0))
-          setClearanceRecords(clearanceData.clearanceRecords || [])
-          setClearanceEligibility(eligibilityData)
-
-          return
-        }
-      } catch (fetchError) {
-        if (isDepartmentHead && !current) return
-        console.error(
-          'Dashboard data loading error:',
-          fetchError
-        )
-
-        setDashboardError(fetchError.message || 'Unable to load dashboard data')
-        if (isAdmin || isStudent) setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
-      } finally {
-        if (!isDepartmentHead || current) setDashboardLoading(false)
-      }
-    }
-
-    loadDashboardData()
-    return () => { current = false }
-  }, [
-    portalReady,
-    isLoggedIn,
-    token,
-    userRole,
-    isAdmin,
-    isDepartmentHead,
-    isStudent,
-    user,
-    dashboardRefreshKey,
-    acceptAdminAttendance,
-    acceptStudentAttendance
-  ])
+    setStudents([]); setViolations([]); setCommunityServiceAssignments([]); setClearanceRecords([])
+    setStudentProfile(null); setClearanceEligibility(null); setClearanceCertificate(null)
+    setClearanceCertificateError(''); setStudentDtr(null); setStudentLiveDtr(null); setStudentDtrError('')
+    setStudentNotifications([]); setUnreadNotificationCount(0); setActiveServiceSessions([])
+    setUnreadMessages(0); setPendingActionCounts({ serviceResults: 0, supportAccess: 0, actionRequests: 0 })
+  }, [portalReady, user?.id])
 
   const loadStudentDtr = useCallback(async ({ from = '', to = '' } = {}) => {
+    studentDtrRequestRef.current?.abort()
+    const controller = new AbortController()
+    studentDtrRequestRef.current = controller
+    const accountId = user?.id
     studentDtrFiltersRef.current = { from, to }
     setStudentDtrLoading(true)
     setStudentDtrError('')
@@ -1009,71 +810,29 @@ function App() {
       if (from) query.set('from', from)
       if (to) query.set('to', to)
       const suffix = query.size ? `?${query}` : ''
-      const response = await fetch(`${API_URL}/api/students/me/community-service/dtr${suffix}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.message || 'Unable to load your DTR')
+      const data = await apiRequest(`/api/students/me/community-service/dtr${suffix}`, { signal: controller.signal })
+      if (controller.signal.aborted || attendanceAccountRef.current !== accountId) return
+      if (!Array.isArray(data.sessions)) throw new Error('Invalid attendance history response')
       setStudentDtr(data)
     } catch (dtrError) {
-      setStudentDtrError(dtrError.message || 'Unable to load your DTR')
+      if (!controller.signal.aborted && attendanceAccountRef.current === accountId) setStudentDtrError(dtrError.message || 'Unable to load your DTR')
     } finally {
-      setStudentDtrLoading(false)
+      if (!controller.signal.aborted && attendanceAccountRef.current === accountId) setStudentDtrLoading(false)
     }
-  }, [token])
+  }, [user?.id])
 
-  const refreshStudentLiveDtr = useCallback(async () => {
-    if (!portalReady || !isStudent || studentLiveRefreshRef.current) return
-    studentLiveRefreshRef.current = true
-    const requestedAt = Date.now()
-    try {
-      const response = await fetch(`${API_URL}/api/students/me/community-service/dtr`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.success === false) throw new Error('Attendance refresh failed')
-      acceptStudentAttendance(data, requestedAt)
-    } catch {
-      setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
-    } finally {
-      studentLiveRefreshRef.current = false
-    }
-  }, [portalReady, isStudent, token, acceptStudentAttendance])
-
-  const refreshAdminAttendance = useCallback(async () => {
-    if (!portalReady || !isAdmin || adminAttendanceRefreshRef.current) return
-    adminAttendanceRefreshRef.current = true
-    const requestedAt = Date.now()
-    try {
-      const response = await fetch(`${API_URL}/api/community-service/active-sessions`, { headers: { Authorization: `Bearer ${token}` } })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok || data.success === false) throw new Error('Attendance refresh failed')
-      acceptAdminAttendance(data, requestedAt)
-    } catch {
-      setAttendanceError('Attendance updates unavailable. Last loaded status may be outdated.')
-    } finally {
-      adminAttendanceRefreshRef.current = false
-    }
-  }, [portalReady, isAdmin, token, acceptAdminAttendance])
-
-  useEffect(() => {
-    if (!portalReady || (!isStudent && !isAdmin)) return undefined
-    const refreshLiveAttendance = () => {
-      if (isStudent) refreshStudentLiveDtr()
-      if (isAdmin) refreshAdminAttendance()
-    }
-    const refresh = () => { if (document.visibilityState === 'visible') refreshLiveAttendance() }
-    const polling = window.setInterval(refresh, 15000)
-    document.addEventListener('visibilitychange', refresh)
-    window.addEventListener('online',refresh)
-    realtimeSocket?.on('community-service:changed', refreshLiveAttendance)
-    realtimeSocket?.on('connect', refreshLiveAttendance)
-    return () => {
-      window.clearInterval(polling)
-      document.removeEventListener('visibilitychange', refresh)
-      window.removeEventListener('online',refresh)
-      realtimeSocket?.off('community-service:changed', refreshLiveAttendance)
-      realtimeSocket?.off('connect', refreshLiveAttendance)
-    }
-  }, [portalReady, isAdmin, isStudent, token, realtimeSocket, refreshAdminAttendance, refreshStudentLiveDtr])
+  const attendanceSync = useRefreshResource({
+    enabled: portalReady && (isStudent || isAdmin), account: `${user?.id}:${token}`,
+    socket: realtimeSocket, refreshKey: dashboardRefreshKey,
+    load: async signal => {
+      const data = await apiRequest(isStudent ? '/api/students/me/community-service/dtr' : '/api/community-service/active-sessions', { signal })
+      if (!Array.isArray(data.sessions)) throw new Error('Attendance returned an invalid response. Please retry.')
+      return data
+    },
+    onData: data => isStudent ? acceptStudentAttendance(data, Date.now()) : acceptAdminAttendance(data, Date.now())
+  })
+  const attendanceError = attendanceSync.error ? 'Attendance updates unavailable. Last loaded status may be outdated.' : ''
+  const refreshAdminAttendance = attendanceSync.refresh
 
   const startViolationEdit = (violation) => setEditingViolation(violation)
   const addViolationForStudent = (student) => {
@@ -1170,6 +929,7 @@ function App() {
 
   const handleChange = (event) => {
     const { name, value } = event.target
+    setInvalidCredentials(false)
 
     setForm((current) => ({
       ...current,
@@ -1726,6 +1486,7 @@ function App() {
   const handleQrAction = async (action, qrValue = qrForm.qr_code, options = {}) => {
     const quiet=Boolean(options.quiet)
     const version=qrInputVersionRef.current
+    const accountId=user.id
     while (qrActionBusyRef.current) {
       if (quiet || action!=='scan') return
       await qrActionBusyRef.current
@@ -1744,6 +1505,7 @@ function App() {
       const data=await apiRequest('/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
         ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
         ...(action==='time-in'?{supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
+      if(attendanceAccountRef.current!==accountId) return false
       if(action==='scan'&&version!==qrInputVersionRef.current) return false
       if(!data.success) throw new Error(data.message||'Unable to process attendance.')
       const resetDraft=action==='scan'&&(!quiet||normalizedQr!==verifiedQrRef.current||Number(data.assignment?.id||0)!==Number(current.assignment_id||0))
@@ -1765,14 +1527,14 @@ function App() {
         try {
           const historyData=await apiRequest('/api/community-service/'+data.assignment.id+'/sessions',{headers:{Authorization:'Bearer '+token}})
           if(!Array.isArray(historyData.sessions)) throw new Error('Invalid attendance history')
-          if(version===qrInputVersionRef.current) {setQrHistory(historyData.sessions);setQrHistoryError('')}
+          if(version===qrInputVersionRef.current&&attendanceAccountRef.current===accountId) {setQrHistory(historyData.sessions);setQrHistoryError('')}
         } catch {
-          if(version===qrInputVersionRef.current) setQrHistoryError('Attendance history is temporarily unavailable. Please try again.')
+          if(version===qrInputVersionRef.current&&attendanceAccountRef.current===accountId) setQrHistoryError('Attendance history is temporarily unavailable. Please try again.')
         }
       } else {setQrHistory([]);setQrHistoryError('')}
       return true
-    } catch(failure) {if(version===qrInputVersionRef.current) setQrError(failure.message);return false}
-    finally {if(!quiet) setQrSubmitting(false);qrActionBusyRef.current=null;release()}
+    } catch(failure) {if(version===qrInputVersionRef.current&&attendanceAccountRef.current===accountId) setQrError(failure.message);return false}
+    finally {if(!quiet&&attendanceAccountRef.current===accountId) setQrSubmitting(false);qrActionBusyRef.current=null;release()}
   }
   qrActionRef.current=handleQrAction
 
@@ -1784,12 +1546,14 @@ function App() {
       const code=verifiedQrRef.current
       if(document.visibilityState==='visible'&&code) qrActionRef.current('scan',code,{quiet:true})
     }
-    const timer=window.setInterval(refresh,15000)
+    const timer=window.setInterval(refresh,60000)
+    let burst
+    const changed=()=>{if(!burst) burst=window.setTimeout(()=>{burst=null;refresh()},200)}
     document.addEventListener('visibilitychange',refresh)
     window.addEventListener('online',refresh)
-    realtimeSocket?.on('community-service:changed',refresh)
+    realtimeSocket?.on('community-service:changed',changed)
     realtimeSocket?.on('connect',refresh)
-    return ()=>{window.clearInterval(timer);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',refresh);realtimeSocket?.off('connect',refresh)}
+    return ()=>{window.clearInterval(timer);window.clearTimeout(burst);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',changed);realtimeSocket?.off('connect',refresh)}
   },[portalReady,activeView,token,user?.id,realtimeSocket])
 
   /*
@@ -1804,6 +1568,7 @@ function App() {
 
     setIsSubmitting(true)
     setError('')
+    setInvalidCredentials(false)
 
     try {
       /*
@@ -1811,17 +1576,28 @@ function App() {
        */
 
       if (!form.username.trim()) {
-        throw new Error(
-          'Please enter your username.'
-        )
+        setInvalidCredentials(true)
+        throw new Error('Please enter your username.')
       }
 
       if (!form.password) {
-        throw new Error(
-          'Please enter your password.'
-        )
+        setInvalidCredentials(true)
+        throw new Error('Please enter your password.')
       }
 
+      if (Date.now() < loginRetryAtRef.current) throw Object.assign(new Error(`Please wait before signing in again. Retry after ${new Date(loginRetryAtRef.current).toLocaleTimeString()}.`), { code: 'RATE_LIMITED' })
+      let startup = loginStartupRef.current
+      if (!startup || startup.error) {
+        const controller = startup?.controller || new AbortController()
+        startup = { controller }
+        startup.promise = prepareLoginService({ signal: controller.signal, onProgress: setConnectionProgress })
+          .catch(failure => { startup.error = failure; throw failure })
+        loginStartupRef.current = startup
+      }
+      await startup.promise
+      if (startup.error) throw startup.error
+      if (startup.controller.signal.aborted) return
+      setConnectionProgress('Signing in...')
       const data = await login({
         username: form.username.trim(),
         password: form.password
@@ -1836,15 +1612,14 @@ function App() {
       if(data.mfa_required){setMfaDraft(EMPTY_MFA_DRAFT);setMfaState({mode:'verify',server_time_ms:data.server_time_ms,totp_period_seconds:data.totp_period_seconds,client_time_ms:Date.now()});return}
       acceptSession(data)
     } catch (loginError) {
+      if (loginError.retryAfterMs) loginRetryAtRef.current = Date.now() + loginError.retryAfterMs
       setError(
         loginError.message
       )
 
-      clearSession()
-
-      setToken('')
-      setUser(null)
+      setInvalidCredentials(!form.username.trim() || !form.password || isAuthenticationRejection(loginError))
     } finally {
+      setConnectionProgress('')
       setIsSubmitting(false)
     }
     })
@@ -1957,6 +1732,8 @@ function App() {
           onToggleTheme={toggleTheme}
           form={form}
           error={error}
+          invalidCredentials={invalidCredentials}
+          connectionProgress={connectionProgress}
           isSubmitting={isSubmitting}
           googleClientId={GOOGLE_CLIENT_ID}
           onChange={handleChange}
@@ -2856,7 +2633,7 @@ function App() {
           onClick={toggleTheme}
         ><PortalIcon name={theme === 'dark' ? 'sun' : 'moon'} /></button>}
 
-        {portalChrome && (isStudent || isAdmin) && attendanceError && !['Dashboard', 'My Service', 'Active Attendance'].includes(activeView) && <p className="attendance-update-error attendance-global-error">{attendanceError}</p>}
+        {portalChrome && <AttendanceSync sync={isDepartmentHead ? department.attendanceSync : attendanceSync} hasSocket={Boolean(realtimeSocket)} />}
         {portalChrome && isStudent && <div className="attendance-notice-region" role="status" aria-live="polite" aria-atomic="true">
           {attendanceNotices.length > 0 && <div className="attendance-notice"><div>{attendanceNotices.map((notice) => <p key={`${notice.sessionId}-${notice.action}`}><strong>{notice.action}</strong> recorded for assignment #{notice.assignmentId}.</p>)}</div><button type="button" className="secondary-button" aria-label="Dismiss Attendance Notification" onClick={() => setAttendanceNotices([])}>Dismiss</button></div>}
         </div>}

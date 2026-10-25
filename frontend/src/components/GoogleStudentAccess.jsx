@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { googleLogin } from '../lib/api.js'
+import { prepareLoginService } from '../lib/serviceStartup.js'
 import {
   isGoogleClientConfigured,
   googleButtonConfiguration,
@@ -13,6 +14,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
   const buttonRef = useRef(null)
   const credentialHandlerRef = useRef(null)
   const attemptTimerRef = useRef(null)
+  const startupRef = useRef(null)
   const [isBusy, setIsBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -45,7 +47,12 @@ function GoogleStudentAccess({ clientId, onSession }) {
     setError('')
 
     try {
+      startupRef.current?.abort()
+      const controller = new AbortController()
+      startupRef.current = controller
+      await prepareLoginService({ signal: controller.signal })
       const session = await googleLogin(nextCredential)
+      if (controller.signal.aborted) return
       onSession(session)
     } catch (loginError) {
       setError(loginError.code === 'GOOGLE_LOGIN_FAILED' ? 'Use your Student Number and issued temporary password first. Google sign-in is available after you bind your recorded Gmail. Contact the Discipline Office for help.' : loginError.message)
@@ -96,6 +103,7 @@ function GoogleStudentAccess({ clientId, onSession }) {
 
   useEffect(() => () => {
     clearAttemptTimer()
+    startupRef.current?.abort()
     credentialHandlerRef.current = null
   }, [])
 

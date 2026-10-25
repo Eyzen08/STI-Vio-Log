@@ -69,6 +69,10 @@ export const installMutationRequestGuard = (target = globalThis) => {
     const publicAuth = isPublicAuthPath(pathname)
     const protectedApi = pathname.startsWith('/api/')
     const handleProtectedResponse = async (response) => {
+      if (publicAuth && response.ok) {
+        const body = await readJson(response.clone())
+        if (body?.user?.id) sessionExpiryHandled = false
+      }
       if (response.status === 403 && protectedApi) {
         const body = await response.clone().json().catch(() => null)
         if (body?.error?.code === 'TERMS_ACKNOWLEDGMENT_REQUIRED') {
@@ -77,6 +81,8 @@ export const installMutationRequestGuard = (target = globalThis) => {
         }
       }
       if (response.status !== 401 || !protectedApi || publicAuth || sessionExpiryHandled) return response
+      const body = await readJson(response.clone())
+      if (!isAuthenticationRejection({ status: response.status, code: body?.error?.code })) return response
       sessionExpiryHandled = true
       clearSession()
       const EventConstructor = target.CustomEvent || globalThis.CustomEvent
@@ -125,13 +131,16 @@ export const installMutationRequestGuard = (target = globalThis) => {
   target.fetch = guardedFetch
 }
 
+export const isAuthenticationRejection = (error) => error?.status === 401 && ['AUTH_REQUIRED', 'CREDENTIALS_EXPIRED', 'INVALID_CREDENTIALS'].includes(error.code)
+
 export class ApiError extends Error {
-  constructor(message, { status = 0, code = 'REQUEST_FAILED', requestId } = {}) {
+  constructor(message, { status = 0, code = 'REQUEST_FAILED', requestId, retryAfterMs = 0 } = {}) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
-    this.requestId = requestId
+    this.requestId = /^[a-zA-Z0-9:._-]{1,200}$/.test(requestId || '') ? requestId : undefined
+    this.retryAfterMs = retryAfterMs
   }
 }
 
@@ -143,14 +152,36 @@ const readJson = async (response) => {
   return response.json().catch(() => null)
 }
 
-export const apiRequest = async (path, options = {}) => {
-  const response = await fetch(`${API_URL}${path}`, options)
-  const data = await readJson(response)
+export const apiRequest = async (path, { timeoutMs = 20000, ...options } = {}) => {
+  const controller = new AbortController()
+  const cancel = () => controller.abort(options.signal?.reason)
+  options.signal?.addEventListener('abort', cancel, { once: true })
+  if (options.signal?.aborted) cancel()
+  let timedOut = false
+  const timeout = setTimeout(() => { timedOut = true; controller.abort() }, timeoutMs)
+  let response
+  let data
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...options, signal: controller.signal })
+    data = await readJson(response)
+    if (controller.signal.aborted) throw new DOMException('Request cancelled', 'AbortError')
+  } catch (error) {
+    if (options.signal?.aborted) throw error
+    if (timedOut) throw new ApiError('The request timed out. Please try again.', { code: 'TIMEOUT' })
+    if (globalThis.navigator?.onLine === false) throw new ApiError('You are offline. Reconnect and try again.', { code: 'OFFLINE' })
+    throw new ApiError('Unable to connect to the service. Please try again.', { code: 'NETWORK_ERROR' })
+  } finally {
+    clearTimeout(timeout)
+    options.signal?.removeEventListener('abort', cancel)
+  }
   const requestId = response.headers.get('x-request-id') || response.headers.get('x-vercel-id') || undefined
-  if (data === null) {
+  const retryAfter = response.headers.get('retry-after')
+  const retryAfterMs = retryAfter ? Math.max(0, /^\d+(?:\.\d+)?$/.test(retryAfter) ? Number(retryAfter) * 1000 : Date.parse(retryAfter) - Date.now()) || 0 : 0
+  if (response.status === 429) throw new ApiError(data?.error?.message || 'Too many requests. Please wait before trying again.', { status: 429, code: 'RATE_LIMITED', requestId, retryAfterMs })
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new ApiError('The service is temporarily unavailable. Please try again.', {
       status: response.status,
-      code: 'INVALID_RESPONSE', requestId
+      code: 'INVALID_RESPONSE', requestId, retryAfterMs
     })
   }
 
@@ -159,7 +190,7 @@ export const apiRequest = async (path, options = {}) => {
       data?.error?.message || data?.message || 'The request could not be completed.',
       {
         status: response.status,
-        code: data?.error?.code || 'REQUEST_FAILED', requestId
+        code: data?.error?.code || (response.status >= 500 ? 'SERVICE_UNAVAILABLE' : 'REQUEST_FAILED'), requestId, retryAfterMs
       }
     )
   }
@@ -184,6 +215,15 @@ export const loadAllPages = async (path, collectionKey, options = {}) => {
     if (batch.length < limit) return records
     page += 1
   }
+}
+
+// Wait for every read to settle before allowing a failed batch to retry.
+export const settleReads = async (requests) => {
+  const results = await Promise.allSettled(requests)
+  const failed = results.filter(result => result.status === 'rejected')
+    .sort((a, b) => (b.reason?.retryAfterMs || 0) - (a.reason?.retryAfterMs || 0))[0]
+  if (failed) throw failed.reason
+  return results.map(result => result.value)
 }
 
 export const login = (credentials) =>

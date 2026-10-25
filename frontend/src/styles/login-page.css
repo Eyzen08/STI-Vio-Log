@@ -223,9 +223,6 @@
   .auth-shell .auth-theme-toggle { top: max(24px,env(safe-area-inset-top)); right: max(24px,env(safe-area-inset-right)); }
   .auth-shell .otp-input { gap: 8px; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .auth-shell .login-page *, .auth-shell .auth-theme-toggle { animation: none !important; transition: none !important; }
-}
 
 /* Public artwork moves independently; authentication targets never transform. */
 .auth-shell .login-page { position: relative; --public-cursor: url('../assets/landing-cursor-navy.svg?no-inline'); --public-action-cursor: url('../assets/landing-cursor-yellow.svg?no-inline'); }
@@ -243,9 +240,8 @@
 .auth-shell .login-utility-controls button:hover { background: var(--auth-canvas); border-color: var(--auth-link); }
 .auth-shell .login-utility-controls button:focus-visible { outline: 2px solid var(--auth-link); outline-offset: 3px; }
 .auth-shell .login-card:focus-within { border-color: var(--auth-link); }
-.auth-shell .login-page[data-motion='full'] :is(.login-submit,.login-home-link,.login-utility-controls button) { transition-property: background-color,border-color,color,box-shadow; transition-duration: 180ms !important; }
+.auth-shell .login-page :is(.login-submit,.login-home-link,.login-utility-controls button) { transition-property: background-color,border-color,color,box-shadow; transition-duration: 180ms !important; }
 .auth-shell .login-page .login-submit { transform: none !important; }
-.auth-shell .login-page[data-motion='reduced'] :is(.login-campus-image,.login-utility-controls svg) { animation: none !important; transition: none !important; }
 @media (max-width: 1023px) {
   .auth-shell .login-page { gap: 24px; }
   .auth-shell .login-form-panel { padding-top: 0; }

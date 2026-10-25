@@ -4,7 +4,7 @@ const express = require("express");
 const http = require("http");
 const cors = require("cors");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
+const { apiLimiter } = require('./middleware/rateLimiters');
 const crypto = require('node:crypto');
 
 const studentRoutes = require("./routes/studentRoutes");
@@ -76,18 +76,6 @@ try {
 // RATE LIMITER
 // =====================================================
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-
-  message: {
-    success: false,
-    message:
-      "Too many requests, please try again later."
-  }
-});
 
 
 // =====================================================
