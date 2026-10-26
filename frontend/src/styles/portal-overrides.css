@@ -997,12 +997,12 @@
 
 /* The inbox heading belongs to the list column, leaving the chat full height. */
 :root .app-shell .main-panel--messages .conversation-pane .messages-page-heading.portal-page-header {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 12px;
+  display: grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  padding: 16px;
+  padding: 12px 16px;
   min-height: 0;
   border:0;
   border-radius:0;
@@ -1010,9 +1010,9 @@
 }
 .main-panel--messages .messages-page-heading.portal-page-header > div { width:100%; flex:0 1 auto; }
 .main-panel--messages .messages-page-heading .page-breadcrumb { display:none; }
-.main-panel--messages .messages-page-heading.portal-page-header h2 { margin:0 0 4px; font-size:var(--text-page-title); line-height:1.2; }
+:root .app-shell .main-panel--messages .conversation-pane .messages-page-heading.portal-page-header h2 { margin:0; font-size:var(--text-section-title); line-height:1.2; }
 .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { margin:0; font-size:var(--text-base); line-height:1.5; }
-.main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width:auto; min-width:0; min-height:var(--page-action-height); flex:0 0 auto; font-size:var(--text-action); white-space:nowrap; }
+:root .app-shell .main-panel--messages .conversation-pane .messages-page-heading.portal-page-header .messages-new-button { width:auto; min-width:44px; min-height:44px; justify-self:end; padding:0 12px; font-size:var(--text-action); white-space:nowrap; gap:6px; }
 .main-panel--messages .messages-inbox { gap: 8px; }
 @media (max-width:900px) {
   .main-panel--messages .messages-page-heading.portal-page-header > div > p:last-child { display:none; }
@@ -1283,6 +1283,8 @@
 
 /* Attendance status stays explicit in both themes; timers are never live regions. */
 :is(.app-shell,.app-modal) .attendance-indicator {
+  background:transparent !important;
+  box-shadow:none !important;
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1504,9 +1506,6 @@
   .app-shell :is(.support-decision-summary,.signature-form,.record-fields,.admin-settings-grid) { grid-template-columns: minmax(0,1fr); }
   .app-shell .topbar { gap: 4px; min-height: var(--topbar-mobile-height); }
   .app-shell .main-panel--messages .topbar { gap: 4px; min-height: var(--topbar-mobile-height); }
-  .app-shell .main-panel--messages .messages-page-heading.portal-page-header { flex-direction: column; align-items: stretch; }
-  .app-shell .main-panel--messages .messages-page-heading.portal-page-header > div { width: 100%; flex: 0 1 auto; }
-  .app-shell .main-panel--messages .messages-page-heading.portal-page-header .messages-new-button { width: 100%; }
   .app-shell .topbar-title { gap: 4px; }
   .app-shell .mobile-brand { padding: 0 !important; gap: 4px; }
   .app-shell .mobile-brand img { width: 32px; }
@@ -1888,7 +1887,7 @@
 :root[data-theme='dark'] .department-stat--active .department-stat-icon { background:var(--status-success-surface); color:var(--status-success-text) !important; }
 :root[data-theme='dark'] .department-stat--heads .department-stat-icon { background:var(--surface-interactive); color:var(--link-color) !important; }
 :root[data-theme='dark'] .department-stat--discipline .department-stat-icon { background:var(--status-warning-surface); color:var(--status-warning-text) !important; }
-:root[data-theme='dark'] .app-shell .attendance-indicator--out { background:var(--surface-interactive) !important; color:var(--text-secondary) !important; }
+:root[data-theme='dark'] .app-shell .attendance-indicator--out { background:transparent !important; color:var(--text-secondary) !important; }
 :root[data-theme='dark'] .app-shell progress { background:var(--surface-interactive); accent-color:var(--link-color); }
 :root[data-theme='dark'] .app-shell progress::-webkit-progress-bar { background:var(--surface-interactive); }
 :root[data-theme='dark'] .app-shell progress::-webkit-progress-value { background:var(--legend-color,var(--link-color)); }

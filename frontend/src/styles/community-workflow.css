@@ -266,6 +266,15 @@
 .qr-attendance .qr-details-column .record-fields > label:last-child { grid-column:1 / -1; }
 .qr-attendance .qr-details-column :is(.service-confirm-actions,.service-active-heading) { flex-wrap:wrap; }
 .qr-attendance .qr-details-column :is(h4,p,dd) { overflow-wrap:anywhere; }
+.qr-attendance .qr-details-column :is(.service-confirm-panel,.qr-assignment-card) { padding:16px; }
+.qr-attendance .qr-details-column :is(.service-confirm-details,.service-daily-summary) { margin:12px 0; gap:12px; }
+.qr-attendance .qr-details-column .service-confirm-actions { margin-top:12px; gap:8px; }
+
+@media (min-height:760px) {
+  @container qr-workspace (min-width:897px) {
+    .qr-attendance .scan-stage { position:sticky; top:calc(var(--topbar-height) + 12px); }
+  }
+}
 
 @container qr-workspace (max-width:896px) {
   .app-shell .qr-attendance > .qr-stage-grid { grid-template-columns:minmax(0,1fr); }

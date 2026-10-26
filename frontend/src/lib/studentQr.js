@@ -36,6 +36,8 @@ export const renderStudentQr = async (payload, logoUrl) => {
   context.fillStyle = '#ffcf24'
   context.fillRect(0, 0, 816, 12)
   context.fillRect(0, 1012, 816, 12)
+  context.fillRect(0, 0, 12, 1024)
+  context.fillRect(804, 0, 12, 1024)
   context.drawImage(logo, 260, 24, 296, 296 * logo.naturalHeight / logo.naturalWidth)
   // Keep all branding outside the QR canvas, including its four-module quiet zone.
   context.drawImage(qr, 48, 208)

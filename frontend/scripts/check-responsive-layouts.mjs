@@ -75,6 +75,8 @@ await page.route('**/*', async route => {
     let response = url.pathname === '/api/auth/session' ? { user, csrf_token: 'fixture-csrf' } : url.pathname === '/api/auth/legal' ? { legal: { required: false } } : { success: true, ...payload }
     if (url.pathname === '/api/clearance/certificates') response = { certificates }
     if (url.pathname === '/api/clearance/signatures') response = { signatures: [] }
+    if (url.pathname === '/api/students/me') response = { student: { ...student, qr_code: 'layout-fixture-student-code' } }
+    if (url.pathname === '/api/students/me/community-service/dtr') response = { ...payload, sessions: [] }
     if (url.pathname === '/api/qr/scan') response = qrScanResponse
     if (url.pathname === '/api/clearance/certificates/students') response = { students: [] }
     if (url.pathname === '/api/audit-logs') response = { audit_logs: [audit], pagination: { page: 1, limit: 25, total: 1 }, filter_options: { actions: ['GOOGLE_LOGIN'], record_types: ['student_google_accounts'] } }
@@ -222,7 +224,7 @@ async function checkCompactQr(waiting = false) {
   assert.ok(scanner.width <= 417 && preview.width <= 385, 'Scanner card and camera keep compact caps')
   assert.ok(Math.abs(preview.width - preview.height) <= 1)
   if (workspace.width <= 896) assert.ok(details.y >= scanner.y + scanner.height - 1, 'Narrow QR workspaces stack by available width')
-  else assert.ok(Math.abs(details.y - scanner.y) <= 1 && details.x >= scanner.x + scanner.width, 'Desktop QR details sit beside the camera')
+  else assert.ok(scanner.y >= details.y - 1 && details.x >= scanner.x + scanner.width, 'Desktop QR details sit beside the camera, allowing its sticky position')
   assert.ok(await page.locator('.qr-details-column .record-stage').count(), 'Attendance stays beneath verification in the details column')
   assert.deepEqual(await page.locator('.qr-stage-card').evaluateAll(nodes => nodes.map(el => getComputedStyle(el).padding).filter(value => value !== '16px')), [])
   await fits('.qr-attendance')
@@ -337,8 +339,93 @@ async function checkMessageStates() {
   user = null
 }
 
+async function checkPortalPolish() {
+  user = { id: 1, role: 'STUDENT', username: 'fixture', full_name: 'Fixture Student' }
+  for (const width of [360, 390, 768]) {
+    await page.setViewportSize({ width, height: 800 })
+    await open('/student/qr')
+    await page.locator('.student-qr-frame img').waitFor()
+    const frame = await page.locator('.student-qr-frame img').evaluate(async image => {
+      await image.decode()
+      const canvas = document.createElement('canvas')
+      canvas.width = image.naturalWidth; canvas.height = image.naturalHeight
+      const context = canvas.getContext('2d'); context.drawImage(image, 0, 0)
+      return [[6, 512], [810, 512], [408, 6], [408, 1018]].map(([x, y]) => Array.from(context.getImageData(x, y, 1, 1).data))
+    })
+    assert.deepEqual(frame, Array(4).fill([255, 207, 36, 255]), 'Rendered QR frame is yellow on all sides')
+    assert.equal(await page.locator('.qr-download-button').getAttribute('href'), await page.locator('.student-qr-frame img').getAttribute('src'), 'Download includes the same frame')
+    await fits('.student-qr-page')
+    await page.screenshot({ path: `${output}student-qr-framed-${width}.png`, fullPage: true })
+    await open('/student/dashboard')
+    const indicator = page.locator('.student-attendance-panel .attendance-indicator--out')
+    await indicator.waitFor()
+    for (const value of ['light', 'dark']) {
+      await theme(value)
+      assert.equal(await indicator.evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)')
+      assert.equal(await indicator.evaluate(el => getComputedStyle(el).boxShadow), 'none')
+      assert.equal(await indicator.locator('small').evaluate(el => getComputedStyle(el).backgroundColor), 'rgba(0, 0, 0, 0)')
+      await page.screenshot({ path: `${output}student-attendance-flat-${value}-${width}.png`, fullPage: true })
+    }
+  }
+  for (const width of [360, 390, 768, 1024, 1280, 1920]) {
+    await page.setViewportSize({ width, height: width < 768 ? 800 : 1000 })
+    for (const role of ['STUDENT', 'DISCIPLINE_ADMIN']) {
+      user = { ...user, role }
+      const base = role === 'STUDENT' ? '/student' : '/admin'
+      await open(`${base}/messages`)
+      const button = page.getByRole('button', { name: 'New Message', exact: true })
+      await button.waitFor()
+      for (const value of ['light', 'dark']) {
+        await theme(value)
+        const heading = await page.locator('.messages-page-heading').boundingBox()
+        const action = await button.boundingBox()
+        assert.ok(heading.height <= 84 && action.width <= 120 && action.height >= 44, 'Messages toolbar stays compact')
+        const title = await page.locator('.messages-page-heading h2').boundingBox()
+        assert.ok(action.x >= title.x + title.width - 1 && Math.abs(action.y + action.height / 2 - title.y - title.height / 2) <= 2, 'New Message sits beside the title')
+        await button.click(); await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape')
+        await page.screenshot({ path: `${output}messages-compact-list-${role}-${value}-${width}.png`, fullPage: true })
+      }
+      await open(`${base}/messages?conversation_id=45`)
+      await page.locator('.chat-composer textarea').waitFor()
+      for (const value of ['light', 'dark']) {
+        await theme(value)
+        await checkMessagesLayout()
+        const header = await page.locator('.chat-header').boundingBox()
+        assert.ok(header.height <= (role === 'STUDENT' ? 120 : 160), 'Conversation header reserves space for messages')
+        if (role === 'STUDENT') assert.equal(await page.locator('.chat-participant-detail').count(), 0, 'Student office identity is not repeated')
+        const composer = await page.locator('.chat-composer').boundingBox()
+        assert.ok(composer.y + composer.height <= page.viewportSize().height)
+        await inside('.chat-header button,.chat-header-actions', '.chat-pane')
+        await page.screenshot({ path: `${output}messages-compact-thread-${role}-${value}-${width}.png`, fullPage: true })
+      }
+    }
+  }
+  user = { id: 1, role: 'DISCIPLINE_ADMIN', username: 'fixture', full_name: 'Fixture Staff' }
+  const original = qrScanResponse
+  qrScanResponse = { ...original, active_session: sessions[1] }
+  try {
+    await page.setViewportSize({ width: 1280, height: 1000 })
+    await page.evaluate(() => sessionStorage.removeItem('service-attendance-qr:1'))
+    await open('/admin/qr-scan')
+    await page.locator('input[name="qr_code"]').fill('sticky-fixture')
+    await page.getByRole('button', { name: 'Verify', exact: true }).click()
+    await page.getByRole('button', { name: 'Resume', exact: true }).waitFor()
+    await page.locator('.record-stage button').last().scrollIntoViewIfNeeded()
+    const camera = await page.locator('.scan-stage').boundingBox()
+    const top = await page.locator('.scan-stage').evaluate(el => parseFloat(getComputedStyle(el).top))
+    assert.equal(await page.locator('.scan-stage').evaluate(el => getComputedStyle(el).position), 'sticky')
+    const group = await page.locator('.qr-stage-grid').boundingBox()
+    const expectedTop = Math.max(group.y, Math.min(top, group.y + group.height - camera.height))
+    assert.ok(Math.abs(camera.y - expectedTop) <= 2, 'Camera stays alongside attendance until history reaches the viewport')
+    await page.screenshot({ path: `${output}qr-camera-sticky.png` })
+    await page.setViewportSize({ width: 1280, height: 640 })
+    assert.notEqual(await page.locator('.scan-stage').evaluate(el => getComputedStyle(el).position), 'sticky', 'Short viewports keep normal scrolling')
+  } finally { qrScanResponse = original; user = null }
+}
+
 try {
   await open('/login')
+  await checkPortalPolish()
   await checkQrLayouts()
   await checkCompactQrStates()
   await checkMessageStates()
