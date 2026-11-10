@@ -5,8 +5,8 @@ const router=require('../src/routes/accountRoutes');
 const {issueSessionToken}=require('../src/services/sessionTokenService');
 
 test('account route exposes password and administrator self-service settings',()=>{
-  const routes=router.stack.filter(layer=>layer.route).map(layer=>({path:layer.route.path,methods:Object.keys(layer.route.methods)}));
-  assert.deepEqual(routes,[{path:'/avatar',methods:['get']},{path:'/avatar',methods:['patch']},{path:'/password-change',methods:['post']},{path:'/student-onboarding/google-email/request',methods:['post']},{path:'/student-onboarding/google-email/verify',methods:['post']},{path:'/student-onboarding/google-link',methods:['post']},{path:'/student-onboarding/profile',methods:['post']},{path:'/admin-profile',methods:['get']},{path:'/admin-profile',methods:['patch']},{path:'/admin-profile/email/resend',methods:['post']},{path:'/admin-profile/email/verify',methods:['post']}]);
+  const routes=router.stack.filter(layer=>layer.route).map(layer=>({path:layer.route.path,methods:Object.keys(layer.route.methods),handlers:layer.route.stack.length}));
+  assert.deepEqual(routes,[{path:'/avatar',methods:['get'],handlers:2},{path:'/avatar',methods:['patch'],handlers:2},{path:'/password-change',methods:['post'],handlers:1},{path:'/student-onboarding/google-email/request',methods:['post'],handlers:2},{path:'/student-onboarding/google-email/verify',methods:['post'],handlers:2},{path:'/student-onboarding/google-link',methods:['post'],handlers:2},{path:'/student-onboarding/profile',methods:['post'],handlers:2},{path:'/admin-profile',methods:['get'],handlers:2},{path:'/admin-profile',methods:['patch'],handlers:2},{path:'/admin-profile/email/resend',methods:['post'],handlers:2},{path:'/admin-profile/email/verify',methods:['post'],handlers:2}]);
 });
 
 test('legacy development tokens are constrained and disabled in production',()=>{

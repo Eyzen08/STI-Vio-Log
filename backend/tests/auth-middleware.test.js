@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const pool = require('../src/config/database');
 const sessions=require('../src/services/browserSessionService');
 
-const { authenticateToken, authorizeRoles } = require('../src/middleware/authMiddleware');
+const { authenticateToken, authorizeRoles, requireExactRoles } = require('../src/middleware/authMiddleware');
 
 function createRes() {
   return {
@@ -83,6 +83,19 @@ test('incomplete Student onboarding cannot pass normal role authorization', () =
   const req={user:{id:7,role:'STUDENT',must_change_password:false,onboarding_required:true}},res=createRes();let called=false;
   authorizeRoles('STUDENT')(req,res,()=>{called=true});
   assert.equal(called,false);assert.equal(res.statusCode,403);assert.equal(res.body.error.code,'STUDENT_ONBOARDING_REQUIRED');
+});
+
+test('requireExactRoles allows onboarding students and denies other roles', () => {
+  const student={user:{id:7,role:'STUDENT',onboarding_required:true,must_change_password:false}};
+  const ok=createRes(); let allowed=false;
+  requireExactRoles('STUDENT')(student,ok,()=>{allowed=true});
+  assert.equal(allowed,true); assert.equal(ok.statusCode,200);
+  const office={user:{role:'DISCIPLINE_OFFICE'}}; const denied=createRes(); let called=false;
+  requireExactRoles('STUDENT')(office,denied,()=>{called=true});
+  assert.equal(called,false); assert.equal(denied.statusCode,403);
+  const staffDenied=createRes();
+  requireExactRoles('DISCIPLINE_ADMIN')({user:{role:'STUDENT'}},staffDenied,()=>{});
+  assert.equal(staffDenied.statusCode,403);
 });
 
 test('unverified Student sessions are rejected from protected APIs', async () => {

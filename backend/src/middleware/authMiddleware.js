@@ -199,6 +199,18 @@ const authorizeAnyPermission = (...allowedPermissions) => (req, res, next) => {
     return next();
 };
 
+// Role match only. Use this for onboarding/admin self-service so password-change
+// and incomplete onboarding gates on authorizeRoles do not block those flows.
+const requireExactRoles = (...allowedRoles) => (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+    if (!allowedRoles.includes(req.user.role)) {
+        return denyAuthorization(req, res, { required: allowedRoles.map((role) => `ROLE:${role}`) });
+    }
+    return next();
+};
+
 const requireAuthorizedDepartment = async (req, res, next, database = pool) => {
     if (req.user.role==='DEPARTMENT_HEAD' && !req.user.department_id) return res.status(403).json({success:false,message:'No authorized department is assigned to this account'});
     // Resolve service routing from stored assignments/sessions, never a client-selected department.
@@ -271,6 +283,7 @@ module.exports = {
     authorizeRoles,
     authorizePermissions,
     authorizeAnyPermission,
+    requireExactRoles,
     requireCsrf,
     requireAuthorizedDepartment
 };

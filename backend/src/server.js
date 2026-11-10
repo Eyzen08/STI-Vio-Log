@@ -411,12 +411,7 @@ httpServer.listen(
   PORT,
   "0.0.0.0",
   () => {
-    console.log(
-      `🚀 STI Vio-Log API running on http://0.0.0.0:${PORT}`
-    );
-    console.log(
-      `📱 LAN access: http://192.168.100.81:${PORT}`
-    );
+    console.log(JSON.stringify({ level: 'info', event: 'listen', bind: '0.0.0.0', port: Number(PORT) }));
     refreshOverdueAttendance();
     const overdueAttendanceTimer = setInterval(refreshOverdueAttendance, 5 * 60 * 1000);
     overdueAttendanceTimer.unref();
