@@ -167,9 +167,13 @@ export const apiRequest = async (path, { timeoutMs = 20000, ...options } = {}) =
     if (controller.signal.aborted) throw new DOMException('Request cancelled', 'AbortError')
   } catch (error) {
     if (options.signal?.aborted) throw error
-    if (timedOut) throw new ApiError('The request timed out. Please try again.', { code: 'TIMEOUT' })
-    if (globalThis.navigator?.onLine === false) throw new ApiError('You are offline. Reconnect and try again.', { code: 'OFFLINE' })
-    throw new ApiError('Unable to connect to the service. Please try again.', { code: 'NETWORK_ERROR' })
+    if (error?.name === 'AbortError' && !timedOut) throw error
+    const code = timedOut ? 'TIMEOUT' : globalThis.navigator?.onLine === false ? 'OFFLINE' : 'NETWORK_ERROR'
+    const message = code === 'TIMEOUT' ? 'The request timed out. Please try again.'
+      : code === 'OFFLINE' ? 'You are offline. Reconnect and try again.'
+      : 'Unable to connect to the service. Please try again.'
+    console.info(JSON.stringify({ source: 'sti-api', event: 'request_failed', endpoint: apiPath(path), code, status: 0 }))
+    throw new ApiError(message, { code })
   } finally {
     clearTimeout(timeout)
     options.signal?.removeEventListener('abort', cancel)

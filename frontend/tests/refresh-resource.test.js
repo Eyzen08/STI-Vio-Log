@@ -100,3 +100,61 @@ test('visibility recovery immediately refreshes and errors clear only after vali
   await resource.refresh(); await settle(); assert.equal(calls,3); assert.equal(statuses.at(-1).error,'')
   resource.dispose()
 })
+
+test('binding a socket after start does not abort or duplicate the first load', async () => {
+  const env = environment(); const resolves = []; const values = []; const statuses = []
+  const resource = createRefreshResource({
+    ...env, socket: undefined,
+    load: () => new Promise(resolve => resolves.push(resolve)),
+    onData: data => values.push(data),
+    onStatus: status => statuses.push({ ...status })
+  })
+  await env.advance(0)
+  assert.equal(resolves.length, 1)
+  resource.setSocket(env.socket)
+  env.socket.emit('connect')
+  await settle()
+  assert.equal(resolves.length, 1)
+  resolves[0]({ sessions: [1] }); await settle()
+  assert.deepEqual(values, [{ sessions: [1] }])
+  assert.equal(statuses.at(-1).error, '')
+  assert.equal(statuses.at(-1).connected, true)
+  resource.dispose()
+})
+
+test('AbortError keeps the last snapshot and does not surface an error', async () => {
+  const env = environment(); const values = []; const statuses = []
+  let failAbort = false
+  const resource = createRefreshResource({
+    ...env,
+    load: async () => {
+      if (failAbort) throw new DOMException('Account changed', 'AbortError')
+      return { sessions: [3] }
+    },
+    onData: data => values.push(data),
+    onStatus: status => statuses.push({ ...status })
+  })
+  await env.advance(0)
+  failAbort = true
+  await resource.refresh(); await settle()
+  assert.deepEqual(values, [{ sessions: [3] }])
+  assert.equal(statuses.at(-1).error, '')
+  assert.equal(statuses.at(-1).lastSuccess, 1000)
+  resource.dispose()
+})
+
+test('reconnect soon after success does not refresh until the interval elapses', async () => {
+  const env = environment(); let calls = 0
+  const resource = createRefreshResource({ ...env, load: async () => { calls++; return [] }, onData: () => {} })
+  await env.advance(0)
+  assert.equal(calls, 1)
+  env.socket.emit('disconnect')
+  env.socket.emit('connect')
+  await settle()
+  assert.equal(calls, 1)
+  await env.advance(14999)
+  assert.equal(calls, 1)
+  await env.advance(1)
+  assert.equal(calls, 2)
+  resource.dispose()
+})

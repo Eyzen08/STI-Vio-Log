@@ -125,6 +125,16 @@ test('network failures and timeouts are distinct and do not replay POSTs', async
   await assert.rejects(apiRequest('/api/login', { method: 'POST', timeoutMs: 5 }), { code: 'TIMEOUT' })
 })
 
+test('caller abort stays AbortError and is not a network failure', async (t) => {
+  const controller = new AbortController()
+  t.mock.method(globalThis, 'fetch', async (_url, { signal }) => new Promise((_resolve, reject) => {
+    signal.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+  }))
+  const pending = apiRequest('/api/community-service/active-sessions', { signal: controller.signal })
+  controller.abort()
+  await assert.rejects(pending, { name: 'AbortError' })
+})
+
 test('offline errors remain distinct and unsafe request identifiers are discarded', async (t) => {
   const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'navigator')
   Object.defineProperty(globalThis, 'navigator', { configurable:true, value:{onLine:false} })

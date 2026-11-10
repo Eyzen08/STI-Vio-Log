@@ -6,6 +6,8 @@ const emptyStatus = { error: '', lastSuccess: null, loading: false, offline: fal
 export default function useRefreshResource({ enabled, account, load, onData, intervalMs = 15000, socket, event, refreshKey }) {
   const latest = useRef({ load, onData, account })
   latest.current = { load, onData, account }
+  const socketRef = useRef(socket)
+  socketRef.current = socket
   const resource = useRef(null)
   const previousKey = useRef(refreshKey)
   const [snapshot, setSnapshot] = useState(null)
@@ -17,11 +19,13 @@ export default function useRefreshResource({ enabled, account, load, onData, int
         if (latest.current.account !== account) throw new DOMException('Account changed', 'AbortError')
         return latest.current.load(signal)
       }, onData: value => { if (latest.current.account === account) latest.current.onData(value) },
-      onStatus: status => setSnapshot({ account, status }), intervalMs, socket, event
+      onStatus: status => setSnapshot({ account, status }), intervalMs, event
     })
+    current.setSocket(socketRef.current)
     resource.current = current
     return () => { current.dispose(); if (resource.current === current) resource.current = null }
-  }, [enabled, account, intervalMs, socket, event])
+  }, [enabled, account, intervalMs, event])
+  useEffect(() => { resource.current?.setSocket(socket) }, [socket])
   useEffect(() => {
     if (previousKey.current !== refreshKey) { previousKey.current = refreshKey; resource.current?.refresh() }
   }, [refreshKey])
