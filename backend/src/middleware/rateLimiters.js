@@ -1,4 +1,5 @@
 const rateLimit = require('express-rate-limit');
+const { ipKeyGenerator } = rateLimit;
 
 const message = { success:false, message:'Too many requests. Please wait before trying again.', error:{code:'RATE_LIMITED',message:'Too many requests. Please wait before trying again.'} };
 const options = { windowMs:15*60*1000, standardHeaders:true, legacyHeaders:false, message };
@@ -18,4 +19,12 @@ const apiLimiter = (req,res,next) => {
 };
 const verifiedReadLimiter = (req,res,next) => req.accountReadBudget ? accountReads(req,res,next) : next();
 
-module.exports = { apiLimiter, verifiedReadLimiter };
+// Spreadsheet/CSV generation is CPU-heavy. CodeQL js/rate-limiting requires a
+// limiter on the export route, not only the global apiLimiter.
+const exportLimiter = rateLimit({
+  ...options,
+  max: 30,
+  keyGenerator: (req) => req.user?.id ? `export:${req.user.id}` : ipKeyGenerator(req.ip)
+});
+
+module.exports = { apiLimiter, verifiedReadLimiter, exportLimiter };

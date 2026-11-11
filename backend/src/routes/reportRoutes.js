@@ -13,19 +13,21 @@ const {
 const { getDTRReport } = require('../controllers/communityServiceSessionReportController');
 const { getParentContactReport, getClearanceReport, getGoodStandingReport } = require('../controllers/extendedReportController');
 const { exportReport } = require('../controllers/reportExportController');
+const { exportLimiter } = require('../middleware/rateLimiters');
 
 const router = express.Router();
 
 const canViewReport = authorizePermissions(PERMISSIONS.REPORT_VIEW);
 const canViewDepartmentReport = authorizeAnyPermission(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DEPARTMENT_REPORT_VIEW);
-router.post('/analytics.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportAnalytics);
-router.post('/analytics.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportAnalytics);
-router.get('/violations.csv', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportCsv);
-router.get('/violations.xlsx', authenticateToken, auditAdministrativeRequest, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportViolationReportXlsx);
+const exportGate = [authenticateToken, auditAdministrativeRequest];
+router.post('/analytics.xlsx', ...exportGate, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportLimiter, exportAnalytics);
+router.post('/analytics.csv', ...exportGate, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportLimiter, exportAnalytics);
+router.get('/violations.csv', ...exportGate, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportLimiter, exportViolationReportCsv);
+router.get('/violations.xlsx', ...exportGate, authorizePermissions(PERMISSIONS.REPORT_VIEW, PERMISSIONS.DATA_EXPORT), exportLimiter, exportViolationReportXlsx);
 for (const type of ['community-service','dtr','non-compliance','parent-contacts','clearance','good-standing']) {
   const view = ['dtr','non-compliance'].includes(type) ? canViewDepartmentReport : canViewReport;
   const exportPermissions = type==='parent-contacts' ? authorizePermissions(PERMISSIONS.DATA_EXPORT,PERMISSIONS.GUARDIAN_CONTACT_VIEW) : authorizePermissions(PERMISSIONS.DATA_EXPORT);
-  router.get(`/${type}.xlsx`,authenticateToken,auditAdministrativeRequest,view,exportPermissions,exportReport(type));
+  router.get(`/${type}.xlsx`,...exportGate,view,exportPermissions,exportLimiter,exportReport(type));
 }
 router.get('/violations', authenticateToken, canViewReport, getViolationReport);
 router.get('/community-service', authenticateToken, canViewReport, getCommunityServiceReport);
