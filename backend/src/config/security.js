@@ -1,3 +1,5 @@
+const helmet = require('helmet');
+
 const LOCAL_ORIGINS = ['http://localhost:3000', 'http://localhost:5173'];
 const INSECURE_JWT_DEFAULTS = new Set(['sti-vio-log-dev-secret-change-me', 'change-this-to-a-long-random-secret']);
 const CORS_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'];
@@ -38,6 +40,25 @@ const allowedOriginsFor = (environment = process.env) => {
   return [...new Set(origins)];
 };
 
+const applyApiSecurityHeaders = (app) => {
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'same-site' },
+    frameguard: { action: 'deny' },
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'none'"],
+        baseUri: ["'none'"],
+        frameAncestors: ["'none'"],
+        formAction: ["'none'"],
+        objectSrc: ["'none'"]
+      }
+    },
+    referrerPolicy: { policy: 'no-referrer' }
+  }));
+  return app;
+};
+
 const enforceHttps = (environment = process.env) => (req, res, next) => {
   if (environment.NODE_ENV !== 'production' || req.secure || req.protocol === 'https') return next();
 
@@ -51,4 +72,4 @@ const enforceHttps = (environment = process.env) => (req, res, next) => {
   return res.redirect(308, `https://${host}${req.originalUrl || '/'}`);
 };
 
-module.exports = { allowedOriginsFor, CORS_METHODS, enforceHttps, parseOrigins, validateSecureConfig };
+module.exports = { allowedOriginsFor, CORS_METHODS, enforceHttps, parseOrigins, validateSecureConfig, applyApiSecurityHeaders };

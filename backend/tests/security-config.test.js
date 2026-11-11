@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { allowedOriginsFor, CORS_METHODS, validateSecureConfig } = require('../src/config/security');
+const express = require('express');
+const { allowedOriginsFor, CORS_METHODS, validateSecureConfig, applyApiSecurityHeaders } = require('../src/config/security');
 
 const secure = { NODE_ENV:'production',DEPLOYMENT_ENV:'production',DATABASE_ENVIRONMENT:'production',TRUST_PROXY_HOPS:'1',JWT_SECRET:'a'.repeat(48),SESSION_HASH_KEY:'b'.repeat(48),CSRF_SIGNING_KEY:'c'.repeat(48),OTP_HASH_KEY:'d'.repeat(48),AUTH_THROTTLE_KEY:'e'.repeat(48),MFA_RECOVERY_KEY:'f'.repeat(48),MFA_ENCRYPTION_KEY:Buffer.alloc(32,7).toString('base64'),CERTIFICATE_SIGNING_KEY:'g'.repeat(48),DATABASE_URL:'postgresql://example',DB_SSL:'require',FRONTEND_URL:'https://portal.example.test',GOOGLE_CLIENT_ID:'123.apps.googleusercontent.com' };
 test('production accepts DATABASE_URL without redundant DB parts',()=>{assert.doesNotThrow(()=>validateSecureConfig(secure))});
@@ -9,3 +10,26 @@ test('production CORS excludes local origins while development includes them',()
 test('hosted environments require matching deployment and database identities',()=>{assert.throws(()=>validateSecureConfig({...secure,DEPLOYMENT_ENV:'staging'}),/DATABASE_ENVIRONMENT/);assert.throws(()=>validateSecureConfig({...secure,DEPLOYMENT_ENV:''}),/DEPLOYMENT_ENV/);assert.doesNotThrow(()=>validateSecureConfig({...secure,DEPLOYMENT_ENV:'staging',DATABASE_ENVIRONMENT:'staging',FRONTEND_URL:'https://staging.example.test'}))});
 test('production requires an explicit bounded trusted-proxy topology',()=>{assert.throws(()=>validateSecureConfig({...secure,TRUST_PROXY_HOPS:''}),/TRUST_PROXY_HOPS/);assert.throws(()=>validateSecureConfig({...secure,TRUST_PROXY_HOPS:'10'}),/TRUST_PROXY_HOPS/)});
 test('CORS supports every application mutation method including PATCH',()=>{assert.ok(CORS_METHODS.includes('PATCH'));assert.ok(CORS_METHODS.includes('POST'));assert.ok(CORS_METHODS.includes('DELETE'))});
+
+test('API security headers deny framing and do not inherit Helmet HTML defaults', async () => {
+  const app = express();
+  applyApiSecurityHeaders(app);
+  app.get('/probe', (_req, res) => res.json({ ok: true }));
+  const server = await new Promise((resolve) => {
+    const listener = app.listen(0, '127.0.0.1', () => resolve(listener));
+  });
+  try {
+    const { port } = server.address();
+    const response = await fetch(`http://127.0.0.1:${port}/probe`);
+    const csp = response.headers.get('content-security-policy') || '';
+    assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.match(csp, /default-src 'none'/);
+    assert.match(csp, /frame-ancestors 'none'/);
+    assert.doesNotMatch(csp, /font-src/);
+    assert.doesNotMatch(csp, /style-src/);
+    assert.doesNotMatch(csp, /script-src 'self'/);
+  } finally {
+    await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
+});

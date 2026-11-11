@@ -3,7 +3,6 @@ require("dotenv").config();
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
-const helmet = require("helmet");
 const { apiLimiter } = require('./middleware/rateLimiters');
 const crypto = require('node:crypto');
 
@@ -33,7 +32,7 @@ const systemAdministrationRoutes = require('./routes/systemAdministrationRoutes'
 const highRiskActionRoutes = require('./routes/highRiskActionRoutes');
 const officerResponsibilityController = require('./controllers/officerResponsibilityController');
 const pool = require("./config/database");
-const { allowedOriginsFor, CORS_METHODS, enforceHttps, validateSecureConfig } = require('./config/security');
+const { allowedOriginsFor, CORS_METHODS, enforceHttps, validateSecureConfig, applyApiSecurityHeaders } = require('./config/security');
 const { errorHandler, notFoundHandler, normalizeErrorResponses } = require("./utils/api");
 const { initializeRealtime, emitToRole } = require('./realtime');
 const { createOverdueAttendanceNotifications } = require('./services/notificationService');
@@ -90,16 +89,7 @@ const allowedOrigins = allowedOriginsFor(process.env);
 // =====================================================
 
 app.use(enforceHttps(process.env));
-
-app.use(
-  helmet({
-    crossOriginResourcePolicy: {
-      policy: "same-site"
-    },
-    contentSecurityPolicy:{directives:{defaultSrc:["'none'"],frameAncestors:["'none'"],baseUri:["'none'"]}},
-    referrerPolicy:{policy:'no-referrer'}
-  })
-);
+applyApiSecurityHeaders(app);
 
 app.use(
   cors({

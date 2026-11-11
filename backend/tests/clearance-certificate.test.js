@@ -11,6 +11,20 @@ test('clearance certificate codes are signed and tamper evident', () => {
   assert.equal(clearanceIdFromCode('CLR-42-invalid'), null);
 });
 
+test('expired OTP cleanup SQL never deletes unexpired rows', () => {
+  const sql = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../database/migrations/036_database_retention_maintenance.sql'), 'utf8');
+  assert.match(sql, /DELETE FROM auth_otps\s+WHERE expires_at<CURRENT_TIMESTAMP-INTERVAL '24 hours'/);
+  assert.match(sql, /cron\.schedule\(\s*'sti-vio-log-daily-maintenance'/);
+  assert.match(sql, /REVOKE ALL ON FUNCTION %I\.cleanup_ephemeral_data\(\) FROM %I/);
+});
+
+test('student certificate download SQL is bound to the authenticated user', () => {
+  const controllerSource = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/controllers/clearanceCertificateController.js'), 'utf8');
+  const download = controllerSource.slice(controllerSource.indexOf('const downloadCertificate'), controllerSource.indexOf('const revokeCertificate'));
+  assert.match(download, /const mine = req\.user\.role === 'STUDENT'/);
+  assert.match(download, /AND s\.user_id=\$2/);
+});
+
 test('certificate routes separate owned issuance from public verification', () => {
   const studentRouter = require('../src/routes/studentClearanceRoutes');
   const publicRouter = require('../src/routes/certificateRoutes');

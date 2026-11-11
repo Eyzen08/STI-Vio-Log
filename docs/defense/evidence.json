@@ -1,0 +1,24 @@
+{
+  "assessment_date": "2026-11-10",
+  "source_commit": "1255e0e",
+  "companion": "docs/SECURITY_AUDIT_REPORT.md",
+  "verdict": "CONDITIONALLY READY",
+  "items": [
+    {"id": "SEC-001", "title": "Opaque cookie session authentication", "path": "backend/src/middleware/authMiddleware.js", "lines": "32-80", "proves": "Requests must present sti_session; identity is loaded from hashed browser_sessions, not a JWT payload."},
+    {"id": "SEC-002", "title": "Session cookie flags and HMAC storage", "path": "backend/src/services/browserSessionService.js", "lines": "7-44", "proves": "HttpOnly, SameSite=Lax, Secure in production; 32-byte tokens hashed with SESSION_HASH_KEY; 8h absolute; idle 30/120 min."},
+    {"id": "SEC-003", "title": "Production Bearer JWT disabled", "path": "backend/src/services/sessionTokenService.js", "lines": "15-20", "proves": "issueSessionToken throws in production."},
+    {"id": "SEC-004", "title": "CSRF double-submit", "path": "backend/src/middleware/authMiddleware.js", "lines": "136-146", "proves": "Non-GET mutations require matching sti_csrf cookie, X-CSRF-Token header, and csrf_hash."},
+    {"id": "SEC-005", "title": "RBAC permission catalog", "path": "backend/src/security/permissions.js", "lines": "66-71", "proves": "Four portal roles; STUDENT has PRIVATE_MESSAGES_VIEW only; no ADMIN role."},
+    {"id": "SEC-006", "title": "requireExactRoles account gates", "path": "backend/src/routes/accountRoutes.js", "lines": "5-18", "proves": "Student onboarding and admin profile are role-gated at the router."},
+    {"id": "SEC-007", "title": "SYSTEM_ADMIN is not a portal home", "path": "frontend/src/lib/routes.js", "lines": "tests", "proves": "getHomePath('SYSTEM_ADMIN') is /unauthorized (frontend/tests/routes.test.js)."},
+    {"id": "SEC-008", "title": "bcrypt cost 12", "path": "backend/src/controllers/studentController.js", "lines": "101", "proves": "Passwords hashed with bcrypt cost 12."},
+    {"id": "SEC-009", "title": "OTP limits and hashing", "path": "backend/src/services/otpService.js", "lines": "4-38", "proves": "6-digit OTP, 10 min TTL, 5 attempts, 60s resend, HMAC stored, prior codes superseded."},
+    {"id": "SEC-010", "title": "Application rate limits", "path": "backend/src/middleware/rateLimiters.js", "lines": "3-19", "proves": "200/15m IP; 600/15m verified account GET; auth routes 10/15m in server.js mount."},
+    {"id": "SEC-011", "title": "Vercel CSP, HSTS, preview isolation", "path": "frontend/vercel.mjs", "lines": "8-36", "proves": "HTTPS CSP, frame deny, production API proxy required, preview must not equal production API origin."},
+    {"id": "SEC-012", "title": "Production config fail-closed", "path": "backend/src/config/security.js", "lines": "7-32", "proves": "TRUST_PROXY_HOPS, independent secrets, HTTPS FRONTEND_URL, DB_SSL required in production."},
+    {"id": "SEC-013", "title": "RLS enabled in migrations", "path": "database/migrations/034_session_mfa_hardening.sql", "lines": "93-101", "proves": "ENABLE ROW LEVEL SECURITY and runtime policy exist in source; live console not verified this pass."},
+    {"id": "SEC-014", "title": "QR uses server clock", "path": "backend/src/controllers/qrController.js", "lines": "37", "proves": "Attendance time uses SELECT clock_timestamp()."},
+    {"id": "SEC-015", "title": "CI security workflow", "path": ".github/workflows/security.yml", "lines": "1-40", "proves": "Gitleaks, CodeQL, npm audit, disposable Postgres gate are defined; Gitleaks binary was not run locally."},
+    {"id": "SEC-016", "title": "C-01/C-02 remediations", "path": "docs/SECURITY_AUDIT_REPORT.md", "lines": "J", "proves": "Route-level BFLA hardening and LAN IP log removal; 37/37 targeted tests PASS on 2026-11-10."}
+  ]
+}
