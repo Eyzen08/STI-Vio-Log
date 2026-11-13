@@ -9,7 +9,7 @@ permissions:
   contents: read
 jobs:
   database-security:
-    name: Disposable PostgreSQL migration and security gate
+    name: database-security
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -69,13 +69,13 @@ jobs:
           npm run security:database
 
   verify:
+    name: verify
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
-          fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: 24
@@ -89,6 +89,22 @@ jobs:
       - name: Frontend verification
         working-directory: frontend
         run: npm ci --ignore-scripts && npm test && npm run lint && npm run build && npm run audit:performance && npm audit --audit-level=moderate && npm sbom --sbom-format cyclonedx > ../frontend-sbom.json
+      - name: Stage software bills of materials
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: sbom-workspace
+          path: '*-sbom.json'
+          retention-days: 1
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - name: Reject tracked secrets and backups
         shell: bash
         run: |
@@ -103,11 +119,22 @@ jobs:
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  security-sbom:
+    name: security-sbom
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: sbom-workspace
+          path: sbom
       - name: Upload software bills of materials
         uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
         with:
           name: security-sbom
-          path: '*-sbom.json'
+          path: sbom/*-sbom.json
           retention-days: 30
 
   codeql:

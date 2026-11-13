@@ -1,12 +1,23 @@
 const USER_KEY = 'sti_vio_log_user'
 const CSRF_KEY = 'sti_vio_log_csrf'
-const DISPLAY_FIELDS = ['avatar','id','username','role','first_name','last_name','full_name','department_id','department_name','department_code','password_change_required','onboarding_required','onboarding_completed_at','onboarding_step','google_onboarding_stage','onboarding_google_email']
+const DISPLAY_FIELDS = ['avatar','id','username','role','first_name','last_name','full_name','department_id','department_name','department_code','password_change_required','onboarding_required','onboarding_completed_at','onboarding_step','google_onboarding_stage']
+const ATTENDANCE_QR_PREFIX = 'service-attendance-qr:'
 const displayUser = (user) => Object.fromEntries(DISPLAY_FIELDS.filter((field) => user?.[field] !== undefined).map((field) => [field, user[field]]))
+
+const clearStoredAttendanceCodes = (storage = globalThis.sessionStorage) => {
+  if (!storage || typeof storage.key !== 'function' || typeof storage.removeItem !== 'function') return
+  const length = Number(storage.length) || 0
+  for (let index = length - 1; index >= 0; index -= 1) {
+    const key = storage.key(index)
+    if (key?.startsWith(ATTENDANCE_QR_PREFIX)) storage.removeItem(key)
+  }
+}
 
 export const clearSession = () => {
   localStorage.removeItem('sti_vio_log_token')
   localStorage.removeItem(USER_KEY)
   globalThis.sessionStorage?.removeItem(CSRF_KEY)
+  clearStoredAttendanceCodes()
 }
 
 export const loadSession = () => {
