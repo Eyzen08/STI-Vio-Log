@@ -58,7 +58,7 @@ The system supports College programs (years 1-4 for new academic submissions) an
 
 ## Current coverage and execution
 
-October 10, 2026: **50 tracked migrations, 001–050**, and all 50 filenames observed in the matched Supabase tracking metadata. Fresh/legacy migration execution passed on a disposable PostgreSQL 18.6 cluster; the complete integration run passed 48/49 because the academic test expects only 043 rather than 043–050. No shared-environment migration was run. [Testing](../TESTING.md) records exact scope. This supersedes older 41/43 migration checkpoints without erasing their release history.
+October 10, 2026: **50 tracked migrations, 001–050**, were the matched Supabase names on that date. November 13, 2026: the repository and production `schema_migrations` both contain **54 migrations, 001–054**, with no pending suffix. Production startup logged `54 migrations current`. Fresh/legacy migration execution passed on a disposable PostgreSQL 18.6 cluster; the complete integration run passed 48/49 because the academic test expects only 043 rather than 043–050. [Testing](../TESTING.md) records exact scope. This supersedes older 41/43 migration checkpoints without erasing their release history.
 
 | Migration | Area |
 |---|---|
@@ -112,5 +112,9 @@ October 10, 2026: **50 tracked migrations, 001–050**, and all 50 filenames obs
 | `048_student_account_activation_security.sql` | student account activation security |
 | `049_office_attendance_notifications.sql` | office attendance notifications |
 | `050_terms_acknowledgments.sql` | terms acknowledgments |
+| `051_flexible_attendance_pauses.sql` | flexible attendance pauses |
+| `052_service_day_invalidations.sql` | service day invalidations |
+| `053_academic_program_offerings.sql` | academic program offerings |
+| `054_message_inbox_preferences.sql` | message inbox preferences |
 
 Each file was inventoried/reviewed for schema changes; ordering, grants, historical transforms and guarded test behavior were inspected. Applied-name metadata does not verify that stored historical file contents match this checkout. Runtime grants, chronology, date/concurrency and retention limitations are described in [the data architecture](../TECH_STACK.md). Migration 050 acknowledgment enforcement remains disabled in application configuration.
