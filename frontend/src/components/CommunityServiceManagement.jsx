@@ -143,7 +143,7 @@ export function AssignServiceForm({ form, students=[], violations=[], assignment
 }
 
 export default function CommunityServiceManagement({ students=[], assignments=[], activeSessions=[], attendanceReady, loading, filters, onFiltersChange, pendingResults, onAssign, formOpen, onCloseForm, formProps, viewingAssignment, onView, onCloseAssignment, token, targetSessionId, onAttendanceSaved }) {
-  const active = assignments.filter(item => !['COMPLETED','CLEARED'].includes(String(item.status).toUpperCase()))
+  const active = assignments.filter(item => !['COMPLETED','CLEARED','INVALID_CANCELLED','ADMIN_CLOSED'].includes(String(item.status).toUpperCase()))
   const timedIn = new Set(activeSessions.filter(isActiveServiceSession).map(item => item.student_id)).size
   const departmentOptions = serviceDepartmentOptions(formProps.destinations)
   const visible = assignments.filter(item => {

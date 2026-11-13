@@ -27,12 +27,14 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
     return () => window.clearInterval(clock)
   }, [visibleActiveSessions.length])
 
+  const countedViolations = violations.filter((item) => String(item.status || '').toUpperCase() !== 'INVALID_CANCEL')
+  const countedAssignments = assignments.filter((item) => !['INVALID_CANCELLED', 'ADMIN_CLOSED'].includes(String(item.status || '').toUpperCase()))
   const openViolations = violations.filter((item) => active(item.status)).length
   const casesResolved = violations.filter((item) => resolved(item.status)).length
   const activeAssignments = assignments.filter((item) => active(item.status || 'OPEN')).length
   const timedIn = new Set(visibleActiveSessions.map((session) => Number(session.student_id))).size
-  const required = assignments.reduce((sum, item) => sum + (Number(item.required_hours) || 0), 0)
-  const remaining = assignments.reduce((sum, item) => sum + (Number(item.remaining_hours) || 0), 0)
+  const required = countedAssignments.reduce((sum, item) => sum + (Number(item.required_hours) || 0), 0)
+  const remaining = countedAssignments.reduce((sum, item) => sum + (Number(item.remaining_hours) || 0), 0)
   const completed = Math.max(0, required - remaining)
   const progress = required ? Math.min(100, Math.round(completed / required * 100)) : 0
   const firstLabel = role === 'DISCIPLINE_OFFICE' ? 'Discipline Officer' : 'Admin'
@@ -41,7 +43,7 @@ function AdminDashboard({ students = [], violations = [], assignments = [], acti
     { level: 'MINOR_2', label: 'Repeat Minor', color: 'var(--severity-minor)' },
     { level: 'MAJOR_LEVEL', label: 'Major Level', color: 'var(--severity-major)' },
     { level: 'GRAVE', label: 'Grave', color: 'var(--status-danger-text)' }
-  ].map((item) => ({ ...item, count: violations.filter((violation) => violation.offense_indicator_level === item.level).length }))
+  ].map((item) => ({ ...item, count: countedViolations.filter((violation) => violation.offense_indicator_level === item.level).length }))
   const classifiedTotal = offenseBreakdown.reduce((sum, item) => sum + item.count, 0)
   const caseStatuses = [
     ['Open', violations.filter((item) => item.status === 'OPEN').length],

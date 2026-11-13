@@ -368,7 +368,9 @@ const getStudentViolationHistory = async (req, res) => {
                 ORDER BY v.incident_date DESC, v.id DESC
                 LIMIT $2 OFFSET $3
             `, [studentId, limit, offset]),
-            pool.query("SELECT COUNT(*)::int AS total FROM violations WHERE student_id = $1", [studentId]),
+            pool.query(`SELECT COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE status <> 'INVALID_CANCEL')::int AS countable
+                FROM violations WHERE student_id = $1`, [studentId]),
             pool.query(`SELECT
                 COUNT(*) FILTER (WHERE status = 'OPEN')::int AS open,
                 COUNT(*) FILTER (WHERE status IN ('COMPLETE', 'CLEAR'))::int AS resolved,
@@ -382,9 +384,10 @@ const getStudentViolationHistory = async (req, res) => {
                 ORDER BY vt.violation_code`, [studentId]),
             pool.query('SELECT * FROM student_offense_escalations WHERE student_id = $1', [studentId])
         ]);
-        const total = count.rows[0]?.total || 0;
+        const historyTotal = count.rows[0]?.total || 0;
+        const countableTotal = count.rows[0]?.countable || 0;
         const aggregate = summaryResult.rows[0] || {};
-        return res.json({ success: true, violations: records.rows, summary: { total, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : total > 0 ? 'Resolved - monitor' : 'Good standing', categoryCounts: categoryResult.rows.map((row) => ({ code: row.violation_code, name: row.violation_name, count: row.offense_count })), offenseStatus: escalationResult.rows[0] || null }, pagination: { page, limit, total, returned: records.rows.length, hasMore: offset + records.rows.length < total } });
+        return res.json({ success: true, violations: records.rows, summary: { total: countableTotal, open: aggregate.open || 0, resolved: aggregate.resolved || 0, requiredHours: Number(aggregate.required_hours || 0), remainingHours: Number(aggregate.remaining_hours || 0), condition: Number(aggregate.open || 0) > 0 ? 'Requires action' : countableTotal > 0 ? 'Resolved - monitor' : 'Good standing', categoryCounts: categoryResult.rows.map((row) => ({ code: row.violation_code, name: row.violation_name, count: row.offense_count })), offenseStatus: escalationResult.rows[0] || null }, pagination: { page, limit, total: historyTotal, returned: records.rows.length, hasMore: offset + records.rows.length < historyTotal } });
     } catch (error) {
         console.error("Get student violation history error:", error);
         return res.status(error.statusCode || 500).json({ success: false, message: error.statusCode ? error.message : "Failed to get student violation history" });

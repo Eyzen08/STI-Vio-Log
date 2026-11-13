@@ -61,7 +61,7 @@ export const analyticsForRange = ({ students = [], violations = [], assignments 
   const programsByStudent = new Map(students.map((student) => [Number(student.id), studentProgram(student)]))
   const groupOf = (record) => programsByStudent.get(Number(record.student_id)) || 'Not recorded'
   const matchesProgram = (record) => program === 'ALL' || groupOf(record) === program
-  const scopedViolations = violations.filter(matchesProgram)
+  const scopedViolations = violations.filter((record) => matchesProgram(record) && String(record.status || '').toUpperCase() !== 'INVALID_CANCEL')
   const current = scopedViolations.filter((record) => inRange(incidentDateKey(record.incident_date), range.from, range.to))
   const previousViolationCount = scopedViolations.filter((record) => inRange(incidentDateKey(record.incident_date), range.previousFrom, range.previousTo)).length
   const scopedAssignments = assignments.filter((record) => matchesProgram(record) && record.assigned_at && inRange(manilaDateKey(record.assigned_at), range.from, range.to))

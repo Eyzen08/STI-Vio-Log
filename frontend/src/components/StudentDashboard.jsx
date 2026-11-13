@@ -11,8 +11,10 @@ const hours = (value) => Math.max(0, Number(value) || 0)
 
 function StudentDashboard({ profile, violations = [], assignments = [], clearanceRecords = [], eligibility, dtr, loading, error, onNavigate, attendanceError }) {
   const summary = summarizeStudentDashboard({ violations, assignments, clearanceRecords, eligibility })
-  const requiredHours = assignments.reduce((total, item) => total + hours(item.required_hours), 0)
-  const remainingHours = assignments.reduce((total, item) => total + hours(item.remaining_hours), 0)
+  const countedViolations = violations.filter((item) => String(item.status || '').toUpperCase() !== 'INVALID_CANCEL')
+  const countedAssignments = assignments.filter((item) => !['INVALID_CANCELLED', 'ADMIN_CLOSED'].includes(String(item.status || '').toUpperCase()))
+  const requiredHours = countedAssignments.reduce((total, item) => total + hours(item.required_hours), 0)
+  const remainingHours = countedAssignments.reduce((total, item) => total + hours(item.remaining_hours), 0)
   const completedHours = Math.max(0, requiredHours - remainingHours)
   const progress = requiredHours ? Math.min(100, Math.round(completedHours / requiredHours * 100)) : 0
   const offenseLevel = violations.find((item) => item.offense_indicator_level)?.offense_indicator_level || (summary.activeViolations ? 'MINOR_1' : 'NEUTRAL')
@@ -33,7 +35,7 @@ function StudentDashboard({ profile, violations = [], assignments = [], clearanc
       <section className="student-section student-standing-summary"><h3>Standing &amp; Clearance</h3><OffenseIndicator level={offenseLevel}/><strong>{summary.standing}</strong><p className={summary.standing === 'Good Standing' ? 'student-clearance-ready' : 'student-clearance-pending'}>{formatDisplayLabel(summary.clearanceStatus)}</p><button type="button" className="text-button" onClick={()=>onNavigate('/student/clearance')}>View Clearance</button></section>
     </div>
     <section className="student-section">
-      <header className="student-section-heading"><div><h3>Recent Violations</h3><p>{violations.length} records · {summary.activeViolations} open</p></div><button type="button" className="text-button" onClick={()=>onNavigate('/student/violations')}>View All</button></header>
+      <header className="student-section-heading"><div><h3>Recent Violations</h3><p>{countedViolations.length} records · {summary.activeViolations} open</p></div><button type="button" className="text-button" onClick={()=>onNavigate('/student/violations')}>View All</button></header>
       {!violations.length ? <p className="student-empty">No violations on record.</p> : <div className="student-recent-list">{violations.slice(0,3).map((violation)=><article className="student-recent-record" key={violation.id}><div><strong>{violation.exact_offense || parseViolationDescription(violation.description || '').exact_offense || violation.violation_type_name || violation.violation_name || `Violation #${violation.id}`}</strong><span>{formatIncidentDateTime(violation.incident_date,violation.incident_time)}</span></div><span className={`status-badge status-${String(violation.status).toLowerCase()}`}>{formatDisplayLabel(violation.status)}</span><span>{formatDuration(violation.required_service_hours)} required</span></article>)}</div>}
     </section>
   </div>

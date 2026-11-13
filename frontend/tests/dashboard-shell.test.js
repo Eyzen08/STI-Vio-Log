@@ -81,7 +81,7 @@ test('dashboard hierarchy leads with live metrics and derives the offense chart 
   assert.ok(student.indexOf('<StudentAttendancePanel') < student.indexOf('className="student-dashboard-summary"'))
   assert.ok(student.indexOf('className="student-dashboard-summary"') < student.indexOf('Recent Violations'))
   const admin = fs.readFileSync(new URL('../src/components/AdminDashboard.jsx', import.meta.url), 'utf8')
-  assert.match(admin, /violations\.filter\(\(violation\) => violation\.offense_indicator_level === item\.level\)/)
+  assert.match(admin, /countedViolations\.filter\(\(violation\) => violation\.offense_indicator_level === item\.level\)/)
   assert.match(admin, /aria-label=\{`\$\{item.label\}: \$\{item.count\} of \$\{classifiedTotal\} Classified Cases`\}/)
   const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
   assert.match(app, /onViewViolation=\{\(violation\) => \{ navigateTo\('\/admin\/violations'\); setViewingViolation\(violation\) \}\}/)

@@ -4,7 +4,7 @@ export const summarizeDepartmentService = (assignments = []) => ({
   total: assignments.length,
   active: assignments.filter((item) => ['OPEN', 'IN_PROGRESS'].includes(item.status) && amount(item.remaining_hours) > 0).length,
   completed: assignments.filter((item) => item.status === 'COMPLETED').length,
-  remainingHours: assignments.reduce((sum, item) => sum + amount(item.remaining_hours), 0)
+  remainingHours: assignments.reduce((sum, item) => ['INVALID_CANCELLED', 'ADMIN_CLOSED'].includes(String(item.status || '').toUpperCase()) ? sum : sum + amount(item.remaining_hours), 0)
 })
 
 export const filterDepartmentService = (assignments, query = '', status = 'ALL') => {

@@ -2,10 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { filterDepartmentService, formatLiveServiceTime, isActiveServiceSession, liveServiceSeconds, serviceProgress, serviceSessionTiming, summarizeDepartmentService } from '../src/lib/departmentService.js'
 
-const assignments = [{ id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000111111', required_hours: '4', completed_hours: '1.5', remaining_hours: '2.5', status: 'IN_PROGRESS' }, { id: 2, first_name: 'Ben', last_name: 'Cruz', student_number: '02000222222', required_hours: 2, completed_hours: 2, remaining_hours: 0, status: 'COMPLETED' }]
+const assignments = [{ id: 1, first_name: 'Ana', last_name: 'Reyes', student_number: '02000111111', required_hours: '4', completed_hours: '1.5', remaining_hours: '2.5', status: 'IN_PROGRESS' }, { id: 2, first_name: 'Ben', last_name: 'Cruz', student_number: '02000222222', required_hours: 2, completed_hours: 2, remaining_hours: 0, status: 'COMPLETED' }, { id: 3, first_name: 'Caty', last_name: 'Co', student_number: '02000333333', required_hours: 8, completed_hours: 0, remaining_hours: 8, status: 'INVALID_CANCELLED' }, { id: 4, first_name: 'Dan', last_name: 'Lim', student_number: '02000444444', required_hours: 3, completed_hours: 1, remaining_hours: 2, status: 'ADMIN_CLOSED' }]
 
 test('department service summarizes authoritative assignment progress', () => {
-  assert.deepEqual(summarizeDepartmentService(assignments), { total: 2, active: 1, completed: 1, remainingHours: 2.5 })
+  assert.deepEqual(summarizeDepartmentService(assignments), { total: 4, active: 1, completed: 1, remainingHours: 2.5 })
   assert.equal(serviceProgress(assignments[0]), 38)
 })
 

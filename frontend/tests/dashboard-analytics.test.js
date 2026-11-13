@@ -48,7 +48,8 @@ test('analytics use current offense indicators, student programs, and assignment
     { id: 2, student_id: 1, incident_date: '2026-10-06', offense_indicator_level: 'MINOR_2' },
     { id: 3, student_id: 2, incident_date: '2026-10-06', offense_indicator_level: 'GRAVE' },
     { id: 4, student_id: 3, incident_date: '2026-10-06', offense_indicator_level: 'MAJOR_LEVEL' },
-    { id: 5, student_id: 1, incident_date: '2026-09-05', offense_indicator_level: 'MINOR_2' }
+    { id: 5, student_id: 1, incident_date: '2026-09-05', offense_indicator_level: 'MINOR_2' },
+    { id: 6, student_id: 1, incident_date: '2026-10-06', offense_indicator_level: 'GRAVE', status: 'INVALID_CANCEL' }
   ]
   const assignments = [
     { id: 1, student_id: 1, assigned_at: '2026-09-30T17:00:00Z', status: 'COMPLETED' },

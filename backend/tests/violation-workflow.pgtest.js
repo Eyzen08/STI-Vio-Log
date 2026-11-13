@@ -357,13 +357,21 @@ test('hour editing and cancellation are blocked during active attendance without
   assert.equal(cancelled.body.assignment.status, 'INVALID_CANCELLED');
   assert.equal(cancelled.body.offenseStatus.indicator_level, 'NEUTRAL');
   assert.equal(cancelled.body.clearanceSync.eligible, true);
+  await createViolation(admin, studentId);
+  await createViolation(admin, studentId);
   const cancelledHistory = await request(`/api/violations/student/${studentId}`, { token: admin });
   assert.deepEqual(cancelledHistory.body.summary.categoryCounts, []);
   assert.equal(cancelledHistory.body.summary.remainingHours, 0);
+  assert.equal(cancelledHistory.body.summary.total, 2);
+  assert.equal(cancelledHistory.body.summary.condition, 'Requires action');
+  assert.equal(cancelledHistory.body.pagination.total, 3);
+  assert.equal(cancelledHistory.body.violations.some((item) => Number(item.id) === Number(violation.id) && item.status === 'INVALID_CANCEL'), true);
   const serviceReport = await request('/api/reports/community-service', { token: admin });
   assert.equal(serviceReport.body.total_pending_hours, 0);
   assert.equal((await edit(admin, violation.id, { description: 'Closed edit' })).status, 409);
   assert.equal((await act(admin, violation.id, 'REOPEN', 'Correction required')).status, 200);
+  const restoredHistory = await request(`/api/violations/student/${studentId}`, { token: admin });
+  assert.equal(restoredHistory.body.summary.total, 3);
   assert.equal((await request(`/api/violations/${violation.id}/actions`, { token: admin })).body.hourCorrections.length, 1);
 });
 

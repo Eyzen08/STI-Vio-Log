@@ -26,7 +26,8 @@ export default function ViolationManagement({ violations = [], loading = false, 
   const first = (page - 1) * pageSize
   const pageStart = Math.max(1, Math.min(page - 2, pages - 4))
   const changePage = (next) => setPagination({ key: filterKey, page: next })
-  const severityCount = (severity) => violations.filter((item) => String(item.severity).toUpperCase().includes(severity)).length
+  const counted = violations.filter((item) => String(item.status || '').toUpperCase() !== 'INVALID_CANCEL')
+  const severityCount = (severity) => counted.filter((item) => String(item.severity).toUpperCase().includes(severity)).length
   const statusCount = (status) => violations.filter((item) => String(item.status).toUpperCase() === status).length
   const statuses = [...new Set(['OPEN', 'PENDING', 'COMPLETE', 'CLEAR', 'INVALID_CANCEL', ...violations.map((item) => String(item.status || '').toUpperCase()).filter(Boolean)])]
 
@@ -36,7 +37,7 @@ export default function ViolationManagement({ violations = [], loading = false, 
       <button type="button" className="violation-record-button" onClick={onRecord}><span aria-hidden="true">＋</span>Record Violation</button>
     </header>
     <section className="violation-summary-grid" aria-label="Violation Summary">
-      {[['Total Violations', violations.length, 'red', 'violations'], ['Minor', severityCount('MINOR'), 'orange', 'violations'], ['Major', severityCount('MAJOR'), 'red', 'violations'], ['Grave', severityCount('GRAVE'), 'purple', 'violations'], ['Open', statusCount('OPEN'), 'blue', 'reports'], ['Completed', statusCount('COMPLETE'), 'green', 'check']].map(([label, value, tone, icon]) => <ManagementMetric key={label} label={label} value={loading ? '—' : value} tone={tone} icon={icon}/>)}
+      {[['Total Violations', counted.length, 'red', 'violations'], ['Minor', severityCount('MINOR'), 'orange', 'violations'], ['Major', severityCount('MAJOR'), 'red', 'violations'], ['Grave', severityCount('GRAVE'), 'purple', 'violations'], ['Open', statusCount('OPEN'), 'blue', 'reports'], ['Completed', statusCount('COMPLETE'), 'green', 'check']].map(([label, value, tone, icon]) => <ManagementMetric key={label} label={label} value={loading ? '—' : value} tone={tone} icon={icon}/>)}
     </section>
     <section className="violation-records-card" aria-labelledby="violation-records-title" aria-busy={loading}>
       <header className="violation-records-heading"><div><h3 id="violation-records-title">Violation Records</h3><p>Most recent incidents and their current status.</p></div><div className="violation-records-tools"><span>{loading ? 'Loading…' : `${visible.length} record${visible.length === 1 ? '' : 's'}`}</span><button type="button" className="violation-sort-button" onClick={() => { setPagination({ key: '', page: 1 }); setAscending(!ascending) }} aria-label={`Sort Incident Date ${ascending ? 'Newest' : 'Oldest'} First`}>{ascending ? 'Oldest First' : 'Newest First'}<PortalIcon name="chevron-right" className={ascending ? 'sort-ascending' : 'sort-descending'} size={14}/></button></div></header>

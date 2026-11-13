@@ -42,6 +42,36 @@ test('senior high selection includes both grades and inferred legacy records', (
 })
 test('admin student search matches number, name, program, or section',()=>{assert.deepEqual(filterAdminStudents(students,'dela').map(x=>x.id),[1]);assert.deepEqual(filterAdminStudents(students,'A103').map(x=>x.id),[1]);assert.equal(filterAdminStudents(students,'020009').length,1)})
 test('student condition summarizes only that students violation history',()=>{assert.deepEqual(summarizeStudentCondition(1,[{student_id:1,status:'OPEN',required_service_hours:4,completed_service_hours:1},{student_id:1,status:'COMPLETE',required_service_hours:2,completed_service_hours:2},{student_id:2,status:'OPEN',required_service_hours:9}]),{records:[{student_id:1,status:'OPEN',required_service_hours:4,completed_service_hours:1},{student_id:1,status:'COMPLETE',required_service_hours:2,completed_service_hours:2}],total:2,open:1,resolved:1,requiredHours:4,remainingHours:3,condition:'Requires Action'})})
+test('cancelled violations stay in history but leave totals, standing, and service hours', () => {
+  const summary = summarizeStudentCondition(1, [
+    { student_id: 1, status: 'OPEN', severity: 'MINOR' },
+    { student_id: 1, status: 'COMPLETE', severity: 'MAJOR' },
+    { student_id: 1, status: 'INVALID_CANCEL', severity: 'GRAVE' }
+  ])
+  assert.equal(summary.records.length, 3)
+  assert.equal(summary.total, 2)
+  assert.equal(summary.condition, 'Requires Action')
+  assert.equal(summarizeStudentCondition(1, [{ student_id: 1, status: 'INVALID_CANCEL' }]).condition, 'Good Standing')
+  const rows = buildStudentDirectory(
+    [{ id: 1, first_name: 'Caty', last_name: 'Co' }, { id: 2, first_name: 'Only', last_name: 'Cancelled' }],
+    [{ student_id: 1, status: 'OPEN', severity: 'MINOR' }, { student_id: 1, status: 'INVALID_CANCEL', severity: 'GRAVE' }, { student_id: 2, status: 'INVALID_CANCEL', severity: 'MINOR' }],
+    [
+      { student_id: 1, status: 'OPEN', required_hours: 2, remaining_hours: 1 },
+      { student_id: 1, status: 'INVALID_CANCELLED', required_hours: 9, remaining_hours: 8 },
+      { student_id: 1, status: 'ADMIN_CLOSED', required_hours: 4, remaining_hours: 3 },
+      { student_id: 2, status: 'INVALID_CANCELLED', required_hours: 5, remaining_hours: 5 }
+    ]
+  )
+  assert.equal(rows[0].condition.total, 1)
+  assert.equal(rows[0].severity, 'Minor')
+  assert.deepEqual(rows[0].service, { required: 2, remaining: 1, completed: 1, percent: 50 })
+  assert.equal(rows[0].inService, true)
+  assert.equal(rows[1].condition.total, 0)
+  assert.equal(rows[1].severity, '')
+  assert.equal(rows[1].inService, false)
+  assert.deepEqual(filterStudentDirectory(rows, { tab: 'violations' }).map((row) => row.id), [1])
+  assert.deepEqual(filterStudentDirectory(rows, { tab: 'service' }).map((row) => row.id), [1])
+})
 test('handbook guidance follows category-specific repeat sequences without inventing service hours',()=>{const guidance=handbookSanctionGuidance([{code:'HANDBOOK_MINOR',name:'Minor',count:2},{code:'HANDBOOK_MAJOR_C',name:'Major C',count:1},{code:'HANDBOOK_MAJOR_D',name:'Major D',count:1}]);assert.equal(guidance[0].guidance,'Written reprimand');assert.match(guidance[1].guidance,/7-10 school days/);assert.match(guidance[2].guidance,/Exclusion or expulsion/);assert.equal(JSON.stringify(guidance).includes('service hours'),false)})
 test('student record drawer uses the reference width and connects the existing case workflow', async () => {
   const [app, css, modal] = await Promise.all([
