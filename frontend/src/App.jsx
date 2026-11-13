@@ -1488,7 +1488,6 @@ function App() {
       qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: value }
       qrInputVersionRef.current += 1
       setQrInputSource('manual')
-      sessionStorage.removeItem('service-attendance-qr:'+user.id)
     }
 
     setQrForm((current) => ({
@@ -1542,7 +1541,6 @@ function App() {
       setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
       setVerifiedQr(normalizedQr)
       verifiedQrRef.current=normalizedQr
-      sessionStorage.setItem('service-attendance-qr:'+user.id,normalizedQr)
       const officers=data.available_officers||[]
       const active=data.active_session||data.session
       const selectedOfficer=!resetDraft&&officers.find(officer=>Number(officer.officer_user_id)===Number(qrFormRef.current.supervising_officer_id))?.officer_user_id
@@ -1569,7 +1567,9 @@ function App() {
 
   useEffect(()=>{
     if(!portalReady||activeView!=='QR Scan'||!token||!user?.id) return undefined
-    const saved=verifiedQrRef.current||(!qrFormRef.current.qr_code&&sessionStorage.getItem('service-attendance-qr:'+user.id))
+    const storageKey='service-attendance-qr:'+user.id
+    sessionStorage.removeItem(storageKey)
+    const saved=verifiedQrRef.current
     if(saved) qrActionRef.current('scan',saved,{quiet:true})
     const refresh=()=>{
       const code=verifiedQrRef.current
@@ -1582,7 +1582,7 @@ function App() {
     window.addEventListener('online',refresh)
     realtimeSocket?.on('community-service:changed',changed)
     realtimeSocket?.on('connect',refresh)
-    return ()=>{window.clearInterval(timer);window.clearTimeout(burst);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',changed);realtimeSocket?.off('connect',refresh)}
+    return ()=>{window.clearInterval(timer);window.clearTimeout(burst);sessionStorage.removeItem(storageKey);document.removeEventListener('visibilitychange',refresh);window.removeEventListener('online',refresh);realtimeSocket?.off('community-service:changed',changed);realtimeSocket?.off('connect',refresh)}
   },[portalReady,activeView,token,user?.id,realtimeSocket])
 
   /*

@@ -124,13 +124,15 @@ test('background refresh skips an in-flight verification instead of duplicating 
   assert.equal(await checking,true)
 })
 
-test('polling verifies saved sessions but leaves unverified manual input alone',()=>{
+test('polling verifies the current scan and discards a stored attendance code',()=>{
   const block=source.slice(source.indexOf('  useEffect(()=>{\n    if(!portalReady||activeView'),source.indexOf("  },[portalReady,activeView,token,user?.id,realtimeSocket])"))+'  })'
   const calls=[]
+  const removed=[]
   let refresh
-  const context={portalReady:true,activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},attendanceAccountRef:{current:1},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{getItem(){return 'previous'}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
+  const context={portalReady:true,activeView:'QR Scan',token:'test',user:{id:1},qrFormRef:{current:{qr_code:'typed'}},attendanceAccountRef:{current:1},verifiedQrRef:{current:''},qrActionRef:{current(...args){calls.push(args)}},sessionStorage:{removeItem(key){removed.push(key)}},document:{visibilityState:'visible',addEventListener(){}},window:{setInterval(callback){refresh=callback},addEventListener(){}},realtimeSocket:null,useEffect(effect){effect()}}
   runInNewContext(block,context)
   refresh()
+  assert.deepEqual(removed,['service-attendance-qr:1'])
   assert.equal(calls.length,0)
   context.verifiedQrRef.current='verified'
   refresh()

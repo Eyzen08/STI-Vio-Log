@@ -6,6 +6,14 @@ import { clearSession, loadSession, saveSession } from '../src/lib/session.js'
 class MemoryStorage {
   #values = new Map()
 
+  get length() {
+    return this.#values.size
+  }
+
+  key(index) {
+    return [...this.#values.keys()][index] ?? null
+  }
+
   getItem(key) {
     return this.#values.has(key) ? this.#values.get(key) : null
   }
@@ -56,11 +64,20 @@ test('persisted session data excludes passwords, hashes and authentication token
   assert.equal(sessionStorage.getItem('sti_vio_log_csrf'), null)
 })
 
+test('persisted session data excludes the onboarding email address', () => {
+  saveSession({ user: { ...user, onboarding_google_email: 'student@school.test', onboarding_step: 'GOOGLE' } })
+  const stored = JSON.parse(localStorage.getItem('sti_vio_log_user'))
+  assert.equal(stored.onboarding_google_email, undefined)
+  assert.equal(stored.onboarding_step, 'GOOGLE')
+})
+
 test('logout clears all persisted authentication data', () => {
   saveSession({ user,csrf_token:'csrf' })
+  sessionStorage.setItem('service-attendance-qr:7', 'STI-attendance-code')
   clearSession()
 
   assert.equal(localStorage.getItem('sti_vio_log_token'), null)
   assert.equal(localStorage.getItem('sti_vio_log_user'), null)
   assert.equal(sessionStorage.getItem('sti_vio_log_csrf'),null)
+  assert.equal(sessionStorage.getItem('service-attendance-qr:7'), null)
 })
