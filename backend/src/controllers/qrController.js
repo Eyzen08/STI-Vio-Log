@@ -8,15 +8,25 @@ const { assertAllowedFields, isPositiveId } = require('../utils/validators');
 const { emitAttendanceChange, emitNotificationChange } = require('../services/realtimeEventService');
 const { notifyAttendanceFailure } = require('../services/notificationService');
 
+const IDENTIFIER_FIELDS = ['qr_code', 'student_number'];
+
 const validateQrBody = (req) => {
-    assertAllowedFields(req.body, ['qr_code','assignment_id','session_id','notes','attendance_outcome','supervising_officer_id','session_type','selected_duration_minutes',...(req.user.role === 'DEPARTMENT_HEAD' ? [] : ['department_id'])]);
+    assertAllowedFields(req.body, [...IDENTIFIER_FIELDS,'assignment_id','session_id','notes','attendance_outcome','supervising_officer_id','session_type','selected_duration_minutes',...(req.user.role === 'DEPARTMENT_HEAD' ? [] : ['department_id'])]);
     const qrCode = typeof req.body.qr_code === 'string' ? req.body.qr_code.trim() : '';
+    const studentNumber = typeof req.body.student_number === 'string' ? req.body.student_number.trim() : '';
     const notes = req.body.notes == null ? '' : typeof req.body.notes === 'string' ? req.body.notes.trim() : null;
-    if (!qrCode || qrCode.length > 256 || notes === null || notes.length > 500) throw new CommunityServiceSessionError('A valid QR code and optional note are required',400);
+    if (notes === null || notes.length > 500) throw new CommunityServiceSessionError('An optional note must be at most 500 characters',400);
+    if (Boolean(qrCode) === Boolean(studentNumber)) throw new CommunityServiceSessionError('Provide exactly one student identifier: scan a QR code or enter an 11-digit Student Number',400,'STUDENT_IDENTIFIER_REQUIRED');
+    if (qrCode && qrCode.length > 256) throw new CommunityServiceSessionError('A valid QR code is required',400);
+    if (studentNumber && !/^\d{11}$/.test(studentNumber)) throw new CommunityServiceSessionError('Student Number must contain exactly 11 digits',400,'INVALID_STUDENT_NUMBER');
     for (const field of ['assignment_id','session_id','supervising_officer_id','department_id']) {
         if (req.body[field] != null && !isPositiveId(req.body[field])) throw new CommunityServiceSessionError('A valid '+field+' is required',400);
     }
-    req.body.qr_code = qrCode;
+    req.identification = qrCode
+        ? { method: 'QR_CODE', value: qrCode }
+        : { method: 'STUDENT_NUMBER', value: studentNumber };
+    if (qrCode) req.body.qr_code = qrCode;
+    else req.body.student_number = studentNumber;
     req.body.notes = notes;
 };
 
@@ -26,7 +36,13 @@ const resolveQr = async (req,res,recording=false) => {
         await requireAuthorizedDepartment({...req,body:{}},res,()=>{enabled=true;});
         if (!enabled) return null;
     }
-    const student = (await pool.query("SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.section,s.year_level,"+avatarSql('s.user_id')+" AS avatar FROM students s JOIN users u ON u.id=s.user_id WHERE s.qr_code=$1 AND u.is_active=TRUE",[req.body.qr_code])).rows[0];
+    const identification = req.identification || (req.body.qr_code
+        ? { method:'QR_CODE', value:req.body.qr_code }
+        : { method:'STUDENT_NUMBER', value:req.body.student_number });
+    const studentQuery = identification.method === 'STUDENT_NUMBER'
+        ? "SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.section,s.year_level,"+avatarSql('s.user_id')+" AS avatar FROM students s JOIN users u ON u.id=s.user_id WHERE s.student_number=$1 AND u.is_active=TRUE"
+        : "SELECT s.id,s.student_number,s.first_name,s.middle_name,s.last_name,s.suffix,s.academic_level,s.strand,s.program,s.section,s.year_level,"+avatarSql('s.user_id')+" AS avatar FROM students s JOIN users u ON u.id=s.user_id WHERE s.qr_code=$1 AND u.is_active=TRUE";
+    const student = (await pool.query(studentQuery,[identification.value])).rows[0];
     if (!student) throw new CommunityServiceSessionError('Student not found or inactive',404);
     const scope = req.user.role==='DEPARTMENT_HEAD' ? req.user.department_id : null;
     // A session in another department also prevents a duplicate Time In.
@@ -60,6 +76,7 @@ const resolveQr = async (req,res,recording=false) => {
     const activeVisible = active && (!scope || Number(active.department_id)===Number(scope));
     const activeSession = activeVisible ? (await hydrateSessions(pool,[active]))[0] : null;
     return { student,assignments,assignment:assignment || null,active_session:activeSession,
+        identification_method:identification.method,
         active_session_elsewhere:Boolean(active && !activeVisible),server_time:now,
         allowance:serviceAllowance(assignment?.day_invalidated ? {remaining_hours:0} : assignment || {remaining_hours:0},completedToday,now),
         available_officers:assignment ? await availableSupervisors(pool,assignment.department_id) : [],
@@ -89,7 +106,8 @@ const handle = (operation) => async (req,res) => {
         const result = await (operation==='time-in' ? recordTimeIn : recordTimeOut)({ assignmentId:verified.assignment.id,
             sessionId:req.body.session_id,expectedStudentId:verified.student.id,departmentId:req.staffDepartmentId,
             supervisingOfficerId:req.body.supervising_officer_id,sessionType:req.body.session_type,
-            selectedDurationMinutes:req.body.selected_duration_minutes,actor:req.user,notes:req.body.notes,ipAddress:req.ip,writeQrLog:true });
+            selectedDurationMinutes:req.body.selected_duration_minutes,actor:req.user,notes:req.body.notes,ipAddress:req.ip,writeQrLog:true,
+            verificationMethod:verified.identification_method });
         if (!result.already_completed) await emitAttendanceChange(result, req.staffDepartmentId);
         return res.status(result.already_completed ? 200 : 201).json({success:true,message:'Community service '+operation+' saved',...verified,...result,studentId:verified.student.id});
     } catch(error) {

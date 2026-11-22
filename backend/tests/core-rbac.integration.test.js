@@ -17,6 +17,7 @@ process.env.DB_USER = process.env.DB_USER || 'test';
 process.env.DB_PASSWORD = process.env.DB_PASSWORD || 'test';
 
 const sessionService=require('../src/services/browserSessionService');
+const { serviceDate } = require('../src/services/communityServiceTiming');
 const pool = require('../src/config/database');
 const app = require('../src/server');
 
@@ -48,6 +49,10 @@ function mockResult(sql, params = []) {
 
   if (text.includes('FROM departments') && text.includes('is_active = TRUE')) {
     return { rows: Number(params[0]) === 9 ? [{ id: 9 }] : [] };
+  }
+
+  if (text.includes('FROM violation_types') && text.includes('is_active=TRUE')) {
+    return { rows: [{ id: Number(params[0]) }] };
   }
 
   if (text.includes('FROM department_heads dh') && text.includes('qr_scanner_enabled = TRUE')) {
@@ -159,7 +164,7 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
       if (text === 'BEGIN' || text === 'COMMIT' || text === 'ROLLBACK') return { rows: [] };
       if (text.includes('INSERT INTO violations')) {
         capturedViolationParams = params;
-        return { rows: [{ id: 70, student_id: params[0], status: params[5], required_service_hours: params[6], completed_service_hours: params[7] }] };
+        return { rows: [{ id: 70, student_id: params[0], status: 'OPEN', required_service_hours: 0, completed_service_hours: 0 }] };
       }
       if (text.includes('FROM community_service_assignments a') && text.includes('JOIN violations v')) {
         return { rows: [{ id: 80, violation_id: 70, student_id: 40, department_id: 9, required_hours: 2, completed_hours: 0, remaining_hours: 2, status: 'OPEN', violation_status: 'OPEN' }] };
@@ -239,16 +244,16 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/violations', {
     token: discipline,
     method: 'POST',
-    body: { student_id: 40, violation_type_id: 1, incident_date: '2026-08-27', required_service_hours: 0, reported_by: 999, status: 'CLEARED', completed_service_hours: 99 }
+    body: { student_id: 40, violation_type_id: 1, incident_date: serviceDate(new Date()), required_service_hours: 0, reported_by: 999, status: 'CLEARED', completed_service_hours: 99 }
   })).status, 400);
   assert.equal((await request(baseUrl, '/api/violations', {
     token: discipline,
     method: 'POST',
-    body: { student_id: 40, violation_type_id: 1, incident_date: '2026-08-27' }
+    body: { student_id: 40, violation_type_id: 1, incident_date: serviceDate(new Date()) }
   })).status, 201);
   assert.equal(capturedViolationParams[2], 2);
-  assert.equal(capturedViolationParams[6], 'OPEN');
-  assert.equal(capturedViolationParams[7], 0);
+  assert.equal(capturedViolationParams[3], serviceDate(new Date()));
+  assert.equal(capturedViolationParams[1], 1);
   assert.equal((await request(baseUrl, '/api/community-service', { token: discipline })).status, 200);
   assert.equal((await request(baseUrl, '/api/clearance', { token: discipline })).status, 200);
 

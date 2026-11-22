@@ -1,13 +1,8 @@
-const { normalizeAcademic } = require('../utils/studentAcademic');
 const { ApiError } = require('../utils/api');
 const {recordSecurityEvent}=require('./securityEventService');
-const { isValidEmail, isValidPhone, normalizePhone, isValidStudentName } = require('../utils/validators');
+const { isValidEmail } = require('../utils/validators');
 
 const GOOGLE_EMAIL_PURPOSE = 'STUDENT_ONBOARDING_GOOGLE_EMAIL';
-
-const clean = (value, max) => typeof value === 'string'
-  ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').slice(0, max)
-  : '';
 
 const onboardingStep = (row) => {
   if (!row || row.role !== 'STUDENT' || (!row.google_rebind_required && (!row.onboarding_required || row.onboarding_completed_at))) return 'COMPLETE';
@@ -79,22 +74,11 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
     finally { client.release(); }
   };
 
-  const completeProfile = async ({ userId, academicLevel, strand, program, section, yearLevel, phoneNumber, guardianName, guardianRelationship, guardianPhoneNumber, ipAddress = null }) => {
-    if (!isValidStudentName(guardianName,{maxLength:200})) throw new ApiError(400,'VALIDATION_ERROR','Enter a valid guardian name using letters, spaces, apostrophes, hyphens, and periods');
-    const values = {
-      academicLevel: academicLevel === undefined ? 'COLLEGE' : clean(academicLevel, 30).toUpperCase(),
-      program: clean(program, 150).toUpperCase(), section: clean(section, 100), yearLevel: Number(yearLevel),
-      phoneNumber: clean(phoneNumber, 30), guardianName: clean(guardianName, 200),
-      guardianRelationship: clean(guardianRelationship, 100), guardianPhoneNumber: clean(guardianPhoneNumber, 30)
-    };
-    const academic = normalizeAcademic({academic_level:academicLevel,strand,program,section,year_level:yearLevel});
-    Object.assign(values,{academicLevel:academic.academic_level,strand:academic.strand,program:academic.program,section:academic.section,yearLevel:academic.year_level});
-    if (![values.phoneNumber,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber].every(Boolean)) throw new ApiError(400,'VALIDATION_ERROR','Complete all student and guardian information');
-    if (!isValidPhone(values.phoneNumber) || !isValidPhone(values.guardianPhoneNumber)) throw new ApiError(400, 'INVALID_PHONE', 'Enter valid Philippine phone numbers');
-    values.phoneNumber = normalizePhone(values.phoneNumber);
-    values.guardianPhoneNumber = normalizePhone(values.guardianPhoneNumber);
-    if (values.academicLevel === 'SENIOR_HIGH_SCHOOL') values.program = null;
-
+  // Official academic, contact, and guardian details are entered by the
+  // Discipline Office during account creation. This step only confirms that
+  // the student has reviewed the school-managed information and unlocks the
+  // portal after password change and Google linking are complete.
+  const completeProfile = async ({ userId, ipAddress = null }) => {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -110,14 +94,10 @@ const createStudentOnboardingService = ({ pool, otpService = null } = {}) => {
         return { onboarding_required:false, onboarding_step:'COMPLETE' };
       }
       if (student.must_change_password) throw new ApiError(409, 'PASSWORD_CHANGE_REQUIRED', 'Change the temporary password before continuing');
-      if (!student.google_linked) throw new ApiError(409, 'STUDENT_ONBOARDING_REQUIRED', 'Bind a Google account before completing contact information');
-      await client.query('UPDATE students SET academic_level=$2,program=$3,section=$4,year_level=$5,phone_number=$6,strand=$7,onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id,values.academicLevel,values.program,values.section,values.yearLevel,values.phoneNumber,values.strand]);
-      const guardian = (await client.query('SELECT id FROM student_guardians WHERE student_id=$1 ORDER BY is_primary DESC,id ASC LIMIT 1 FOR UPDATE', [student.id])).rows[0];
-      await client.query('UPDATE student_guardians SET is_primary=FALSE WHERE student_id=$1 AND ($2::bigint IS NULL OR id<>$2)', [student.id,guardian?.id||null]);
-      if (guardian) await client.query('UPDATE student_guardians SET guardian_name=$2,relationship=$3,phone_number=$4,is_primary=TRUE WHERE id=$1', [guardian.id,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber]);
-      else await client.query('INSERT INTO student_guardians(student_id,guardian_name,relationship,phone_number,is_primary) VALUES($1,$2,$3,$4,TRUE)', [student.id,values.guardianName,values.guardianRelationship,values.guardianPhoneNumber]);
+      if (!student.google_linked) throw new ApiError(409, 'STUDENT_ONBOARDING_REQUIRED', 'Bind a Google account before completing onboarding');
+      await client.query('UPDATE students SET onboarding_required=FALSE,onboarding_completed_at=CURRENT_TIMESTAMP,updated_at=CURRENT_TIMESTAMP WHERE id=$1', [student.id]);
       await client.query(`INSERT INTO audit_logs(user_id,action,table_name,record_id,description,ip_address)
-        VALUES($1,'STUDENT_ONBOARDING_COMPLETE','students',$2,'Student completed mandatory account onboarding',$3)`, [Number(userId),student.id,ipAddress]);
+        VALUES($1,'STUDENT_ONBOARDING_COMPLETE','students',$2,'Student reviewed and confirmed school-managed information during mandatory account onboarding',$3)`, [Number(userId),student.id,ipAddress]);
       await client.query('COMMIT');
       return { onboarding_required:false, onboarding_step:'COMPLETE' };
     } catch (error) { try { await client.query('ROLLBACK'); } catch (_) {} throw error; }

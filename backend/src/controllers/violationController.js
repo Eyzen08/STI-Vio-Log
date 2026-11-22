@@ -1,21 +1,10 @@
 const pool = require("../config/database");
-const { notifyStudent } = require('../services/notificationService');
-const {
-    syncClearanceStatusForStudent
-} = require("./clearanceController");
 const {
     ViolationWorkflowError,
-    insertViolationAction,
-    insertViolationAudit,
     transitionViolation
 } = require("../services/violationWorkflowService");
-const { recalculateOffenseStatus } = require("../services/offenseEscalationService");
 const { assertAllowedFields, isPositiveId, parsePagination } = require("../utils/validators");
-
-const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))
-    && !Number.isNaN(new Date(`${value}T00:00:00+08:00`).getTime());
-const isTimeOfDay = (value) => value === null || value === undefined || value === ''
-    || /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(String(value));
+const { createViolationWithClient } = require('../services/violationCreationService');
 
 
 // =====================================================
@@ -176,118 +165,22 @@ const createViolation = async (req, res) => {
             });
         }
 
-        if (!isIsoDate(incident_date) || !isTimeOfDay(incident_time)) {
-            return res.status(400).json({ success: false, message: "Enter a valid incident date and time" });
-        }
-
         await client.query("BEGIN");
 
-        // -------------------------------------------------
-        // Create violation
-        // -------------------------------------------------
-
-        const result = await client.query(
-            `
-            INSERT INTO violations (
-                student_id,
-                violation_type_id,
-                reported_by,
-                incident_date,
-                incident_time,
-                description,
-                status,
-                required_service_hours,
-                completed_service_hours,
-                cleared_at
-            )
-            VALUES (
-                $1,
-                $2,
-                $3,
-                $4,
-                $5,
-                $6,
-                $7,
-                $8,
-                $9,
-                $10
-            )
-            RETURNING *
-            `,
-            [
-                student_id,
-                violation_type_id,
-                req.user.id,
-                incident_date,
-                incident_time || null,
-                description || null,
-                "OPEN",
-                0,
-                0,
-                null
-            ]
-        );
-
-        const violation = result.rows[0];
-
-        const assignment = null;
-
-        const history = await insertViolationAction({
+        const result = await createViolationWithClient({
             client,
-            violationId: violation.id,
-            action: "CREATE",
-            fromStatus: null,
-            toStatus: "OPEN",
-            reason: null,
-            actor: req.user
-        });
-
-        await insertViolationAudit({
-            client,
-            violationId: violation.id,
-            action: "CREATE",
-            fromStatus: null,
-            toStatus: "OPEN",
-            reason: null,
+            studentId: student_id,
+            violationTypeId: violation_type_id,
+            incidentDate: incident_date,
+            incidentTime: incident_time,
+            description,
             actor: req.user,
             ipAddress: req.ip
         });
 
-        const clearanceSync = await syncClearanceStatusForStudent(
-            violation.student_id,
-            client
-        );
-        const offenseStatus = await recalculateOffenseStatus({
-            client, studentId: violation.student_id, actor: req.user, ipAddress: req.ip
-        });
-
-        await notifyStudent(client, violation.student_id, {
-            title: 'New violation recorded',
-            message: `Violation #${violation.id} was added to your disciplinary record. Review the details in My Violations.`,
-            type: 'VIOLATION_CREATED',
-            category: 'VIOLATIONS', resourceType: 'violations', resourceId: violation.id,
-            linkPath: `/student/violations?violation_id=${violation.id}`, metadata: { student_id: violation.student_id },
-            eventKey: `violation:${violation.id}:created`
-        });
-
-        // -------------------------------------------------
-        // Commit violation + assignment
-        // -------------------------------------------------
-
         await client.query("COMMIT");
 
-        // -------------------------------------------------
-        // Return result
-        // -------------------------------------------------
-
-        return res.status(201).json({
-            success: true,
-            violation,
-            assignment,
-            history,
-            clearanceSync,
-            offenseStatus
-        });
+        return res.status(201).json({ success: true, ...result });
 
     } catch (error) {
 
@@ -300,7 +193,7 @@ const createViolation = async (req, res) => {
             );
         }
 
-        console.error(
+        if (!error.statusCode) console.error(
             "Create violation error:",
             error
         );

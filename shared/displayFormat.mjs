@@ -70,6 +70,15 @@ const validDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date
 }
 
+// Current calendar date in Asia/Manila as YYYY-MM-DD. Used by new-violation
+// forms so the browser clock or local timezone cannot choose the incident day.
+export const manilaToday = (value = new Date()) => {
+  const date = validDate(value) || new Date()
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: MANILA_TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit'
+  }).format(date)
+}
+
 export const formatManilaDate = (value, fallback = 'Not recorded') => {
   const date = validDate(value)
   if (!date) return fallback

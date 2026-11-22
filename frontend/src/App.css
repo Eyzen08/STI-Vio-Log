@@ -2719,6 +2719,13 @@ th {
 .student-account-review dl > div { display: grid; gap: 4px; }
 .student-account-review dt { font-size: .875rem; color: var(--color-text-muted); }
 .student-account-review dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.student-account-review-section { margin-top: 24px; }
+.student-account-review-section h4 { margin: 0 0 4px; font-size: 1rem; }
+.student-account-review-section .review-note { margin: 12px 0 0; color: var(--color-text-muted); font-size: .875rem; }
+.onboarding-review-list { display: grid; gap: 14px; margin: 16px 0 0; padding: 0; }
+.onboarding-review-list > div { display: grid; gap: 3px; }
+.onboarding-review-list dt { font-size: .875rem; color: var(--color-text-muted); }
+.onboarding-review-list dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 
 .form-guidance {
   padding: var(--space-3) var(--space-4);

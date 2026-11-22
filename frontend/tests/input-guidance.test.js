@@ -28,15 +28,14 @@ test('academic forms show category-specific programs and no TESDA year field', (
   assert.match(tesda,/name="section"/)
 })
 
-test('onboarding offers TESDA programs without requiring a school year', (t) => {
+test('onboarding profile review loads official details and never renders editable academic controls', (t) => {
   const previous=globalThis.window
   globalThis.window={location:{pathname:'/student/onboarding',search:'',hash:''}}
   t.after(()=>{if(previous===undefined)delete globalThis.window;else globalThis.window=previous})
-  const html=render('StudentOnboarding',{user:{onboarding_step:'PROFILE'},draft:{screen:'ACADEMIC',profile:{academicLevel:'TESDA',program:'AIPA-III',section:'',yearLevel:''}}})
-  assert.match(html,/<input\b(?=[^>]*value="TESDA")(?=[^>]*checked)[^>]*>/)
-  assert.match(html,/<option value="AIPA-III" selected="">/)
-  assert.match(html,/Data Collection and Annotation/)
-  assert.doesNotMatch(html,/Select Year Level|Select Grade Level|<option value="BSIT"/)
+  const html=render('StudentOnboarding',{user:{onboarding_step:'PROFILE'},draft:{}})
+  assert.match(html,/Review Your Student Information/)
+  assert.match(html,/managed by the Discipline Office and cannot be edited here/)
+  assert.doesNotMatch(html,/name="academic_level"|Select Year Level|Select Grade Level|<option value="BSIT"/)
 })
 
 test('section examples follow academic level without filling or restricting the section', () => {

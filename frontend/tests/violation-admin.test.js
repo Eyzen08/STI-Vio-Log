@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { buildViolationPayload, buildViolationUpdatePayload, offensesForType, selectedViolationType, studentIdFromSearch, studentOptionLabel, parseViolationDescription, violationEditForm, validateViolationEditForm } from '../src/lib/violationAdmin.js'
 import * as violationAdmin from '../src/lib/violationAdmin.js'
+import { manilaToday } from '../src/lib/displayFormat.js'
 
 test('offense search matches every keyword across offense and classification text', () => {
   assert.equal(typeof violationAdmin.searchHandbookOffenses, 'function')
@@ -29,8 +30,10 @@ test('offense search matches every keyword across offense and classification tex
   assert.equal(violationAdmin.searchHandbookOffenses(types, 'offense')[0].type.id, 1)
 })
 
-test('violation creation sends only staff-editable contract fields', () => {
-  assert.deepEqual(buildViolationPayload({student_id:'4',violation_type_id:'2',incident_date:'2026-08-28',exact_offense:' ID misuse ',incident_details:' Used another ID ',required_service_hours:'3.5',reported_by:99,status:'CLEAR',completed_service_hours:9}), {student_id:4,violation_type_id:2,incident_date:'2026-08-28',description:'Handbook offense: ID misuse\nIncident details: Used another ID'})
+test('violation creation sends only staff-editable contract fields and always uses today', () => {
+  const payload=buildViolationPayload({student_id:'4',violation_type_id:'2',incident_date:'2026-08-28',exact_offense:' ID misuse ',incident_details:' Used another ID ',required_service_hours:'3.5',reported_by:99,status:'CLEAR',completed_service_hours:9})
+  assert.deepEqual(payload, {student_id:4,violation_type_id:2,incident_date:manilaToday(),description:'Handbook offense: ID misuse\nIncident details: Used another ID'})
+  assert.notEqual(payload.incident_date,'2026-08-28')
 })
 
 test('handbook classification reveals only its exact offense choices', () => {

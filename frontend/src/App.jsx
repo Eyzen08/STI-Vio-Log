@@ -52,8 +52,12 @@ import { attendanceTransitions } from './lib/attendanceStatus.js'
 import ProfileMenu from './components/ProfileMenu.jsx'
 import AsyncActionButton from './components/AsyncActionButton.jsx'
 import StudentCredentialsModal from './components/StudentCredentialsModal.jsx'
-import { normalizeStudentGmail, reviewStudentAccount } from './lib/studentAccount.js'
+import { normalizeStudentGmail, reviewStudentAccount, emptyStudentForm } from './lib/studentAccount.js'
 import StudentAccountReview from './components/StudentAccountReview.jsx'
+import StudentAcademicFields from './components/StudentAcademicFields.jsx'
+import PhoneInput from './components/PhoneInput.jsx'
+import { changedAcademicMode } from './lib/studentAcademic.js'
+import { manilaToday } from './lib/displayFormat.js'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login, isAuthenticationRejection, settleReads } from './lib/api.js'
 import { prepareLoginService } from './lib/serviceStartup.js'
@@ -392,14 +396,7 @@ function App() {
     }
   }
 
-  const [studentForm, setStudentForm] = useState({
-    student_number: '',
-    first_name: '',
-    last_name: '',
-    middle_name: '',
-    suffix: '',
-    email: ''
-  })
+  const [studentForm, setStudentForm] = useState(emptyStudentForm)
 
   const [studentFormError, setStudentFormError] = useState('')
   const [studentFormSuccess, setStudentFormSuccess] = useState('')
@@ -422,7 +419,7 @@ function App() {
     student_id: '',
     student_search: '',
     violation_type_id: '',
-    incident_date: '',
+    incident_date: manilaToday(),
     incident_time: '',
     exact_offense: '',
     incident_details: '',
@@ -466,6 +463,7 @@ function App() {
   const [qrResult, setQrResult] = useState(null)
   const [verifiedQr, setVerifiedQr] = useState('')
   const [qrInputSource, setQrInputSource] = useState('manual')
+  const qrInputSourceRef = useRef('manual')
   const verifiedQrRef = useRef('')
   const qrInputVersionRef = useRef(0)
   const [qrSubmitting, setQrSubmitting] = useState(false)
@@ -840,7 +838,7 @@ function App() {
   const addViolationForStudent = (student) => {
     setReviewedStudent(null)
     setViewingViolation(null)
-    setViolationForm({ student_id: student.id, student_search: studentOptionLabel(student), violation_type_id: '', incident_date: '', incident_time: '', exact_offense: '', incident_details: '' })
+    setViolationForm({ student_id: student.id, student_search: studentOptionLabel(student), violation_type_id: '', incident_date: manilaToday(), incident_time: '', exact_offense: '', incident_details: '' })
     setViolationFormError(''); setViolationFormSuccess('')
     navigateTo('/admin/violations')
     setIsViolationFormOpen(true)
@@ -946,19 +944,28 @@ function App() {
    */
 
   const handleStudentFieldChange = (event) => {
-    const { name, value } = event.target
+    const { name, value, type, checked } = event.target
 
-    setStudentForm((current) => ({
-      ...current,
-      [name]: name === 'year_level'
-        ? Number(value) || ''
-        : name === 'student_number'
-          ? digitsOnly(value)
-          : ['first_name','middle_name','last_name','suffix'].includes(name)
-            ? normalizePersonName(value)
-            : name === 'email' ? emailWithoutSpaces(value) : value
-    }))
+    setStudentForm((current) => {
+      if (name === 'academic_level') return { ...current, ...changedAcademicMode(value) }
+      return {
+        ...current,
+        [name]: type === 'checkbox'
+          ? checked
+          : name === 'year_level'
+            ? Number(value) || ''
+            : name === 'student_number'
+              ? digitsOnly(value)
+              : ['first_name','middle_name','last_name','suffix','guardian_name'].includes(name)
+                ? normalizePersonName(value)
+                : name === 'email'
+                  ? emailWithoutSpaces(value)
+                  : name === 'violation_type_id' ? Number(value) || '' : value
+      }
+    })
   }
+
+  const handleStudentAcademicChange = (update) => setStudentForm(current => ({ ...current, ...update }))
 
   const handleStudentNameBlur = ({target:{name,value}}) => setStudentForm(current => ({...current,[name]:normalizeNameSpacing(value)}))
 
@@ -970,6 +977,11 @@ function App() {
 
   const handleViolationFieldChange = (event) => {
     const { name, value } = event.target
+
+    if (name === 'incident_date') {
+      setViolationForm((current) => ({ ...current, incident_date: manilaToday() }))
+      return
+    }
 
     if (name === 'student_search') {
       const search = normalizeStudentSearch(value, students.map(studentOptionLabel))
@@ -1045,8 +1057,10 @@ function App() {
     setStudentFormError('')
     setStudentFormSuccess('')
     try {
-      const details = reviewStudentAccount(studentForm)
-      setStudentForm(details)
+      const candidate = studentForm.include_first_violation
+        ? { ...studentForm, incident_date: manilaToday() }
+        : studentForm
+      const details = reviewStudentAccount(candidate)
       setStudentAccountReview(details)
     } catch (error) { setStudentFormError(error.message) }
   }
@@ -1091,14 +1105,7 @@ function App() {
       setIsStudentFormOpen(false)
       setStudentAccountReview(null)
 
-      setStudentForm({
-        student_number: '',
-        first_name: '',
-        last_name: '',
-        middle_name: '',
-        suffix: '',
-        email: ''
-      })
+      setStudentForm(emptyStudentForm())
 
       // Account creation succeeded even if refreshing the directory fails.
       setStudents((current) => [...current, data.student])
@@ -1183,7 +1190,7 @@ function App() {
         student_id: '',
         student_search: '',
         violation_type_id: '',
-        incident_date: '',
+        incident_date: manilaToday(),
         incident_time: '',
         exact_offense: '',
         incident_details: ''
@@ -1335,6 +1342,7 @@ function App() {
           qrInputVersionRef.current += 1
           const decodedVersion = qrInputVersionRef.current
           qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: decodedQr }
+          qrInputSourceRef.current = 'camera'
           setQrInputSource('camera')
           setQrForm((current) => ({
             ...current,
@@ -1484,8 +1492,10 @@ function App() {
       handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
     }
     const { name, value } = event.target
+    const nextValue = name === 'qr_code' ? digitsOnly(value).slice(0, 11) : value
     if (name === 'qr_code') {
-      qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: value }
+      qrInputSourceRef.current = 'manual'
+      qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: nextValue }
       qrInputVersionRef.current += 1
       setQrInputSource('manual')
     }
@@ -1497,7 +1507,7 @@ function App() {
       [name]:
         ['department_id', 'supervising_officer_id'].includes(name)
           ? Number(value) || ''
-          : value
+          : nextValue
     }))
 
     if (name === 'qr_code' || name === 'department_id') {
@@ -1524,28 +1534,31 @@ function App() {
     qrActionBusyRef.current = new Promise(resolve=>{release=resolve})
     if (!quiet) {setQrError('');setQrSubmitting(true)}
     const normalizedQr=typeof qrValue==='string'?qrValue.trim():''
+    const method=qrInputSourceRef.current==='camera'?'qr_code':'student_number'
+    const identifier=method==='student_number'?normalizedQr.replace(/\D/g,''):normalizedQr
     const current=qrFormRef.current
     try {
-      if (!normalizedQr) throw new Error('QR code is required.')
-      if (action!=='scan'&&normalizedQr!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
+      if (!identifier) throw new Error(method==='student_number'?'Enter the 11-digit Student Number.':'QR code is required.')
+      if (method==='student_number'&&!/^\d{11}$/.test(identifier)) throw new Error('Student Number must contain exactly 11 digits.')
+      if (action!=='scan'&&identifier!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
       if (action==='time-in'&&!current.supervising_officer_id) throw new Error('Select an authorized supervising officer.')
-      const assignmentId=options.assignment_id!==undefined?options.assignment_id:normalizedQr===verifiedQrRef.current?current.assignment_id:undefined
-      const data=await apiRequest('/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({qr_code:normalizedQr,
+      const assignmentId=options.assignment_id!==undefined?options.assignment_id:identifier===verifiedQrRef.current?current.assignment_id:undefined
+      const data=await apiRequest('/api/qr/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({[method]:identifier,
         ...(assignmentId?{assignment_id:Number(assignmentId)}:{}),
         ...(action==='time-in'?{supervising_officer_id:Number(current.supervising_officer_id),notes:current.notes.trim()}:{})})})
       if(attendanceAccountRef.current!==accountId) return false
       if(action==='scan'&&version!==qrInputVersionRef.current) return false
       if(!data.success) throw new Error(data.message||'Unable to process attendance.')
-      const resetDraft=action==='scan'&&(!quiet||normalizedQr!==verifiedQrRef.current||Number(data.assignment?.id||0)!==Number(current.assignment_id||0))
+      const resetDraft=action==='scan'&&(!quiet||identifier!==verifiedQrRef.current||Number(data.assignment?.id||0)!==Number(current.assignment_id||0))
       if(resetDraft) {setQrHistory([]);setQrHistoryError('')}
       setQrResult(previous=>({...data,session:data.session||(quiet&&previous?.session?.status==='COMPLETED'?previous.session:null),action:quiet?(previous?.action||'scan'):action,message:quiet?previous?.message:data.message}))
-      setVerifiedQr(normalizedQr)
-      verifiedQrRef.current=normalizedQr
+      setVerifiedQr(identifier)
+      verifiedQrRef.current=identifier
       const officers=data.available_officers||[]
       const active=data.active_session||data.session
       const selectedOfficer=!resetDraft&&officers.find(officer=>Number(officer.officer_user_id)===Number(qrFormRef.current.supervising_officer_id))?.officer_user_id
       const officerId=active?.supervising_officer_user_id||selectedOfficer||officers.find(officer=>Number(officer.officer_user_id)===Number(user.id))?.officer_user_id||(officers.length===1?officers[0].officer_user_id:'')
-      setQrForm(form=>({...form,...(resetDraft?EMPTY_QR_SERVICE_DRAFT:{}),qr_code:normalizedQr,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
+      setQrForm(form=>({...form,...(resetDraft?EMPTY_QR_SERVICE_DRAFT:{}),qr_code:identifier,assignment_id:data.assignment?.id||'',supervising_officer_id:officerId,...(action==='time-in'?{notes:''}:{})}))
       if(action!=='scan') {
         setDashboardRefreshKey(key=>key+1);refreshPendingActions()
         if(isAdmin) refreshAdminAttendance()
@@ -2058,13 +2071,15 @@ function App() {
     if (
       activeView === 'Students'
     ) {
+      const firstViolationType = selectedViolationType(violationTypes, studentForm.violation_type_id)
+      const firstViolationOffenses = offensesForType(firstViolationType)
       return (
         <>
           <StudentManagement students={students} violations={violations} assignments={communityServiceAssignments} clearances={clearanceRecords} activeSessions={activeServiceSessions} attendanceReady={adminAttendanceReady} loading={dashboardLoading} query={studentRosterSearch} onQueryChange={setStudentRosterSearch} token={token}
-            onAdd={() => { setStudentAccountReview(null); setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
+            onAdd={() => { setStudentForm(emptyStudentForm()); setStudentAccountReview(null); setStudentFormError(''); setStudentFormSuccess(''); setIsStudentFormOpen(true) }} onView={loadReviewedStudentHistory} onServiceTime={setServiceTimeStudent} onGuardianContact={setGuardianContactStudent}
             onUpdated={(updated) => setStudents((current) => current.map((item) => Number(item.id) === Number(updated.id) ? updated : item))}/>
-          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => { if (!mutationBusy.studentCreate) { setIsStudentFormOpen(false); setStudentAccountReview(null) } }}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the Student Account</h3><p>Enter the Student Number, official legal name, and personal Gmail address. After creating the account, click Send Email to share the temporary password. The student completes the remaining information during first sign-in.</p></div></div>
-          {studentAccountReview ? <StudentAccountReview details={studentAccountReview} busy={Boolean(mutationBusy.studentCreate)} error={studentFormError} onBack={() => { setStudentAccountReview(null); setStudentFormError(''); requestAnimationFrame(() => document.getElementById('create-student-student_number')?.focus()) }} onConfirm={confirmStudentAccount}/> : <section className="drawer-form-card">
+          {isStudentFormOpen && <Modal title="Add Student" className="create-record-drawer" drawer onClose={() => { if (!mutationBusy.studentCreate) { setIsStudentFormOpen(false); setStudentAccountReview(null) } }}><div className="create-record-intro"><i><PortalIcon name="students" size={24}/></i><div><h3>Create the Student Account</h3><p>Enter the official student information managed by the Discipline Office. You can optionally record the first violation in the same transaction. After creating the account, click Send Email to share the temporary password.</p></div></div>
+          {studentAccountReview ? <StudentAccountReview details={studentAccountReview} violationTypes={violationTypes} busy={Boolean(mutationBusy.studentCreate)} error={studentFormError} onBack={() => { setStudentAccountReview(null); setStudentFormError(''); requestAnimationFrame(() => document.getElementById('create-student-student_number')?.focus()) }} onConfirm={confirmStudentAccount}/> : <section className="drawer-form-card">
             <div className="table-header">
               <h3>
                 Add Student
@@ -2083,6 +2098,8 @@ function App() {
               }
             >
               <fieldset disabled={mutationBusy.studentCreate}><legend className="sr-only">Student Account Details</legend><div className="student-form-grid">
+                <div className="full-width-field create-form-section-heading"><h4>Student Identity</h4><p>School-issued identity and the student's personal Gmail.</p></div>
+
                 <label className="full-width-field"><span id="create-student-student_number-label">Student Number <b aria-hidden="true">*</b></span>
                   <input
                     type="text"
@@ -2102,7 +2119,7 @@ function App() {
                     maxLength={11}
                     required
                   />
-                  <small id="create-student-number-help">Enter your 11-digit Student Number.</small>
+                  <small id="create-student-number-help">Enter the 11-digit Student Number issued by the school.</small>
                 </label>
 
                 <label><span id="create-student-first_name-label">First Name <b aria-hidden="true">*</b></span>
@@ -2198,8 +2215,123 @@ function App() {
                     aria-describedby="student-gmail-help"
                     required
                   />
-                  <span id="student-gmail-help" className="student-gmail-help">Use personal Gmail (@gmail.com). You can email the temporary password after creating the account.</span>
+                  <span id="student-gmail-help" className="student-gmail-help">Use the student's personal Gmail (@gmail.com). You can email the temporary password after creating the account.</span>
                 </label>
+
+                <div className="full-width-field create-form-section-heading"><h4>Academic Information</h4><p>Official academic level, program or strand, section, and year.</p></div>
+                <StudentAcademicFields value={studentForm} onChange={handleStudentAcademicChange}/>
+
+                <div className="full-width-field create-form-section-heading"><h4>Contact and Guardian</h4><p>These contact details are visible to authorized school staff only.</p></div>
+                <PhoneInput id="create-student-phone" name="phone_number" label="Student Mobile Number" value={studentForm.phone_number} onChange={handleStudentFieldChange} required/>
+                <label><span id="create-student-guardian_name-label">Guardian's Full Name <b aria-hidden="true">*</b></span>
+                  <input
+                    type="text"
+                    name="guardian_name"
+                    id="create-student-guardian_name"
+                    aria-labelledby="create-student-guardian_name-label"
+                    value={studentForm.guardian_name}
+                    onChange={handleStudentFieldChange}
+                    onBlur={handleStudentNameBlur}
+                    placeholder="e.g. Maria Dela Cruz"
+                    pattern={STUDENT_NAME_PATTERN}
+                    maxLength={200}
+                    required
+                  />
+                </label>
+                <label><span id="create-student-guardian_relationship-label">Relationship to Student <b aria-hidden="true">*</b></span>
+                  <input
+                    type="text"
+                    name="guardian_relationship"
+                    id="create-student-guardian_relationship"
+                    aria-labelledby="create-student-guardian_relationship-label"
+                    value={studentForm.guardian_relationship}
+                    onChange={handleStudentFieldChange}
+                    placeholder="e.g. Mother"
+                    maxLength={100}
+                    required
+                  />
+                </label>
+                <PhoneInput id="create-student-guardian-phone" name="guardian_phone_number" label="Guardian Mobile Number" value={studentForm.guardian_phone_number} onChange={handleStudentFieldChange} required/>
+
+                <div className="full-width-field create-form-section-heading"><h4>First Violation <small className="create-field-optional">(optional)</small></h4><p>Record the student's first handbook violation in the same transaction. Community Service hours are assigned later by authorized staff.</p></div>
+                <label className="full-width-field create-checkbox-field"><input type="checkbox" name="include_first_violation" checked={studentForm.include_first_violation} onChange={handleStudentFieldChange}/><span>Record a first violation with this account</span></label>
+
+                {studentForm.include_first_violation && <>
+                  <label><span id="create-student-violation_type_id-label">Handbook Classification <b aria-hidden="true">*</b></span>
+                    <select
+                      name="violation_type_id"
+                      id="create-student-violation_type_id"
+                      aria-labelledby="create-student-violation_type_id-label"
+                      value={studentForm.violation_type_id}
+                      onChange={handleStudentFieldChange}
+                      required
+                    >
+                      <option value="">Select a Classification</option>
+                      {violationTypes.map((type) => (
+                        <option key={type.id} value={type.id}>{type.violation_name} ({type.severity})</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label><span id="create-student-incident_date-label">Incident Date <b aria-hidden="true">*</b></span>
+                    <input
+                      type="date"
+                      name="incident_date"
+                      id="create-student-incident_date"
+                      aria-labelledby="create-student-incident_date-label"
+                      aria-describedby="create-student-incident_date-help"
+                      value={studentForm.incident_date}
+                      min={manilaToday()}
+                      max={manilaToday()}
+                      readOnly
+                      required
+                    />
+                    <small id="create-student-incident_date-help">New records use today's date in Asia/Manila. Historical corrections use the authorized edit workflow.</small>
+                  </label>
+
+                  <label><span id="create-student-incident_time-label">Incident Time <b aria-hidden="true">*</b></span>
+                    <input
+                      type="time"
+                      name="incident_time"
+                      id="create-student-incident_time"
+                      aria-labelledby="create-student-incident_time-label"
+                      value={studentForm.incident_time}
+                      onChange={handleStudentFieldChange}
+                      required
+                    />
+                  </label>
+
+                  <label className="full-width-field"><span id="create-student-exact_offense-label">Specific Handbook Offense <b aria-hidden="true">*</b></span>
+                    <select
+                      name="exact_offense"
+                      id="create-student-exact_offense"
+                      aria-labelledby="create-student-exact_offense-label"
+                      value={studentForm.exact_offense}
+                      onChange={handleStudentFieldChange}
+                      disabled={!firstViolationType || firstViolationOffenses.length === 0}
+                      required
+                    >
+                      <option value="">{firstViolationType ? 'Select a Handbook Offense' : 'Choose a Handbook Classification First'}</option>
+                      {firstViolationOffenses.map((offense) => (
+                        <option key={offense} value={offense}>{offense}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label className="full-width-field"><span id="create-student-incident_details-label">Incident Details <b aria-hidden="true">*</b></span>
+                    <textarea
+                      name="incident_details"
+                      id="create-student-incident_details"
+                      aria-labelledby="create-student-incident_details-label"
+                      value={studentForm.incident_details}
+                      onChange={handleStudentFieldChange}
+                      rows="4"
+                      placeholder="e.g. Student entered the library without a school ID at 9:15 AM."
+                      required
+                    />
+                    <small>Describe what happened, where and when it occurred, and other relevant facts.</small>
+                  </label>
+                </>}
 
               </div></fieldset>
 
@@ -2252,7 +2384,7 @@ function App() {
       const exactOffenses = offensesForType(selectedType)
       return (
         <>
-          <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={(violation) => navigateTo(`/admin/violations?violation_id=${violation.id}`)} onEdit={startViolationEdit}/>
+          <ViolationManagement violations={violations} loading={dashboardLoading} filters={violationTableFilters} onFiltersChange={setViolationTableFilters} role={userRole} onRecord={() => { setViolationForm((current) => ({ ...current, incident_date: manilaToday() })); setViolationFormError(''); setViolationFormSuccess(''); setIsViolationFormOpen(true) }} onView={(violation) => navigateTo(`/admin/violations?violation_id=${violation.id}`)} onEdit={startViolationEdit}/>
           {isViolationFormOpen && <Modal title="Record Violation" className="create-record-drawer" drawer onClose={() => setIsViolationFormOpen(false)}><div className="create-record-intro"><i><PortalIcon name="violations" size={24}/></i><div><h3>Create an Incident Record</h3><p>Choose the exact handbook classification and document only verified facts.</p></div></div>
           <section className="drawer-form-card">
             <div className="table-header">
@@ -2339,12 +2471,15 @@ function App() {
                     value={
                       violationForm.incident_date
                     }
+                    min={manilaToday()}
+                    max={manilaToday()}
+                    readOnly
                     onChange={
                       handleViolationFieldChange
                     }
                     required
                   />
-                  <small id="app-date-help-1">e.g. 12 Oct 2026.</small>
+                  <small id="app-date-help-1">New records use today's date in Asia/Manila. Historical corrections use the authorized edit workflow.</small>
                 </label>
 
                 <label><span id="create-violation-incident_time-label">Incident Time <b aria-hidden="true">*</b></span>

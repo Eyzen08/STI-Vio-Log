@@ -1917,6 +1917,14 @@
 .app-modal.app-modal--drawer.create-record-drawer :is(label,legend) b { color:var(--status-danger-text); font-weight:600; }
 .app-modal.app-modal--drawer.create-record-drawer .offense-legend { flex-wrap:wrap; gap:8px 12px; margin:0 0 20px; font-size:var(--text-sm); }
 .create-record-drawer .violation-offense-search { min-width:0; }
+.create-record-drawer .create-form-section-heading { grid-column:1/-1; margin:6px 0 -4px; padding-top:16px; border-top:1px solid var(--border-strong); }
+.create-record-drawer .create-form-section-heading:first-child { margin-top:0; padding-top:0; border-top:0; }
+.create-record-drawer .create-form-section-heading h4 { margin:0; color:var(--text-primary); font-size:var(--text-base); font-weight:700; line-height:1.4; }
+.create-record-drawer .create-form-section-heading p { margin:4px 0 0; color:var(--text-secondary); font-size:var(--text-sm); font-weight:400; line-height:1.5; }
+.create-record-drawer .create-checkbox-field { display:flex !important; flex-direction:row !important; align-items:center; gap:10px; min-height:44px; padding:10px 14px; border:1px solid var(--border-strong); border-radius:9px; background:var(--surface-nested); cursor:pointer; }
+.create-record-drawer .create-checkbox-field input[type='checkbox'] { flex:0 0 auto; width:18px !important; height:18px !important; min-height:18px !important; margin:0 !important; padding:0 !important; accent-color:var(--action-primary-surface); }
+.create-record-drawer .create-checkbox-field span { color:var(--text-primary); font-size:var(--text-base); font-weight:600; }
+.verified-method { color:var(--text-secondary); font-size:var(--text-sm); font-weight:500; }
 .create-record-drawer .violation-offense-search-status { margin:8px 0 0; color:var(--text-secondary); font-size:var(--text-sm); }
 .create-record-drawer .violation-offense-search-status:empty { margin:0; }
 .create-record-drawer .violation-offense-search-results { display:grid; gap:8px; max-height:280px; overflow-y:auto; margin:8px 0 0; padding:4px; list-style:none; }

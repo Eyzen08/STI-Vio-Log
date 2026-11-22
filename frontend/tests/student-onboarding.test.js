@@ -14,7 +14,7 @@ test('mandatory Student onboarding renders before portal content and resumes by 
   assert.match(progress,/Password.*Google.*Student Details.*Ready/s)
 });
 
-test('onboarding binds Google first and submits only student-controlled academic and contact fields',()=>{
+test('onboarding binds Google first and reviews official student details without writing them',()=>{
   assert.match(onboarding,/step==='GOOGLE'/)
   assert.match(api,/student-onboarding\/google-link/)
   assert.match(api,/student-onboarding\/google-email\/request/)
@@ -25,17 +25,23 @@ test('onboarding binds Google first and submits only student-controlled academic
   assert.match(onboarding,/Email.*Verification Code.*Google Sign-In/s)
   assert.match(onboarding,/<OtpInput id="google-email-code"/)
   assert.match(api,/student-onboarding\/profile/)
-  assert.match(onboarding,/program:.*section:.*year_level:.*phone_number:.*guardian_name:.*guardian_relationship:.*guardian_phone_number:/s)
+  assert.match(onboarding,/apiRequest\('\/api\/students\/me'/)
+  assert.match(onboarding,/completeStudentOnboarding\(\{\}\)/)
+  assert.doesNotMatch(onboarding,/academic_level:/)
+  assert.doesNotMatch(onboarding,/guardian_name:/)
   assert.doesNotMatch(onboarding,/student_number:/)
+  assert.match(onboarding,/managed by the Discipline Office and cannot be edited here/)
 });
 
-test('Discipline Office creation collects identity and Gmail and leaves QR generation to the server',()=>{
-  const start=app.indexOf('const [studentForm')
-  const end=app.indexOf('const [studentFormError',start)
-  const formState=app.slice(start,end)
-  for(const field of ['student_number','first_name','middle_name','last_name','suffix','email'])assert.match(formState,new RegExp(field))
-  for(const field of ['phone_number','program','section','year_level','qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
-  assert.match(app,/Enter the Student Number, official legal name, and personal Gmail address/)
+test('Discipline Office creation collects the full official profile and optional first violation',()=>{
+  assert.match(app,/useState\(emptyStudentForm\)/)
+  for(const field of ['student_number','first_name','middle_name','last_name','suffix','email','include_first_violation','violation_type_id','incident_date','incident_time','exact_offense','incident_details'])assert.match(app,new RegExp(field))
+  assert.match(app,/<StudentAcademicFields value=\{studentForm\}/)
+  assert.match(app,/<PhoneInput id="create-student-phone"/)
+  assert.match(app,/<PhoneInput id="create-student-guardian-phone"/)
+  assert.match(app,/official student information managed by the Discipline Office/)
+  const formState=app.slice(app.indexOf('const [studentForm'),app.indexOf('const [studentFormError'))
+  for(const field of ['qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
 });
 
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{
@@ -45,15 +51,16 @@ test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',
   assert.match(css,/var\(--text-primary\)/)
 });
 
-test('academic onboarding switches levels and keeps mode-specific fields and year ranges',()=>{
-  assert.match(onboarding,/role="radiogroup" aria-labelledby="onboarding-academic-level-label"/)
-  assert.match(onboarding,/form\.academicLevel!=='SENIOR_HIGH_SCHOOL'&&<label className="onboarding-program-field">Program/)
-  assert.match(onboarding,/academic_level:form\.academicLevel/)
-  assert.match(onboarding,/year_level:form\.academicLevel==='TESDA'\?null:Number\(form\.yearLevel\)/)
-  assert.match(onboarding,/form\.academicLevel!=='TESDA'&&<label className="onboarding-year-field">/)
-  assert.match(onboarding,/academicLevel,strand:'',program:'',yearLevel:''/)
-  assert.match(onboarding,/yearOptions\(form\.academicLevel\)/)
-  assert.match(onboarding,/<select value=\{form\.yearLevel\}/)
+test('academic and guardian details are displayed read-only from the official student profile',()=>{
+  assert.match(onboarding,/academicLevelLabel\(profile\)/)
+  assert.match(onboarding,/academicProgram\(profile\)/)
+  assert.match(onboarding,/academicYear\(profile\)/)
+  assert.match(onboarding,/profile\.section/)
+  assert.match(onboarding,/profile\.guardian_name/)
+  assert.match(onboarding,/profile\.guardian_phone_number/)
+  assert.doesNotMatch(onboarding,/role="radiogroup"/)
+  assert.doesNotMatch(onboarding,/form\.academicLevel/)
+  assert.doesNotMatch(onboarding,/yearOptions/)
   assert.match(css,/\.onboarding-academic-grid \{ display:grid; grid-template-columns:minmax\(0,1fr\)/)
   assert.match(css,/@media\(min-width:600px\).*\.onboarding-academic-grid \{ grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/s)
 });

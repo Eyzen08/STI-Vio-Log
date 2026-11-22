@@ -73,6 +73,47 @@ test('QR verification requires an active linked student account', async () => {
   } finally { database.query = originalQuery; }
 });
 
+test('manual Student Number lookup resolves the exact student and reports the verification method', async () => {
+  const originalQuery = database.query;
+  const queries = [];
+  database.query = async (sql, params) => {
+    queries.push({ sql: String(sql), params });
+    if (String(sql).includes('WHERE s.student_number=$1')) return { rows: [{ id: 40, student_number: '02000123456', first_name: 'Test', last_name: 'Student' }] };
+    if (String(sql) === 'SELECT clock_timestamp() AS now') return { rows: [{ now: new Date('2026-10-08T01:00:00Z') }] };
+    if (String(sql).includes('SUM(COALESCE(invalidated_allowance_minutes,credited_minutes))')) return { rows: [{ minutes: 0 }] };
+    return { rows: [] };
+  };
+  try {
+    const res = response();
+    await scanQrCode({ user: { id: 1, role: 'DISCIPLINE_ADMIN' }, body: { student_number: '02000123456' } }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.success, true);
+    assert.equal(res.body.student.id, 40);
+    assert.equal(res.body.identification_method, 'STUDENT_NUMBER');
+    const lookup = queries.find(({ sql }) => sql.includes('WHERE s.student_number=$1'));
+    assert.deepEqual(lookup.params, ['02000123456']);
+    assert.match(lookup.sql, /JOIN users u ON u\.id=s\.user_id/);
+    assert.match(lookup.sql, /u\.is_active=TRUE/);
+    assert.equal(queries.some(({ sql }) => sql.includes('WHERE s.qr_code=$1')), false);
+  } finally { database.query = originalQuery; }
+});
+
+test('manual Student Number input requires exactly one 11-digit identifier', async () => {
+  for (const body of [
+    { student_number: '0200012345' },
+    { student_number: '020001234567' },
+    { student_number: '02000-123456' },
+    { student_number: 'ABCDEFGHIJK' },
+    { student_number: '02000123456', qr_code: 'QR-40' },
+    {}
+  ]) {
+    const res = response();
+    await scanQrCode({ user: { role: 'DISCIPLINE_ADMIN' }, body }, res);
+    assert.equal(res.statusCode, 400, JSON.stringify(body));
+    assert.equal(res.body.success, false);
+  }
+});
+
 test('admin and department staff can verify a completed student without a client department', async () => {
   const originalQuery = database.query;
   database.query = async (sql) => {
@@ -92,6 +133,7 @@ test('admin and department staff can verify a completed student without a client
       assert.equal(res.body.assignment,null);
       assert.equal(res.body.student_status,'No active service requirement');
       assert.equal(res.body.allowance.available_minutes,0);
+      assert.equal(res.body.identification_method,'QR_CODE');
     }
   } finally { database.query=originalQuery; }
 });

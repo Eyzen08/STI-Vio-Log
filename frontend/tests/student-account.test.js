@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { isValidStudentGmail, normalizeStudentGmail, sendStudentCredentialsEmail } from '../src/lib/studentAccount.js'
 import * as studentAccount from '../src/lib/studentAccount.js'
+import { manilaToday } from '../src/lib/displayFormat.js'
 
 test('new student Gmail normalizes casing and rejects missing, invalid, other-provider and overlength addresses', () => {
   assert.equal(normalizeStudentGmail(' Student@GMAIL.COM '), 'student@gmail.com')
@@ -29,16 +30,26 @@ test('email errors propagate so the confirmation can offer retry without recreat
 })
 
 test('review creates a normalized snapshot of exactly the permitted account details', () => {
-  const draft = {student_number:' 02000123456 ',first_name:' Juan   Carlos ',last_name:' Dela Cruz ',middle_name:' ',suffix:'',email:' STUDENT@GMAIL.COM ',role:'ADMIN'}
+  const draft = {student_number:' 02000123456 ',first_name:' Juan   Carlos ',last_name:' Dela Cruz ',middle_name:' ',suffix:'',email:' STUDENT@GMAIL.COM ',academic_level:'COLLEGE',program:'BSIT',section:' A103 ',year_level:'2',phone_number:'09171234567',guardian_name:' Maria   Santos ',guardian_relationship:' Mother ',guardian_phone_number:'0918-765-4321',include_first_violation:false,role:'ADMIN'}
   const reviewed = studentAccount.reviewStudentAccount(draft)
-  assert.deepEqual(reviewed,{student_number:'02000123456',first_name:'Juan Carlos',last_name:'Dela Cruz',middle_name:'',suffix:'',email:'student@gmail.com'})
+  assert.deepEqual(reviewed,{student_number:'02000123456',first_name:'Juan Carlos',last_name:'Dela Cruz',middle_name:'',suffix:'',email:'student@gmail.com',academic_level:'COLLEGE',strand:null,program:'BSIT',section:'A103',year_level:2,phone_number:'+639171234567',guardian_name:'Maria Santos',guardian_relationship:'Mother',guardian_phone_number:'+639187654321'})
   draft.email='changed@gmail.com'
   assert.equal(reviewed.email,'student@gmail.com')
 })
 
+test('review accepts an optional first violation only for the current Manila date', () => {
+  const draft = {student_number:'02000123456',first_name:'Juan',last_name:'Santos',middle_name:'',suffix:'',email:'student@gmail.com',academic_level:'COLLEGE',program:'BSIT',section:'A103',year_level:'1',phone_number:'09171234567',guardian_name:'Maria Santos',guardian_relationship:'Mother',guardian_phone_number:'09187654321',include_first_violation:true,violation_type_id:'3',incident_date:manilaToday(),incident_time:'09:15',exact_offense:'Uniform violation',incident_details:'No school ID.'}
+  const reviewed=studentAccount.reviewStudentAccount(draft)
+  assert.equal(reviewed.first_violation.violation_type_id,3)
+  assert.equal(reviewed.first_violation.incident_time,'09:15')
+  assert.match(reviewed.first_violation.description,/Uniform violation/)
+  assert.throws(()=>studentAccount.reviewStudentAccount({...draft,incident_date:'2020-01-01'}),/today's date/)
+  assert.throws(()=>studentAccount.reviewStudentAccount({...draft,guardian_phone_number:'0917-123-4567'}),/must be different/)
+})
+
 test('invalid student details cannot reach the account review', () => {
-  const valid={student_number:'02000123456',first_name:'Juan',last_name:'Santos',middle_name:'',suffix:'',email:'student@gmail.com'}
-  for(const change of [{student_number:'123'}, {first_name:''}, {first_name:'Juan123'}, {middle_name:'123'}, {suffix:'Unknown'}, {email:'student@yahoo.com'}])assert.throws(()=>studentAccount.reviewStudentAccount({...valid,...change}))
+  const valid={student_number:'02000123456',first_name:'Juan',last_name:'Santos',middle_name:'',suffix:'',email:'student@gmail.com',academic_level:'COLLEGE',program:'BSIT',section:'A103',year_level:'1',phone_number:'09171234567',guardian_name:'Maria Santos',guardian_relationship:'Mother',guardian_phone_number:'09187654321'}
+  for(const change of [{student_number:'123'}, {first_name:''}, {first_name:'Juan123'}, {middle_name:'123'}, {suffix:'Unknown'}, {email:'student@yahoo.com'}, {academic_level:''}, {program:''}, {section:''}, {year_level:9}, {phone_number:'123'}, {guardian_name:''}, {guardian_relationship:''}])assert.throws(()=>studentAccount.reviewStudentAccount({...valid,...change}))
 })
 
 test('Gmail correction sends only the new Gmail, reason, and current credential without emailing', async () => {
