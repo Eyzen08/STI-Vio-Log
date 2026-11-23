@@ -416,7 +416,7 @@ test('manual Student Number attendance resolves the student and records the veri
   const timeOutLog = (await pool.query('SELECT verification_method FROM qr_scan_logs WHERE student_id=$1 ORDER BY id DESC LIMIT 1', [studentId])).rows[0];
   assert.equal(timeOutLog.verification_method, 'STUDENT_NUMBER');
 
-  assert.equal((await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '123' } })).status, 400);
+  assert.equal((await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '0200012345A' } })).status, 400);
   assert.equal((await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '02000123456', qr_code: 'QR-TEST' } })).status, 400);
 });
 

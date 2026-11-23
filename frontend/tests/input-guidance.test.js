@@ -4,6 +4,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { build } from 'vite'
 import react from '@vitejs/plugin-react'
+import { studentNumberInput } from '../src/lib/inputNormalization.js'
 
 const components = {}
 before(async () => {
@@ -53,6 +54,15 @@ test('section examples follow academic level without filling or restricting the 
 test('phone example is only guidance and existing number formatting remains intact', () => {
   assert.match(render('PhoneInput', { id: 'phone', name: 'phone', value: '' }), /placeholder="e.g. \+63 912 345 6789"[^>]*value=""/)
   assert.match(render('PhoneInput', { id: 'phone', name: 'phone', value: '09123456789' }), /value="\+63 912 345 6789"/)
+})
+
+test('manual attendance accepts the Student Number exactly as the school recorded it', () => {
+  assert.equal(studentNumberInput(' 024726481947 '), '024726481947')
+  assert.equal(studentNumberInput('2024-001'), '2024-001')
+  assert.equal(studentNumberInput('02000-123456'), '02000-123456')
+  assert.equal(studentNumberInput('0200 0123 456'), '02000123456')
+  assert.equal(studentNumberInput('ABC02000123456'), '02000123456')
+  assert.equal(studentNumberInput('0'.repeat(40)), '0'.repeat(32))
 })
 
 test('DTR distinguishes record IDs from student numbers and explains blank filters', () => {

@@ -78,7 +78,7 @@ import { connectRealtime } from './lib/realtime.js'
 import { iconNameForView, mobileNavItemsFor, mobileNavLabel, sidebarNavigationFor, sidebarGroupForPath, sidebarTooltipFor } from './lib/portalNavigation.js'
 import { formatActionCount, useActionLock } from './lib/asyncAction.js'
 import { applyPageMetadata, metadataForRoute } from './lib/pageMetadata.js'
-import { digitsOnly, STUDENT_NUMBER_PATTERN, STUDENT_NAME_PATTERN, STUDENT_SUFFIXES, normalizePersonName, normalizeNameSpacing, normalizeStudentSearch, emailWithoutSpaces, wholeNumberInput } from './lib/inputNormalization.js'
+import { digitsOnly, studentNumberInput, STUDENT_NUMBER_PATTERN, STUDENT_NAME_PATTERN, STUDENT_SUFFIXES, normalizePersonName, normalizeNameSpacing, normalizeStudentSearch, emailWithoutSpaces, wholeNumberInput } from './lib/inputNormalization.js'
 import './App.css'
 import './styles/student-portal.css'
 import './styles/legal-policy.css'
@@ -1492,7 +1492,7 @@ function App() {
       handleQrAction('scan',qrFormRef.current.qr_code,{assignment_id:id});return
     }
     const { name, value } = event.target
-    const nextValue = name === 'qr_code' ? digitsOnly(value).slice(0, 11) : value
+    const nextValue = name === 'qr_code' ? studentNumberInput(value) : value
     if (name === 'qr_code') {
       qrInputSourceRef.current = 'manual'
       qrFormRef.current = { ...qrFormRef.current, ...EMPTY_QR_SERVICE_DRAFT, qr_code: nextValue }
@@ -1535,11 +1535,11 @@ function App() {
     if (!quiet) {setQrError('');setQrSubmitting(true)}
     const normalizedQr=typeof qrValue==='string'?qrValue.trim():''
     const method=qrInputSourceRef.current==='camera'?'qr_code':'student_number'
-    const identifier=method==='student_number'?normalizedQr.replace(/\D/g,''):normalizedQr
+    const identifier=method==='student_number'?normalizedQr.replace(/[^0-9-]/g,''):normalizedQr
     const current=qrFormRef.current
     try {
-      if (!identifier) throw new Error(method==='student_number'?'Enter the 11-digit Student Number.':'QR code is required.')
-      if (method==='student_number'&&!/^\d{11}$/.test(identifier)) throw new Error('Student Number must contain exactly 11 digits.')
+      if (!identifier) throw new Error(method==='student_number'?'Enter the Student Number.':'QR code is required.')
+      if (method==='student_number'&&!/^[0-9-]{1,32}$/.test(identifier)) throw new Error('Enter the Student Number exactly as recorded (digits and hyphens only).')
       if (action!=='scan'&&identifier!==verifiedQrRef.current) throw new Error('Verify the student before recording attendance.')
       if (action==='time-in'&&!current.supervising_officer_id) throw new Error('Select an authorized supervising officer.')
       const assignmentId=options.assignment_id!==undefined?options.assignment_id:identifier===verifiedQrRef.current?current.assignment_id:undefined

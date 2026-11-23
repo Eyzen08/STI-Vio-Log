@@ -8,5 +8,6 @@ export { STUDENT_NAME_PATTERN, STUDENT_SUFFIXES, normalizeNameSpacing, isValidSt
 export const normalizePersonName = value => capitalizeWords(String(value ?? '').normalize('NFC').replace(/\s/gu, ' ').replace(/[^\p{L}\p{M} .'’-]/gu, ''))
 export const normalizeStudentSearch = (value, labels = []) => labels.includes(value) ? value : String(value ?? '').normalize('NFC').replace(/\s/gu, ' ').replace(/[^\p{L}\p{M}0-9 .'’-]/gu, '')
 export const emailWithoutSpaces = value => String(value ?? '').replace(/\s/gu, '')
+export const studentNumberInput = (value) => String(value ?? '').replace(/[^0-9-]/g, '').slice(0, 32)
 export const wholeNumberInput = (value, previous = '') => /^[0-9]*$/.test(value) ? value : previous
 
