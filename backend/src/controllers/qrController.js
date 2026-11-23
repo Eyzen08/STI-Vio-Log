@@ -16,9 +16,12 @@ const validateQrBody = (req) => {
     const studentNumber = typeof req.body.student_number === 'string' ? req.body.student_number.trim() : '';
     const notes = req.body.notes == null ? '' : typeof req.body.notes === 'string' ? req.body.notes.trim() : null;
     if (notes === null || notes.length > 500) throw new CommunityServiceSessionError('An optional note must be at most 500 characters',400);
-    if (Boolean(qrCode) === Boolean(studentNumber)) throw new CommunityServiceSessionError('Provide exactly one student identifier: scan a QR code or enter an 11-digit Student Number',400,'STUDENT_IDENTIFIER_REQUIRED');
+    if (Boolean(qrCode) === Boolean(studentNumber)) throw new CommunityServiceSessionError('Provide exactly one student identifier: scan a QR code or enter the Student Number',400,'STUDENT_IDENTIFIER_REQUIRED');
     if (qrCode && qrCode.length > 256) throw new CommunityServiceSessionError('A valid QR code is required',400);
-    if (studentNumber && !/^\d{11}$/.test(studentNumber)) throw new CommunityServiceSessionError('Student Number must contain exactly 11 digits',400,'INVALID_STUDENT_NUMBER');
+    // Legacy records predate the 11-digit rule (10/12-digit numbers and values
+    // such as 2024-001), so the manual lookup accepts any recorded shape and
+    // matches the stored value exactly. Letters and spaces are still rejected.
+    if (studentNumber && !/^[0-9-]{1,32}$/.test(studentNumber)) throw new CommunityServiceSessionError('Enter the Student Number exactly as recorded (digits and hyphens only)',400,'INVALID_STUDENT_NUMBER');
     for (const field of ['assignment_id','session_id','supervising_officer_id','department_id']) {
         if (req.body[field] != null && !isPositiveId(req.body[field])) throw new CommunityServiceSessionError('A valid '+field+' is required',400);
     }

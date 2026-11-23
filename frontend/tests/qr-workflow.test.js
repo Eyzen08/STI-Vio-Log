@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import { runInNewContext } from 'node:vm'
 import { apiRequest } from '../src/lib/api.js'
+import { studentNumberInput } from '../src/lib/inputNormalization.js'
 
 // Exercise the actual request handler with deferred HTTP responses, without a camera.
 const source=(await readFile(new URL('../src/App.jsx',import.meta.url),'utf8')).replace(/\r\n/g,'\n')
@@ -17,7 +18,7 @@ const handler=source.slice(source.indexOf('  const handleQrAction = async'),sour
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done});return {promise,resolve}}
 const setup=()=>{
   const requests=[]
-  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:OLD},qrFormRef:{current:{qr_code:OLD,assignment_id:21,supervising_officer_id:9,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},qrInputSourceRef:{current:'manual'},attendanceAccountRef:{current:1},verifiedQrRef:{current:OLD},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,refreshes:0,pendingRefreshes:0,historyRequests:0,digitsOnly:(value)=>String(value||'').replace(/\D/g,''),setDashboardRefreshKey(){context.refreshes++},refreshPendingActions(){context.pendingRefreshes++},setQrInputSource(){},
+  const context={EMPTY_QR_SERVICE_DRAFT,qrForm:{qr_code:OLD},qrFormRef:{current:{qr_code:OLD,assignment_id:21,supervising_officer_id:9,notes:'Old student note'}},qrActionBusyRef:{current:null},qrInputVersionRef:{current:0},qrInputSourceRef:{current:'manual'},attendanceAccountRef:{current:1},verifiedQrRef:{current:OLD},user:{id:1},token:'test',API_URL:'',sessionStorage:{setItem(){},removeItem(){}},isAdmin:false,refreshes:0,pendingRefreshes:0,historyRequests:0,digitsOnly:(value)=>String(value||'').replace(/\D/g,''),studentNumberInput,setDashboardRefreshKey(){context.refreshes++},refreshPendingActions(){context.pendingRefreshes++},setQrInputSource(){},
     setQrResult(value){context.result=typeof value==='function'?value(context.result):value},setVerifiedQr(value){context.verified=value},setQrError(value){context.error=value},setQrSubmitting(){},setQrHistory(value){context.history=value},setQrHistoryError(value){context.historyError=value},setQrForm(update){context.qrFormRef.current=typeof update==='function'?update(context.qrFormRef.current):update},
     apiRequest(path,options){const original=globalThis.fetch;globalThis.fetch=context.fetch;try{return apiRequest(path,options)}finally{globalThis.fetch=original}},
     fetch(url,options){url=new URL(url,'http://localhost').pathname;if(url.endsWith('/sessions')){context.historyRequests++;return context.historyResponse||Promise.resolve(ok(OLD,{sessions:[]}))}const pending=deferred();requests.push({url,options,pending});return pending.promise}}
