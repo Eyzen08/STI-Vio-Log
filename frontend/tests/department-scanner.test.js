@@ -42,7 +42,7 @@ test('all authorized staff roles use the single three-stage attendance workspace
   ])
   assert.equal((appSource.match(/activeView === 'QR Scan'/g)||[]).length, 1)
   assert.doesNotMatch(appSource, /Legacy QR Scan/)
-  assert.match(scannerSource, /Scan Student QR/)
+  assert.match(scannerSource, /Scan QR or Enter Student Number/)
   assert.match(scannerSource, /Student Verification/)
   assert.match(scannerSource, /Record Attendance/)
   assert.match(scannerSource, /ServiceAttendanceControls/)

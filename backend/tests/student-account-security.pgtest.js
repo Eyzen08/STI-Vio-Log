@@ -82,9 +82,11 @@ test('concurrent binding admits one Google owner and safely audits the rejected 
   assert(!JSON.stringify(event).includes('private-token'));
   const linked = results.find(result => result.status === 'fulfilled').value.user;
   assert.equal(linked.onboarding_step, 'PROFILE');
-  const completed = await onboarding.completeProfile({ userId: linked.id, academicLevel: 'COLLEGE', program: 'BSIT', section: 'IT101', yearLevel: 1, phoneNumber: '09171234567', guardianName: 'Maria Santos', guardianRelationship: 'Mother', guardianPhoneNumber: '09179876543' });
+  const completed = await onboarding.completeProfile({ userId: linked.id });
   assert.equal(completed.onboarding_step, 'COMPLETE');
-  assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM student_guardians g JOIN students s ON s.id=g.student_id WHERE s.user_id=$1', [linked.id])).rows[0].count, 1);
+  // Official guardian details are recorded by the Discipline Office at account
+  // creation; onboarding only confirms the review and must not add rows.
+  assert.equal((await pool.query('SELECT COUNT(*)::int AS count FROM student_guardians g JOIN students s ON s.id=g.student_id WHERE s.user_id=$1', [linked.id])).rows[0].count, 0);
 });
 
 test('legacy recovery revokes credentials and rejects an old-inbox OTP issued after revocation', async () => {

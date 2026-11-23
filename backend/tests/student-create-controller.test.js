@@ -2,7 +2,28 @@ const test=require('node:test');
 const assert=require('node:assert/strict');
 const pool=require('../src/config/database');
 const {createStudent,updateStudent,resetStudentPassword}=require('../src/controllers/studentController');
+const { serviceDate } = require('../src/services/communityServiceTiming');
 const response=()=>({statusCode:200,body:null,status(code){this.statusCode=code;return this},json(body){this.body=body;return this}});
+
+// The Discipline Office now supplies the full official profile when creating an
+// account. Tests start from this valid baseline and override one field at a time.
+const officialProfile = (overrides = {}) => ({
+  student_number:'02000123456',
+  first_name:'Test',
+  middle_name:'Middle',
+  last_name:'Student',
+  suffix:'',
+  email:'student@gmail.com',
+  academic_level:'COLLEGE',
+  program:'BSIT',
+  section:'A103',
+  year_level:1,
+  phone_number:'09171234567',
+  guardian_name:'Maria Santos',
+  guardian_relationship:'Mother',
+  guardian_phone_number:'09187654321',
+  ...overrides
+});
 
 test('email edits recheck active Google links after locking the student record',async()=>{
   const previousConnect=pool.connect;const queries=[];
@@ -20,7 +41,7 @@ test('student creation rejects malformed identity fields before database access'
   try {
     for(const [field,value] of [['first_name','Juan123'],['first_name','---'],['last_name','$Reyes'],['middle_name','123'],['suffix','@'],['suffix','XI']]) {
       const res=response();
-      await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Juan',last_name:'Reyes',email:'juan@gmail.com',[field]:value}},res);
+      await createStudent({user:{id:1},body:officialProfile({[field]:value})},res);
       assert.equal(res.statusCode,400,field);
     }
   } finally {pool.connect=originalConnect}
@@ -42,7 +63,7 @@ test('student edits preserve unchanged legacy identities and reject invalid chan
   } finally {pool.connect=originalConnect}
 });
 
-test('student creation rejects profile and ownership fields',async()=>{for(const field of ['user_id','phone_number','program','section','year_level','qr_code','profile_image']){const res=response();await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Test',last_name:'Student',email:'student@gmail.com',[field]:'unsupported'}},res);assert.equal(res.statusCode,400,field)}});
+test('student creation rejects unsupported ownership and system fields before database access',async()=>{const originalConnect=pool.connect;pool.connect=async()=>{throw new Error('Unsupported fields must not reach the database')};try{for(const field of ['user_id','qr_code','profile_image','role','must_change_password','onboarding_required']){const res=response();await createStudent({user:{id:1},body:officialProfile({[field]:'unsupported'})},res);assert.equal(res.statusCode,400,field)}}finally{pool.connect=originalConnect}});
 
 test('student number, legal name, and Gmail create an account without automatically emailing it',async()=>{
   const originalConnect=pool.connect;
@@ -58,7 +79,7 @@ test('student number, legal name, and Gmail create an account without automatica
   },release(){}});
   try{
     const res=response();
-    await createStudent({user:{id:1},ip:'127.0.0.1',body:{student_number:'02000123456',first_name:'Test',middle_name:'Middle',last_name:'Student',suffix:'Jr.',email:'  Student@GMAIL.COM  '}},res);
+    await createStudent({user:{id:1},ip:'127.0.0.1',body:officialProfile({suffix:'Jr.',email:'  Student@GMAIL.COM  '})},res);
     assert.equal(res.statusCode,201);
     assert.equal(res.body.student.user_id,44);
     assert.equal(res.body.student.email,'student@gmail.com');
@@ -68,8 +89,11 @@ test('student number, legal name, and Gmail create an account without automatica
     assert.equal(res.body.password_change_required,true);
     assert.equal(res.body.onboarding_required,true);
     assert.equal(res.body.onboarding_step,'PASSWORD');
+    assert.equal(res.body.first_violation,undefined);
     assert.equal(sends,0);
     assert(queries.some(({text,params})=>text.includes('INSERT INTO users')&&params[0]==='02000123456'&&text.includes('must_change_password')));
+    assert(queries.some(({text,params})=>text.includes('INSERT INTO student_guardians')&&params[1]==='Maria Santos'&&params[2]==='Mother'&&params[3]==='+639187654321'));
+    assert(queries.some(({text,params})=>text.includes('INSERT INTO students')&&params.includes('COLLEGE')&&params.includes('BSIT')&&params.includes('A103')&&params.includes(1)&&params.includes('+639171234567')));
     assert(queries.some(({text})=>text.includes('student-registration-email:')));
     assert(queries.some(({text})=>text.includes("'STUDENT_CREATE'")));
   }finally{pool.connect=originalConnect;global.fetch=originalFetch}
@@ -81,7 +105,7 @@ test('student creation requires a valid personal Gmail before accessing the data
   try{
     for(const email of [undefined,null,123,'','student@yahoo.com','student@sti.edu.ph','a@@gmail.com','a b@gmail.com','@gmail.com','a'.repeat(246)+'@gmail.com']){
       const res=response();
-      await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Test',last_name:'Student',email}},res);
+      await createStudent({user:{id:1},body:officialProfile({email})},res);
       assert.equal(res.statusCode,400,String(email));
       assert.match(res.body.message,/Gmail/);
     }
@@ -95,12 +119,64 @@ test('duplicate student Gmail rolls back without creating an account',async()=>{
   pool.connect=async()=>({query:async(sql,params)=>{queries.push({sql,params});return{rows:String(sql).includes('SELECT 1 FROM students')?[{exists:1}]:[]}},release(){released=true}});
   try{
     const res=response();
-    await createStudent({user:{id:1},body:{student_number:'02000123456',first_name:'Test',last_name:'Student',email:'Student@gmail.com'}},res);
+    await createStudent({user:{id:1},body:officialProfile({email:'Student@gmail.com'})},res);
     assert.equal(res.statusCode,409);
     assert.match(res.body.message,/Gmail address is already assigned/);
     assert(queries.some(({sql})=>sql==='ROLLBACK'));
     assert(!queries.some(({sql})=>String(sql).includes('INSERT INTO users')));
     assert.equal(released,true);
+  }finally{pool.connect=originalConnect}
+});
+
+test('identical student and guardian numbers are rejected after normalization',async()=>{
+  const originalConnect=pool.connect;
+  pool.connect=async()=>{throw new Error('Duplicate phone numbers must not reach the database')};
+  try{
+    const res=response();
+    await createStudent({user:{id:1},body:officialProfile({phone_number:'09171234567',guardian_phone_number:'0917-123-4567'})},res);
+    assert.equal(res.statusCode,400);
+    assert.match(res.body.message,/must be different/);
+  }finally{pool.connect=originalConnect}
+});
+
+test('optional first violation is created in the same transaction with the current Manila date',async()=>{
+  const originalConnect=pool.connect;
+  const queries=[];
+  let released=false;
+  pool.connect=async()=>({query:async(sql,params=[])=>{
+    const text=String(sql);queries.push({text,params});
+    if(text.includes('INSERT INTO users'))return{rows:[{id:44,username:'02000123456',must_change_password:true}]};
+    if(text.includes('INSERT INTO students'))return{rows:[{id:55,user_id:44,student_number:params[1]}]};
+    if(text.includes('SELECT id FROM violation_types'))return{rows:[{id:3}]};
+    if(text.includes('INSERT INTO violations'))return{rows:[{id:70,student_id:55,violation_type_id:3}]};
+    if(text.includes('COUNT(*)')&&text.includes('FROM violations'))return{rows:[{count:'1'}]};
+    if(text.includes('COUNT(*)')&&text.includes('FROM community_service_assignments'))return{rows:[{count:'0'}]};
+    return{rows:[]}
+  },release(){released=true}});
+  try{
+    const res=response();
+    await createStudent({user:{id:1,role:'DISCIPLINE_ADMIN'},ip:'127.0.0.1',body:officialProfile({first_violation:{violation_type_id:3,incident_date:serviceDate(new Date()),incident_time:'09:15',description:'No school ID.'}})},res);
+    assert.equal(res.statusCode,201);
+    assert.equal(res.body.first_violation.id,70);
+    const studentInsert=queries.findIndex(({text})=>text.includes('INSERT INTO students'));
+    const guardianInsert=queries.findIndex(({text})=>text.includes('INSERT INTO student_guardians'));
+    const violationInsert=queries.findIndex(({text})=>text.includes('INSERT INTO violations'));
+    assert(studentInsert>=0&&guardianInsert>studentInsert&&violationInsert>guardianInsert);
+    assert(queries.some(({text,params})=>text.includes('INSERT INTO violations')&&params.includes(serviceDate(new Date()))&&params.includes('09:15')&&params.includes('No school ID.')));
+    assert(queries.some(({text,params})=>text.includes('INSERT INTO audit_logs')&&String(params[2]).includes('first violation #70')));
+    assert(queries.some(({text})=>text==='COMMIT'));
+    assert.equal(released,true);
+  }finally{pool.connect=originalConnect}
+});
+
+test('first violation rejects a date other than the current Manila date before writing account rows',async()=>{
+  const originalConnect=pool.connect;
+  pool.connect=async()=>{throw new Error('A historical first-violation date must not reach the database')};
+  try{
+    const res=response();
+    await createStudent({user:{id:1},body:officialProfile({first_violation:{violation_type_id:3,incident_date:'2020-01-01',incident_time:'09:15',description:'Historical entry'}})},res);
+    assert.equal(res.statusCode,400);
+    assert.match(res.body.message,/today's date in Asia\/Manila/);
   }finally{pool.connect=originalConnect}
 });
 

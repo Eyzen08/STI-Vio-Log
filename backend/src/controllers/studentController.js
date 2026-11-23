@@ -8,6 +8,7 @@ const { ApiError, sendError } = require('../utils/api');
 const { isValidEmail, isValidPhone, normalizePhone, sanitizeString, isPositiveId, isValidStudentNumber, assertAllowedFields, parsePagination } = require("../utils/validators");
 const { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } = require('../utils/validators');
 const { recordSecurityEvent } = require('../services/securityEventService');
+const { normalizeStudentRegistration, createStudentWithClient } = require('../services/studentRegistrationService');
 
 const getStudents = async (req, res) => {
     try {
@@ -83,32 +84,34 @@ const getStudentById = async (req, res) => {
 const createStudent = async (req, res) => {
     let client;
     try {
-        assertAllowedFields(req.body, ["student_number", "first_name", "middle_name", "last_name", "suffix", "email"]);
-        const { student_number, first_name, middle_name, last_name, suffix } = req.body;
-        const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
-        if (email.length > 255 || !isValidEmail(email) || !email.endsWith('@gmail.com')) return res.status(400).json({ success:false, message:'Enter a valid personal Gmail address (@gmail.com)' });
-        if (!student_number || !first_name || !last_name) return res.status(400).json({ success: false, message: "student_number, first_name, and last_name are required" });
-        if (!isValidStudentNumber(student_number)) return res.status(400).json({ success: false, message: "Student Number must contain exactly 11 digits" });
-        if (!isValidStudentName(first_name) || !isValidStudentName(last_name) || !isValidStudentName(middle_name, {optional:true})) return res.status(400).json({success:false,message:'Names must contain letters and may include spaces, apostrophes, hyphens, and periods (maximum 150 characters)'});
-        if (!isValidStudentSuffix(suffix)) return res.status(400).json({success:false,message:'Select a valid suffix or None'});
-        const payload = { student_number:sanitizeString(student_number), first_name:sanitizeString(first_name), middle_name:sanitizeString(middle_name), last_name:sanitizeString(last_name), suffix:sanitizeString(suffix), qr_code:`STI-${crypto.randomUUID()}` };
-        for (const field of ['first_name','middle_name','last_name']) payload[field] = normalizeNameSpacing(payload[field]);
+        assertAllowedFields(req.body, [
+            "student_number", "first_name", "middle_name", "last_name", "suffix", "email",
+            "academic_level", "strand", "program", "section", "year_level",
+            "phone_number", "guardian_name", "guardian_relationship", "guardian_phone_number",
+            "first_violation"
+        ]);
+        const registration = normalizeStudentRegistration(req.body);
         client = await pool.connect();
         await client.query('BEGIN');
-        await client.query("SELECT pg_advisory_xact_lock(hashtext('student-registration-email:' || LOWER($1)))", [email]);
-        if ((await client.query('SELECT 1 FROM students WHERE LOWER(email)=LOWER($1) LIMIT 1', [email])).rows.length) throw new ApiError(409, 'STUDENT_EMAIL_CONFLICT', 'That Gmail address is already assigned to another student');
-        const temporaryPassword = crypto.randomBytes(18).toString('base64url') + '!Aa1';
-        const passwordHash = await bcrypt.hash(temporaryPassword, 12);
-        const account = (await client.query("INSERT INTO users (username,password_hash,role,is_active,must_change_password,email_verified,temporary_password_expires_at) VALUES ($1,$2,'STUDENT',TRUE,TRUE,TRUE,CURRENT_TIMESTAMP+INTERVAL '24 hours') RETURNING id,username,must_change_password", [payload.student_number,passwordHash])).rows[0];
-        const result = await client.query(`INSERT INTO students (user_id,student_number,first_name,middle_name,last_name,suffix,qr_code,email,onboarding_required) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,TRUE) RETURNING *`, [account.id,payload.student_number,payload.first_name,payload.middle_name||null,payload.last_name,payload.suffix||null,payload.qr_code,email]);
-        await client.query(`INSERT INTO audit_logs (user_id,action,table_name,record_id,description,ip_address) VALUES ($1,'STUDENT_CREATE','students',$2,'Created enrolled student record and linked local account',$3)`, [req.user.id,result.rows[0].id,req.ip||null]);
+        const result = await createStudentWithClient({
+            client, registration, actor: req.user, ipAddress: req.ip
+        });
         await client.query('COMMIT');
         res.set?.('Cache-Control', 'no-store');
-        return res.status(201).json({ success:true, student:result.rows[0], account:{ username:account.username }, temporary_password:temporaryPassword, password_change_required:true, onboarding_required:true, onboarding_step:'PASSWORD' });
+        return res.status(201).json({
+            success: true,
+            student: result.student,
+            account: { username: result.account.username },
+            ...(result.violation ? { first_violation: result.violation } : {}),
+            temporary_password: result.temporaryPassword,
+            password_change_required: true,
+            onboarding_required: true,
+            onboarding_step: 'PASSWORD'
+        });
     } catch (error) {
         if (client) try { await client.query('ROLLBACK'); } catch (_) {}
         if (client && (error.code==='23505' || error.code==='STUDENT_EMAIL_CONFLICT')) await recordSecurityEvent({actor:req.user,action:'STUDENT_ACCOUNT_CONFLICT',targetType:'STUDENT_RECORD',targetLabel:error.code==='STUDENT_EMAIL_CONFLICT'?req.body.email:req.body.student_number,details:{conflict_type:error.code==='STUDENT_EMAIL_CONFLICT'?'GMAIL':'STUDENT_NUMBER'},reason:error.code==='STUDENT_EMAIL_CONFLICT'?'Gmail already assigned':'Student number already assigned',result:'DENIED',ipAddress:req.ip,requestId:req.requestId,database:client});
-        console.error("Create student error:", error.code || 'INTERNAL_ERROR');
+        if (!error.statusCode) console.error("Create student error:", error.code || 'INTERNAL_ERROR');
         return res.status(error.statusCode || (error.code === '23505' ? 409 : 500)).json({ success:false, message:error.statusCode ? error.message : error.code === '23505' ? "A student account with that student number already exists" : "Failed to create student" });
     } finally { if (client) client.release(); }
 };
@@ -364,6 +367,12 @@ const getMyProfile = async (req, res) => {
                 id, student_number, first_name, middle_name, last_name,
                 suffix, email, phone_number, academic_level, strand, program, section, year_level,
                 qr_code, profile_image, ${avatarSql('students.user_id')} AS avatar,
+                (SELECT guardian_name FROM student_guardians
+                 WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)
+                    AS guardian_name,
+                (SELECT relationship FROM student_guardians
+                 WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)
+                    AS guardian_relationship,
                 (SELECT phone_number FROM student_guardians
                  WHERE student_id = students.id ORDER BY is_primary DESC, id ASC LIMIT 1)
                     AS guardian_phone_number

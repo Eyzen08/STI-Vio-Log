@@ -178,7 +178,7 @@ const insertAudit = ({ client, actor, action, sessionId, assignmentId, descripti
         [actor.id, action, sessionId, JSON.stringify({ assignment_id: Number(assignmentId), ...description }), ipAddress || null, actor.role]
     );
 
-const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, sessionType, selectedDurationMinutes, actor, notes, ipAddress, writeQrLog = false }) => {
+const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, supervisingOfficerId, sessionType, selectedDurationMinutes, actor, notes, ipAddress, writeQrLog = false, verificationMethod = 'QR_CODE' }) => {
     if (notes != null && (typeof notes !== 'string' || notes.length > 500)) throw new CommunityServiceSessionError('Notes must be at most 500 characters', 400);
     const client = await pool.connect();
     try {
@@ -224,9 +224,9 @@ const recordTimeIn = async ({ assignmentId, expectedStudentId, departmentId, sup
         if (writeQrLog) {
             scanLog = (await client.query(
                 `INSERT INTO qr_scan_logs
-                    (student_id, scanned_by, department_id, scan_type, device_information, ip_address)
-                 VALUES ($1, $2, $3, 'TIME_IN', $4, $5) RETURNING *`,
-                [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null]
+                    (student_id, scanned_by, department_id, scan_type, device_information, ip_address, verification_method)
+                 VALUES ($1, $2, $3, 'TIME_IN', $4, $5, $6) RETURNING *`,
+                [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null, verificationMethod === 'STUDENT_NUMBER' ? 'STUDENT_NUMBER' : 'QR_CODE']
             )).rows[0];
         }
         await insertAudit({ client, actor, action: "TIME_IN", sessionId: session.id, assignmentId, description: { department_id: Number(departmentId), supervising_officer_user_id: Number(supervisor.officer_user_id) }, ipAddress });
@@ -289,7 +289,7 @@ const calculateSessionWork = ({ requiredHours, completedHours, elapsedMinutes })
     };
 };
 
-const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, ipAddress, writeQrLog = false }) => {
+const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, departmentId, supervisingOfficerId, actor, notes, ipAddress, writeQrLog = false, verificationMethod = 'QR_CODE' }) => {
     if (notes != null && (typeof notes !== 'string' || notes.length > 500)) throw new CommunityServiceSessionError('Notes must be at most 500 characters', 400);
     const client = await pool.connect();
     try {
@@ -379,9 +379,9 @@ const recordTimeOut = async ({ assignmentId, sessionId, expectedStudentId, depar
         if (writeQrLog) {
             scanLog = (await client.query(
                 `INSERT INTO qr_scan_logs
-                    (student_id, scanned_by, department_id, scan_type, device_information, ip_address)
-                 VALUES ($1, $2, $3, 'TIME_OUT', $4, $5) RETURNING *`,
-                [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null]
+                    (student_id, scanned_by, department_id, scan_type, device_information, ip_address, verification_method)
+                 VALUES ($1, $2, $3, 'TIME_OUT', $4, $5, $6) RETURNING *`,
+                [assignment.student_id, actor.id, departmentId, notes || null, ipAddress || null, verificationMethod === 'STUDENT_NUMBER' ? 'STUDENT_NUMBER' : 'QR_CODE']
             )).rows[0];
         }
         await client.query(`UPDATE community_service_session_officer_history SET ends_at=CURRENT_TIMESTAMP WHERE session_id=$1 AND ends_at IS NULL`, [session.id]);

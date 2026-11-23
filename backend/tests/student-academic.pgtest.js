@@ -41,7 +41,7 @@ test('043 infers only missing levels, preserves programs and access, and is trac
  const result=await runMigrations(pool,{directory:beforeOfferingsDir,logger:{log(){}}});assert.deepEqual(result.applied,listMigrationFiles().filter(name=>name>='043_'&&name<'053_'));
  const tables=['students','student_account_registrations','google_student_registrations'];
  const before=await Promise.all(tables.map(table=>pool.query('SELECT * FROM '+table+' ORDER BY id')));
- assert.deepEqual((await runMigrations(pool,{logger:{log(){}}})).applied,['053_academic_program_offerings.sql']);
+ assert.deepEqual((await runMigrations(pool,{logger:{log(){}}})).applied,['053_academic_program_offerings.sql','054_message_inbox_preferences.sql','055_qr_verification_method.sql']);
  for(const [index,table] of tables.entries()) assert.deepEqual((await pool.query('SELECT * FROM '+table+' ORDER BY id')).rows,before[index].rows);
  const records=(await pool.query('SELECT academic_level,strand,program,onboarding_required,onboarding_completed_at FROM students ORDER BY student_number')).rows;
  assert.deepEqual(records.map(r=>r.academic_level),['SENIOR_HIGH_SCHOOL','COLLEGE',null,'COLLEGE']);
@@ -66,7 +66,10 @@ test('all academic offerings persist through onboarding and preserve Google iden
   const {user,student}=await createStudent(number,1);
   const subject='onboarding-'+number;
   await pool.query('INSERT INTO google_identity_links(user_id,google_subject,google_email) VALUES($1,$2,$3)',[user.id,subject,number+'@example.test']);
-  await service.completeProfile({...input,userId:user.id,section:'TEST-A',phoneNumber:'09171234567',guardianName:'Test Guardian',guardianRelationship:'Parent',guardianPhoneNumber:'09181234567'});
+  // Official academic details are recorded by the Discipline Office at account
+  // creation; onboarding must preserve them without writing anything.
+  await pool.query('UPDATE students SET academic_level=$2,strand=$3,program=$4,year_level=$5 WHERE id=$1',[student.id,input.academicLevel,input.strand||null,input.program||null,input.yearLevel]);
+  await service.completeProfile({userId:user.id});
   const saved=(await pool.query('SELECT * FROM students WHERE id=$1',[student.id])).rows[0];
   assert.equal(saved.academic_level,input.academicLevel);assert.equal(saved.strand,input.strand||null);assert.equal(saved.year_level,input.yearLevel);assert.equal(saved.program,input.program||null);assert.equal(saved.onboarding_required,false);
   const identity=createGoogleIdentityService({pool,verifyIdentity:async()=>({subject,email:number+'@example.test',emailVerified:true}),issueToken:()=>null});

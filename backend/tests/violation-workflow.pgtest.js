@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Pool } = require('pg');
 const { listMigrationFiles } = require('../scripts/migrate');
+const { serviceDate } = require('../src/services/communityServiceTiming');
 const { testDatabaseConfig } = require('./testDatabase');
 
 require('dotenv').config({ quiet: true });
@@ -116,7 +117,7 @@ async function createViolation(token, studentId) {
     body: {
       student_id: studentId,
       violation_type_id: 1,
-      incident_date: '2026-08-27',
+      incident_date: serviceDate(new Date()),
       description: 'Lifecycle integration test'
     }
   });
@@ -162,7 +163,7 @@ async function createServiceViolation(token, studentId, requiredHours) {
     body: {
       student_id: studentId,
       violation_type_id: 1,
-      incident_date: '2026-08-27',
+      incident_date: serviceDate(new Date()),
       description: 'DTR session integration test'
     }
   });
@@ -394,6 +395,31 @@ test('Officer QR attendance works outside the profile department with an authori
   assert.equal(Number(closed.body.session.credited_minutes), 30);
 });
 
+test('manual Student Number attendance resolves the student and records the verification method', async () => {
+  const admin = await login('admin_test');
+  const office = await login('discipline_test');
+  const studentId = (await pool.query("SELECT id FROM students WHERE student_number='02000123456'")).rows[0].id;
+  const { assignment } = await createServiceViolation(admin, studentId, 1);
+
+  const scan = await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '02000123456' } });
+  assert.equal(scan.status, 200, JSON.stringify(scan.body));
+  assert.equal(scan.body.identification_method, 'STUDENT_NUMBER');
+  assert.equal(Number(scan.body.assignment.id), Number(assignment.id));
+
+  const opened = await request('/api/qr/time-in', { token: office, method: 'POST', body: { student_number: '02000123456', session_type: 'FIXED', selected_duration_minutes: 60 } });
+  assert.equal(opened.status, 201, JSON.stringify(opened.body));
+  const timeInLog = (await pool.query('SELECT verification_method FROM qr_scan_logs WHERE student_id=$1 ORDER BY id DESC LIMIT 1', [studentId])).rows[0];
+  assert.equal(timeInLog.verification_method, 'STUDENT_NUMBER');
+
+  const closed = await request('/api/qr/time-out', { token: office, method: 'POST', body: { student_number: '02000123456', session_id: opened.body.session.id } });
+  assert.equal(closed.status, 201, JSON.stringify(closed.body));
+  const timeOutLog = (await pool.query('SELECT verification_method FROM qr_scan_logs WHERE student_id=$1 ORDER BY id DESC LIMIT 1', [studentId])).rows[0];
+  assert.equal(timeOutLog.verification_method, 'STUDENT_NUMBER');
+
+  assert.equal((await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '123' } })).status, 400);
+  assert.equal((await request('/api/qr/scan', { token: office, method: 'POST', body: { student_number: '02000123456', qr_code: 'QR-TEST' } })).status, 400);
+});
+
 test('fully credited positive hours complete the violation; zero-hour edits remain open', async () => {
   const admin = await login('admin_test');
   const studentId = (await pool.query('SELECT id FROM students LIMIT 1')).rows[0].id;
@@ -547,7 +573,7 @@ test('service attendance completes assignment, violation, clearance, history, an
     body: {
       student_id: studentId,
       violation_type_id: 1,
-      incident_date: '2026-08-27',
+      incident_date: serviceDate(new Date()),
       description: 'Service completion workflow'
     }
   });
