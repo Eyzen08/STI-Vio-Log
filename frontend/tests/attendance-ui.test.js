@@ -450,7 +450,7 @@ test('student record overview uses full API totals, two case previews and four a
   assert.doesNotMatch(html, /Other student case|Case 3/)
   assert.match(html, /Student Information/)
   assert.doesNotMatch(html, /record-case-service|Handbook sanction reference|record-discipline-status|Review required for repeated minor offenses/)
-  assert.equal((html.match(/Major Level/g) || []).length, 1)
+  assert.doesNotMatch(html, /record-profile-status|Requires action|Major Level/)
   assert.equal((html.match(/5 hr 15 min/g) || []).length, 1)
   assert.match(html, /Edit Photo for Ana Reyes/)
   assert.doesNotMatch(html, /type="file"|Photo Change Reason/)
