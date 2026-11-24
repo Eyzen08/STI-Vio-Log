@@ -13,7 +13,6 @@ import { StudentServiceTimeContent } from './StudentServiceTimeDrawer.jsx'
 import '../styles/student-record.css'
 
 const handbookNote = 'Use the documented category, repeat-offense history, case facts, and handbook procedure when deciding sanctions. The portal does not assign punishment automatically.'
-const levelLabels = { NEUTRAL: 'Good Standing', MINOR_1: '1 Minor', MINOR_2: '2 Minors', MAJOR_LEVEL: 'Major Level', GRAVE: 'Grave' }
 
 function ViolationCaseCard({ violation, onView, preview = false }) {
   const resolved = ['COMPLETE', 'CLEAR'].includes(violation.status)
@@ -47,7 +46,6 @@ export function StudentRecordContent({ student, violations = [], summary, loadin
   const resolved = summary?.resolved ?? condition.resolved
   const remaining = summary?.remainingHours ?? condition.remainingHours
   const level = summary?.offenseStatus?.indicator_level || student.offense_indicator_level || 'NEUTRAL'
-  const standing = summary?.condition || (loading ? 'Loading status…' : condition.condition)
   const guidance = handbookSanctionGuidance(summary?.categoryCounts || [])
   const phone = displayPhilippinePhone(student.phone_number)
   const fullName = [student.first_name, student.middle_name, student.last_name, student.suffix].filter(Boolean).join(' ')
@@ -66,7 +64,6 @@ export function StudentRecordContent({ student, violations = [], summary, loadin
     <section className="record-profile" aria-label="Student Identity">
       <div className="record-photo"><Avatar identity={student} className="record-avatar"/><button type="button" aria-label={`Edit Photo for ${fullName}`} onClick={() => setPhotoOpen(true)}><PortalIcon name="camera" size={20}/></button></div>
       <div className="record-identity"><h3>{fullName}</h3><p>{student.student_number}</p><p>{[academicProgram(student), student.section, academicYear(student)].filter(Boolean).join(' • ')}</p><div className="record-contact"><span><PortalIcon name="mail"/>{student.email || 'Email not recorded'}</span><span><PortalIcon name="phone"/>{phone || 'Phone not recorded'}</span></div></div>
-      <div className="record-profile-status"><span className={`record-standing${open ? ' record-requires-action' : ''}`}><PortalIcon name={open ? 'violations' : 'check'}/>{formatDisplayLabel(standing)}</span><span className="record-level"><PortalIcon name="book"/>{levelLabels[level] || 'Status Unavailable'}</span></div>
     </section>
     <div ref={tabsRef} className="record-tabs" role="tablist" aria-label="Student Record Sections">{tabs.map(([key, label], index) => <button type="button" key={key} role="tab" id={`${id}-${key}-tab`} aria-controls={`${id}-${key}-panel`} aria-selected={tab === key} tabIndex={tab === key ? 0 : -1} onClick={() => selectTab(key)} onKeyDown={(event) => tabKey(event, index)}>{label}</button>)}</div>
     {error && <p className="error-message record-history-error" role="alert">{error}</p>}

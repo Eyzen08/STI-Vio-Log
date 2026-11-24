@@ -218,6 +218,14 @@ test('violation legend keeps grave classification while the student directory sh
   assert.doesNotMatch(directory, /offense-legend|AttendanceIndicator/)
 })
 
+test('both violation entry points offer handbook offense search and the record header omits status chips', () => {
+  const app = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  const record = fs.readFileSync(new URL('../src/components/StudentRecordDrawer.jsx', import.meta.url), 'utf8')
+  assert.equal((app.match(/<ViolationOffenseSearch types=\{violationTypes\} onSelect=/g) || []).length, 2)
+  assert.match(app, /<ViolationOffenseSearch types=\{violationTypes\} onSelect=\{\(\{ type, offense \}\) => \{\s*setStudentForm/)
+  assert.doesNotMatch(record, /record-profile-status|record-standing|record-level|levelLabels/)
+})
+
 test('desktop sidebar scrolls vertically without hover-created horizontal overflow', () => {
   const css = readPortalStyles()
   const appCss = fs.readFileSync(new URL('../src/App.css', import.meta.url), 'utf8')

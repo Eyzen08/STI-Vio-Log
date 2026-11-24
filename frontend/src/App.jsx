@@ -430,6 +430,7 @@ function App() {
 
   const [violationFormError, setViolationFormError] = useState('')
   const violationOffenseRef = useRef(null)
+  const studentOffenseRef = useRef(null)
   const [violationFormSuccess, setViolationFormSuccess] = useState('')
   const [isViolationFormOpen, setIsViolationFormOpen] = useState(false)
   const [violationTableFilters, setViolationTableFilters] = useState({ search: '', status: 'ALL', severity: 'ALL' })
@@ -2257,6 +2258,10 @@ function App() {
                 <label className="full-width-field create-checkbox-field"><input type="checkbox" name="include_first_violation" checked={studentForm.include_first_violation} onChange={handleStudentFieldChange}/><span>Record a first violation with this account</span></label>
 
                 {studentForm.include_first_violation && <>
+                  <ViolationOffenseSearch types={violationTypes} onSelect={({ type, offense }) => {
+                    setStudentForm((current) => ({ ...current, violation_type_id: type.id, exact_offense: offense }))
+                    requestAnimationFrame(() => studentOffenseRef.current?.focus())
+                  }}/>
                   <label><span id="create-student-violation_type_id-label">Handbook Classification <b aria-hidden="true">*</b></span>
                     <select
                       name="violation_type_id"
@@ -2305,6 +2310,7 @@ function App() {
                     <select
                       name="exact_offense"
                       id="create-student-exact_offense"
+                      ref={studentOffenseRef}
                       aria-labelledby="create-student-exact_offense-label"
                       value={studentForm.exact_offense}
                       onChange={handleStudentFieldChange}
