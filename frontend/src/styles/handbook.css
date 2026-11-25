@@ -5,6 +5,7 @@
 .handbook-documents { padding: 16px; }
 .handbook-documents h3 { margin: 0 0 6px; font-size: var(--text-section-title); }
 .handbook-documents > p { margin: 0 0 20px; color: var(--text-secondary); font-size: var(--text-sm); }
+.handbook-documents > .handbook-doc-group { margin: 10px 0 2px; color: var(--text-secondary); font-size: var(--text-xs); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .handbook-page .handbook-documents button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 72px; margin: 6px 0 0; padding: 12px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-primary); box-shadow: none; text-align: left; font: inherit; cursor: pointer; }
 .handbook-documents button > svg { flex-shrink: 0; color: var(--link-color); }
 .handbook-documents button > span { flex: 1; font-weight: 600; line-height: 1.5; }

@@ -278,5 +278,15 @@
     "sti-offenses-july-2026.pdf": "934f3e1389de25287540302b0c7ef0559e47f537835ce2d0aa4db67f38c3f85b",
     "sti-student-discipline-july-2026.pdf": "7d8b8e6e51f8cd02e9d5246889b7f45d758d947fc3ced6c5d2fcb10be0ceda5a",
     "sti-tertiary-handbook-july-2026.pdf": "c30248217d151a67d8304da5065c1047e388ec11a0527a3293c95b923baf66ca"
+  },
+  "seniorHighSchool": {
+    "edition": "July 2026",
+    "capturedOn": "2026-11-25",
+    "source": "https://one.sti.edu/STI-SHS_Handbook.html",
+    "sourceSections": 38,
+    "pdfPages": 65,
+    "files": {
+      "sti-senior-high-school-handbook-july-2026.pdf": "e249a42b9ea076c8b1566813f503e29a89fd7f9b8f5beaa8a801180925ac67f1"
+    }
   }
 }
