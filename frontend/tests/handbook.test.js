@@ -30,20 +30,25 @@ test('handbook is directly below Dashboard for discipline roles and students wit
   assert.equal(sidebarTooltipFor('STI Handbook'), 'Read the STI Student Handbook')
 })
 
-test('handbook offers four document choices and an accessible reader with open and download links', async () => {
+test('handbook offers five document choices across both levels and an accessible reader with open and download links', async () => {
   const server = await createServer({ configFile: false, plugins: [react()], server: { middlewareMode: true, hmr: false } })
   try {
     const { default: HandbookPage, HANDBOOK_DOCUMENTS } = await server.ssrLoadModule('/src/components/HandbookPage.jsx')
     const html = renderToStaticMarkup(createElement(HandbookPage))
-    assert.equal(HANDBOOK_DOCUMENTS.length, 4)
-    assert.equal((html.match(/aria-pressed="(?:true|false)"/g) || []).length, 4)
+    assert.equal(HANDBOOK_DOCUMENTS.length, 5)
+    assert.equal((html.match(/aria-pressed="(?:true|false)"/g) || []).length, 5)
     assert.match(html, /aria-pressed="true"[^>]*>[\s\S]*?Complete Tertiary Handbook/)
     assert.match(html, /<iframe[^>]*src="\/handbook\/sti-tertiary-handbook-july-2026.pdf"[^>]*title="Complete Tertiary Handbook PDF reader"/)
     assert.match(html, /class="handbook-open-pdf" href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" target="_blank" rel="noopener noreferrer">Open PDF/)
     assert.match(html, /href="\/handbook\/sti-tertiary-handbook-july-2026.pdf" download="">Download PDF/)
     assert.match(html, /Open STI’s Live Handbook/)
+    assert.match(html, /href="https:\/\/one\.sti\.edu\/STI-BCT_Handbook\.html#home"/)
+    assert.match(html, /handbook-doc-group">Tertiary/)
+    assert.match(html, /handbook-doc-group">Senior High School/)
+    assert.match(html, /Complete Senior High School Handbook<small>July 2026 · PDF<\/small>/)
+    assert.equal(HANDBOOK_DOCUMENTS.find(doc => doc.id === 'senior-high').url, '/handbook/sti-senior-high-school-handbook-july-2026.pdf')
     assert.ok(html.indexOf('Open STI’s Live Handbook') < html.indexOf('handbook-library'))
-    assert.match(html, /Saved copy captured/)
+    assert.match(html, /Saved copies captured/)
     for (const doc of HANDBOOK_DOCUMENTS) {
       const bytes = await readFile(new URL(`../public${doc.url}`, import.meta.url))
       assert.equal(bytes.subarray(0, 5).toString(), '%PDF-')
@@ -81,6 +86,13 @@ test('saved handbook collection matches its verified capture manifest', async ()
   assert.equal(new Set(manifest.sections.map(section => section.id)).size, 53)
   assert.equal(Object.keys(manifest.files).length, 4)
   for (const [name, hash] of Object.entries(manifest.files)) {
+    assert.equal(createHash('sha256').update(await readFile(new URL(name, assets))).digest('hex'), hash, name)
+  }
+  assert.equal(manifest.seniorHighSchool.edition, 'July 2026')
+  assert.equal(manifest.seniorHighSchool.sourceSections, 38)
+  assert.equal(manifest.seniorHighSchool.pdfPages, 65)
+  assert.deepEqual(Object.keys(manifest.seniorHighSchool.files), ['sti-senior-high-school-handbook-july-2026.pdf'])
+  for (const [name, hash] of Object.entries(manifest.seniorHighSchool.files)) {
     assert.equal(createHash('sha256').update(await readFile(new URL(name, assets))).digest('hex'), hash, name)
   }
 })
