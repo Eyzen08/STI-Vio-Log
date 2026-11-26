@@ -79,6 +79,19 @@ export const manilaToday = (value = new Date()) => {
   }).format(date)
 }
 
+// Staff may backfill a missed incident on an earlier day, but the incident
+// cannot be dated after today in Asia/Manila.
+export const incidentDateError = (value, today = manilaToday()) => {
+  const date = String(value || '').trim()
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return 'Enter a valid incident date.'
+  const parsed = new Date(`${date}T00:00:00Z`)
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+    return 'Enter a valid incident date.'
+  }
+  if (date > today) return 'Incident date cannot be in the future. Choose today or an earlier date in Asia/Manila.'
+  return ''
+}
+
 export const formatManilaDate = (value, fallback = 'Not recorded') => {
   const date = validDate(value)
   if (!date) return fallback

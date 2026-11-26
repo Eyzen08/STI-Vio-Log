@@ -2,7 +2,7 @@ import { isValidStudentName, isValidStudentSuffix, normalizeNameSpacing } from '
 import { ACADEMIC_LEVELS, STRANDS } from './studentAcademic.js'
 import { COLLEGE_PROGRAMS, TESDA_PROGRAMS } from './programNames.js'
 import { normalizePhilippinePhone } from './phone.js'
-import { manilaToday } from './displayFormat.js'
+import { manilaToday, incidentDateError } from './displayFormat.js'
 
 export const normalizeStudentGmail = (email) => typeof email === 'string' ? email.trim().toLowerCase() : ''
 
@@ -47,7 +47,8 @@ const reviewFirstViolation = (form) => {
   if (!form.include_first_violation) return null
   const incidentDate = String(form.incident_date || '').trim()
   if (!form.violation_type_id) throw new Error('Select the first violation classification.')
-  if (incidentDate !== manilaToday()) throw new Error('New violations must use today\'s date in Asia/Manila.')
+  const dateError = incidentDateError(incidentDate)
+  if (dateError) throw new Error(dateError)
   if (!String(form.incident_time || '').trim()) throw new Error('Enter the first violation incident time.')
   if (!String(form.exact_offense || '').trim()) throw new Error('Select the specific handbook offense.')
   if (!String(form.incident_details || '').trim()) throw new Error('Enter the first violation incident details.')

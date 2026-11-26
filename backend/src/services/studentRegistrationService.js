@@ -6,7 +6,7 @@ const {
     isValidEmail, isValidPhone, normalizePhone, sanitizeString, isValidStudentNumber,
     assertAllowedFields, isValidStudentName, isValidStudentSuffix, normalizeNameSpacing
 } = require('../utils/validators');
-const { createViolationWithClient, requireCurrentIncidentDate } = require('./violationCreationService');
+const { createViolationWithClient, requireIncidentDateNotInFuture } = require('./violationCreationService');
 
 const cleanText = (value, max) => typeof value === 'string'
     ? value.normalize('NFKC').trim().replace(/\s+/g, ' ').slice(0, max)
@@ -21,9 +21,9 @@ const normalizeFirstViolation = (value) => {
     if (!value.violation_type_id || !value.incident_date) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Select a violation classification and incident date for the first violation');
     }
-    // Reject a historical date before any account rows are written so the whole
+    // Reject a future date before any account rows are written so the whole
     // registration fails cleanly instead of relying on a later rollback.
-    requireCurrentIncidentDate(String(value.incident_date).trim());
+    requireIncidentDateNotInFuture(String(value.incident_date).trim());
     return {
         violation_type_id: value.violation_type_id,
         incident_date: String(value.incident_date).trim(),

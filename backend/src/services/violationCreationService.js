@@ -5,22 +5,30 @@ const { recalculateOffenseStatus } = require('./offenseEscalationService');
 const { notifyStudent } = require('./notificationService');
 const { syncClearanceStatusForStudent } = require('../controllers/clearanceController');
 
-const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))
-    && !Number.isNaN(new Date(`${value}T00:00:00+08:00`).getTime());
+const isIsoDate = (value) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return false;
+    const [year, month, day] = String(value).split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year
+        && date.getUTCMonth() === month - 1
+        && date.getUTCDate() === day;
+};
 const isTimeOfDay = (value) => value === null || value === undefined || value === ''
     || /^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(String(value));
 
 // The browser date/time must never decide which calendar day a new incident
 // belongs to. `serviceDate` resolves the current date in Asia/Manila, matching
-// the rest of the attendance and clearance workflows.
+// the rest of the attendance and clearance workflows. Staff may backfill an
+// incident they failed to record on the day it happened, but a future date is
+// still rejected.
 const currentManilaDate = (now = new Date()) => serviceDate(now);
 
-const requireCurrentIncidentDate = (incidentDate, now = new Date()) => {
+const requireIncidentDateNotInFuture = (incidentDate, now = new Date()) => {
     if (!isIsoDate(incidentDate)) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Enter a valid incident date in YYYY-MM-DD format');
     }
-    if (incidentDate !== currentManilaDate(now)) {
-        throw new ApiError(400, 'INCIDENT_DATE_NOT_TODAY', 'New violations must use today\'s date in Asia/Manila. Historical corrections must use the authorized edit workflow.');
+    if (incidentDate > currentManilaDate(now)) {
+        throw new ApiError(400, 'INCIDENT_DATE_IN_FUTURE', 'Incident date cannot be in the future. Choose today or an earlier date in Asia/Manila.');
     }
 };
 
@@ -31,7 +39,7 @@ const normalizeViolationInput = ({ studentId, violationTypeId, incidentDate, inc
     if (!/^\d+$/.test(String(violationTypeId)) || Number(violationTypeId) < 1) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'A valid violation classification is required');
     }
-    requireCurrentIncidentDate(incidentDate, now);
+    requireIncidentDateNotInFuture(incidentDate, now);
     if (!isTimeOfDay(incidentTime)) {
         throw new ApiError(400, 'VALIDATION_ERROR', 'Enter a valid incident time');
     }
@@ -109,7 +117,7 @@ const createViolationWithClient = async ({
 
 module.exports = {
     currentManilaDate,
-    requireCurrentIncidentDate,
+    requireIncidentDateNotInFuture,
     normalizeViolationInput,
     createViolationWithClient
 };

@@ -1,6 +1,7 @@
 import { parseViolationDescription } from '../../../shared/reportPresentation.mjs'
 export { parseViolationDescription }
-import { manilaToday } from './displayFormat.js'
+import { incidentDateError } from './displayFormat.js'
+export { incidentDateError }
 import handbookOffenses from '../../../shared/handbookOffenses.json' with { type: 'json' }
 
 export const HANDBOOK_OFFENSES = handbookOffenses
@@ -29,9 +30,9 @@ export const buildViolationDescription = (form = {}) =>
 export const buildViolationPayload = (form = {}) => ({
   student_id: Number(form.student_id),
   violation_type_id: Number(form.violation_type_id),
-  // New records always belong to the current Asia/Manila service day. The
-  // backend rejects any other date; historical changes use the edit workflow.
-  incident_date: manilaToday(),
+  // Keep the staff-selected day so a missed incident can be recorded later.
+  // The backend rejects dates after today in Asia/Manila.
+  incident_date: String(form.incident_date || '').slice(0, 10),
   ...(form.incident_time ? { incident_time: form.incident_time } : {}),
   description: buildViolationDescription(form)
 })

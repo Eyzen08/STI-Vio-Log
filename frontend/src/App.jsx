@@ -57,7 +57,7 @@ import StudentAccountReview from './components/StudentAccountReview.jsx'
 import StudentAcademicFields from './components/StudentAcademicFields.jsx'
 import PhoneInput from './components/PhoneInput.jsx'
 import { changedAcademicMode } from './lib/studentAcademic.js'
-import { manilaToday } from './lib/displayFormat.js'
+import { manilaToday, incidentDateError } from './lib/displayFormat.js'
 const PublicPolicyPage = lazy(() => import('./components/PublicPolicyPage.jsx'))
 import { API_URL, apiRequest, loadAllPages, login, isAuthenticationRejection, settleReads } from './lib/api.js'
 import { prepareLoginService } from './lib/serviceStartup.js'
@@ -979,11 +979,6 @@ function App() {
   const handleViolationFieldChange = (event) => {
     const { name, value } = event.target
 
-    if (name === 'incident_date') {
-      setViolationForm((current) => ({ ...current, incident_date: manilaToday() }))
-      return
-    }
-
     if (name === 'student_search') {
       const search = normalizeStudentSearch(value, students.map(studentOptionLabel))
       setViolationFormError('')
@@ -1058,10 +1053,7 @@ function App() {
     setStudentFormError('')
     setStudentFormSuccess('')
     try {
-      const candidate = studentForm.include_first_violation
-        ? { ...studentForm, incident_date: manilaToday() }
-        : studentForm
-      const details = reviewStudentAccount(candidate)
+      const details = reviewStudentAccount(studentForm)
       setStudentAccountReview(details)
     } catch (error) { setStudentFormError(error.message) }
   }
@@ -1145,6 +1137,8 @@ function App() {
 
     try {
       const payload = buildViolationPayload(violationForm)
+      const dateError = incidentDateError(payload.incident_date)
+      if (dateError) throw new Error(dateError)
 
       if (
         !payload.student_id ||
@@ -2286,12 +2280,11 @@ function App() {
                       aria-labelledby="create-student-incident_date-label"
                       aria-describedby="create-student-incident_date-help"
                       value={studentForm.incident_date}
-                      min={manilaToday()}
                       max={manilaToday()}
-                      readOnly
+                      onChange={handleStudentFieldChange}
                       required
                     />
-                    <small id="create-student-incident_date-help">New records use today's date in Asia/Manila. Historical corrections use the authorized edit workflow.</small>
+                    <small id="create-student-incident_date-help">Choose today or an earlier date in Asia/Manila. Future dates are not allowed.</small>
                   </label>
 
                   <label><span id="create-student-incident_time-label">Incident Time <b aria-hidden="true">*</b></span>
@@ -2477,15 +2470,13 @@ function App() {
                     value={
                       violationForm.incident_date
                     }
-                    min={manilaToday()}
                     max={manilaToday()}
-                    readOnly
                     onChange={
                       handleViolationFieldChange
                     }
                     required
                   />
-                  <small id="app-date-help-1">New records use today's date in Asia/Manila. Historical corrections use the authorized edit workflow.</small>
+                  <small id="app-date-help-1">Choose today or an earlier date in Asia/Manila. Future dates are not allowed.</small>
                 </label>
 
                 <label><span id="create-violation-incident_time-label">Incident Time <b aria-hidden="true">*</b></span>

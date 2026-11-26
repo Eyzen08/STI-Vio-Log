@@ -139,7 +139,7 @@ test('identical student and guardian numbers are rejected after normalization',a
   }finally{pool.connect=originalConnect}
 });
 
-test('optional first violation is created in the same transaction with the current Manila date',async()=>{
+test('optional first violation is created in the same transaction with a backfilled past date',async()=>{
   const originalConnect=pool.connect;
   const queries=[];
   let released=false;
@@ -155,28 +155,28 @@ test('optional first violation is created in the same transaction with the curre
   },release(){released=true}});
   try{
     const res=response();
-    await createStudent({user:{id:1,role:'DISCIPLINE_ADMIN'},ip:'127.0.0.1',body:officialProfile({first_violation:{violation_type_id:3,incident_date:serviceDate(new Date()),incident_time:'09:15',description:'No school ID.'}})},res);
+    await createStudent({user:{id:1,role:'DISCIPLINE_ADMIN'},ip:'127.0.0.1',body:officialProfile({first_violation:{violation_type_id:3,incident_date:'2026-01-15',incident_time:'09:15',description:'No school ID.'}})},res);
     assert.equal(res.statusCode,201);
     assert.equal(res.body.first_violation.id,70);
     const studentInsert=queries.findIndex(({text})=>text.includes('INSERT INTO students'));
     const guardianInsert=queries.findIndex(({text})=>text.includes('INSERT INTO student_guardians'));
     const violationInsert=queries.findIndex(({text})=>text.includes('INSERT INTO violations'));
     assert(studentInsert>=0&&guardianInsert>studentInsert&&violationInsert>guardianInsert);
-    assert(queries.some(({text,params})=>text.includes('INSERT INTO violations')&&params.includes(serviceDate(new Date()))&&params.includes('09:15')&&params.includes('No school ID.')));
+    assert(queries.some(({text,params})=>text.includes('INSERT INTO violations')&&params.includes('2026-01-15')&&params.includes('09:15')&&params.includes('No school ID.')));
     assert(queries.some(({text,params})=>text.includes('INSERT INTO audit_logs')&&String(params[2]).includes('first violation #70')));
     assert(queries.some(({text})=>text==='COMMIT'));
     assert.equal(released,true);
   }finally{pool.connect=originalConnect}
 });
 
-test('first violation rejects a date other than the current Manila date before writing account rows',async()=>{
+test('first violation rejects a future date before writing account rows',async()=>{
   const originalConnect=pool.connect;
-  pool.connect=async()=>{throw new Error('A historical first-violation date must not reach the database')};
+  pool.connect=async()=>{throw new Error('A future first-violation date must not reach the database')};
   try{
     const res=response();
-    await createStudent({user:{id:1},body:officialProfile({first_violation:{violation_type_id:3,incident_date:'2020-01-01',incident_time:'09:15',description:'Historical entry'}})},res);
+    await createStudent({user:{id:1},body:officialProfile({first_violation:{violation_type_id:3,incident_date:'2999-01-01',incident_time:'09:15',description:'Future entry'}})},res);
     assert.equal(res.statusCode,400);
-    assert.match(res.body.message,/today's date in Asia\/Manila/);
+    assert.match(res.body.message,/cannot be in the future/);
   }finally{pool.connect=originalConnect}
 });
 
