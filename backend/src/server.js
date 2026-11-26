@@ -40,7 +40,8 @@ const { createOverdueAttendanceNotifications } = require('./services/notificatio
 const {
   authenticateToken,
   authorizeRoles,
-  authorizePermissions
+  authorizePermissions,
+  requireExactRoles
 } = require("./middleware/authMiddleware");
 const { PERMISSIONS } = require('./security/permissions');
 
@@ -190,7 +191,10 @@ app.use(
   "/api/students",
   authenticateToken,
   auditAdministrativeRequest,
-  authorizeRoles(
+  // The router applies the normal password/onboarding gates per route. This
+  // mount-level check only limits the roles that may reach it, so an
+  // onboarding student can still read /me while finishing account setup.
+  requireExactRoles(
     "DISCIPLINE_ADMIN",
     "DISCIPLINE_OFFICE",
     "STUDENT"
