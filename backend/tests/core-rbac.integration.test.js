@@ -25,7 +25,8 @@ const accounts = {
   1: { id: 1, username: 'admin', role: 'DISCIPLINE_ADMIN', session_version:1, must_change_password:false, department_id: null },
   2: { id: 2, username: 'discipline', role: 'DISCIPLINE_OFFICE', session_version:1, must_change_password:false, department_id: null },
   3: { id: 3, username: 'head', role: 'DEPARTMENT_HEAD', session_version:1, must_change_password:false, department_id: 9 },
-  4: { id: 4, username: 'student', role: 'STUDENT', session_version:1, must_change_password:false, email_verified:true, department_id: null }
+  4: { id: 4, username: 'student', role: 'STUDENT', session_version:1, must_change_password:false, email_verified:true, department_id: null },
+  5: { id: 5, username: 'onboarding-student', role: 'STUDENT', session_version:1, must_change_password:false, email_verified:true, onboarding_required:true, onboarding_completed_at:null, google_linked:true, department_id: null }
 };
 
 function tokenFor(id, options = {}) {
@@ -270,6 +271,10 @@ test('mounted API enforces core role and ownership boundaries', async (t) => {
   assert.equal((await request(baseUrl, '/api/community-service', { token: head, method: 'POST', body: {} })).status, 403);
 
   assert.equal((await request(baseUrl, '/api/students/me', { token: student })).status, 200);
+  const onboardingStudent = tokenFor(5);
+  assert.equal((await request(baseUrl, '/api/students/me', { token: onboardingStudent })).status, 200);
+  assert.equal((await request(baseUrl, '/api/students/me/violations', { token: onboardingStudent })).status, 403);
+  assert.equal((await request(baseUrl, '/api/students/me/notifications', { token: onboardingStudent })).status, 403);
   assert.equal((await request(baseUrl, '/api/students/me/violations', { token: student })).status, 200);
   assert.equal((await request(baseUrl, '/api/students/me/violations?student_id=41', { token: student })).status, 400);
   assert.equal((await request(baseUrl, '/api/students/me/community-service', { token: student })).status, 200);

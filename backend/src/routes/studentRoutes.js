@@ -17,7 +17,7 @@ const { getMyCommunityServiceAssignment } = require("../controllers/communitySer
 const { getMyClearanceRecords } = require("../controllers/clearanceController");
 const { getMyDTR } = require("../controllers/communityServiceSessionReportController");
 const { getMyNotifications, markMyNotificationRead } = require("../controllers/notificationController");
-const { authorizeRoles } = require("../middleware/authMiddleware");
+const { authorizeRoles, requireExactRoles } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 const avatar = require('../controllers/avatarController');
@@ -29,7 +29,10 @@ router.delete('/:id/avatar', authorizeRoles('DISCIPLINE_ADMIN', 'DISCIPLINE_OFFI
 // LOGGED-IN STUDENT'S OWN DATA
 // =====================================================
 
-router.get("/me", authorizeRoles("STUDENT"), getMyProfile);
+// Onboarding students must read their own official profile to review it before
+// finishing setup. Only this endpoint bypasses the onboarding gate; all other
+// student self-service routes still require a completed onboarding.
+router.get("/me", requireExactRoles("STUDENT"), getMyProfile);
 
 router.get(
     "/me/violations",
