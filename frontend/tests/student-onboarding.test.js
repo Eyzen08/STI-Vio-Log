@@ -44,6 +44,21 @@ test('Discipline Office creation collects the full official profile and optional
   for(const field of ['qr_code','profile_image'])assert.doesNotMatch(formState,new RegExp(field))
 });
 
+test('incident dates can be backfilled for missed days but cannot be future-dated',()=>{
+  const dateInput=(id)=>{
+    const start=app.indexOf(`id="${id}"`)
+    return app.slice(start,app.indexOf('/>',start))
+  }
+  for(const id of ['create-student-incident_date','create-violation-incident_date']){
+    const input=dateInput(id)
+    assert.match(input,/max=\{manilaToday\(\)\}/)
+    assert.match(input,/onChange=/)
+    assert.doesNotMatch(input,/readOnly/)
+    assert.doesNotMatch(input,/min=\{manilaToday\(\)\}/)
+  }
+  assert.match(app,/Choose today or an earlier date in Asia\/Manila\. Future dates are not allowed\./)
+});
+
 test('onboarding layout is responsive, keyboard-semantic, and dark-theme aware',()=>{
   assert.match(progress,/aria-label="Student Account Setup Progress"/)
   assert.match(css,/@media\(max-width:600px\).*\.onboarding-progress/s)

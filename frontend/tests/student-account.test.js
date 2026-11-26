@@ -37,13 +37,14 @@ test('review creates a normalized snapshot of exactly the permitted account deta
   assert.equal(reviewed.email,'student@gmail.com')
 })
 
-test('review accepts an optional first violation only for the current Manila date', () => {
+test('review accepts a backfilled past first violation and rejects a future date', () => {
   const draft = {student_number:'02000123456',first_name:'Juan',last_name:'Santos',middle_name:'',suffix:'',email:'student@gmail.com',academic_level:'COLLEGE',program:'BSIT',section:'A103',year_level:'1',phone_number:'09171234567',guardian_name:'Maria Santos',guardian_relationship:'Mother',guardian_phone_number:'09187654321',include_first_violation:true,violation_type_id:'3',incident_date:manilaToday(),incident_time:'09:15',exact_offense:'Uniform violation',incident_details:'No school ID.'}
   const reviewed=studentAccount.reviewStudentAccount(draft)
   assert.equal(reviewed.first_violation.violation_type_id,3)
   assert.equal(reviewed.first_violation.incident_time,'09:15')
   assert.match(reviewed.first_violation.description,/Uniform violation/)
-  assert.throws(()=>studentAccount.reviewStudentAccount({...draft,incident_date:'2020-01-01'}),/today's date/)
+  assert.equal(studentAccount.reviewStudentAccount({...draft,incident_date:'2020-01-01'}).first_violation.incident_date,'2020-01-01')
+  assert.throws(()=>studentAccount.reviewStudentAccount({...draft,incident_date:'2999-12-31'}),/cannot be in the future/)
   assert.throws(()=>studentAccount.reviewStudentAccount({...draft,guardian_phone_number:'0917-123-4567'}),/must be different/)
 })
 
